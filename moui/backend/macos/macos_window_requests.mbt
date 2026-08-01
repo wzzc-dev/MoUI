@@ -154,11 +154,14 @@ fn MacosNativeHostBackend::attach_resolved_window(
         ),
       )
       ignore(
-        self.platform_slots.insert({
-          host_id: resolved.id,
-          platform_id: window.id(),
-          window,
-        }),
+        self.platform_slots.insert(
+          @platform_bridge.WindowSlot::new(
+            host_id=resolved.id,
+            platform_id=window.id(),
+            window~,
+            extra=(),
+          ),
+        ),
       )
       ignore(
         self.coordinator.attach_surface(

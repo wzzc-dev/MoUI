@@ -1,30 +1,4 @@
 ///|
-pub fn window_event_to_host(
-  event : @window_core.WindowEvent,
-  last_pointer : @core.Point,
-) -> @host.HostEvent? {
-  window_event_to_host_with_modifiers(
-    event,
-    last_pointer,
-    @core.KeyModifiers::none(),
-  )
-}
-
-///|
-pub fn window_event_to_host_with_modifiers(
-  event : @window_core.WindowEvent,
-  last_pointer : @core.Point,
-  modifiers : @core.KeyModifiers,
-) -> @host.HostEvent? {
-  @host.window_event_to_host_with_modifiers(
-    event,
-    last_pointer,
-    modifiers,
-    scale_factor=1.0,
-  )
-}
-
-///|
 fn window_event_to_host_with_scale(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,

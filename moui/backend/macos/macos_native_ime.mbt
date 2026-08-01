@@ -87,7 +87,7 @@ fn MacosNativeHostBackend::record_native_ime_runtime_smoke(
 fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
   self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
-  platform_slot : MacosWindowPlatformSlot,
+  platform_slot : @platform_bridge.WindowSlot[@window_macos.Window, Unit],
   runtime_slot : @runtime.HostWindowRuntimeSlot,
   title~ : String,
   prefix~ : String,
@@ -226,7 +226,7 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
 fn MacosNativeHostBackend::record_native_ime_composition_smoke(
   self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
-  platform_slot : MacosWindowPlatformSlot,
+  platform_slot : @platform_bridge.WindowSlot[@window_macos.Window, Unit],
   runtime_slot : @runtime.HostWindowRuntimeSlot,
   prefix~ : String,
 ) -> Bool {
@@ -279,7 +279,7 @@ fn MacosNativeHostBackend::record_native_ime_composition_smoke(
 fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
   self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
-  platform_slot : MacosWindowPlatformSlot,
+  platform_slot : @platform_bridge.WindowSlot[@window_macos.Window, Unit],
   runtime_slot : @runtime.HostWindowRuntimeSlot,
   title~ : String,
   prefix~ : String,
@@ -429,7 +429,7 @@ fn MacosNativeHostBackend::fail_native_ime_runtime_smoke(
 
 ///|
 fn native_ime_content_view_handle(
-  platform_slot : MacosWindowPlatformSlot,
+  platform_slot : @platform_bridge.WindowSlot[@window_macos.Window, Unit],
   prefix~ : String,
 ) -> UInt64? {
   Some(platform_slot.window.content_view_handle()) catch {
@@ -488,7 +488,7 @@ fn macos_native_ime_focus_point(title : String) -> @core.Point {
 ///|
 fn MacosNativeHostBackend::native_ime_request_matches_window(
   self : MacosNativeHostBackend,
-  platform_slot : MacosWindowPlatformSlot,
+  platform_slot : @platform_bridge.WindowSlot[@window_macos.Window, Unit],
   expected_text~ : String,
 ) -> Bool {
   match self.coordinator.text_input_session.last_diagnostics() {
@@ -558,7 +558,7 @@ fn macos_native_ime_expected_cursor_size(
 ///|
 fn MacosNativeHostBackend::native_ime_runtime_diagnostics(
   self : MacosNativeHostBackend,
-  platform_slot : MacosWindowPlatformSlot,
+  platform_slot : @platform_bridge.WindowSlot[@window_macos.Window, Unit],
   input : @core.TextInputState,
 ) -> String {
   let window_has_ime = platform_slot.window.ime_capabilities() is Some(_)

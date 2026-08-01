@@ -65,11 +65,14 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
           self.driver.set_text_system(renderer.text_system())
           ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
           ignore(
-            self.platform_slots.insert({
-              host_id: window_id,
-              platform_id: window.id(),
-              window,
-            }),
+            self.platform_slots.insert(
+              @platform_bridge.WindowSlot::new(
+                host_id=window_id,
+                platform_id=window.id(),
+                window~,
+                extra=(),
+              ),
+            ),
           )
           window.request_redraw()
           self.drain_window_requests(event_loop)
@@ -275,10 +278,11 @@ fn MacosNativeHostBackend::redraw_window(
       let present_completions = renderer.drain_present_completions()
       match macos_native_view_handle(platform_slot.window) {
         Some(handle) =>
-          for plugin in self.platform_view_plugins {
-            (plugin.sync_platform_views)(handle, frame, 0.0)
-            (plugin.drain_commands)(handle)
-          }
+          @runtime.sync_platform_view_plugins(
+            self.platform_view_plugins,
+            handle,
+            frame,
+          )
         None => ()
       }
       runtime_slot.driver.apply_render_frame_result(result)
@@ -335,13 +339,15 @@ fn MacosNativeHostBackend::finish_presented_window(
 ) -> Bool {
   if self.record_native_ime_runtime_smoke(window_id) {
     true
-  } else if self.first_frame_smoke_auto_exit {
-    println(
-      "macOS renderer presented first frame; exiting by request; title=" +
-      runtime_slot.record.title,
-    )
-    self.first_frame_smoke_auto_exit = false
-    self.coordinator.dispose_window(window_id)
+  } else if @runtime.finish_first_frame_smoke_auto_exit(
+    platform_name="macOS",
+    title=runtime_slot.record.title,
+    flag=self.first_frame_smoke_auto_exit,
+    finish=fn() {
+      self.first_frame_smoke_auto_exit = false
+      self.coordinator.dispose_window(window_id)
+    },
+  ) {
     true
   } else if self.performance_smoke_active {
     self.record_performance_smoke_present(window_id, runtime_slot)

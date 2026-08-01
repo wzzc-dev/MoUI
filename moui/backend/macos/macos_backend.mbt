@@ -68,7 +68,7 @@ struct MacosNativeHostBackend {
   coordinator : @runtime.WindowHostCoordinator
   renderer_provider : MacosRendererProvider
   services : @host.HostServiceBridge
-  platform_slots : MacosWindowPlatformSlots
+  platform_slots : @platform_bridge.WindowSlotMap[@window_macos.Window, Unit]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
@@ -109,18 +109,6 @@ struct MacosNativeHostBackend {
   mut promotion_recovered_within_vsyncs : Int
   mut promotion_recovery_count_before : Int
   mut promotion_fallback_count : Int
-}
-
-///|
-priv struct MacosWindowPlatformSlot {
-  host_id : @host.HostWindowId
-  platform_id : @window_core.WindowId
-  window : @window_macos.Window
-}
-
-///|
-priv struct MacosWindowPlatformSlots {
-  mut slots : Array[MacosWindowPlatformSlot]
 }
 
 ///|
