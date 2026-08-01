@@ -104,7 +104,8 @@ fn RuntimeState::semantics_node_id_for_element(
         return SemanticsNodeId::new(0UL)
       }
       let id = SemanticsNodeId::new(self.semantics.next_semantics_node_id)
-      self.semantics.next_semantics_node_id = self.semantics.next_semantics_node_id + 1UL
+      self.semantics.next_semantics_node_id = self.semantics.next_semantics_node_id +
+        1UL
       element.semantics_node_id = Some(id)
       id
     }
@@ -452,7 +453,8 @@ fn RuntimeState::build_semantics_for_element(
     element.semantics_cache.matches(layout.frame, environment, style) {
     return element.semantics_cache.replay()
   }
-  self.stats.semantics_recompute_count = self.stats.semantics_recompute_count + 1
+  self.stats.semantics_recompute_count = self.stats.semantics_recompute_count +
+    1
   let info = element.view_node.semantics()
   let roots : Array[SemanticsNodeId] = if info.composition ==
     SemanticsComposition::Hidden {
@@ -837,7 +839,8 @@ fn RuntimeState::read_semantics(
   if self.closed {
     return Err(SemanticsReadError::RuntimeClosed)
   }
-  if !self.semantics.semantics_action_dispatching && !self.semantics.semantics_commit_in_progress {
+  if !self.semantics.semantics_action_dispatching &&
+    !self.semantics.semantics_commit_in_progress {
     self.commit_semantics()
   }
   if self.closed {
@@ -981,7 +984,8 @@ fn RuntimeState::perform_semantics_action(
         {
           frame: action_route.layout.frame,
           child_frames: action_route.layout.children.map(child => child.frame),
-          focused: self.animfocus.focused_element == Some(action_route.element.id),
+          focused: self.animfocus.focused_element ==
+          Some(action_route.element.id),
           state: action_route.element.control.view_context(
             self.animfocus.focused_element == Some(action_route.element.id),
           ),

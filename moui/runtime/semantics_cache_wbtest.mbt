@@ -436,8 +436,12 @@ test "removed semantics nodes and action routes are pruned from the tree" {
   let initial_node = initial_nodes[initial_index]
   visible.set(false)
   let removed = runtime.cached_semantics()
-  assert_false(runtime.semantics.semantics_tree.nodes.contains(initial_node.node_id))
-  assert_false(runtime.semantics.semantics_tree.routes.contains(initial_node.node_id))
+  assert_false(
+    runtime.semantics.semantics_tree.nodes.contains(initial_node.node_id),
+  )
+  assert_false(
+    runtime.semantics.semantics_tree.routes.contains(initial_node.node_id),
+  )
   assert_false(runtime.semantics.semantic_id_index.contains(semantic_id))
   assert_false(
     removed.nodes().any(node => node.node_id == initial_node.node_id),
@@ -533,7 +537,10 @@ test "semantics node identity exhaustion closes before publishing a wrapped id" 
     Err(SemanticsReadError::RuntimeClosed) => ()
     _ => fail("identity exhaustion must close the semantics runtime")
   }
-  assert_eq(runtime.semantics.committed_semantics.generation(), before.generation())
+  assert_eq(
+    runtime.semantics.committed_semantics.generation(),
+    before.generation(),
+  )
   assert_false(
     runtime.semantics.committed_semantics
     .nodes()
@@ -562,5 +569,7 @@ test "semantics generation exhaustion closes before wrapping to zero" {
     runtime.semantics.committed_semantics.generation(),
     @core.SemanticsGeneration::new(18446744073709551615UL),
   )
-  assert_true(before.generation() < runtime.semantics.committed_semantics.generation())
+  assert_true(
+    before.generation() < runtime.semantics.committed_semantics.generation(),
+  )
 }

@@ -7,7 +7,7 @@ import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/views/navigation",
 }
 
 // Values
@@ -47,7 +47,7 @@ pub struct Model {
   docs_scroll : @core.ScrollState
   showcase_grid_scroll : @core.ScrollState
   tutorial_scroll : @core.ScrollState
-  route_history : @views.RouteHistoryState
+  route_history : @navigation.RouteHistoryState
   pending_anchor : String?
   copied_text : String?
 }

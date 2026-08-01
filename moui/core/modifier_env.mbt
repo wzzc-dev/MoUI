@@ -6,7 +6,11 @@
 pub(all) struct ThemeModifier {
   theme : Theme
 }
-pub fn[Msg] ThemeModifier::to_any_modifier(self : ThemeModifier) -> AnyModifier[Msg] {
+
+///|
+pub fn[Msg] ThemeModifier::to_any_modifier(
+  self : ThemeModifier,
+) -> AnyModifier[Msg] {
   let theme = self.theme
   {
     ..noop_modifier(),
@@ -19,7 +23,11 @@ pub fn[Msg] ThemeModifier::to_any_modifier(self : ThemeModifier) -> AnyModifier[
 pub(all) struct EnvironmentModifier {
   environment : Environment
 }
-pub fn[Msg] EnvironmentModifier::to_any_modifier(self : EnvironmentModifier) -> AnyModifier[Msg] {
+
+///|
+pub fn[Msg] EnvironmentModifier::to_any_modifier(
+  self : EnvironmentModifier,
+) -> AnyModifier[Msg] {
   let env = self.environment
   {
     ..noop_modifier(),
@@ -32,7 +40,11 @@ pub fn[Msg] EnvironmentModifier::to_any_modifier(self : EnvironmentModifier) -> 
 pub(all) struct DisabledModifier {
   disabled : Bool
 }
-pub fn[Msg] DisabledModifier::to_any_modifier(self : DisabledModifier) -> AnyModifier[Msg] {
+
+///|
+pub fn[Msg] DisabledModifier::to_any_modifier(
+  self : DisabledModifier,
+) -> AnyModifier[Msg] {
   let disabled = self.disabled
   {
     ..noop_modifier(),
@@ -40,7 +52,16 @@ pub fn[Msg] DisabledModifier::to_any_modifier(self : DisabledModifier) -> AnyMod
     child_environment: fn(e) { e.with_enabled(!disabled) },
     semantics: ViewSemanticsInfo::new(disabled~),
     paint: if disabled {
-      fn(_ctx) { { commands: [DrawCommand::PushOpacity(0.42)], child_layers: [], post_commands: [DrawCommand::PopOpacity], overlay_commands: [], repaint_boundary: false, animating: false } }
+      fn(_ctx) {
+        {
+          commands: [DrawCommand::PushOpacity(0.42)],
+          child_layers: [],
+          post_commands: [DrawCommand::PopOpacity],
+          overlay_commands: [],
+          repaint_boundary: false,
+          animating: false,
+        }
+      }
     } else {
       fn(_ctx) { ViewPaintPlan::empty() }
     },
@@ -56,18 +77,22 @@ pub fn[Msg] DisabledModifier::to_any_modifier(self : DisabledModifier) -> AnyMod
 pub(all) struct FocusableModifier {
   focusable : Bool
 }
-pub fn[Msg] FocusableModifier::to_any_modifier(self : FocusableModifier) -> AnyModifier[Msg] {
-  {
-    ..noop_modifier(),
-    identity_kind: "Focusable",
-    focusable: self.focusable,
-  }
+
+///|
+pub fn[Msg] FocusableModifier::to_any_modifier(
+  self : FocusableModifier,
+) -> AnyModifier[Msg] {
+  { ..noop_modifier(), identity_kind: "Focusable", focusable: self.focusable }
 }
 
 ///|
 pub(all) struct FocusTrapModifier {
   trap : Bool
 }
-pub fn[Msg] FocusTrapModifier::to_any_modifier(_self : FocusTrapModifier) -> AnyModifier[Msg] {
+
+///|
+pub fn[Msg] FocusTrapModifier::to_any_modifier(
+  _self : FocusTrapModifier,
+) -> AnyModifier[Msg] {
   { ..noop_modifier(), identity_kind: "FocusTrap" }
 }

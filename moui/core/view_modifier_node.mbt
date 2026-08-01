@@ -89,4 +89,3 @@ impl[Msg] ViewNode for ModifierViewNode[Msg] with fn focusable(self) {
 impl[Msg] ViewNode for ModifierViewNode[Msg] with fn flex_weight(self) {
   self.modifier.flex_weight
 }
-

@@ -1,7 +1,7 @@
 // Local helpers for navigation/: thin row/column/stack wrappers over the
 // shared @common implementations, plus the navigation-local modal_scrim.
 
-
+///|
 fn[Msg] row(
   children : Array[@core.View[Msg]],
   spacing? : Double = 10.0,
@@ -36,7 +36,6 @@ fn[Msg] column(
 // === Stack layout ===
 
 ///|
-
 fn[Msg] stack(children : Array[@core.View[Msg]]) -> @core.View[Msg] {
   @common.stack_layout(children~)
 }

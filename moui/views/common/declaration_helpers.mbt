@@ -33,8 +33,8 @@ pub fn view_declaration_auto(
   layout_fields : Array[(String, @core.DeclarationKey)],
   paint_fields : Array[(String, @core.DeclarationKey)],
   semantics_fields : Array[(String, @core.DeclarationKey)],
-  layout_theme_dependent~ : Bool = true,
-  paint_theme_dependent~ : Bool = true,
+  layout_theme_dependent? : Bool = true,
+  paint_theme_dependent? : Bool = true,
 ) -> @core.ViewDeclaration {
   let layout_key = view_record_key(kind + ".layout", layout_fields)
   let paint_key = view_record_key(kind + ".paint", paint_fields)

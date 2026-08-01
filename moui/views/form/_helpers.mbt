@@ -1,7 +1,7 @@
 // Local helpers for form/: thin row/column wrappers over the shared
 // @common flex implementation.
 
-
+///|
 fn[Msg] row(
   children : Array[@core.View[Msg]],
   spacing? : Double = 10.0,

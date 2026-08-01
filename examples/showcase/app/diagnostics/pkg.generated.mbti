@@ -7,7 +7,7 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/views/navigation",
 }
 
 // Values
@@ -54,7 +54,7 @@ pub(all) struct ShowcaseModel {
   draft : String
   tab : String
   selected_section : String
-  route_history : @views.RouteHistoryState
+  route_history : @navigation.RouteHistoryState
   filter : String
   data_filter_query : String
   data_filter_active : Bool

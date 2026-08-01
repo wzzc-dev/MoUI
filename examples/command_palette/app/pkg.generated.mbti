@@ -4,7 +4,7 @@ package "examples/command_palette/app"
 import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/views/controls",
 }
 
 // Values
@@ -12,7 +12,7 @@ pub fn action_command_map() -> @core.ActionCommandMap
 
 pub fn command_palette_commands() -> Array[@core.ActionCommand]
 
-pub fn command_sections() -> Array[@views.CommandMenuSection]
+pub fn command_sections() -> Array[@controls.CommandMenuSection]
 
 pub fn program() -> @core.Program[CommandPaletteModel, CommandPaletteMsg]
 
