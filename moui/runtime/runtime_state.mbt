@@ -191,22 +191,10 @@ fn RuntimeState::destroy_now(self : RuntimeState) -> Unit {
   self.render_tree = RenderTree::empty()
   self.platform_tree = PlatformTree::empty()
   self.next_element_id = 1
-  self.dirty.dirty_elements.clear()
-  self.dirty.dirty_build_elements.clear()
-  self.dirty.dirty_layout_elements.clear()
-  self.dirty.dirty_paint_elements.clear()
-  self.dirty.dirty_semantics_elements.clear()
-  self.dirty.dirty_platform_elements.clear()
+  self.dirty.clear()
   self.animfocus.focused_element = None
   self.animfocus.active_pointer_capture = None
   self.pending_scroll_request = None
-  self.dirty.needs_rebuild = false
-  self.dirty.needs_layout = false
-  self.dirty.needs_paint = false
-  self.dirty.needs_semantics = false
-  self.dirty.needs_platform = false
-  self.dirty.needs_redraw = false
-  self.dirty.rebuild_wakeup_redraw = false
   self.stats.rebuild_pass_count = 0
   self.stats.layout_pass_count = 0
   self.stats.paint_pass_count = 0
@@ -496,6 +484,12 @@ fn DirtyTracking::new() -> DirtyTracking {
 }
 
 ///|
+/// Full reset of all dirty flags and queues. Reset semantics only: safe at
+/// teardown (`destroy_now`) or whole-tree reset. Never call mid-frame — the
+/// phase passes (`layout_current_tree` / `render_current_tree` /
+/// `refresh_platform_tree`) own incremental clearing, and a blanket clear
+/// would drop pending work (e.g. `needs_paint` while `needs_rebuild` is
+/// still outstanding → stale rendering).
 fn DirtyTracking::clear(self : DirtyTracking) -> Unit {
   self.needs_redraw = false
   self.needs_rebuild = false
@@ -560,21 +554,3 @@ fn SemanticsSubsystem::new() -> SemanticsSubsystem {
 ///   2. Compiler errors guide ~400 `self.needs_*` → `self.dirty.needs_*` renames.
 ///   3. Each rename is a `replace_all_preview` → `multi_edit` batch per file.
 ///   Constructors above produce correct initial values for the subsystem fields.
-
-///|
-/// Convenience: clear all dirty state in one call.
-fn RuntimeState::clear_all_dirty(self : RuntimeState) -> Unit {
-  self.dirty.needs_redraw = false
-  self.dirty.needs_rebuild = false
-  self.dirty.needs_layout = false
-  self.dirty.needs_paint = false
-  self.dirty.needs_semantics = false
-  self.dirty.needs_platform = false
-  self.dirty.rebuild_wakeup_redraw = false
-  self.dirty.dirty_elements.clear()
-  self.dirty.dirty_build_elements.clear()
-  self.dirty.dirty_layout_elements.clear()
-  self.dirty.dirty_paint_elements.clear()
-  self.dirty.dirty_semantics_elements.clear()
-  self.dirty.dirty_platform_elements.clear()
-}
