@@ -144,52 +144,46 @@ impl @core.ViewNode for Slider with fn identity(_self) {
 
 ///|
 impl @core.ViewNode for Slider with fn declaration(self) {
-  let paint_key = @common.view_record_key("Slider.paint", [
-    ("value", @core.DeclarationKey::double(self.value)),
-    ("min", @core.DeclarationKey::double(self.min)),
-    ("max", @core.DeclarationKey::double(self.max)),
-    (
-      "style",
-      @core.DeclarationKey::option(
-        self.style.map(style => {
-          @common.view_record_key("SliderStyle", [
-            ("foreground", @common.view_color_key(style.foreground)),
-            ("background", @common.view_color_key(style.background)),
-            ("thumb_color", @common.view_color_key(style.thumb_color)),
-            ("track_height", @core.DeclarationKey::double(style.track_height)),
-            ("thumb_size", @core.DeclarationKey::double(style.thumb_size)),
-            ("radius", @core.DeclarationKey::double(style.radius)),
-          ])
-        }),
+  @common.view_declaration_auto(
+    "Slider",
+    self.theme,
+    [
+      ("width", @core.DeclarationKey::double(self.width)),
+      ("height", @core.DeclarationKey::double(self.height)),
+    ],
+    [
+      ("value", @core.DeclarationKey::double(self.value)),
+      ("min", @core.DeclarationKey::double(self.min)),
+      ("max", @core.DeclarationKey::double(self.max)),
+      (
+        "style",
+        @core.DeclarationKey::option(
+          self.style.map(style => {
+            @common.view_record_key("SliderStyle", [
+              ("foreground", @common.view_color_key(style.foreground)),
+              ("background", @common.view_color_key(style.background)),
+              ("thumb_color", @common.view_color_key(style.thumb_color)),
+              ("track_height", @core.DeclarationKey::double(style.track_height)),
+              ("thumb_size", @core.DeclarationKey::double(style.thumb_size)),
+              ("radius", @core.DeclarationKey::double(style.radius)),
+            ])
+          }),
+        ),
       ),
-    ),
-    (
-      "foreground",
-      @core.DeclarationKey::option(self.foreground.map(@common.view_color_key)),
-    ),
-    (
-      "background",
-      @core.DeclarationKey::option(self.background.map(@common.view_color_key)),
-    ),
-  ])
-  @common.view_declaration(
-    layout=@common.view_exact_channel(
-      @common.view_record_key("Slider.layout", [
-        ("width", @core.DeclarationKey::double(self.width)),
-        ("height", @core.DeclarationKey::double(self.height)),
-      ]),
-    ),
-    paint=if self.theme is Some(_) {
-      @core.DeclarationChannel::Uncacheable
-    } else {
-      @common.view_exact_channel(paint_key)
-    },
-    semantics=@common.view_exact_channel(
-      @common.view_record_key("Slider.semantics", [
-        ("value", @core.DeclarationKey::double(self.value)),
-        ("scroll", @core.DeclarationKey::bool(self.has_on_change)),
-      ]),
-    ),
+      (
+        "foreground",
+        @core.DeclarationKey::option(self.foreground.map(@common.view_color_key)),
+      ),
+      (
+        "background",
+        @core.DeclarationKey::option(self.background.map(@common.view_color_key)),
+      ),
+    ],
+    [
+      ("value", @core.DeclarationKey::double(self.value)),
+      ("scroll", @core.DeclarationKey::bool(self.has_on_change)),
+    ],
+    layout_theme_dependent=false,
   )
 }
 
@@ -205,9 +199,20 @@ impl @core.ViewNode for Slider with fn layout(self, ctx) {
 ///|
 impl @core.ViewNode for Slider with fn paint(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let set = @style.views_ambient_control_theme(resolved_theme)
   let resolved_style = match self.style {
     Some(value) => value
-    None => @style.SliderStyle::default(theme=resolved_theme)
+    None => {
+      let s = set.slider
+      @style.SliderStyle::{
+        foreground: s.foreground,
+        background: s.background,
+        thumb_color: s.thumb_color,
+        track_height: s.track_height,
+        thumb_size: s.thumb_size,
+        radius: s.radius,
+      }
+    }
   }
   let range = if self.max <= self.min { 1.0 } else { self.max - self.min }
   let normalized = @common.clamp_view_double(
@@ -224,7 +229,7 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
     track_height / 2.0,
     resolved_style.radius,
   )
-  let thumb_shape = @style.views_ambient_control_theme(resolved_theme).slider.thumb_shape
+  let thumb_shape = set.slider.thumb_shape
   let thumb_radius = match thumb_shape {
     @style.ThumbShape::Circle => knob / 2.0
     @style.ThumbShape::Rounded =>

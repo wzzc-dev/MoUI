@@ -24,6 +24,23 @@ color change through these layers before editing:
    Per ADR 0017, these token structs live in `moui/views` as `ControlThemeSet`;
    `core` carries no control vocabulary. App-facing one-shot styles remain
    `@views.ButtonStyle` / variant helpers.
+
+### Single source of truth
+
+`ControlThemeSet`, built once by `minimal_control_theme_set(theme)`, is the
+**only** compute source for *all* control theming — choice controls, sliders,
+progress, pickers, feedback, badges, form validation, and buttons. The legacy
+`XStyle::default(theme=)` constructors in `moui/views/style/control_style.mbt`
+(`ChoiceControlStyle::default`, `SliderStyle::default`, `BadgeStyle::default`,
+etc.) are now thin projections over `ControlThemeSet` kept only for backward
+compatibility.
+
+**Rule:** when changing a control's themed appearance, edit
+`minimal_control_theme_set` (or an override of `ControlThemeSet`) and read
+tokens at paint time via `@style.views_ambient_control_theme(theme)`. Do **not**
+fork a second computation inside an `XStyle::default` — that reintroduces the
+dual-source drift this unification removed. New controls should read
+`ControlThemeSet` directly (or be built with `themeable_control`).
    - `minimal_control_theme_set(theme)` builds the default `ControlThemeSet` from
      the palette. Each variant (`primary`/`tonal`/`outline`/`ghost`/`subtle`/`subtle_brand`)
      is a `ControlStateTokens` (foreground/background/border/border_width/radius).

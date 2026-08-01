@@ -130,7 +130,9 @@ pub fn minimal_control_theme_set(theme : @core.Theme) -> ControlThemeSet {
   }
   let slider = {
     foreground: palette.primary,
-    background: palette.surface_variant,
+    // Matches the legacy `SliderStyle::default` track fill so unifying the two
+    // sources does not shift the rendered track opacity.
+    background: palette.surface_variant.multiply_alpha(0.7),
     thumb_color: palette.primary,
     track_height: 4.0,
     thumb_size: 18.0,
@@ -164,10 +166,12 @@ pub fn minimal_control_theme_set(theme : @core.Theme) -> ControlThemeSet {
   }
   let badge : BadgeTheme = {
     neutral: badge_neutral,
-    accent: tone_tokens(palette.info, 1.0, 1.0),
-    success: tone_tokens(palette.success, 1.0, 1.0),
-    warning: tone_tokens(palette.warning, 1.0, 1.0),
-    danger: tone_tokens(palette.danger, 1.0, 1.0),
+    // Foreground stays white (legacy `badge_tone` semantics) so unifying the
+    // two sources keeps the badge control's current rendered look.
+    accent: { foreground: @core.Color::white(), background: palette.info, border: palette.info },
+    success: { foreground: @core.Color::white(), background: palette.success, border: palette.success },
+    warning: { foreground: @core.Color::white(), background: palette.warning, border: palette.warning },
+    danger: { foreground: @core.Color::white(), background: palette.danger, border: palette.danger },
     radius: radius.pill,
     padding: 3.0,
   }

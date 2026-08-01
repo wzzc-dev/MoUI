@@ -18,6 +18,43 @@ pub fn view_declaration(
 }
 
 ///|
+/// Build a `ViewDeclaration` from per-channel field lists, eliminating the
+/// repetitive record-key + channel boilerplate every control repeats by hand.
+///
+/// A theme override (`theme?` passed to the control) makes the affected
+/// channels `Uncacheable` (the resolved theme is not part of the cache key),
+/// otherwise an `Exact` channel is built from the record key. `semantics` is
+/// always `Exact`. Use `layout_theme_dependent=false` for controls whose layout
+/// does not depend on the theme (e.g. the slider, which sizes from width/height
+/// only) to preserve their prior cache behavior.
+pub fn view_declaration_auto(
+  kind : String,
+  theme_override : @core.Theme?,
+  layout_fields : Array[(String, @core.DeclarationKey)],
+  paint_fields : Array[(String, @core.DeclarationKey)],
+  semantics_fields : Array[(String, @core.DeclarationKey)],
+  layout_theme_dependent~ : Bool = true,
+  paint_theme_dependent~ : Bool = true,
+) -> @core.ViewDeclaration {
+  let layout_key = view_record_key(kind + ".layout", layout_fields)
+  let paint_key = view_record_key(kind + ".paint", paint_fields)
+  let semantics_key = view_record_key(kind + ".semantics", semantics_fields)
+  view_declaration(
+    layout=if layout_theme_dependent && theme_override is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(layout_key)
+    },
+    paint=if paint_theme_dependent && theme_override is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(paint_key)
+    },
+    semantics=view_exact_channel(semantics_key),
+  )
+}
+
+///|
 pub fn view_constant_declaration() -> @core.ViewDeclaration {
   @core.ViewDeclaration::constant()
 }
