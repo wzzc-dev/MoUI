@@ -71,7 +71,7 @@ pub fn create_session(
   view~ : @ios_host.IosViewHandle,
   metrics~ : @host.HostSurfaceMetrics,
   options? : IosSkiaAppOptions = IosSkiaAppOptions::new(),
-) -> @ios_host.IosRuntimeSession? {
+) -> @embedded_runtime_backend.HostedRuntimeSession? {
   @ios_host.create_session(
     runtime~,
     view~,

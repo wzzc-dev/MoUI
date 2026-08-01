@@ -57,8 +57,11 @@ renderers consume `DrawCommand` only.
 | AppRuntime / trees / effects | `moui/runtime` |
 | Host services & embedder channel | `moui/backend/host` |
 | Neutral platform lifecycle bridge | `moui/backend/platform_bridge` |
+| Window host coordination (shared) | `moui/runtime/window_host_coordinator.mbt` |
+| Shared embedded-runtime host shell | `moui/backend/internal/embedded_runtime_backend` |
 | Native host backends | `moui/backend/{macos,windows,linux}` |
 | Embedded runtime backends | `moui/backend/{android,ios,harmonyos}` |
+| Web host backend | `moui/backend/web` |
 | Skia mainline providers | `moui/backend/<platform>/skia` |
 | WGPU diagnostic providers | `moui/backend/<platform>/wgpu` |
 | Renderer facades and provider bindings | `moui/render`, `render/skia`, `render/wgpu`, `render/webgpu_adapter`, `render/sun`, `render/canvas2d` |

@@ -5,7 +5,6 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
-  "wzzc-dev/moui/backend/platform_bridge",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
@@ -13,7 +12,7 @@ import {
 // Values
 pub fn backend_info() -> IosBackendInfo
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : IosViewHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : IosRendererProvider) -> IosRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : IosViewHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : IosRendererProvider) -> @embedded_runtime_backend.HostedRuntimeSession?
 
 pub fn ios_capability_matrix() -> IosBackendCapabilities
 
@@ -26,6 +25,8 @@ pub fn ios_readiness() -> IosBackendReadiness
 pub fn ios_service_capabilities() -> @host.HostServiceCapabilities
 
 pub fn ios_window_hosted_pump_host_sim(IosEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
+
+pub fn renderer_provider_adapter_from_ios(IosRendererProvider) -> @embedded_runtime_backend.RendererProviderAdapter
 
 // Errors
 
@@ -62,20 +63,7 @@ pub(all) struct IosBackendReadiness {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct IosEmbeddedRuntimeBackend {
-  title : String
-  runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
-  provider_factory : () -> IosRendererProvider
-  mut runtime : @runtime.AppRuntime?
-  mut session : IosRuntimeSession?
-  mut window : @wzzc-dev/window/ios.Window?
-  mut provider : IosRendererProvider?
-  mut last_pointer : @wzzc-dev/moui/core.Point
-  modifiers : @wzzc-dev/moui/core.KeyModifiers
-  mut last_generation : Int
-  mut frames_presented : Int
-  mut surface_lifecycle : @platform_bridge.PlatformSurfaceLifecycle
-  auto_exit_after_frames : Int?
-  ime_sink : IosImeSink
+  backend : @embedded_runtime_backend.HostedWindowBackend
 }
 pub fn IosEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn IosEmbeddedRuntimeBackend::has_session(Self) -> Bool
@@ -95,35 +83,6 @@ pub struct IosRendererProvider {
 }
 pub fn IosRendererProvider::has_async_image_loader(Self) -> Bool
 pub fn IosRendererProvider::new(create_renderer~ : (IosViewHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_view? : (IosViewHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
-
-pub struct IosRuntimeSession {
-  // private fields
-}
-pub fn IosRuntimeSession::advance_time(Self, Double) -> Unit
-pub fn IosRuntimeSession::attach_view(Self, IosViewHandle, @host.HostSurfaceMetrics, IosRendererProvider) -> Bool
-pub fn IosRuntimeSession::detach_view(Self) -> Bool
-pub fn IosRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
-pub fn IosRuntimeSession::dispatch_host_response(Self, @embedded_runtime_backend.EmbeddingHostResponse) -> Bool
-pub fn IosRuntimeSession::dispatch_host_response_envelope(Self, @embedded_runtime_backend.EmbeddingHostResponseEnvelope) -> Bool
-pub fn IosRuntimeSession::dispatch_host_response_envelope_json(Self, String) -> Bool
-pub fn IosRuntimeSession::dispose(Self) -> Unit
-pub fn IosRuntimeSession::disposed(Self) -> Bool
-pub fn IosRuntimeSession::drain_host_update_envelope_json(Self) -> String
-pub fn IosRuntimeSession::drain_host_updates(Self) -> Array[@embedded_runtime_backend.EmbeddingHostUpdate]
-pub fn IosRuntimeSession::drain_host_updates_json(Self) -> String
-pub fn IosRuntimeSession::host_service_bridge(Self) -> @host.HostServiceBridge
-pub fn IosRuntimeSession::metrics(Self) -> @host.HostSurfaceMetrics
-pub fn IosRuntimeSession::present_count(Self) -> Int
-pub fn IosRuntimeSession::redraw_requested(Self) -> Bool
-pub fn IosRuntimeSession::render_frame(Self) -> @render.RenderFrameResult
-pub fn IosRuntimeSession::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
-pub fn IosRuntimeSession::runtime(Self) -> @runtime.AppRuntime
-pub fn IosRuntimeSession::session_generation(Self) -> Int
-pub fn IosRuntimeSession::surface_attached(Self) -> Bool
-pub fn IosRuntimeSession::surface_epoch(Self) -> Int
-pub fn IosRuntimeSession::sync_view(Self, IosRendererProvider) -> Unit
-pub fn IosRuntimeSession::take_redraw_requested(Self) -> Bool
-pub fn IosRuntimeSession::view(Self) -> IosViewHandle
 
 pub(all) struct IosViewHandle {
   raw : UInt64

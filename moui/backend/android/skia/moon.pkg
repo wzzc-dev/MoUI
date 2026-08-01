@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
   "wzzc-dev/moui/backend/android" @android_host,
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,

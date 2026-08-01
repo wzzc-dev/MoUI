@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/android/skia"
 import {
   "wzzc-dev/moui/backend/android",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
@@ -13,7 +14,7 @@ pub fn android_skia_gpu_available() -> Bool
 
 pub fn android_skia_provider_preflight_summary(options? : AndroidSkiaAppOptions) -> String
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @android.AndroidSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, options? : AndroidSkiaAppOptions) -> @android.AndroidRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @android.AndroidSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, options? : AndroidSkiaAppOptions) -> @embedded_runtime_backend.HostedRuntimeSession?
 
 pub fn renderer_provider(options? : AndroidSkiaAppOptions) -> @android.AndroidRendererProvider
 

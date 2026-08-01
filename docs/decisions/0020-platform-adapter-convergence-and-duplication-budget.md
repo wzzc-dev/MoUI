@@ -1,6 +1,6 @@
 # 0020: Platform Bridge convergence and duplication budget
 
-- **Date**: 2026-07-28, amended 2026-07-29
+- **Date**: 2026-07-28, amended 2026-07-29, amended 2026-08-01
 - **Status**: Accepted
 - **Related**: ADR 0011 (platform product class), ADR 0018 (host contract
   split), ADR 0019 (renderer providers), invariants P5/M6
@@ -57,6 +57,28 @@ usage.
 - Bridge behavior is covered by `moon test moui/backend/platform_bridge
   --target native`; the validator has its own MoonBit fixture tests and is part
   of the PR profile.
+
+## Amendment (2026-08-01): window-host coordination and file-level similarity gate
+
+The window-lifecycle state that was previously re-implemented per backend now
+lives in `WindowHostCoordinator` (moui/runtime, with `WindowSurfaceActions`
+per-window projections). macOS/Windows/Linux and the Web backend all delegate
+window records, runtime slots, platform-window maps, surface attachment,
+redraw/IME/close coordination, and host-event dispatch to it; embedded-runtime
+backends share `moui/backend/internal/embedded_runtime_backend`
+(`HostedWindowBackend`/`HostedRuntimeSession`), leaving each platform's
+`window_hosted.mbt` as a thin shell.
+
+The api-surface validator gains a file-level mirror similarity gate
+(`validate_platform_file_similarity` in
+`tools/moui/validate_api_surface/platform_file_similarity.mbt`): platform
+identifiers are normalized to a placeholder token, mirror file pairs scoring
+above 80% similarity are rejected unless registered in
+`platform_file_similarity_budgets` with a reason and a per-pair budget row.
+Registered pairs include the Wave 2 shared embedded-runtime shells, renderer
+provider adapter shells, and pre-existing duplicate helper files
+(`menu_helpers`, `file_dialog_helpers`); new platform files must fold shared
+logic into the coordinator/shared packages instead of copying it.
 
 ## Rejected alternatives
 

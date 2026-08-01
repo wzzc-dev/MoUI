@@ -49,7 +49,7 @@ pub fn create_session(
   surface~ : @android_host.AndroidSurfaceHandle,
   metrics~ : @host.HostSurfaceMetrics,
   options? : AndroidSkiaAppOptions = AndroidSkiaAppOptions::new(),
-) -> @android_host.AndroidRuntimeSession? {
+) -> @embedded_runtime_backend.HostedRuntimeSession? {
   @android_host.create_session(
     runtime~,
     surface~,

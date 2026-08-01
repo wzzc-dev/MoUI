@@ -67,12 +67,6 @@ pub struct AndroidRendererProvider {
 }
 
 ///|
-pub struct AndroidRuntimeSession {
-  priv mut surface : AndroidSurfaceHandle
-  priv core : @embedded_runtime_backend.EmbeddedRuntimeBackendCore
-}
-
-///|
 pub fn AndroidRendererProvider::new(
   create_renderer~ : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
   sync_surface? : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
@@ -107,6 +101,36 @@ pub fn AndroidRendererProvider::has_async_image_loader(
   self : AndroidRendererProvider,
 ) -> Bool {
   self.image_loader is Some(_)
+}
+
+///|
+pub fn create_session(
+  runtime~ : @runtime.AppRuntime,
+  surface~ : AndroidSurfaceHandle,
+  metrics~ : @host.HostSurfaceMetrics,
+  provider~ : AndroidRendererProvider,
+) -> @embedded_runtime_backend.HostedRuntimeSession? {
+  @embedded_runtime_backend.HostedRuntimeSession::create(
+    runtime~,
+    raw_handle=surface.raw(),
+    metrics~,
+    adapter=renderer_provider_adapter_from_android(provider),
+  )
+}
+
+///|
+pub fn renderer_provider_adapter_from_android(
+  provider : AndroidRendererProvider,
+) -> @embedded_runtime_backend.RendererProviderAdapter {
+  @embedded_runtime_backend.RendererProviderAdapter::new(
+    create_renderer=fn(raw, metrics) {
+      provider.create(AndroidSurfaceHandle::new(raw=raw), metrics)
+    },
+    sync=fn(raw, metrics) {
+      provider.sync(AndroidSurfaceHandle::new(raw=raw), metrics)
+    },
+    image_loader=provider.image_loader,
+  )
 }
 
 ///|
@@ -202,226 +226,3 @@ pub fn android_capability_summary(
   )
 }
 
-///|
-pub fn create_session(
-  runtime~ : @runtime.AppRuntime,
-  surface~ : AndroidSurfaceHandle,
-  metrics~ : @host.HostSurfaceMetrics,
-  provider~ : AndroidRendererProvider,
-) -> AndroidRuntimeSession? {
-  match provider.create(surface, metrics) {
-    Some(renderer) => {
-      let core = @embedded_runtime_backend.EmbeddedRuntimeBackendCore::new(
-        runtime~,
-        renderer~,
-        image_loader=provider.image_loader,
-        metrics~,
-      )
-      provider.sync(surface, metrics)
-      Some({ surface, core })
-    }
-    None => None
-  }
-}
-
-///|
-pub fn AndroidRuntimeSession::metrics(
-  self : AndroidRuntimeSession,
-) -> @host.HostSurfaceMetrics {
-  self.core.metrics()
-}
-
-///|
-pub fn AndroidRuntimeSession::surface(
-  self : AndroidRuntimeSession,
-) -> AndroidSurfaceHandle {
-  self.surface
-}
-
-///|
-pub fn AndroidRuntimeSession::runtime(
-  self : AndroidRuntimeSession,
-) -> @runtime.AppRuntime {
-  self.core.runtime()
-}
-
-///|
-pub fn AndroidRuntimeSession::disposed(self : AndroidRuntimeSession) -> Bool {
-  self.core.disposed()
-}
-
-///|
-pub fn AndroidRuntimeSession::surface_attached(
-  self : AndroidRuntimeSession,
-) -> Bool {
-  self.core.surface_attached()
-}
-
-///|
-pub fn AndroidRuntimeSession::session_generation(
-  self : AndroidRuntimeSession,
-) -> Int {
-  self.core.session_generation()
-}
-
-///|
-pub fn AndroidRuntimeSession::surface_epoch(
-  self : AndroidRuntimeSession,
-) -> Int {
-  self.core.surface_epoch()
-}
-
-///|
-pub fn AndroidRuntimeSession::attach_surface(
-  self : AndroidRuntimeSession,
-  surface : AndroidSurfaceHandle,
-  metrics : @host.HostSurfaceMetrics,
-  provider : AndroidRendererProvider,
-) -> Bool {
-  match provider.create(surface, metrics) {
-    Some(renderer) =>
-      if self.core.attach_surface(
-          renderer~,
-          metrics~,
-          image_loader=provider.image_loader,
-        ) {
-        self.surface = surface
-        provider.sync(surface, metrics)
-        true
-      } else {
-        false
-      }
-    None => false
-  }
-}
-
-///|
-pub fn AndroidRuntimeSession::detach_surface(
-  self : AndroidRuntimeSession,
-) -> Bool {
-  if self.core.detach_surface() {
-    self.surface = AndroidSurfaceHandle::none()
-    true
-  } else {
-    false
-  }
-}
-
-///|
-pub fn AndroidRuntimeSession::dispatch(
-  self : AndroidRuntimeSession,
-  event : @host.HostEvent,
-) -> @host.HostEventResult {
-  self.core.dispatch(event)
-}
-
-///|
-pub fn AndroidRuntimeSession::resize(
-  self : AndroidRuntimeSession,
-  metrics : @host.HostSurfaceMetrics,
-) -> @host.HostEventResult {
-  self.core.resize(metrics)
-}
-
-///|
-pub fn AndroidRuntimeSession::sync_surface(
-  self : AndroidRuntimeSession,
-  provider : AndroidRendererProvider,
-) -> Unit {
-  if self.surface_attached() {
-    provider.sync(self.surface, self.core.metrics())
-  }
-}
-
-///|
-pub fn AndroidRuntimeSession::render_frame(
-  self : AndroidRuntimeSession,
-) -> @render.RenderFrameResult {
-  self.core.render_frame()
-}
-
-///|
-pub fn AndroidRuntimeSession::advance_time(
-  self : AndroidRuntimeSession,
-  time_ms : Double,
-) -> Unit {
-  self.core.advance_time(time_ms)
-}
-
-///|
-pub fn AndroidRuntimeSession::drain_host_updates(
-  self : AndroidRuntimeSession,
-) -> Array[@embedded_runtime_backend.EmbeddingHostUpdate] {
-  self.core.drain_host_updates()
-}
-
-///|
-pub fn AndroidRuntimeSession::drain_host_updates_json(
-  self : AndroidRuntimeSession,
-) -> String {
-  self.core.drain_host_updates_json()
-}
-
-///|
-pub fn AndroidRuntimeSession::drain_host_update_envelope_json(
-  self : AndroidRuntimeSession,
-) -> String {
-  self.core.drain_host_update_envelope_json()
-}
-
-///|
-pub fn AndroidRuntimeSession::dispatch_host_response(
-  self : AndroidRuntimeSession,
-  response : @embedded_runtime_backend.EmbeddingHostResponse,
-) -> Bool {
-  self.core.dispatch_host_response(response)
-}
-
-///|
-pub fn AndroidRuntimeSession::dispatch_host_response_envelope(
-  self : AndroidRuntimeSession,
-  envelope : @embedded_runtime_backend.EmbeddingHostResponseEnvelope,
-) -> Bool {
-  self.core.dispatch_host_response_envelope(envelope)
-}
-
-///|
-pub fn AndroidRuntimeSession::dispatch_host_response_envelope_json(
-  self : AndroidRuntimeSession,
-  text : String,
-) -> Bool {
-  self.core.dispatch_host_response_envelope_json(text)
-}
-
-///|
-pub fn AndroidRuntimeSession::host_service_bridge(
-  self : AndroidRuntimeSession,
-) -> @host.HostServiceBridge {
-  self.core.host_service_bridge()
-}
-
-///|
-pub fn AndroidRuntimeSession::redraw_requested(
-  self : AndroidRuntimeSession,
-) -> Bool {
-  self.core.redraw_requested()
-}
-
-///|
-pub fn AndroidRuntimeSession::take_redraw_requested(
-  self : AndroidRuntimeSession,
-) -> Bool {
-  self.core.take_redraw_requested()
-}
-
-///|
-pub fn AndroidRuntimeSession::present_count(
-  self : AndroidRuntimeSession,
-) -> Int {
-  self.core.present_count()
-}
-
-///|
-pub fn AndroidRuntimeSession::dispose(self : AndroidRuntimeSession) -> Unit {
-  self.core.dispose()
-}

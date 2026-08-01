@@ -6,13 +6,14 @@ import {
   "moonbitlang/core/ref",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/internal/host_session_transport",
-  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend/platform_bridge",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/window/dpi",
 }
 
 // Values
-pub fn embedding_accessibility_response(@core.SemanticsNodeId, @core.SemanticsGeneration, @core.SemanticsAction) -> EmbeddingHostResponse
+pub fn embedding_accessibility_response(@wzzc-dev/moui/core.SemanticsNodeId, @wzzc-dev/moui/core.SemanticsGeneration, @wzzc-dev/moui/core.SemanticsAction) -> EmbeddingHostResponse
 
 pub fn embedding_command_response(Int) -> EmbeddingHostResponse?
 
@@ -76,10 +77,10 @@ pub struct EmbeddingHostBridge {
   session_generation : Int
   mut updates : Array[EmbeddingHostUpdate]
   mut ime_revision : Int
-  mut last_text_input : @core.TextInputState?
-  mut semantics_cursor : @core.SemanticsGeneration?
+  mut last_text_input : @wzzc-dev/moui/core.TextInputState?
+  mut semantics_cursor : @wzzc-dev/moui/core.SemanticsGeneration?
   mut platform_view_revision : Int
-  mut last_platform_views : Array[@core.PlatformViewPlacement]
+  mut last_platform_views : Array[@wzzc-dev/moui/core.PlatformViewPlacement]
   mut disposed : Bool
 }
 pub fn EmbeddingHostBridge::dispatch_response(Self, EmbeddingHostResponse, @runtime.HostRuntimeDriver) -> Bool
@@ -96,14 +97,14 @@ pub fn EmbeddingHostBridge::push_diagnostic(Self, String) -> Bool
 pub fn EmbeddingHostBridge::service_bridge(Self) -> @host.HostServiceBridge
 pub fn EmbeddingHostBridge::session_generation(Self) -> Int
 pub fn EmbeddingHostBridge::sync(Self, @runtime.AppRuntime) -> Int
-pub fn EmbeddingHostBridge::sync_platform_views(Self, Array[@core.PlatformViewPlacement]) -> Bool
+pub fn EmbeddingHostBridge::sync_platform_views(Self, Array[@wzzc-dev/moui/core.PlatformViewPlacement]) -> Bool
 
 pub(all) enum EmbeddingHostResponse {
-  TextInput(@core.TextInputEvent)
-  Command(@core.CommandIntent)
+  TextInput(@wzzc-dev/moui/core.TextInputEvent)
+  Command(@wzzc-dev/moui/core.CommandIntent)
   Clipboard(@host.HostServiceRequestId, @host.HostServiceResponse)
   Accessibility(@runtime.NativeAccessibilityActionRequest)
-  PlatformView(Int, String, String, @core.PlatformViewEvent)
+  PlatformView(Int, String, String, @wzzc-dev/moui/core.PlatformViewEvent)
   PlatformChannel(@host.HostServiceRequestId, @host.PlatformChannelResponse)
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -134,44 +135,118 @@ pub(all) struct EmbeddingImeRequest {
   enabled : Bool
   text : String
   caret : Int
-  selection : @core.TextRange?
+  selection : @wzzc-dev/moui/core.TextRange?
   composition : String?
-  composition_cursor : @core.TextRange?
-  frame : @core.Rect
-  candidate_anchor : @core.Rect
+  composition_cursor : @wzzc-dev/moui/core.TextRange?
+  frame : @wzzc-dev/moui/core.Rect
+  candidate_anchor : @wzzc-dev/moui/core.Rect
 } derive(Eq, ToJson, @debug.Debug)
-pub fn EmbeddingImeRequest::from_state(revision~ : Int, @core.TextInputState) -> Self
+pub fn EmbeddingImeRequest::from_state(revision~ : Int, @wzzc-dev/moui/core.TextInputState) -> Self
 
 pub(all) struct EmbeddingPlatformViewSnapshot {
   revision : Int
-  placements : Array[@core.PlatformViewPlacement]
+  placements : Array[@wzzc-dev/moui/core.PlatformViewPlacement]
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct EmbeddingSemanticsNode {
-  node_id : @core.SemanticsNodeId
-  semantic_id : @core.SemanticId?
-  role : @core.SemanticsRole
+  node_id : @wzzc-dev/moui/core.SemanticsNodeId
+  semantic_id : @wzzc-dev/moui/core.SemanticId?
+  role : @wzzc-dev/moui/core.SemanticsRole
   level : Int?
   url : String
   label : String
   value : String
   description : String
-  state : @core.SemanticsState
-  actions : Array[@core.SemanticsActionKind]
+  state : @wzzc-dev/moui/core.SemanticsState
+  actions : Array[@wzzc-dev/moui/core.SemanticsActionKind]
   focus_order : Int?
-  frame : @core.Rect
-  children : Array[@core.SemanticsNodeId]
+  frame : @wzzc-dev/moui/core.Rect
+  children : Array[@wzzc-dev/moui/core.SemanticsNodeId]
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct EmbeddingSemanticsUpdate {
   kind : String
-  generation : @core.SemanticsGeneration
-  root : @core.SemanticsNodeId?
-  focused : @core.SemanticsNodeId?
+  generation : @wzzc-dev/moui/core.SemanticsGeneration
+  root : @wzzc-dev/moui/core.SemanticsNodeId?
+  focused : @wzzc-dev/moui/core.SemanticsNodeId?
   nodes : Array[EmbeddingSemanticsNode]
-  removed : Array[@core.SemanticsNodeId]
+  removed : Array[@wzzc-dev/moui/core.SemanticsNodeId]
   issues : Array[@runtime.SemanticsIssue]
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostedRuntimeSession {
+  mut raw_handle : UInt64
+  core : EmbeddedRuntimeBackendCore
+}
+pub fn HostedRuntimeSession::advance_time(Self, Double) -> Unit
+pub fn HostedRuntimeSession::attach(Self, raw_handle~ : UInt64, metrics~ : @host.HostSurfaceMetrics, adapter~ : RendererProviderAdapter) -> Bool
+pub fn HostedRuntimeSession::create(runtime~ : @runtime.AppRuntime, raw_handle~ : UInt64, metrics~ : @host.HostSurfaceMetrics, adapter~ : RendererProviderAdapter) -> Self?
+pub fn HostedRuntimeSession::detach(Self) -> Bool
+pub fn HostedRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
+pub fn HostedRuntimeSession::dispatch_host_response(Self, EmbeddingHostResponse) -> Bool
+pub fn HostedRuntimeSession::dispatch_host_response_envelope(Self, EmbeddingHostResponseEnvelope) -> Bool
+pub fn HostedRuntimeSession::dispatch_host_response_envelope_json(Self, String) -> Bool
+pub fn HostedRuntimeSession::dispose(Self) -> Unit
+pub fn HostedRuntimeSession::disposed(Self) -> Bool
+pub fn HostedRuntimeSession::drain_host_update_envelope_json(Self) -> String
+pub fn HostedRuntimeSession::drain_host_updates(Self) -> Array[EmbeddingHostUpdate]
+pub fn HostedRuntimeSession::drain_host_updates_json(Self) -> String
+pub fn HostedRuntimeSession::host_service_bridge(Self) -> @host.HostServiceBridge
+pub fn HostedRuntimeSession::metrics(Self) -> @host.HostSurfaceMetrics
+pub fn HostedRuntimeSession::present_count(Self) -> Int
+pub fn HostedRuntimeSession::raw_handle(Self) -> UInt64
+pub fn HostedRuntimeSession::redraw_requested(Self) -> Bool
+pub fn HostedRuntimeSession::render_frame(Self) -> @render.RenderFrameResult
+pub fn HostedRuntimeSession::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
+pub fn HostedRuntimeSession::runtime(Self) -> @runtime.AppRuntime
+pub fn HostedRuntimeSession::session_generation(Self) -> Int
+pub fn HostedRuntimeSession::surface_attached(Self) -> Bool
+pub fn HostedRuntimeSession::surface_epoch(Self) -> Int
+pub fn HostedRuntimeSession::take_redraw_requested(Self) -> Bool
+
+pub struct HostedWindow {
+  scale_factor : () -> Double
+  inner_size : () -> @dpi.PhysicalSize
+  request_redraw : () -> Unit
+}
+pub fn HostedWindow::new(scale_factor~ : () -> Double, inner_size~ : () -> @dpi.PhysicalSize, request_redraw~ : () -> Unit) -> Self
+
+pub struct HostedWindowBackend {
+  title : String
+  runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
+  provider_factory : () -> RendererProviderAdapter
+  ime_sync : ((@runtime.AppRuntime?) -> Unit)?
+  mut window : HostedWindow?
+  mut runtime : @runtime.AppRuntime?
+  mut session : HostedRuntimeSession?
+  mut last_pointer : @wzzc-dev/moui/core.Point
+  modifiers : @wzzc-dev/moui/core.KeyModifiers
+  mut last_generation : Int
+  mut frames_presented : Int
+  mut surface_lifecycle : @platform_bridge.PlatformSurfaceLifecycle
+  auto_exit_after_frames : Int?
+}
+pub fn HostedWindowBackend::about_to_wait(Self) -> Unit
+pub fn HostedWindowBackend::attach_session(Self, HostedWindow, raw_handle~ : UInt64) -> Unit
+pub fn HostedWindowBackend::detach_session(Self) -> Unit
+pub fn HostedWindowBackend::dispatch_host_event(Self, @host.HostEvent) -> Unit
+pub fn HostedWindowBackend::dispatch_window_event(Self, @wzzc-dev/window/core.WindowEvent) -> Unit
+pub fn HostedWindowBackend::force_redraw(Self) -> Unit
+pub fn HostedWindowBackend::frames_presented(Self) -> Int
+pub fn HostedWindowBackend::handle_window_event(Self, @wzzc-dev/window/core.WindowEvent, exit~ : () -> Unit) -> Unit
+pub fn HostedWindowBackend::has_session(Self) -> Bool
+pub fn HostedWindowBackend::has_window(Self) -> Bool
+pub fn HostedWindowBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> RendererProviderAdapter, ime_sync? : ((@runtime.AppRuntime?) -> Unit)?, auto_exit_after_frames? : Int?) -> Self
+pub fn HostedWindowBackend::session_attached(Self) -> Bool
+pub fn HostedWindowBackend::surface_generation(Self) -> Int
+pub fn HostedWindowBackend::title(Self) -> String
+
+pub struct RendererProviderAdapter {
+  create_renderer : (UInt64, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
+  sync : (UInt64, @host.HostSurfaceMetrics) -> Unit
+  image_loader : @render.HostAsyncImageLoader?
+}
+pub fn RendererProviderAdapter::new(create_renderer~ : (UInt64, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync~ : (UInt64, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
 // Type aliases
 

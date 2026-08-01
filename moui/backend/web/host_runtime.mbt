@@ -13,16 +13,10 @@ struct WebApp {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
-  text_input_session : @host.TextInputSession
   services : @host.HostServiceBridge
   async_services : @host.HostServiceAsyncQueue
-  window_requests : @host.HostWindowRequestQueue
-  scene_resolver : @runtime.HostWindowSceneResolver
-  windows : @host.HostWindowRegistry
-  runtime_slots : @runtime.HostWindowRuntimeSlots
-  platform_windows : @host.HostPlatformWindowMap
+  coordinator : @runtime.WindowHostCoordinator
   platform_slots : WebWindowPlatformSlots
-  event_sources : @runtime.HostPlatformEventSources?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
@@ -123,25 +117,26 @@ pub fn run_app_with_options(
   runtime.set_environment(
     services.environment_with_system_theme(runtime.environment()),
   )
+  let coordinator = @runtime.WindowHostCoordinator::new(
+    window_requests~,
+    scene_resolver=options.scene_resolver,
+    services~,
+    event_sources=options.event_sources,
+    image_loader=None,
+  )
   let app = WebApp::{
     title,
     runtime,
     driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
-    text_input_session: @host.TextInputSession::new(),
     services,
     async_services,
-    window_requests,
-    scene_resolver: options.scene_resolver,
-    windows: @host.HostWindowRegistry::new(),
-    runtime_slots: @runtime.HostWindowRuntimeSlots::new(),
-    platform_windows: @host.HostPlatformWindowMap::new(),
+    coordinator,
     platform_slots: WebWindowPlatformSlots::new(),
-    event_sources: options.event_sources,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
   web_active_app.val = Some(app)
-  app.driver.set_redraw_scheduler(() => app.request_redraw())
+  app.driver.set_redraw_scheduler(() => ())
   event_loop.spawn_app(app)
 }
 
@@ -181,17 +176,20 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
         window.surface_size(),
         window.scale_factor(),
       )
-      let window_id = self.windows.open(
+      let window_id = self.coordinator.windows.open(
         title=self.title,
         metrics~,
         primary=true,
       )
       ignore(
-        self.platform_windows.bind(platform_id=window.id(), host_id=window_id),
+        self.coordinator.platform_windows.bind(
+          platform_id=window.id(),
+          host_id=window_id,
+        ),
       )
-      self.register_primary_runtime_slot(window_id)
+      self.coordinator.register_primary_runtime_slot(window_id, self.driver)
       self.driver.set_redraw_scheduler(() => {
-        self.request_redraw_window_if_needed(window_id)
+        self.coordinator.request_redraw_window_if_needed(window_id)
       })
       try
         WebRenderer::create(
@@ -207,11 +205,18 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
       } noraise {
         renderer => {
           self.driver.set_text_system(renderer.text_system())
-          match self.runtime_slots.lookup(window_id) {
+          match self.coordinator.runtime_slot_lookup(window_id) {
             Some(slot) =>
               ignore(slot.driver.dispatch(@host.HostEvent::Resized(metrics)))
             None => ()
           }
+          ignore(
+            self.coordinator.attach_surface(
+              window_id,
+              renderer.host_renderer,
+              self.web_surface_actions(window, renderer),
+            ),
+          )
           ignore(
             self.platform_slots.insert({
               host_id: window_id,
@@ -254,7 +259,7 @@ fn WebApp::redraw_window(self : WebApp, window_id : @host.HostWindowId) -> Unit 
   match
     (
       self.platform_slots.lookup_host(window_id),
-      self.runtime_slots.lookup(window_id),
+      self.coordinator.runtime_slots.lookup(window_id),
     ) {
     (Some(platform_slot), Some(runtime_slot)) => {
       runtime_slot.driver.begin_redraw()
@@ -266,7 +271,7 @@ fn WebApp::redraw_window(self : WebApp, window_id : @host.HostWindowId) -> Unit 
     }
     _ => ()
   }
-  self.sync_text_input_session()
+  self.coordinator.sync_text_input_session()
 }
 
 ///|
@@ -275,50 +280,13 @@ fn WebApp::drain_async_host_services(self : WebApp) -> Unit {
     dispatch_web_async_host_service_request(request)
   }
   for completion in self.async_services.drain_completed() {
-    match self.active_runtime_slot() {
+    match self.coordinator.active_runtime_slot() {
       Some(slot) =>
         ignore(
           slot.driver.dispatch_service_completion(completion, self.services),
         )
       None => ()
     }
-  }
-}
-
-///|
-fn WebApp::register_primary_runtime_slot(
-  self : WebApp,
-  window_id : @host.HostWindowId,
-) -> Unit {
-  ignore(
-    self.runtime_slots.insert_from_registry(
-      self.windows,
-      window_id,
-      driver=self.driver,
-    ),
-  )
-}
-
-///|
-fn WebApp::sync_runtime_slot(
-  self : WebApp,
-  window_id : @host.HostWindowId,
-) -> Unit {
-  ignore(self.runtime_slots.sync_from_registry(self.windows, window_id))
-}
-
-///|
-fn WebApp::sync_runtime_slots(self : WebApp) -> Unit {
-  ignore(self.runtime_slots.sync_open_from_registry(self.windows))
-}
-
-///|
-fn WebApp::active_runtime_slot(
-  self : WebApp,
-) -> @runtime.HostWindowRuntimeSlot? {
-  match self.runtime_slots.focused_slot() {
-    Some(slot) => Some(slot)
-    None => self.runtime_slots.primary_slot()
   }
 }
 
@@ -330,45 +298,10 @@ fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
 
 ///|
 fn WebApp::redraw_dirty_windows(self : WebApp) -> Unit {
-  for slot in self.runtime_slots.open_slots() {
+  for slot in self.coordinator.runtime_slots.open_slots() {
     if runtime_slot_needs_redraw(slot) {
       self.redraw_window(slot.id)
     }
-  }
-}
-
-///|
-fn WebApp::apply_window_lifecycle(
-  self : WebApp,
-  window_id : @host.HostWindowId,
-  host_event : @host.HostEvent,
-) -> Unit {
-  ignore(
-    self.runtime_slots.apply_host_event(self.windows, window_id, host_event),
-  )
-}
-
-///|
-fn WebApp::sync_text_input_session(self : WebApp) -> Unit {
-  match self.active_runtime_slot() {
-    Some(runtime_slot) =>
-      match self.platform_slots.lookup_host(runtime_slot.id) {
-        Some(platform_slot) =>
-          match
-            self.text_input_session.sync(
-              runtime_slot.driver.focused_text_input(),
-            ) {
-            @host.TextInputSessionAction::EnableIme(request)
-            | @host.TextInputSessionAction::UpdateIme(request)
-            | @host.TextInputSessionAction::DisableIme(request) =>
-              platform_slot.window.request_ime_update(request) catch {
-                _ => ()
-              }
-            @host.TextInputSessionAction::NoImeChange => ()
-          }
-        None => ()
-      }
-    None => ()
   }
 }
 
@@ -396,36 +329,51 @@ fn WebApp::resize_renderer(
 }
 
 ///|
-fn WebApp::request_redraw(self : WebApp) -> Unit {
-  match self.active_runtime_slot() {
-    Some(slot) => self.request_redraw_window_if_needed(slot.id)
-    None => ()
-  }
-}
-
-///|
-fn WebApp::request_redraw_window_if_needed(
-  self : WebApp,
-  window_id : @host.HostWindowId,
-) -> Unit {
-  match self.runtime_slots.lookup(window_id) {
-    Some(slot) =>
-      if runtime_slot_needs_redraw(slot) {
-        self.request_platform_redraw(window_id)
+/// Platform window actions for the coordinator. Closures capture only the
+/// native window and its renderer; web-specific semantics teardown happens
+/// in `dispose_platform_views`.
+fn WebApp::web_surface_actions(
+  _self : WebApp,
+  window : @window_web.Window,
+  renderer : WebRenderer,
+) -> @runtime.WindowSurfaceActions {
+  @runtime.WindowSurfaceActions::new(
+    focus=fn() { window.focus_window() },
+    request_surface_size=fn(metrics) {
+      ignore(
+        window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)),
+      )
+    },
+    sync_surface=fn(_metrics) { () },
+    renderer_resize=fn(metrics) {
+      renderer.resize(
+        @host.HostSurfaceMetrics::new(
+          logical_size=metrics.logical_size,
+          physical_size=metrics.physical_size,
+          scale_factor=metrics.scale_factor,
+        ),
+      )
+    },
+    set_minimized=fn(minimized) { window.set_minimized(minimized) },
+    set_visible=fn(visible) { window.set_visible(visible) },
+    request_redraw=fn() { window.request_redraw() },
+    request_ime_update=fn(action) {
+      match action {
+        @host.TextInputSessionAction::EnableIme(request)
+        | @host.TextInputSessionAction::UpdateIme(request)
+        | @host.TextInputSessionAction::DisableIme(request) =>
+          window.request_ime_update(request) catch {
+            _ => ()
+          }
+        @host.TextInputSessionAction::NoImeChange => ()
       }
-    None => ()
-  }
-}
-
-///|
-fn WebApp::request_platform_redraw(
-  self : WebApp,
-  window_id : @host.HostWindowId,
-) -> Unit {
-  match self.platform_slots.lookup_host(window_id) {
-    Some(slot) => slot.window.request_redraw()
-    None => ()
-  }
+    },
+    drop=fn() { window.drop() },
+    native_view_handle=fn() { None },
+    dispose_platform_views=fn() {
+      unregister_web_semantics_runtime(window.id().into_raw())
+    },
+  )
 }
 
 ///|
@@ -433,25 +381,12 @@ fn WebApp::dispose_window(
   self : WebApp,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  ignore(self.windows.close(window_id))
-  self.sync_runtime_slot(window_id)
-  ignore(self.runtime_slots.remove(window_id))
-  ignore(self.platform_windows.remove_host(window_id))
-  match self.platform_slots.remove_host(window_id) {
-    Some(slot) => {
-      unregister_web_semantics_runtime(slot.platform_id.into_raw())
-      slot.renderer.dispose()
-      slot.window.drop()
-    }
-    None => ()
-  }
-  ignore(self.windows.remove_closed())
-  self.sync_runtime_slots()
-  if self.runtime_slots.is_empty() {
+  self.coordinator.dispose_window(window_id)
+  ignore(self.platform_slots.remove_host(window_id))
+  if self.coordinator.runtime_slots_empty() {
     set_web_async_host_service_queue(None)
   }
 }
-
 ///|
 fn surface_metrics_from_physical(
   size : @dpi.PhysicalSize,

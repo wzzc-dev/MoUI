@@ -52,7 +52,7 @@ fn WebApp::dispatch_web_pointer_input(
         ),
         modifiers=self.modifiers,
       )
-      match self.runtime_slots.lookup(window_id) {
+      match self.coordinator.runtime_slots.lookup(window_id) {
         Some(slot) => {
           // The browser ABI needs a synchronous consumption result. Keep the
           // shared host driver responsible for redraw scheduling, but bypass
@@ -60,13 +60,13 @@ fn WebApp::dispatch_web_pointer_input(
           let result = slot.driver.runtime.dispatch_pointer_input(pointer)
           slot.driver.request_redraw_if_needed()
           ignore(
-            self.publish_subscription_event(
+            self.coordinator.publish_platform_event(
               window_id,
               @host.HostEvent::Pointer(pointer),
             ),
           )
           self.drain_async_host_services()
-          self.sync_text_input_session()
+          self.coordinator.sync_text_input_session()
           result.host_flags()
         }
         None => 0
@@ -90,7 +90,7 @@ pub fn web_dispatch_pointer_input(
   match web_active_app.val {
     Some(app) =>
       match
-        app.platform_windows.lookup_host(
+        app.coordinator.platform_windows.lookup_host(
           @window_core.WindowId::from_raw(raw_id),
         ) {
         Some(window_id) =>

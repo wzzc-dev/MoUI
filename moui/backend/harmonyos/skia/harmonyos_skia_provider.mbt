@@ -49,7 +49,7 @@ pub fn create_session(
   surface~ : @harmonyos_host.HarmonyOsSurfaceHandle,
   metrics~ : @host.HostSurfaceMetrics,
   options? : HarmonyOsSkiaAppOptions = HarmonyOsSkiaAppOptions::new(),
-) -> @harmonyos_host.HarmonyOsRuntimeSession? {
+) -> @embedded_runtime_backend.HostedRuntimeSession? {
   @harmonyos_host.create_session(
     runtime~,
     surface~,
