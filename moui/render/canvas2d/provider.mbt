@@ -10,11 +10,11 @@ pub fn create_canvas2d_provider(
   create_canvas2d~ : (@render.RendererSurfaceMetrics) -> Canvas2DRenderer,
 ) -> @render.RendererProvider {
   let caps = canvas2d_provider_capabilities(
-    provider_id="canvas2d",
+    provider_id="wxCanvas2d",
     backend=@render.RendererBackendKind::Canvas2DWasm,
   )
   @render.RendererProvider::{
-    id: "canvas2d",
+    id: "wxCanvas2d",
     descriptor: canvas2d_descriptor(),
     capabilities: () => caps,
     negotiate: canvas2d_negotiate_surface,
