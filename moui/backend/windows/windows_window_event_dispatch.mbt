@@ -11,7 +11,7 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_eve
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match self.platform_windows.lookup_host(platform_window_id) {
+  let window_id = match self.coordinator.platform_windows.lookup_host(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }
@@ -28,19 +28,25 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_eve
     @platform_bridge.TransformedWindowEvent::CloseRequested => {
       self.dispatch_host_event(window_id, @host.HostEvent::CloseRequested)
       self.dispose_window(window_id)
-      if self.runtime_slots.is_empty() {
+      if self.coordinator.runtime_slots_empty() {
         event_loop.exit()
       }
       return ()
     }
     @platform_bridge.TransformedWindowEvent::DispatchHostEvent(host_event) => {
-      match self.platform_slots.lookup_host(window_id) {
-        Some(slot) =>
+      match self.coordinator.surface_actions(window_id) {
+        Some(actions) =>
           match host_event {
             @host.HostEvent::Resized(metrics) => {
-              (self.renderer_provider.sync_surface)(slot.window, metrics)
-              slot.renderer.resize(to_render_metrics(metrics))
-              slot.window.request_redraw()
+              (actions.sync_surface)(metrics)
+              (actions.renderer_resize)(
+                @render.RendererSurfaceMetrics::new(
+                  logical_size=metrics.logical_size,
+                  physical_size=metrics.physical_size,
+                  scale_factor=metrics.scale_factor,
+                ),
+              )
+              (actions.request_redraw)()
             }
             _ => ()
           }

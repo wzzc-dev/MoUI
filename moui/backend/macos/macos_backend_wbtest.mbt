@@ -1,6 +1,6 @@
 ///|
 test "macos startup surface size preserves runtime logical dimensions" {
-  let size = runtime_size_to_window_surface_size(
+  let size = @host.core_size_to_window_surface_size(
     @core.Size::new(width=800.0, height=600.0),
   )
   assert_eq(size.to_logical(2.0), @dpi.LogicalSize::LogicalSize(800.0, 600.0))
@@ -73,7 +73,7 @@ test "macos host options carry optional scene resolver and smoke options stay se
 }
 
 ///|
-test "macos renderer provider exposes async image loader hook" {
+test "macos coordinator exposes async image loader hook" {
   let loader_started = Ref(0)
   let loader = @render.HostAsyncImageLoader::new(start_load=(
     _id,
@@ -83,8 +83,11 @@ test "macos renderer provider exposes async image loader hook" {
     loader_started.val = loader_started.val + 1
     None
   })
-  let provider = MacosRendererProvider::new(
-    create_renderer=(_window, _metrics) => None,
+  let coordinator = @runtime.WindowHostCoordinator::new(
+    window_requests=@host.HostWindowRequestQueue::new(),
+    scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
+    services=macos_service_bridge(),
+    event_sources=None,
     image_loader=Some(loader),
   )
   let renderer = @render.HostWindowRenderer::new(
@@ -93,53 +96,57 @@ test "macos renderer provider exposes async image loader hook" {
     text_system=() => @core.TextSystem::fallback(),
   )
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let source = @render.HostImageResourceCompletionSource::new(
+    let completion = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
   )
   match
-    provider.schedule_image_resource_loads(
+    coordinator.schedule_image_resource_loads(
       @host.HostWindowId::new(1),
       renderer,
-      source,
+      completion,
     ) {
     Some(result) => {
       inspect(result.loading_count(), content="0")
       inspect(result.scheduled_count(), content="0")
     }
-    None => fail("expected macOS async image loader hook result")
+    None => fail("expected macOS coordinator async image loader hook result")
   }
   inspect(loader_started.val, content="0")
   inspect(
-    provider.cancel_image_resource_loads(@host.HostWindowId::new(1)),
+    coordinator.cancel_image_resource_loads(@host.HostWindowId::new(1)),
     content="0",
   )
 }
 
 ///|
-test "macos renderer provider async image hook defaults to unavailable" {
-  let provider = MacosRendererProvider::new(create_renderer=(_window, _metrics) => {
-    None
-  })
+test "macos coordinator async image hook defaults to unavailable" {
+  let coordinator = @runtime.WindowHostCoordinator::new(
+    window_requests=@host.HostWindowRequestQueue::new(),
+    scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
+    services=macos_service_bridge(),
+    event_sources=None,
+    image_loader=None,
+  )
   let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
   )
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let source = @render.HostImageResourceCompletionSource::new(
+  let completion = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
   )
   match
-    provider.schedule_image_resource_loads(
+    coordinator.schedule_image_resource_loads(
       @host.HostWindowId::new(2),
       renderer,
-      source,
+      completion,
     ) {
     None => ()
-    Some(_) => fail("expected absent macOS async image loader hook")
+    Some(_) => fail("expected absent macOS coordinator async image loader hook")
   }
 }

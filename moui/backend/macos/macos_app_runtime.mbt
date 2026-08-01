@@ -91,17 +91,16 @@ fn create_macos_app(
     title,
     runtime,
     driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
-    text_input_session: @host.TextInputSession::new(),
+    coordinator: @runtime.WindowHostCoordinator::new(
+      window_requests~,
+      scene_resolver=options.scene_resolver,
+      services~,
+      event_sources=options.event_sources,
+      image_loader=provider.image_loader,
+    ),
     renderer_provider: provider,
     services,
-    window_requests,
-    scene_resolver: options.scene_resolver,
-    windows: @host.HostWindowRegistry::new(),
-    runtime_slots: @runtime.HostWindowRuntimeSlots::new(),
-    platform_windows: @host.HostPlatformWindowMap::new(),
     platform_slots: MacosWindowPlatformSlots::new(),
-    image_repaint_tracker: @render.HostImageResourceRepaintTracker::new(),
-    event_sources: options.event_sources,
     platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,
     platform_attributes: options.platform_attributes,
@@ -174,54 +173,6 @@ fn run_app_until_first_present(
     )
     event_loop.exit()
   }
-}
-
-///|
-pub fn window_event_to_core(
-  event : @window_core.WindowEvent,
-  last_pointer : @core.Point,
-) -> @core.AppEvent? {
-  @host.window_event_to_core(event, last_pointer)
-}
-
-///|
-pub fn window_event_to_core_with_modifiers(
-  event : @window_core.WindowEvent,
-  last_pointer : @core.Point,
-  modifiers : @core.KeyModifiers,
-) -> @core.AppEvent? {
-  match window_event_to_host_with_modifiers(event, last_pointer, modifiers) {
-    Some(host_event) => host_event.to_core()
-    None => None
-  }
-}
-
-///|
-pub fn window_event_to_host(
-  event : @window_core.WindowEvent,
-  last_pointer : @core.Point,
-) -> @host.HostEvent? {
-  @host.window_event_to_host(event, last_pointer)
-}
-
-///|
-pub fn window_event_to_host_with_modifiers(
-  event : @window_core.WindowEvent,
-  last_pointer : @core.Point,
-  modifiers : @core.KeyModifiers,
-  scale_factor? : Double = 1.0,
-) -> @host.HostEvent? {
-  @host.window_event_to_host_with_modifiers(
-    event,
-    last_pointer,
-    modifiers,
-    scale_factor~,
-  )
-}
-
-///|
-fn runtime_size_to_window_surface_size(size : @core.Size) -> @dpi.Size {
-  @dpi.LogicalSize::LogicalSize(size.width, size.height).into_size()
 }
 
 ///|

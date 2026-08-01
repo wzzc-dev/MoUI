@@ -1,28 +1,13 @@
 {
   "schemaVersion": 2,
   "description": "Platform Bridge duplication budget baseline (ADR 0020). Lists allowed native-event and pacing exceptions while requiring neutral lifecycle and coordinate transformations to use moui/backend/platform_bridge.",
-  "generatedAt": "2026-07-29",
+  "generatedAt": "2026-08-01",
   "budget": {
     "allowlist": [
       {
-        "pattern": "app_handler redraw loop",
-        "reason": "Each platform slot model differs (Android SurfaceView, iOS CAMetalLayer, macOS NSView, Linux X11/Wayland, Windows HWND). The loop structure is uniform but the slot interaction is platform-private.",
-        "allowUntil": "2026-10-01"
-      },
-      {
-        "pattern": "HostWindowSlot resize/detach routing",
-        "reason": "Per-platform resolution path (macOS windowDidResize, Linux configure event, Windows WM_SIZE) requires native handles. The routing contract is stable; duplication is structural.",
-        "allowUntil": "2026-10-01"
-      },
-      {
-        "pattern": "window_event_to_host_with_modifiers call sites",
-        "reason": "Each backend has a unique event loop (NSApplication, X11, Win32, Android Looper, HarmonyOS XComponent). The call pattern is identical but the dispatch harness is platform-private.",
-        "allowUntil": "2026-10-01"
-      },
-      {
-        "pattern": "RenderFrameResult apply/finish pattern",
-        "reason": "Platform variations exist in sync vs async frame application and platform-view composition (Linux offscreen webview, iOS vs Android surface flip). Shared adapter captures the uniform parts; platform-specific finish is allowed.",
-        "allowUntil": "2026-10-01"
+        "pattern": "per-platform redraw frame loop (native present composition)",
+        "reason": "Wave 1 extracted all shared redraw state into WindowHostCoordinator (frame_pending, image repaint tracker, completion source, text input sync, runtime slot needs-redraw). What remains per platform is the final native present composition: window pre-present notify, decorations commands (Linux), platform-view draw setup and sync, and native handle access (NSView/X11/HWND). Loop skeleton is a candidate for full coordinator extraction in Wave 3.",
+        "allowUntil": "2026-12-01"
       },
       {
         "pattern": "Texture native surface creation (mtl_texture, vulkan_image, egl_surface)",
@@ -59,7 +44,10 @@
       "Platform backends MUST NOT reimplement make_surface_metrics or normalize_pointer_position — use platform_bridge versions.",
       "Applicable window-hosted platform backends MUST import moui/backend/platform_bridge and use its transformers.",
       "Platform-specific WindowEvent dispatch (pointer, keyboard, IME, drag) MUST remain in the platform backend — those carry platform-specific payloads that cannot be abstracted.",
-      "Render lifecycle helpers (drain prior present, resolve pending frame, record presented frame) belong in moui/runtime or moui/render, NOT platform_bridge — platform_bridge imports core + backend/host contracts only (ADR 0020)."
+      "Render lifecycle helpers (drain prior present, resolve pending frame, record presented frame) belong in moui/runtime or moui/render, NOT platform_bridge — platform_bridge imports core + backend/host contracts only (ADR 0020).",
+      "Window host state (window requests, runtime slots, surfaces, image repaint, event sources, IME session) MUST live in moui/runtime WindowHostCoordinator; platform backends keep native decoding, window creation, and WindowSurfaceActions construction only.",
+      "Size conversions (host_metrics_to_dpi_size, core_size_to_window_surface_size) belong in @host, NOT in platform backends.",
+      "Platform backends MUST NOT define local window_event_to_host(_with_modifiers) forwarding shells — call @host directly."
     ],
     "platformExceptions": {
       "moui/backend/wechat": {
