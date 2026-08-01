@@ -1,4 +1,10 @@
 ///|
+/// Legacy control style structs and their `::default(theme=)` constructors.
+/// These `::default` constructors are now thin projections over
+/// `ControlThemeSet` (built by `minimal_control_theme_set`) — the single source
+/// of truth for control theming. Prefer reading tokens from `ControlThemeSet`
+/// directly via `@style.views_ambient_control_theme(theme)` for new code; the
+/// `::default` helpers remain only for backward compatibility.
 pub(all) struct TextStyle {
   font : @core.FontSpec
   color : @core.Color
@@ -132,12 +138,13 @@ pub fn TextStyle::title(theme? : @core.Theme) -> TextStyle {
 ///|
 pub fn SurfaceStyle::default(theme? : @core.Theme) -> SurfaceStyle {
   let resolved_theme = @common.views_ambient_theme(theme)
+  let set = views_ambient_control_theme(resolved_theme)
   {
     brush: resolved_theme.surface_brush(@core.SurfaceLevel::Base),
     border: None,
-    radius: resolved_theme.radius_scale.md,
-    shadow: None,
-    padding: @core.Insets::all(resolved_theme.spacing_scale.md),
+    radius: set.surface.base_radius,
+    shadow: set.surface.base_shadow,
+    padding: @core.Insets::all(set.surface.base_padding),
     level: @core.SurfaceLevel::Base,
   }
 }
@@ -392,104 +399,76 @@ pub fn TextFieldStyle::outline(theme? : @core.Theme) -> TextFieldStyle {
 
 ///|
 pub fn ChoiceControlStyle::default(theme? : @core.Theme) -> ChoiceControlStyle {
-  let resolved_theme = @common.views_ambient_theme(theme)
+  let cc = views_ambient_control_theme(@common.views_ambient_theme(theme)).choice_control
   {
-    foreground: resolved_theme.palette.foreground,
-    selected_color: resolved_theme.palette.primary,
-    disabled_foreground: resolved_theme.palette.muted,
-    disabled_selected_color: resolved_theme.palette.primary.multiply_alpha(0.42),
-    control_size: 20.0,
+    foreground: cc.foreground,
+    selected_color: cc.selected_color,
+    disabled_foreground: cc.disabled_foreground,
+    disabled_selected_color: cc.disabled_selected_color,
+    control_size: cc.control_size,
   }
 }
 
 ///|
 pub fn ProgressStyle::default(theme? : @core.Theme) -> ProgressStyle {
-  let resolved_theme = @common.views_ambient_theme(theme)
+  let set = views_ambient_control_theme(@common.views_ambient_theme(theme))
   {
-    foreground: resolved_theme.palette.primary,
-    background: resolved_theme.palette.surface_variant,
-    radius: resolved_theme.radius_scale.pill,
+    foreground: set.progress.foreground,
+    background: set.progress.background,
+    radius: set.progress.radius,
   }
 }
 
 ///|
 pub fn SliderStyle::default(theme? : @core.Theme) -> SliderStyle {
-  let resolved_theme = @common.views_ambient_theme(theme)
+  let s = views_ambient_control_theme(@common.views_ambient_theme(theme)).slider
   {
-    foreground: resolved_theme.palette.primary,
-    background: resolved_theme.palette.surface_variant.multiply_alpha(0.7),
-    thumb_color: resolved_theme.palette.primary,
-    track_height: 4.0,
-    thumb_size: 18.0,
-    radius: resolved_theme.radius_scale.pill,
+    foreground: s.foreground,
+    background: s.background,
+    thumb_color: s.thumb_color,
+    track_height: s.track_height,
+    thumb_size: s.thumb_size,
+    radius: s.radius,
   }
 }
 
 ///|
 pub fn PickerStyle::default(theme? : @core.Theme) -> PickerStyle {
-  let resolved_theme = @common.views_ambient_theme(theme)
+  let set = views_ambient_control_theme(@common.views_ambient_theme(theme))
   {
-    font: resolved_theme.typography.control,
-    foreground: resolved_theme.palette.foreground,
-    background: @core.Brush::solid(resolved_theme.palette.surface),
-    radius: resolved_theme.radius_scale.md,
-    popup_max_height: 200.0,
+    font: set.picker.font,
+    foreground: set.picker.foreground,
+    background: set.picker.background,
+    radius: set.picker.radius,
+    popup_max_height: set.picker.popup_max_height,
   }
 }
 
 ///|
 pub fn FeedbackStyle::default(theme? : @core.Theme) -> FeedbackStyle {
-  let resolved_theme = @common.views_ambient_theme(theme)
-  let background_alpha = match resolved_theme.scheme {
-    @core.ColorScheme::Light => 0.14
-    @core.ColorScheme::Dark => 0.24
-  }
+  let set = views_ambient_control_theme(@common.views_ambient_theme(theme))
   {
-    neutral: tone_style(
-      foreground=resolved_theme.palette.muted,
-      background_alpha~,
-      border_alpha=0.78,
-    ),
-    info: tone_style(
-      foreground=resolved_theme.palette.info,
-      background_alpha~,
-      border_alpha=0.78,
-    ),
-    success: tone_style(
-      foreground=resolved_theme.palette.success,
-      background_alpha~,
-      border_alpha=0.78,
-    ),
-    warning: tone_style(
-      foreground=resolved_theme.palette.warning,
-      background_alpha~,
-      border_alpha=0.78,
-    ),
-    danger: tone_style(
-      foreground=resolved_theme.palette.danger,
-      background_alpha~,
-      border_alpha=0.78,
-    ),
-    radius: resolved_theme.radius_scale.md,
-    padding: resolved_theme.spacing_scale.sm,
+    neutral: tone_style_from_tokens(set.feedback.neutral),
+    info: tone_style_from_tokens(set.feedback.info),
+    success: tone_style_from_tokens(set.feedback.success),
+    warning: tone_style_from_tokens(set.feedback.warning),
+    danger: tone_style_from_tokens(set.feedback.danger),
+    radius: set.feedback.radius,
+    padding: set.feedback.padding,
   }
 }
 
 ///|
 pub fn BadgeStyle::default(theme? : @core.Theme) -> BadgeStyle {
-  let resolved_theme = @common.views_ambient_theme(theme)
+  let set = views_ambient_control_theme(@common.views_ambient_theme(theme))
   {
-    neutral: {
-      foreground: resolved_theme.palette.foreground,
-      background: resolved_theme.palette.surface_variant,
-      border: resolved_theme.palette.outline.multiply_alpha(0.42),
-    },
-    accent: badge_tone(resolved_theme.palette.info),
-    success: badge_tone(resolved_theme.palette.success),
-    warning: badge_tone(resolved_theme.palette.warning),
-    danger: badge_tone(resolved_theme.palette.danger),
-    radius: resolved_theme.radius_scale.pill,
-    padding: 3.0,
+    neutral: tone_style_from_tokens(set.badge.neutral),
+    accent: tone_style_from_tokens(set.badge.accent),
+    success: tone_style_from_tokens(set.badge.success),
+    warning: tone_style_from_tokens(set.badge.warning),
+    danger: tone_style_from_tokens(set.badge.danger),
+    radius: set.badge.radius,
+    padding: set.badge.padding,
   }
 }
 
@@ -497,33 +476,22 @@ pub fn BadgeStyle::default(theme? : @core.Theme) -> BadgeStyle {
 pub fn FormValidationStyle::default(
   theme? : @core.Theme,
 ) -> FormValidationStyle {
-  let resolved_theme = @common.views_ambient_theme(theme)
-  let color = resolved_theme.palette.danger
+  let set = views_ambient_control_theme(@common.views_ambient_theme(theme))
   {
-    foreground: color,
-    background: color.multiply_alpha(0.12),
-    border: color.multiply_alpha(0.72),
-    radius: resolved_theme.radius_scale.md,
-    padding: resolved_theme.spacing_scale.md,
+    foreground: set.form_validation.foreground,
+    background: set.form_validation.background,
+    border: set.form_validation.border,
+    radius: set.form_validation.radius,
+    padding: set.form_validation.padding,
   }
 }
 
 ///|
-fn tone_style(
-  foreground~ : @core.Color,
-  background_alpha~ : Double,
-  border_alpha~ : Double,
-) -> ToneStyle {
-  {
-    foreground,
-    background: foreground.multiply_alpha(background_alpha),
-    border: foreground.multiply_alpha(border_alpha),
-  }
-}
-
-///|
-fn badge_tone(background : @core.Color) -> ToneStyle {
-  { foreground: @core.Color::white(), background, border: background }
+/// Project a resolved `ToneTokens` (from `ControlThemeSet`) into the legacy
+/// `ToneStyle` shape. After the style unification, `XStyle::default` helpers
+/// project from `ControlThemeSet`; this bridges the two parallel token types.
+fn tone_style_from_tokens(t : ToneTokens) -> ToneStyle {
+  { foreground: t.foreground, background: t.background, border: t.border }
 }
 
 ///|
