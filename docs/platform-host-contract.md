@@ -175,6 +175,33 @@ asynchronous text/image clipboard requests and responses. Its cursor suppresses
 unchanged transport without becoming a second revision authority. A disposed
 channel rejects late responses.
 
+## Window Host Coordinator
+
+`WindowHostCoordinator` (moui/runtime) is the shared owner of host window state
+for all host backends: window records, runtime slots, platform-window maps,
+surface attachments, redraw/IME/close coordination, and host event dispatch
+into runtime slots. Native backends (macOS/Windows/Linux), the Web backend, and
+the embedded runtime backends keep only platform-private parts out of it:
+window creation attributes, raw native decoding, surface ownership, and IME
+sink specifics.
+
+Platforms contribute a `WindowSurfaceActions` per native window at attach time
+(`focus`, `request_surface_size`, `sync_surface`, `renderer_resize`,
+`set_minimized`, `set_visible`, `request_redraw`, `request_ime_update`, `drop`,
+`native_view_handle`, `dispose_platform_views`); the coordinator owns when each
+action runs. `apply_window_request` takes `open_window`/`dispose_window`/`exit`
+hooks so web can wrap native open failure, platform view disposal, and async
+service queue teardown.
+
+Embedded-runtime backends share `moui/backend/internal/embedded_runtime_backend`
+(`HostedWindowBackend`, `HostedWindow` projection closures, `HostedRuntimeSession`).
+Android/iOS/HarmonyOS `window_hosted.mbt` are thin shells (platform window
+creation, surface handles, six `ApplicationHandler` slots, host simulation
+pump, IME sink injection) around that shared shell. Web reuses the coordinator
+directly: `WebApp` holds one coordinator and `web_surface_actions` builds the
+`WindowSurfaceActions` projection; browser DOM routing stays in
+`moui/backend/web`.
+
 `TextInputEvent::ReplaceText` and `SetSelection` preserve arbitrary native IME
 replacement and UTF-16 selection updates. Mobile requests include text,
 selection, composition, caret, and candidate rectangle without changing the

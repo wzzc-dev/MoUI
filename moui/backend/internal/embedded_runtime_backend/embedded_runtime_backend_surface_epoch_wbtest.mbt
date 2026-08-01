@@ -44,7 +44,7 @@ test "surface detach cancels pending host service exactly once" {
   assert_true(core.detach_surface())
   inspect(completion_count.val, content="1")
   assert_false(unexpected_completion.val)
-  inspect(cancellation_reason.val, content="mobile surface epoch detached")
+  inspect(cancellation_reason.val, content="embedded runtime surface epoch detached")
   assert_false(
     channel.service_queue.complete(
       id,

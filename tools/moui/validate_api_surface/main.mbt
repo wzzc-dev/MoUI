@@ -1044,6 +1044,7 @@ fn embedded_runtime_backend_internal_package_token() -> String {
 fn allowed_embedded_runtime_backend_internal_imports() -> Array[String] {
   [
     "moui/backend/android/moon.pkg", "moui/backend/ios/moon.pkg", "moui/backend/harmonyos/moon.pkg",
+    "moui/backend/android/skia/moon.pkg", "moui/backend/ios/skia/moon.pkg", "moui/backend/harmonyos/skia/moon.pkg",
     "moui/backend/internal/embedded_runtime_backend/moon.pkg",
   ]
 }
@@ -1084,7 +1085,7 @@ fn validate_embedded_runtime_backend_internal_imports(
     }
     validate_embedded_runtime_backend_internal_import_text(path, text, failures)
   }
-  println("api surface: embedded runtime imports=\{import_count}/3")
+  println("api surface: embedded runtime imports=\{import_count}/7")
 }
 
 ///|
@@ -1973,6 +1974,7 @@ fn run_checks(
   validate_core_runtime_boundary(repo_root, failures)
   validate_backend_runtime_interfaces(repo_root, failures)
   validate_embedded_runtime_backend_internal_imports(repo_root, failures)
+  validate_platform_file_similarity(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)
   validate_shared_app_runtime_imports(repo_root, failures)
   validate_shared_app_core_imports(repo_root, failures)

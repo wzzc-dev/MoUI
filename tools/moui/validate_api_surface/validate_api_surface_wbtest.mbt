@@ -722,10 +722,13 @@ test "shared app core import budget is an explicit advanced-app allowlist" {
 ///|
 test "internal embedded runtime session imports are restricted to platform backends" {
   let allowed = allowed_embedded_runtime_backend_internal_imports()
-  inspect(allowed.length(), content="4")
+  inspect(allowed.length(), content="7")
   assert_true(allowed.contains("moui/backend/android/moon.pkg"))
   assert_true(allowed.contains("moui/backend/ios/moon.pkg"))
   assert_true(allowed.contains("moui/backend/harmonyos/moon.pkg"))
+  assert_true(allowed.contains("moui/backend/android/skia/moon.pkg"))
+  assert_true(allowed.contains("moui/backend/ios/skia/moon.pkg"))
+  assert_true(allowed.contains("moui/backend/harmonyos/skia/moon.pkg"))
   assert_true(
     allowed.contains("moui/backend/internal/embedded_runtime_backend/moon.pkg"),
   )
@@ -830,4 +833,139 @@ test "views return rules cover app-facing constructors" {
   for rule in view_return_rules() {
     inspect(rule.return_token, content="-> @core.View[Msg]")
   }
+}
+
+///|
+test "platform token normalization maps platform identifiers" {
+  let tokens = normalize_platform_tokens(
+    "fn MacosBackend::new() { macos_window_requests web_host IosImeSink webgpu }",
+  )
+  assert_true(tokens.contains("__P__Backend"))
+  assert_true(tokens.contains("__P__window_requests"))
+  assert_true(tokens.contains("__P__host"))
+  assert_true(tokens.contains("__P__ImeSink"))
+  assert_true(tokens.contains("webgpu"))
+  assert_false(tokens.contains("macos_window_requests"))
+}
+
+///|
+test "token set dice bounds" {
+  inspect(token_set_dice([], []), content="0")
+  inspect(token_set_dice(["a", "b"], ["a", "b"]), content="1")
+  inspect(token_set_dice(["a", "b"], ["c", "d"]), content="0")
+}
+
+///|
+test "mirror group strips platform prefixes" {
+  inspect(
+    mirror_group_name("moui/backend/macos/macos_window_requests.mbt"),
+    content="window_requests.mbt",
+  )
+  inspect(
+    mirror_group_name("moui/backend/web/web_window_requests.mbt"),
+    content="window_requests.mbt",
+  )
+  inspect(
+    mirror_group_name("moui/backend/android/window_hosted.mbt"),
+    content="window_hosted.mbt",
+  )
+  inspect(
+    mirror_group_name("moui/runtime/window_host_coordinator.mbt"),
+    content="window_host_coordinator.mbt",
+  )
+}
+
+///|
+test "platform similarity budgets are unique and in range" {
+  let seen : Map[String, Bool] = Map([])
+  for budget in platform_file_similarity_budgets() {
+    let key = budget.path_a + "|" + budget.path_b
+    assert_false(seen.contains(key), msg="duplicate budget " + key)
+    seen.set(key, true)
+    assert_true(
+      budget.max_similarity > 0.0 && budget.max_similarity <= 1.0,
+    )
+    assert_true(budget.label.length() > 0)
+  }
+}
+
+///|
+fn similarity_fixture_dir(name : String) -> String {
+  let root = "/tmp/moui_validator_similarity_" + name
+  @fs.create_dir(root) catch {
+    _ => ()
+  }
+  root
+}
+
+///|
+fn write_similarity_fixture_file(
+  root : String,
+  relative : String,
+  body : String,
+) -> Unit {
+  let path = root + "/" + relative
+  let parts = path.split("/").to_array()
+  let mut current = ""
+  for i in 0..<(parts.length() - 1) {
+    let segment = parts[i].to_owned()
+    if segment.length() == 0 {
+      continue
+    }
+    current = current + "/" + segment
+    @fs.create_dir(current) catch {
+      _ => ()
+    }
+  }
+  match @tools.write_text_file(path, body, "similarity fixture") {
+    Ok(_) => ()
+    Err(message) => println("write failed: " + path + " :: " + message)
+  }
+}
+
+///|
+test "similarity gate rejects unregistered near-duplicate platform files" {
+  let root = similarity_fixture_dir("unregistered")
+  let body = "fn f() -> Int {\n  let macos_a = 1\n  let macos_b = 2\n" +
+    "  return macos_a + macos_b\n}\n"
+  write_similarity_fixture_file(
+    root,
+    "moui/backend/macos/macos_window_requests.mbt",
+    body,
+  )
+  write_similarity_fixture_file(
+    root,
+    "moui/backend/linux/linux_window_requests.mbt",
+    body,
+  )
+  let failures : Array[String] = []
+  validate_platform_file_similarity(root, failures)
+  assert_true(
+    failures.length() > 0,
+    msg="expected unregistered mirror pair to be rejected",
+  )
+  let rejected = failures.filter(f => f.contains("platform file similarity"))
+  assert_true(rejected.length() == 1)
+  assert_true(rejected[0].contains("macos_window_requests.mbt"))
+}
+
+///|
+test "similarity gate accepts registered budget pair" {
+  let root = similarity_fixture_dir("registered")
+  write_similarity_fixture_file(
+    root,
+    "moui/backend/android/window_hosted.mbt",
+    "fn f() -> Int {\n  let android_a = 1\n  let android_b = 2\n" +
+      "  return android_a + android_b\n}\n",
+  )
+  write_similarity_fixture_file(
+    root,
+    "moui/backend/ios/window_hosted.mbt",
+    "fn f() -> Int {\n  let ios_a = 1\n  let ios_b = 2\n" +
+      "  let ios_extra = 3\n  return ios_a + ios_b + ios_extra\n}\n",
+  )
+  let failures : Array[String] = []
+  validate_platform_file_similarity(root, failures)
+  let rejected = failures.filter(f => f.contains("platform file similarity"))
+  inspect(rejected.length(), content="0")
 }

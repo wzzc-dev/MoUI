@@ -51,7 +51,7 @@ pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match self.platform_windows.lookup_host(platform_window_id) {
+  let window_id = match self.coordinator.platform_windows.lookup_host(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }
@@ -68,7 +68,7 @@ pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
     @platform_bridge.TransformedWindowEvent::CloseRequested => {
       self.dispatch_host_event(window_id, @host.HostEvent::CloseRequested)
       self.dispose_window(window_id)
-      if self.runtime_slots.is_empty() {
+      if self.coordinator.runtime_slots_empty() {
         event_loop.exit()
       }
       return ()
@@ -76,7 +76,8 @@ pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
     @platform_bridge.TransformedWindowEvent::DispatchHostEvent(host_event) => {
       self.dispatch_host_event(window_id, host_event)
       match host_event {
-        @host.HostEvent::Resized(_) => self.request_platform_redraw(window_id)
+        @host.HostEvent::Resized(_) =>
+          self.coordinator.request_platform_redraw(window_id)
         _ => ()
       }
       return ()
@@ -132,27 +133,15 @@ fn WebApp::dispatch_pointer_or_context_menu(
 ) -> Unit {
   if @host.window_event_is_context_menu_button(event) {
     if @host.window_event_is_context_menu_trigger(event) {
-      match self.runtime_slots.lookup(window_id) {
+      match self.coordinator.runtime_slots.lookup(window_id) {
         Some(slot) => ignore(slot.driver.show_context_menu(self.services))
         None => ()
       }
       self.drain_async_host_services()
-      self.sync_text_input_session()
+      self.coordinator.sync_text_input_session()
     }
   } else {
     self.dispatch_window_event(window_id, event)
-  }
-}
-
-///|
-fn WebApp::publish_subscription_event(
-  self : WebApp,
-  window_id : @host.HostWindowId,
-  event : @host.HostEvent,
-) -> @runtime.HostPlatformEventPublishResult? {
-  match self.event_sources {
-    Some(sources) => Some(sources.publish(window_id~, event~))
-    None => None
   }
 }
 

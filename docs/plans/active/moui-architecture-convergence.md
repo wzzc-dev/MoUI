@@ -134,6 +134,11 @@ Phase F  Task 5 — platform adapter convergence (ADR 0020)
       native decode + PlatformCapability declaration + strategy impl + thin
       wiring calling platform_bridge. WeChat is the `direct-canvas-callback`
       exception and does not fabricate a window-event dependency.
+      [DONE Wave 1-3: window lifecycle state converged into
+      `WindowHostCoordinator` (moui/runtime) for macos/windows/linux/web;
+      embedded-runtime mobile shells converged into
+      `moui/backend/internal/embedded_runtime_backend`; per-platform
+      `window_hosted.mbt` is a thin shell.]
   F3  backend/platform_bridge/*_test.mbt: table-driven tests feed
       (native_type_tag, payload) → expected HostEvent/HostCmd for every
       platform in one place.
@@ -149,6 +154,11 @@ Phase F  Task 5 — platform adapter convergence (ADR 0020)
         sh scripts/check.sh --profile platform; per-platform smoke
         (path-triggered) unchanged; no reverse dependency
         (platform_bridge imports host, host does not import platform_bridge).
+        [Phase F completed via the Wave 1-3 closure in
+        docs/plans/active/platform-adapter-duplication-remediation.md;
+        file-level mirror similarity gate added to the api-surface validator
+        (platform_file_similarity.mbt) to keep future platform files from
+        reintroducing copies.]
 
 Phase G  docs + repo-local skill + final verification
   G1  docs/architecture-map.md: update ownership cheat sheet + dependency

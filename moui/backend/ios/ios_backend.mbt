@@ -1,3 +1,4 @@
+
 ///|
 /// Window-hosted native surface handle.
 pub(all) struct IosViewHandle {
@@ -67,10 +68,6 @@ pub struct IosRendererProvider {
 }
 
 ///|
-pub struct IosRuntimeSession {
-  priv mut view : IosViewHandle
-  priv core : @embedded_runtime_backend.EmbeddedRuntimeBackendCore
-}
 
 ///|
 pub fn IosRendererProvider::new(
@@ -107,6 +104,36 @@ pub fn IosRendererProvider::has_async_image_loader(
   self : IosRendererProvider,
 ) -> Bool {
   self.image_loader is Some(_)
+}
+
+///|
+pub fn create_session(
+  runtime~ : @runtime.AppRuntime,
+  view~ : IosViewHandle,
+  metrics~ : @host.HostSurfaceMetrics,
+  provider~ : IosRendererProvider,
+) -> @embedded_runtime_backend.HostedRuntimeSession? {
+  @embedded_runtime_backend.HostedRuntimeSession::create(
+    runtime~,
+    raw_handle=view.raw(),
+    metrics~,
+    adapter=renderer_provider_adapter_from_ios(provider),
+  )
+}
+
+///|
+pub fn renderer_provider_adapter_from_ios(
+  provider : IosRendererProvider,
+) -> @embedded_runtime_backend.RendererProviderAdapter {
+  @embedded_runtime_backend.RendererProviderAdapter::new(
+    create_renderer=fn(raw, metrics) {
+      provider.create(IosViewHandle::new(raw=raw), metrics)
+    },
+    sync=fn(raw, metrics) {
+      provider.sync(IosViewHandle::new(raw=raw), metrics)
+    },
+    image_loader=provider.image_loader,
+  )
 }
 
 ///|
@@ -201,212 +228,3 @@ pub fn ios_capability_summary(
   )
 }
 
-///|
-pub fn create_session(
-  runtime~ : @runtime.AppRuntime,
-  view~ : IosViewHandle,
-  metrics~ : @host.HostSurfaceMetrics,
-  provider~ : IosRendererProvider,
-) -> IosRuntimeSession? {
-  match provider.create(view, metrics) {
-    Some(renderer) => {
-      let core = @embedded_runtime_backend.EmbeddedRuntimeBackendCore::new(
-        runtime~,
-        renderer~,
-        image_loader=provider.image_loader,
-        metrics~,
-      )
-      provider.sync(view, metrics)
-      Some({ view, core })
-    }
-    None => None
-  }
-}
-
-///|
-pub fn IosRuntimeSession::metrics(
-  self : IosRuntimeSession,
-) -> @host.HostSurfaceMetrics {
-  self.core.metrics()
-}
-
-///|
-pub fn IosRuntimeSession::view(self : IosRuntimeSession) -> IosViewHandle {
-  self.view
-}
-
-///|
-pub fn IosRuntimeSession::runtime(
-  self : IosRuntimeSession,
-) -> @runtime.AppRuntime {
-  self.core.runtime()
-}
-
-///|
-pub fn IosRuntimeSession::disposed(self : IosRuntimeSession) -> Bool {
-  self.core.disposed()
-}
-
-///|
-pub fn IosRuntimeSession::surface_attached(self : IosRuntimeSession) -> Bool {
-  self.core.surface_attached()
-}
-
-///|
-pub fn IosRuntimeSession::session_generation(self : IosRuntimeSession) -> Int {
-  self.core.session_generation()
-}
-
-///|
-pub fn IosRuntimeSession::surface_epoch(self : IosRuntimeSession) -> Int {
-  self.core.surface_epoch()
-}
-
-///|
-pub fn IosRuntimeSession::attach_view(
-  self : IosRuntimeSession,
-  view : IosViewHandle,
-  metrics : @host.HostSurfaceMetrics,
-  provider : IosRendererProvider,
-) -> Bool {
-  match provider.create(view, metrics) {
-    Some(renderer) =>
-      if self.core.attach_surface(
-          renderer~,
-          metrics~,
-          image_loader=provider.image_loader,
-        ) {
-        self.view = view
-        provider.sync(view, metrics)
-        true
-      } else {
-        false
-      }
-    None => false
-  }
-}
-
-///|
-pub fn IosRuntimeSession::detach_view(self : IosRuntimeSession) -> Bool {
-  if self.core.detach_surface() {
-    self.view = IosViewHandle::none()
-    true
-  } else {
-    false
-  }
-}
-
-///|
-pub fn IosRuntimeSession::dispatch(
-  self : IosRuntimeSession,
-  event : @host.HostEvent,
-) -> @host.HostEventResult {
-  self.core.dispatch(event)
-}
-
-///|
-pub fn IosRuntimeSession::resize(
-  self : IosRuntimeSession,
-  metrics : @host.HostSurfaceMetrics,
-) -> @host.HostEventResult {
-  self.core.resize(metrics)
-}
-
-///|
-pub fn IosRuntimeSession::sync_view(
-  self : IosRuntimeSession,
-  provider : IosRendererProvider,
-) -> Unit {
-  if self.surface_attached() {
-    provider.sync(self.view, self.core.metrics())
-  }
-}
-
-///|
-pub fn IosRuntimeSession::render_frame(
-  self : IosRuntimeSession,
-) -> @render.RenderFrameResult {
-  self.core.render_frame()
-}
-
-///|
-pub fn IosRuntimeSession::advance_time(
-  self : IosRuntimeSession,
-  time_ms : Double,
-) -> Unit {
-  self.core.advance_time(time_ms)
-}
-
-///|
-pub fn IosRuntimeSession::drain_host_updates(
-  self : IosRuntimeSession,
-) -> Array[@embedded_runtime_backend.EmbeddingHostUpdate] {
-  self.core.drain_host_updates()
-}
-
-///|
-pub fn IosRuntimeSession::drain_host_updates_json(
-  self : IosRuntimeSession,
-) -> String {
-  self.core.drain_host_updates_json()
-}
-
-///|
-pub fn IosRuntimeSession::drain_host_update_envelope_json(
-  self : IosRuntimeSession,
-) -> String {
-  self.core.drain_host_update_envelope_json()
-}
-
-///|
-pub fn IosRuntimeSession::dispatch_host_response(
-  self : IosRuntimeSession,
-  response : @embedded_runtime_backend.EmbeddingHostResponse,
-) -> Bool {
-  self.core.dispatch_host_response(response)
-}
-
-///|
-pub fn IosRuntimeSession::dispatch_host_response_envelope(
-  self : IosRuntimeSession,
-  envelope : @embedded_runtime_backend.EmbeddingHostResponseEnvelope,
-) -> Bool {
-  self.core.dispatch_host_response_envelope(envelope)
-}
-
-///|
-pub fn IosRuntimeSession::dispatch_host_response_envelope_json(
-  self : IosRuntimeSession,
-  text : String,
-) -> Bool {
-  self.core.dispatch_host_response_envelope_json(text)
-}
-
-///|
-pub fn IosRuntimeSession::host_service_bridge(
-  self : IosRuntimeSession,
-) -> @host.HostServiceBridge {
-  self.core.host_service_bridge()
-}
-
-///|
-pub fn IosRuntimeSession::redraw_requested(self : IosRuntimeSession) -> Bool {
-  self.core.redraw_requested()
-}
-
-///|
-pub fn IosRuntimeSession::take_redraw_requested(
-  self : IosRuntimeSession,
-) -> Bool {
-  self.core.take_redraw_requested()
-}
-
-///|
-pub fn IosRuntimeSession::present_count(self : IosRuntimeSession) -> Int {
-  self.core.present_count()
-}
-
-///|
-pub fn IosRuntimeSession::dispose(self : IosRuntimeSession) -> Unit {
-  self.core.dispose()
-}

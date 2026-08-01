@@ -4,12 +4,13 @@ package "wzzc-dev/moui/backend/harmonyos/skia"
 import {
   "wzzc-dev/moui/backend/harmonyos",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @harmonyos.HarmonyOsSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, options? : HarmonyOsSkiaAppOptions) -> @harmonyos.HarmonyOsRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @harmonyos.HarmonyOsSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, options? : HarmonyOsSkiaAppOptions) -> @embedded_runtime_backend.HostedRuntimeSession?
 
 pub fn harmonyos_skia_gpu_available() -> Bool
 

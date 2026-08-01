@@ -1,21 +1,11 @@
 ///|
 /// Embedded runtime backend on the window-hosted route: surface/input come
-/// only from `wzzc-dev/window/harmonyos` HostCmd → ApplicationHandler. Surface
-/// attachment is driven only by the platform event loop.
+/// only from `wzzc-dev/window/harmonyos` HostCmd → ApplicationHandler.
+/// Surface attachment is driven only by the platform event loop. The backend
+/// is a thin shell around the shared `HostedWindowBackend`; native
+/// XComponent surface access and window creation stay here.
 pub struct HarmonyOsEmbeddedRuntimeBackend {
-  title : String
-  runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
-  provider_factory : () -> HarmonyOsRendererProvider
-  mut runtime : @runtime.AppRuntime?
-  mut session : HarmonyOsRuntimeSession?
-  mut window : @window_harmonyos.Window?
-  mut provider : HarmonyOsRendererProvider?
-  mut last_pointer : @core.Point
-  modifiers : @core.KeyModifiers
-  mut last_generation : Int
-  mut frames_presented : Int
-  mut surface_lifecycle : @platform_bridge.PlatformSurfaceLifecycle
-  auto_exit_after_frames : Int?
+  backend : @embedded_runtime_backend.HostedWindowBackend
 }
 
 ///|
@@ -26,19 +16,23 @@ pub fn HarmonyOsEmbeddedRuntimeBackend::new(
   auto_exit_after_frames? : Int? = None,
 ) -> HarmonyOsEmbeddedRuntimeBackend {
   {
-    title,
-    runtime_factory,
-    provider_factory,
-    runtime: None,
-    session: None,
-    window: None,
-    provider: None,
-    last_pointer: @core.Point::new(x=0.0, y=0.0),
-    modifiers: @core.KeyModifiers::none(),
-    last_generation: 0,
-    frames_presented: 0,
-    surface_lifecycle: @platform_bridge.PlatformSurfaceLifecycle::Detached,
-    auto_exit_after_frames,
+    backend: @embedded_runtime_backend.HostedWindowBackend::new(
+      title~,
+      runtime_factory~,
+      provider_factory=() => {
+        let provider = provider_factory()
+        @embedded_runtime_backend.RendererProviderAdapter::new(
+          create_renderer=fn(raw, metrics) {
+            provider.create(HarmonyOsSurfaceHandle::new(raw=raw), metrics)
+          },
+          sync=fn(raw, metrics) {
+            provider.sync(HarmonyOsSurfaceHandle::new(raw=raw), metrics)
+          },
+          image_loader=provider.image_loader,
+        )
+      },
+      auto_exit_after_frames~,
+    ),
   }
 }
 
@@ -46,163 +40,28 @@ pub fn HarmonyOsEmbeddedRuntimeBackend::new(
 pub fn HarmonyOsEmbeddedRuntimeBackend::frames_presented(
   self : HarmonyOsEmbeddedRuntimeBackend,
 ) -> Int {
-  self.frames_presented
+  self.backend.frames_presented()
 }
 
 ///|
 pub fn HarmonyOsEmbeddedRuntimeBackend::surface_generation(
   self : HarmonyOsEmbeddedRuntimeBackend,
 ) -> Int {
-  self.last_generation
+  self.backend.surface_generation()
 }
 
 ///|
 pub fn HarmonyOsEmbeddedRuntimeBackend::session_attached(
   self : HarmonyOsEmbeddedRuntimeBackend,
 ) -> Bool {
-  match self.session {
-    Some(session) => session.surface_attached()
-    None => false
-  }
+  self.backend.session_attached()
 }
 
 ///|
 pub fn HarmonyOsEmbeddedRuntimeBackend::has_session(
   self : HarmonyOsEmbeddedRuntimeBackend,
 ) -> Bool {
-  self.session is Some(_)
-}
-
-///|
-fn HarmonyOsEmbeddedRuntimeBackend::metrics_from_window(
-  _self : HarmonyOsEmbeddedRuntimeBackend,
-  window : @window_harmonyos.Window,
-) -> @host.HostSurfaceMetrics {
-  let size = window.inner_size()
-  let scale = window.scale_factor()
-  @platform_bridge.make_surface_metrics(size, scale_factor=scale)
-}
-
-///|
-fn HarmonyOsEmbeddedRuntimeBackend::attach_session(
-  self : HarmonyOsEmbeddedRuntimeBackend,
-  window : @window_harmonyos.Window,
-) -> Unit {
-  let metrics = self.metrics_from_window(window)
-  self.surface_lifecycle = @platform_bridge.PlatformSurfaceLifecycle::attach(
-    metrics,
-  )
-  let runtime = match self.runtime {
-    Some(runtime) => {
-      runtime.dispatch_event(@core.AppEvent::Resize(metrics.logical_size))
-      runtime
-    }
-    None => {
-      let runtime = (self.runtime_factory)(metrics)
-      self.runtime = Some(runtime)
-      runtime
-    }
-  }
-  let provider = (self.provider_factory)()
-  self.provider = Some(provider)
-  let surface = HarmonyOsSurfaceHandle::new(
-    raw=window.xcomponent_window_handle(),
-  )
-  match self.session {
-    Some(session) => {
-      ignore(session.attach_surface(surface, metrics, provider))
-      self.last_generation = session.session_generation()
-    }
-    None =>
-      match create_session(runtime~, surface~, metrics~, provider~) {
-        Some(session) => {
-          self.session = Some(session)
-          self.last_generation = session.session_generation()
-        }
-        None => ()
-      }
-  }
-}
-
-///|
-fn HarmonyOsEmbeddedRuntimeBackend::detach_session(
-  self : HarmonyOsEmbeddedRuntimeBackend,
-) -> Unit {
-  match self.session {
-    Some(session) => ignore(session.detach_surface())
-    None => ()
-  }
-  self.window = None
-  self.surface_lifecycle = self.surface_lifecycle.detach()
-}
-
-///|
-fn HarmonyOsEmbeddedRuntimeBackend::dispatch_window_event(
-  self : HarmonyOsEmbeddedRuntimeBackend,
-  event : @window_core.WindowEvent,
-) -> Unit {
-  let scale = match self.window {
-    Some(window) => window.scale_factor()
-    None => 1.0
-  }
-  match
-    @host.window_event_to_host_with_modifiers(
-      event,
-      self.last_pointer,
-      self.modifiers,
-      scale_factor=scale,
-    ) {
-    Some(host_event) => self.dispatch_host_event(host_event)
-    None => ()
-  }
-}
-
-///|
-fn HarmonyOsEmbeddedRuntimeBackend::dispatch_host_event(
-  self : HarmonyOsEmbeddedRuntimeBackend,
-  host_event : @host.HostEvent,
-) -> Unit {
-  match host_event {
-    @host.HostEvent::Pointer(pointer) => {
-      match self.session {
-        Some(session) => ignore(session.dispatch(host_event))
-        None => ()
-      }
-      self.last_pointer = pointer.position
-    }
-    @host.HostEvent::Resized(metrics) =>
-      match self.session {
-        Some(session) => ignore(session.resize(metrics))
-        None => ()
-      }
-    @host.HostEvent::RedrawRequested =>
-      match self.session {
-        Some(session) => {
-          ignore(session.render_frame())
-          self.frames_presented = self.frames_presented + 1
-        }
-        None => ()
-      }
-    _ =>
-      match self.session {
-        Some(session) => ignore(session.dispatch(host_event))
-        None => ()
-      }
-  }
-  match host_event {
-    @host.HostEvent::Resized(_) | @host.HostEvent::RedrawRequested => ()
-    _ =>
-      match self.session {
-        Some(session) =>
-          if session.take_redraw_requested() || session.redraw_requested() {
-            match self.window {
-              Some(window) => window.request_redraw()
-              None => ()
-            }
-          }
-        None => ()
-      }
-  }
+  self.backend.has_session()
 }
 
 ///|
@@ -218,10 +77,12 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
   self,
   event_loop,
 ) {
-  if self.window is Some(_) {
+  if self.backend.has_window() {
     return
   }
-  let attrs = @window_core.WindowAttributes::default().with_title(self.title)
+  let attrs = @window_core.WindowAttributes::default().with_title(
+    self.backend.title(),
+  )
   let created : @window_harmonyos.Window? = Some(
     event_loop.try_create_window(attrs),
   ) catch {
@@ -229,8 +90,15 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
   }
   match created {
     Some(window) => {
-      self.window = Some(window)
-      self.attach_session(window)
+      let hosted = @embedded_runtime_backend.HostedWindow::new(
+        scale_factor=fn() { window.scale_factor() },
+        inner_size=fn() { window.inner_size() },
+        request_redraw=fn() { window.request_redraw() },
+      )
+      self.backend.attach_session(
+        hosted,
+        raw_handle=window.xcomponent_window_handle(),
+      )
       window.request_redraw()
     }
     None => ()
@@ -242,7 +110,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
   self,
   _event_loop,
 ) {
-  self.detach_session()
+  self.backend.detach_session()
 }
 
 ///|
@@ -251,8 +119,8 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
   _event_loop,
 ) {
   // Surface may already be destroyed; ensure session is detached.
-  if self.window is None {
-    self.detach_session()
+  if !self.backend.has_window() {
+    self.backend.detach_session()
   }
 }
 
@@ -263,31 +131,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
   _id,
   event,
 ) {
-  let (scale_factor, surface_size) = match self.window {
-    Some(window) => (window.scale_factor(), Some(window.inner_size()))
-    None => (1.0, None)
-  }
-  match
-    @platform_bridge.transform_cross_platform_event(
-      event,
-      scale_factor~,
-      surface_size~,
-    ) {
-    @platform_bridge.TransformedWindowEvent::CloseRequested => {
-      self.dispatch_host_event(@host.HostEvent::CloseRequested)
-      event_loop.exit()
-    }
-    @platform_bridge.TransformedWindowEvent::DispatchHostEvent(host_event) =>
-      self.dispatch_host_event(host_event)
-    @platform_bridge.TransformedWindowEvent::WindowRedrawRequired => {
-      self.dispatch_host_event(@host.HostEvent::RedrawRequested)
-      match self.auto_exit_after_frames {
-        Some(limit) => if self.frames_presented >= limit { event_loop.exit() }
-        None => ()
-      }
-    }
-    _ => self.dispatch_window_event(event)
-  }
+  self.backend.handle_window_event(event, exit=fn() { event_loop.exit() })
 }
 
 ///|
@@ -295,16 +139,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
   self,
   _event_loop,
 ) {
-  match self.session {
-    Some(session) =>
-      if session.take_redraw_requested() || session.redraw_requested() {
-        match self.window {
-          Some(window) => window.request_redraw()
-          None => ()
-        }
-      }
-    None => ()
-  }
+  self.backend.about_to_wait()
 }
 
 ///|
@@ -326,10 +161,7 @@ pub fn harmonyos_window_hosted_pump_host_sim(
     ),
   )
   ignore(event_loop.pump_app_events(None, app))
-  match app.window {
-    Some(window) => window.request_redraw()
-    None => ()
-  }
+  app.backend.force_redraw()
   ignore(event_loop.pump_app_events(None, app))
   @window_harmonyos.host_push(
     @window_harmonyos.HostCmd::PointerButton(true, 10.0, 20.0),
