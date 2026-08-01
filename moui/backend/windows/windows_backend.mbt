@@ -567,6 +567,7 @@ fn WindowsNativeHostBackend::redraw_window(
           return false
         }
         frame_pending = false
+        self.coordinator.set_surface_frame_pending(window_id, frame_pending)
         if prior_presented {
           ignore(
             self.coordinator.image_repaint_tracker.record_presented(
