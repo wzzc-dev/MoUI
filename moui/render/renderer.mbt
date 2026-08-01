@@ -25,7 +25,6 @@ pub(all) enum RendererBackendKind {
   NativeWgpu
   WebGpuWasm
   SkiaRasterNative
-  SkiaRasterWeb
   SkiaGpuNative
   SunRasterNative
   Canvas2DWasm
@@ -209,7 +208,6 @@ pub fn RendererBackendKind::label(self : RendererBackendKind) -> String {
     NativeWgpu => "native-wgpu"
     WebGpuWasm => "webgpu-wasm"
     SkiaRasterNative => "skia-raster-native"
-    SkiaRasterWeb => "skia-raster-web"
     SkiaGpuNative => "skia-gpu-native"
     SunRasterNative => "sun-raster-native"
     Canvas2DWasm => "canvas2d-wasm"
@@ -222,7 +220,6 @@ pub fn RendererBackendKind::short_label(self : RendererBackendKind) -> String {
     NativeWgpu => "wgpu"
     WebGpuWasm => "webgpu"
     SkiaRasterNative => "skia"
-    SkiaRasterWeb => "skia-web"
     SkiaGpuNative => "skia-gpu"
     SunRasterNative => "sun"
     Canvas2DWasm => "canvas2d"
@@ -281,7 +278,7 @@ pub fn RendererBackendKind::family(
   match self {
     NativeWgpu => RendererFamily::Wgpu
     WebGpuWasm => RendererFamily::WebGpu
-    SkiaRasterNative | SkiaRasterWeb | SkiaGpuNative => RendererFamily::Skia
+    SkiaRasterNative | SkiaGpuNative => RendererFamily::Skia
     SunRasterNative => RendererFamily::Sun
     Canvas2DWasm => RendererFamily::Canvas2D
   }

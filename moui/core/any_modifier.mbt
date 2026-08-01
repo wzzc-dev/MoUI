@@ -8,6 +8,8 @@
 pub(all) struct AnyModifier[Msg] {
   /// Human-readable kind string for identity composition.
   identity_kind : String
+  /// Declaration key for identity composition (used by KeyModifier).
+  identity_key : Key?
   /// Declaration key for incremental caching.
   declaration : ViewDeclaration
   /// Transform child constraints before passing to child.
@@ -37,6 +39,7 @@ pub(all) struct AnyModifier[Msg] {
 pub fn[Msg] noop_modifier() -> AnyModifier[Msg] {
   {
     identity_kind: "",
+    identity_key: None,
     declaration: ViewDeclaration::constant(),
     child_constraints: fn(c) { c.loosen() },
     child_environment: fn(e) { e },

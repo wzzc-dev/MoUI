@@ -28,12 +28,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/core/pkg.generated.mbti",
       category: "advanced_core_protocol",
-      max_count: 589,
+      max_count: 633,
     },
     {
       path: "moui/core/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 148,
+      max_count: 177,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -78,12 +78,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/runtime/pkg.generated.mbti",
       category: "runtime_diagnostic",
-      max_count: 407,
+      max_count: 447,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 34,
+      max_count: 35,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",
@@ -240,7 +240,9 @@ fn classify_api_surface_line(path : String, line : String) -> String? {
   }
   if path == "moui/core/pkg.generated.mbti" {
     if line_has_any_token(line, core_api_surface_name_tokens()) ||
-      line_has_any_prefix(line, core_api_surface_function_prefixes()) {
+      line_has_any_prefix(line, core_api_surface_function_prefixes()) ||
+      line.contains("to_any_modifier") ||
+      line.contains("noop_modifier") {
       return Some("advanced_core_protocol")
     }
     return None

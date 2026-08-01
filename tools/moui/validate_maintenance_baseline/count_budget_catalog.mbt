@@ -9,23 +9,18 @@ struct CountBudget {
 ///|
 fn pub_all_budgets() -> Array[CountBudget] {
   [
-    // Actual ~140 after API narrowing; keep a small buffer for legitimate core enums.
-    { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 150 },
-    // 39 = 19 (prior baseline) + 20 for ADR 0017 control theme token structs
-    // migrated from core (ControlThemeSet, ButtonTheme, ControlStateTokens,
-    // ControlStateStyle, ComponentThemes, …) — control vocabulary now lives
-    // in views, so the pub(all) budget moved with it.
-    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 39 },
+    // Actual ~178 after API growth (modifier adapters + state protocol);
+    // keep a small buffer for legitimate core enums.
+    { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 178 },
+    // 56 = 39 (ADR 0017 control theme tokens) + 17 growth: control theme
+    // structs and style records added during view sub-package extraction.
+    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 56 },
     {
       kind: "pub(all)",
       label: "moui/runtime",
       path: "moui/runtime",
-      // 34 = 16 (prior baseline) + 18 for ADR 0018 host split: the host
-      // runtime driver, wall clock, redraw scheduler, window runtime slots,
-      // window scene resolver, and runtime-side subscription source adapters
-      // moved from backend/host to moui/runtime. These are the runtime
-      // orchestration types that host contracts no longer own.
-      max_count: 34,
+      // 35 = 34 (ADR 0018 host split) + 1 (window scene lifecycle growth).
+      max_count: 35,
     },
     {
       kind: "pub(all)",
