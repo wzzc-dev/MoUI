@@ -117,77 +117,67 @@ impl @core.ViewNode for Checkbox with fn identity(self) {
 
 ///|
 impl @core.ViewNode for Checkbox with fn declaration(self) {
-  let layout_key = @common.view_record_key("Checkbox.layout", [
-    ("label", @core.DeclarationKey::string(self.label)),
-    ("font", @common.view_font_option_key(self.font)),
-    ("box_size", @common.view_double_option_key(self.box_size)),
-    ("height", @core.DeclarationKey::double(self.height)),
-  ])
-  let paint_key = @common.view_record_key("Checkbox.paint", [
-    ("checked", @core.DeclarationKey::bool(self.checked)),
-    (
-      "foreground",
-      @core.DeclarationKey::option(self.foreground.map(@common.view_color_key)),
-    ),
-    (
-      "check_color",
-      @core.DeclarationKey::option(self.check_color.map(@common.view_color_key)),
-    ),
-    (
-      "box_shape",
-      @core.DeclarationKey::option(
-        self.box_shape.map(value => {
-          @core.DeclarationKey::int(
-            match value {
-              @style.ChoiceControlShape::Square => 0
-              @style.ChoiceControlShape::Circle => 1
-            },
-          )
-        }),
+  @common.view_declaration_auto(
+    "Checkbox",
+    self.theme,
+    [
+      ("label", @core.DeclarationKey::string(self.label)),
+      ("font", @common.view_font_option_key(self.font)),
+      ("box_size", @common.view_double_option_key(self.box_size)),
+      ("height", @core.DeclarationKey::double(self.height)),
+    ],
+    [
+      ("checked", @core.DeclarationKey::bool(self.checked)),
+      (
+        "foreground",
+        @core.DeclarationKey::option(self.foreground.map(@common.view_color_key)),
       ),
-    ),
-    (
-      "check_style",
-      @core.DeclarationKey::option(
-        self.check_style.map(value => {
-          @core.DeclarationKey::int(
-            match value {
-              @style.CheckMarkStyle::Checkmark => 0
-              @style.CheckMarkStyle::Dot => 1
-            },
-          )
-        }),
+      (
+        "check_color",
+        @core.DeclarationKey::option(self.check_color.map(@common.view_color_key)),
       ),
-    ),
-  ])
-  @common.view_declaration(
-    layout=if self.theme is Some(_) {
-      @core.DeclarationChannel::Uncacheable
-    } else {
-      @common.view_exact_channel(layout_key)
-    },
-    paint=if self.theme is Some(_) {
-      @core.DeclarationChannel::Uncacheable
-    } else {
-      @common.view_exact_channel(paint_key)
-    },
-    semantics=@common.view_exact_channel(
-      @common.view_record_key("Checkbox.semantics", [
-        ("label", @core.DeclarationKey::string(self.label)),
-        ("checked", @core.DeclarationKey::bool(self.checked)),
-      ]),
-    ),
+      (
+        "box_shape",
+        @core.DeclarationKey::option(
+          self.box_shape.map(value => {
+            @core.DeclarationKey::int(
+              match value {
+                @style.ChoiceControlShape::Square => 0
+                @style.ChoiceControlShape::Circle => 1
+              },
+            )
+          }),
+        ),
+      ),
+      (
+        "check_style",
+        @core.DeclarationKey::option(
+          self.check_style.map(value => {
+            @core.DeclarationKey::int(
+              match value {
+                @style.CheckMarkStyle::Checkmark => 0
+                @style.CheckMarkStyle::Dot => 1
+              },
+            )
+          }),
+        ),
+      ),
+    ],
+    [
+      ("label", @core.DeclarationKey::string(self.label)),
+      ("checked", @core.DeclarationKey::bool(self.checked)),
+    ],
   )
 }
 
 ///|
 impl @core.ViewNode for Checkbox with fn layout(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
-  let style = @style.ChoiceControlStyle::default(theme=resolved_theme)
+  let cc = @style.views_ambient_control_theme(resolved_theme).choice_control
   let resolved_font = resolve_choice_font(self.font, resolved_theme)
   let resolved_box_size = resolve_control_double(
     self.box_size,
-    style.control_size,
+    cc.control_size,
   )
   let label_width = if self.label.length() == 0 {
     0.0
@@ -212,21 +202,20 @@ impl @core.ViewNode for Checkbox with fn layout(self, ctx) {
 ///|
 impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
-  let style = @style.ChoiceControlStyle::default(theme=resolved_theme)
+  let cc = @style.views_ambient_control_theme(resolved_theme).choice_control
   let resolved_font = resolve_choice_font(self.font, resolved_theme)
   let resolved_foreground = @common.resolve_control_color(
     self.foreground,
-    style.foreground,
+    cc.foreground,
   )
   let resolved_check_color = @common.resolve_control_color(
     self.check_color,
-    style.selected_color,
+    cc.selected_color,
   )
   let resolved_box_size = resolve_control_double(
     self.box_size,
-    style.control_size,
+    cc.control_size,
   )
-  let cc = @style.views_ambient_control_theme(resolved_theme).choice_control
   let commands : Array[@core.DrawCommand] = []
   append_checkbox_commands(
     commands,

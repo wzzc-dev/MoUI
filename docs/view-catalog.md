@@ -25,6 +25,25 @@ advanced rendering, text diagnostics, interaction diagnostics, and reusable
 examples are kept as focused diagnostic destinations rather than top-level
 catalog rows.
 
+## Authoring new controls (boilerplate reduction)
+
+Two helpers in `moui/views` cut the ~60% boilerplate every new control used to
+repeat:
+
+- **`view_declaration_auto`** (`moui/views/common/declaration_helpers.mbt`) —
+  builds a `ViewDeclaration` from per-channel field lists, applying the
+  theme-override cache rule. Prefer it over hand-rolled `view_record_key` +
+  `view_declaration` plumbing inside a control's `declaration()` method.
+- **`themeable_control[Msg, Style]`** (`moui/views/controls/control_builder.mbt`)
+  — a generic, theme-aware constructor that wires `identity`, theme resolution,
+  `focusable`, and event forwarding. A new control supplies only `layout`,
+  `paint`, and optional `event`/`semantics` logic; `Style` is resolved once per
+  frame from `ControlThemeSet` (the single source of truth). This is the
+  recommended path for standard themed controls.
+
+Both read theming from `ControlThemeSet` (never the legacy `XStyle::default`
+constructors), so a theme change lives in exactly one place.
+
 ## API Style
 
 - Constructors use MoonBit labeled and optional parameters for common options.
