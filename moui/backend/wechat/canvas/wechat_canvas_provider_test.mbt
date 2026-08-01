@@ -77,5 +77,5 @@ test "wechat canvas binding negotiates its direct canvas surface" {
     is Some((selected, _surface)) else {
     fail("expected WeChat canvas binding to accept CPU canvas")
   }
-  inspect(selected.provider().id, content="canvas2d")
+  inspect(selected.provider().id, content="wxCanvas2d")
 }
