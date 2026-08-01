@@ -2,7 +2,6 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/backend/platform_bridge",
   "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
   "wzzc-dev/moui/render",
   "wzzc-dev/window/core" @window_core,
