@@ -81,7 +81,7 @@ Page.onUnload→ Surface 销毁回调槽
 ```
 
 在真实设备运行时证据验证完整契约之前，生命周期和 Surface 回调仍属于
-`runtime_partial` 范围。
+`experimental` 范围（product_class `experimental`，`ready=false`）。
 
 ## 性能
 

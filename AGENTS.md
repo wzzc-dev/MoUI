@@ -18,7 +18,7 @@ Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 - Protocols → `moui/core`. Lifecycle trees → `moui/runtime`. Host contracts → `moui/backend/host`. Renderers → `moui/render/*`.
 - App deps: `wzzc-dev/moui` + domain facades + `views` only (no `runtime` / `render/*` / platform backends).
 - Mainline: Native Skia. Diagnostic: Native WGPU. Reclassify only with RFC.
-- Embedded-runtime product class: `runtime_partial`; `wzzc-dev/window` hosted entrypoints are canonical. Details: `docs/platform-readiness-declaration.md`, ADR 0011.
+- Embedded-runtime product class: `experimental` (`ready=false`; code compiles, no usability/product commitment without matching-device evidence); `wzzc-dev/window` hosted entrypoints are canonical. Details: `docs/platform-readiness-declaration.md`, ADR 0021.
 - `moon.work`: no local `./window/modules/window*` members by default (use
   `window-dev-mode.sh on/off`), no `./openseek`.
 - Discover APIs with `moon ide doc` / `outline` / `peek-def` / `find-references` before inventing names.

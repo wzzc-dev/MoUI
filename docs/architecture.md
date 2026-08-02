@@ -123,19 +123,19 @@ workspace.
 - Native Skia route: shared app package -> platform `*_skia` entrypoint ->
   platform backend -> platform Skia provider -> `moui/render/skia` ->
   `moui_skia`.
-- Android embedded-runtime route (`runtime_partial`): shared app package ->
+- Android embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/android_window_hosted` -> `wzzc-dev/window/android`
   `HostCmd` / `EventLoop` -> `AndroidEmbeddedRuntimeBackend` ->
   `moui/backend/android/skia` -> `moui/render/skia` -> `moui_skia`.
   The window template owns Android lifecycle, surface acquisition, and input;
   the embedded runtime backend owns runtime/session assembly and rendering.
-- iOS embedded-runtime route (`runtime_partial`): shared app package ->
+- iOS embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/ios_window_hosted` -> `wzzc-dev/window/ios`
   `HostCmd` / `EventLoop` -> `IosEmbeddedRuntimeBackend` ->
   `moui/backend/ios/skia` -> `moui/render/skia` -> `moui_skia`.
   UIKit lifecycle, surface, and touch callbacks enter through the window event
   loop only.
-- HarmonyOS embedded-runtime route (`runtime_partial`): shared app package ->
+- HarmonyOS embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/harmonyos_window_hosted` -> `wzzc-dev/window/harmonyos`
   `HostCmd` / `EventLoop` -> `HarmonyOsEmbeddedRuntimeBackend` ->
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`.

@@ -37,11 +37,12 @@ pub(all) struct IosBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// `ready` means the window-hosted path is usable for app development
-/// and demos (aligned with Linux host usability). It does **not** mean full
-/// L3 runtime promotion or GPU seven-gate claims.
+/// `ready` means the window-hosted path is **experimental**: it compiles and
+/// host-sim tests pass, but no development/demonstration usability or product
+/// commitment is made without matching-simulator/device evidence. It does
+/// **not** mean full L3 runtime promotion or GPU seven-gate claims.
 ///
-/// `status` is a coarse evidence class: `runtime_partial` until window-hosted
+/// `status` is a coarse evidence class: `experimental` until window-hosted
 /// matching-simulator smoke and presenter verification close gaps.
 pub(all) struct IosBackendReadiness {
   ready : Bool
@@ -178,10 +179,10 @@ pub fn ios_capability_matrix() -> IosBackendCapabilities {
 ///|
 pub fn ios_readiness() -> IosBackendReadiness {
   {
-    ready: true,
-    status: "runtime_partial",
+    ready: false,
+    status: "experimental",
     blocked_by: [
-      "window-hosted iOS matching-simulator smoke still needs re-recording with --require-passed",
+      "product_class=experimental: no development/demonstration usability commitment without matching-device evidence", "window-hosted iOS matching-simulator smoke still needs re-recording with --require-passed",
       "physical-device and real VoiceOver observations remain open", "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
@@ -202,7 +203,7 @@ pub fn backend_info() -> IosBackendInfo {
     services: ios_service_capabilities(),
     input: ios_input_capabilities(),
     readiness: ios_readiness(),
-    description: "iOS backend exposes a native-session contract: wzzc-dev/window/ios supplies a view/Metal surface and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until window-hosted matching-simulator L3 and presenter verification close remaining gaps.",
+    description: "iOS backend exposes a native-session contract: wzzc-dev/window/ios supplies a view/Metal surface and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until window-hosted matching-simulator L3 and presenter verification close remaining gaps.",
   }
 }
 

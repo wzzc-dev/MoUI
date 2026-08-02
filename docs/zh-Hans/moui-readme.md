@@ -14,11 +14,13 @@ MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，�
 | Web | **committed** | 产品主线（wasm-gc + WebGPU） |
 | Windows | **committed_with_gaps** | 产品 L0-L2；完整 L3 runtime 仍不完整 |
 | Linux | **committed_with_gaps** | 产品 L0-L2；交互式 L3 仍不完整 |
-| Android | **runtime_partial** | window-hosted 路径可用于开发/演示；尚未达到产品完整 |
-| iOS | **runtime_partial** | 同 Android |
-| HarmonyOS | **runtime_partial** | 同上；签名设备完整 smoke 仍待完成 |
+| Android | **experimental** | window-hosted 路径可编译；尚无可用性/产品承诺 |
+| iOS | **experimental** | 同 Android |
+| HarmonyOS | **experimental** | 同上；签名设备完整 smoke 仍待完成 |
 
-Mobile **不是**“只有未接线的胶水层”，但也**尚未**完全晋级。参见[平台就绪声明](../platform-readiness-declaration.md)。
+Mobile **不是**“只有未接线的胶水层”，但也**尚未**做出产品承诺。它是
+**实验性**的：代码可编译且 host-sim tests 通过，但在匹配设备证据落地前，
+不做任何开发/演示可用性或产品承诺。参见[平台就绪声明](../platform-readiness-declaration.md)。
 
 runtime 管线是显式的：
 

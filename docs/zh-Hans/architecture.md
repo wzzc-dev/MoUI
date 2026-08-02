@@ -97,18 +97,18 @@ HarmonyOS 可以运行在桌面硬件上；这不改变它们当前 MoUI 集成�
 - Native Skia route：shared app package -> platform `*_skia` entrypoint ->
   platform backend -> platform Skia provider -> `moui/render/skia` ->
   `moui_skia`。
-- Android 嵌入运行时路线（`runtime_partial`）：shared app package ->
+- Android 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/android_window_hosted` -> `wzzc-dev/window/android`
   `HostCmd` / `EventLoop` -> `AndroidEmbeddedRuntimeBackend` ->
   `moui/backend/android/skia` -> `moui/render/skia` -> `moui_skia`。
   window template 拥有 Android lifecycle、surface acquisition 和 input；嵌入运行时
   backend 负责 runtime/session 装配与渲染。
-- iOS 嵌入运行时路线（`runtime_partial`）：shared app package ->
+- iOS 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/ios_window_hosted` -> `wzzc-dev/window/ios`
   `HostCmd` / `EventLoop` -> `IosEmbeddedRuntimeBackend` ->
   `moui/backend/ios/skia` -> `moui/render/skia` -> `moui_skia`。UIKit lifecycle、
   surface 和 touch callbacks 只能经由 window event loop 进入。
-- HarmonyOS 嵌入运行时路线（`runtime_partial`）：shared app package ->
+- HarmonyOS 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/harmonyos_window_hosted` -> `wzzc-dev/window/harmonyos`
   `HostCmd` / `EventLoop` -> `HarmonyOsEmbeddedRuntimeBackend` ->
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`。

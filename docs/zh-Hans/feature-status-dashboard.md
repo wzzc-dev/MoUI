@@ -64,7 +64,7 @@
 
 ## 移动端状态
 
-Android、iOS 和 HarmonyOS 的**产品分类：`runtime_partial`**（可用的 window-hosted 路径；不是 product-complete）。请见 [platform-readiness-declaration.md](../platform-readiness-declaration.md)。
+Android、iOS、HarmonyOS 和微信小程序的**产品分类：`experimental`**（代码路径可编译且 host-sim tests 通过；在匹配设备证据落地前，**不**做任何开发/演示可用性或产品承诺）。请见 [platform-readiness-declaration.md](../platform-readiness-declaration.md)。
 
 window-hosted 路径使用 `HostCmd` → `EventLoop` → `ApplicationHandler` → MoUI
 adapters。HarmonyOS XComponent callbacks 独占 surface、pointer、resize 和 detach。

@@ -36,11 +36,12 @@ pub(all) struct AndroidBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// `ready` means the window-hosted path is usable for app development
-/// and demos (aligned with Linux host usability). It does **not** mean full
-/// L3 runtime promotion or GPU seven-gate claims.
+/// `ready` means the window-hosted path is **experimental**: it compiles and
+/// host-sim tests pass, but no development/demonstration usability or product
+/// commitment is made without matching-device evidence. It does **not** mean
+/// full L3 runtime promotion or GPU seven-gate claims.
 ///
-/// `status` is a coarse evidence class: `runtime_partial` until window-hosted
+/// `status` is a coarse evidence class: `experimental` until window-hosted
 /// matching-device smoke and presenter verification close the remaining gaps.
 pub(all) struct AndroidBackendReadiness {
   ready : Bool
@@ -175,10 +176,10 @@ pub fn android_capability_matrix() -> AndroidBackendCapabilities {
 ///|
 pub fn android_readiness() -> AndroidBackendReadiness {
   {
-    ready: true,
-    status: "runtime_partial",
+    ready: false,
+    status: "experimental",
     blocked_by: [
-      "window-hosted Android matching-device smoke still needs re-recording", "real-device signing observation and verified direct presenter route remain open",
+      "product_class=experimental: no development/demonstration usability commitment without matching-device evidence", "window-hosted Android matching-device smoke still needs re-recording", "real-device signing observation and verified direct presenter route remain open",
       "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
@@ -200,7 +201,7 @@ pub fn backend_info() -> AndroidBackendInfo {
     services: android_service_capabilities(),
     input: android_input_capabilities(),
     readiness: android_readiness(),
-    description: "Android backend exposes a native-session contract: wzzc-dev/window/android supplies an ANativeWindow surface and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until window-hosted matching-device L3 and presenter verification close remaining gaps.",
+    description: "Android backend exposes a native-session contract: wzzc-dev/window/android supplies an ANativeWindow surface and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until window-hosted matching-device L3 and presenter verification close remaining gaps.",
   }
 }
 

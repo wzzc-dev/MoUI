@@ -5,10 +5,10 @@ test "wechat_backend_info_has_wechat_kind" {
 }
 
 ///|
-test "wechat_readiness_reports_runtime_partial" {
+test "wechat_readiness_reports_experimental" {
   let readiness = wechat_readiness()
-  assert_true(readiness.ready)
-  assert_eq(readiness.status, "runtime_partial")
+  assert_false(readiness.ready)
+  assert_eq(readiness.status, "experimental")
   assert_true(readiness.blocked_by.length() >= 2)
 }
 
@@ -43,5 +43,5 @@ test "wechat_backend_full_info_has_all_fields" {
   assert_true(info.capabilities.canvas_surface)
   assert_false(info.services.clipboard)
   assert_true(info.input.pointer)
-  assert_true(info.readiness.ready)
+  assert_false(info.readiness.ready)
 }

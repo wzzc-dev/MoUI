@@ -1,5 +1,5 @@
 ///|
-test "ios backend reports usable runtime_partial capabilities" {
+test "ios backend reports experimental readiness" {
   let info = backend_info()
   assert_true(info.host_info.backend == @host.HostBackendKind::Native)
   inspect(info.capabilities.embedded_view, content="true")
@@ -10,10 +10,10 @@ test "ios backend reports usable runtime_partial capabilities" {
   inspect(info.capabilities.accessibility, content="true")
   inspect(info.capabilities.async_image, content="true")
   inspect(info.services.clipboard, content="true")
-  inspect(info.readiness.ready, content="true")
-  inspect(info.readiness.status, content="runtime_partial")
+  inspect(info.readiness.ready, content="false")
+  inspect(info.readiness.status, content="experimental")
   assert_true(info.readiness.blocked_by.length() >= 1)
-  assert_true(info.readiness.blocked_by[0].contains("window-hosted iOS"))
+  assert_true(info.readiness.blocked_by[0].contains("experimental"))
   let summary = ios_capability_summary()
   inspect(summary.label, content="iOS host")
   inspect(summary.window_lifecycle, content="true")

@@ -1,10 +1,12 @@
 # WeChat Mini Program Support
 
-WeChat Mini Program support is a **runtime_partial** Canvas 2D WebAssembly
-route. Unlike Android, iOS, and HarmonyOS, it does not use the native mobile
+WeChat Mini Program support is an **experimental** Canvas 2D WebAssembly
+route (product_class `experimental`, `ready=false`). Unlike Android, iOS, and
+HarmonyOS, it does not use the native mobile
 `window` event loop: the Mini Program template calls the canvas host callbacks
-directly. It is usable for development and demos, but is **not**
-product-complete until real Mini Program pixel smoke, touch-event verification,
+directly. The code paths compile, but no development/demonstration usability
+or product commitment is made until real Mini Program pixel smoke,
+touch-event verification,
 and wx API service integrations close remaining gaps.
 
 The Skyline rendering engine provides enhanced Canvas 2D performance in the

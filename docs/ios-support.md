@@ -1,7 +1,9 @@
 # iOS Support
 
 iOS uses the **embedded runtime backend** route and is currently
-`runtime_partial`. `wzzc-dev/window/ios` owns UIKit lifecycle, surface, and
+**experimental** (product_class `experimental`, `ready=false`): the code paths
+compile and host-sim tests pass, but no development/demonstration usability or
+product commitment is made without matching-simulator/device evidence. `wzzc-dev/window/ios` owns UIKit lifecycle, surface, and
 input callbacks; `moui/backend/ios` assembles the MoUI runtime session and
 `moui/backend/ios/skia` provides presentation.
 
@@ -77,6 +79,7 @@ verified by matching-host evidence.
 
 ## Status
 
-The route is available for development and template integration, but remains
-`runtime_partial`. See `docs/platform-readiness-declaration.md` and
+The route compiles and is usable for template integration, but remains
+**experimental** (product_class `experimental`, `ready=false`). See
+`docs/platform-readiness-declaration.md` and
 `docs/window-hosted-moui.md` for the promotion criteria.

@@ -1,6 +1,6 @@
 # iOS 支持
 
-iOS 使用**嵌入运行时后端**路径，目前状态为 `runtime_partial`。
+iOS 使用**嵌入运行时后端**路径，目前状态为 **experimental**（product_class `experimental`，`ready=false`）：代码路径可编译且 host-sim tests 通过，但在匹配模拟器/设备证据落地前，不做任何开发/演示可用性或产品承诺。
 `wzzc-dev/window/ios` 拥有 UIKit 生命周期、Surface 与输入回调；
 `moui/backend/ios` 组装 MoUI runtime session，`moui/backend/ios/skia`
 提供呈现器。
@@ -74,5 +74,5 @@ moon test moui/backend/ios --target native
 
 ## 状态
 
-该路径可用于开发与模板集成，但仍为 `runtime_partial`。升级条件见
+该路径可编译并可用于模板集成，但仍为 **experimental**（product_class `experimental`，`ready=false`）。升级条件见
 `docs/platform-readiness-declaration.md` 与 `docs/window-hosted-moui.md`。

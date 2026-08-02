@@ -1,5 +1,5 @@
 ///|
-test "ios skia preflight names runtime_partial requirements" {
+test "ios skia preflight names experimental requirements" {
   let summary = ios_skia_provider_preflight_summary(
     options=IosSkiaAppOptions::new(
       font_resolution=@skia_renderer.SkiaFontResolution::EmptyTypeface,
@@ -9,7 +9,7 @@ test "ios skia preflight names runtime_partial requirements" {
   assert_true(
     summary.contains("presenter=iOS UIKit UIImageView Skia pixel presenter"),
   )
-  assert_true(summary.contains("runtime_status=runtime_partial"))
+  assert_true(summary.contains("runtime_status=experimental"))
   assert_true(summary.contains("host=iOS host"))
   assert_true(summary.contains("font=empty-typeface"))
 }

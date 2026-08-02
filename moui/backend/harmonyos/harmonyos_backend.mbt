@@ -37,11 +37,12 @@ pub(all) struct HarmonyOsBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// `ready` means the window-hosted path is usable for app development
-/// and demos (aligned with Linux host usability). It does **not** mean full
-/// L3 runtime promotion, commercial signing, or GPU seven-gate claims.
+/// `ready` means the window-hosted path is **experimental**: it compiles and
+/// host-sim tests pass, but no development/demonstration usability or product
+/// commitment is made without signed-device evidence. It does **not** mean
+/// full L3 runtime promotion, commercial signing, or GPU seven-gate claims.
 ///
-/// `status` is a coarse evidence class: `runtime_partial` until signed-device
+/// `status` is a coarse evidence class: `experimental` until signed-device
 /// full smoke and presenter verification close remaining gaps.
 pub(all) struct HarmonyOsBackendReadiness {
   ready : Bool
@@ -178,10 +179,10 @@ pub fn harmonyos_capability_matrix() -> HarmonyOsBackendCapabilities {
 ///|
 pub fn harmonyos_readiness() -> HarmonyOsBackendReadiness {
   {
-    ready: true,
-    status: "runtime_partial",
+    ready: false,
+    status: "experimental",
     blocked_by: [
-      "commercial/signed-device window-hosted smoke is not yet status=passed", "checked-in smoke still lacks a complete attach/resize/input/IME/clipboard suite",
+      "product_class=experimental: no development/demonstration usability commitment without signed-device evidence", "commercial/signed-device window-hosted smoke is not yet status=passed", "checked-in smoke still lacks a complete attach/resize/input/IME/clipboard suite",
       "actualPresenterRoute remains unverified; GPU seven-gate promotion is not claimed",
     ],
     next_steps: [
@@ -203,7 +204,7 @@ pub fn backend_info() -> HarmonyOsBackendInfo {
     services: harmonyos_service_capabilities(),
     input: harmonyos_input_capabilities(),
     readiness: harmonyos_readiness(),
-    description: "HarmonyOS backend exposes a native-session contract: wzzc-dev/window/harmonyos supplies an XComponent native-window handle and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until signed-device full L3 smoke and presenter verification close remaining gaps.",
+    description: "HarmonyOS backend exposes a native-session contract: wzzc-dev/window/harmonyos supplies an XComponent native-window handle and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until signed-device full L3 smoke and presenter verification close remaining gaps.",
   }
 }
 

@@ -1,6 +1,6 @@
 # HarmonyOS 支持
 
-HarmonyOS 使用**嵌入运行时后端**路径，目前状态为 `runtime_partial`。
+HarmonyOS 使用**嵌入运行时后端**路径，目前状态为 **experimental**（product_class `experimental`，`ready=false`）：代码路径可编译且 host-sim tests 通过，但在签名设备证据落地前，不做任何开发/演示可用性或产品承诺。
 `wzzc-dev/window/harmonyos` 拥有 Stage Ability、XComponent Surface、生命周期与
 输入队列；`moui/backend/harmonyos` 将回调适配到 MoUI runtime session。
 
