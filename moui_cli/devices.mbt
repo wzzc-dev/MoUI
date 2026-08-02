@@ -12,7 +12,7 @@ priv struct Device {
   name : String
   state : String
   kind : String // emulator | physical | unknown
-} derive(Debug, Eq)
+}
 
 ///|
 priv struct ParsedDevices {

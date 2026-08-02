@@ -20,7 +20,6 @@ test "test_parse_run_args_basic" {
         fail("expected options")
         return
       }
-      inspect(options.app, content="showcase")
       assert_false(options.fallback_skia)
       assert_false(options.no_build)
       assert_false(options.no_install)
@@ -187,7 +186,6 @@ test "test_parse_run_args_rejects_unknown_option" {
 ///|
 test "test_apply_config_overrides_run_preserves_cli_values" {
   let options : RunOptions = {
-    app: "demo",
     app_config_path: Some("/cli/moui.mobile.json"),
     device: Some("emulator-5554"),
     renderer: Some("skia"),
@@ -215,7 +213,6 @@ test "test_apply_config_overrides_run_preserves_cli_values" {
 ///|
 test "test_apply_config_overrides_run_fills_none_with_defaults" {
   let options : RunOptions = {
-    app: "demo",
     app_config_path: None,
     device: None,
     renderer: None,
@@ -267,7 +264,6 @@ test "test_find_build_artifact_returns_platform_suffix" {
 ///|
 test "test_resolve_target_device_uses_supplied_id" {
   let options : RunOptions = {
-    app: "demo",
     app_config_path: None,
     device: Some("emulator-5554"),
     renderer: None,
@@ -345,7 +341,6 @@ test "test_run_result_to_json_emits_schema" {
 ///|
 test "test_build_options_from_run_options_preserves_cli_overrides" {
   let options : RunOptions = {
-    app: "demo",
     app_config_path: Some("/cli/moui.mobile.json"),
     device: Some("emulator-5554"),
     renderer: Some("skia"),
@@ -389,7 +384,6 @@ test "test_build_options_from_run_options_preserves_cli_overrides" {
 ///|
 test "test_build_options_from_run_options_uses_defaults_when_none" {
   let options : RunOptions = {
-    app: "demo",
     app_config_path: None,
     device: None,
     renderer: None,
@@ -415,7 +409,6 @@ test "test_build_options_from_run_options_uses_defaults_when_none" {
 ///|
 test "test_build_options_from_run_options_passes_sdk_override" {
   let options : RunOptions = {
-    app: "demo",
     app_config_path: None,
     device: None,
     renderer: None,

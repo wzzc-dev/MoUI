@@ -89,7 +89,6 @@ test "project names and validation reject unsafe identifiers" {
     project_id_from_path("/tmp/123 Hello-app"),
     content="app_123_hello_app",
   )
-  inspect(kebab_name("sample_app"), content="sample-app")
   inspect(product_name("sample_app"), content="SampleApp")
   inspect(
     validate_project_options(test_project_options(["web"])) is Ok(_),
@@ -224,15 +223,6 @@ test "mobile config contains window-hosted platform defaults" {
     harmonyos.get("compatibleSdkVersion") is Some(Number(20.0, repr=_)),
     content="true",
   )
-}
-
-///|
-test "file plan digest is deterministic and content-sensitive" {
-  let first = [text_file("b.txt", "two"), text_file("a.txt", "one")]
-  let second = [text_file("a.txt", "one"), text_file("b.txt", "two")]
-  let changed = [text_file("a.txt", "one"), text_file("b.txt", "changed")]
-  inspect(file_plan_digest(first) == file_plan_digest(second), content="true")
-  inspect(file_plan_digest(first) == file_plan_digest(changed), content="false")
 }
 
 ///|

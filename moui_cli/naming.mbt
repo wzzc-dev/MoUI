@@ -39,11 +39,6 @@ fn project_id_from_path(path : String) -> String {
 }
 
 ///|
-fn kebab_name(id : String) -> String {
-  id.replace_all(old="_", new="-")
-}
-
-///|
 fn product_name(id : String) -> String {
   let builder = StringBuilder::new()
   let capitalize = Ref(true)

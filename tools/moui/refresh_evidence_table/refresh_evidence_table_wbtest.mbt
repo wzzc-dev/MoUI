@@ -36,26 +36,6 @@ test "dry-run template includes manual review boundary" {
 }
 
 ///|
-test "filters successful jobs and artifact names" {
-  let jobs = (
-    {
-      "jobs": [
-        { "name": "pr-profile", "conclusion": "success" },
-        { "name": "failed-job", "conclusion": "failure" },
-        { "name": "api-surface", "conclusion": "success" },
-      ],
-    } : Json)
-  let artifacts = (
-    { "artifacts": [{ "name": "renderer-proof" }, { "name": "logs" }] } : Json)
-  let expected_jobs =
-    #|["pr-profile", "api-surface"]
-  let expected_artifacts =
-    #|["renderer-proof", "logs"]
-  debug_inspect(successful_job_names(jobs), content=expected_jobs)
-  debug_inspect(artifact_names(artifacts), content=expected_artifacts)
-}
-
-///|
 test "parses payload and builds live report" {
   let payload =
     #|{

@@ -54,7 +54,7 @@ test "RuntimeAgentHost reads committed semantics and performs typed actions" {
       snapshot.generation
     }
     Ok(_) => fail("first read must return a full snapshot")
-    Err(error) => fail("unexpected read error: \{to_repr(error)}")
+    Err(error) => fail("unexpected read error: \{Repr(error)}")
   }
   let semantic_id = @core.SemanticId::parse("fixture.activate").unwrap()
   match
@@ -64,7 +64,7 @@ test "RuntimeAgentHost reads committed semantics and performs typed actions" {
       precondition: AgentGenerationPrecondition::Exact(generation),
     }) {
     Ok(receipt) => assert_true(receipt.after >= receipt.before)
-    Err(error) => fail("unexpected action error: \{to_repr(error)}")
+    Err(error) => fail("unexpected action error: \{Repr(error)}")
   }
 }
 

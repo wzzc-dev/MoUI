@@ -5,38 +5,33 @@ let mobile_config_schema_version : Int = 1
 priv struct MobileAndroid {
   application_id : String
   min_sdk : Int
-} derive(Eq)
+}
 
 ///|
 priv struct MobileIos {
   bundle_id : String
   product_name : String
-  deployment_target : String
-} derive(Eq)
+}
 
 ///|
 priv struct MobileHarmonyos {
   bundle_name : String
-  product_name : String
   app_name : String?
   module_name : String?
   module_description : String?
   entry_description : String?
   compatible_sdk_version : Int
-} derive(Eq)
+}
 
 ///|
 priv struct MobileApp {
   id : String
   display_name : String
-  artifact_name : String
-  app_package : String
-  schema_version : Int
   metadata_path : String
   android : MobileAndroid?
   ios : MobileIos?
   harmonyos : MobileHarmonyos?
-} derive(Eq)
+}
 
 ///|
 fn mobile_optional_string(
@@ -128,15 +123,15 @@ fn parse_mobile_ios(value : Json, label : String) -> Result[MobileIos, String] {
     Ok(result) => result
     Err(message) => return Err(message)
   }
-  let deployment_target = match
+  let _deployment_target = match
     json_required_string(fields, "deploymentTarget", label) {
     Ok(result) => result
     Err(message) => return Err(message)
   }
-  if !mobile_numeric_dotted_version_at_least(deployment_target, 15, 0) {
+  if !mobile_numeric_dotted_version_at_least(_deployment_target, 15, 0) {
     return Err(label + ".deploymentTarget must be at least 15.0")
   }
-  Ok({ bundle_id, product_name, deployment_target })
+  Ok({ bundle_id, product_name })
 }
 
 ///|
@@ -161,7 +156,7 @@ fn parse_mobile_harmonyos(
     Ok(result) => result
     Err(message) => return Err(message)
   }
-  let product_name = match json_required_string(fields, "productName", label) {
+  let _product_name = match json_required_string(fields, "productName", label) {
     Ok(result) => result
     Err(message) => return Err(message)
   }
@@ -193,7 +188,6 @@ fn parse_mobile_harmonyos(
   }
   Ok({
     bundle_name,
-    product_name,
     app_name,
     module_name,
     module_description,
@@ -240,12 +234,12 @@ fn read_mobile_app_at(metadata_path : String) -> Result[MobileApp, String] {
     Ok(result) => result
     Err(message) => return Err(message)
   }
-  let artifact_name = match
+  let _artifact_name = match
     json_required_string(fields, "artifactName", metadata_path) {
     Ok(result) => result
     Err(message) => return Err(message)
   }
-  let app_package = match
+  let _app_package = match
     json_required_string(fields, "appPackage", metadata_path) {
     Ok(result) => result
     Err(message) => return Err(message)
@@ -280,17 +274,7 @@ fn read_mobile_app_at(metadata_path : String) -> Result[MobileApp, String] {
       " must configure at least one of android, ios, or harmonyos",
     )
   }
-  Ok({
-    id,
-    display_name,
-    artifact_name,
-    app_package,
-    schema_version,
-    metadata_path,
-    android,
-    ios,
-    harmonyos,
-  })
+  Ok({ id, display_name, metadata_path, android, ios, harmonyos })
 }
 
 ///|

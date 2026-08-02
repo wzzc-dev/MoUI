@@ -14,11 +14,7 @@
 priv struct BuildIosOptions {
   app : MobileApp
   product_name : String?
-  app_config : String
   workspace_root : String
-  project_root : String
-  moui_root : String
-  skia_root : String
   sdk : String
   arch : String
   deployment_target : String?
@@ -36,11 +32,11 @@ priv struct BuildIosOptions {
 fn xcode_version_string() -> String {
   match process_exec_argv(["xcodebuild", "-version"], capture=true) {
     Ok(result) if result.exit_code == 0 => {
-      let line = result.stdout.split("\n").to_array()[0].to_string()
+      let line = result.stdout.split("\n").to_array()[0].to_owned()
       // "Xcode 15.4\n..." -> take the second whitespace-delimited token.
       let parts = line.split(" ").to_array()
       if parts.length() >= 2 {
-        parts[1].to_string()
+        parts[1].to_owned()
       } else {
         ""
       }
@@ -110,7 +106,7 @@ fn version_at_least(actual : String, floor : String) -> Bool {
 fn ios_sdk_path(sdk : String) -> String {
   match
     process_exec_argv(["xcrun", "--sdk", sdk, "--show-sdk-path"], capture=true) {
-    Ok(result) if result.exit_code == 0 => result.stdout.trim().to_string()
+    Ok(result) if result.exit_code == 0 => result.stdout.trim().to_owned()
     _ => ""
   }
 }
@@ -121,7 +117,7 @@ fn ios_sdk_path(sdk : String) -> String {
 fn ios_find_tool(sdk : String, tool : String) -> String {
   match
     process_exec_argv(["xcrun", "--sdk", sdk, "--find", tool], capture=true) {
-    Ok(result) if result.exit_code == 0 => result.stdout.trim().to_string()
+    Ok(result) if result.exit_code == 0 => result.stdout.trim().to_owned()
     _ => ""
   }
 }
@@ -170,28 +166,27 @@ fn patch_plist_string_value(
   }
   // After the key, find the next `<X>...</X>` sibling and rewrite it.
   let search_from = key_pos + key_pattern.length()
-  let after = text.substring(start=search_from)
+  let after = text[search_from:].to_owned()
   let open = match after.find("<") {
     Some(pos) => pos
     None => return text
   }
-  let close = match after.substring(start=open).find(">") {
+  let close = match after[open:].find(">") {
     Some(pos) => pos
     None => return text
   }
   // Tag name inside `<...>` (skipping attributes if any — Info.plist has none).
-  // `close` is the offset of `>` within `after.substring(start=open)`, so the
+  // `close` is the offset of `>` within `after[open:]`, so the
   // tag name (relative to `after`) spans `[open + 1, open + close)`.
-  let tag_body = after.substring(start=open + 1, end=open + close)
-  let tag_name = tag_body.trim().to_string()
+  let tag_body = after[open + 1:open + close].to_owned()
+  let tag_name = tag_body.trim().to_owned()
   let value_open = open + close + 1
-  let value_close = match
-    after.substring(start=value_open).find("</" + tag_name + ">") {
+  let value_close = match after[value_open:].find("</" + tag_name + ">") {
     Some(pos) => pos
     None => return text
   }
-  let prefix = text.substring(end=search_from + value_open)
-  let suffix = after.substring(start=value_open + value_close)
+  let prefix = text[:search_from + value_open].to_owned()
+  let suffix = after[value_open + value_close:].to_owned()
   prefix + new_value + suffix
 }
 
@@ -462,7 +457,7 @@ fn build_ios(
       moonbit_c +
       ")",
     )
-    return Ok({ platform: "ios", build_dir: build_dir_abs, output_artifact: "" })
+    return Ok({ build_dir: build_dir_abs, output_artifact: "" })
   }
   // 6. Resolve iOS SDK + clang/clang++ via xcrun.
   let sdk = options.sdk
@@ -624,7 +619,7 @@ fn build_ios(
   for stub in skia_stubs {
     let source = join_path(skia_root, stub)
     if path_is_file(source) {
-      let obj_name = stub.substring(end=stub.length() - ".cpp".length()) + ".o"
+      let obj_name = stub[:stub.length() - ".cpp".length()].to_owned() + ".o"
       let obj_path = join_path(obj_dir, obj_name)
       match
         compile_ios_object(
@@ -646,7 +641,7 @@ fn build_ios(
     if path_is_file(glue) {
       let base = basename(glue)
       let stem = if base.has_suffix(".mm") {
-        base.substring(end=base.length() - ".mm".length()).to_string()
+        base[:base.length() - ".mm".length()].to_owned()
       } else {
         base
       }
@@ -726,9 +721,5 @@ fn build_ios(
   log_info(
     "This is build/install evidence only until a simulator/device smoke proves first frame, input, resize, and lifecycle.",
   )
-  Ok({
-    platform: "ios",
-    build_dir: build_dir_abs,
-    output_artifact: final_output,
-  })
+  Ok({ build_dir: build_dir_abs, output_artifact: final_output })
 }

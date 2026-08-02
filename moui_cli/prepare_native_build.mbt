@@ -49,7 +49,7 @@ let moon_build_env_blocked_keys : Array[String] = [
 priv struct SkiaLink {
   stub_flags : String
   link_flags : String
-} derive(Eq)
+}
 
 ///|
 fn lookup_static_map(

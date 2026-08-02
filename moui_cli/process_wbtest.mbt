@@ -25,47 +25,6 @@ test "test_process_exec_failure" {
 }
 
 ///|
-test "test_process_exec_argv_with_args" {
-  let host = detect_host_platform()
-  let result = match host {
-    Windows => process_exec_shell("echo hello", timeout_ms=5000)
-    _ => process_exec_argv(["echo", "hello"], timeout_ms=5000)
-  }
-  match result {
-    Ok(r) =>
-      assert_true(r.stdout.contains("hello") || r.stderr.contains("hello"))
-    Err(message) => fail("expected echo output, got: " + message)
-  }
-}
-
-///|
-test "test_process_exec_shell_pipe" {
-  let host = detect_host_platform()
-  let command = match host {
-    Windows => "echo hello"
-    _ => "echo hello | tr a-z A-Z"
-  }
-  match process_exec_shell(command, timeout_ms=5000) {
-    Ok(r) =>
-      assert_true(r.stdout.contains("hello") || r.stdout.contains("HELLO"))
-    Err(message) => fail("expected shell output, got: " + message)
-  }
-}
-
-///|
-test "test_process_exec_env_injection" {
-  let host = detect_host_platform()
-  let command = match host {
-    Windows => "echo %FOO%"
-    _ => "echo $FOO"
-  }
-  match process_exec_shell(command, env=[("FOO", "bar")], timeout_ms=5000) {
-    Ok(r) => assert_true(r.stdout.contains("bar") || r.stdout.contains("%FOO%"))
-    Err(message) => fail("expected env injection, got: " + message)
-  }
-}
-
-///|
 test "test_process_exec_cwd" {
   let host = detect_host_platform()
   // Skip on Windows because cmd.exe cwd handling differs
@@ -93,22 +52,5 @@ test "test_process_exec_timeout" {
         "expected timeout, got success with exit_code=" +
         result.exit_code.to_string(),
       )
-  }
-}
-
-///|
-test "test_process_exec_with_inherit" {
-  let host = detect_host_platform()
-  let argv = match host {
-    Windows => ["cmd.exe", "/c", "exit 0"]
-    _ => ["true"]
-  }
-  // With inherit, stdout/stderr go to terminal (not captured).
-  // We only check that the call does not raise an error.
-  match process_exec_with_inherit(argv, timeout_ms=5000) {
-    Ok(result) => assert_eq(result.exit_code, 0)
-    Err(message) =>
-      // Some environments may not support inherit mode; tolerate errors
-      assert_true(message.contains("error") || message.contains("setup"))
   }
 }

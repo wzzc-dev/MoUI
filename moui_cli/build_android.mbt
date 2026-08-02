@@ -11,10 +11,7 @@
 ///|
 priv struct BuildAndroidOptions {
   app : MobileApp
-  app_config : String
   workspace_root : String
-  project_root : String
-  moui_root : String
   skia_root : String
   abi : String
   compile_sdk : Int
@@ -28,7 +25,6 @@ priv struct BuildAndroidOptions {
 
 ///|
 priv struct BuildResult {
-  platform : String
   build_dir : String
   output_artifact : String
 }
@@ -460,11 +456,7 @@ fn build_android(
       moonbit_c +
       ")",
     )
-    return Ok({
-      platform: "android",
-      build_dir: build_dir_abs,
-      output_artifact: "",
-    })
+    return Ok({ build_dir: build_dir_abs, output_artifact: "" })
   }
   // 5. Resolve Gradle command.
   let (gradle_cmd, _) = match resolve_gradle_command(workspace_root_abs) {
@@ -529,11 +521,7 @@ fn build_android(
     Err(message) => return Err(message)
   }
   log_info("[moui-window-hosted-android] Wrote " + options.output_apk)
-  Ok({
-    platform: "android",
-    build_dir: build_dir_abs,
-    output_artifact: options.output_apk,
-  })
+  Ok({ build_dir: build_dir_abs, output_artifact: options.output_apk })
 }
 
 ///|

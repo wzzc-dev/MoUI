@@ -11,9 +11,12 @@ test "build parser accepts embedded-runtime options" {
   guard parsed is Ok({ platform: "android", options: Some(options), .. }) else {
     fail("expected build arguments to parse")
   }
-  inspect(options.app_config_path, content="Some(/tmp/moui.mobile.json)")
-  inspect(options.renderer, content="Some(skia-raster)")
-  inspect(options.abi, content="Some(x86_64)")
+  debug_inspect(
+    options.app_config_path,
+    content="Some(\"/tmp/moui.mobile.json\")",
+  )
+  debug_inspect(options.renderer, content="Some(\"skia-raster\")")
+  debug_inspect(options.abi, content="Some(\"x86_64\")")
   inspect(options.prepare_only, content="true")
 }
 

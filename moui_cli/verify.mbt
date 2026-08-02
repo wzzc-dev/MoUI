@@ -11,12 +11,10 @@ priv struct ParsedVerify {
 
 ///|
 priv struct VerifyOptions {
-  app : String
   device : String?
   build_dir : String?
   output_path : String?
   require_passed : Bool
-  observation_filter : String?
 }
 
 ///|
@@ -43,7 +41,6 @@ fn verify_usage() -> String {
     #|  --output PATH           Manifest output path. Defaults to
     #|                          `artifacts/<platform>/<app>/verify-manifest.json`.
     #|  --require-passed        Exit non-zero when any observation fails.
-    #|  --filter FILTER         Logcat/hilog/oslog filter expression.
     #|  --json                  Emit machine-readable output.
     #|  -h, --help              Show this help.
   )
@@ -64,7 +61,6 @@ fn parse_verify_args(
   let build_dir : Ref[String?] = Ref(None)
   let output_path : Ref[String?] = Ref(None)
   let require_passed = Ref(false)
-  let filter : Ref[String?] = Ref(None)
   let mut index = 0
   while index < args.length() {
     let argument = args[index]
@@ -85,14 +81,13 @@ fn parse_verify_args(
           Ok(_) => require_passed.val = true
           Err(message) => return Err(message)
         }
-      "--device" | "--build-dir" | "--output" | "--filter" =>
+      "--device" | "--build-dir" | "--output" =>
         match option_value(args, index, inline, name) {
           Ok((value, next)) => {
             match name {
               "--device" => device.val = Some(value)
               "--build-dir" => build_dir.val = Some(value)
               "--output" => output_path.val = Some(value)
-              "--filter" => filter.val = Some(value)
               _ => ()
             }
             index = next
@@ -113,7 +108,6 @@ fn parse_verify_args(
     return Err("usage: moui verify <platform> <app> [options]")
   }
   let platform = positional[0]
-  let app = positional[1]
   match platform {
     "android" | "ios" | "harmonyos" => ()
     _ => return Err("unsupported platform for moui verify: " + platform)
@@ -123,12 +117,10 @@ fn parse_verify_args(
     json: json.val,
     platform,
     options: Some({
-      app,
       device: device.val,
       build_dir: build_dir.val,
       output_path: output_path.val,
       require_passed: require_passed.val,
-      observation_filter: filter.val,
     }),
   })
 }

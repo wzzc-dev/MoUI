@@ -148,7 +148,6 @@ test "write_config then read_config roundtrips" {
       ohpm: Some("/usr/local/bin/ohpm"),
     },
     android: {
-      ..default_android_config(),
       sdk_home: Some("/Users/user/Library/Android/sdk"),
       ndk_home: Some("/Users/user/Library/Android/ndk"),
       abi: ["arm64-v8a", "x86_64"],
@@ -175,14 +174,12 @@ test "cli_config_to_json and cli_config_from_json roundtrip" {
   let original = {
     ..default_cli_config(),
     harmonyos: {
-      ..default_harmonyos_config(),
       sdk_home: Some("/home/sdk"),
       hvigorw: Some("/home/hvigorw"),
       ohpm: Some("/home/ohpm"),
       signing_config_file: Some("/home/signing.json"),
     },
     android: {
-      ..default_android_config(),
       sdk_home: Some("/android/sdk"),
       ndk_home: Some("/android/ndk"),
       abi: ["arm64-v8a"],
@@ -190,13 +187,11 @@ test "cli_config_to_json and cli_config_from_json roundtrip" {
       target_sdk: Some(33),
     },
     ios: {
-      ..default_ios_config(),
       sdk: Some("iphonesimulator"),
       arch: Some("arm64"),
       deployment_target: Some(15),
     },
     paths: {
-      ..default_paths_config(),
       moon_home: Some("/home/moon"),
       moui_root: Some("/home/moui"),
       skia_root: Some("/home/skia"),

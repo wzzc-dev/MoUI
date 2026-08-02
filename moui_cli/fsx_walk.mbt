@@ -37,27 +37,3 @@ fn collect_template_files(
   }
   Ok(files)
 }
-
-///|
-/// Recursively walk `root` and collect relative paths (using `/` separator)
-/// of files for which `predicate` returns true. Returns paths relative to
-/// `root`, sorted lexically. Useful for discovering artifacts by extension.
-fn collect_files_with_predicate(
-  root : String,
-  predicate : (String) -> Bool,
-) -> Array[String] {
-  let entries : Array[String] = @fs.read_dir(root) catch { _ => return [] }
-  entries.sort_by((left, right) => left.lexical_compare(right))
-  let result : Array[String] = []
-  for name in entries {
-    let child = join_path(root, name)
-    if path_is_dir(child) {
-      for sub in collect_files_with_predicate(child, predicate) {
-        result.push(name + "/" + sub)
-      }
-    } else if path_is_file(child) && predicate(name) {
-      result.push(name)
-    }
-  }
-  result
-}

@@ -10,7 +10,7 @@ priv struct ParsedBuild {
   json : Bool
   platform : String
   options : BuildCommandOptions?
-} derive(Debug)
+}
 
 ///|
 priv struct BuildCommandOptions {
@@ -37,7 +37,7 @@ priv struct BuildCommandOptions {
   hvigorw : String?
   ohpm : String?
   signing_config_file : String?
-} derive(Debug)
+}
 
 ///|
 fn build_usage() -> String {
@@ -308,7 +308,7 @@ fn build_android_options_from_command(
   app : MobileApp,
   config : CliConfig,
 ) -> BuildAndroidOptions {
-  let (moui_root, skia_root) = resolve_build_roots(options, config)
+  let (_, skia_root) = resolve_build_roots(options, config)
   let build_dir = if options.build_dir != "" {
     options.build_dir
   } else {
@@ -349,13 +349,7 @@ fn build_android_options_from_command(
   }
   {
     app,
-    app_config: match options.app_config_path {
-      Some(p) => p
-      None => "moui.mobile.json"
-    },
     workspace_root: options.workspace_root,
-    project_root: ".",
-    moui_root,
     skia_root,
     abi,
     compile_sdk,
@@ -376,7 +370,7 @@ fn build_ios_options_from_command(
   app : MobileApp,
   config : CliConfig,
 ) -> BuildIosOptions {
-  let (moui_root, skia_root) = resolve_build_roots(options, config)
+  let (_, _) = resolve_build_roots(options, config)
   let build_dir = if options.build_dir != "" {
     options.build_dir
   } else {
@@ -417,14 +411,7 @@ fn build_ios_options_from_command(
   {
     app,
     product_name: options.product_name,
-    app_config: match options.app_config_path {
-      Some(p) => p
-      None => "moui.mobile.json"
-    },
     workspace_root: options.workspace_root,
-    project_root: ".",
-    moui_root,
-    skia_root,
     sdk,
     arch,
     deployment_target,
@@ -444,7 +431,7 @@ fn build_harmonyos_options_from_command(
   app : MobileApp,
   config : CliConfig,
 ) -> BuildHarmonyosOptions {
-  let (moui_root, skia_root) = resolve_build_roots(options, config)
+  let (_, skia_root) = resolve_build_roots(options, config)
   let build_dir = if options.build_dir != "" {
     options.build_dir
   } else {
@@ -480,13 +467,7 @@ fn build_harmonyos_options_from_command(
   }
   {
     app,
-    app_config: match options.app_config_path {
-      Some(p) => p
-      None => "moui.mobile.json"
-    },
     workspace_root: options.workspace_root,
-    project_root: ".",
-    moui_root,
     skia_root,
     arch,
     renderer,

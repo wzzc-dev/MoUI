@@ -131,11 +131,9 @@ fn platform_file_similarity_budgets() -> Array[PlatformFileSimilarityBudget] {
 ///|
 fn platform_similarity_tokens() -> Array[String] {
   [
-    "macos_", "linux_", "windows_", "win32_", "android_", "ios_",
-    "harmonyos_", "web_",
-    "macos", "linux", "windows", "win32", "android", "ios", "harmonyos",
-    "Macos", "Linux", "Windows", "Win32", "Android", "Ios", "Harmonyos",
-    "Web",
+    "macos_", "linux_", "windows_", "win32_", "android_", "ios_", "harmonyos_", "web_",
+    "macos", "linux", "windows", "win32", "android", "ios", "harmonyos", "Macos",
+    "Linux", "Windows", "Win32", "Android", "Ios", "Harmonyos", "Web",
   ]
 }
 
@@ -160,11 +158,9 @@ fn normalize_platform_tokens(text : String) -> Array[String] {
       char == '_'
     if identifier_char {
       current = current + char.to_string()
-    } else {
-      if current.length() > 0 {
-        tokens.push(current)
-        current = ""
-      }
+    } else if current.length() > 0 {
+      tokens.push(current)
+      current = ""
     }
   }
   if current.length() > 0 {
@@ -186,7 +182,8 @@ fn token_set_dice(first : Array[String], second : Array[String]) -> Double {
       intersection = intersection + 1
     }
   }
-  (2.0 * intersection.to_double()) /
+  2.0 *
+  intersection.to_double() /
   (first_set.length().to_double() + second_set.length().to_double())
 }
 
@@ -196,10 +193,13 @@ fn token_set_dice(first : Array[String], second : Array[String]) -> Double {
 fn mirror_group_name(file : String) -> String {
   let parts = file.split("/").to_array()
   let name = parts[parts.length() - 1].to_owned()
-  for prefix in ["macos_", "linux_", "windows_", "win32_", "android_", "ios_",
-    "harmonyos_", "web_"] {
+  for
+    prefix in [
+      "macos_", "linux_", "windows_", "win32_", "android_", "ios_", "harmonyos_",
+      "web_",
+    ] {
     if name.has_prefix(prefix) {
-      return name.substring(start=prefix.length(), end=name.length())
+      return name[prefix.length():].to_owned()
     }
   }
   name
@@ -212,7 +212,8 @@ fn platform_backend_dirs() -> Array[String] {
 
 ///|
 fn is_platform_backend_file(path : String) -> Bool {
-  if !path.has_suffix(".mbt") || path.contains("_test.mbt") ||
+  if !path.has_suffix(".mbt") ||
+    path.contains("_test.mbt") ||
     path.contains("_wbtest.mbt") {
     return false
   }
@@ -284,29 +285,37 @@ fn validate_platform_file_similarity(
           normalize_platform_tokens(second_text),
         )
         match find_similarity_budget(first, second) {
-          Some(budget) => {
+          Some(budget) =>
             if similarity > budget.max_similarity {
               failures.push(
-                "platform file similarity: " + budget.label + " (" + first +
-                " <-> " + second + ") " +
+                "platform file similarity: " +
+                budget.label +
+                " (" +
+                first +
+                " <-> " +
+                second +
+                ") " +
                 (similarity * 100.0).round().to_int().to_string() +
                 "% exceeds budget " +
                 (budget.max_similarity * 100.0).round().to_int().to_string() +
                 "%",
               )
             }
-          }
-          None => {
+          None =>
             if similarity > threshold {
               failures.push(
-                "platform file similarity: " + first + " <-> " + second +
-                " is " + (similarity * 100.0).round().to_int().to_string() +
-                "% similar (limit " + (threshold * 100.0).round().to_int().to_string() +
+                "platform file similarity: " +
+                first +
+                " <-> " +
+                second +
+                " is " +
+                (similarity * 100.0).round().to_int().to_string() +
+                "% similar (limit " +
+                (threshold * 100.0).round().to_int().to_string() +
                 "%). Fold shared logic into moui/runtime or register a " +
                 "platform_file_similarity_budgets row with a reason.",
               )
             }
-          }
         }
       }
     }

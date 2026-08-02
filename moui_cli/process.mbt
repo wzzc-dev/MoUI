@@ -157,29 +157,3 @@ fn process_exec_argv(
       )
   }
 }
-
-///|
-fn process_exec_shell(
-  command : String,
-  cwd? : String = "",
-  env? : Array[(String, String)] = [],
-  timeout_ms? : Int = 0,
-  capture? : Bool = true,
-  host? : HostPlatform = detect_host_platform(),
-) -> Result[ProcessResult, String] {
-  let argv = match host {
-    Windows => ["cmd.exe", "/c", command]
-    _ => ["/bin/sh", "-c", command]
-  }
-  process_exec_argv(argv, cwd~, env~, timeout_ms~, capture~)
-}
-
-///|
-fn process_exec_with_inherit(
-  argv : Array[String],
-  cwd? : String = "",
-  env? : Array[(String, String)] = [],
-  timeout_ms? : Int = 0,
-) -> Result[ProcessResult, String] {
-  process_exec_argv(argv, cwd~, env~, timeout_ms~, capture=false)
-}
