@@ -14,17 +14,20 @@
   secondary、tertiary、error、surface/on_surface/on_surface_variant，带有
   on-colors 的语义 success/warning/danger/info、outline/outline_variant、focus、
   scrim），因此带品牌的系统不需要临时推导角色。
-- `Theme` 是一个令牌记录，带有一等的 `components : ComponentThemes`
-  字段（`button`、`text_field`、`surface`、`choice_control`、`progress`、
-  `slider`、`picker`、`feedback`、`badge`、`form_validation`）。每个组件主题都保存令牌集
-  （`ControlStateTokens`），并在绘制时通过 `ButtonTheme::resolve(variant, state)`
-  等解析为 `ControlStateStyle`。应用和控件代码读取规范分组，例如
+- `Theme` 是一个令牌记录，包含 scheme、palette、spacing、radius、typography、
+  shadow、motion 和 surfaces——**没有控制词汇表**（ADR 0017）。
+  控制令牌位于 `@views.ControlThemeSet`（`button`、`text_field`、
+  `surface`、`choice_control`、`progress`、`slider`、`picker`、`feedback`、
+  `badge`、`form_validation`），每个都保存 `ControlStateTokens`，并在绘制时通过
+  `ButtonTheme::resolve(variant, state)` 等解析为 `ControlStateStyle`。
+  应用和控件代码读取规范分组，例如
   `theme.palette.foreground`、`theme.palette.on_primary`、
-  `theme.components.button.primary`、`theme.typography.body`、
+  `control_set.button.primary`、`theme.typography.body`、
   `theme.spacing_scale.sm` 和 `theme.radius_scale.md`。
 - `@views.light_theme()` / `@views.dark_theme()` 通过
   `resolve_minimal_theme` 解析 Minimal 预设。`@views.theme(...)` 会把整组令牌
-  （包括 `components?`）叠加到可选基底上。
+  叠加到可选基底上。环境携带的 `ControlThemeSet` 由
+  `minimal_control_theme_set(theme)` 构建，并与 `Theme` 一起穿过视图环境。
 - `Environment` 携带 `theme_spec`（用户意图）、`system_scheme`
   （宿主报告）和解析后的 `theme`。`with_system_scheme` 会从 `theme_spec`
   重建完整主题，因此宿主 `ThemeChanged(Dark)` 事件会切换调色板、表面和阴影，
@@ -38,8 +41,8 @@
   叶子控件会发出 `"context"` 修订令牌，使协调过程延后到由环境驱动的重绘。
   组合视图通过共享的 `views_ambient_theme(theme)` 辅助函数解析构造期布局读取
   （spacing/shadow，兜底到 `Theme::neutral`），并把解析后的主题传给叶子子控件。
-- `ButtonVariant::style(theme)` 通过 `ButtonVariantToken` 从
-  `theme.components.button` 解析变体；控件默认走这条路径，`style?` 是一次性覆盖。
+- `ButtonVariant::style(control_set)` 通过 `ButtonVariantToken` 从
+  `control_set.button` 解析变体；控件默认走这条路径，`style?` 是一次性覆盖。
   `ButtonVariant` 覆盖 Primary/Tonal/Outline/Ghost/Subtle/SubtleBrand。
   `ControlStateStyle` 携带可选的 `bottom_border_only` 和 `inner_focus_border`
   字段，使 Fluent 2 下划线输入框和焦点显露内描边无需变体专用绘制路径也能渲染。
@@ -62,7 +65,7 @@
   `ColorPalette` 表面层级（surface=background_2、surface_variant=background_3、
   outline=stroke_1、outline_variant=stroke_2）。`divider` 使用
   `outline_variant`（柔和的 stroke_2）；菜单/弹出层读取
-  `theme.components.surface.overlay_shadow`（Fluent 浮出阴影），并兜底到
+  `control_set.surface.overlay_shadow`（Fluent 浮出阴影），并兜底到
   `shadow_scale.lg`/`md`。
 - `presence_dot(status, ...)` 将 Fluent 2 PresenceBadge 状态点
   （Available/Away/Busy/Offline/Unknown）渲染为带对比边框的实心圆，可叠放在头像上。

@@ -82,12 +82,14 @@ app-facing facade/extension over `core`，第一阶段主要通过
   `BorderStyle`、`ShadowStyle`、`Theme` token 这类基础值。picker 的低层
   option representation 是 `views` 包内私有实现细节；普通 app 使用
   `@views.PickerItem` / `@views.picker`。
-- **组件 theme schema 仍在 core（S1）**：`ComponentThemes` / `ButtonTheme` /
-  `ControlStateTokens` / `ControlStateStyle` 等挂在 `@core.Theme.components` 上，
-  供 resolver 与 `moui_theme` 投影使用。因 `core` 不能依赖 `views`，在拆分
-  `Theme`（去掉 `components` 字段）的 RFC 之前，这些类型的**定义**留在
-  `core`；app 侧控件外观仍优先 `@views.*Style` 与 `light_theme`/`theme`。
-  详见 `docs/plans/active/core-component-theme-to-views.md`。
+- **控件主题归 `views`（ADR 0017）**：`Theme` 只携带中性的 palette/spacing/
+  typography，没有 `components` 字段。控件 token（`ControlThemeSet`、
+  `ButtonTheme`、`ControlStateTokens`、`ControlStateStyle`）在
+  `moui/views/style/`（`control_theme_tokens.mbt`、`control_theme_set.mbt`、
+  `control_style.mbt`）。app 侧控件外观应通过
+  `@style.views_ambient_control_theme(theme)` 读取 `@views.ControlThemeSet`，
+  并使用 `@views.*Style` 与 `light_theme`/`theme`。详见
+  `docs/plans/done/core-component-theme-to-views.md`（已被 ADR 0017 取代）。
 - **WebView ownership 已迁出**：`WebViewSpec`、`WebViewCommand`、
   `WebViewEvent`、`WebViewNavigationPolicy` 已归 `moui/backend/host` 拥有。
   `core` 只保留 renderer-neutral 的 `PlatformViewPlacement`、

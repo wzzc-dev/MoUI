@@ -16,18 +16,21 @@ adapters that produce the same `@core.Theme`:
   secondary, tertiary, error, surface/on_surface/on_surface_variant, semantic
   success/warning/danger/info with on-colors, outline/outline_variant, focus,
   scrim) so a branded system does not need to derive roles ad hoc.
-- `Theme` is a token record with a first-class `components : ComponentThemes`
-  field (`button`, `text_field`, `surface`, `choice_control`, `progress`,
-  `slider`, `picker`, `feedback`, `badge`, `form_validation`). Each component
-  theme stores token sets (`ControlStateTokens`) resolved to
+- `Theme` is a token record for scheme, palette, spacing, radius, typography,
+  shadow, motion, and surfaces — **no control vocabulary** (ADR 0017).
+  Control tokens live in `@views.ControlThemeSet` (`button`, `text_field`,
+  `surface`, `choice_control`, `progress`, `slider`, `picker`, `feedback`,
+  `badge`, `form_validation`), each storing `ControlStateTokens` resolved to
   `ControlStateStyle` at paint time via `ButtonTheme::resolve(variant, state)`
   etc. App and control code reads canonical groups such as
   `theme.palette.foreground`, `theme.palette.on_primary`,
-  `theme.components.button.primary`, `theme.typography.body`,
+  `control_set.button.primary`, `theme.typography.body`,
   `theme.spacing_scale.sm`, and `theme.radius_scale.md`.
 - `@views.light_theme()` / `@views.dark_theme()` resolve the Minimal preset
   via `resolve_minimal_theme`. `@views.theme(...)` composes whole token groups
-  (including `components?`) over an optional base.
+  over an optional base. The ambient `ControlThemeSet` is built by
+  `minimal_control_theme_set(theme)` and carried through the view
+  environment alongside the `Theme`.
 - `Environment` carries `theme_spec` (user intent), `system_scheme`
   (host-reported), and the resolved `theme`. `with_system_scheme` rebuilds the
   full theme from `theme_spec` so a host `ThemeChanged(Dark)` event switches
@@ -43,8 +46,8 @@ adapters that produce the same `@core.Theme`:
   construction-time layout reads (spacing/shadow) through a shared
   `views_ambient_theme(theme)` helper (falling back to `Theme::neutral`) and
   pass the resolved theme to their leaf children.
-- `ButtonVariant::style(theme)` resolves a variant from
-  `theme.components.button` via `ButtonVariantToken`; controls default to this
+- `ButtonVariant::style(control_set)` resolves a variant from
+  `control_set.button` via `ButtonVariantToken`; controls default to this
   path and `style?` is a one-shot override. `ButtonVariant` covers
   Primary/Tonal/Outline/Ghost/Subtle/SubtleBrand. `ControlStateStyle` carries
   optional `bottom_border_only` and `inner_focus_border` fields so Fluent 2

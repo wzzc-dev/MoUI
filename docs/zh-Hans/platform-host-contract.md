@@ -5,8 +5,9 @@
 
 `backend/host` 是平台包与平台中立运行时之间的共享边界。它定义
 `HostSurfaceMetrics`、输入能力、坐标策略、`HostEvent`、文本输入会话同步、
-`HostRuntimeDriver`、文件拖放归一化，以及用于平台中立窗口生命周期和多窗口簿记的
-`HostWindowRegistry`。它还暴露 `HostWindowRequestQueue`，让应用/运行时或更高层宿主代码可以
+文件拖放归一化，以及用于平台中立窗口生命周期和多窗口簿记的
+`HostWindowRegistry`。按 ADR 0018，`HostRuntimeDriver`、`RedrawScheduler`
+和 `HostWallClock` 位于 `moui/runtime`；`backend/host` 把它们当作契约消费，但不拥有它们。它还暴露 `HostWindowRequestQueue`，让应用/运行时或更高层宿主代码可以
 排队打开、聚焦、关闭、调整大小、最小化、显示和主窗口请求，而无需把这些请求嵌入平台后端。
 `OpenWindow` 请求除了标题和指标，还携带平台中立的场景 id 和负载，因此未来多窗口宿主有足够的
 应用层身份来为新的平台窗口选择运行时/内容。`HostWindowSceneResolver` 是匹配的共享契约，用于在

@@ -10,7 +10,7 @@
 - **Status**: Accepted
 - **Deciders**: Agent-assisted (AtomCode GLM-5.2)
 - **Related**: supersedes the default "S1 schema stay" path of
-  `docs/plans/active/core-component-theme-to-views.md`; ADR 0014 (core owns
+  `docs/plans/done/core-component-theme-to-views.md`; ADR 0014 (core owns
   value types); ADR 0015 (public ViewNode trait); invariants P3/P6/P7
 
 ### Context
@@ -150,10 +150,10 @@ clear (any pressable element, not just buttons). Only the concrete control
 ### References
 
 - `docs/invariants.md` P3/P6
-- `docs/plans/active/core-component-theme-to-views.md` (supersedes S1 default)
+- `docs/plans/done/core-component-theme-to-views.md` (supersedes S1 default)
 - `moui/core/theme.mbt`, `moui/core/theme_components.mbt`,
   `moui/core/theme_resolver.mbt`
-- `moui/views/control_style.mbt`, `moui/views/style_api.mbt`,
+- `moui/views/style/control_style.mbt`, `moui/views/style_api.mbt`,
   `moui/views/theme.mbt`
 
 ---

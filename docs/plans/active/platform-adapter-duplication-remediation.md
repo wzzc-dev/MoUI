@@ -11,7 +11,7 @@
 - **Decisions**: ADR 0020（platform_bridge + duplication budget）、
   ADR 0018（host split：`HostRuntimeDriver`/wall clock/redraw scheduler 已归
   `moui/runtime`）、ADR 0019（renderer provider）。
-- **Related**: `docs/plans/active/moui-architecture-convergence.md` Phase F
+- **Related**: `docs/plans/done/moui-architecture-convergence.md` Phase F
   （本计划是其收尾）、Phase E（struct-of-closures 先例）。
 
 ## 依据（实测数据，2026-07-29 基线复核）
@@ -109,7 +109,7 @@ event dispatch 调用点、RenderFrameResult apply/finish）到期后 validator
   基线加入每文件预算行。
 - 3.3 文档：architecture-map 所有权表、platform-host-contract、
   ADR 0020 修订（budget 收缩、allowlist 更新）、skills 指针、
-  `docs/plans/active/moui-architecture-convergence.md` Phase F 标注收尾。
+  `docs/plans/done/moui-architecture-convergence.md` Phase F 标注收尾。
 - **Gate**：全部 profile 绿；validator 自测（fixture）绿；
   API surface 只缩有解释；三 static trio 绿。
 

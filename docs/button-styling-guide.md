@@ -20,7 +20,7 @@ color change through these layers before editing:
      dark primaries, near-black on light primaries (luminance threshold 0.55).
 
 2. **Component tokens** — `@views.ControlThemeSet.button : ButtonTheme`
-   (`moui/views/control_theme_tokens.mbt`, `moui/views/control_theme_resolver.mbt`).
+   (`moui/views/style/control_theme_tokens.mbt`, `moui/views/style/control_theme_set.mbt`).
    Per ADR 0017, these token structs live in `moui/views` as `ControlThemeSet`;
    `core` carries no control vocabulary. App-facing one-shot styles remain
    `@views.ButtonStyle` / variant helpers.
@@ -52,7 +52,7 @@ dual-source drift this unification removed. New controls should read
      differentiates `subtle`/`subtle_brand` and adds brand-stroke borders.
 
 3. **State resolution** — `ButtonTheme::resolve(variant, state)`
-   (`moui/views/control_theme_tokens.mbt`).
+   (`moui/views/style/control_theme_tokens.mbt`).
    - Normal state = `variant_tokens.resolve()` (tokens → `ControlStateStyle`).
    - Hovered/Pressed/Focused = normal with a state-layer wash blended onto the
      background via `state_layer_background(base, layer_color, alpha)`. When the
@@ -64,16 +64,19 @@ dual-source drift this unification removed. New controls should read
      are the near-black primary with a translucent primary wash, which is why
      hover/press on the default Primary button is nearly invisible.
 
-4. **Control paint** — `button_control` (`moui/views/control_primitives.mbt`)
-   called by `button` (`moui/views/button.mbt`).
-   - `resolved_style = style? | variant.style(resolved_theme)` — an explicit
+4. **Control paint** — `button_control` (`moui/views/button/button.mbt`)
+   called by `button` (same file; re-exported as `@views.button` via
+   `moui/views/button.mbt`).
+   - `resolved_style = style? | variant.style(control_set)` — an explicit
      `style=` argument is a one-shot override; otherwise the variant resolves
      from `control_set.button` (layer 2/3).
-   - `variant.style(theme)` (`moui/views/style_api.mbt`) maps
-     `ButtonVariant` → `ButtonVariantToken` → `ButtonTheme::resolve`.
-   - Theme is resolved ambient-ly: `theme.unwrap_or(ctx.environment.theme)` at
-     paint time, so dark-mode/a11y/reduced-motion changes apply without the
-     caller rebuilding the view tree.
+   - `variant.style(control_set)` (`moui/views/style/style_api.mbt`) maps
+     `ButtonVariant` → `ButtonVariantToken` → `ButtonTheme::resolve`; the
+     signature takes a `ControlThemeSet`, not a `Theme`.
+   - The `ControlThemeSet` is resolved ambient-ly at paint time via
+     `@style.views_ambient_control_theme(theme)`, so
+     dark-mode/a11y/reduced-motion changes apply without the caller rebuilding
+     the view tree.
 
 ## Variant Cheat Sheet (Minimal preset)
 
@@ -231,7 +234,7 @@ uniformly.
 
 ## Common Pitfalls
 
-- **Editing `moui/core/theme.mbt` or `moui/views/control_style.mbt` to change
+- **Editing `moui/core/theme.mbt` or `moui/views/style/control_style.mbt` to change
   one app's button color is almost always wrong.** Those are framework files
   affecting every app. Use Strategy A or B in the app package instead.
 - **`ButtonStyle::filled/tonal/outline/ghost` are legacy helpers** that bypass

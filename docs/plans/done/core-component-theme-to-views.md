@@ -1,6 +1,11 @@
 # Plan: Component theme / control semantics ownership → views
 
-- **Status**: active
+> **SUPERSEDED** — ADR 0017 (`docs/decisions/0017-theme-and-host-contract.md`)
+> supersedes this plan's default "S1 schema stay" path: `Theme.components` was
+> removed and control tokens moved to `@views.ControlThemeSet`
+> (`moui/views/style/`). Archived to `docs/plans/done/` on 2026-08-02.
+
+- **Status**: done (superseded by ADR 0017)
 - **Goal**: Keep neutral theme **schema** in `core`; move **control-specific**
   component tokens and semantics ownership toward `moui/views` (not domain).
 - **Non-goals**: Domain facade ownership of theme types; letting `core` import
@@ -55,6 +60,11 @@ So “move to views” means one of:
 - `Theme.components` field
 
 ## Acceptance (this plan)
+
+> Fulfilled by ADR 0017 (`docs/decisions/0017-theme-and-host-contract.md`):
+> `Theme.components` was removed and control tokens moved to
+> `@views.ControlThemeSet` (`moui/views/style/`). The S1 default path below was
+> superseded; see the banner at the top of this file.
 
 - [x] Geometry facade exports `MainAxisAlignment` / `CrossAxisAlignment` (related layout sugar; separate small change)
 - [ ] Written ownership rule: component tokens on `Theme` = core schema; control paint styles = views

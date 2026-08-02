@@ -531,7 +531,7 @@ branch on renderer identity, so ADR 0018's host-import baseline holds.
 ### Implementation Progress (Phase E, 2026-07-29)
 
 Provider implementation is now owned by Phase E of the
-[architecture-convergence plan](../plans/active/moui-architecture-convergence.md).
+[architecture-convergence plan](../plans/done/moui-architecture-convergence.md).
 `moui/render` exposes add-only provider bindings that pair a provider with a
 `HostWindowRenderer` factory. Each platform composition root registers its
 ordered bindings and negotiates the concrete surface; no central runtime

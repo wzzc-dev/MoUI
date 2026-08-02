@@ -152,6 +152,40 @@ WeChat `direct-canvas-callback` exception are checked by the MoonBit tool;
 expired allowlist entries fail. Rendering-composition changes also require the
 path-triggered macOS Skia and Web presentation smokes before a runtime claim.
 
+### Architecture convergence validators (ADR 0017–0020)
+
+The four architecture validators from the convergence plan are enforced gates
+(PR profile per `checks/profiles.json`; also in the daily token list above)
+and map to invariants P3/P5/P6/M6:
+
+```sh
+node scripts/validate-core-theme-no-control-surface.mjs  # core keeps no control-only theme/API surface (ADR 0017, P3)
+node scripts/validate-host-import-baseline.mjs           # backend/host default imports stay contracts-only (ADR 0018, P5)
+node scripts/validate-renderer-provider-open-extension.mjs  # render providers stay open-extension; no central matrix (ADR 0019, P6)
+node scripts/validate-platform-adapter-duplication.mjs   # platform adapters converge on platform_bridge; no copies (ADR 0020, M6/P10)
+```
+
+Run them when touching their change surface: core/theme layering, host
+contracts, renderer provider composition, or platform adapters — the same
+surfaces the PR profile gates. When a validator switches from report-only to
+enforce, freeze the baseline in the same change and keep it shrinking or
+stable.
+
+**Adapter duplication budget policy.**
+`checks/platform-adapter-duplication-baseline.json` is the frozen
+post-convergence measurement. Budgets only shrink or stay; growth requires an
+RFC entry in the allowlist, and expired exemptions fail the gate. The
+renderer-provider manifest budgets follow the same shrink-or-stay rule for
+`RendererProviderBinding` composition (ADR 0019).
+
+**Platform profile expectation.** `sh scripts/check.sh --profile platform`
+runs shared platform service checks for host/Web contracts and opportunistic
+Linux protocol/cache sanity, then `checks/profiles.json` owns the
+host-specific backend/provider package steps. The four validators above are
+PR/daily gates; the platform profile adds the matching backend/provider
+package tests, and path-triggered platform smokes remain required before a
+runtime claim.
+
 Playground-focused checks should cover both MoonBit editor behavior and the
 static browser bundle:
 

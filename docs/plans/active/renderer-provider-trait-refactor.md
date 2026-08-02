@@ -2,7 +2,7 @@
 
 - **Status**: superseded on 2026-07-29
 - **Successor**: Phase E of
-  [`moui-architecture-convergence.md`](moui-architecture-convergence.md)
+  [`moui-architecture-convergence.md`](../done/moui-architecture-convergence.md)
 
 The former standalone plan described an intermediate renderer-provider
 refactor. Its remaining work is now implemented and governed as Phase E of the

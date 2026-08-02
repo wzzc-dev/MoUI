@@ -32,6 +32,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `moui/render/skia/` | 基于 `moui_skia` 的 Native Skia renderer facade。 |
 | `moui/render/webgpu_adapter/` | `wasm-gc` 的 Browser WebGPU host-import adapter。 |
 | `moui/render/wgpu/` | 实验性 native WGPU renderer 和 native text providers。 |
+| `moui/render/sun/` | 实验性 Sun CPU raster renderer，基于仓库内 `moui_sun` workspace（ADR 0023：默认能力冻结，不在默认组合根）。 |
+| `moui_sun/` | 实验性 MoonBit 原生 CPU raster graphics/text/softbuffer workspace（ADR 0023）。 |
 | `moui_richtext/` | 富编辑应用使用的 Markdown/rich-text document、editor、command、input、paste、table 和 source-mapping 逻辑。 |
 | `moui_skia/` | 可编辑的 Skia binding 以及 native/fallback capability contract workspace。 |
 | `moui_theme/` | 可选设计系统 addon workspace，涵盖 Material、Carbon、Primer、Fluent、通用 source-mapped token diagnostics，以及 Sickle 等第一方 visual theme addons。 |
@@ -355,7 +357,7 @@ Modifiers 表示为内部 view wrappers，而不是递归重写每个 child view
 
 MoUI 的视觉系统是一条 `ThemeSpec -> resolve_theme -> Theme` 流水线。`core` 拥有中立 schema 和 resolver；controls 在 paint time 从 ambient resolve styles。完整细节见：[视觉主题系统](../visual-theme-system.md)。
 
-要点：`@views.light_theme()` / `@views.dark_theme()` resolve Minimal preset，`ButtonVariant::style(theme)` 从 `theme.components.button` resolve，`ControlStateStyle` 位于 `core` 并由 token resolver 和 view-layer style structs 共享，`DesignSemanticPalette` 携带 Fluent 2 neutral ramp。每控件 style resolution 另见 [按钮样式指南](../button-styling-guide.md)。
+要点：`@views.light_theme()` / `@views.dark_theme()` resolve Minimal preset，`ButtonVariant::style(control_set)` 从 `control_set.button`（views 拥有的 `ControlThemeSet`，ADR 0017）resolve，`ControlStateStyle` 位于 `views` 并由 token resolver 和 view-layer style structs 共享，`DesignSemanticPalette` 携带 Fluent 2 neutral ramp。每控件 style resolution 另见 [按钮样式指南](../button-styling-guide.md)。
 
 ## 内置与自定义视图
 
