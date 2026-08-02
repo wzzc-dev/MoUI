@@ -1,13 +1,13 @@
 ///|
 pub fn[Msg] command_palette(
-  commands : Array[ActionCommand],
+  commands : Array[@core.ActionCommand],
   query? : String = "",
-  on_select~ : (CommandIntent) -> Msg,
+  on_select~ : (@core.CommandIntent) -> Msg,
   theme? : @core.Theme,
   width? : Double = 420.0,
   max_height? : Double = 260.0,
 ) -> @core.View[Msg] {
-  let resolved_theme = views_ambient_theme(theme)
+  let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
   for command in commands {
     if command_palette_matches(command, query) {
@@ -23,28 +23,28 @@ pub fn[Msg] command_palette(
   }
   if rows.length() == 0 {
     rows.push(
-      text(
+      @text.text(
         "No commands",
-        role=TextRole::Caption,
+        role=@style.TextRole::Caption,
         theme=resolved_theme,
         width=width - resolved_theme.spacing_scale.md * 2.0,
         height=28.0,
       ),
     )
   }
-  container(
-    scroll_view(
-      column(
+  @container.container(
+    @controls.scroll_view(
+      @layout.column(
         rows,
         spacing=resolved_theme.spacing_scale.xs,
-        align=CrossAlign::Start,
+        align=@style.CrossAlign::Start,
       ),
       width=width - resolved_theme.spacing_scale.md * 2.0,
       height=max_height - resolved_theme.spacing_scale.md * 2.0,
     ),
     width~,
     height=max_height,
-    variant=ContainerVariant::Overlay,
+    variant=@style.ContainerVariant::Overlay,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
   )
@@ -56,8 +56,8 @@ pub fn[Msg] command_palette(
 
 ///|
 fn[Msg] command_palette_row(
-  command : ActionCommand,
-  on_select~ : (CommandIntent) -> Msg,
+  command : @core.ActionCommand,
+  on_select~ : (@core.CommandIntent) -> Msg,
   theme~ : @core.Theme,
   width~ : Double,
 ) -> @core.View[Msg] {
@@ -65,39 +65,39 @@ fn[Msg] command_palette_row(
   let meta = command_palette_meta(command)
   let label_width = @common.view_max_double(120.0, width - 112.0)
   let rows : Array[@core.View[Msg]] = [
-    row(
+    @layout.row(
       [
-        text(
+        @text.text(
           command.display_label(),
-          role=TextRole::Control,
+          role=@style.TextRole::Control,
           theme~,
           width=label_width,
           height=24.0,
         ),
-        text(shortcut, role=TextRole::Mono, theme~, width=96.0, height=24.0),
+        @text.text(shortcut, role=@style.TextRole::Mono, theme~, width=96.0, height=24.0),
       ],
       spacing=theme.spacing_scale.xs,
-      align=CrossAlign::Center,
+      align=@style.CrossAlign::Center,
     ),
   ]
   if meta != "" {
-    rows.push(text(meta, role=TextRole::Caption, theme~, width~, height=22.0))
+    rows.push(@text.text(meta, role=@style.TextRole::Caption, theme~, width~, height=22.0))
   }
-  let base = button(
+  let base = @button.button(
     "",
     on_click=on_select(command.intent),
-    variant=ButtonVariant::Ghost,
+    variant=@style.ButtonVariant::Ghost,
     theme~,
     width~,
     height=if meta == "" { 36.0 } else { 58.0 },
   )
-  overlay(base, column(rows, spacing=0.0, align=CrossAlign::Start))
+  @layout.overlay(base, @layout.column(rows, spacing=0.0, align=@style.CrossAlign::Start))
   .disabled(disabled=!command.enabled)
   .accessibility_label(command.display_label())
 }
 
 ///|
-fn command_palette_meta(command : ActionCommand) -> String {
+fn command_palette_meta(command : @core.ActionCommand) -> String {
   if command.group != "" && command.description != "" {
     command.group + " - " + command.description
   } else if command.group != "" {
@@ -108,7 +108,7 @@ fn command_palette_meta(command : ActionCommand) -> String {
 }
 
 ///|
-fn command_palette_matches(command : ActionCommand, query : String) -> Bool {
+fn command_palette_matches(command : @core.ActionCommand, query : String) -> Bool {
   if query == "" {
     true
   } else {

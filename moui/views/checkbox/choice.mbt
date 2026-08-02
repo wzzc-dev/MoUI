@@ -7,7 +7,7 @@ pub fn[Msg] toggle(
   foreground? : @core.Color,
   check_color? : @core.Color,
 ) -> @core.View[Msg] {
-  @checkbox.checkbox(
+  checkbox(
     label,
     checked~,
     on_change~,
@@ -26,7 +26,7 @@ pub fn[Msg] radio(
   foreground? : @core.Color,
   check_color? : @core.Color,
 ) -> @core.View[Msg] {
-  @checkbox.checkbox(
+  checkbox(
     label,
     checked=selected,
     on_change~,

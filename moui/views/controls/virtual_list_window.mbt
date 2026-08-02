@@ -28,7 +28,7 @@ fn[T, Msg] lazy_list_window(
   let virtual_children : Array[@core.View[Msg]] = []
   if first_visible > 0 {
     virtual_children.push(
-      spacer(min_length=first_visible.to_double() * stride, weight=0.0).key(
+      @container.spacer(min_length=first_visible.to_double() * stride, weight=0.0).key(
         "lazy-list-before",
       ),
     )
@@ -43,13 +43,13 @@ fn[T, Msg] lazy_list_window(
   }
   if hidden_after > 0 {
     virtual_children.push(
-      spacer(min_length=hidden_after.to_double() * stride, weight=0.0).key(
+      @container.spacer(min_length=hidden_after.to_double() * stride, weight=0.0).key(
         "lazy-list-after",
       ),
     )
   }
   scroll_view(
-    list(virtual_children, spacing~),
+    @layout.list(virtual_children, spacing~),
     offset=state.offset(),
     width=0.0,
     height=viewport_height,
@@ -90,7 +90,7 @@ fn[T, Msg] virtual_list_window(
   let virtual_children : Array[@core.View[Msg]] = []
   if first_visible > 0 {
     virtual_children.push(
-      spacer(min_length=first_visible.to_double() * stride, weight=0.0).key(
+      @container.spacer(min_length=first_visible.to_double() * stride, weight=0.0).key(
         "virtual-list-before",
       ),
     )
@@ -105,13 +105,13 @@ fn[T, Msg] virtual_list_window(
   }
   if hidden_after > 0 {
     virtual_children.push(
-      spacer(min_length=hidden_after.to_double() * stride, weight=0.0).key(
+      @container.spacer(min_length=hidden_after.to_double() * stride, weight=0.0).key(
         "virtual-list-after",
       ),
     )
   }
   scroll_view(
-    list(virtual_children, spacing~),
+    @layout.list(virtual_children, spacing~),
     offset=state.offset(),
     width=0.0,
     height=viewport_height,

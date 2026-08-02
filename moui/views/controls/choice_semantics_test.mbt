@@ -12,7 +12,7 @@ test "checkbox exposes role value and checked on the control node" {
 
 ///|
 test "toggle and radio wrap checkbox with public semantics roles" {
-  let switch : @core.View[Unit] = @choice.toggle("Dark mode", true, on_change=_value => {
+  let switch : @core.View[Unit] = @checkbox.toggle("Dark mode", true, on_change=_value => {
     ()
   })
   assert_true(switch.semantics().role == Some(@core.SemanticsRole::Switch))
@@ -22,7 +22,7 @@ test "toggle and radio wrap checkbox with public semantics roles" {
   assert_true(switch_child.role == Some(@core.SemanticsRole::Checkbox))
   assert_true(switch_child.checked is Some(true))
 
-  let option : @core.View[Unit] = @choice.radio("Option A", true, on_change=_value => {
+  let option : @core.View[Unit] = @checkbox.radio("Option A", true, on_change=_value => {
     ()
   })
   assert_true(option.semantics().role == Some(@core.SemanticsRole::Radio))

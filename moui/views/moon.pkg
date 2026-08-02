@@ -23,7 +23,6 @@ import {
   "wzzc-dev/moui/views/controls",
   "wzzc-dev/moui/views/button",
   "wzzc-dev/moui/views/checkbox",
-  "wzzc-dev/moui/views/choice",
   "wzzc-dev/moui/views/container",
   "wzzc-dev/moui/views/divider",
   "wzzc-dev/moui/views/icon",
@@ -40,10 +39,6 @@ import {
   "wzzc-dev/moui/views/feedback",
   "wzzc-dev/moui/views/popover",
 }
-
-import {
-  "wzzc-dev/moui/runtime",
-} for "wbtest"
 
 supported_targets = "+native+wasm-gc+wasm"
 

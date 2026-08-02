@@ -11,7 +11,7 @@ pub fn[Msg] baseline_form_rows(
     children.push(row.label)
     children.push(row.control)
   }
-  custom_children_layout(
+  @controls.custom_children_layout(
     children~,
     measure=ctx => {
       let sizes = ctx.children.map(child => child.size)

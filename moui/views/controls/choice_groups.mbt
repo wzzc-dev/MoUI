@@ -15,7 +15,7 @@ pub fn[Msg] radio_group(
   let rows : Array[@core.View[Msg]] = []
   for item in items {
     rows.push(
-      @choice.radio(
+      @checkbox.radio(
         item.label,
         item.id == selected,
         on_change=_value => on_select(item.id),
