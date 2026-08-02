@@ -41,6 +41,8 @@ ViewDeclaration -> ElementTree
 | `moui/render/skia/` | Native Skia renderer facade over `moui_skia`. |
 | `moui/render/webgpu_adapter/` | Browser WebGPU host-import adapter for `wasm-gc`. |
 | `moui/render/wgpu/` | Experimental native WGPU renderer and native text providers. |
+| `moui/render/sun/` | Experimental Sun CPU raster renderer over the repo-local `moui_sun` workspace (ADR 0023: capability freeze by default, not on default composition roots). |
+| `moui_sun/` | Experimental MoonBit-native CPU raster graphics/text/softbuffer workspace (ADR 0023). |
 | `moui_richtext/` | Markdown/rich-text document, editor, command, input, paste, table, and source-mapping logic used by rich editing apps. |
 | `moui_skia/` | Editable Skia binding and native/fallback capability contract workspace. |
 | `moui_theme/` | Optional design-system addon workspace for Material, Carbon, Primer, Fluent, common source-mapped token diagnostics, and first-party visual theme addons such as Sickle. |
@@ -573,8 +575,9 @@ MoUI's visual system is a `ThemeSpec -> resolve_theme -> Theme` pipeline.
 at paint time. Full details: [Visual Theme System](visual-theme-system.md).
 
 Key points: `@views.light_theme()` / `@views.dark_theme()` resolve the Minimal
-preset, `ButtonVariant::style(theme)` resolves from `theme.components.button`,
-`ControlStateStyle` lives in `core` and is shared by the token resolver and
+preset, `ButtonVariant::style(control_set)` resolves from `control_set.button`
+(the views-owned `ControlThemeSet`, ADR 0017),
+`ControlStateStyle` lives in `views` and is shared by the token resolver and
 view-layer style structs, and `DesignSemanticPalette` carries the Fluent 2
 neutral ramp. See also [Button Styling Guide](button-styling-guide.md) for
 per-control style resolution.

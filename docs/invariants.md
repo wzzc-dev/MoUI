@@ -22,6 +22,8 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | P7 | Native Skia binding ownership + FFI borrow rules go in `moui_skia` | code review | none |
 | P8 | App packages import `wzzc-dev/moui` + domain facades (`geometry`/`graphics`/`animation`/`text`/`state`) + `views` only | `validate-maintenance-baseline.mjs` | `showcase/app` for diagnostics; `for "test"` imports |
 | P9 | App packages must not depend on `moui/runtime`, `moui/render/*`, concrete platform backends, renderer providers, or `moui_theme/*` (unless a design-system preview) | `validate-maintenance-baseline.mjs` | `showcase/app` |
+| P11 | Renderer provider budgets shrink-or-stay: growth in `RendererProvider` / `RendererProviderBinding` provider-ID and capability surface requires an RFC allowlist entry (ADR 0019) | `validate-renderer-provider-open-extension.mjs` + `validate-renderer-provider-manifests.mjs` | RFC allowlist entry |
+| P12 | Platform adapter duplication budget is frozen at the post-convergence measurement (`checks/platform-adapter-duplication-baseline.json`); budgets only shrink or stay, expired exemptions fail, and growth requires an RFC allowlist entry (ADR 0020) | `validate-platform-adapter-duplication.mjs` | RFC allowlist entry |
 
 ## Platform and Renderer Status
 
@@ -66,11 +68,11 @@ When changing button colors or styles, update `docs/button-styling-guide.md` in 
 
 ```
 ColorPalette/from_seed → ButtonTheme/ControlStateTokens/StateLayerTokens →
-minimal_components/minimal_state_layer → ButtonVariant::style/to_token →
+minimal_control_theme_set/minimal_state_layer → ButtonVariant::style/to_token →
 ButtonStyle::filled/tonal/outline/ghost/control_state → button/button_control paint
 ```
 
-Files involved: `moui/core/theme.mbt` (neutral palette/spacing/typography only — no `components` field per ADR 0017), `moui/views/control_theme_tokens.mbt`, `moui/views/control_theme_set.mbt`, `moui/views/control_theme_resolver.mbt`, `moui/views/style_api.mbt`, `moui/views/control_style.mbt`, `moui/views/button.mbt`, `moui/views/control_primitives.mbt`.
+Files involved: `moui/core/theme.mbt` (neutral palette/spacing/typography only — no `components` field per ADR 0017), `moui/views/style/control_theme_tokens.mbt`, `moui/views/style/control_theme_set.mbt` (incl. `views_ambient_control_theme` resolver), `moui/views/style/style_api.mbt` (ButtonVariant::style), `moui/views/style_api.mbt` (@style re-export facade), `moui/views/style/control_style.mbt`, `moui/views/style/control_primitives.mbt`, `moui/views/button/button.mbt` (button/button_control), `moui/views/button.mbt` (re-export).
 Prefer app-level overrides over framework edits.
 
 ## Pre-push Validation

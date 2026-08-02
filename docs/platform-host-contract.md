@@ -6,8 +6,11 @@
 `backend/host` is the shared boundary between platform packages and the
 platform-neutral runtime. It defines `HostSurfaceMetrics`, input capabilities,
 coordinate policies, `HostEvent`, text input session synchronization,
-`HostRuntimeDriver`, file drag/drop normalization, and `HostWindowRegistry` for
-platform-neutral window lifecycle and multi-window bookkeeping.
+file drag/drop normalization, and `HostWindowRegistry` for
+platform-neutral window lifecycle and multi-window bookkeeping. Per ADR 0018,
+`HostRuntimeDriver`, `RedrawScheduler`, and `HostWallClock` live in
+`moui/runtime`; `backend/host` consumes them as contracts but does not own
+them.
 
 `backend/platform_bridge` sits immediately outside this contract. It converts
 already-neutral Close, Focus, resize/scale, redraw, and surface lifecycle facts
