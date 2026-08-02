@@ -18,8 +18,6 @@ pub fn decode_png(Bytes) -> ImageData raise DecodeError
 
 pub fn decode_png_stream(Bytes, on_row~ : (Int, Bytes) -> Unit) -> IhdrData raise DecodeError
 
-pub fn encode_avif(ImageData) -> Bytes raise EncodeError
-
 pub fn encode_bmp(ImageData) -> Bytes raise EncodeError
 
 pub fn encode_gif(ImageData) -> Bytes raise EncodeError

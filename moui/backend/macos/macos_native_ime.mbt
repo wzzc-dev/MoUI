@@ -183,7 +183,9 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
     " MoUI native IME surrounding text passed surrounding-text selection-anchor utf8-offsets grapheme appkit-setMarkedText appkit-firstRectForCharacterRange",
   )
   let composition_input = runtime_slot.driver.focused_text_input()
-  let composition_frame_presented = self.present_native_ime_smoke_frame(window_id, runtime_slot)
+  let composition_frame_presented = self.present_native_ime_smoke_frame(
+    window_id, runtime_slot,
+  )
   let has_composition = composition_input.composition is Some(_)
   let has_composition_cursor = composition_input.composition_cursor is Some(_)
   let composition_ok = composition_frame_presented &&
@@ -232,7 +234,9 @@ fn MacosNativeHostBackend::record_native_ime_composition_smoke(
 ) -> Bool {
   self.coordinator.sync_text_input_session()
   let composition_input = runtime_slot.driver.focused_text_input()
-  let composition_frame_presented = self.present_native_ime_smoke_frame(window_id, runtime_slot)
+  let composition_frame_presented = self.present_native_ime_smoke_frame(
+    window_id, runtime_slot,
+  )
   let composition_ok = composition_frame_presented &&
     composition_input.focused &&
     composition_input.composition is Some(_) &&

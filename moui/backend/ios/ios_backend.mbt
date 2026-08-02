@@ -1,4 +1,3 @@
-
 ///|
 /// Window-hosted native surface handle.
 pub(all) struct IosViewHandle {
@@ -128,11 +127,9 @@ pub fn renderer_provider_adapter_from_ios(
 ) -> @embedded_runtime_backend.RendererProviderAdapter {
   @embedded_runtime_backend.RendererProviderAdapter::new(
     create_renderer=fn(raw, metrics) {
-      provider.create(IosViewHandle::new(raw=raw), metrics)
+      provider.create(IosViewHandle::new(raw~), metrics)
     },
-    sync=fn(raw, metrics) {
-      provider.sync(IosViewHandle::new(raw=raw), metrics)
-    },
+    sync=fn(raw, metrics) { provider.sync(IosViewHandle::new(raw~), metrics) },
     image_loader=provider.image_loader,
   )
 }
@@ -182,7 +179,8 @@ pub fn ios_readiness() -> IosBackendReadiness {
     ready: false,
     status: "experimental",
     blocked_by: [
-      "product_class=experimental: no development/demonstration usability commitment without matching-device evidence", "window-hosted iOS matching-simulator smoke still needs re-recording with --require-passed",
+      "product_class=experimental: no development/demonstration usability commitment without matching-device evidence",
+      "window-hosted iOS matching-simulator smoke still needs re-recording with --require-passed",
       "physical-device and real VoiceOver observations remain open", "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
@@ -228,4 +226,3 @@ pub fn ios_capability_summary(
     description="iOS embedded runtime backend with window HostCmd lifecycle and an ApplicationHandler session. The window embedder owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
   )
 }
-

@@ -66,14 +66,12 @@ test "lower_draw_commands mirrors every variant" {
         color=@core.Color::black(),
       ),
     ),
-    @core.DrawCommand::DrawImage(
-      @core.ImageRun::{
-        source: "",
-        frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
-        opacity: 1.0,
-        fit: @core.ImageFit::Contain,
-      },
-    ),
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: "",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
     @core.DrawCommand::DrawPath(
       @core.PathSpec::new(
         verbs=[@core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0))],

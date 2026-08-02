@@ -215,7 +215,9 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
     )
     is None
   let missing_glyph_recovery_ready = skia_sample_missing_glyph_recovery_ready()
-  let mixed_run_font_fallback_ready = @render.text_mixed_segments("A你\u{1F642}B").length() ==
+  let mixed_run_font_fallback_ready = @render.text_mixed_segments(
+      "A你\u{1F642}B",
+    ).length() ==
     4 &&
     @render.text_grapheme_clusters("\u{1F469}\u{200D}\u{1F4BB}").length() == 1
   let unicode_17_grapheme_boundary_ready = skia_unicode_17_grapheme_boundary_contract_available()
@@ -524,6 +526,7 @@ fn skia_preflight_family_candidates(font : @core.FontSpec) -> Array[String] {
 fn skia_representative_fallback_codepoint(text : String) -> Int {
   @render.representative_fallback_codepoint(text)
 }
+
 ///|
 fn skia_preflight_glyph_count(text : String) -> Int {
   let mut count = 0

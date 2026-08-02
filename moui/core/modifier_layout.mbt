@@ -15,9 +15,11 @@ pub fn[Msg] PaddingModifier::to_any_modifier(
     ..noop_modifier(),
     identity_kind: "Padding",
     declaration: ViewDeclaration::channels(
-      layout=Exact(DeclarationKey::record(type_tag="Padding", fields=[
-        ("insets", declaration_insets(insets)),
-      ])),
+      layout=Exact(
+        DeclarationKey::record(type_tag="Padding", fields=[
+          ("insets", declaration_insets(insets)),
+        ]),
+      ),
       paint=Constant,
       semantics=Constant,
       platform=Constant,

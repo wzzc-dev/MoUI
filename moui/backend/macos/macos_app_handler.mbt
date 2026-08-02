@@ -19,7 +19,9 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
   }
   let base_attributes = @window_core.WindowAttributes::default()
     .with_title(self.title)
-    .with_surface_size(@host.core_size_to_window_surface_size(self.runtime.size()))
+    .with_surface_size(
+      @host.core_size_to_window_surface_size(self.runtime.size()),
+    )
     .with_platform_attributes(platform)
   let attributes = match self.min_window_size {
     Some(min) => base_attributes.with_min_inner_size(@dpi.Size::Logical(min))
@@ -46,7 +48,10 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
         primary=true,
       )
       ignore(
-        self.coordinator.platform_windows.bind(platform_id=window.id(), host_id=window_id),
+        self.coordinator.platform_windows.bind(
+          platform_id=window.id(),
+          host_id=window_id,
+        ),
       )
       self.register_primary_runtime_slot(window_id)
       self.driver.set_redraw_scheduler(() => {
@@ -115,7 +120,8 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match self.coordinator.platform_windows.lookup_host(platform_window_id) {
+  let window_id = match
+    self.coordinator.platform_windows.lookup_host(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }
@@ -340,14 +346,14 @@ fn MacosNativeHostBackend::finish_presented_window(
   if self.record_native_ime_runtime_smoke(window_id) {
     true
   } else if @runtime.finish_first_frame_smoke_auto_exit(
-    platform_name="macOS",
-    title=runtime_slot.record.title,
-    flag=self.first_frame_smoke_auto_exit,
-    finish=fn() {
-      self.first_frame_smoke_auto_exit = false
-      self.coordinator.dispose_window(window_id)
-    },
-  ) {
+      platform_name="macOS",
+      title=runtime_slot.record.title,
+      flag=self.first_frame_smoke_auto_exit,
+      finish=fn() {
+        self.first_frame_smoke_auto_exit = false
+        self.coordinator.dispose_window(window_id)
+      },
+    ) {
     true
   } else if self.performance_smoke_active {
     self.record_performance_smoke_present(window_id, runtime_slot)

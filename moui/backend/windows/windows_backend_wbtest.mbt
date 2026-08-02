@@ -137,6 +137,7 @@ test "windows coordinator async image hook defaults to unavailable" {
       completion,
     ) {
     None => ()
-    Some(_) => fail("expected absent Windows coordinator async image loader hook")
+    Some(_) =>
+      fail("expected absent Windows coordinator async image loader hook")
   }
 }

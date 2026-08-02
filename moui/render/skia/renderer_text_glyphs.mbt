@@ -217,7 +217,6 @@ fn skia_text_contains_emoji_hint(text : String) -> Bool {
   false
 }
 
-
 ///|
 fn skia_codepoint_is_hebrew_script(codepoint : Int) -> Bool {
   codepoint >= 0x0590 && codepoint <= 0x05FF

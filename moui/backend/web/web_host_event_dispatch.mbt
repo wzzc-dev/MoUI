@@ -9,13 +9,12 @@ fn WebApp::dispatch_host_event(
   host_event : @host.HostEvent,
 ) -> Unit {
   match host_event {
-    @host.HostEvent::Resized(metrics) => self.resize_renderer(window_id, metrics)
+    @host.HostEvent::Resized(metrics) =>
+      self.resize_renderer(window_id, metrics)
     _ => ()
   }
-  self.coordinator.dispatch_host_event(
-    window_id,
-    host_event,
-    adjust=event => Some(event),
-  )
+  self.coordinator.dispatch_host_event(window_id, host_event, adjust=event => {
+    Some(event)
+  })
   self.drain_async_host_services()
 }

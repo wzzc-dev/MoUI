@@ -80,7 +80,10 @@ struct LinuxNativeHostBackend {
   coordinator : @runtime.WindowHostCoordinator
   renderer_provider : LinuxRendererProvider
   services : @host.HostServiceBridge
-  platform_slots : @platform_bridge.WindowSlotMap[@window_linux.Window, LinuxClientDecorationState]
+  platform_slots : @platform_bridge.WindowSlotMap[
+    @window_linux.Window,
+    LinuxClientDecorationState,
+  ]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes

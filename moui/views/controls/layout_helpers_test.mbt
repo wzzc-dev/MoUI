@@ -3,6 +3,7 @@
 // The shared helpers drive view layout/paint directly with synthetic
 // contexts (no renderer required).
 
+///|
 fn center_test_rect(width~ : Double, height~ : Double) -> @core.View[Unit] {
   @core.View::from_node(CenterTestRect::{ width, height })
 }
@@ -104,6 +105,7 @@ fn center_paint_context(frame~ : @core.Rect) -> @core.ViewPaintContext {
   }
 }
 
+///|
 test "text forwards explicit alignment to text run" {
   let view : @core.View[Unit] = @text.text(
     "left aligned",

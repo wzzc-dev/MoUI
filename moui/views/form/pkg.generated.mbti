@@ -9,6 +9,8 @@ import {
 }
 
 // Values
+pub fn[Msg] baseline_form_rows(Array[BaselineFormRow[Msg]], width? : Double, label_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
+
 pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @style.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
 pub fn[Msg] drop_zone(title? : String, message? : String, on_drop~ : (Array[String]) -> Msg, theme? : @core.Theme, width? : Double, height? : Double, enabled? : Bool) -> @core.View[Msg]

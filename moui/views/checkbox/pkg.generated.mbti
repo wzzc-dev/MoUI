@@ -11,6 +11,10 @@ pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, theme?
 
 pub fn[Msg] checkbox_control(label~ : String, checked~ : @core.Binding[Bool], theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, box_shape? : @style.ChoiceControlShape, check_style? : @style.CheckMarkStyle, height? : Double, on_change? : ((Bool) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
 
+pub fn[Msg] radio(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+
+pub fn[Msg] toggle(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+
 // Errors
 
 // Types and methods

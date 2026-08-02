@@ -355,7 +355,10 @@ fn sun_text_bidi_visual_clusters(clusters : Array[String]) -> Array[String] {
 
 ///|
 fn sun_text_cluster_is_rtl(cluster : String) -> Bool {
-  let representative = @render.representative_fallback_codepoint(cluster, skip_joiners=true)
+  let representative = @render.representative_fallback_codepoint(
+    cluster,
+    skip_joiners=true,
+  )
   sun_codepoint_is_hebrew_script(representative) ||
   sun_codepoint_is_arabic_script(representative)
 }
@@ -379,7 +382,10 @@ fn sun_text_segment_count(clusters : Array[String]) -> Int {
 
 ///|
 fn sun_text_segment_class(cluster : String) -> Int {
-  let representative = @render.representative_fallback_codepoint(cluster, skip_joiners=true)
+  let representative = @render.representative_fallback_codepoint(
+    cluster,
+    skip_joiners=true,
+  )
   if @render.codepoint_is_emoji_hint(representative) {
     1
   } else if @render.codepoint_is_cjk_ideograph(representative) ||

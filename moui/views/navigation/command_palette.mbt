@@ -74,14 +74,28 @@ fn[Msg] command_palette_row(
           width=label_width,
           height=24.0,
         ),
-        @text.text(shortcut, role=@style.TextRole::Mono, theme~, width=96.0, height=24.0),
+        @text.text(
+          shortcut,
+          role=@style.TextRole::Mono,
+          theme~,
+          width=96.0,
+          height=24.0,
+        ),
       ],
       spacing=theme.spacing_scale.xs,
       align=@style.CrossAlign::Center,
     ),
   ]
   if meta != "" {
-    rows.push(@text.text(meta, role=@style.TextRole::Caption, theme~, width~, height=22.0))
+    rows.push(
+      @text.text(
+        meta,
+        role=@style.TextRole::Caption,
+        theme~,
+        width~,
+        height=22.0,
+      ),
+    )
   }
   let base = @button.button(
     "",
@@ -91,7 +105,10 @@ fn[Msg] command_palette_row(
     width~,
     height=if meta == "" { 36.0 } else { 58.0 },
   )
-  @layout.overlay(base, @layout.column(rows, spacing=0.0, align=@style.CrossAlign::Start))
+  @layout.overlay(
+    base,
+    @layout.column(rows, spacing=0.0, align=@style.CrossAlign::Start),
+  )
   .disabled(disabled=!command.enabled)
   .accessibility_label(command.display_label())
 }
@@ -108,7 +125,10 @@ fn command_palette_meta(command : @core.ActionCommand) -> String {
 }
 
 ///|
-fn command_palette_matches(command : @core.ActionCommand, query : String) -> Bool {
+fn command_palette_matches(
+  command : @core.ActionCommand,
+  query : String,
+) -> Bool {
   if query == "" {
     true
   } else {

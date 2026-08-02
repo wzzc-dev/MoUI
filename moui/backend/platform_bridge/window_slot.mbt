@@ -94,9 +94,6 @@ pub fn[W, X] WindowSlotMap::remove_host(
 
 ///|
 /// Replace the platform-private per-window state (Linux client decorations).
-pub fn[W, X] WindowSlot::set_extra(
-  self : WindowSlot[W, X],
-  extra~ : X,
-) -> Unit {
+pub fn[W, X] WindowSlot::set_extra(self : WindowSlot[W, X], extra~ : X) -> Unit {
   self.extra = extra
 }

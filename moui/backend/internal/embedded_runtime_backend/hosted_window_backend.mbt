@@ -150,9 +150,7 @@ pub fn HostedRuntimeSession::session_generation(
 }
 
 ///|
-pub fn HostedRuntimeSession::surface_epoch(
-  self : HostedRuntimeSession,
-) -> Int {
+pub fn HostedRuntimeSession::surface_epoch(self : HostedRuntimeSession) -> Int {
   self.core.surface_epoch()
 }
 
@@ -254,9 +252,7 @@ pub fn HostedRuntimeSession::take_redraw_requested(
 }
 
 ///|
-pub fn HostedRuntimeSession::present_count(
-  self : HostedRuntimeSession,
-) -> Int {
+pub fn HostedRuntimeSession::present_count(self : HostedRuntimeSession) -> Int {
   self.core.present_count()
 }
 
@@ -316,9 +312,7 @@ pub fn HostedWindowBackend::title(self : HostedWindowBackend) -> String {
 }
 
 ///|
-pub fn HostedWindowBackend::frames_presented(
-  self : HostedWindowBackend,
-) -> Int {
+pub fn HostedWindowBackend::frames_presented(self : HostedWindowBackend) -> Int {
   self.frames_presented
 }
 
@@ -383,12 +377,8 @@ pub fn HostedWindowBackend::attach_session(
       self.last_generation = session.session_generation()
     }
     None =>
-      match HostedRuntimeSession::create(
-        runtime~,
-        raw_handle~,
-        metrics~,
-        adapter~,
-      ) {
+      match
+        HostedRuntimeSession::create(runtime~, raw_handle~, metrics~, adapter~) {
         Some(session) => {
           self.session = Some(session)
           self.last_generation = session.session_generation()
@@ -399,9 +389,7 @@ pub fn HostedWindowBackend::attach_session(
 }
 
 ///|
-pub fn HostedWindowBackend::detach_session(
-  self : HostedWindowBackend,
-) -> Unit {
+pub fn HostedWindowBackend::detach_session(self : HostedWindowBackend) -> Unit {
   match self.session {
     Some(session) => ignore(session.detach())
     None => ()
@@ -520,9 +508,7 @@ pub fn HostedWindowBackend::about_to_wait(self : HostedWindowBackend) -> Unit {
 
 ///|
 /// Request a platform redraw for the hosted window, if one exists.
-pub fn HostedWindowBackend::force_redraw(
-  self : HostedWindowBackend,
-) -> Unit {
+pub fn HostedWindowBackend::force_redraw(self : HostedWindowBackend) -> Unit {
   match self.window {
     Some(window) => (window.request_redraw)()
     None => ()

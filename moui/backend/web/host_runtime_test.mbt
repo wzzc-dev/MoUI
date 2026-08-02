@@ -207,7 +207,8 @@ test "web maps close event to host event" {
     @window_core.WindowEvent::CloseRequested,
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match event {
     Some(@host.HostEvent::CloseRequested) => ()
     _ => fail("expected close requested")
@@ -220,7 +221,8 @@ test "web maps browser theme change to host theme event" {
     @window_core.WindowEvent::ThemeChanged(@window_core.Theme::Dark),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match event {
     Some(@host.HostEvent::ThemeChanged(@core.ColorScheme::Dark)) => ()
     _ => fail("expected host theme change")
@@ -235,7 +237,8 @@ test "web maps surface resize to host metrics" {
     ),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match event {
     Some(@host.HostEvent::Resized(metrics)) => {
       assert_true(
@@ -258,7 +261,8 @@ test "web maps scale factor changes to host metrics" {
     @window_core.WindowEvent::ScaleFactorChanged(2.0, writer),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match event {
     Some(@host.HostEvent::Resized(metrics)) => {
       assert_true(
@@ -284,7 +288,8 @@ test "web maps pointer move and left button to host events" {
     ),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match moved {
     Some(
       @host.HostEvent::Pointer(
@@ -304,7 +309,8 @@ test "web maps pointer move and left button to host events" {
     ),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match down {
     Some(@host.HostEvent::Pointer({ position, phase, button, .. })) => {
       assert_true(position == @core.Point::new(x=5.0, y=6.0))
@@ -325,7 +331,8 @@ test "web maps wheel and focus to host input events" {
     ),
     @core.Point::new(x=12.0, y=34.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match wheel {
     Some(
       @host.HostEvent::Scroll(
@@ -342,7 +349,8 @@ test "web maps wheel and focus to host input events" {
     @window_core.WindowEvent::Focused(true),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match focus {
     Some(@host.HostEvent::Focus({ focused: true, .. })) => ()
     _ => fail("expected focus event")
@@ -365,7 +373,8 @@ test "web maps keyboard modifiers repeat and text" {
     @window_core.WindowEvent::KeyboardInput(None, key_event, false),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::new(shift=true),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match event {
     Some(@host.HostEvent::Keyboard(event)) => {
       inspect(event.key, content="a")
@@ -397,7 +406,8 @@ test "web maps named keys and ignores synthetic keyboard input" {
     @window_core.WindowEvent::KeyboardInput(None, key_event, false),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match event {
     Some(@host.HostEvent::Keyboard(event)) => {
       inspect(event.key, content="Enter")
@@ -409,7 +419,8 @@ test "web maps named keys and ignores synthetic keyboard input" {
     @window_core.WindowEvent::KeyboardInput(None, key_event, true),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match synthetic {
     None => ()
     Some(_) => fail("expected synthetic keyboard input to be ignored")
@@ -427,7 +438,8 @@ test "web maps ime composition lifecycle and redraw" {
     ),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   let expected_preedit = Some(
     @host.HostEvent::TextInput(
       @core.TextInputEvent::CompositionUpdate(
@@ -447,7 +459,8 @@ test "web maps ime composition lifecycle and redraw" {
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("hello")),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match ime {
     Some(@host.HostEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
       inspect(text, content="hello")
@@ -458,7 +471,8 @@ test "web maps ime composition lifecycle and redraw" {
     @window_core.WindowEvent::RedrawRequested,
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
-    scale_factor=1.0)
+    scale_factor=1.0,
+  )
   match redraw {
     Some(@host.HostEvent::RedrawRequested) => ()
     _ => fail("expected redraw requested")

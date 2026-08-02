@@ -23,10 +23,10 @@ pub fn AndroidEmbeddedRuntimeBackend::new(
         let provider = provider_factory()
         @embedded_runtime_backend.RendererProviderAdapter::new(
           create_renderer=fn(raw, metrics) {
-            provider.create(AndroidSurfaceHandle::new(raw=raw), metrics)
+            provider.create(AndroidSurfaceHandle::new(raw~), metrics)
           },
           sync=fn(raw, metrics) {
-            provider.sync(AndroidSurfaceHandle::new(raw=raw), metrics)
+            provider.sync(AndroidSurfaceHandle::new(raw~), metrics)
           },
           image_loader=provider.image_loader,
         )

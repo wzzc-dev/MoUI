@@ -213,7 +213,10 @@ pub fn linux_service_bridge(
       @host.HostServiceRequest::BinaryFile(binary_file_request) =>
         binary_file(binary_file_request)
       @host.HostServiceRequest::ShowMenu(commands) =>
-        @platform_bridge.menu_command_response_with_unavailable(commands, menu(commands))
+        @platform_bridge.menu_command_response_with_unavailable(
+          commands,
+          menu(commands),
+        )
       @host.HostServiceRequest::SetApplicationMenu(_) =>
         @host.HostServiceResponse::Unavailable(
           "application menu bar service is unavailable",
@@ -283,7 +286,9 @@ fn dispatch_linux_file_dialog(
 ) -> Array[String] {
   let title = @platform_bridge.encode_host_string(options.title)
   let filters = @platform_bridge.encode_host_filter_list(options.filters)
-  let default_name = @platform_bridge.encode_host_string(options.default_name.unwrap_or(""))
+  let default_name = @platform_bridge.encode_host_string(
+    options.default_name.unwrap_or(""),
+  )
   let raw_bytes = linux_file_dialog_bytes(
     @platform_bridge.host_file_dialog_kind_code(options.kind),
     title,
@@ -293,7 +298,10 @@ fn dispatch_linux_file_dialog(
     default_name,
     default_name.length(),
   )
-  let selection = @platform_bridge.decode_file_dialog_selection(raw_bytes, trim_paths=true)
+  let selection = @platform_bridge.decode_file_dialog_selection(
+    raw_bytes,
+    trim_paths=true,
+  )
   if selection.length() == 0 {
     // No paths returned — portal desktop and zenity both failed silently.
     // This usually means neither dialog tool is available in the current

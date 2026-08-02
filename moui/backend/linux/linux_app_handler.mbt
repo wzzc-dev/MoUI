@@ -5,7 +5,9 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can
 ) {
   let base_attributes = @window_core.WindowAttributes::default()
     .with_title(self.title)
-    .with_surface_size(@host.core_size_to_window_surface_size(self.runtime.size()))
+    .with_surface_size(
+      @host.core_size_to_window_surface_size(self.runtime.size()),
+    )
   let attributes = if self.transparent_titlebar {
     base_attributes.with_platform_attributes(
       self.platform_attributes.with_titlebar_transparent(true),
@@ -49,7 +51,10 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can
         primary=true,
       )
       ignore(
-        self.coordinator.platform_windows.bind(platform_id=window.id(), host_id=window_id),
+        self.coordinator.platform_windows.bind(
+          platform_id=window.id(),
+          host_id=window_id,
+        ),
       )
       self.register_primary_runtime_slot(window_id)
       self.driver.set_redraw_scheduler(() => {
@@ -127,7 +132,8 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match self.coordinator.platform_windows.lookup_host(platform_window_id) {
+  let window_id = match
+    self.coordinator.platform_windows.lookup_host(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }
@@ -156,10 +162,15 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
             @host.HostEvent::Resized(_) => {
               slot.set_extra(extra=linux_client_decoration_state(slot.window))
               let surface_metrics = linux_window_surface_metrics(slot.window)
-              (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
+              (self.renderer_provider.sync_surface)(
+                slot.window,
+                surface_metrics,
+              )
               match self.coordinator.surface_actions(window_id) {
                 Some(actions) => {
-                  (actions.renderer_resize)(@runtime.to_render_metrics(surface_metrics))
+                  (actions.renderer_resize)(
+                    @runtime.to_render_metrics(surface_metrics),
+                  )
                   (actions.request_redraw)()
                 }
                 None => ()
@@ -197,7 +208,9 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
           (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
           match self.coordinator.surface_actions(window_id) {
             Some(actions) => {
-              (actions.renderer_resize)(@runtime.to_render_metrics(surface_metrics))
+              (actions.renderer_resize)(
+                @runtime.to_render_metrics(surface_metrics),
+              )
               (actions.request_redraw)()
             }
             None => ()
@@ -227,7 +240,9 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
           (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
           match self.coordinator.surface_actions(window_id) {
             Some(actions) => {
-              (actions.renderer_resize)(@runtime.to_render_metrics(surface_metrics))
+              (actions.renderer_resize)(
+                @runtime.to_render_metrics(surface_metrics),
+              )
               (actions.request_redraw)()
             }
             None => ()
@@ -311,8 +326,7 @@ fn LinuxNativeHostBackend::pointer_is_in_client_titlebar(
 ) -> Bool {
   match self.platform_slots.lookup_host(window_id) {
     Some(slot) =>
-      slot.extra.active &&
-      self.last_pointer.y < slot.extra.titlebar_height
+      slot.extra.active && self.last_pointer.y < slot.extra.titlebar_height
     None => false
   }
 }
@@ -470,14 +484,14 @@ fn LinuxNativeHostBackend::redraw_window(
       let presented = completion_presented ||
         (present_completions.is_empty() && result.presented)
       if @runtime.finish_first_frame_smoke_auto_exit(
-        platform_name="Linux",
-        title=runtime_slot.record.title,
-        flag=self.first_frame_smoke_auto_exit && presented,
-        finish=fn() {
-          self.first_frame_smoke_auto_exit = false
-          self.dispose_window(window_id)
-        },
-      ) {
+          platform_name="Linux",
+          title=runtime_slot.record.title,
+          flag=self.first_frame_smoke_auto_exit && presented,
+          finish=fn() {
+            self.first_frame_smoke_auto_exit = false
+            self.dispose_window(window_id)
+          },
+        ) {
         true
       } else {
         if frame_pending ||

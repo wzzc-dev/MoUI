@@ -9,15 +9,49 @@ import {
 // Values
 pub fn builtin_shader_names() -> Array[String]
 
+pub fn codepoint_is_cjk(Int) -> Bool
+
+pub fn codepoint_is_cjk_ideograph(Int) -> Bool
+
+pub fn codepoint_is_emoji_hint(Int) -> Bool
+
+pub fn codepoint_is_hangul_cluster_codepoint(Int) -> Bool
+
+pub fn codepoint_is_hangul_compatibility_jamo(Int) -> Bool
+
+pub fn codepoint_is_hangul_l(Int) -> Bool
+
+pub fn codepoint_is_hangul_lv(Int) -> Bool
+
+pub fn codepoint_is_hangul_lvt(Int) -> Bool
+
+pub fn codepoint_is_hangul_syllable(Int) -> Bool
+
+pub fn codepoint_is_hangul_t(Int) -> Bool
+
+pub fn codepoint_is_hangul_v(Int) -> Bool
+
+pub fn codepoint_is_kana(Int) -> Bool
+
+pub fn codepoint_is_rtl_script(Int) -> Bool
+
 pub fn collect_rect_batches(Array[@core.DrawCommand]) -> Array[RectBatch]
 
 pub fn first_clear_color(Array[@core.DrawCommand]) -> @core.Color
 
 pub fn grow_capacity(UInt64) -> UInt64
 
+pub fn image_placement(@core.Rect, @core.Size, @core.ImageFit) -> ImagePlacement
+
 pub fn import_svg(String) -> SvgImportResult
 
 pub fn lower_draw_commands(Array[@core.DrawCommand]) -> DrawPlan
+
+pub fn negotiate_cpu_raster_surface(SurfaceDescriptor, label~ : String, id~ : String, presentation_model~ : RendererPresentationModel) -> SurfaceNegotiationResult
+
+pub fn negotiate_gpu_surface(SurfaceDescriptor, label~ : String, id~ : String, route_for~ : (GpuHostSurfaceDescriptor) -> SkiaSurfaceRoute) -> SurfaceNegotiationResult
+
+pub fn new_provider_instance(render_frame~ : (@core.DrawFrame) -> RenderFrameResult, recover~ : (String) -> RecoveryResult, dispose~ : () -> Unit) -> RendererInstance
 
 pub fn plan_renderer_command_fallbacks(Array[@core.DrawCommand]) -> RendererCommandPlan
 
@@ -51,6 +85,8 @@ pub fn renderer_provider_binding_providers(Array[RendererProviderBinding]) -> Ar
 
 pub fn renderer_provider_capabilities(provider_id~ : String, backend~ : RendererBackendKind, capability_for~ : (RendererFeature) -> (RendererFeatureStatus, String)) -> Array[RendererBackendFeatureCapability]
 
+pub fn representative_fallback_codepoint(String, skip_joiners? : Bool) -> Int
+
 pub fn resolve_shader_effect(@core.ShaderEffectSpec) -> ShaderRegistryResult
 
 pub fn[P : NativePlatformSurface] resolve_surface_route(P, NativeRendererMode, gpu_available~ : Bool, gpu_promoted~ : Bool) -> SkiaSurfaceRoute
@@ -60,6 +96,18 @@ pub fn select_renderer_provider_binding(Array[RendererProviderBinding], SurfaceD
 pub fn size_dim_to_uint(Double) -> UInt
 
 pub fn tessellate_path(@core.PathSpec) -> PathMesh
+
+pub fn text_bidi_visual_clusters(String) -> Array[String]
+
+pub fn text_grapheme_clusters(String) -> Array[String]
+
+pub fn text_join_clusters(Array[String]) -> String
+
+pub fn text_mixed_segments(String) -> Array[String]
+
+pub fn text_segment_class(String) -> Int
+
+pub fn text_string_arrays_equal(Array[String], Array[String]) -> Bool
 
 // Errors
 
@@ -336,6 +384,18 @@ pub fn HostWindowRenderer::resize(Self, RendererSurfaceMetrics) -> Unit
 pub fn HostWindowRenderer::set_image_resource_change_callback(Self, ((ImageResourceSnapshot) -> Unit)?) -> Unit
 pub fn HostWindowRenderer::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
 pub fn HostWindowRenderer::text_system(Self) -> @core.TextSystem
+
+pub enum ImageCropAxis {
+  None
+  Horizontal
+  Vertical
+}
+
+pub struct ImagePlacement {
+  frame : @core.Rect
+  crop_axis : ImageCropAxis
+  visible : Double
+}
 
 pub(all) struct ImageResourceLifecycle {
   mut records : Map[String, ImageResourceRecord]

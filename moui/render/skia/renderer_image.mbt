@@ -301,26 +301,15 @@ fn skia_image_placement(
       { frame: placement.frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0 }
     @render.ImageCropAxis::Horizontal => {
       let inset = (1.0 - placement.visible) / 2.0
-      {
-        frame: placement.frame,
-        u0: inset,
-        v0: 0.0,
-        u1: 1.0 - inset,
-        v1: 1.0,
-      }
+      { frame: placement.frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0 }
     }
     @render.ImageCropAxis::Vertical => {
       let inset = (1.0 - placement.visible) / 2.0
-      {
-        frame: placement.frame,
-        u0: 0.0,
-        v0: inset,
-        u1: 1.0,
-        v1: 1.0 - inset,
-      }
+      { frame: placement.frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset }
     }
   }
 }
+
 ///|
 pub fn SkiaRasterRenderer::image_resources(
   self : SkiaRasterRenderer,

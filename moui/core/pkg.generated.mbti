@@ -857,10 +857,10 @@ pub fn KeyboardShortcut::display_label(Self) -> String
 pub fn KeyboardShortcut::matches(Self, KeyboardEvent) -> Bool
 pub fn KeyboardShortcut::new(key~ : String, modifiers? : KeyModifiers) -> Self
 
-pub(all) struct KeyboardShortcutModifier[Msg] {
+pub(all) struct KeyboardShortcutModifier {
   shortcut : KeyboardShortcut
 }
-pub fn[Msg] KeyboardShortcutModifier::to_any_modifier(Self[Msg]) -> AnyModifier[Msg]
+pub fn[Msg] KeyboardShortcutModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) enum LayerMask {
   NoMask
