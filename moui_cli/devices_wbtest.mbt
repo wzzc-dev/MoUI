@@ -50,8 +50,8 @@ test "test_parse_adb_devices_ignores_daemon_messages" {
 
 ///|
 test "test_parse_adb_devices_empty_output" {
-  debug_inspect(parse_adb_devices(""), content="[]")
-  debug_inspect(parse_adb_devices("List of devices attached\n"), content="[]")
+  assert_true(parse_adb_devices("").is_empty())
+  assert_true(parse_adb_devices("List of devices attached\n").is_empty())
 }
 
 ///|
@@ -94,12 +94,12 @@ test "test_parse_simctl_list_skips_non_devices_section" {
     #|== Device Pairs ==
     #|    (pair) (Booted)
   let devices = parse_simctl_list(sample)
-  debug_inspect(devices, content="[]")
+  assert_true(devices.is_empty())
 }
 
 ///|
 test "test_parse_simctl_list_empty_output" {
-  debug_inspect(parse_simctl_list(""), content="[]")
+  assert_true(parse_simctl_list("").is_empty())
 }
 
 ///|
@@ -126,9 +126,9 @@ test "test_parse_hdc_targets_single_column" {
 
 ///|
 test "test_parse_hdc_targets_empty_output" {
-  debug_inspect(parse_hdc_targets(""), content="[]")
-  debug_inspect(parse_hdc_targets("[Empty]"), content="[]")
-  debug_inspect(parse_hdc_targets("No target found"), content="[]")
+  assert_true(parse_hdc_targets("").is_empty())
+  assert_true(parse_hdc_targets("[Empty]").is_empty())
+  assert_true(parse_hdc_targets("No target found").is_empty())
 }
 
 ///|
@@ -248,23 +248,4 @@ test "test_list_all_devices_returns_array_without_panic" {
   let devices = list_all_devices(detect_host_platform())
   let _ = devices.length()
   assert_true(true)
-}
-
-///|
-test "test_device_struct_equality" {
-  let d1 : Device = {
-    platform: "android",
-    id: "emulator-5554",
-    name: "sdk_gphone64",
-    state: "device",
-    kind: "emulator",
-  }
-  let d2 : Device = {
-    platform: "android",
-    id: "emulator-5554",
-    name: "sdk_gphone64",
-    state: "device",
-    kind: "emulator",
-  }
-  assert_true(d1 == d2)
 }

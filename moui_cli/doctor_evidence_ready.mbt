@@ -9,7 +9,7 @@ priv struct EvidenceStatus {
   manifest_path : String
   passed : Bool
   observations_summary : String
-} derive(Eq, Show)
+}
 
 ///|
 /// Scan `artifacts/<platform>/*/verify-manifest.json` for the given platforms.

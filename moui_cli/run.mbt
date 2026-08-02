@@ -13,7 +13,6 @@ priv struct ParsedRun {
 
 ///|
 priv struct RunOptions {
-  app : String
   app_config_path : String?
   device : String?
   renderer : String?
@@ -165,7 +164,6 @@ fn parse_run_args(
     return Err("moui run accepts exactly two positional arguments")
   }
   let platform = positional[0]
-  let app = positional[1]
   match platform {
     "android" | "ios" | "harmonyos" => ()
     _ =>
@@ -180,7 +178,6 @@ fn parse_run_args(
     json: json.val,
     platform,
     options: Some({
-      app,
       app_config_path: app_config.val,
       device: device.val,
       renderer: renderer.val,
@@ -783,13 +780,12 @@ fn run_run(parsed : ParsedRun, cwd : String, host : HostPlatform) -> CliOutcome 
   // iOS bundles are directories (`*.app`); Android APKs / HarmonyOS HAPs are
   // files. Using only `path_is_file` silently skips iOS install and then
   // `simctl launch` fails with FBSOpenApplicationServiceErrorDomain code=4.
-  if not(options.no_install) &&
-    (path_is_file(artifact) || path_is_dir(artifact)) {
+  if !options.no_install && (path_is_file(artifact) || path_is_dir(artifact)) {
     match install_on_device(parsed.platform, device, artifact, host) {
       Ok(_) => ()
       Err(message) => return failed_outcome(message, parsed.json, run_usage())
     }
-  } else if not(options.no_install) {
+  } else if !options.no_install {
     return failed_outcome(
       "build artifact not found for install: " + artifact,
       parsed.json,

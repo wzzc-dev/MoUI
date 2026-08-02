@@ -210,13 +210,6 @@ extern "C" fn path_is_symlink_native(path : Bytes) -> Int = "moui_cli_path_is_sy
 extern "C" fn canonical_path_native(path : Bytes) -> Bytes = "moui_cli_canonical_path"
 
 ///|
-#borrow(root, candidate)
-extern "C" fn path_resolves_within_native(
-  root : Bytes,
-  candidate : Bytes,
-) -> Int = "moui_cli_path_resolves_within"
-
-///|
 fn path_is_executable(path : String) -> Bool {
   path_is_executable_native(nul_terminated(path)) == 1
 }
@@ -234,12 +227,6 @@ fn canonical_path(path : String) -> String? {
   } else {
     Some(@utf8.decode_lossy(bytes))
   }
-}
-
-///|
-fn path_resolves_within(root : String, candidate : String) -> Bool {
-  path_resolves_within_native(nul_terminated(root), nul_terminated(candidate)) ==
-  1
 }
 
 ///|
@@ -397,25 +384,6 @@ fn text_file(path : String, text : String) -> PlannedFile {
       bom=false,
     ),
   }
-}
-
-///|
-fn sha256_hex(bytes : Bytes) -> String {
-  @crypto.bytes_to_hex_string(@crypto.sha256(bytes))
-}
-
-///|
-fn file_plan_digest(files : Array[PlannedFile]) -> String {
-  let hasher = @crypto.SHA256::new()
-  let sorted = files.copy()
-  sorted.sort_by((left, right) => left.path.lexical_compare(right.path))
-  for file in sorted {
-    hasher.update(@utf8.encode(file.path[:], bom=false))
-    hasher.update(b"\x00")
-    hasher.update(file.bytes)
-    hasher.update(b"\x00")
-  }
-  @crypto.bytes_to_hex_string(hasher.finalize())
 }
 
 ///|

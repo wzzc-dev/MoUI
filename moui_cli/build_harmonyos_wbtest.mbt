@@ -339,15 +339,11 @@ test "test_apply_harmonyos_window_hosted_identity_sets_bundle_name" {
   let app : MobileApp = {
     id: "showcase",
     display_name: "MoUI Showcase",
-    artifact_name: "showcase",
-    app_package: "examples/showcase/app",
-    schema_version: 1,
     metadata_path: "",
     android: None,
     ios: None,
     harmonyos: Some({
       bundle_name: "dev.wzzc.moui.showcase",
-      product_name: "MoUIShowcase",
       app_name: Some("MoUI Showcase"),
       module_name: Some("entry"),
       module_description: Some("module"),

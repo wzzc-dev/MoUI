@@ -21,7 +21,6 @@ test "test_parse_verify_args_basic" {
         fail("expected options")
         return
       }
-      inspect(options.app, content="showcase")
       assert_false(options.require_passed)
     }
     Err(message) => fail("parse_verify_args failed: " + message)
@@ -33,7 +32,7 @@ test "test_parse_verify_args_options" {
   let parsed = parse_verify_args(
     [
       "ios", "demo", "--device", "UUID-DEAD", "--build-dir", "/tmp/build", "--output",
-      "/tmp/manifest.json", "--require-passed", "--filter", "MoUI:V", "--json",
+      "/tmp/manifest.json", "--require-passed", "--json",
     ],
     "/tmp",
     detect_host_platform(),
@@ -48,7 +47,6 @@ test "test_parse_verify_args_options" {
       debug_inspect(options.device, content="Some(\"UUID-DEAD\")")
       debug_inspect(options.build_dir, content="Some(\"/tmp/build\")")
       debug_inspect(options.output_path, content="Some(\"/tmp/manifest.json\")")
-      debug_inspect(options.observation_filter, content="Some(\"MoUI:V\")")
       assert_true(options.require_passed)
     }
     Err(message) => fail("parse_verify_args failed: " + message)
@@ -206,12 +204,10 @@ test "test_parent_dir_extracts_directory" {
 ///|
 test "test_resolve_verify_device_uses_supplied_id" {
   let options : VerifyOptions = {
-    app: "demo",
     device: Some("emulator-5554"),
     build_dir: None,
     output_path: None,
     require_passed: false,
-    observation_filter: None,
   }
   match resolve_verify_device(options, "android", detect_host_platform()) {
     Ok(device) => {

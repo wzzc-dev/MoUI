@@ -8,17 +8,6 @@ priv enum DoctorProbeKind {
 }
 
 ///|
-fn DoctorProbeKind::code(self : DoctorProbeKind) -> Int {
-  match self {
-    DashVersion => 1
-    DoubleDashVersion => 2
-    SwiftCompilerVersion => 3
-    WaylandPackages => 4
-    XcodeDeveloperPath => 5
-  }
-}
-
-///|
 priv struct DoctorProbeResult {
   status : Int
   output : String

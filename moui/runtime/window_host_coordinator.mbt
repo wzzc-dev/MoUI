@@ -114,7 +114,9 @@ pub fn WindowHostCoordinator::new(
 }
 
 ///|
-pub fn WindowHostCoordinator::services(self : WindowHostCoordinator) -> @backend_host.HostServiceBridge {
+pub fn WindowHostCoordinator::services(
+  self : WindowHostCoordinator,
+) -> @backend_host.HostServiceBridge {
   self.services
 }
 
@@ -130,9 +132,7 @@ pub fn WindowHostCoordinator::attach_surface(
       return false
     }
   }
-  self.surfaces.push(
-    { host_id, renderer, actions, frame_pending: false },
-  )
+  self.surfaces.push({ host_id, renderer, actions, frame_pending: false })
   true
 }
 
@@ -247,7 +247,10 @@ pub fn WindowHostCoordinator::dispatch_host_event(
           match adjusted {
             @backend_host.HostEvent::Keyboard(event) =>
               ignore(
-                slot.driver.dispatch_keyboard_with_services(event, self.services),
+                slot.driver.dispatch_keyboard_with_services(
+                  event,
+                  self.services,
+                ),
               )
             _ => ignore(slot.driver.dispatch(adjusted))
           }
@@ -328,7 +331,7 @@ pub fn WindowHostCoordinator::apply_window_request(
   self : WindowHostCoordinator,
   request : @backend_host.HostWindowRequest,
   open_window~ : (@backend_host.HostWindowOpenRequest) -> @backend_host.HostWindowRequestResult,
-  dispose_window~ : (@backend_host.HostWindowId) -> Unit = (_window_id) => (),
+  dispose_window? : (@backend_host.HostWindowId) -> Unit = _window_id => (),
   exit~ : () -> Unit,
 ) -> @backend_host.HostWindowRequestResult {
   match request {
@@ -340,7 +343,7 @@ pub fn WindowHostCoordinator::apply_window_request(
       })
     @backend_host.HostWindowRequest::CloseWindow(id) =>
       self.apply_platform_window_request(id, request, _actions => {
-        (dispose_window)(id)
+        dispose_window(id)
         if self.runtime_slots.is_empty() {
           exit()
         }
@@ -423,10 +426,7 @@ pub fn WindowHostCoordinator::request_image_resource_redraw_if_changed(
   window_id : @backend_host.HostWindowId,
 ) -> Bool {
   match
-    (
-      self.surface_renderer(window_id),
-      self.runtime_slots.lookup(window_id),
-    ) {
+    (self.surface_renderer(window_id), self.runtime_slots.lookup(window_id)) {
     (Some(renderer), Some(runtime_slot)) => {
       let render_id = to_render_id(window_id)
       let result = self.image_repaint_tracker.request_redraw_if_changed(
@@ -463,7 +463,8 @@ pub fn WindowHostCoordinator::bind_renderer_image_resource_changes(
     Some(renderer) =>
       renderer.set_image_resource_change_callback(
         Some(snapshot => {
-          match self.image_repaint_tracker.revision_for(to_render_id(window_id)) {
+          match
+            self.image_repaint_tracker.revision_for(to_render_id(window_id)) {
             Some(_) =>
               match self.runtime_slots.lookup(window_id) {
                 Some(runtime_slot) =>
@@ -541,7 +542,9 @@ pub fn WindowHostCoordinator::schedule_image_resource_loads(
     Some(loader) =>
       Some(
         loader.schedule_loading_resources(
-          to_render_id(window_id), renderer, completion_source,
+          to_render_id(window_id),
+          renderer,
+          completion_source,
         ),
       )
     None => None
@@ -566,11 +569,7 @@ pub fn WindowHostCoordinator::register_primary_runtime_slot(
   driver : HostRuntimeDriver,
 ) -> Unit {
   ignore(
-    self.runtime_slots.insert_from_registry(
-      self.windows,
-      window_id,
-      driver~,
-    ),
+    self.runtime_slots.insert_from_registry(self.windows, window_id, driver~),
   )
 }
 
@@ -636,12 +635,16 @@ pub fn runtime_slot_needs_redraw(slot : HostWindowRuntimeSlot) -> Bool {
 }
 
 ///|
-pub fn to_host_id(render_id : @render.RenderWindowId) -> @backend_host.HostWindowId {
+pub fn to_host_id(
+  render_id : @render.RenderWindowId,
+) -> @backend_host.HostWindowId {
   @backend_host.HostWindowId::new(render_id.value)
 }
 
 ///|
-pub fn to_render_id(window_id : @backend_host.HostWindowId) -> @render.RenderWindowId {
+pub fn to_render_id(
+  window_id : @backend_host.HostWindowId,
+) -> @render.RenderWindowId {
   @render.RenderWindowId::new(window_id.value)
 }
 
