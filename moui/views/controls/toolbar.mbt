@@ -7,7 +7,7 @@ pub fn[Msg] toolbar(
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   @container.container(
-    row(
+    @layout.row(
       children,
       spacing=resolved_theme.spacing_scale.sm,
       align=@style.CrossAlign::Center,
@@ -49,7 +49,7 @@ pub fn[Msg] button_group(
       .semantics_selected(selected=item.id == selected),
     )
   }
-  row(buttons, spacing=0.0, align=@style.CrossAlign::Center).semantics_role(
+  @layout.row(buttons, spacing=0.0, align=@style.CrossAlign::Center).semantics_role(
     @core.SemanticsRole::ButtonGroup,
   )
 }
@@ -99,7 +99,7 @@ pub fn[Msg] status_bar(
     )
   }
   @container.container(
-    row(
+    @layout.row(
       segments,
       spacing=resolved_theme.spacing_scale.sm,
       align=@style.CrossAlign::Center,

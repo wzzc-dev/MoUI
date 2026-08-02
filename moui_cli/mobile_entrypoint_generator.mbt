@@ -29,7 +29,7 @@ fn mobile_entrypoint_main_text(platform : String) -> String {
   let app_type = match platform {
     "android" => "AndroidEmbeddedRuntimeBackend"
     "ios" => "IosEmbeddedRuntimeBackend"
-    "harmonyos" => "HarmonyOsEmbeddedRuntimeBackend"
+    "harmonyos" => "HarmonyOSEmbeddedRuntimeBackend"
     _ => abort("unsupported embedded-runtime platform: " + platform)
   }
   let template =

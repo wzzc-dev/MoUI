@@ -37,7 +37,7 @@ pub fn[Msg] progress_status(
     inner_width - status_width - 10.0,
   )
   let rows : Array[@core.View[Msg]] = [
-    row(
+    @layout.row(
       [
         @text.text(
           title,
@@ -91,7 +91,7 @@ pub fn[Msg] progress_status(
     None => ()
   }
   @container.container(
-    column(
+    @layout.column(
       rows,
       spacing=resolved_theme.spacing_scale.sm,
       align=@style.CrossAlign::Start,

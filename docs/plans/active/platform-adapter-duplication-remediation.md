@@ -1,6 +1,6 @@
 # Plan: Platform adapter structural duplication remediation
 
-- **Status**: active（Wave 1-3 完成，Wave 4 候选：menu/file_dialog helpers 合并）
+- **Status**: active（Wave 1-5 完成；剩余：Linux 红循环骨架窄条目 2026-12-01 到期）
 - **Goal**: 消除 `moui/backend/{macos,linux,windows}` 与
   `{android,ios,harmonyos}` 中经实测确认为"机械重复"的窗口请求分发、redraw
   协调、窗口销毁、事件桥接、run-loop 骨架代码（基线
@@ -13,6 +13,21 @@
   `moui/runtime`）、ADR 0019（renderer provider）。
 - **Related**: `docs/plans/done/moui-architecture-convergence.md` Phase F
   （本计划是其收尾）、Phase E（struct-of-closures 先例）。
+
+## Wave 5（2026-08-03）：provider 级样板收敛
+
+四类经实测逐字/同构重复的 provider 辅助样板已收敛（架构审计 2.1 项）：
+
+| 样板 | 收敛前 | 收敛后 |
+|---|---|---|
+| `renderer_metrics_from_host` | 12 份（android/harmonyos/ios/linux/macos/windows × skia/sun/wgpu） | `moui/backend/platform_bridge/renderer_metrics.mbt` 单实现（macos sun 的防御逻辑提升为共享），12 个 provider 包加 `platform_bridge` 依赖 |
+| `async_image_read_i32_le` | 6 份逐字相同（desktop × skia/sun） | `moui/render/async_image_bytes.mbt` 单实现 |
+| `env_flag` | 3 份逐字相同（desktop skia） | `moui/render/env_flags.mbt` 单实现（render 新增 `moonbitlang/core/env` 依赖） |
+| `skia_host_renderer_bridge_preflight` | 6 份（移动/桌面两组同构串） | `moui/render/skia/renderer_preflight.mbt` 两个 pub 函数（mobile/desktop） |
+
+净删除约 27 份本地定义、~100 处调用点改共享前缀；12 个 provider 包
+61 测试 + host/platform_bridge 124 测试全绿；`validate-platform-adapter-duplication`
+guard 保持绿（baseline 由 validator 自动刷新）。
 
 ## 依据（实测数据，2026-07-29 基线复核）
 

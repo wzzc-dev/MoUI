@@ -1,21 +1,21 @@
 ///|
 /// Window-hosted native surface handle.
-pub(all) struct IosViewHandle {
+pub(all) struct IosSurfaceHandle {
   raw : UInt64
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn IosViewHandle::new(raw~ : UInt64) -> IosViewHandle {
+pub fn IosSurfaceHandle::new(raw~ : UInt64) -> IosSurfaceHandle {
   { raw, }
 }
 
 ///|
-pub fn IosViewHandle::none() -> IosViewHandle {
+pub fn IosSurfaceHandle::none() -> IosSurfaceHandle {
   { raw: 0UL }
 }
 
 ///|
-pub fn IosViewHandle::raw(self : IosViewHandle) -> UInt64 {
+pub fn IosSurfaceHandle::raw(self : IosSurfaceHandle) -> UInt64 {
   self.raw
 }
 
@@ -62,8 +62,8 @@ pub(all) struct IosBackendInfo {
 
 ///|
 pub struct IosRendererProvider {
-  priv create_renderer : (IosViewHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-  priv sync_view : (IosViewHandle, @host.HostSurfaceMetrics) -> Unit
+  priv create_renderer : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
+  priv sync_surface : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> Unit
   priv image_loader : @render.HostAsyncImageLoader?
 }
 
@@ -71,32 +71,32 @@ pub struct IosRendererProvider {
 
 ///|
 pub fn IosRendererProvider::new(
-  create_renderer~ : (IosViewHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
-  sync_view? : (IosViewHandle, @host.HostSurfaceMetrics) -> Unit = (
+  create_renderer~ : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
+  sync_surface? : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
     _view,
     _metrics,
   ) => (),
   image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> IosRendererProvider {
-  { create_renderer, sync_view, image_loader }
+  { create_renderer, sync_surface, image_loader }
 }
 
 ///|
 fn IosRendererProvider::create(
   self : IosRendererProvider,
-  view : IosViewHandle,
+  surface : IosSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
 ) -> @render.HostWindowRenderer? {
-  (self.create_renderer)(view, metrics)
+  (self.create_renderer)(surface, metrics)
 }
 
 ///|
 fn IosRendererProvider::sync(
   self : IosRendererProvider,
-  view : IosViewHandle,
+  surface : IosSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
 ) -> Unit {
-  (self.sync_view)(view, metrics)
+  (self.sync_surface)(surface, metrics)
 }
 
 ///|
@@ -109,13 +109,13 @@ pub fn IosRendererProvider::has_async_image_loader(
 ///|
 pub fn create_session(
   runtime~ : @runtime.AppRuntime,
-  view~ : IosViewHandle,
+  surface~ : IosSurfaceHandle,
   metrics~ : @host.HostSurfaceMetrics,
   provider~ : IosRendererProvider,
 ) -> @embedded_runtime_backend.HostedRuntimeSession? {
   @embedded_runtime_backend.HostedRuntimeSession::create(
     runtime~,
-    raw_handle=view.raw(),
+    raw_handle=surface.raw(),
     metrics~,
     adapter=renderer_provider_adapter_from_ios(provider),
   )
@@ -127,9 +127,11 @@ pub fn renderer_provider_adapter_from_ios(
 ) -> @embedded_runtime_backend.RendererProviderAdapter {
   @embedded_runtime_backend.RendererProviderAdapter::new(
     create_renderer=fn(raw, metrics) {
-      provider.create(IosViewHandle::new(raw~), metrics)
+      provider.create(IosSurfaceHandle::new(raw~), metrics)
     },
-    sync=fn(raw, metrics) { provider.sync(IosViewHandle::new(raw~), metrics) },
+    sync=fn(raw, metrics) {
+      provider.sync(IosSurfaceHandle::new(raw~), metrics)
+    },
     image_loader=provider.image_loader,
   )
 }

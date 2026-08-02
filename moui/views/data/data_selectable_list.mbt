@@ -32,7 +32,7 @@ pub fn[Msg] selectable_list(
       )
     }
     @container.container(
-      column(
+      @layout.column(
         rows,
         spacing=resolved_theme.spacing_scale.xs,
         align=@style.CrossAlign::Start,
@@ -91,7 +91,7 @@ fn[Msg] selectable_list_row(
     )
   }
   let content_children : Array[@core.View[Msg]] = [
-    column(
+    @layout.column(
       title_rows,
       spacing=theme.spacing_scale.xs,
       align=@style.CrossAlign::Start,
@@ -109,7 +109,7 @@ fn[Msg] selectable_list_row(
     )
   }
   let content = @container.container(
-    row(
+    @layout.row(
       content_children,
       spacing=theme.spacing_scale.sm,
       justify=@style.MainAlign::Between,

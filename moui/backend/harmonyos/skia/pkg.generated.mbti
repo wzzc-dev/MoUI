@@ -10,21 +10,21 @@ import {
 }
 
 // Values
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @harmonyos.HarmonyOsSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, options? : HarmonyOsSkiaAppOptions) -> @embedded_runtime_backend.HostedRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @harmonyos.HarmonyOSSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, options? : HarmonyOSSkiaAppOptions) -> @embedded_runtime_backend.HostedRuntimeSession?
 
 pub fn harmonyos_skia_gpu_available() -> Bool
 
-pub fn harmonyos_skia_provider_preflight_summary(options? : HarmonyOsSkiaAppOptions) -> String
+pub fn harmonyos_skia_provider_preflight_summary(options? : HarmonyOSSkiaAppOptions) -> String
 
-pub fn renderer_provider(options? : HarmonyOsSkiaAppOptions) -> @harmonyos.HarmonyOsRendererProvider
+pub fn renderer_provider(options? : HarmonyOSSkiaAppOptions) -> @harmonyos.HarmonyOSRendererProvider
 
 // Errors
 
 // Types and methods
-pub struct HarmonyOsSkiaAppOptions {
+pub struct HarmonyOSSkiaAppOptions {
   // private fields
 }
-pub fn HarmonyOsSkiaAppOptions::new(font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @render.SkiaSurfaceRoute) -> Self
+pub fn HarmonyOSSkiaAppOptions::new(font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @render.SkiaSurfaceRoute) -> Self
 
 // Type aliases
 

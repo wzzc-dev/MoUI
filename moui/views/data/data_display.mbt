@@ -10,7 +10,7 @@ pub fn[Msg] description_list(
   let rows : Array[@core.View[Msg]] = []
   for item in items {
     rows.push(
-      row(
+      @layout.row(
         [
           @text.text(
             item.term,
@@ -35,7 +35,7 @@ pub fn[Msg] description_list(
       ),
     )
   }
-  column(
+  @layout.column(
     rows,
     spacing=resolved_theme.spacing_scale.xs,
     align=@style.CrossAlign::Start,
@@ -118,7 +118,7 @@ pub fn[Msg] detail_panel(
     None => ()
   }
   @container.container(
-    column(
+    @layout.column(
       rows,
       spacing=resolved_theme.spacing_scale.xs,
       align=@style.CrossAlign::Start,

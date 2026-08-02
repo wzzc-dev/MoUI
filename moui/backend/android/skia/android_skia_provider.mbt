@@ -76,12 +76,7 @@ pub fn android_skia_provider_preflight_summary(
   let vulkan_runtime_available = @skia_native.Surface::vulkan_gpu_context_runtime_available()
   let egl_runtime_available = @skia_native.Surface::egl_gpu_context_runtime_available()
   let host_preflight = @android_host.android_capability_summary().preflight_fields()
-  "Android Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{android_skia_presenter_description()}; gpu_presenter=\{android_skia_gpu_presenter_description()}; vulkan_runtime_available=\{vulkan_runtime_available}; egl_runtime_available=\{egl_runtime_available}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=android-device-smoke-required; runtime_status=experimental; unavailable=\"\{android_skia_unavailable_message()}\""
-}
-
-///|
-fn skia_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_frame=SkiaRasterRenderer.render_frame; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SkiaRasterRenderer.set_image_resource_change_callback; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
+  "Android Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{android_skia_presenter_description()}; gpu_presenter=\{android_skia_gpu_presenter_description()}; vulkan_runtime_available=\{vulkan_runtime_available}; egl_runtime_available=\{egl_runtime_available}; \{@platform_bridge.skia_host_renderer_bridge_preflight_mobile()}; \{host_preflight}; runtime=android-device-smoke-required; runtime_status=experimental; unavailable=\"\{android_skia_unavailable_message()}\""
 }
 
 ///|
@@ -158,7 +153,7 @@ fn create_host_renderer_from_binding(
     Some((binding, bound_surface)) =>
       Some(
         (binding.create_host_renderer)(
-          renderer_metrics_from_host(metrics),
+          @platform_bridge.renderer_metrics_from_host(metrics),
           bound_surface,
         ),
       )
@@ -186,7 +181,7 @@ fn create_gpu_worker_renderer(
 ) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target(
-      renderer_metrics_from_host(metrics),
+      @platform_bridge.renderer_metrics_from_host(metrics),
       android_skia_present_target(surface),
       font_resolution=options.font_resolution,
       async_image_loading=true,
@@ -195,7 +190,7 @@ fn create_gpu_worker_renderer(
       None => create_raster_renderer(surface, metrics, options)
       Some(worker) => {
         let dimensions = android_skia_vulkan_surface_descriptor(
-          renderer_metrics_from_host(metrics),
+          @platform_bridge.renderer_metrics_from_host(metrics),
         ).dimensions()
         ignore(
           worker.submit_control(
@@ -236,7 +231,7 @@ fn create_raster_renderer(
 ) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target_and_route(
-      renderer_metrics_from_host(metrics),
+      @platform_bridge.renderer_metrics_from_host(metrics),
       android_skia_present_target(surface),
       surface_route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
       font_resolution=options.font_resolution,
@@ -536,16 +531,5 @@ fn host_renderer_from_skia(
         renderer.set_platform_view_draw_fn(draw_fn)
       },
     ),
-  )
-}
-
-///|
-fn renderer_metrics_from_host(
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::new(
-    logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
   )
 }

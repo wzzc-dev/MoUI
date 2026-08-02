@@ -60,7 +60,7 @@ pub fn[Msg] combobox(
   max_height? : Double = 180.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let anchor_view = row(
+  let anchor_view = @layout.row(
     [
       @text.text_field(
         value,

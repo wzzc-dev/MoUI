@@ -10,24 +10,24 @@ extern "C" fn harmonyos_present_skia_pixels_to_surface(
 ) -> Int = "moui_harmonyos_present_skia_pixels_to_surface"
 
 ///|
-pub struct HarmonyOsSkiaAppOptions {
+pub struct HarmonyOSSkiaAppOptions {
   priv font_resolution : @skia_renderer.SkiaFontResolution
   priv surface_route : @render.SkiaSurfaceRoute
 }
 
 ///|
-pub fn HarmonyOsSkiaAppOptions::new(
+pub fn HarmonyOSSkiaAppOptions::new(
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   surface_route? : @render.SkiaSurfaceRoute = @render.SkiaSurfaceRoute::RasterSurfaceRoute,
-) -> HarmonyOsSkiaAppOptions {
+) -> HarmonyOSSkiaAppOptions {
   { font_resolution, surface_route }
 }
 
 ///|
 pub fn renderer_provider(
-  options? : HarmonyOsSkiaAppOptions = HarmonyOsSkiaAppOptions::new(),
-) -> @harmonyos_host.HarmonyOsRendererProvider {
-  @harmonyos_host.HarmonyOsRendererProvider::new(
+  options? : HarmonyOSSkiaAppOptions = HarmonyOSSkiaAppOptions::new(),
+) -> @harmonyos_host.HarmonyOSRendererProvider {
+  @harmonyos_host.HarmonyOSRendererProvider::new(
     create_renderer=(surface, metrics) => {
       create_renderer_from_provider_bindings(surface, metrics, options)
     },
@@ -46,9 +46,9 @@ fn harmonyos_skia_async_image_loader() -> @render.HostAsyncImageLoader {
 ///|
 pub fn create_session(
   runtime~ : @runtime.AppRuntime,
-  surface~ : @harmonyos_host.HarmonyOsSurfaceHandle,
+  surface~ : @harmonyos_host.HarmonyOSSurfaceHandle,
   metrics~ : @host.HostSurfaceMetrics,
-  options? : HarmonyOsSkiaAppOptions = HarmonyOsSkiaAppOptions::new(),
+  options? : HarmonyOSSkiaAppOptions = HarmonyOSSkiaAppOptions::new(),
 ) -> @embedded_runtime_backend.HostedRuntimeSession? {
   @harmonyos_host.create_session(
     runtime~,
@@ -60,7 +60,7 @@ pub fn create_session(
 
 ///|
 pub fn harmonyos_skia_provider_preflight_summary(
-  options? : HarmonyOsSkiaAppOptions = HarmonyOsSkiaAppOptions::new(),
+  options? : HarmonyOSSkiaAppOptions = HarmonyOSSkiaAppOptions::new(),
 ) -> String {
   let info = @skia_renderer.backend_info()
   let render_status = if harmonyos_skia_provider_ready() {
@@ -75,19 +75,14 @@ pub fn harmonyos_skia_provider_preflight_summary(
   let surface_route = options.surface_route.label()
   let gpu_runtime_available = @skia_native.Surface::egl_gpu_context_runtime_available()
   let host_preflight = @harmonyos_host.harmonyos_capability_summary().preflight_fields()
-  "HarmonyOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{harmonyos_skia_presenter_description()}; gpu_presenter=\{harmonyos_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=harmonyos-device-smoke-required; runtime_status=experimental; unavailable=\"\{harmonyos_skia_unavailable_message()}\""
-}
-
-///|
-fn skia_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_frame=SkiaRasterRenderer.render_frame; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SkiaRasterRenderer.set_image_resource_change_callback; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
+  "HarmonyOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{harmonyos_skia_presenter_description()}; gpu_presenter=\{harmonyos_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; \{@platform_bridge.skia_host_renderer_bridge_preflight_mobile()}; \{host_preflight}; runtime=harmonyos-device-smoke-required; runtime_status=experimental; unavailable=\"\{harmonyos_skia_unavailable_message()}\""
 }
 
 ///|
 fn create_renderer(
-  surface : @harmonyos_host.HarmonyOsSurfaceHandle,
+  surface : @harmonyos_host.HarmonyOSSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
-  options : HarmonyOsSkiaAppOptions,
+  options : HarmonyOSSkiaAppOptions,
 ) -> @render.HostWindowRenderer? {
   if !harmonyos_skia_provider_ready() {
     println(harmonyos_skia_unavailable_message())
@@ -102,7 +97,7 @@ fn create_renderer(
     Some(gpu_target) =>
       try {
         let renderer = @skia_renderer.create_with_present_target_and_route(
-          renderer_metrics_from_host(metrics),
+          @platform_bridge.renderer_metrics_from_host(metrics),
           harmonyos_skia_present_target(surface),
           surface_route=options.surface_route,
           gpu_target=Some(gpu_target),
@@ -130,9 +125,9 @@ fn create_renderer(
 /// Skia immediately at that attach point; the platform-specific native window
 /// remains private while `platform_bridge` owns only lifecycle state.
 fn create_renderer_from_provider_bindings(
-  surface : @harmonyos_host.HarmonyOsSurfaceHandle,
+  surface : @harmonyos_host.HarmonyOSSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
-  options : HarmonyOsSkiaAppOptions,
+  options : HarmonyOSSkiaAppOptions,
 ) -> @render.HostWindowRenderer? {
   if !harmonyos_skia_provider_ready() {
     println(harmonyos_skia_unavailable_message())
@@ -157,7 +152,7 @@ fn create_renderer_from_provider_bindings(
     Some((selected, bound_surface)) =>
       Some(
         (selected.create_host_renderer)(
-          renderer_metrics_from_host(metrics),
+          @platform_bridge.renderer_metrics_from_host(metrics),
           bound_surface,
         ),
       )
@@ -183,7 +178,7 @@ fn require_host_renderer(
 /// available. Returns `None` to fall back to raster.
 fn resolve_gpu_present_target(
   native_window : UInt64,
-  options : HarmonyOsSkiaAppOptions,
+  options : HarmonyOSSkiaAppOptions,
 ) -> @skia_renderer.HostGpuPresentTarget? {
   if !options.surface_route.is_gpu() {
     return None
@@ -206,9 +201,9 @@ fn resolve_gpu_present_target(
 
 ///|
 fn create_raster_renderer(
-  surface : @harmonyos_host.HarmonyOsSurfaceHandle,
+  surface : @harmonyos_host.HarmonyOSSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
-  options : HarmonyOsSkiaAppOptions,
+  options : HarmonyOSSkiaAppOptions,
 ) -> @render.HostWindowRenderer? {
   match create_raster_skia_renderer(surface, metrics, options) {
     None => None
@@ -219,13 +214,13 @@ fn create_raster_renderer(
 
 ///|
 fn create_raster_skia_renderer(
-  surface : @harmonyos_host.HarmonyOsSurfaceHandle,
+  surface : @harmonyos_host.HarmonyOSSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
-  options : HarmonyOsSkiaAppOptions,
+  options : HarmonyOSSkiaAppOptions,
 ) -> @skia_renderer.SkiaRasterRenderer? {
   Some(
     @skia_renderer.create_with_present_target_and_route(
-      renderer_metrics_from_host(metrics),
+      @platform_bridge.renderer_metrics_from_host(metrics),
       harmonyos_skia_present_target(surface),
       surface_route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
       font_resolution=options.font_resolution,
@@ -331,7 +326,7 @@ fn harmonyos_skia_egl_surface_descriptor(
 
 ///|
 fn harmonyos_skia_present_target(
-  surface : @harmonyos_host.HarmonyOsSurfaceHandle,
+  surface : @harmonyos_host.HarmonyOSSurfaceHandle,
 ) -> @skia_renderer.SkiaPresentTarget {
   @skia_renderer.SkiaPresentTarget::new(
     description=harmonyos_skia_presenter_description(),
@@ -353,9 +348,9 @@ fn harmonyos_skia_present_target(
 ///|
 fn host_renderer_from_skia(
   renderer : @skia_renderer.SkiaRasterRenderer,
-  surface : @harmonyos_host.HarmonyOsSurfaceHandle,
+  surface : @harmonyos_host.HarmonyOSSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
-  options : HarmonyOsSkiaAppOptions,
+  options : HarmonyOSSkiaAppOptions,
 ) -> @render.HostWindowRenderer {
   // Sticky raster fallback only after HostGpu present/surface failures — not
   // incomplete draws — so a transient layer miss cannot permanently demote GPU.
@@ -473,16 +468,5 @@ fn host_renderer_from_skia(
         active.val.set_platform_view_draw_fn(draw_fn)
       },
     ),
-  )
-}
-
-///|
-fn renderer_metrics_from_host(
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::new(
-    logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
   )
 }

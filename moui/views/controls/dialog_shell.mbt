@@ -70,7 +70,7 @@ pub fn[Msg] dialog(
   ]
   if actions.length() > 0 {
     body_rows.push(
-      row(
+      @layout.row(
         actions,
         spacing=resolved_theme.spacing_scale.sm,
         justify=@style.MainAlign::End,
@@ -79,7 +79,11 @@ pub fn[Msg] dialog(
     )
   }
   @container.container(
-    column(body_rows, spacing=section_spacing, align=@style.CrossAlign::Start),
+    @layout.column(
+      body_rows,
+      spacing=section_spacing,
+      align=@style.CrossAlign::Start,
+    ),
     width~,
     height~,
     variant=@style.ContainerVariant::Raised,
@@ -144,14 +148,14 @@ fn[Msg] dialog_header(
       ),
     )
   }
-  let title_block = column(
+  let title_block = @layout.column(
     rows,
     spacing=theme.spacing_scale.xs,
     align=@style.CrossAlign::Start,
   )
   match dismiss_action {
     Some(action) =>
-      row(
+      @layout.row(
         [
           title_block.frame(width=title_width, height~),
           semantic_dismiss_action_control(

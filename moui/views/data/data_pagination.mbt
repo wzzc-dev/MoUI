@@ -23,7 +23,7 @@ pub fn[Msg] pagination(
     88.0,
     width - previous_width - next_width - resolved_theme.spacing_scale.sm * 2.0,
   )
-  row(
+  @layout.row(
     [
       @button.button(
         previous_label,

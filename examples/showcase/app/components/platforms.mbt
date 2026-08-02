@@ -18,7 +18,7 @@ pub fn platform_id_to_string(id : PlatformId) -> String {
     PlatformId::Windows => "windows"
     PlatformId::Android => "android"
     PlatformId::IOS => "ios"
-    PlatformId::HarmonyOs => "harmonyos"
+    PlatformId::HarmonyOS => "harmonyos"
     PlatformId::Web => "web"
   }
 }
@@ -31,7 +31,7 @@ pub fn platform_id_from_string(id : String) -> PlatformId? {
     "windows" => Some(PlatformId::Windows)
     "android" => Some(PlatformId::Android)
     "ios" => Some(PlatformId::IOS)
-    "harmonyos" => Some(PlatformId::HarmonyOs)
+    "harmonyos" => Some(PlatformId::HarmonyOS)
     "web" => Some(PlatformId::Web)
     _ => None
   }
@@ -91,7 +91,7 @@ fn platform_runtime_infos() -> Array[PlatformRuntimeInfo] {
       progress: 0.72,
     },
     {
-      id: PlatformId::HarmonyOs,
+      id: PlatformId::HarmonyOS,
       name: "HarmonyOS",
       route: "examples/showcase/harmonyos_window_hosted",
       status: "experimental",

@@ -87,7 +87,7 @@ pub fn[Msg] stat_card(
     )
   }
   @container.container(
-    column(
+    @layout.column(
       rows,
       spacing=resolved_theme.spacing_scale.xs,
       align=@style.CrossAlign::Start,

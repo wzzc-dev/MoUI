@@ -4,17 +4,17 @@
 /// Surface attachment is driven only by the platform event loop. The backend
 /// is a thin shell around the shared `HostedWindowBackend`; native
 /// XComponent surface access and window creation stay here.
-pub struct HarmonyOsEmbeddedRuntimeBackend {
+pub struct HarmonyOSEmbeddedRuntimeBackend {
   backend : @embedded_runtime_backend.HostedWindowBackend
 }
 
 ///|
-pub fn HarmonyOsEmbeddedRuntimeBackend::new(
+pub fn HarmonyOSEmbeddedRuntimeBackend::new(
   title? : String = "MoUI",
   runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
-  provider_factory~ : () -> HarmonyOsRendererProvider,
+  provider_factory~ : () -> HarmonyOSRendererProvider,
   auto_exit_after_frames? : Int? = None,
-) -> HarmonyOsEmbeddedRuntimeBackend {
+) -> HarmonyOSEmbeddedRuntimeBackend {
   {
     backend: @embedded_runtime_backend.HostedWindowBackend::new(
       title~,
@@ -23,10 +23,10 @@ pub fn HarmonyOsEmbeddedRuntimeBackend::new(
         let provider = provider_factory()
         @embedded_runtime_backend.RendererProviderAdapter::new(
           create_renderer=fn(raw, metrics) {
-            provider.create(HarmonyOsSurfaceHandle::new(raw~), metrics)
+            provider.create(HarmonyOSSurfaceHandle::new(raw~), metrics)
           },
           sync=fn(raw, metrics) {
-            provider.sync(HarmonyOsSurfaceHandle::new(raw~), metrics)
+            provider.sync(HarmonyOSSurfaceHandle::new(raw~), metrics)
           },
           image_loader=provider.image_loader,
         )
@@ -37,35 +37,35 @@ pub fn HarmonyOsEmbeddedRuntimeBackend::new(
 }
 
 ///|
-pub fn HarmonyOsEmbeddedRuntimeBackend::frames_presented(
-  self : HarmonyOsEmbeddedRuntimeBackend,
+pub fn HarmonyOSEmbeddedRuntimeBackend::frames_presented(
+  self : HarmonyOSEmbeddedRuntimeBackend,
 ) -> Int {
   self.backend.frames_presented()
 }
 
 ///|
-pub fn HarmonyOsEmbeddedRuntimeBackend::surface_generation(
-  self : HarmonyOsEmbeddedRuntimeBackend,
+pub fn HarmonyOSEmbeddedRuntimeBackend::surface_generation(
+  self : HarmonyOSEmbeddedRuntimeBackend,
 ) -> Int {
   self.backend.surface_generation()
 }
 
 ///|
-pub fn HarmonyOsEmbeddedRuntimeBackend::session_attached(
-  self : HarmonyOsEmbeddedRuntimeBackend,
+pub fn HarmonyOSEmbeddedRuntimeBackend::session_attached(
+  self : HarmonyOSEmbeddedRuntimeBackend,
 ) -> Bool {
   self.backend.session_attached()
 }
 
 ///|
-pub fn HarmonyOsEmbeddedRuntimeBackend::has_session(
-  self : HarmonyOsEmbeddedRuntimeBackend,
+pub fn HarmonyOSEmbeddedRuntimeBackend::has_session(
+  self : HarmonyOSEmbeddedRuntimeBackend,
 ) -> Bool {
   self.backend.has_session()
 }
 
 ///|
-pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBackend with fn resumed(
+pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend with fn resumed(
   _self,
   _event_loop,
 ) {
@@ -73,7 +73,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
 }
 
 ///|
-pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBackend with fn can_create_surfaces(
+pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -106,7 +106,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
 }
 
 ///|
-pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBackend with fn destroy_surfaces(
+pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend with fn destroy_surfaces(
   self,
   _event_loop,
 ) {
@@ -114,7 +114,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
 }
 
 ///|
-pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBackend with fn suspended(
+pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend with fn suspended(
   self,
   _event_loop,
 ) {
@@ -125,7 +125,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
 }
 
 ///|
-pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBackend with fn window_event(
+pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend with fn window_event(
   self,
   event_loop,
   _id,
@@ -135,7 +135,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
 }
 
 ///|
-pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBackend with fn about_to_wait(
+pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend with fn about_to_wait(
   self,
   _event_loop,
 ) {
@@ -145,7 +145,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBacken
 ///|
 /// Pump one host-sim cycle for tests / offline validation.
 pub fn harmonyos_window_hosted_pump_host_sim(
-  app : HarmonyOsEmbeddedRuntimeBackend,
+  app : HarmonyOSEmbeddedRuntimeBackend,
   surface_handle? : UInt64 = 0xABCUL,
   width? : Int = 320,
   height? : Int = 640,

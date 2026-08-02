@@ -246,6 +246,6 @@ test "Linux Sun async image background_io confirmed" {
   guard result.length() >= 24 else {
     fail("expected result with 24-byte header, got \{result.length()} bytes")
   }
-  let background_io_raw = async_image_read_i32_le(result, 20)
+  let background_io_raw = @render.async_image_read_i32_le(result, 20)
   assert_true(background_io_raw == 1)
 }

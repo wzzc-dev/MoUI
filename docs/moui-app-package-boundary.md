@@ -529,7 +529,7 @@ or forward a second embedding ABI.
 
 Android, iOS, and HarmonyOS templates own their native lifecycle and surface
 bridges. `AndroidEmbeddedRuntimeBackend`, `IosEmbeddedRuntimeBackend`, and
-`HarmonyOsEmbeddedRuntimeBackend` assemble the MoUI runtime session after the window
+`HarmonyOSEmbeddedRuntimeBackend` assemble the MoUI runtime session after the window
 event loop creates a surface. HarmonyOS XComponent callbacks remain the sole
 source for surface, pointer, resize, and detach events.
 

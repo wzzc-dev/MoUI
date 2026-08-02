@@ -26,7 +26,7 @@ pub fn[Msg] popover(
       )
       .align(alignment=popover_alignment(placement))
     let panel = if trap_focus { panel.focus_trap() } else { panel }
-    stack([anchor, panel])
+    @layout.stack([anchor, panel])
   } else {
     anchor
   }

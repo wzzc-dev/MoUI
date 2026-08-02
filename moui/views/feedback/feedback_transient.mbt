@@ -40,7 +40,7 @@ pub fn[Msg] toast_stack(
         toast_stack_row(item, theme=resolved_theme, style~, width~, spacing~),
       )
     }
-    column(rows, spacing~, align=@style.CrossAlign::Stretch)
+    @layout.column(rows, spacing~, align=@style.CrossAlign::Stretch)
     .semantics_role(@core.SemanticsRole::Group)
     .accessibility_label("Toast stack")
   }
@@ -79,7 +79,7 @@ fn[Msg] toast_stack_row(
   match item.dismiss {
     Some(message) => {
       let dismiss_width = 86.0
-      row(
+      @layout.row(
         [
           toast(
             item.message,
