@@ -248,7 +248,7 @@ test "encode_host_string and encode_host_filter_list keep byte layout" {
 test "decode_file_dialog_selection trims only when asked" {
   let bytes = @utf8.encode("/a \n /b\n"[:], bom=false)
   let raw = decode_file_dialog_selection(bytes)
-  inspect(raw, content="[/a ,  /b]")
+  debug_inspect(raw, content="[/a ,  /b]")
   let trimmed = decode_file_dialog_selection(bytes, trim_paths=true)
-  inspect(trimmed, content="[/a, /b]")
+  debug_inspect(trimmed, content="[/a, /b]")
 }

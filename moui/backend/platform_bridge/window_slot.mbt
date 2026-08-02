@@ -5,14 +5,14 @@
 /// decorations, `Unit` elsewhere). Web keeps its own slot because it also
 /// binds a canvas surface.
 pub struct WindowSlot[W, X] {
-  pub host_id : @host.HostWindowId
-  pub platform_id : @window_core.WindowId
-  pub window : W
-  pub mut extra : X
+  host_id : @host.HostWindowId
+  platform_id : @window_core.WindowId
+  window : W
+  mut extra : X
 }
 
 ///|
-pub fn WindowSlot::new[W, X](
+pub fn[W, X] WindowSlot::new(
   host_id~ : @host.HostWindowId,
   platform_id~ : @window_core.WindowId,
   window~ : W,
@@ -25,16 +25,16 @@ pub fn WindowSlot::new[W, X](
 /// Ordered registry of `WindowSlot`s with bidirectional lookup and
 /// duplicate rejection, shared by the desktop backends.
 pub struct WindowSlotMap[W, X] {
-  pub mut slots : Array[WindowSlot[W, X]]
+  mut slots : Array[WindowSlot[W, X]]
 }
 
 ///|
-pub fn WindowSlotMap::new[W, X]() -> WindowSlotMap[W, X] {
+pub fn[W, X] WindowSlotMap::new() -> WindowSlotMap[W, X] {
   { slots: [] }
 }
 
 ///|
-pub fn WindowSlotMap::insert[W, X](
+pub fn[W, X] WindowSlotMap::insert(
   self : WindowSlotMap[W, X],
   slot : WindowSlot[W, X],
 ) -> Bool {
@@ -49,7 +49,7 @@ pub fn WindowSlotMap::insert[W, X](
 }
 
 ///|
-pub fn WindowSlotMap::lookup_host[W, X](
+pub fn[W, X] WindowSlotMap::lookup_host(
   self : WindowSlotMap[W, X],
   host_id : @host.HostWindowId,
 ) -> WindowSlot[W, X]? {
@@ -62,7 +62,7 @@ pub fn WindowSlotMap::lookup_host[W, X](
 }
 
 ///|
-pub fn WindowSlotMap::lookup_platform[W, X](
+pub fn[W, X] WindowSlotMap::lookup_platform(
   self : WindowSlotMap[W, X],
   platform_id : @window_core.WindowId,
 ) -> WindowSlot[W, X]? {
@@ -75,7 +75,7 @@ pub fn WindowSlotMap::lookup_platform[W, X](
 }
 
 ///|
-pub fn WindowSlotMap::remove_host[W, X](
+pub fn[W, X] WindowSlotMap::remove_host(
   self : WindowSlotMap[W, X],
   host_id : @host.HostWindowId,
 ) -> WindowSlot[W, X]? {
@@ -94,7 +94,7 @@ pub fn WindowSlotMap::remove_host[W, X](
 
 ///|
 /// Replace the platform-private per-window state (Linux client decorations).
-pub fn WindowSlot::set_extra[W, X](
+pub fn[W, X] WindowSlot::set_extra(
   self : WindowSlot[W, X],
   extra~ : X,
 ) -> Unit {

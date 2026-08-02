@@ -7,12 +7,12 @@ import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/platform_bridge",
   "wzzc-dev/window/core" @window_core,
-  "wzzc-dev/window/dpi",
   "wzzc-dev/window/linux" @window_linux,
 }
 
 import {
   "wzzc-dev/moui/views",
+  "wzzc-dev/window/dpi",
 } for "test"
 
 import {
