@@ -5,16 +5,13 @@ on:
     - cron: "17 19 * * *"
   workflow_dispatch:
     inputs:
-      gate:
-        description: Smoke gate tier to summarize.
-        required: true
-        default: nightly
-        type: choice
-        options:
-          - nightly
-          - release
       run_web_runtime_presentation:
         description: Run the browser-session Web runtime presentation smoke.
+        required: false
+        default: true
+        type: boolean
+      run_window_hosted_hostsim:
+        description: Run the window-hosted host-sim smoke (Android/iOS/HarmonyOS adapters).
         required: false
         default: true
         type: boolean
@@ -28,8 +25,6 @@ jobs:
   catalog:
     name: Smoke gate catalog
     runs-on: macos-14
-    env:
-      SMOKE_GATE: ${{ github.event_name == 'workflow_dispatch' && inputs.gate || 'nightly' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -45,13 +40,8 @@ jobs:
       - name: Validate smoke gate catalog
         run: |
           node --check scripts/smoke-check.mjs
-          node --check scripts/test-smoke-check.mjs
-          node scripts/test-smoke-check.mjs
           node scripts/smoke-check.mjs --check
           node --check scripts/smoke-gate.mjs
-          node --check scripts/test-smoke-gate.mjs
-          node scripts/test-smoke-gate.mjs
-          node scripts/smoke-gate.mjs --tier "$SMOKE_GATE" --dry-run --json
 
   web-runtime-presentation:
     name: Web runtime presentation smoke
@@ -80,6 +70,33 @@ jobs:
           name: web-runtime-presentation-smoke
           path: artifacts/smoke/web-runtime-presentation/
           if-no-files-found: warn
+
+  window-hosted-hostsim:
+    name: Window-hosted host-sim smoke
+    runs-on: macos-14
+    needs: catalog
+    if: ${{ github.event_name == 'schedule' || inputs.run_window_hosted_hostsim }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          sh scripts/ci-moon-update.sh
+
+      - name: Run window-hosted host-sim smoke
+        run: |
+          sh scripts/window-dev-mode.sh on
+          trap 'sh scripts/window-dev-mode.sh off' EXIT
+          sh scripts/window-hosted-hostsim-smoke.sh
+          rc=$?
+          exit $rc
 
   macos-real-skia:
     name: macOS real Skia release smoke

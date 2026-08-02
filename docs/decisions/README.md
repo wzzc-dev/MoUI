@@ -37,7 +37,7 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0015–0016 | [Core protocols](0015-core-protocols.md) | 2026-07-26 | Accepted |
 | 0011–0021 | [Platform class and convergence](0011-platform-class-and-convergence.md) | 2026-07-16 (amended 2026-08-02) | Accepted |
 | 0008–0013 | [Tools and examples](0008-tools-and-examples.md) | 2026-07-13 | Accepted |
-| 0007–0022 | [Renderer and Skia](0007-renderer-and-skia.md) | 2026-07-12 | Accepted |
+| 0007–0022 | [Renderer and Skia](0007-renderer-and-skia.md) | 2026-07-12 (amended 2026-08-02) | Accepted |
 | 0005–0006 | [Mobile host and GPU](0005-mobile-host-and-gpu.md) | 2026-07-11 | Accepted |
 | 0003–0014 | [Core package and API](0003-core-package-and-api.md) | 2026-07-04 | Accepted |
 | 0001–0002 | [Editor and rich text](0001-editor-and-richtext.md) | 2026-06-28 | Accepted |

@@ -32,7 +32,6 @@ Schema 示例：[`gpu-promotion-manifest.example.json`](../gpu-promotion-manifes
 ```sh
 moon run tools/moui/gpu_promotion_scaffold --target native -- \
   --platform macos --out-dir artifacts/gpu-promotion/macos/manual
-moon test tools/moui/gpu_promotion_scaffold --target native
 ```
 
 Node `scripts/record-gpu-promotion-smoke.mjs` 是这个工具之上的薄 orchestrator（并可选运行 macOS short-smoke）。
@@ -107,12 +106,6 @@ node scripts/record-gpu-promotion-smoke.mjs --platform macos --mode performance 
 node scripts/record-gpu-promotion-smoke.mjs --platform macos --dry-run
 ```
 
-### Lib self-test
-
-```sh
-node scripts/test-gpu-promotion-manifest-lib.mjs
-```
-
 ## Modes
 
 | Mode | 状态 | 含义 |
@@ -163,4 +156,4 @@ node scripts/record-gpu-promotion-smoke.mjs --platform macos --mode short-smoke
 - ADR：[`decisions/0005-mobile-host-and-gpu.md`](../decisions/0005-mobile-host-and-gpu.md)
 - 嵌入运行时路线：[`window-hosted-moui.md`](../window-hosted-moui.md)
 - 能力说明：[`renderer-capability-report.md`](renderer-capability-report.md)
-- 会话：[`ai-sessions/2026-07-13-all-platform-native-gpu-workers.md`](../ai-sessions/2026-07-13-all-platform-native-gpu-workers.md)
+- 会话：见 `docs/ai-sessions/` 中的 all-platform native GPU workers 会话记录。
