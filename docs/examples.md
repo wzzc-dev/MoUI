@@ -769,7 +769,7 @@ through `run.cmd`.
 
 ## Linux Native
 
-Linux examples use the `wzzc-dev/window@0.5.4-0.1.0` Wayland host core. The
+Linux examples use the `wzzc-dev/window@0.5.4-0.1.2` Wayland host core. The
 recommended native entrypoints use `backend/linux/skia` and present Skia CPU
 pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
 host with a Wayland compositor and real Skia link flags:
