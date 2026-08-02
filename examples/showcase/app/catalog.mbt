@@ -14,6 +14,7 @@ pub(all) struct CatalogItem {
   title : String
   summary : String
   badge : String
+  tone : @views.BadgeTone
 } derive(Eq, Debug)
 
 ///|
@@ -29,8 +30,9 @@ pub fn CatalogItem::new(
   title~ : String,
   summary~ : String,
   badge? : String = "",
+  tone? : @views.BadgeTone = @views.BadgeTone::Neutral,
 ) -> CatalogItem {
-  { workspace, id, group_id, title, summary, badge }
+  { workspace, id, group_id, title, summary, badge, tone }
 }
 
 ///|
@@ -71,6 +73,7 @@ pub fn global_catalog_items() -> Array[CatalogItem] {
         title=item.title,
         summary=item.summary,
         badge=item.badge,
+        tone=item.tone,
       ),
     )
   }
