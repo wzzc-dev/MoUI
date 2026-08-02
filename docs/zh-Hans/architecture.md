@@ -114,7 +114,7 @@ HarmonyOS 可以运行在桌面硬件上；这不改变它们当前 MoUI 集成�
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`。
   Native XComponent callbacks 是 surface、pointer、resize 和 detach events 的唯一来源。
 - Native WGPU route：shared app package -> platform `*_wgpu` entrypoint ->
-  platform WGPU provider -> `moui/render/wgpu`。这是诊断路线，不是默认主线。
+  platform WGPU provider -> `moui/render/wgpu`。这是实验性且诊断性的路线，不是默认主线。
 
 平台入口应保持很薄：创建 program/runtime，选择 backend 和 renderer provider，并传入 app-owned service adapters。业务 model/update/view 逻辑应留在 shared app package。
 

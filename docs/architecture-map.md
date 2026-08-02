@@ -76,7 +76,7 @@ renderers consume `DrawCommand` only.
 | Track | Status |
 |---|---|
 | Native Skia | **Mainline** |
-| Native WGPU | **Diagnostic** |
+| Native WGPU | **Experimental** (engineering gate: `diagnostic` — runnable and testable, no product commitment) |
 | Web `wasm-gc` + browser WebGPU imports | Main web path, with Canvas2D provider fallback |
 | Embedded runtime backend route | `experimental` — code paths compile; no usability/product commitment without matching-device evidence |
 | Product `auto` renderer | Prefer `SkiaGpuNative` when host GPU surface exists; `SkiaRasterNative` explicit/recovery |

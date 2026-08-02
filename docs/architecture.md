@@ -142,15 +142,16 @@ workspace.
   Native XComponent callbacks are the sole source for surface, pointer, resize,
   and detach events.
 - Native WGPU route: shared app package -> platform `*_wgpu` entrypoint ->
-  platform WGPU provider -> `moui/render/wgpu`. This is diagnostic, not the
-  default mainline.
+  platform WGPU provider -> `moui/render/wgpu`. This is experimental and
+  diagnostic, not the default mainline.
 
 Platform entrypoints should stay thin: create the program/runtime, assemble
 their ordered provider bindings, negotiate the surface, and pass app-owned
 service adapters. Binding selection uses `RendererProvider.id`; the optional
 `RendererBackendKind` classification is diagnostic-only. Desktop product lists
 prefer Skia GPU then raster according to the requested route; Web registers
-WebGPU then Canvas2D fallback; native WGPU remains an explicit diagnostic
+WebGPU then Canvas2D fallback; native WGPU remains an explicit experimental
+diagnostic
 route. Business
 model/update/view logic should remain in the shared app package.
 

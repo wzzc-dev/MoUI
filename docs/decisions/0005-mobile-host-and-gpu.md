@@ -1,17 +1,60 @@
-# ADR 0006: Mobile GPU Surface And Render Thread Ownership
+# ADR 0005-0006: Mobile Host and GPU (merged)
+
+> 原编号保留为小节锚点: 0005-mobile-host-channel-ownership,0006-mobile-gpu-surface-and-render-thread
+
+---
+
+## ADR 0005: Mobile Host Channel Ownership
+
+- Status: Accepted
+- Date: 2026-07-11
+
+### Context
+
+Android JNI, iOS Obj-C++, and HarmonyOS NAPI need the same runtime-facing IME,
+clipboard, semantics, and accessibility action behavior. Putting separate
+state machines in each shell would make composition, async completion, and
+dispose behavior diverge.
+
+### Decision
+
+`moui/backend/host` owns `EmbedderHostChannel` and the platform-neutral mobile
+payloads. Runtime sessions synchronize IME state and revisioned flattened
+semantics snapshots into the channel. Platform shells drain updates and return
+typed responses through a stable C ABI.
+
+IME requests carry text, UTF-16 selection/composition ranges, caret, and
+candidate rectangle without changing desktop `window_core.ImeRequest`.
+Clipboard requests are asynchronous and preserve request/session identity.
+Semantics actions are validated and dispatched by `ElementId`; platform shells
+must not re-hit-test screen coordinates.
+
+### Consequences
+
+- Platform shells own native API conversion and permission/user-interaction
+  timing, while runtime semantics remain shared.
+- Revisions suppress unchanged semantics traffic across JNI/Obj-C++/NAPI.
+- Disposal invalidates outstanding responses so an old platform callback
+  cannot mutate a new session.
+- Matching-device evidence remains required before capabilities are declared
+  available.
+
+---
+
+## ADR 0006: Mobile GPU Surface And Render Thread Ownership
 
 - Status: Accepted (product default is GPU on all native Skia platforms; matching-hardware evidence still tracked)
 - Date: 2026-07-11
 - Superseding note: 2026-07-14 product default flipped all `NativeGpuPlatform::gpu_promoted` arms to `true` without waiting for every matching-device seven-gate manifest.
 
-## Context
+### Context
 
 The raster embedded-runtime route copies a complete pixel frame to each platform
 presenter. iOS additionally constructs CoreGraphics/UIKit image objects. This
 is useful for compatibility and testing but is not the final performance
 architecture.
 
-## Decision
+### Decision
 
 `SkiaGpuNative` describes the direct `HostGpuSurface` route. Platform templates
 expose `auto`, `skia-gpu`, and `skia-raster`. Product policy is now
@@ -31,7 +74,7 @@ GLES fallback on Android, EGL/GLES first on HarmonyOS, D3D12 on Windows, and
 Wayland Vulkan on Linux. Web keeps WebGPU. Full-frame readback or platform image
 intermediates are forbidden on a promoted GPU production path.
 
-## Consequences
+### Consequences
 
 - Raster remains a tested fallback and can retain runtime state after GPU
   recovery failure.
@@ -41,7 +84,7 @@ intermediates are forbidden on a promoted GPU production path.
   completion. Promotion requires matching-device performance, memory,
   recreation, and context-loss evidence.
 
-## Implementation Status
+### Implementation Status
 
 ### Phase 1 — Window-surface source paths (implemented, unpromoted)
 
@@ -155,3 +198,4 @@ the explicit `skia-raster` choice and the recovery fallback.
 The intended backend order is iOS Metal, Android Vulkan with GLES fallback,
 then HarmonyOS EGL/GLES followed by optional Vulkan. The desktop order is
 macOS Metal, Windows D3D12, Linux Vulkan.
+

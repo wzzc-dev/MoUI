@@ -2,7 +2,7 @@
 
 - **Status:** active
 - **RFC:** [#3](https://github.com/wzzc-dev/MoUI/issues/3) (accepted 2026-07-26)
-- **ADR:** [0015](../../decisions/0015-public-view-node-trait.md)
+- **ADR:** [0015](../../decisions/0015-core-protocols.md)
 - **Goal:** Make `ViewNode` the sole public low-level custom-control protocol
   while preserving typed `View[Msg]`, TEA message composition, and private
   runtime lifecycle ownership.

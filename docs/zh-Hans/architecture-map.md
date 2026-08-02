@@ -67,7 +67,7 @@ thin wiring only                   ▼
 | 轨道 | 状态 |
 |---|---|
 | Native Skia | **主线** |
-| Native WGPU | **诊断** |
+| Native WGPU | **实验性**（工程门禁：`diagnostic` — 可运行、可测试，无产品承诺） |
 | Web `wasm-gc` + browser WebGPU imports | Web 主路径 |
 | 嵌入运行时后端路线 | `experimental` — 代码路径可编译；无匹配设备证据前不做可用性/产品承诺 |
 | Product `auto` renderer | 宿主 GPU surface 存在时优先 `SkiaGpuNative`；`SkiaRasterNative` 用于显式选择/恢复 |

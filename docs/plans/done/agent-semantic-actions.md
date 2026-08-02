@@ -2,7 +2,7 @@
 
 - **Status:** done
 - **RFC:** [#5](https://github.com/wzzc-dev/MoUI/issues/5) (accepted 2026-07-27)
-- **ADR:** [0016](../../decisions/0016-declaration-invalidation-and-committed-agent-semantics.md)
+- **ADR:** [0016](../../decisions/0015-core-protocols.md)
 - **Goal:** Replace string-based view revisions and render-coupled Agent
   semantics with immutable four-channel declarations, runtime-owned committed
   semantics, stable semantic identity, generation-checked typed actions, and a

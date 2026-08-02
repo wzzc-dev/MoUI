@@ -160,7 +160,7 @@ node scripts/record-gpu-promotion-smoke.mjs --platform macos --mode short-smoke
 
 ## 相关文档
 
-- ADR：[`decisions/0006-mobile-gpu-surface-and-render-thread.md`](../decisions/0006-mobile-gpu-surface-and-render-thread.md)
+- ADR：[`decisions/0005-mobile-host-and-gpu.md`](../decisions/0005-mobile-host-and-gpu.md)
 - 嵌入运行时路线：[`window-hosted-moui.md`](../window-hosted-moui.md)
 - 能力说明：[`renderer-capability-report.md`](renderer-capability-report.md)
 - 会话：[`ai-sessions/2026-07-13-all-platform-native-gpu-workers.md`](../ai-sessions/2026-07-13-all-platform-native-gpu-workers.md)

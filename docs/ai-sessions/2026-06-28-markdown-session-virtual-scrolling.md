@@ -22,7 +22,7 @@ ordinary scroll and focused text-input polling paths.
 | `examples/markdown_editor/app/view_editor_surface.mbt` | Replaced `controlled_rich_text_editor(format=...)` plus outer `scroll_view` with `controlled_markdown_session_editor` sized to the viewport. | Avoid carrying a whole-document-height child through the runtime layout tree. |
 | `examples/markdown_editor/app/view_chrome.mbt`, `view_inspectors.mbt`, `editor_navigation.mbt` | Routed root/status/outline/info/navigation through cached session fields and source-offset mapping. | Keep root/view updates from forcing snapshots or full rich-text documents. |
 | `examples/markdown_editor/app/editor_app_cache_runtime_wbtest.mbt` | Added a regression that scroll does not reparse and marks paint dirty, not layout dirty. | Guard the performance contract that failed in practice. |
-| `docs/markdown-editor.md`, `docs/text-system.md`, `docs/decisions/0001-markdown-session-virtual-scrolling.md` | Documented the session viewport and text-input hot-path rules. | Preserve the architecture choice for future agents and maintainers. |
+| `docs/markdown-editor.md`, `docs/text-system.md`, `docs/decisions/0001-editor-and-richtext.md` | Documented the session viewport and text-input hot-path rules. | Preserve the architecture choice for future agents and maintainers. |
 
 ## Key Decisions
 
@@ -32,7 +32,7 @@ ordinary scroll and focused text-input polling paths.
   for normal child views, not the primary large-document Markdown surface.
 - Keep focused text-input polling cheap: full source is returned to hosts, but
   caret geometry comes from the visible block window and cached session data.
-- See ADR: [0001: Markdown session virtual scrolling](../decisions/0001-markdown-session-virtual-scrolling.md).
+- See ADR: [0001: Markdown session virtual scrolling](../decisions/0001-editor-and-richtext.md).
 
 ## Discoveries
 

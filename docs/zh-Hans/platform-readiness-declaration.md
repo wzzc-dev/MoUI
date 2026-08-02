@@ -102,7 +102,7 @@ moon run examples/showcase/macos_skia --target native
 | 仓库地址 | `https://github.com/wzzc-dev/MoUI` |
 | 主分支 | `main` |
 | 声明范围 | 框架核心 + 渲染管线 + 平台后端 + 文本系统 + 示例应用 |
-| 渲染后端 | Skia Raster Native（主线程）, WebGPU wasm-gc（Web）, WGPU（诊断） |
+| 渲染后端 | Skia Raster Native（主线程）, WebGPU wasm-gc（Web）, WGPU（实验性；工程门禁 `diagnostic`） |
 
 ## 二、目标平台与证明等级
 

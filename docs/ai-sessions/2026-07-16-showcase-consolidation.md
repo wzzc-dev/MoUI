@@ -22,7 +22,7 @@ mobile-service-probe, removed `component_gallery` / `platform_lab` /
 | `examples/showcase/app/components/platforms.mbt` | Showcase paths/commands | Still advertised deleted gallery scripts |
 | `examples/component_gallery`, `platform_lab`, `moui_example` | Deleted | Single comprehensive example |
 | `moon.work`, `examples/catalog.json` | Dropped old members | Workspace consistency |
-| `docs/decisions/0012-…` | ADR | Record decision |
+| `docs/decisions/0008-tools-and-examples.md` (`## 0012` section) | ADR | Record decision |
 
 ## Key Decisions
 

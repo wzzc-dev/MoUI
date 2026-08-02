@@ -83,9 +83,11 @@ changes and ratchet their full-only budgets down as each split lands.
 
 ## Diagnostic Routes
 
-Native WGPU is a renderer diagnostic route. It stays available through
-`sh scripts/check.sh --profile full` and focused renderer/provider
-commands, but it is not the native mainline.
+Native WGPU is an **experimental** renderer diagnostic route. Its engineering
+gate stays `diagnostic` — runnable, testable, allowed to record observation,
+but **not** a default daily gate and carrying **no** product commitment. It
+stays available through `sh scripts/check.sh --profile full` and focused
+renderer/provider commands, but it is not the native mainline.
 
 Design Systems is addon diagnostic coverage. `moui_theme` and
 `examples/design_systems` remain important source-mapped preview/parity
