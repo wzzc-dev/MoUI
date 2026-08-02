@@ -35,14 +35,16 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/render",
       path: "moui/render",
-      // 57 = 47 (prior baseline) + 10 for ADR 0019 RendererProvider plugin
-      // system: RendererProvider, RendererInstance, RendererProviderRegistry,
+      // 61 = 47 (prior baseline) + 10 for ADR 0019 RendererProvider plugin
+      // system (RendererProvider, RendererInstance, RendererProviderRegistry,
       // SurfaceDescriptor, BoundSurface, SurfaceNegotiationResult,
       // RendererRecoveryKind, RendererProviderDescriptor, provider factory
-      // aliases, and RendererProviderBinding. The integration API is
-      // intentionally budgeted here rather than leaking these types into the
-      // app facade.
-      max_count: 57,
+      // aliases, RendererProviderBinding) + 4 for shared renderer contracts
+      // introduced by the maintainability convergence: DrawPlan/PlanOp and
+      // lowering helpers, text segmentation pipeline, image placement
+      // geometry, and the provider shell assembler. Integration types stay
+      // budgeted here rather than leaking into the app facade.
+      max_count: 61,
     },
     {
       kind: "pub(all)",

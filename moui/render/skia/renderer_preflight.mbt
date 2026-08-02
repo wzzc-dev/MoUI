@@ -215,9 +215,9 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
     )
     is None
   let missing_glyph_recovery_ready = skia_sample_missing_glyph_recovery_ready()
-  let mixed_run_font_fallback_ready = skia_mixed_text_segments("A你\u{1F642}B").length() ==
+  let mixed_run_font_fallback_ready = @render.text_mixed_segments("A你\u{1F642}B").length() ==
     4 &&
-    skia_grapheme_cluster_texts("\u{1F469}\u{200D}\u{1F4BB}").length() == 1
+    @render.text_grapheme_clusters("\u{1F469}\u{200D}\u{1F4BB}").length() == 1
   let unicode_17_grapheme_boundary_ready = skia_unicode_17_grapheme_boundary_contract_available()
   let bidi_reordering_ready = true
   let paragraph_line_breaking_ready = true
@@ -275,7 +275,7 @@ fn skia_grapheme_cluster_boundaries_match(
 ) -> Bool {
   let actual = [0]
   let mut cursor = 0
-  for cluster in skia_grapheme_cluster_texts(text) {
+  for cluster in @render.text_grapheme_clusters(text) {
     cursor += cluster.to_array().length()
     actual.push(cursor)
   }
@@ -522,27 +522,8 @@ fn skia_preflight_family_candidates(font : @core.FontSpec) -> Array[String] {
 
 ///|
 fn skia_representative_fallback_codepoint(text : String) -> Int {
-  let mut first = 0
-  let mut first_non_ascii = 0
-  for ch in text {
-    let codepoint = ch.to_int()
-    if first == 0 {
-      first = codepoint
-    }
-    if first_non_ascii == 0 && codepoint >= 0x80 {
-      first_non_ascii = codepoint
-    }
-    if skia_codepoint_is_emoji_hint(codepoint) {
-      return codepoint
-    }
-  }
-  if first_non_ascii > 0 {
-    first_non_ascii
-  } else {
-    first
-  }
+  @render.representative_fallback_codepoint(text)
 }
-
 ///|
 fn skia_preflight_glyph_count(text : String) -> Int {
   let mut count = 0

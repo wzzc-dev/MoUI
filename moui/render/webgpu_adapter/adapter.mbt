@@ -179,28 +179,11 @@ fn webgpu_create_instance(
   create_webgpu~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer,
 ) -> @render.RendererInstance {
   let renderer = create_webgpu(metrics)
-  let disposed = Ref(false)
-  @render.RendererInstance::{
-    render_frame: frame => {
-      if disposed.val {
-        return @render.RenderFrameResult::new(presented=false)
-      }
-      renderer.render_frame(frame)
-    },
-    recover: _reason => {
-      if disposed.val {
-        @render.RecoveryResult::RecoveryFailed("renderer is disposed")
-      } else {
-        @render.RecoveryResult::RecoverySucceeded
-      }
-    },
-    dispose: () => {
-      if !disposed.val {
-        disposed.val = true
-        renderer.dispose()
-      }
-    },
-  }
+  @render.new_provider_instance(
+    render_frame=frame => renderer.render_frame(frame),
+    recover=_reason => @render.RecoveryResult::RecoverySucceeded,
+    dispose=() => renderer.dispose(),
+  )
 }
 
 ///|

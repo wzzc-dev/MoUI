@@ -342,10 +342,11 @@ fn RendererHandle::render(
 ) -> Unit {
   self.last_batches = @render.collect_rect_batches(commands)
   self.record_native_image_commands(commands)
+  let lowered = @render.lower_draw_commands(commands)
   let plan = build_native_draw_plan(
     self.font_cache,
     self.glyph_atlas,
-    commands,
+    lowered.ops,
     self.size,
     self.scale_factor,
   )

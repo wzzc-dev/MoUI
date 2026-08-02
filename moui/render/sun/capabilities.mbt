@@ -20,10 +20,11 @@ pub fn sun_feature_status(
     | @render.RendererFeature::LayerCompositing
     | @render.RendererFeature::FilterEffect
     | @render.RendererFeature::ShaderEffect
-    | @render.RendererFeature::TextShaping
-    | @render.RendererFeature::EmojiText
     | @render.RendererFeature::AsyncImage =>
       @render.RendererFeatureStatus::Supported
+    @render.RendererFeature::TextShaping
+    | @render.RendererFeature::EmojiText =>
+      @render.RendererFeatureStatus::Partial
   }
 }
 

@@ -73,11 +73,12 @@ pub fn Canvas2DRenderer::render(
   // Rendering is dispatched through the JS host bridge.
   // The actual CanvasRenderingContext2D calls are performed
   // in the canvas2d_runtime.js file.
+  let plan = @render.lower_draw_commands(commands)
   canvas2d_render_commands(
     self.canvas_id,
     self.logical_width,
     self.logical_height,
-    commands,
+    plan.ops,
   )
 }
 
@@ -89,11 +90,12 @@ pub fn Canvas2DRenderer::render_frame(
   if self.disposed {
     return @render.RenderFrameResult::new(presented=false)
   }
+  let plan = @render.lower_draw_commands(frame.commands)
   canvas2d_render_commands(
     self.canvas_id,
     self.logical_width,
     self.logical_height,
-    frame.commands,
+    plan.ops,
   )
   @render.RenderFrameResult::new(presented=true)
 }
@@ -323,7 +325,7 @@ fn canvas2d_render_commands(
   canvas_id : String,
   width : Double,
   height : Double,
-  commands : Array[@core.DrawCommand],
+  commands : Array[@render.PlanOp],
 ) -> Unit {
   let _ = canvas_id
   // Begin a new frame — clear the canvas

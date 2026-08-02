@@ -2,7 +2,7 @@
 fn build_native_draw_plan(
   cache : NativeFontCache,
   atlas : GlyphAtlas,
-  commands : Array[@core.DrawCommand],
+  commands : Array[@render.PlanOp],
   size : @core.Size,
   scale_factor : Double,
 ) -> NativeDrawPlan {
@@ -29,7 +29,7 @@ priv struct NativeDrawPlanRangeResult {
 fn build_native_draw_plan_range(
   cache : NativeFontCache,
   atlas : GlyphAtlas,
-  commands : Array[@core.DrawCommand],
+  commands : Array[@render.PlanOp],
   start_index~ : Int,
   stop_at_layer~ : Bool,
   stop_at_filter~ : Bool,
@@ -51,8 +51,8 @@ fn build_native_draw_plan_range(
       let command = commands[index]
       if !full {
         match command {
-          @core.DrawCommand::Clear(_) => ()
-          @core.DrawCommand::FillRect(rect, color) =>
+          @render.PlanOp::Clear(_) => ()
+          @render.PlanOp::FillRect(rect, color) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -66,7 +66,7 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @core.DrawCommand::StrokeRect(rect, color, width) =>
+          @render.PlanOp::StrokeRect(rect, color, width) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -80,7 +80,7 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @core.DrawCommand::FillRoundedRect(rounded, color) =>
+          @render.PlanOp::FillRoundedRect(rounded, color) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -94,7 +94,7 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @core.DrawCommand::StrokeRoundedRect(rounded, color, width) =>
+          @render.PlanOp::StrokeRoundedRect(rounded, color, width) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -108,7 +108,7 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @core.DrawCommand::FillRoundedRectBrush(rounded, brush) =>
+          @render.PlanOp::FillRoundedRectBrush(rounded, brush) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -122,7 +122,7 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width) =>
+          @render.PlanOp::StrokeRoundedRectBrush(rounded, brush, width) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -136,11 +136,11 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @core.DrawCommand::DrawShadow(shadow) =>
+          @render.PlanOp::DrawShadow(shadow) =>
             append_shadow_item(
               visual_vertices, items, shadow, state, size, scale_factor,
             )
-          @core.DrawCommand::DrawText(run) =>
+          @render.PlanOp::DrawText(run) =>
             if native_paint_state_visible(state) &&
               native_scissor_visible(
                 native_scissor_for_state(state, size, scale_factor),
@@ -164,38 +164,38 @@ fn build_native_draw_plan_range(
               }
               full = result.atlas_full
             }
-          @core.DrawCommand::DrawImage(run) =>
+          @render.PlanOp::DrawImage(run) =>
             append_image_item(
               image_vertices, items, run, state, size, scale_factor,
             )
-          @core.DrawCommand::PushClip(rect) => {
+          @render.PlanOp::PushClip(rect) => {
             state_stack.push(state)
             state = push_clip_state(state, rect)
           }
-          @core.DrawCommand::PopClip =>
+          @render.PlanOp::PopClip =>
             state = pop_native_paint_state(state_stack, state)
-          @core.DrawCommand::PushRoundedClip(rounded) => {
+          @render.PlanOp::PushRoundedClip(rounded) => {
             state_stack.push(state)
             state = push_rounded_clip_state(state, rounded)
           }
-          @core.DrawCommand::PopRoundedClip =>
+          @render.PlanOp::PopRoundedClip =>
             state = pop_native_paint_state(state_stack, state)
-          @core.DrawCommand::PushTransform(transform) => {
+          @render.PlanOp::PushTransform(transform) => {
             state_stack.push(state)
             state = {
               ..state,
               transform: multiply_transform(state.transform, transform),
             }
           }
-          @core.DrawCommand::PopTransform =>
+          @render.PlanOp::PopTransform =>
             state = pop_native_paint_state(state_stack, state)
-          @core.DrawCommand::PushOpacity(opacity) => {
+          @render.PlanOp::PushOpacity(opacity) => {
             state_stack.push(state)
             state = { ..state, opacity: state.opacity * clamp_opacity(opacity) }
           }
-          @core.DrawCommand::PopOpacity =>
+          @render.PlanOp::PopOpacity =>
             state = pop_native_paint_state(state_stack, state)
-          @core.DrawCommand::PushLayer(layer) => {
+          @render.PlanOp::PushLayer(layer) => {
             let mask = native_layer_mask_for_state(state, layer.mask)
             let child = build_native_draw_plan_range(
               cache,
@@ -220,7 +220,7 @@ fn build_native_draw_plan_range(
             )
             index = child.next_index - 1
           }
-          @core.DrawCommand::PopLayer =>
+          @render.PlanOp::PopLayer =>
             if stop_at_layer {
               return {
                 plan: {
@@ -233,7 +233,7 @@ fn build_native_draw_plan_range(
                 next_index: index + 1,
               }
             }
-          @core.DrawCommand::BeginCachedLayer(spec) => {
+          @render.PlanOp::BeginCachedLayer(spec) => {
             let mask = native_layer_mask_for_state(
               state,
               @core.LayerMask::RectMask(spec.frame),
@@ -261,7 +261,7 @@ fn build_native_draw_plan_range(
             )
             index = child.next_index - 1
           }
-          @core.DrawCommand::EndCachedLayer(_) =>
+          @render.PlanOp::EndCachedLayer(_) =>
             if stop_at_layer {
               return {
                 plan: {
@@ -274,8 +274,8 @@ fn build_native_draw_plan_range(
                 next_index: index + 1,
               }
             }
-          @core.DrawCommand::DrawCachedLayer(_) => ()
-          @core.DrawCommand::PushFilter(filter) => {
+          @render.PlanOp::DrawCachedLayer(_) => ()
+          @render.PlanOp::PushFilter(filter) => {
             let child = build_native_draw_plan_range(
               cache,
               atlas,
@@ -299,7 +299,7 @@ fn build_native_draw_plan_range(
             )
             index = child.next_index - 1
           }
-          @core.DrawCommand::PopFilter =>
+          @render.PlanOp::PopFilter =>
             if stop_at_filter {
               return {
                 plan: {
@@ -312,7 +312,7 @@ fn build_native_draw_plan_range(
                 next_index: index + 1,
               }
             }
-          @core.DrawCommand::DrawShaderEffect(spec) =>
+          @render.PlanOp::DrawShaderEffect(spec) =>
             items.push(
               NativeDrawItem::NativeShaderEffect({
                 name: spec.name,
@@ -324,7 +324,7 @@ fn build_native_draw_plan_range(
                 scissor: native_scissor_for_state(state, size, scale_factor),
               }),
             )
-          @core.DrawCommand::DrawPath(path) =>
+          @render.PlanOp::DrawPath(path) =>
             append_path_item(
               visual_vertices, items, path, state, size, scale_factor,
             )
