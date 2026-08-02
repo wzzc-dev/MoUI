@@ -476,7 +476,7 @@ fn route_session_page(model : Model) -> @moui.View[Msg] {
             text("Route: platform/\{model.route}"),
             text("Host label: \{model.host_label}"),
             text("Timer running: \{model.timer_running}"),
-            text("Pending service: \{to_repr(model.pending_service)}"),
+            text("Pending service: \{Repr(model.pending_service)}"),
             text("Last event: \{model.last_event}"),
           ],
           spacing=8.0,
