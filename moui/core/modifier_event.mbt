@@ -283,13 +283,13 @@ pub fn[Msg] OnFileDropModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct KeyboardShortcutModifier[Msg] {
+pub(all) struct KeyboardShortcutModifier {
   shortcut : KeyboardShortcut
 }
 
 ///|
 pub fn[Msg] KeyboardShortcutModifier::to_any_modifier(
-  self : KeyboardShortcutModifier[Msg],
+  self : KeyboardShortcutModifier,
 ) -> AnyModifier[Msg] {
   let shortcut = self.shortcut
   {

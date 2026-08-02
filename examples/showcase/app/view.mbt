@@ -301,6 +301,19 @@ fn shell_detail(
     Some(item) => item.workspace
     None => model.workspace.slug()
   }
+  let story_badge = match model.current_catalog_item() {
+    Some(item) if item.badge != "" =>
+      Some(
+        @views.badge(
+          item.badge,
+          tone=item.tone,
+          theme~,
+          width=104.0,
+          height=22.0,
+        ),
+      )
+    _ => None
+  }
   // Content is narrower than the scroll viewport so the overlay indicator sits
   // in empty space instead of covering demo controls.
   let content_width = (width - shell_scroll_indicator_gutter).max(240.0)
@@ -313,6 +326,10 @@ fn shell_detail(
           theme~,
           width=content_width,
         ),
+        match story_badge {
+          Some(chip) => chip
+          None => @views.spacer(min_length=0.0)
+        },
         feature_body(model, env, content_width),
         // Keep the last demo controls clear of the clip / window edge.
         spacer(min_length=shell_scroll_end_inset),

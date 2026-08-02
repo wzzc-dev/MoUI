@@ -15,14 +15,9 @@ pub fn[Msg] PaddingModifier::to_any_modifier(
     ..noop_modifier(),
     identity_kind: "Padding",
     declaration: ViewDeclaration::channels(
-      layout=Exact(
-        DeclarationKey::record(type_tag="Padding", fields=[
-          ("top", DeclarationKey::double(insets.top)),
-          ("right", DeclarationKey::double(insets.right)),
-          ("bottom", DeclarationKey::double(insets.bottom)),
-          ("left", DeclarationKey::double(insets.left)),
-        ]),
-      ),
+      layout=Exact(DeclarationKey::record(type_tag="Padding", fields=[
+        ("insets", declaration_insets(insets)),
+      ])),
       paint=Constant,
       semantics=Constant,
       platform=Constant,
@@ -259,7 +254,7 @@ pub(all) struct SpacingModifier {
 
 ///|
 pub fn[Msg] SpacingModifier::to_any_modifier(
-  self : SpacingModifier,
+  _self : SpacingModifier,
 ) -> AnyModifier[Msg] {
   { ..noop_modifier(), identity_kind: "Spacing" }
 }
@@ -271,7 +266,7 @@ pub(all) struct LayoutPriorityModifier {
 
 ///|
 pub fn[Msg] LayoutPriorityModifier::to_any_modifier(
-  self : LayoutPriorityModifier,
+  _self : LayoutPriorityModifier,
 ) -> AnyModifier[Msg] {
   { ..noop_modifier(), identity_kind: "LayoutPriority" }
 }
@@ -283,7 +278,7 @@ pub(all) struct MainAxisAlignmentModifier {
 
 ///|
 pub fn[Msg] MainAxisAlignmentModifier::to_any_modifier(
-  self : MainAxisAlignmentModifier,
+  _self : MainAxisAlignmentModifier,
 ) -> AnyModifier[Msg] {
   { ..noop_modifier(), identity_kind: "MainAxisAlignment" }
 }
@@ -295,7 +290,7 @@ pub(all) struct CrossAxisAlignmentModifier {
 
 ///|
 pub fn[Msg] CrossAxisAlignmentModifier::to_any_modifier(
-  self : CrossAxisAlignmentModifier,
+  _self : CrossAxisAlignmentModifier,
 ) -> AnyModifier[Msg] {
   { ..noop_modifier(), identity_kind: "CrossAxisAlignment" }
 }
