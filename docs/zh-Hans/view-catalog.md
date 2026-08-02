@@ -50,12 +50,12 @@ fn view(draft : String) -> @moui.View[Msg] {
 
 | Constructor | Source | Theme | Semantics | Tests | 示例覆盖 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `text` | `views/text.mbt` | Font/foreground modifier | core 中的 Text role | `views/views_test.mbt` | Showcase、Markdown Editor | 基础 label primitive。 |
-| `image` | `views/image.mbt` | 基于 modifier | Image draw intent | `views/views_test.mbt` | Showcase | Renderer image 支持在 capability report 中跟踪；Showcase Interaction Lab 覆盖 ready/loading/failed lifecycle state。 |
-| `icon` | `views/icon.mbt` | 基于 modifier | core 中的 Image role | `views/views_test.mbt` | Showcase | 按 `IconName` 定尺寸的 icon glyph primitive，可选 color/weight override。 |
+| `text` | `views/views.mbt` | Font/foreground modifier | core 中的 Text role | `views/views_test.mbt` | Showcase、Markdown Editor | 基础 label primitive。 |
+| `image` | `views/views.mbt` | 基于 modifier | Image draw intent | `views/views_test.mbt` | Showcase | Renderer image 支持在 capability report 中跟踪；Showcase Interaction Lab 覆盖 ready/loading/failed lifecycle state。 |
+| `icon` | `views/views.mbt` | 基于 modifier | core 中的 Image role | `views/views_test.mbt` | Showcase | 按 `IconName` 定尺寸的 icon glyph primitive，可选 color/weight override。 |
 | `web_view` | `views/web_view.mbt` | Host native WebView | core 中的 WebView role | `views/views_test.mbt`、WebView Demo app 测试 | WebView Demo | 受控 native WebView primitive。Navigation request 首先报告为 `WebViewEvent::NavigationRequested`；app 通过更新 `url` model 值或发出 `HostWebViewCommandQueue::load_url` 来 commit。Command 还覆盖 reload、stop、back、forward 和 JavaScript evaluation。 |
 | `canvas` | `views/canvas.mbt` | 基于 modifier | Group | `views/views_test.mbt` | Showcase Platform 和 Diagnostics 工作区 | 纯绘制 view（带 `PaintContext` 的 `measure` + `draw`）。无 children。参见 [Canvas and custom paint](../canvas-and-custom-paint.md)。 |
-| `custom_layout` / `custom_children_layout` | `views/layout_helpers.mbt` | N/A | Group / child semantics | `views/views_test.mbt` | PDF Workbench；Markdown Editor surface；Showcase | 用于高级控件的 custom measure/paint 和 multi-child layout delegate。 |
+| `custom_layout` / `custom_children_layout` | `views/views.mbt` | N/A | Group / child semantics | `views/views_test.mbt` | PDF Workbench；Markdown Editor surface；Showcase | 用于高级控件的 custom measure/paint 和 multi-child layout delegate。 |
 
 ## Controls
 
@@ -64,15 +64,15 @@ fn view(draft : String) -> @moui.View[Msg] {
 | `button` | `views/button.mbt` | ButtonStyle | Button | `views/views_test.mbt` | 所有示例 | 主要 activation primitive。 |
 | `shortcut_button` | `views/button.mbt` | ButtonStyle/surface/text | 带 shortcut 描述的 Button | `views/views_test.mbt` | Showcase Interaction Lab | 组合常规 button、可见 shortcut label、`View::keyboard_shortcut` 和 shortcut semantics，使 app-owned keyboard shortcut 保持可发现，并通过类型化消息循环 dispatch。 |
 | `menu_button` | `views/control_focus_overlay.mbt` | ButtonStyle | Menu | `views/views_test.mbt` | Showcase | 带 menu semantics 的 button wrapper。 |
-| `checkbox` | `views/checkbox.mbt` | ChoiceControlStyle，支持直接 font/color/size override | Checkbox | `views/views_test.mbt` | Showcase Todo pattern | TEA 优先 boolean control。Component-local state 应在跨越公开 `views` API 边界前投影为显式值和类型化 `on_change` 消息。 |
+| `checkbox` | `views/views.mbt` | ChoiceControlStyle，支持直接 font/color/size override | Checkbox | `views/views_test.mbt` | Showcase Todo pattern | TEA 优先 boolean control。Component-local state 应在跨越公开 `views` API 边界前投影为显式值和类型化 `on_change` 消息。 |
 | `toggle` | `views/control_choice.mbt` | ChoiceControlStyle，支持直接 color override | Switch | `views/views_test.mbt` | Showcase | TEA 优先 switch control。 |
 | `radio` | `views/control_choice.mbt` | ChoiceControlStyle，支持直接 color override | Radio | `views/views_test.mbt` | Showcase | TEA 优先 single-option primitive。 |
-| `text_field` | `views/text.mbt`、`views/text_input_controls.mbt` | TextFieldStyle | Text field | `views/views_test.mbt`、core input 测试 | Showcase、Markdown Editor | TEA 优先 text input。App、host、smoke 和跨包测试应使用这个 `views` 入口，而不是直接使用 core control constructor。 |
-| `searchbar` | `views/searchbar.mbt`、`views/text_input_controls.mbt` | TextFieldStyle | Search field | `views/views_test.mbt` | Showcase | 专用于过滤和 clear action 的 TEA 优先 text input。 |
-| `picker` | `views/picker.mbt` | PickerStyle | Picker | `runtime/runtime_control_choices_wbtest.mbt`、`views/views_test.mbt` | Showcase | TEA 优先 option picker，具备 renderer-neutral popup stacking，可位于后续 sibling 之上。 |
+| `text_field` | `views/views.mbt`、`views/text_input_controls.mbt` | TextFieldStyle | Text field | `views/views_test.mbt`、core input 测试 | Showcase、Markdown Editor | TEA 优先 text input。App、host、smoke 和跨包测试应使用这个 `views` 入口，而不是直接使用 core control constructor。 |
+| `searchbar` | `views/views.mbt`、`views/text_input_controls.mbt` | TextFieldStyle | Search field | `views/views_test.mbt` | Showcase | 专用于过滤和 clear action 的 TEA 优先 text input。 |
+| `picker` | `views/views.mbt` | PickerStyle | Picker | `runtime/runtime_control_choices_wbtest.mbt`、`views/views_test.mbt` | Showcase | TEA 优先 option picker，具备 renderer-neutral popup stacking，可位于后续 sibling 之上。 |
 | `datepicker` | `views/datepicker.mbt` | PickerStyle | Date picker | `runtime/runtime_control_choices_wbtest.mbt`、`views/views_test.mbt` | Showcase | TEA 优先 date picker，使用周日优先的 calendar popup rendering 和 min/max range enforcement。 |
 | `dropdown` / `combobox` / `autocomplete` | `views/popover_selectors.mbt` | ButtonStyle/TextFieldStyle/SurfaceStyle | 带 selected/disabled option state 的 expanded menu anchor | `views/views_test.mbt` | Showcase Interaction Lab | 用 overlay、scroll view、button 和 text field 构建的受控 floating menu。Expansion、selected option、disabled option 和 toggle action 通过 semantics 暴露，而 state 和 filtering 留给 app 拥有。 |
-| `menu_bar` / `command_menu` / `context_menu_region` | `views/menu_commands.mbt` | ButtonStyle/text/surface | 带 selected、disabled 和 expanded fallback state 的 Menu/group | `views/descriptor_helpers_test.mbt`、`views/views_test.mbt` | Showcase Navigation Shell | 基于 `menu_item` descriptor 和 `@views.ActionCommand` metadata 的 TEA 优先 menu surface。Disabled command 会渲染但不 dispatch，fallback view menu 暴露 expanded/collapse semantics，而 native context menu 留在 host service 中。 |
+| `menu_bar` / `command_menu` / `context_menu_region` | `views/views.mbt` | ButtonStyle/text/surface | 带 selected、disabled 和 expanded fallback state 的 Menu/group | `views/descriptor_helpers_test.mbt`、`views/views_test.mbt` | Showcase Navigation Shell | 基于 `menu_item` descriptor 和 `@views.ActionCommand` metadata 的 TEA 优先 menu surface。Disabled command 会渲染但不 dispatch，fallback view menu 暴露 expanded/collapse semantics，而 native context menu 留在 host service 中。 |
 | `radio_group` / `checkbox_group` | `views/choice_groups.mbt` | ChoiceControlStyle | 带 radio/checkbox children 的 Group | `views/views_test.mbt` | Showcase Controls | 基于 `ChoiceItem` descriptor 构建的 TEA 优先 grouped selection。 |
 | `segmented_control` | `views/choice_segmented.mbt` | ButtonStyle/SurfaceStyle | 类似 tab 的 group | `views/views_test.mbt` | Showcase Controls | 受控 single-selection segmented button。 |
 | `chip` / `tag` / `filter_chip` / `choice_chip` | `views/choice_chips.mbt` | SurfaceStyle/ButtonStyle | Button 或 text role | `views/views_test.mbt` | Showcase Controls | 紧凑 selection 和 labeling control。 |
@@ -94,7 +94,7 @@ fn view(draft : String) -> @moui.View[Msg] {
 | `inline_error` | `views/feedback_status.mbt` | FeedbackStyle/BadgeStyle/ButtonStyle | Invalid group | `views/views_test.mbt` | Showcase Feedback | 面向 full state panel 之外的 app-owned validation 或 workflow failure 的紧凑 inline error row。 |
 | `empty_state` / `loading_state` / `error_state` | `views/feedback_status.mbt` | FeedbackStyle | Group | `views/views_test.mbt` | Showcase Feedback | 使用可选 `StateViewAction` 的可复用 workflow state panel。 |
 | `status_badge` / `badge` / `stat_card` | `views/feedback_badge.mbt` | BadgeStyle/FeedbackStyle | 带显式 status label 的 Text/group | `views/views_test.mbt` | Showcase Feedback | `status_badge` 用 `Status: ...` accessibility label 和可选 detail description 包装紧凑 status text。`badge` 仍是通用 metadata chip，`stat_card` 覆盖紧凑 metric。 |
-| `presence_dot` | `views/presence_dot.mbt` | Theme colors | core 中的 Image role | `views/views_test.mbt` | Showcase Data | Fluent 2 PresenceBadge 状态点（Available/Away/Busy/Offline/Unknown），是带对比 border 的实心圆，可覆盖在 avatar 上。 |
+| `presence_dot` | `views/views.mbt` | Theme colors | core 中的 Image role | `views/views_test.mbt` | Showcase Data | Fluent 2 PresenceBadge 状态点（Available/Away/Busy/Offline/Unknown），是带对比 border 的实心圆，可覆盖在 avatar 上。 |
 | `drop_zone` / `file_import_panel` | `views/file_import.mbt` | Surface/button/text | Button-like drop target/group | `views/views_test.mbt` | Showcase Interaction Lab | Drag/drop 通过 `View::on_file_drop` 映射；browse button 发出 app 消息，使具备 effect 的 app 可以从 `Effect::host_service` 调用 `HostAppServices::open_file`，并为 pending response 声明 `HostAppServices::completion_subscription`，而不让 `views` 依赖 backend 包。Web host 可以暴露浏览器文件名或 handle，而 native host 可以暴露 filesystem path。 |
 
 ## Data Display
@@ -125,7 +125,7 @@ fn view(draft : String) -> @moui.View[Msg] {
 | `form_workflow_bar` | `views/form_workflow.mbt` | FormValidationStyle/surface/text/ButtonStyle | 带 invalid state 的 Group | `views/views_test.mbt` | Showcase Forms | 将 validation summary、first-invalid focus action、`FocusScope` Enter/Escape target status 和 submit-guarded action row 组合成一个可复用 form footer。实际 focus movement 仍由 app/runtime 拥有。 |
 | `form_error` / `form_helper_text` | `views/form_support_text.mbt` | FormValidationStyle/theme typography/colors | Text | `views/views_test.mbt` | Showcase Forms | app-local form layout 的可复用 support text helper。`form_error` 可以消费中立 validation style，而 `form_helper_text` 保持 muted-theme text。 |
 | `input_group` | `views/input_group_shell.mbt` | Theme surface/border | Child semantics | `views/views_test.mbt` | Showcase Forms | app-owned input 的 prefix/suffix shell。 |
-| `clearable_text_field` / `password_field` | `views/input_text_wrappers.mbt` | TextFieldStyle/ButtonStyle | Text field 加 button semantics | `views/views_test.mbt` | Showcase Forms | 受控 wrapper；password reveal state 仍由 app 拥有。 |
+| `clearable_text_field` / `password_field` | `views/views.mbt` | TextFieldStyle/ButtonStyle | Text field 加 button semantics | `views/views_test.mbt` | Showcase Forms | 受控 wrapper；password reveal state 仍由 app 拥有。 |
 | `number_field` / `stepper` | `views/input_number.mbt` | TextFieldStyle/ButtonStyle | Text field 和 button semantics | `views/views_test.mbt` | Showcase Forms | 保持 parsing 和 numeric state 在 app model 中。 |
 | `text_area` | `views/text_area.mbt` | TextFieldStyle | Text field semantics | `views/views_test.mbt` | Showcase Forms | 用于 multi-line layout 的固定高度 text area，不添加 editor engine。 |
 
@@ -133,56 +133,56 @@ fn view(draft : String) -> @moui.View[Msg] {
 
 | Constructor | Source | Theme | Semantics | Tests | 示例覆盖 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `container` / `card` | `views/container.mbt` | SurfaceStyle | 通过 child 形成 Group | `views/views_test.mbt` | Counter、Showcase、Markdown Editor | Styled container primitive；`card` 是简单 app 的 raised、padded 入口。 |
-| `empty` | `views/container.mbt` | N/A | None | `views/views_test.mbt` | Showcase | optional/slot composition 的 zero-size placeholder leaf。 |
+| `container` / `card` | `views/views.mbt` | SurfaceStyle | 通过 child 形成 Group | `views/views_test.mbt` | Counter、Showcase、Markdown Editor | Styled container primitive；`card` 是简单 app 的 raised、padded 入口。 |
+| `empty` | `views/views.mbt` | N/A | None | `views/views_test.mbt` | Showcase | optional/slot composition 的 zero-size placeholder leaf。 |
 | `toolbar` / `command_bar` / `button_group` / `status_bar` | `views/toolbar.mbt` | ButtonStyle/text/surface | Group | `views/descriptor_helpers_test.mbt`、`views/views_test.mbt`、Showcase 测试 | Showcase Navigation Shell | 从 `action_item` descriptor、button、text 和 surface 构建的 app-owned command 和 status surface。 |
-| `command_palette` | `views/command_palette.mbt` | ButtonStyle/text/surface | Menu | `views/views_test.mbt`、`core/gesture_action_wbtest.mbt`、Showcase 测试 | Showcase Navigation Shell | 将 `@views.ActionCommand` metadata（`group`、`description`、shortcut label、enabled state）渲染成 TEA-controlled palette，无需 native menu 或 renderer 变化。 |
-| `row` / `column` | `views/flex.mbt` | 基于 child/modifier | 通过 children 形成 Group/list | `views/views_test.mbt` | 所有示例 | Flex layout primitive。 |
-| `center` | `views/container.mbt` | 可选 background | Child semantics | `views/views_test.mbt` | Counter | 单 child layout helper，将内容居中放在可用空间中。 |
-| `spacer` | `views/flex.mbt` | N/A | None | `views/views_test.mbt` | Showcase | Flexible space primitive。 |
-| `divider` | `views/divider.mbt` | Theme colors/thickness | core 中的 Separator | `views/views_test.mbt` | Showcase | 水平/垂直 divider line，支持可选 thickness、color 和 inset。 |
-| `frame` | `views/frame.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Constraint wrapper。 |
-| `padding` / `padding_insets` | `views/padding.mbt` | N/A | Child semantics | `views/views_test.mbt`、`core/advanced_layout_test.mbt` | 所有示例 | 有序 layout modifier wrapper。 |
-| `padding_edges` / `padding_xy` | `views/padding.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | 基于同一个有序 modifier 的 per-edge 和 symmetric horizontal/vertical padding convenience wrapper。 |
-| `stack` / `overlay` | `views/stack.mbt` | 基于 child/modifier | Children preserved | `views/views_test.mbt` | Showcase、Dialog host、Tooltip | Overlay layout primitive。 |
+| `command_palette` | `views/views.mbt` | ButtonStyle/text/surface | Menu | `views/views_test.mbt`、`core/gesture_action_wbtest.mbt`、Showcase 测试 | Showcase Navigation Shell | 将 `@views.ActionCommand` metadata（`group`、`description`、shortcut label、enabled state）渲染成 TEA-controlled palette，无需 native menu 或 renderer 变化。 |
+| `row` / `column` | `views/views.mbt` | 基于 child/modifier | 通过 children 形成 Group/list | `views/views_test.mbt` | 所有示例 | Flex layout primitive。 |
+| `center` | `views/views.mbt` | 可选 background | Child semantics | `views/views_test.mbt` | Counter | 单 child layout helper，将内容居中放在可用空间中。 |
+| `spacer` | `views/views.mbt` | N/A | None | `views/views_test.mbt` | Showcase | Flexible space primitive。 |
+| `divider` | `views/views.mbt` | Theme colors/thickness | core 中的 Separator | `views/views_test.mbt` | Showcase | 水平/垂直 divider line，支持可选 thickness、color 和 inset。 |
+| `frame` | `views/views.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Constraint wrapper。 |
+| `padding` / `padding_insets` | `views/views.mbt` | N/A | Child semantics | `views/views_test.mbt`、`core/advanced_layout_test.mbt` | 所有示例 | 有序 layout modifier wrapper。 |
+| `padding_edges` / `padding_xy` | `views/views.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | 基于同一个有序 modifier 的 per-edge 和 symmetric horizontal/vertical padding convenience wrapper。 |
+| `stack` / `overlay` | `views/views.mbt` | 基于 child/modifier | Children preserved | `views/views_test.mbt` | Showcase、Dialog host、Tooltip | Overlay layout primitive。 |
 | `popover` | `views/popover_overlay.mbt` | SurfaceStyle | Anchor 加可选 overlay content | `views/views_test.mbt` | Showcase Interaction Lab | 使用现有 stack、align 和 container primitive 的 view-level floating overlay。可选 `trap_focus=true` 路径应用 `View::focus_trap`；默认情况下 popover 保持 non-modal。Native context menu 通过 host service。 |
-| `scroll_view` | `views/stack.mbt` | N/A | Child semantics | `views/views_test.mbt`、`core/advanced_layout_test.mbt` | Showcase、Markdown Editor | 通过 core 发出 clip/offset 行为，并可通过 `on_scroll` 报告 wheel delta。 |
-| `grid` | `views/grid_list.mbt` | N/A | Children preserved | `views/views_test.mbt` | Showcase | 固定列 layout。 |
-| `list` | `views/grid_list.mbt` | N/A | 通过 core 的 List/list item role | `views/views_test.mbt`、`core/semantics_test.mbt` | Showcase Todo pattern | Eager list layout。 |
-| `lazy_list` | `views/virtual_list.mbt` | N/A | List output | `views/views_test.mbt` | Showcase | 从 data 取窗口可见 row。 |
-| `lazy_grid` | `views/lazy_grid.mbt` | N/A | List/grid output | `views/views_test.mbt` | Showcase | 从 data 取窗口可见 grid row。 |
-| `virtual_list` / `sectioned_list` / `scroll_to_index` | `views/virtual_list.mbt`、`views/sectioned_list.mbt` | N/A | List output | `views/views_test.mbt`、Showcase 测试 | Showcase Layout | 基于现有 scroll/list primitive 的 overscanned windowed list、grouped section header、empty state 和 controlled offset intent。 |
-| `accordion` / `disclosure` / `collapsible_panel` | `views/disclosure.mbt` | ButtonStyle/surface/text | Group | `views/views_test.mbt`、Showcase 测试 | Showcase Feedback | 受控 disclosure container；expanded state 和 toggle behavior 留在 app model 中。 |
-| `resizable_panel` | `views/disclosure.mbt` | SurfaceStyle | Group | `views/views_test.mbt`、Showcase 测试 | Showcase Layout | 带视觉 handle 和可选 drag callback 的 controlled-size panel；app 仍拥有 size value。 |
+| `scroll_view` | `views/views.mbt` | N/A | Child semantics | `views/views_test.mbt`、`core/advanced_layout_test.mbt` | Showcase、Markdown Editor | 通过 core 发出 clip/offset 行为，并可通过 `on_scroll` 报告 wheel delta。 |
+| `grid` | `views/views.mbt` | N/A | Children preserved | `views/views_test.mbt` | Showcase | 固定列 layout。 |
+| `list` | `views/views.mbt` | N/A | 通过 core 的 List/list item role | `views/views_test.mbt`、`core/semantics_test.mbt` | Showcase Todo pattern | Eager list layout。 |
+| `lazy_list` | `views/views.mbt` | N/A | List output | `views/views_test.mbt` | Showcase | 从 data 取窗口可见 row。 |
+| `lazy_grid` | `views/views.mbt` | N/A | List/grid output | `views/views_test.mbt` | Showcase | 从 data 取窗口可见 grid row。 |
+| `virtual_list` / `sectioned_list` / `scroll_to_index` | `views/views.mbt`、`views/views.mbt` | N/A | List output | `views/views_test.mbt`、Showcase 测试 | Showcase Layout | 基于现有 scroll/list primitive 的 overscanned windowed list、grouped section header、empty state 和 controlled offset intent。 |
+| `accordion` / `disclosure` / `collapsible_panel` | `views/views.mbt` | ButtonStyle/surface/text | Group | `views/views_test.mbt`、Showcase 测试 | Showcase Feedback | 受控 disclosure container；expanded state 和 toggle behavior 留在 app model 中。 |
+| `resizable_panel` | `views/views.mbt` | SurfaceStyle | Group | `views/views_test.mbt`、Showcase 测试 | Showcase Layout | 带视觉 handle 和可选 drag callback 的 controlled-size panel；app 仍拥有 size value。 |
 
 ## Navigation And Presentation
 
 | Constructor | Source | Theme | Semantics | Tests | 示例覆盖 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `navigation_destination` | `views/navigation.mbt` | N/A | N/A | `views/views_test.mbt` | N/A | navigation stack 的 route/view pair。 |
-| `navigation_stack` / `navigation_stack_selected` | `views/navigation.mbt` | 基于 child | Selected child semantics | `views/views_test.mbt` | N/A | 从 `NavigationState` 或 TEA-owned route string 中选择一个 view。 |
-| `router_stack` | `views/navigation.mbt` | 基于 child | Selected child semantics | `views/views_test.mbt`、`core/app_framework_wbtest.mbt` | N/A | 从 `@core.RouterState` 中选择 destination，保留 query param 和 restoration snapshot，同时保持在 renderer 之上。 |
+| `navigation_destination` | `views/views.mbt` | N/A | N/A | `views/views_test.mbt` | N/A | navigation stack 的 route/view pair。 |
+| `navigation_stack` / `navigation_stack_selected` | `views/views.mbt` | 基于 child | Selected child semantics | `views/views_test.mbt` | N/A | 从 `NavigationState` 或 TEA-owned route string 中选择一个 view。 |
+| `router_stack` | `views/views.mbt` | 基于 child | Selected child semantics | `views/views_test.mbt`、`core/app_framework_wbtest.mbt` | N/A | 从 `@core.RouterState` 中选择 destination，保留 query param 和 restoration snapshot，同时保持在 renderer 之上。 |
 | `@core.RouteHistoryState` / `RouteHistoryEntry` | `core/app_framework.mbt` | N/A | N/A | `core/app_framework_wbtest.mbt`、Showcase 测试 | Showcase Navigation Shell | App-owned、可序列化 route/deep-link history，带 back/forward cursor、新 push 时截断 forward，以及 `RouterSnapshot` restoration。它不会自行更新 browser history 或 native URL/deep-link handler。 |
 | `route_header` | `views/navigation_route_header.mbt` | Surface/text/ButtonStyle | Group | `views/views_test.mbt`、Showcase 测试 | Showcase Navigation Shell | 受控 page header，用于 app-owned route title、subtitle 和 `ActionItem` button；routing、deep link 和 history 留在 view helper 之外。 |
 | `section_nav` | `views/navigation_section_nav.mbt` | ButtonStyle/text/surface | 带 selected/disabled list item 的 List | `views/descriptor_helpers_test.mbt`、`views/views_test.mbt`、Showcase 测试 | Showcase Navigation Shell | 从 `section_nav_item` descriptor 构建的受控 section switcher。App 拥有 selected id、routing effect、history 和 unavailable-section policy。 |
 | `sidebar` / `breadcrumb` | `views/navigation_sidebar.mbt`、`views/navigation_breadcrumb.mbt` | ButtonStyle/text/surface | List/group | `views/descriptor_helpers_test.mbt`、`views/views_test.mbt`、Showcase 测试 | Showcase Navigation Shell | 从 `sidebar_item` 和 `breadcrumb_item` descriptor 加上 button、text 和 surface primitive 构建的受控 navigation shell helper。 |
 | `split_view` / `master_detail` / `resizable_split_view` | `views/navigation_split.mbt` | 基于 child | 带可选 drag handle 的 Group | `views/views_test.mbt`、Showcase 测试 | Showcase Navigation Shell | 面向 master/detail layout 的 fixed-width 和 controlled drag-resizable shell composition。`resizable_split_view` 通过 `on_drag` 发出 clamp 后 primary width；app model 仍拥有 persistence、snapping 和 route-specific pane sizing。 |
 | `wizard` / `wizard_step` | `views/navigation_presentation.mbt` | ButtonStyle/surface | 带 tab-like step button 的 Group | `views/views_test.mbt`、Showcase 测试 | Showcase Navigation Shell | 使用 `WizardStep` descriptor 和 app-owned current step 的受控 wizard workflow。 |
-| `tab_item` | `views/navigation.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase | Tab descriptor。 |
-| `tab_view` | `views/navigation.mbt` | ButtonStyle default | Tab button | `views/views_test.mbt` | Showcase | TEA 优先 tab selection。 |
+| `tab_item` | `views/views.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase | Tab descriptor。 |
+| `tab_view` | `views/views.mbt` | ButtonStyle default | Tab button | `views/views_test.mbt` | Showcase | TEA 优先 tab selection。 |
 | `dialog` | `views/dialog_shell.mbt` | SurfaceStyle/ButtonStyle | Dialog | `views/views_test.mbt`、Showcase 测试 | Showcase Navigation Shell | 可复用 custom-content dialog shell，包含 title、subtitle、可选 primary/secondary action 和可选 dismiss action。把它传给 `dialog_host` 做 view-level presentation；host-modal semantics 仍是后续工作。 |
 | `alert` | `views/dialog_alert.mbt` | SurfaceStyle/ButtonStyle | Dialog | `views/views_test.mbt`、Showcase 测试 | Showcase | 可复用 alert content，带 primary 和可选 secondary action；把它传给 `dialog_host` 做 view-level presentation。 |
 | `dialog_host` | `views/navigation_presentation.mbt` | SurfaceStyle | Presented 时为 Dialog | `views/views_test.mbt`、Showcase 测试 | Showcase | 带 dim scrim 和居中 dialog 的 modal content stack wrapper。Presented dialog 默认应用 view-level focus trap；只有在有意构建 non-modal preview surface 时才传入 `trap_focus=false`。 |
-| `sheet` / `sheet_host` | `views/sheet.mbt` | Brush、radius、shadow | Sheet presentation | `views/views_test.mbt` | Showcase | 支持 content dismissal 的 modal 或 bottom-sheet presentation。Presented sheet 默认应用 view-level focus trap，而 host-modal deep binding 仍是平台后续工作。 |
+| `sheet` / `sheet_host` | `views/views.mbt` | Brush、radius、shadow | Sheet presentation | `views/views_test.mbt` | Showcase | 支持 content dismissal 的 modal 或 bottom-sheet presentation。Presented sheet 默认应用 view-level focus trap，而 host-modal deep binding 仍是平台后续工作。 |
 
 ## Theme And Environment
 
 | Constructor | Source | Theme | Semantics | Tests | 示例覆盖 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `theme` | `views/theme.mbt` | 创建 Theme | N/A | `views/views_test.mbt` | Showcase | 自定义 `@moui.Theme` token 的 convenience constructor，包含 palette、spacing、radius、typography、shadow、motion，以及在可选 base theme 上的 surface override。 |
-| `environment` | `views/theme.mbt` | 创建 Environment | N/A | `views/views_test.mbt` | Showcase | Runtime environment helper。Showcase Runtime 还显示注入的 `@host.HostCapabilitySummary`，让 app 无需依赖 renderer 包即可比较 service、input、window、text-input、IME、drag/drop、async-service 和 accessibility readiness。 |
-| `light_theme` / `dark_theme` | `views/theme.mbt` | 创建 Theme | N/A | `views/views_test.mbt` | Showcase | Convenience theme preset。 |
-| `default_theme` | `views/theme.mbt` | 创建 Theme | N/A | `views/views_test.mbt` | Showcase | 未提供 ambient theme 时使用的中立 fallback theme；`light_theme`/`dark_theme` 会在其上解析 Minimal preset。 |
+| `theme` | `views/views.mbt` | 创建 Theme | N/A | `views/views_test.mbt` | Showcase | 自定义 `@moui.Theme` token 的 convenience constructor，包含 palette、spacing、radius、typography、shadow、motion，以及在可选 base theme 上的 surface override。 |
+| `environment` | `views/views.mbt` | 创建 Environment | N/A | `views/views_test.mbt` | Showcase | Runtime environment helper。Showcase Runtime 还显示注入的 `@host.HostCapabilitySummary`，让 app 无需依赖 renderer 包即可比较 service、input、window、text-input、IME、drag/drop、async-service 和 accessibility readiness。 |
+| `light_theme` / `dark_theme` | `views/views.mbt` | 创建 Theme | N/A | `views/views_test.mbt` | Showcase | Convenience theme preset。 |
+| `default_theme` | `views/views.mbt` | 创建 Theme | N/A | `views/views_test.mbt` | Showcase | 未提供 ambient theme 时使用的中立 fallback theme；`light_theme`/`dark_theme` 会在其上解析 Minimal preset。 |
 | `@material.light_theme` / `@carbon.light_theme` / `@primer.light_theme` / `@fluent.light_theme` / package `dark_theme` / `high_contrast_theme` / `system_theme` / package `tokens` / `tokens_for_variant` / `report` / `manifest` / `component_token_matrix` / shared `@common.custom` / `@common.custom_tokens` / `DesignPreset::*_report` shared resolver APIs | `moui_theme/common/*.mbt`、`moui_theme/material/theme.mbt`、`moui_theme/carbon/theme.mbt`、`moui_theme/primer/theme.mbt`、`moui_theme/fluent/theme.mbt` | 通过 package entrypoint 创建 source-mapped official-system preview Theme 值，并暴露共享 semantic/component token 和 report model | N/A | `moui_theme/common/theme_test.mbt`、official-system entrypoint package 测试、Design Systems 测试 | Design Systems 示例 | MoUI 的可选 design-system addon。Material、Carbon、Primer 和 Fluent 通过各自 package-local entrypoint 请求；`moui_theme/common` 拥有共享 token struct、source/golden/coverage/report model、resolver helper 和 generic customization helper。当前外部系统保持 source-mapped preview，直到测试证明 full official source import、stable source lock、official-token anchor coverage、token taxonomy parity、semantic palette parity、typography parity、density/variant parity、component-token matrix coverage、runtime token alignment、customization parity、adaptation closure 和 golden/source-import integrity。View 仍只消费 `@moui.Theme` 或中立 style contract。 |
 | `@sickle.light_theme` / `@sickle.dark_theme` / `@sickle.skeuo_theme` / `@sickle.flat_theme` / `@sickle.hybrid_theme` / `@sickle.palette` | `moui_theme/sickle/theme.mbt` | 创建一方 Sickle Theme 值 | N/A | `moui_theme/sickle/theme_test.mbt` | Addon package 测试 | Smartisan-inspired 混合视觉主题，具备精确桌面拟物和扁平 semantic control。`Hybrid` 和 `Skeuo` 模式使用分层 surface gradient、更强 shadow、内嵌 text-field focus edge 和 metal/cream neutral ramp；`Flat` 模式保持相同 Sickle red brand palette，同时移除 depth 和 shadow。它是 MoUI theme addon，不是 source-mapped official design-system preset。 |
 
@@ -198,15 +198,15 @@ fn view(draft : String) -> @moui.View[Msg] {
 
 | Constructor | Source | Theme | Semantics | Tests | 示例覆盖 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `expanded` / `flexible` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Flex child modifier。 |
-| `layout_priority` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt`、`core/advanced_layout_test.mbt` | Showcase | 为 custom layout delegate 提供 priority metadata。 |
-| `wrap` / `flow` / `responsive_grid` / `baseline_form_rows` | `views/layout_flow.mbt`、`views/layout_responsive_grid.mbt`、`views/layout_baseline_form.mbt` | N/A | Group | `views/views_test.mbt`、Showcase 测试 | Showcase Layout | 用 `custom_children_layout` 构建 responsive wrapping、adaptive grid column 和 baseline-aligned form row；无需 renderer 变化。 |
-| `align` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt`、`core/advanced_layout_wbtest.mbt` | Showcase、Dialog host、Tooltip | 使用请求的 alignment 将 child 放入 parent frame。 |
-| `aspect_ratio` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Ratio constraint wrapper。 |
-| `intrinsic_width` / `intrinsic_height` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Intrinsic measurement wrapper。 |
-| `custom_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt` | Showcase Advanced Rendering | 构建 custom `View[Msg]`；Showcase 用它发出 layer/blend、filter、shader、path、transform 和 opacity draw command。 |
-| `custom_children_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt`、`core/advanced_layout_wbtest.mbt` | Showcase | 构建 custom child-layout `View[Msg]`，带 child size、baseline、priority 和 placement callback。 |
-| `component` | `views/layout_helpers.mbt` | 基于 ComponentContext | Built child semantics | `views/views_test.mbt` | 通过 app component 的示例 | 包装 `@core.Component::new`。 |
+| `expanded` / `flexible` | `views/views.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Flex child modifier。 |
+| `layout_priority` | `views/views.mbt` | N/A | Child semantics | `views/views_test.mbt`、`core/advanced_layout_test.mbt` | Showcase | 为 custom layout delegate 提供 priority metadata。 |
+| `wrap` / `flow` / `responsive_grid` / `baseline_form_rows` | `views/layout_flow.mbt`、`views/views.mbt`、`views/views.mbt` | N/A | Group | `views/views_test.mbt`、Showcase 测试 | Showcase Layout | 用 `custom_children_layout` 构建 responsive wrapping、adaptive grid column 和 baseline-aligned form row；无需 renderer 变化。 |
+| `align` | `views/views.mbt` | N/A | Child semantics | `views/views_test.mbt`、`core/advanced_layout_wbtest.mbt` | Showcase、Dialog host、Tooltip | 使用请求的 alignment 将 child 放入 parent frame。 |
+| `aspect_ratio` | `views/views.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Ratio constraint wrapper。 |
+| `intrinsic_width` / `intrinsic_height` | `views/views.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Intrinsic measurement wrapper。 |
+| `custom_layout` | `views/views.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt` | Showcase Advanced Rendering | 构建 custom `View[Msg]`；Showcase 用它发出 layer/blend、filter、shader、path、transform 和 opacity draw command。 |
+| `custom_children_layout` | `views/views.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt`、`core/advanced_layout_wbtest.mbt` | Showcase | 构建 custom child-layout `View[Msg]`，带 child size、baseline、priority 和 placement callback。 |
+| `component` | `views/views.mbt` | 基于 ComponentContext | Built child semantics | `views/views_test.mbt` | 通过 app component 的示例 | 包装 `@core.Component::new`。 |
 
 ## 维护清单
 

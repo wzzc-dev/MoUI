@@ -50,7 +50,7 @@ impl @core.ViewNode for RoundedClip with fn identity(_self) {
 
 ///|
 impl @core.ViewNode for RoundedClip with fn declaration(self) {
-  view_paint_declaration(@core.DeclarationKey::double(self.radius))
+  @common.view_paint_declaration(@core.DeclarationKey::double(self.radius))
 }
 
 ///|
@@ -121,11 +121,11 @@ pub fn[Msg] custom_children_layout(
   children~ : Array[@core.View[Msg]],
   measure~ : (@core.CustomLayoutContext) -> @core.Size,
   place~ : (@core.CustomPlacementContext) -> Array[@core.Rect],
-  paint~ : (PaintContext, @core.Rect) -> Unit,
+  paint~ : (@common.PaintContext, @core.Rect) -> Unit,
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  @controls.custom_children_layout_control(
+  custom_children_layout_control(
     children~,
     measure~,
     place~,
@@ -139,5 +139,5 @@ pub fn[Msg] custom_children_layout(
 pub fn[Msg] component(
   build : (@core.ComponentContext) -> @core.View[Msg],
 ) -> @core.View[Msg] {
-  @controls.component_host(build)
+  component_host(build)
 }

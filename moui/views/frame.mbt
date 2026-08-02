@@ -1,2 +1,0 @@
-///|
-pub using @layout {frame}

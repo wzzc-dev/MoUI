@@ -82,7 +82,7 @@ fn scroll_test_container(
   state : @core.ScrollState,
   shows_indicator? : Bool = false,
 ) -> @core.View[Unit] {
-  @controls.scroll_container(
+  scroll_container(
     child~,
     offset=state.offset(),
     viewport=Some(@core.Size::new(width=100.0, height=100.0)),
@@ -288,7 +288,7 @@ test "lazy grid rebuilds its virtual window after scrolling" {
   let root : @core.View[Unit] = lazy_grid(
     ["row-0", "row-1", "row-2", "row-3", "row-4"],
     item => item,
-    item => text(item, width=100.0, height=100.0),
+    item => @text.text(item, width=100.0, height=100.0),
     state~,
     columns=1,
     item_height=100.0,
@@ -310,7 +310,7 @@ test "lazy list rebuilds its virtual window after scrolling" {
   let root : @core.View[Unit] = lazy_list(
     ["row-0", "row-1", "row-2", "row-3", "row-4"],
     item => item,
-    item => text(item, width=100.0, height=100.0),
+    item => @text.text(item, width=100.0, height=100.0),
     state~,
     item_height=100.0,
     viewport_height=100.0,
@@ -330,7 +330,7 @@ test "virtual list rebuilds its virtual window after scrolling" {
   let root : @core.View[Unit] = virtual_list(
     ["row-0", "row-1", "row-2", "row-3", "row-4"],
     item => item,
-    item => text(item, width=100.0, height=100.0),
+    item => @text.text(item, width=100.0, height=100.0),
     state~,
     item_height=100.0,
     viewport_height=100.0,

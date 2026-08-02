@@ -9,7 +9,6 @@ import {
   "wzzc-dev/moui/views/button",
   "wzzc-dev/moui/views/text",
   "wzzc-dev/moui/views/checkbox",
-  "wzzc-dev/moui/views/choice",
 }
 
 import {

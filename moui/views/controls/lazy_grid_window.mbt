@@ -36,7 +36,7 @@ fn[T, Msg] lazy_grid_window(
         row_children.push(cell(item).key(key(item)))
       }
       rows.push(
-        grid(row_children, columns~, row_spacing=0.0, column_spacing~).key(
+        @layout.grid(row_children, columns~, row_spacing=0.0, column_spacing~).key(
           "lazy-grid-row-\{row_index}",
         ),
       )
@@ -45,7 +45,7 @@ fn[T, Msg] lazy_grid_window(
   let virtual_rows : Array[@core.View[Msg]] = []
   if first_visible_row > 0 {
     virtual_rows.push(
-      spacer(min_length=first_visible_row.to_double() * row_stride, weight=0.0).key(
+      @container.spacer(min_length=first_visible_row.to_double() * row_stride, weight=0.0).key(
         "lazy-grid-before",
       ),
     )
@@ -60,13 +60,13 @@ fn[T, Msg] lazy_grid_window(
   }
   if hidden_after > 0 {
     virtual_rows.push(
-      spacer(min_length=hidden_after.to_double() * row_stride, weight=0.0).key(
+      @container.spacer(min_length=hidden_after.to_double() * row_stride, weight=0.0).key(
         "lazy-grid-after",
       ),
     )
   }
   scroll_view(
-    list(virtual_rows, spacing=row_spacing),
+    @layout.list(virtual_rows, spacing=row_spacing),
     offset=state.offset(),
     width=viewport_width,
     height=viewport_height,
