@@ -75,4 +75,4 @@ renderer-thread integration also remain pending and were not promoted.
 ## Decisions
 
 - [ADR 0005](../decisions/0005-mobile-host-channel-ownership.md)
-- [ADR 0006](../decisions/0006-mobile-gpu-surface-and-render-thread.md)
+- [ADR 0006](../decisions/0005-mobile-host-and-gpu.md)

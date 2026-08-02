@@ -173,7 +173,7 @@ Keep working:
 
 ## Related
 
-- ADR: [`decisions/0006-mobile-gpu-surface-and-render-thread.md`](decisions/0006-mobile-gpu-surface-and-render-thread.md)
+- ADR: [`decisions/0005-mobile-host-and-gpu.md`](decisions/0005-mobile-host-and-gpu.md)
 - Embedded-runtime route: [`window-hosted-moui.md`](window-hosted-moui.md)
 - Capability notes: [`renderer-capability-report.md`](renderer-capability-report.md)
 - Session: [`ai-sessions/2026-07-13-all-platform-native-gpu-workers.md`](ai-sessions/2026-07-13-all-platform-native-gpu-workers.md)

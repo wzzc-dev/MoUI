@@ -48,7 +48,7 @@ moon run tools/moui/validate_maintenance_baseline --target native -- --scope ful
 
 ## 诊断路线
 
-Native WGPU 是渲染器诊断路线。它通过 `sh scripts/check.sh --profile full` 和聚焦的渲染器/provider 命令保持可用，但它不是 native 主线。
+Native WGPU 是**实验性**渲染器诊断路线。它的工程门禁保持 `diagnostic`——可运行、可测试、允许记录观察，但**不是**默认每日门禁，也不携带**任何**产品承诺。它通过 `sh scripts/check.sh --profile full` 和聚焦的渲染器/provider 命令保持可用，但它不是 native 主线。
 
 Design Systems 是 addon 诊断覆盖。`moui_theme` 和 `examples/design_systems` 仍然是重要的 source-mapped 预览/一致性 surface，但它们不是核心 MoUI 框架基线的一部分。修改 `moui_theme` 或 Design Systems 示例时，请运行 `sh scripts/check.sh --profile theme`。
 

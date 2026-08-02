@@ -1,4 +1,90 @@
-# 0016: Declaration invalidation and committed Agent semantics
+# ADR 0015-0016: Core Protocols (merged)
+
+> 原编号保留为小节锚点: 0015-public-view-node-trait,0016-declaration-invalidation-and-committed-agent-semantics
+
+---
+
+## 0015: Public object-safe ViewNode with typed View adapters
+
+- **Date**: 2026-07-26
+- **Status**: Accepted
+- **Deciders**: Repository maintainer, agent-assisted
+- **Related**: [RFC #3](https://github.com/wzzc-dev/MoUI/issues/3),
+  `docs/plans/active/view-node-trait-refactor.md`
+
+### Context
+
+The custom-view kernel is currently a private `ViewNode[Msg]` closure bundle
+constructed through the large public `View::node` callback API. It preserves
+typed TEA, but repeats the same forwarding surface in `View::map` and runtime
+erasure, gives downstream packages no nominal custom-control protocol, and
+stores runtime interaction state on the erased view description instead of the
+reconciled element lifecycle.
+
+MoonBit trait objects cannot express the complete generic node directly. The
+current toolchain does not support `trait ViewNode[Msg]`, and polymorphic trait
+methods cannot form trait objects. Object-safe methods must use `Self` exactly
+once as the first parameter.
+
+### Decision
+
+1. Add a public open, object-safe `ViewNode` trait in `moui/core`. It owns only
+   message-independent identity, revision, child transforms, layout, paint,
+   text-input state, semantics, focus, and flex behavior.
+2. Keep `View[Msg]` as the complete typed virtual view. `View::from_node`
+   combines a concrete `ViewNode` with typed children, component-build, event,
+   and text-command adapters.
+3. Remove the public `View::node` callback constructor and all compatibility
+   aliases. Private callback adapters may be used only inside `core`.
+4. Keep high-level components as functions returning `View[Msg]`; `ViewNode`
+   is a low-level renderer-neutral control protocol, not a component state
+   model.
+5. Replace the runtime erased closure record with a private object-safe
+   `RuntimeViewNode` adapter. Runtime tree types remain private.
+6. Move `ViewStateContext` into `ElementControlState`. Reconciliation preserves
+   it for the same identity and resets it on remount.
+7. Commit event-local state, dirty flags, focus, and capture before delivering
+   typed messages to the program queue.
+
+### Options Considered
+
+### Keep the callback bundle
+
+- Pros: complete typed representation and minimal conceptual layers.
+- Cons: large constructor, repeated closure wrapping, weak downstream
+  discoverability, and no nominal extension contract.
+
+### Use a generic or polymorphic ViewNode trait
+
+- Pros: one apparent abstraction for every node behavior.
+- Cons: incompatible with current MoonBit trait syntax or trait-object safety.
+
+### Erase messages inside the public trait
+
+- Pros: simple trait object.
+- Cons: loses `View[Msg]` static guarantees and weakens TEA composition.
+
+### Consequences
+
+- Third-party packages can implement low-level controls while returning typed
+  `View[Msg]` values.
+- Node configuration is immutable declaration data; business state remains in
+  the app model and transient interaction state remains in runtime elements.
+- The implementation gains a deliberate split between message-independent
+  trait dispatch and typed adapters.
+- This is a breaking API change and intentionally provides no migration shim.
+
+### Validation
+
+- Downstream black-box trait implementation and typed message mapping tests.
+- Same-identity state preservation and changed-identity reset tests.
+- Native, wasm-gc, and wasm checks plus API, maintenance, guidance, daily, Web,
+  and native Skia validation.
+
+
+---
+
+## 0016: Declaration invalidation and committed Agent semantics
 
 - **Date**: 2026-07-27
 - **Status**: Accepted
@@ -8,7 +94,7 @@
   [ADR 0005](0005-mobile-host-channel-ownership.md),
   [ADR 0015](0015-public-view-node-trait.md)
 
-## Context
+### Context
 
 MoUI's public `ViewNode` contract uses lazily sampled `String` revisions and a
 separate paint revision. Producers build these values through interpolation,
@@ -29,7 +115,7 @@ operations. That makes coordinates, commands, runtime state, and paint details
 appear to be stable product contracts even though they are implementation and
 diagnostic concerns.
 
-## Decision
+### Decision
 
 1. Replace `ViewNode::revision()` and `paint_revision()` with
    `declaration() -> ViewDeclaration`. Its conservative trait default is fully
@@ -103,7 +189,7 @@ This ADR supersedes only the following earlier choices:
 
 Neither ADR 0005 nor ADR 0015 is superseded in full.
 
-## Options Considered
+### Options Considered
 
 ### Keep strings but standardize producers
 
@@ -139,7 +225,7 @@ Neither ADR 0005 nor ADR 0015 is superseded in full.
 - Cons: broad breaking migration, more explicit producer work, persistent
   per-element metadata, and bounded journal/index memory.
 
-## Rationale
+### Rationale
 
 MoUI needs correctness before caching convenience. Canonical declaration bytes
 make equality exact while channel policies let producers state when caching is
@@ -153,7 +239,7 @@ runtime slots hold only transient control state. Application state still
 changes only through `update`; the runtime owns lifecycle, focus, and other
 node-local interaction mechanics.
 
-## Consequences
+### Consequences
 
 - Exact declaration producers must classify all observable fields by channel.
   Nodes that do not provide that cache proof remain correct through the fully
@@ -173,7 +259,7 @@ node-local interaction mechanics.
   revision, activation-state Agent host, and coordinate-simulation APIs are
   deleted rather than deprecated.
 
-## Agent Notes
+### Agent Notes
 
 - **Session context**: Terminal refactor of declaration invalidation, committed
   semantics, Agent host ownership, and MCP semantic actions.
@@ -184,9 +270,10 @@ node-local interaction mechanics.
   active plan defines focused native/wasm-gc tests, generated API review,
   static validators, Theme profile, and Daily profile required before closure.
 
-## References
+### References
 
 - [RFC #5: declaration invalidation and committed agent semantics](https://github.com/wzzc-dev/MoUI/issues/5)
 - [Completed implementation plan](../plans/done/agent-semantic-actions.md)
 - [ADR 0005: Mobile Host Channel Ownership](0005-mobile-host-channel-ownership.md)
 - [ADR 0015: Public object-safe ViewNode with typed View adapters](0015-public-view-node-trait.md)
+
