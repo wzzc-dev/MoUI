@@ -890,43 +890,6 @@ fn WindowsNativeHostBackend::register_primary_runtime_slot(
 }
 
 ///|
-fn WindowsNativeHostBackend::sync_runtime_slot(
-  self : WindowsNativeHostBackend,
-  window_id : @host.HostWindowId,
-) -> Unit {
-  self.coordinator.sync_runtime_slot(window_id)
-}
-
-///|
-fn WindowsNativeHostBackend::apply_window_lifecycle(
-  self : WindowsNativeHostBackend,
-  window_id : @host.HostWindowId,
-  host_event : @host.HostEvent,
-) -> Unit {
-  ignore(
-    self.coordinator.runtime_slots.apply_host_event(
-      self.coordinator.windows,
-      window_id,
-      host_event,
-    ),
-  )
-}
-
-///|
-fn WindowsNativeHostBackend::active_runtime_slot(
-  self : WindowsNativeHostBackend,
-) -> @runtime.HostWindowRuntimeSlot? {
-  self.coordinator.active_runtime_slot()
-}
-
-///|
-fn WindowsNativeHostBackend::sync_text_input_session(
-  self : WindowsNativeHostBackend,
-) -> Unit {
-  self.coordinator.sync_text_input_session()
-}
-
-///|
 fn WindowsNativeHostBackend::request_redraw(
   self : WindowsNativeHostBackend,
 ) -> Unit {
@@ -942,14 +905,6 @@ fn WindowsNativeHostBackend::request_redraw_window_if_needed(
   window_id : @host.HostWindowId,
 ) -> Unit {
   self.coordinator.request_redraw_window_if_needed(window_id)
-}
-
-///|
-fn WindowsNativeHostBackend::request_image_resource_redraw_if_changed(
-  self : WindowsNativeHostBackend,
-  window_id : @host.HostWindowId,
-) -> Bool {
-  self.coordinator.request_image_resource_redraw_if_changed(window_id)
 }
 
 ///|
@@ -969,13 +924,6 @@ fn WindowsNativeHostBackend::request_platform_redraw(
     Some(slot) => slot.window.request_redraw()
     None => ()
   }
-}
-
-///|
-fn WindowsNativeHostBackend::image_resource_completion_source(
-  self : WindowsNativeHostBackend,
-) -> @render.HostImageResourceCompletionSource {
-  self.coordinator.image_resource_completion_source()
 }
 
 ///|

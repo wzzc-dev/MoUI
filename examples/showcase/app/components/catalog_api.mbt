@@ -13,6 +13,7 @@ pub(all) struct CatalogItem {
   title : String
   summary : String
   badge : String
+  tone : @views.BadgeTone
 } derive(Eq, Debug)
 
 ///|
@@ -31,6 +32,7 @@ pub fn catalog_items() -> Array[CatalogItem] {
         title: item.name,
         summary: item.description,
         badge: item.badge,
+        tone: item.tone,
       })
     }
   }
