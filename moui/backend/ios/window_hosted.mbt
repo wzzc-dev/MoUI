@@ -24,10 +24,10 @@ pub fn IosEmbeddedRuntimeBackend::new(
         let provider = provider_factory()
         @embedded_runtime_backend.RendererProviderAdapter::new(
           create_renderer=fn(raw, metrics) {
-            provider.create(IosViewHandle::new(raw=raw), metrics)
+            provider.create(IosViewHandle::new(raw~), metrics)
           },
           sync=fn(raw, metrics) {
-            provider.sync(IosViewHandle::new(raw=raw), metrics)
+            provider.sync(IosViewHandle::new(raw~), metrics)
           },
           image_loader=provider.image_loader,
         )
@@ -90,9 +90,7 @@ pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn ca
   let attrs = @window_core.WindowAttributes::default().with_title(
     self.backend.title(),
   )
-  let created : @window_ios.Window? = Some(
-    event_loop.try_create_window(attrs),
-  ) catch {
+  let created : @window_ios.Window? = Some(event_loop.try_create_window(attrs)) catch {
     _ => None
   }
   match created {

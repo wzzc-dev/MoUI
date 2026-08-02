@@ -7,14 +7,9 @@ pub fn[Msg] toggle(
   foreground? : @core.Color,
   check_color? : @core.Color,
 ) -> @core.View[Msg] {
-  checkbox(
-    label,
-    checked~,
-    on_change~,
-    theme?,
-    foreground?,
-    check_color?,
-  ).semantics_role(@core.SemanticsRole::Switch)
+  checkbox(label, checked~, on_change~, theme?, foreground?, check_color?).semantics_role(
+    @core.SemanticsRole::Switch,
+  )
 }
 
 ///|

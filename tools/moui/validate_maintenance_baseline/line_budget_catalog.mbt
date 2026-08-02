@@ -332,11 +332,17 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/popover/popover_selectors.mbt", max_lines: 120 },
     { path: "moui/views/popover/popover_menu.mbt", max_lines: 60 },
     { path: "moui/views/navigation/navigation_breadcrumb.mbt", max_lines: 60 },
-    { path: "moui/views/navigation/navigation_route_header.mbt", max_lines: 110 },
+    {
+      path: "moui/views/navigation/navigation_route_header.mbt",
+      max_lines: 110,
+    },
     { path: "moui/views/navigation/navigation_section_nav.mbt", max_lines: 150 },
     { path: "moui/views/navigation/navigation_sidebar.mbt", max_lines: 65 },
     { path: "moui/views/navigation/navigation_split.mbt", max_lines: 115 },
-    { path: "moui/views/navigation/navigation_presentation.mbt", max_lines: 120 },
+    {
+      path: "moui/views/navigation/navigation_presentation.mbt",
+      max_lines: 120,
+    },
     { path: "moui/views/data/data_display_state.mbt", max_lines: 15 },
     { path: "moui/views/data/data_filter_state.mbt", max_lines: 25 },
     { path: "moui/views/data/data_sort_pagination.mbt", max_lines: 115 },
@@ -353,7 +359,10 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/data/data_avatar.mbt", max_lines: 95 },
     { path: "moui/views/data/data_tree.mbt", max_lines: 165 },
     { path: "moui/views/data/data_filter_bar.mbt", max_lines: 170 },
-    { path: "moui/views/data/data_filter_column_visibility.mbt", max_lines: 175 },
+    {
+      path: "moui/views/data/data_filter_column_visibility.mbt",
+      max_lines: 175,
+    },
     { path: "moui/views/data/data_table.mbt", max_lines: 70 },
     { path: "moui/views/data/data_table_rendering.mbt", max_lines: 190 },
     {

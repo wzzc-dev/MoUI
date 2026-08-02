@@ -99,7 +99,12 @@ fn responsive_grid_place(
         column.to_double() * (column_width + column_spacing)
       rects.push(
         @core.Rect::new(
-          x=@layout.layout_mirror_x(frame, x - frame.origin.x, column_width, direction),
+          x=@layout.layout_mirror_x(
+            frame,
+            x - frame.origin.x,
+            column_width,
+            direction,
+          ),
           y~,
           width=column_width,
           height=sizes[index].height,

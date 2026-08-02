@@ -29,11 +29,9 @@ fn MacosNativeHostBackend::dispatch_host_event(
   window_id : @host.HostWindowId,
   host_event : @host.HostEvent,
 ) -> Unit {
-  self.coordinator.dispatch_host_event(
-    window_id,
-    host_event,
-    adjust=event => Some(event),
-  )
+  self.coordinator.dispatch_host_event(window_id, host_event, adjust=event => {
+    Some(event)
+  })
 }
 
 ///|
@@ -86,7 +84,9 @@ fn MacosNativeHostBackend::create_resolved_window(
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
     .with_surface_size(
-      @host.core_size_to_window_surface_size(resolved.record.metrics.logical_size),
+      @host.core_size_to_window_surface_size(
+        resolved.record.metrics.logical_size,
+      ),
     )
     .with_platform_attributes(platform)
   let window : @window_macos.Window? = Some(
@@ -266,7 +266,9 @@ fn MacosNativeHostBackend::macos_surface_actions(
         ),
       )
     },
-    sync_surface=fn(metrics) { (self.renderer_provider.sync_surface)(window, metrics) },
+    sync_surface=fn(metrics) {
+      (self.renderer_provider.sync_surface)(window, metrics)
+    },
     renderer_resize=fn(metrics) { renderer.resize(metrics) },
     set_minimized=fn(minimized) { window.set_minimized(minimized) },
     set_visible=fn(visible) { window.set_visible(visible) },

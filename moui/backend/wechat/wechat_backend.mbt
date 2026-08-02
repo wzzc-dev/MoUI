@@ -107,7 +107,10 @@ pub fn wechat_readiness() -> WechatBackendReadiness {
   {
     ready: false,
     status: "experimental",
-    blocked_by: ["product_class=experimental: no usability commitment without real Mini Program evidence", "real-miniprogram-pixel-smoke", "touch-event-verification"],
+    blocked_by: [
+      "product_class=experimental: no usability commitment without real Mini Program evidence",
+      "real-miniprogram-pixel-smoke", "touch-event-verification",
+    ],
     next_steps: [
       "Build and run a counter demo in WeChat Developer Tools with Skyline", "Verify canvas rendering produces correct pixels",
       "Verify touch events dispatch correctly", "Record runtime evidence for promotion",

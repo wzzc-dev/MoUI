@@ -88,7 +88,10 @@ pub fn SunRasterRenderer::emoji_font_fallback_diagnostic(
   let glyph_format = "coverage-mask"
   let font_source = "sun-registered-font-chain"
   let shaper = "font-fallback-plan"
-  let fallback_character = @render.representative_fallback_codepoint(text, skip_joiners=true)
+  let fallback_character = @render.representative_fallback_codepoint(
+    text,
+    skip_joiners=true,
+  )
   let resolved_fallback_face_index = @sun_text.select_font_face_index_for_char(
     faces, fallback_character,
   )
@@ -378,7 +381,10 @@ fn sun_positive_pixel_extent(value : Double) -> Int {
 ///|
 fn sun_font_fallback_language_tags(text : String) -> Array[String] {
   let tags : Array[String] = []
-  let representative = @render.representative_fallback_codepoint(text, skip_joiners=true)
+  let representative = @render.representative_fallback_codepoint(
+    text,
+    skip_joiners=true,
+  )
   match sun_script_language_tag_for_codepoint(representative) {
     Some(tag) => sun_push_language_tag(tags, tag)
     None => ()
@@ -441,6 +447,7 @@ fn sun_push_language_tag(tags : Array[String], tag : String) -> Unit {
   }
 }
 
+///|
 fn sun_codepoint_is_hebrew_script(codepoint : Int) -> Bool {
   codepoint >= 0x0590 && codepoint <= 0x05FF
 }

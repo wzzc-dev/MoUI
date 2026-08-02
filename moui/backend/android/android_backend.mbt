@@ -125,10 +125,10 @@ pub fn renderer_provider_adapter_from_android(
 ) -> @embedded_runtime_backend.RendererProviderAdapter {
   @embedded_runtime_backend.RendererProviderAdapter::new(
     create_renderer=fn(raw, metrics) {
-      provider.create(AndroidSurfaceHandle::new(raw=raw), metrics)
+      provider.create(AndroidSurfaceHandle::new(raw~), metrics)
     },
     sync=fn(raw, metrics) {
-      provider.sync(AndroidSurfaceHandle::new(raw=raw), metrics)
+      provider.sync(AndroidSurfaceHandle::new(raw~), metrics)
     },
     image_loader=provider.image_loader,
   )
@@ -179,7 +179,8 @@ pub fn android_readiness() -> AndroidBackendReadiness {
     ready: false,
     status: "experimental",
     blocked_by: [
-      "product_class=experimental: no development/demonstration usability commitment without matching-device evidence", "window-hosted Android matching-device smoke still needs re-recording", "real-device signing observation and verified direct presenter route remain open",
+      "product_class=experimental: no development/demonstration usability commitment without matching-device evidence",
+      "window-hosted Android matching-device smoke still needs re-recording", "real-device signing observation and verified direct presenter route remain open",
       "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
@@ -226,4 +227,3 @@ pub fn android_capability_summary(
     description="Android embedded runtime backend with window HostCmd lifecycle and an ApplicationHandler session. The window embedder owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
   )
 }
-

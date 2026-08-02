@@ -235,7 +235,10 @@ test "host_file_dialog_kind_code keeps the wire codes" {
 
 ///|
 test "encode_host_string and encode_host_filter_list keep byte layout" {
-  let text = @utf8.decode_lossy(encode_host_string("标题")[:], ignore_bom=false)
+  let text = @utf8.decode_lossy(
+    encode_host_string("标题")[:],
+    ignore_bom=false,
+  )
   assert_eq(text, "标题")
   let filters = @utf8.decode_lossy(
     encode_host_filter_list(["PNG", "JPEG"])[:],
