@@ -29,6 +29,7 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 
 | # | Title | Date | Status |
 |---|-------|------|--------|
+| 0021 | [Mobile platforms downgraded to experimental product class](0021-mobile-platform-experimental-downgrade.md) | 2026-08-02 | Accepted |
 | 0020 | [Platform Bridge convergence and duplication budget](0020-platform-adapter-convergence-and-duplication-budget.md) | 2026-07-28 (amended 2026-07-29) | Accepted |
 | 0019 | [Renderer provider plugin architecture](0019-renderer-provider-plugin-architecture.md) | 2026-07-28 | Accepted |
 | 0018 | [Host contract split — runtime/render ownership leaves backend/host](0018-host-contract-split-and-runtime-render-ownership.md) | 2026-07-28 | Accepted |
@@ -38,7 +39,7 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 | 0014 | [Core owns value types; domain packages are facades only](0014-core-owns-domain-facades.md) | 2026-07-16 | Accepted |
 | 0013 | [Showcase unified shell](0013-showcase-unified-shell.md) | 2026-07-16 | Accepted |
 | 0012 | [Showcase consolidation and moui_cli quick start](0012-showcase-consolidation-and-moui-cli-quickstart.md) | 2026-07-16 | Accepted |
-| 0011 | [Platform product class and mobile readiness](0011-platform-product-class-and-mobile-readiness.md) | 2026-07-16 | Accepted |
+| 0011 | [Platform product class and mobile readiness](0011-platform-product-class-and-mobile-readiness.md) | 2026-07-16 (amended 2026-08-02) | Accepted (product-class decision superseded in part by ADR 0021) |
 | 0009 | [DrawFrame clear ownership and Skia damage clipping](0009-draw-frame-clear-and-skia-damage-clip.md) | 2026-07-14 | Accepted |
 | 0008 | [MoonBit-native browser Playground](0008-moonbit-native-playground.md) | 2026-07-13 | Accepted |
 | 0007 | [Skia layer cache indexing and damage region partial clear](0007-skia-layer-cache-indexing-and-damage-region.md) | 2026-07-12 | Accepted |

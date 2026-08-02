@@ -1,7 +1,9 @@
 # HarmonyOS Support
 
 HarmonyOS uses the **embedded runtime backend** route and is currently
-`runtime_partial`. `wzzc-dev/window/harmonyos` owns the Stage Ability,
+**experimental** (product_class `experimental`, `ready=false`): the code paths
+compile and host-sim tests pass, but no development/demonstration usability or
+product commitment is made without signed-device evidence. `wzzc-dev/window/harmonyos` owns the Stage Ability,
 XComponent surface, lifecycle, and input queue; `moui/backend/harmonyos`
 adapts those callbacks into the MoUI runtime session.
 

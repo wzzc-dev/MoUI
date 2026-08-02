@@ -20,12 +20,14 @@ matures.
 | Web | **committed** | Product mainline (wasm-gc + WebGPU) |
 | Windows | **committed_with_gaps** | Product L0–L2; full L3 runtime still partial |
 | Linux | **committed_with_gaps** | Product L0–L2; interactive L3 still partial |
-| Android | **runtime_partial** | Window-hosted path usable for dev/demo; not product-complete |
-| iOS | **runtime_partial** | Same as Android |
-| HarmonyOS | **runtime_partial** | Same; signed-device full smoke still open |
+| Android | **experimental** | Window-hosted path compiles; no usability/product commitment yet |
+| iOS | **experimental** | Same as Android |
+| HarmonyOS | **experimental** | Same; signed-device full smoke still open |
 
-Mobile is **not** “unwired glue only,” and it is **not** fully promoted either.
-See [platform readiness declaration](docs/platform-readiness-declaration.md).
+Mobile is **not** “unwired glue only,” and it is **not** product-committed.
+It is **experimental**: code compiles and host-sim tests pass, but no
+development/demonstration usability or product commitment is made without
+matching-device evidence. See [platform readiness declaration](docs/platform-readiness-declaration.md).
 
 The runtime pipeline is explicit:
 

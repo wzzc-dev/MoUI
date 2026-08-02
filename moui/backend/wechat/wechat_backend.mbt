@@ -15,9 +15,11 @@ pub(all) struct WechatBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// `ready` means the wasm-gc host path is usable for app development.
-/// `status` is a coarse evidence class: `runtime_partial` until real
-/// Mini Program pixel smoke and touch event verification close remaining gaps.
+/// `ready` means the wasm-gc host path is **experimental**: it compiles, but
+/// no development/demonstration usability or product commitment is made
+/// without real Mini Program pixel smoke and touch event verification.
+/// `status` is a coarse evidence class: `experimental` until those close
+/// remaining gaps.
 pub(all) struct WechatBackendReadiness {
   ready : Bool
   status : String
@@ -103,9 +105,9 @@ pub fn wechat_capability_summary() -> @host.HostCapabilitySummary {
 ///|
 pub fn wechat_readiness() -> WechatBackendReadiness {
   {
-    ready: true,
-    status: "runtime_partial",
-    blocked_by: ["real-miniprogram-pixel-smoke", "touch-event-verification"],
+    ready: false,
+    status: "experimental",
+    blocked_by: ["product_class=experimental: no usability commitment without real Mini Program evidence", "real-miniprogram-pixel-smoke", "touch-event-verification"],
     next_steps: [
       "Build and run a counter demo in WeChat Developer Tools with Skyline", "Verify canvas rendering produces correct pixels",
       "Verify touch events dispatch correctly", "Record runtime evidence for promotion",

@@ -17,9 +17,9 @@ OS 产品完成度。
 | **Web** | **committed** | 产品主线可用 | 每日 wasm-gc + browser WebGPU；`checks/platforms/web.json` runtimeL3=passed | — |
 | **Windows** | **committed_with_gaps** | 产品主线可用（L3 未满） | L0–L2 PR/real Skia；`runtimeL3=partial` | 完整 IME/服务 L3 |
 | **Linux** | **committed_with_gaps** | 宿主 `ready=true` = 代码路径可用，**≠** L3 全绿 | L0–L2 + 首帧 L3；交互 IME 等 partial | 完整交互 L3 |
-| **Android** | **runtime_partial** | `ready=true`：window-hosted template + session **可用于开发/演示**；`status=runtime_partial` | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching-device presenter/service evidence；GPU seven-gate claim |
-| **iOS** | **runtime_partial** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching simulator/device presenter 和 VoiceOver evidence；GPU seven-gate claim |
-| **HarmonyOS** | **runtime_partial** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | signed-device presenter/service evidence；GPU seven-gate claim |
+| **Android** | **experimental** | `ready=false`：window-hosted template + session 可编译且 host-sim tests 通过，但不做任何开发/演示可用性或产品承诺；`status=experimental` | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching-device presenter/service evidence；GPU seven-gate claim；可用性承诺 |
+| **iOS** | **experimental** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching simulator/device presenter 和 VoiceOver evidence；GPU seven-gate claim；可用性承诺 |
+| **HarmonyOS** | **experimental** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | signed-device presenter/service evidence；GPU seven-gate claim；可用性承诺 |
 
 ### 禁止的两种错误表述
 
@@ -30,9 +30,14 @@ OS 产品完成度。
 
 | 维度 | 含义 |
 |------|------|
-| 宿主可用性 (`ready`) | 开发/演示能否走 window-hosted template + MoUI session（对齐 Linux：代码完整可用） |
-| 运行时证据 (`status` / smoke) | 匹配宿主观察：`passed` / `partial` / packaging-only |
+| 宿主可用性 (`ready`) | 仅当开发/演示可以依赖 window-hosted template + MoUI session 时为 `true`（对齐 Linux：代码完整可用）；`experimental` 平台在匹配设备证据落地前为 `false` |
+| 运行时证据 (`status` / smoke) | 匹配宿主观察：`passed` / `partial` / packaging-only；移动端 product_class `experimental` 刻意低于 `runtime_partial` |
 | 产品完整承诺 | L3 全绿 + `actualPresenterRoute` verified + GPU seven-gate claimed |
+
+移动端 product_class `experimental` 的含义是：代码路径可编译且 host-sim
+tests 通过，但在匹配设备 presenter/service 证据记录之前，**不**做任何
+开发/演示可用性或产品承诺。这是对先前 `runtime_partial` 声明的**降级**
+（见 ADR 0021）；它**不是**宣称后端不可用。
 
 结构化状态源：`checks/platforms/{macos,windows,linux,web,android,ios,harmonyos}.json`。
 **无新证据时不得抬高** `runtimeL3` / `actualPresenterRoute`。

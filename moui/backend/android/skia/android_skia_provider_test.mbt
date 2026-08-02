@@ -1,5 +1,5 @@
 ///|
-test "android skia preflight names runtime_partial requirements" {
+test "android skia preflight names experimental requirements" {
   let summary = android_skia_provider_preflight_summary(
     options=AndroidSkiaAppOptions::new(
       font_resolution=@skia_renderer.SkiaFontResolution::EmptyTypeface,
@@ -11,7 +11,7 @@ test "android skia preflight names runtime_partial requirements" {
       "presenter=Android ANativeWindow RGBA8888 Skia pixel presenter",
     ),
   )
-  assert_true(summary.contains("runtime_status=runtime_partial"))
+  assert_true(summary.contains("runtime_status=experimental"))
   assert_true(summary.contains("host=Android host"))
   assert_true(summary.contains("font=empty-typeface"))
   assert_true(summary.contains("surface_route=raster"))

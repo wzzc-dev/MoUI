@@ -169,13 +169,13 @@ For detailed platform-specific setup, requirements, and runtime evidence:
   auto-detection, and host architecture.
 - [Linux](platform-notes-linux.md) — Wayland host, runtime requirements, Skia provider,
   runtime evidence, and remaining gaps.
-- [Android](android-support.md) (**runtime_partial**) — window-hosted Activity,
+- [Android](android-support.md) (**experimental**) — window-hosted Activity,
   APK packaging, and matching-device evidence requirements.
-- [iOS](ios-support.md) (**runtime_partial**) — window-hosted UIKit template,
+- [iOS](ios-support.md) (**experimental**) — window-hosted UIKit template,
   simulator packaging, and matching-device evidence requirements.
-- [HarmonyOS](harmonyos-support.md) (**runtime_partial**) — window-hosted
+- [HarmonyOS](harmonyos-support.md) (**experimental**) — window-hosted
   Stage Ability/XComponent template, HAP packaging, and signed-device evidence requirements.
-- [WeChat Mini Program](wechat-support.md) (**runtime_partial**) — Skyline Canvas 2D + wasm-gc,
+- [WeChat Mini Program](wechat-support.md) (**experimental**) — Skyline Canvas 2D + wasm-gc,
   window-hosted app, touch events, WeChat Mini Program project template.
 
 Product-class summary: [platform readiness declaration](platform-readiness-declaration.md).

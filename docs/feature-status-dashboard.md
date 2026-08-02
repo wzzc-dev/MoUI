@@ -101,8 +101,10 @@ proof status:
 
 ## Mobile Status
 
-**Product class: `runtime_partial`** for Android, iOS, and HarmonyOS (usable
-window-hosted paths; not product-complete). See
+**Product class: `experimental`** for Android, iOS, HarmonyOS, and WeChat Mini
+Program (code paths compile and host-sim tests pass; **no**
+development/demonstration usability or product commitment without
+matching-device evidence). See
 [platform-readiness-declaration.md](platform-readiness-declaration.md).
 
 The window-hosted path uses `HostCmd` → `EventLoop` → `ApplicationHandler` →

@@ -18,10 +18,10 @@ OS product completeness.
 | **Web** | **committed** | Usable as a product mainline | Daily wasm-gc + browser WebGPU; `checks/platforms/web.json` `runtimeL3=passed` | — |
 | **Windows** | **committed_with_gaps** | Usable as a product mainline (L3 incomplete) | L0–L2 PR/real Skia; `runtimeL3=partial` | Complete IME/service L3 |
 | **Linux** | **committed_with_gaps** | host `ready=true` = implementation path available, **≠** all L3 checks green | L0–L2 + first-frame L3; interactive IME and similar checks are partial | Complete interactive L3 |
-| **Android** | **runtime_partial** | `ready=true`: the window-hosted template + session are **usable for development/demonstration**; `status=runtime_partial` | `HostCmd` host-sim and MoUI adapter tests pass | Matching-device presenter/service evidence; GPU seven-gate claim |
-| **iOS** | **runtime_partial** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Matching simulator/device presenter and VoiceOver evidence; GPU seven-gate claim |
-| **HarmonyOS** | **runtime_partial** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Signed-device presenter/service evidence; GPU seven-gate claim |
-| **WeChat Mini Program** | **runtime_partial** | `ready=true`: the window-hosted Canvas 2D session is **usable for development/demonstration**; `status=runtime_partial` | Canvas 2D renderer and wasm-gc build pipeline compile; Skyline project template is staged | Real Mini Program pixel smoke; touch event verification; wx API service integrations |
+| **Android** | **experimental** | `ready=false`: the window-hosted template + session compile and host-sim tests pass, but no development/demonstration usability or product commitment is made; `status=experimental` | `HostCmd` host-sim and MoUI adapter tests pass | Matching-device presenter/service evidence; GPU seven-gate claim; usability commitment |
+| **iOS** | **experimental** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Matching simulator/device presenter and VoiceOver evidence; GPU seven-gate claim; usability commitment |
+| **HarmonyOS** | **experimental** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Signed-device presenter/service evidence; GPU seven-gate claim; usability commitment |
+| **WeChat Mini Program** | **experimental** | `ready=false`: the window-hosted Canvas 2D session compiles, but no development/demonstration usability or product commitment is made; `status=experimental` | Canvas 2D renderer and wasm-gc build pipeline compile; Skyline project template is staged | Real Mini Program pixel smoke; touch event verification; wx API service integrations; usability commitment |
 
 ### Two Prohibited Misstatements
 
@@ -32,9 +32,15 @@ OS product completeness.
 
 | Dimension | Meaning |
 |------|------|
-| Host availability (`ready`) | Whether development/demonstration can use the window-hosted template + MoUI session (aligned with Linux: implementation complete and usable) |
-| Runtime evidence (`status` / smoke) | Matching-host observation: `passed` / `partial` / packaging-only |
+| Host availability (`ready`) | `true` only when development/demonstration can rely on the window-hosted template + MoUI session (Linux-aligned: implementation complete and usable); `false` for `experimental` platforms until matching-device evidence lands |
+| Runtime evidence (`status` / smoke) | Matching-host observation: `passed` / `partial` / packaging-only; mobile product_class `experimental` is deliberately below `runtime_partial` |
 | Product-completeness commitment | All L3 checks green + `actualPresenterRoute` verified + GPU seven-gate claimed |
+
+Mobile product_class `experimental` means: code paths compile and host-sim
+tests pass, but **no** development/demonstration usability or product
+commitment is made until matching-device presenter/service evidence is
+recorded. It is a *downgrade* from the previous `runtime_partial` claim
+(see ADR 0021); it does **not** claim the backends are nonfunctional.
 
 The structured status source is
 `checks/platforms/{macos,windows,linux,web,android,ios,harmonyos}.json`.
