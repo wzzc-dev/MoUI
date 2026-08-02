@@ -1,7 +1,7 @@
 ///|
 test "harmonyos skia preflight names experimental requirements" {
   let summary = harmonyos_skia_provider_preflight_summary(
-    options=HarmonyOsSkiaAppOptions::new(
+    options=HarmonyOSSkiaAppOptions::new(
       font_resolution=@skia_renderer.SkiaFontResolution::EmptyTypeface,
     ),
   )
@@ -23,7 +23,7 @@ test "harmonyos skia preflight names experimental requirements" {
 ///|
 test "harmonyos skia preflight reports egl direct gpu presenter path" {
   let summary = harmonyos_skia_provider_preflight_summary(
-    options=HarmonyOsSkiaAppOptions::new(
+    options=HarmonyOSSkiaAppOptions::new(
       surface_route=@render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
     ),
   )

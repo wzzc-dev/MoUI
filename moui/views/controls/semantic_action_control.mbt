@@ -56,7 +56,7 @@ impl @core.ViewNode for SemanticActionControl with fn child_constraints(
 
 ///|
 impl @core.ViewNode for SemanticActionControl with fn layout(_self, ctx) {
-  let child_size = first_child_size(ctx.child_sizes)
+  let child_size = @common.first_child_size(ctx.child_sizes)
   @core.ViewLayoutResult::new(size=child_size, child_frames=[
     @core.Rect::new(
       x=0.0,

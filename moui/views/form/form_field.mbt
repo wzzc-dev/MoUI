@@ -51,16 +51,19 @@ pub fn[Msg] form_field(
     Some(view) => body_rows.push(view)
     None => ()
   }
-  let body = column(
+  let body = @layout.column(
     body_rows,
     spacing=resolved_theme.spacing_scale.xs,
     align=@style.CrossAlign::Stretch,
   )
   let field = match layout {
     Vertical =>
-      column([label_view, body], spacing=resolved_theme.spacing_scale.xs)
+      @layout.column(
+        [label_view, body],
+        spacing=resolved_theme.spacing_scale.xs,
+      )
     Horizontal =>
-      row(
+      @layout.row(
         [label_view, body],
         spacing=resolved_theme.spacing_scale.md,
         align=@style.CrossAlign::Start,

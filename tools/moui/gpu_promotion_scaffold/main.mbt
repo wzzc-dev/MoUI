@@ -255,12 +255,12 @@ fn platform_mapping(platform : String) -> PlatformMapping? {
 ///|
 fn platform_type_label(platform : String) -> String {
   match platform {
-    "macos" => "Macos"
+    "macos" => "MacOS"
     "windows" => "Windows"
     "linux" => "Linux"
     "android" => "Android"
-    "ios" => "Ios"
-    "harmonyos" => "HarmonyOs"
+    "ios" => "IOS"
+    "harmonyos" => "HarmonyOS"
     "web" => "Web"
     _ => platform
   }

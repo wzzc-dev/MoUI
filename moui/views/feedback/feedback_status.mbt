@@ -114,7 +114,7 @@ pub fn[Msg] inline_error(
     None => ()
   }
   @container.container(
-    row(
+    @layout.row(
       body,
       spacing=resolved_theme.spacing_scale.sm,
       align=@style.CrossAlign::Center,
@@ -179,7 +179,11 @@ fn[Msg] state_panel(
     None => ()
   }
   @container.container(
-    column(rows, spacing=theme.spacing_scale.sm, align=@style.CrossAlign::Start),
+    @layout.column(
+      rows,
+      spacing=theme.spacing_scale.sm,
+      align=@style.CrossAlign::Start,
+    ),
     width~,
     height=148.0,
     background=@controls.feedback_background(tone, style),

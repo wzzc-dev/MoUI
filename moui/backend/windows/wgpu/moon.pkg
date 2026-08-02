@@ -2,6 +2,7 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/platform_bridge",
   "wzzc-dev/moui/backend/windows" @windows_host,
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/wgpu" @wgpu_renderer,

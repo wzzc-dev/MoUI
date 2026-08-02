@@ -69,7 +69,7 @@ pub fn[Msg] avatar_group(
       ),
     )
   }
-  row(children, spacing=0.0, align=@style.CrossAlign::Center)
+  @layout.row(children, spacing=0.0, align=@style.CrossAlign::Center)
 }
 
 ///|

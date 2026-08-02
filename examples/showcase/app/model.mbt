@@ -190,7 +190,7 @@ fn platform_id_from_host(
   } else if label.contains("ios") || label.contains("iphone") {
     @components.PlatformId::IOS
   } else if label.contains("harmony") {
-    @components.PlatformId::HarmonyOs
+    @components.PlatformId::HarmonyOS
   } else if label.contains("linux") {
     @components.PlatformId::Linux
   } else if label.contains("windows") {

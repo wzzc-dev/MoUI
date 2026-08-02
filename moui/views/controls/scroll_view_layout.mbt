@@ -80,7 +80,9 @@ impl @core.ViewNode for ScrollContainer with fn child_constraints(
 
 ///|
 impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
-  let viewport_size = self.viewport.unwrap_or(first_child_size(ctx.child_sizes))
+  let viewport_size = self.viewport.unwrap_or(
+    @common.first_child_size(ctx.child_sizes),
+  )
   @core.ViewLayoutResult::new(size=ctx.constraints.constrain(viewport_size), child_frames=[
     scroll_child_frame(
       frame=@core.Rect::new(
@@ -91,7 +93,7 @@ impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
       ),
       offset=self.offset,
       viewport=viewport_size,
-      child_size=first_child_size(ctx.child_sizes),
+      child_size=@common.first_child_size(ctx.child_sizes),
     ),
   ])
 }

@@ -139,7 +139,7 @@ workspace.
   loop only.
 - HarmonyOS embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/harmonyos_window_hosted` -> `wzzc-dev/window/harmonyos`
-  `HostCmd` / `EventLoop` -> `HarmonyOsEmbeddedRuntimeBackend` ->
+  `HostCmd` / `EventLoop` -> `HarmonyOSEmbeddedRuntimeBackend` ->
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`.
   Native XComponent callbacks are the sole source for surface, pointer, resize,
   and detach events.

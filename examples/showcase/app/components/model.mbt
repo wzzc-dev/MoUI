@@ -5,7 +5,7 @@ pub(all) enum PlatformId {
   Windows
   Android
   IOS
-  HarmonyOs
+  HarmonyOS
   Web
 } derive(Eq, Debug, ToJson)
 
@@ -192,7 +192,7 @@ pub fn SessionRuntimeInfo::for_platform(
         gpu_promoted=true,
         note="Mobile product default is Skia GPU when the host surface is available; SkiaRaster is explicit/recovery.",
       )
-    PlatformId::HarmonyOs =>
+    PlatformId::HarmonyOS =>
       SessionRuntimeInfo::new(
         host="HarmonyOS",
         path="GPU",

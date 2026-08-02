@@ -2,7 +2,7 @@
 /// Embedded runtime backend on the window-hosted route: surface/input come
 /// only from `wzzc-dev/window/ios` HostCmd → ApplicationHandler. Surface
 /// attachment is driven only by the platform event loop. The backend is a
-/// thin shell around the shared `HostedWindowBackend`; native view access,
+/// thin shell around the shared `HostedWindowBackend`; native surface access,
 /// the IME sink and window creation stay here.
 pub struct IosEmbeddedRuntimeBackend {
   backend : @embedded_runtime_backend.HostedWindowBackend
@@ -24,10 +24,10 @@ pub fn IosEmbeddedRuntimeBackend::new(
         let provider = provider_factory()
         @embedded_runtime_backend.RendererProviderAdapter::new(
           create_renderer=fn(raw, metrics) {
-            provider.create(IosViewHandle::new(raw~), metrics)
+            provider.create(IosSurfaceHandle::new(raw~), metrics)
           },
           sync=fn(raw, metrics) {
-            provider.sync(IosViewHandle::new(raw~), metrics)
+            provider.sync(IosSurfaceHandle::new(raw~), metrics)
           },
           image_loader=provider.image_loader,
         )

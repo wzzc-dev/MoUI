@@ -17,7 +17,7 @@ test "skia hybrid renderer presents next frame through raster after terminal rec
     renderer,
     worker: @render.GpuRenderWorker::new(),
     surface_route: @render.resolve_surface_route(
-      @render.NativeGpuPlatform::Macos,
+      @render.NativeGpuPlatform::MacOS,
       @render.NativeRendererMode::SkiaGpu,
       gpu_available=true,
       gpu_promoted=false,

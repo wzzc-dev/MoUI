@@ -30,7 +30,7 @@ pub fn[Msg] disclosure(
       ),
     )
   }
-  let header = row(
+  let header = @layout.row(
     [
       @button.button(
         if expanded {
@@ -44,7 +44,7 @@ pub fn[Msg] disclosure(
         width=34.0,
         height=34.0,
       ),
-      column(title_rows, spacing=0.0, align=@style.CrossAlign::Start),
+      @layout.column(title_rows, spacing=0.0, align=@style.CrossAlign::Start),
     ],
     spacing=resolved_theme.spacing_scale.xs,
     align=@style.CrossAlign::Center,
@@ -55,7 +55,7 @@ pub fn[Msg] disclosure(
       content.frame(width=width - resolved_theme.spacing_scale.md * 2.0),
     )
   }
-  column(
+  @layout.column(
     rows,
     spacing=resolved_theme.spacing_scale.sm,
     align=@style.CrossAlign::Start,
@@ -88,7 +88,7 @@ pub fn[Msg] accordion(
       ).disabled(disabled=!section.enabled),
     )
   }
-  column(
+  @layout.column(
     rows,
     spacing=resolved_theme.spacing_scale.sm,
     align=@style.CrossAlign::Start,
@@ -164,7 +164,7 @@ pub fn[Msg] resizable_panel(
       })
     None => handle
   }
-  row(
+  @layout.row(
     [
       @container.container(
         content.frame(

@@ -38,7 +38,7 @@ pub fn[Msg] segmented_control(
     )
   }
   @container.container(
-    row(segments, spacing=0.0, align=@style.CrossAlign::Center),
+    @layout.row(segments, spacing=0.0, align=@style.CrossAlign::Center),
     width~,
     height~,
     background=resolved_theme.palette.surface_variant.multiply_alpha(0.55),

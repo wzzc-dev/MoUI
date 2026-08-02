@@ -42,7 +42,7 @@ pub fn[Msg] sidebar(
     )
   }
   @container.container(
-    column(
+    @layout.column(
       rows,
       spacing=resolved_theme.spacing_scale.sm,
       align=@style.CrossAlign::Start,

@@ -152,7 +152,7 @@ test "macOS Sun host renderer forwards platform view pixels" {
 
 ///|
 test "macOS Sun renderer metrics recover from zero initial surface height" {
-  let metrics = renderer_metrics_from_host(
+  let metrics = @platform_bridge.renderer_metrics_from_host(
     @host.HostSurfaceMetrics::new(
       logical_size=@core.Size::new(width=960.0, height=560.0),
       physical_size=@core.Size::new(width=1.0, height=0.0),
@@ -327,6 +327,6 @@ test "macOS Sun async image background_io confirmed" {
   guard result.length() >= 24 else {
     fail("expected result with 24-byte header, got \{result.length()} bytes")
   }
-  let background_io_raw = async_image_read_i32_le(result, 20)
+  let background_io_raw = @render.async_image_read_i32_le(result, 20)
   assert_true(background_io_raw == 1)
 }

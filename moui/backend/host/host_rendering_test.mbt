@@ -116,14 +116,14 @@ test "native accessibility bridge forwards generation checked typed actions" {
 ///|
 test "native renderer auto mode requires availability and promotion" {
   let pending = @render.resolve_surface_route(
-    @render.NativeGpuPlatform::Macos,
+    @render.NativeGpuPlatform::MacOS,
     @render.NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=false,
   )
   assert_true(pending == @render.SkiaSurfaceRoute::RasterSurfaceRoute)
   let promoted = @render.resolve_surface_route(
-    @render.NativeGpuPlatform::Macos,
+    @render.NativeGpuPlatform::MacOS,
     @render.NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=true,
@@ -148,7 +148,7 @@ test "native renderer surface route reflects platform selection" {
   )
   assert_true(android == @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute)
   let harmonyos = @render.resolve_surface_route(
-    @render.NativeGpuPlatform::HarmonyOs,
+    @render.NativeGpuPlatform::HarmonyOS,
     @render.NativeRendererMode::SkiaGpu,
     gpu_available=true,
     gpu_promoted=false,

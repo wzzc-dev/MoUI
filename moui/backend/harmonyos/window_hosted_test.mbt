@@ -3,7 +3,7 @@ test "harmonyos window-hosted host-sim creates session and presents" {
   let render_count = Ref(0)
   let dispose_count = Ref(0)
   let pointer_count = Ref(0)
-  let provider = HarmonyOsRendererProvider::new(create_renderer=(
+  let provider = HarmonyOSRendererProvider::new(create_renderer=(
     _surface,
     _metrics,
   ) => {
@@ -22,7 +22,7 @@ test "harmonyos window-hosted host-sim creates session and presents" {
       ),
     )
   })
-  let app = HarmonyOsEmbeddedRuntimeBackend::new(
+  let app = HarmonyOSEmbeddedRuntimeBackend::new(
     title="window-hosted-test",
     runtime_factory=metrics => {
       let runtime = @runtime.AppRuntime::new_view(

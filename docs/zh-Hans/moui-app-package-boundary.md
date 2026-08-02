@@ -420,7 +420,7 @@ lifecycle、surface 和 input callbacks 的唯一通路；嵌入运行时 execut
 转发第二套 embedding ABI。
 
 Android、iOS 和 HarmonyOS template 拥有各自的 native lifecycle 与 surface bridge。
-`AndroidEmbeddedRuntimeBackend`、`IosEmbeddedRuntimeBackend` 和 `HarmonyOsEmbeddedRuntimeBackend`
+`AndroidEmbeddedRuntimeBackend`、`IosEmbeddedRuntimeBackend` 和 `HarmonyOSEmbeddedRuntimeBackend`
 会在 window event loop 创建 surface 后装配 MoUI runtime session。HarmonyOS
 XComponent callbacks 仍是 surface、pointer、resize 和 detach events 的唯一来源。
 

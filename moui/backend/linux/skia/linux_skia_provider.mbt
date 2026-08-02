@@ -57,21 +57,18 @@ pub fn LinuxSkiaSmokeOptions::new(
 ///|
 fn LinuxSkiaSmokeOptions::from_environment() -> LinuxSkiaSmokeOptions {
   LinuxSkiaSmokeOptions::new(
-    first_frame_smoke_auto_exit=env_flag(
+    first_frame_smoke_auto_exit=@render.env_flag(
         "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
       ) ||
-      env_flag("MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT"),
+      @render.env_flag(
+        "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      ),
   )
 }
 
 ///|
 fn LinuxSkiaSmokeOptions::enabled(self : LinuxSkiaSmokeOptions) -> Bool {
   self.first_frame_smoke_auto_exit
-}
-
-///|
-fn env_flag(name : String) -> Bool {
-  @env.get_env_var(name) == Some("1")
 }
 
 ///|
@@ -171,14 +168,6 @@ extern "C" fn moui_linux_async_image_spawn(
 extern "C" fn moui_linux_async_image_take_result() -> Bytes = "moui_linux_async_image_take_result"
 
 ///|
-fn async_image_read_i32_le(data : Bytes, offset : Int) -> Int {
-  data[offset].to_int() +
-  data[offset + 1].to_int() * 256 +
-  data[offset + 2].to_int() * 65536 +
-  data[offset + 3].to_int() * 16777216
-}
-
-///|
 fn skia_async_image_loader() -> @render.HostAsyncImageLoader {
   let native_source = @render.HostNativeAsyncImageSource::new()
   @render.HostNativeAsyncImageSource::loader_with_drain(
@@ -208,16 +197,16 @@ fn skia_async_image_loader() -> @render.HostAsyncImageLoader {
           break
         }
         let window_id = @host.HostWindowId::new(
-          async_image_read_i32_le(result, 0),
+          @render.async_image_read_i32_le(result, 0),
         )
-        let status = async_image_read_i32_le(result, 8)
-        let source_len = async_image_read_i32_le(result, 12)
-        let bytes_len = async_image_read_i32_le(result, 16)
-        let background_io_raw = async_image_read_i32_le(result, 20)
-        let decoded_width = async_image_read_i32_le(result, 24)
-        let decoded_height = async_image_read_i32_le(result, 28)
-        let decoded_row_bytes = async_image_read_i32_le(result, 32)
-        let background_decode_raw = async_image_read_i32_le(result, 36)
+        let status = @render.async_image_read_i32_le(result, 8)
+        let source_len = @render.async_image_read_i32_le(result, 12)
+        let bytes_len = @render.async_image_read_i32_le(result, 16)
+        let background_io_raw = @render.async_image_read_i32_le(result, 20)
+        let decoded_width = @render.async_image_read_i32_le(result, 24)
+        let decoded_height = @render.async_image_read_i32_le(result, 28)
+        let decoded_row_bytes = @render.async_image_read_i32_le(result, 32)
+        let background_decode_raw = @render.async_image_read_i32_le(result, 36)
         let background_io = background_io_raw != 0
         let background_decode = background_decode_raw != 0
         let header = 40
@@ -273,12 +262,7 @@ pub fn linux_skia_provider_preflight_summary(
   let surface_route = options.surface_route.label()
   let gpu_runtime_available = @skia_native.Surface::vulkan_gpu_context_runtime_available()
   let host_preflight = @linux_host.linux_capability_summary().preflight_fields()
-  "Linux Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{linux_skia_presenter_description()}; gpu_presenter=\{linux_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; first_frame_smoke=disabled; first_frame_env=MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT|MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=smoke log required; runtime_smokes=showcase-linux-skia,markdown-editor-linux-skia,window-package-linux-skia; service_runtime_evidence=clipboard,file-dialog,text-file,open-url,ime,drag-drop; unavailable=\"\{linux_skia_unavailable_message()}\""
-}
-
-///|
-fn skia_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_image_loader=skia_async_image_loader; renderer_async_image_loading=off-main-io; renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SkiaRasterRenderer.set_image_resource_change_callback; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
+  "Linux Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{linux_skia_presenter_description()}; gpu_presenter=\{linux_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; first_frame_smoke=disabled; first_frame_env=MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT|MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT; \{@platform_bridge.skia_host_renderer_bridge_preflight_desktop()}; \{host_preflight}; runtime=smoke log required; runtime_smokes=showcase-linux-skia,markdown-editor-linux-skia,window-package-linux-skia; service_runtime_evidence=clipboard,file-dialog,text-file,open-url,ime,drag-drop; unavailable=\"\{linux_skia_unavailable_message()}\""
 }
 
 ///|
@@ -361,7 +345,7 @@ fn create_host_renderer_from_binding(
     Some((binding, bound_surface)) =>
       Some(
         (binding.create_host_renderer)(
-          renderer_metrics_from_host(metrics),
+          @platform_bridge.renderer_metrics_from_host(metrics),
           bound_surface,
         ),
       )
@@ -390,7 +374,7 @@ fn create_gpu_worker_renderer(
 ) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target(
-      renderer_metrics_from_host(metrics),
+      @platform_bridge.renderer_metrics_from_host(metrics),
       linux_skia_present_target(window),
       font_resolution=options.font_resolution,
       async_image_loading=true,
@@ -399,7 +383,7 @@ fn create_gpu_worker_renderer(
       None => create_raster_renderer(window, metrics, options)
       Some(worker) => {
         let dimensions = linux_skia_vulkan_surface_descriptor(
-          renderer_metrics_from_host(metrics),
+          @platform_bridge.renderer_metrics_from_host(metrics),
         ).dimensions()
         ignore(
           worker.submit_control(
@@ -442,7 +426,7 @@ fn create_raster_renderer(
 ) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target_and_route(
-      renderer_metrics_from_host(metrics),
+      @platform_bridge.renderer_metrics_from_host(metrics),
       linux_skia_present_target(window),
       surface_route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
       font_resolution=options.font_resolution,
@@ -709,16 +693,5 @@ fn host_renderer_from_skia(
         renderer.set_platform_view_draw_fn(draw_fn)
       },
     ),
-  )
-}
-
-///|
-fn renderer_metrics_from_host(
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::new(
-    logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
   )
 }

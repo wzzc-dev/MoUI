@@ -16,7 +16,7 @@ window/<platform>/template / 原生 Activity|UIApp|Ability
         → window HostCmd 队列
         → EventLoop.pump / run_app
         → *EmbeddedRuntimeBackend (moui/backend/{android,ios,harmonyos})
-        → AndroidRuntimeSession / IosRuntimeSession / HarmonyOsRuntimeSession
+        → AndroidRuntimeSession / IosRuntimeSession / HarmonyOSRuntimeSession
         → Skia HostWindowRenderer
 ```
 
@@ -29,7 +29,7 @@ window-hosted 是唯一受支持的嵌入运行时后端路径。不要在 `Host
 |------|------|
 | Android 嵌入运行时后端 | `moui/backend/android/window_hosted.mbt`（`AndroidEmbeddedRuntimeBackend`） |
 | iOS 嵌入运行时后端 | `moui/backend/ios/window_hosted.mbt`（`IosEmbeddedRuntimeBackend`） |
-| HarmonyOS 嵌入运行时后端 | `moui/backend/harmonyos/window_hosted.mbt`（`HarmonyOsEmbeddedRuntimeBackend`） |
+| HarmonyOS 嵌入运行时后端 | `moui/backend/harmonyos/window_hosted.mbt`（`HarmonyOSEmbeddedRuntimeBackend`） |
 | Counter 入口 | `examples/counter/{android,ios,harmonyos}_window_hosted` |
 | window 契约 | `window/docs/mobile-hosted-backend.md` |
 | 移动端状态 | `checks/platforms/{android,ios,harmonyos}.json` |

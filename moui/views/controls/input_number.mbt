@@ -39,7 +39,7 @@ pub fn[Msg] number_field(
       )
     None => ()
   }
-  row(
+  @layout.row(
     rows,
     spacing=resolved_theme.spacing_scale.xs,
     align=@style.CrossAlign::Center,
@@ -87,7 +87,7 @@ pub fn[Msg] stepper(
       height~,
     ),
   )
-  row(
+  @layout.row(
     rows,
     spacing=resolved_theme.spacing_scale.xs,
     align=@style.CrossAlign::Center,

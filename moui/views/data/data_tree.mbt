@@ -23,7 +23,7 @@ pub fn[Msg] tree_view(
       width~,
     )
   }
-  column(
+  @layout.column(
     rows,
     spacing=resolved_theme.spacing_scale.xs,
     align=@style.CrossAlign::Start,
@@ -134,7 +134,7 @@ fn[Msg] tree_row(
         height=30.0,
       )
   }
-  row(
+  @layout.row(
     [@container.spacer(min_length=indent, weight=0.0), toggle, label_view],
     spacing=3.0,
     align=@style.CrossAlign::Center,

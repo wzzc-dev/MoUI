@@ -11,28 +11,28 @@ import {
 }
 
 // Values
-pub fn backend_info() -> HarmonyOsBackendInfo
+pub fn backend_info() -> HarmonyOSBackendInfo
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : HarmonyOsSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : HarmonyOsRendererProvider) -> @embedded_runtime_backend.HostedRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : HarmonyOSSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : HarmonyOSRendererProvider) -> @embedded_runtime_backend.HostedRuntimeSession?
 
-pub fn harmonyos_capability_matrix() -> HarmonyOsBackendCapabilities
+pub fn harmonyos_capability_matrix() -> HarmonyOSBackendCapabilities
 
 pub fn harmonyos_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
 
 pub fn harmonyos_input_capabilities() -> @host.HostInputCapabilities
 
-pub fn harmonyos_readiness() -> HarmonyOsBackendReadiness
+pub fn harmonyos_readiness() -> HarmonyOSBackendReadiness
 
 pub fn harmonyos_service_capabilities() -> @host.HostServiceCapabilities
 
-pub fn harmonyos_window_hosted_pump_host_sim(HarmonyOsEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
+pub fn harmonyos_window_hosted_pump_host_sim(HarmonyOSEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
-pub fn renderer_provider_adapter_from_harmonyos(HarmonyOsRendererProvider) -> @embedded_runtime_backend.RendererProviderAdapter
+pub fn renderer_provider_adapter_from_harmonyos(HarmonyOSRendererProvider) -> @embedded_runtime_backend.RendererProviderAdapter
 
 // Errors
 
 // Types and methods
-pub(all) struct HarmonyOsBackendCapabilities {
+pub(all) struct HarmonyOSBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
   renderer_provider : Bool
@@ -47,44 +47,44 @@ pub(all) struct HarmonyOsBackendCapabilities {
   async_image : Bool
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct HarmonyOsBackendInfo {
+pub(all) struct HarmonyOSBackendInfo {
   host_info : @host.HostAppInfo
-  capabilities : HarmonyOsBackendCapabilities
+  capabilities : HarmonyOSBackendCapabilities
   services : @host.HostServiceCapabilities
   input : @host.HostInputCapabilities
-  readiness : HarmonyOsBackendReadiness
+  readiness : HarmonyOSBackendReadiness
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct HarmonyOsBackendReadiness {
+pub(all) struct HarmonyOSBackendReadiness {
   ready : Bool
   status : String
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct HarmonyOsEmbeddedRuntimeBackend {
+pub struct HarmonyOSEmbeddedRuntimeBackend {
   backend : @embedded_runtime_backend.HostedWindowBackend
 }
-pub fn HarmonyOsEmbeddedRuntimeBackend::frames_presented(Self) -> Int
-pub fn HarmonyOsEmbeddedRuntimeBackend::has_session(Self) -> Bool
-pub fn HarmonyOsEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> HarmonyOsRendererProvider, auto_exit_after_frames? : Int?) -> Self
-pub fn HarmonyOsEmbeddedRuntimeBackend::session_attached(Self) -> Bool
-pub fn HarmonyOsEmbeddedRuntimeBackend::surface_generation(Self) -> Int
-pub impl @wzzc-dev/window/harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBackend
+pub fn HarmonyOSEmbeddedRuntimeBackend::frames_presented(Self) -> Int
+pub fn HarmonyOSEmbeddedRuntimeBackend::has_session(Self) -> Bool
+pub fn HarmonyOSEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> HarmonyOSRendererProvider, auto_exit_after_frames? : Int?) -> Self
+pub fn HarmonyOSEmbeddedRuntimeBackend::session_attached(Self) -> Bool
+pub fn HarmonyOSEmbeddedRuntimeBackend::surface_generation(Self) -> Int
+pub impl @wzzc-dev/window/harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend
 
-pub struct HarmonyOsRendererProvider {
+pub struct HarmonyOSRendererProvider {
   // private fields
 }
-pub fn HarmonyOsRendererProvider::has_async_image_loader(Self) -> Bool
-pub fn HarmonyOsRendererProvider::new(create_renderer~ : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
+pub fn HarmonyOSRendererProvider::has_async_image_loader(Self) -> Bool
+pub fn HarmonyOSRendererProvider::new(create_renderer~ : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
-pub(all) struct HarmonyOsSurfaceHandle {
+pub(all) struct HarmonyOSSurfaceHandle {
   raw : UInt64
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HarmonyOsSurfaceHandle::new(raw~ : UInt64) -> Self
-pub fn HarmonyOsSurfaceHandle::none() -> Self
-pub fn HarmonyOsSurfaceHandle::raw(Self) -> UInt64
+pub fn HarmonyOSSurfaceHandle::new(raw~ : UInt64) -> Self
+pub fn HarmonyOSSurfaceHandle::none() -> Self
+pub fn HarmonyOSSurfaceHandle::raw(Self) -> UInt64
 
 // Type aliases
 

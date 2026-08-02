@@ -95,5 +95,5 @@ pub fn[Msg] tab_view(
       .semantics_selected(selected=tab.route == selected)
     buttons.push(tab_button)
   }
-  column([row(buttons, spacing~), content], spacing~)
+  @layout.column([@layout.row(buttons, spacing~), content], spacing~)
 }

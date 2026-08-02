@@ -39,7 +39,7 @@ pub fn[Msg] selection_toolbar(
     None => ()
   }
   @container.container(
-    row(
+    @layout.row(
       [
         @text.text(
           selection_toolbar_label(selected, total_count),

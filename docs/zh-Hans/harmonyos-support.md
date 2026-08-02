@@ -15,7 +15,7 @@ HarmonyOS 使用**嵌入运行时后端**路径，目前状态为 **experimental
 | MoUI 嵌入运行时后端 | `moui/backend/harmonyos/window_hosted.mbt` |
 
 XComponent 回调是 Surface、pointer、resize 与 detach 的唯一来源。hosted event loop
-将它们转发给 `HarmonyOsEmbeddedRuntimeBackend`；不要注入第二条 Surface 或输入路径。
+将它们转发给 `HarmonyOSEmbeddedRuntimeBackend`；不要注入第二条 Surface 或输入路径。
 
 ## 工具链
 

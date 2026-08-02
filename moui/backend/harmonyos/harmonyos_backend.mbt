@@ -1,26 +1,26 @@
 ///|
 /// Window-hosted native surface handle.
-pub(all) struct HarmonyOsSurfaceHandle {
+pub(all) struct HarmonyOSSurfaceHandle {
   raw : UInt64
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn HarmonyOsSurfaceHandle::new(raw~ : UInt64) -> HarmonyOsSurfaceHandle {
+pub fn HarmonyOSSurfaceHandle::new(raw~ : UInt64) -> HarmonyOSSurfaceHandle {
   { raw, }
 }
 
 ///|
-pub fn HarmonyOsSurfaceHandle::none() -> HarmonyOsSurfaceHandle {
+pub fn HarmonyOSSurfaceHandle::none() -> HarmonyOSSurfaceHandle {
   { raw: 0UL }
 }
 
 ///|
-pub fn HarmonyOsSurfaceHandle::raw(self : HarmonyOsSurfaceHandle) -> UInt64 {
+pub fn HarmonyOSSurfaceHandle::raw(self : HarmonyOSSurfaceHandle) -> UInt64 {
   self.raw
 }
 
 ///|
-pub(all) struct HarmonyOsBackendCapabilities {
+pub(all) struct HarmonyOSBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
   renderer_provider : Bool
@@ -43,7 +43,7 @@ pub(all) struct HarmonyOsBackendCapabilities {
 ///
 /// `status` is a coarse evidence class: `experimental` until signed-device
 /// full smoke and presenter verification close remaining gaps.
-pub(all) struct HarmonyOsBackendReadiness {
+pub(all) struct HarmonyOSBackendReadiness {
   ready : Bool
   status : String
   blocked_by : Array[String]
@@ -51,57 +51,57 @@ pub(all) struct HarmonyOsBackendReadiness {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HarmonyOsBackendInfo {
+pub(all) struct HarmonyOSBackendInfo {
   host_info : @host.HostAppInfo
-  capabilities : HarmonyOsBackendCapabilities
+  capabilities : HarmonyOSBackendCapabilities
   services : @host.HostServiceCapabilities
   input : @host.HostInputCapabilities
-  readiness : HarmonyOsBackendReadiness
+  readiness : HarmonyOSBackendReadiness
   description : String
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub struct HarmonyOsRendererProvider {
-  priv create_renderer : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-  priv sync_surface : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> Unit
+pub struct HarmonyOSRendererProvider {
+  priv create_renderer : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
+  priv sync_surface : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> Unit
   priv image_loader : @render.HostAsyncImageLoader?
 }
 
 ///|
 
 ///|
-pub fn HarmonyOsRendererProvider::new(
-  create_renderer~ : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
-  sync_surface? : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
+pub fn HarmonyOSRendererProvider::new(
+  create_renderer~ : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
+  sync_surface? : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
     _surface,
     _metrics,
   ) => (),
   image_loader? : @render.HostAsyncImageLoader? = None,
-) -> HarmonyOsRendererProvider {
+) -> HarmonyOSRendererProvider {
   { create_renderer, sync_surface, image_loader }
 }
 
 ///|
-fn HarmonyOsRendererProvider::create(
-  self : HarmonyOsRendererProvider,
-  surface : HarmonyOsSurfaceHandle,
+fn HarmonyOSRendererProvider::create(
+  self : HarmonyOSRendererProvider,
+  surface : HarmonyOSSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
 ) -> @render.HostWindowRenderer? {
   (self.create_renderer)(surface, metrics)
 }
 
 ///|
-fn HarmonyOsRendererProvider::sync(
-  self : HarmonyOsRendererProvider,
-  surface : HarmonyOsSurfaceHandle,
+fn HarmonyOSRendererProvider::sync(
+  self : HarmonyOSRendererProvider,
+  surface : HarmonyOSSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
 ) -> Unit {
   (self.sync_surface)(surface, metrics)
 }
 
 ///|
-pub fn HarmonyOsRendererProvider::has_async_image_loader(
-  self : HarmonyOsRendererProvider,
+pub fn HarmonyOSRendererProvider::has_async_image_loader(
+  self : HarmonyOSRendererProvider,
 ) -> Bool {
   self.image_loader is Some(_)
 }
@@ -109,9 +109,9 @@ pub fn HarmonyOsRendererProvider::has_async_image_loader(
 ///|
 pub fn create_session(
   runtime~ : @runtime.AppRuntime,
-  surface~ : HarmonyOsSurfaceHandle,
+  surface~ : HarmonyOSSurfaceHandle,
   metrics~ : @host.HostSurfaceMetrics,
-  provider~ : HarmonyOsRendererProvider,
+  provider~ : HarmonyOSRendererProvider,
 ) -> @embedded_runtime_backend.HostedRuntimeSession? {
   @embedded_runtime_backend.HostedRuntimeSession::create(
     runtime~,
@@ -123,14 +123,14 @@ pub fn create_session(
 
 ///|
 pub fn renderer_provider_adapter_from_harmonyos(
-  provider : HarmonyOsRendererProvider,
+  provider : HarmonyOSRendererProvider,
 ) -> @embedded_runtime_backend.RendererProviderAdapter {
   @embedded_runtime_backend.RendererProviderAdapter::new(
     create_renderer=fn(raw, metrics) {
-      provider.create(HarmonyOsSurfaceHandle::new(raw~), metrics)
+      provider.create(HarmonyOSSurfaceHandle::new(raw~), metrics)
     },
     sync=fn(raw, metrics) {
-      provider.sync(HarmonyOsSurfaceHandle::new(raw~), metrics)
+      provider.sync(HarmonyOSSurfaceHandle::new(raw~), metrics)
     },
     image_loader=provider.image_loader,
   )
@@ -158,7 +158,7 @@ pub fn harmonyos_input_capabilities() -> @host.HostInputCapabilities {
 }
 
 ///|
-pub fn harmonyos_capability_matrix() -> HarmonyOsBackendCapabilities {
+pub fn harmonyos_capability_matrix() -> HarmonyOSBackendCapabilities {
   {
     embedded_surface: true,
     external_event_loop: true,
@@ -176,7 +176,7 @@ pub fn harmonyos_capability_matrix() -> HarmonyOsBackendCapabilities {
 }
 
 ///|
-pub fn harmonyos_readiness() -> HarmonyOsBackendReadiness {
+pub fn harmonyos_readiness() -> HarmonyOSBackendReadiness {
   {
     ready: false,
     status: "experimental",
@@ -194,7 +194,7 @@ pub fn harmonyos_readiness() -> HarmonyOsBackendReadiness {
 }
 
 ///|
-pub fn backend_info() -> HarmonyOsBackendInfo {
+pub fn backend_info() -> HarmonyOSBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,

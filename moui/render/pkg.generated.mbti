@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn async_image_read_i32_le(Bytes, Int) -> Int
+
 pub fn builtin_shader_names() -> Array[String]
 
 pub fn codepoint_is_cjk(Int) -> Bool
@@ -36,6 +38,8 @@ pub fn codepoint_is_kana(Int) -> Bool
 pub fn codepoint_is_rtl_script(Int) -> Bool
 
 pub fn collect_rect_batches(Array[@core.DrawCommand]) -> Array[RectBatch]
+
+pub fn env_flag(String) -> Bool
 
 pub fn first_clear_color(Array[@core.DrawCommand]) -> @core.Color
 
@@ -463,12 +467,12 @@ pub(all) enum ImageResourceStatus {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum NativeGpuPlatform {
-  Macos
+  MacOS
   Windows
   Linux
   Android
-  Ios
-  HarmonyOs
+  IOS
+  HarmonyOS
 } derive(Eq, ToJson, @debug.Debug)
 pub impl NativePlatformSurface for NativeGpuPlatform
 

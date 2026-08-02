@@ -543,7 +543,7 @@ pub struct MacosSkiaRendererOptions {
 pub fn MacosSkiaRendererOptions::new(
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   surface_route? : @render.SkiaSurfaceRoute = @skia_renderer.desktop_surface_route(
-    platform=@render.NativeGpuPlatform::Macos,
+    platform=@render.NativeGpuPlatform::MacOS,
     gpu_available=@skia_native.Surface::metal_gpu_context_runtime_available(),
     route_override_env="MOUI_MACOS_SKIA_SURFACE_ROUTE",
   ),
@@ -696,7 +696,7 @@ fn select_route(platform~ : P, gpu_available~ : Bool) -> @render.SkiaSurfaceRout
 
 **应下沉 skia 族 —— `NativeGpuPlatform` / `NativeRendererMode` / `gpu_promoted`**
 - `native_gpu_selection.mbt:10,24`（enum 定义）、`:99-130`（`NativePlatformSurface for NativeGpuPlatform` impl）、`:140` parse、`:150` label
-- `native_platform_surface.mbt:14,21,22,28` —— **残留耦合的确切位置**：该文件是 ADR 0019 的开放扩展点，`resolve_surface_route` 已泛型化为 `pub fn[P : NativePlatformSurface](P, NativeRendererMode, ...)`，但第二个参数**仍硬依赖 `NativeRendererMode` 这个具体 enum**。泛型化做了一半：平台维度开放了，渲染器模式维度没开放。
+- `native_platform_surface.mbt:14,21,22,28` —— 泛型化状态：`resolve_surface_route` 已泛型化为 `pub fn[P : NativePlatformSurface](P, NativeRendererMode, ...)`，平台维度已开放。**结论（2026-08-03 复核）**：第二个参数 `NativeRendererMode` 保持封闭枚举是有意设计——它是渲染器偏好集合（Auto/SkiaGpu/SkiaRaster，无第三方扩展需求），不是平台扩展维度；平台类型通过 `P : NativePlatformSurface` 开放。下沉 M5 与用户决策（仅重命名变体、不动枚举位置）冲突，本提案此条目暂不实施。
 - `render/skia/hybrid_renderer.mbt:9,16,17,61`
 - 3 个 desktop provider 的 parse 调用（macos:91 / linux:36 / windows:47）
 - `backend/host/host_rendering_test.mbt:119-159`（见 §3.5.2 / B1(b)）

@@ -50,8 +50,8 @@ pub fn renderer_provider(
   options? : IosSkiaAppOptions = IosSkiaAppOptions::new(),
 ) -> @ios_host.IosRendererProvider {
   @ios_host.IosRendererProvider::new(
-    create_renderer=(view, metrics) => {
-      create_renderer_from_provider_bindings(view, metrics, options)
+    create_renderer=(surface, metrics) => {
+      create_renderer_from_provider_bindings(surface, metrics, options)
     },
     image_loader=Some(ios_skia_async_image_loader()),
   )
@@ -68,13 +68,13 @@ fn ios_skia_async_image_loader() -> @render.HostAsyncImageLoader {
 ///|
 pub fn create_session(
   runtime~ : @runtime.AppRuntime,
-  view~ : @ios_host.IosViewHandle,
+  surface~ : @ios_host.IosSurfaceHandle,
   metrics~ : @host.HostSurfaceMetrics,
   options? : IosSkiaAppOptions = IosSkiaAppOptions::new(),
 ) -> @embedded_runtime_backend.HostedRuntimeSession? {
   @ios_host.create_session(
     runtime~,
-    view~,
+    surface~,
     metrics~,
     provider=renderer_provider(options~),
   )
@@ -96,12 +96,7 @@ pub fn ios_skia_provider_preflight_summary(
   }
   let host_preflight = @ios_host.ios_capability_summary().preflight_fields()
   let gpu_runtime_available = @skia_native.Surface::metal_gpu_context_runtime_available()
-  "iOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{options.surface_route.label()}; presenter=\{ios_skia_presenter_description()}; gpu_presenter=\{ios_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; metal_view_factory=available; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=ios-simulator-smoke-required; runtime_status=experimental; unavailable=\"\{ios_skia_unavailable_message()}\""
-}
-
-///|
-fn skia_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_frame=SkiaRasterRenderer.render_frame; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SkiaRasterRenderer.set_image_resource_change_callback; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
+  "iOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{options.surface_route.label()}; presenter=\{ios_skia_presenter_description()}; gpu_presenter=\{ios_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; metal_view_factory=available; \{@platform_bridge.skia_host_renderer_bridge_preflight_mobile()}; \{host_preflight}; runtime=ios-simulator-smoke-required; runtime_status=experimental; unavailable=\"\{ios_skia_unavailable_message()}\""
 }
 
 ///|
@@ -109,7 +104,7 @@ fn skia_host_renderer_bridge_preflight() -> String {
 /// CAMetalLayer negotiates the GPU binding first; the raster binding remains
 /// the explicit recovery route without leaking UIKit handles into `render`.
 fn create_renderer_from_provider_bindings(
-  view : @ios_host.IosViewHandle,
+  surface : @ios_host.IosSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
   options : IosSkiaAppOptions,
 ) -> @render.HostWindowRenderer? {
@@ -122,7 +117,7 @@ fn create_renderer_from_provider_bindings(
     _bound_surface,
   ) => {
     require_host_renderer(
-      create_raster_renderer(view, metrics, options),
+      create_raster_renderer(surface, metrics, options),
       "iOS Skia raster binding could not create a host renderer",
     )
   })
@@ -131,7 +126,7 @@ fn create_renderer_from_provider_bindings(
     height=metrics.logical_size.height,
     scale_factor=metrics.scale_factor,
   )
-  let layer_ptr = ios_skia_metal_layer_for_view(view.raw())
+  let layer_ptr = ios_skia_metal_layer_for_view(surface.raw())
   if options.surface_route.is_gpu() && ios_skia_gpu_available() {
     match @render.GpuHostSurfaceDescriptor::metal_layer(layer_ptr) {
       Some(handle) => {
@@ -140,7 +135,7 @@ fn create_renderer_from_provider_bindings(
           _bound_surface,
         ) => {
           require_host_renderer(
-            create_gpu_worker_renderer(view, layer_ptr, metrics, options),
+            create_gpu_worker_renderer(surface, layer_ptr, metrics, options),
             "iOS Skia GPU binding could not create a host renderer",
           )
         })
@@ -177,7 +172,7 @@ fn create_host_renderer_from_binding(
     Some((binding, bound_surface)) =>
       Some(
         (binding.create_host_renderer)(
-          renderer_metrics_from_host(metrics),
+          @platform_bridge.renderer_metrics_from_host(metrics),
           bound_surface,
         ),
       )
@@ -198,34 +193,34 @@ fn require_host_renderer(
 
 ///|
 fn create_gpu_worker_renderer(
-  view : @ios_host.IosViewHandle,
+  surface : @ios_host.IosSurfaceHandle,
   layer_ptr : UInt64,
   metrics : @host.HostSurfaceMetrics,
   options : IosSkiaAppOptions,
 ) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target(
-      renderer_metrics_from_host(metrics),
-      ios_skia_present_target(view),
+      @platform_bridge.renderer_metrics_from_host(metrics),
+      ios_skia_present_target(surface),
       font_resolution=options.font_resolution,
       async_image_loading=true,
     )
     match @skia_native.NativeGpuRenderWorker::new() {
-      None => create_raster_renderer(view, metrics, options)
+      None => create_raster_renderer(surface, metrics, options)
       Some(worker) => {
         let descriptor = ios_skia_metal_surface_descriptor(
-          renderer_metrics_from_host(metrics),
+          @platform_bridge.renderer_metrics_from_host(metrics),
         )
         let dimensions = descriptor.dimensions()
         if ios_skia_configure_metal_layer(
-            view.raw(),
+            surface.raw(),
             layer_ptr,
             dimensions.width,
             dimensions.height,
           ) ==
           0 {
           worker.shutdown()
-          return create_raster_renderer(view, metrics, options)
+          return create_raster_renderer(surface, metrics, options)
         }
         ignore(
           worker.submit_control(
@@ -247,7 +242,7 @@ fn create_gpu_worker_renderer(
         )
         Some(
           host_renderer_from_native_gpu_worker(
-            renderer, worker, view, layer_ptr,
+            renderer, worker, surface, layer_ptr,
           ),
         )
       }
@@ -257,22 +252,22 @@ fn create_gpu_worker_renderer(
       println(
         "error creating iOS Skia Metal GPU worker renderer, falling back to raster: \{err.message()}",
       )
-      create_raster_renderer(view, metrics, options)
+      create_raster_renderer(surface, metrics, options)
     }
   }
 }
 
 ///|
 fn create_raster_renderer(
-  view : @ios_host.IosViewHandle,
+  surface : @ios_host.IosSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
   options : IosSkiaAppOptions,
 ) -> @render.HostWindowRenderer? {
   Some(
     host_renderer_from_skia(
       @skia_renderer.create_with_present_target(
-        renderer_metrics_from_host(metrics),
-        ios_skia_present_target(view),
+        @platform_bridge.renderer_metrics_from_host(metrics),
+        ios_skia_present_target(surface),
         font_resolution=options.font_resolution,
         async_image_loading=true,
       ),
@@ -307,14 +302,14 @@ fn ios_skia_presenter_description() -> String {
 
 ///|
 fn ios_skia_present_target(
-  view : @ios_host.IosViewHandle,
+  surface : @ios_host.IosSurfaceHandle,
 ) -> @skia_renderer.SkiaPresentTarget {
   @skia_renderer.SkiaPresentTarget::new(
     description=ios_skia_presenter_description(),
     present=frame => {
       let pixels = frame.pixels()
       ios_present_skia_pixels_to_view(
-        view.raw(),
+        surface.raw(),
         frame.width(),
         frame.height(),
         frame.row_bytes(),
@@ -346,32 +341,32 @@ fn ios_skia_metal_surface_descriptor(
 
 ///|
 /// Create a `CAMetalLayer`-backed `UIView` for the Skia Metal direct-present
-/// path. Returns `Some(IosViewHandle)` on success, or `None` when the Metal
-/// view cannot be created (non-iOS, non-main-thread, or allocation failure).
+/// path. Returns `Some(IosSurfaceHandle)` on success, or `None` when the Metal
+/// surface cannot be created (non-iOS, non-main-thread, or allocation failure).
 /// The caller owns the reference and must call `ios_skia_release_metal_view_handle`
-/// when the view is no longer needed (or add the view to a superview, which
+/// when the surface is no longer needed (or add the surface to a superview, which
 /// retains it under standard ObjC ownership).
 pub fn ios_skia_create_metal_view_handle(
   x : Double,
   y : Double,
   width : Double,
   height : Double,
-) -> @ios_host.IosViewHandle? {
+) -> @ios_host.IosSurfaceHandle? {
   let raw = ios_skia_create_metal_view(x, y, width, height)
   if raw == 0UL {
     None
   } else {
-    Some(@ios_host.IosViewHandle::new(raw~))
+    Some(@ios_host.IosSurfaceHandle::new(raw~))
   }
 }
 
 ///|
-/// Release a Metal view previously created by `ios_skia_create_metal_view_handle`.
+/// Release a Metal surface previously created by `ios_skia_create_metal_view_handle`.
 /// Safe to call with a handle whose raw value is 0.
 pub fn ios_skia_release_metal_view_handle(
-  view : @ios_host.IosViewHandle,
+  surface : @ios_host.IosSurfaceHandle,
 ) -> Unit {
-  ios_skia_release_metal_view(view.raw())
+  ios_skia_release_metal_view(surface.raw())
 }
 
 ///|
@@ -408,7 +403,7 @@ fn ios_native_gpu_completion_to_render(
 fn host_renderer_from_native_gpu_worker(
   renderer : @skia_renderer.SkiaRasterRenderer,
   worker : @skia_native.NativeGpuRenderWorker,
-  view : @ios_host.IosViewHandle,
+  surface : @ios_host.IosSurfaceHandle,
   layer_ptr : UInt64,
 ) -> @render.HostWindowRenderer {
   let pending_completions : Array[@render.RenderPresentCompletion] = []
@@ -444,7 +439,7 @@ fn host_renderer_from_native_gpu_worker(
         let descriptor = ios_skia_metal_surface_descriptor(metrics)
         let dimensions = descriptor.dimensions()
         if ios_skia_configure_metal_layer(
-            view.raw(),
+            surface.raw(),
             layer_ptr,
             dimensions.width,
             dimensions.height,
@@ -594,16 +589,5 @@ fn host_renderer_from_skia(
         renderer.set_platform_view_draw_fn(draw_fn)
       },
     ),
-  )
-}
-
-///|
-fn renderer_metrics_from_host(
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::new(
-    logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
   )
 }

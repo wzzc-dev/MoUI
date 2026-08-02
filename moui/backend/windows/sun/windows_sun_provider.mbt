@@ -100,14 +100,6 @@ extern "C" fn moui_windows_sun_async_image_spawn(
 extern "C" fn moui_windows_sun_async_image_take_result() -> Bytes = "moui_windows_sun_async_image_take_result"
 
 ///|
-fn async_image_read_i32_le(data : Bytes, offset : Int) -> Int {
-  data[offset].to_int() +
-  data[offset + 1].to_int() * 256 +
-  data[offset + 2].to_int() * 65536 +
-  data[offset + 3].to_int() * 16777216
-}
-
-///|
 fn sun_native_image_loader() -> @render.HostAsyncImageLoader {
   let native_source = @render.HostNativeAsyncImageSource::new()
   @render.HostNativeAsyncImageSource::loader_with_drain(
@@ -137,12 +129,12 @@ fn sun_native_image_loader() -> @render.HostAsyncImageLoader {
           break
         }
         let window_id = @host.HostWindowId::new(
-          async_image_read_i32_le(result, 0),
+          @render.async_image_read_i32_le(result, 0),
         )
-        let status = async_image_read_i32_le(result, 8)
-        let source_len = async_image_read_i32_le(result, 12)
-        let bytes_len = async_image_read_i32_le(result, 16)
-        let background_io_raw = async_image_read_i32_le(result, 20)
+        let status = @render.async_image_read_i32_le(result, 8)
+        let source_len = @render.async_image_read_i32_le(result, 12)
+        let bytes_len = @render.async_image_read_i32_le(result, 16)
+        let background_io_raw = @render.async_image_read_i32_le(result, 20)
         let background_io = background_io_raw != 0
         let header = 24
         let source = @utf8.decode_lossy(
@@ -215,7 +207,7 @@ fn create_renderer(
   Some(
     host_renderer_from_sun(
       @sun_renderer.create_with_present_target(
-        renderer_metrics_from_host(metrics),
+        @platform_bridge.renderer_metrics_from_host(metrics),
         windows_sun_present_target(window.native_window_handle(), metrics),
         async_image_loading=true,
       ),
@@ -322,17 +314,6 @@ fn host_renderer_from_sun(
         renderer.set_platform_view_draw_fn(draw_fn)
       },
     ),
-  )
-}
-
-///|
-fn renderer_metrics_from_host(
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::new(
-    logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
   )
 }
 

@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted Counter for HarmonyOS: HostCmd / ApplicationHandler only.
 fn main {
-  let app = @harmonyos_host.HarmonyOsEmbeddedRuntimeBackend::new(
+  let app = @harmonyos_host.HarmonyOSEmbeddedRuntimeBackend::new(
     title="MoUI Counter (window-hosted)",
     runtime_factory=metrics => {
       @runtime.new_program(

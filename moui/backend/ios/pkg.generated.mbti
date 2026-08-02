@@ -12,7 +12,7 @@ import {
 // Values
 pub fn backend_info() -> IosBackendInfo
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : IosViewHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : IosRendererProvider) -> @embedded_runtime_backend.HostedRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : IosSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : IosRendererProvider) -> @embedded_runtime_backend.HostedRuntimeSession?
 
 pub fn ios_capability_matrix() -> IosBackendCapabilities
 
@@ -82,14 +82,14 @@ pub struct IosRendererProvider {
   // private fields
 }
 pub fn IosRendererProvider::has_async_image_loader(Self) -> Bool
-pub fn IosRendererProvider::new(create_renderer~ : (IosViewHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_view? : (IosViewHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
+pub fn IosRendererProvider::new(create_renderer~ : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
-pub(all) struct IosViewHandle {
+pub(all) struct IosSurfaceHandle {
   raw : UInt64
 } derive(Eq, ToJson, @debug.Debug)
-pub fn IosViewHandle::new(raw~ : UInt64) -> Self
-pub fn IosViewHandle::none() -> Self
-pub fn IosViewHandle::raw(Self) -> UInt64
+pub fn IosSurfaceHandle::new(raw~ : UInt64) -> Self
+pub fn IosSurfaceHandle::none() -> Self
+pub fn IosSurfaceHandle::raw(Self) -> UInt64
 
 // Type aliases
 

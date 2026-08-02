@@ -48,7 +48,7 @@ pub fn[Msg] form_actions(
     ).disabled(disabled=!primary_enabled),
   )
   rows.push(
-    row(
+    @layout.row(
       actions,
       spacing=resolved_theme.spacing_scale.sm,
       justify=@style.MainAlign::End,
@@ -56,7 +56,7 @@ pub fn[Msg] form_actions(
     ).frame(width~, height=40.0),
   )
   @container.container(
-    column(
+    @layout.column(
       rows,
       spacing=resolved_theme.spacing_scale.xs,
       align=@style.CrossAlign::Stretch,
@@ -110,7 +110,7 @@ pub fn[Msg] form_workflow_bar(
       width~,
     ),
   )
-  column(
+  @layout.column(
     rows,
     spacing=resolved_theme.spacing_scale.sm,
     align=@style.CrossAlign::Stretch,

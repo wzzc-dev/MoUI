@@ -55,7 +55,7 @@ pub fn[Msg] route_header(
     )
   }
   let children : Array[@core.View[Msg]] = [
-    column(
+    @layout.column(
       title_rows,
       spacing=resolved_theme.spacing_scale.xs,
       align=@style.CrossAlign::Start,
@@ -63,7 +63,7 @@ pub fn[Msg] route_header(
   ]
   if action_buttons.length() > 0 {
     children.push(
-      row(
+      @layout.row(
         action_buttons,
         spacing=resolved_theme.spacing_scale.xs,
         align=@style.CrossAlign::Center,
@@ -71,7 +71,7 @@ pub fn[Msg] route_header(
     )
   }
   @container.container(
-    row(
+    @layout.row(
       children,
       spacing=resolved_theme.spacing_scale.md,
       justify=@style.MainAlign::Between,

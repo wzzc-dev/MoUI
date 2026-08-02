@@ -94,6 +94,10 @@ function checkIdentityBranching() {
   const violations = [];
   const restrictedPatterns = [
     /\bNativeGpuPlatform::\w+\b/,
+    // RendererBackendKind is diagnostic metadata only (docs/invariants.md):
+    // core/host/runtime must not branch on it. Renderer identity and
+    // selection live in RendererProvider.id / negotiate.
+    /\bRendererBackendKind::\w+\b/,
   ];
 
   const restrictedDirs = ["moui/core", "moui/backend/host", "moui/runtime"];

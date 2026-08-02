@@ -39,7 +39,7 @@ pub fn[Msg] breadcrumb(
     }
     children.push(child.key("breadcrumb-item-" + item.id))
   }
-  row(children, spacing~, align=@style.CrossAlign::Center).semantics_role(
+  @layout.row(children, spacing~, align=@style.CrossAlign::Center).semantics_role(
     @core.SemanticsRole::Group,
   )
 }

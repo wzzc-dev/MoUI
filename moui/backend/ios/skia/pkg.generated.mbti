@@ -10,15 +10,15 @@ import {
 }
 
 // Values
-pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : @ios.IosViewHandle, metrics~ : @host.HostSurfaceMetrics, options? : IosSkiaAppOptions) -> @embedded_runtime_backend.HostedRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @ios.IosSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, options? : IosSkiaAppOptions) -> @embedded_runtime_backend.HostedRuntimeSession?
 
-pub fn ios_skia_create_metal_view_handle(Double, Double, Double, Double) -> @ios.IosViewHandle?
+pub fn ios_skia_create_metal_view_handle(Double, Double, Double, Double) -> @ios.IosSurfaceHandle?
 
 pub fn ios_skia_gpu_available() -> Bool
 
 pub fn ios_skia_provider_preflight_summary(options? : IosSkiaAppOptions) -> String
 
-pub fn ios_skia_release_metal_view_handle(@ios.IosViewHandle) -> Unit
+pub fn ios_skia_release_metal_view_handle(@ios.IosSurfaceHandle) -> Unit
 
 pub fn renderer_provider(options? : IosSkiaAppOptions) -> @ios.IosRendererProvider
 

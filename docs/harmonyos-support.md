@@ -19,7 +19,7 @@ adapts those callbacks into the MoUI runtime session.
 
 XComponent callbacks are the sole source for surface, pointer, resize, and
 detach events. The hosted event loop forwards them to
-`HarmonyOsEmbeddedRuntimeBackend`; do not inject a second surface or input route.
+`HarmonyOSEmbeddedRuntimeBackend`; do not inject a second surface or input route.
 
 ## Toolchain
 

@@ -1,37 +1,5 @@
-// Local helpers for data/: thin row/column/overlay wrappers over the
-// shared @common implementations, plus the data-local empty_state.
-
-///|
-fn[Msg] row(
-  children : Array[@core.View[Msg]],
-  spacing? : Double = 10.0,
-  justify? : @style.MainAlign = @style.MainAlign::Start,
-  align? : @style.CrossAlign = @style.CrossAlign::Stretch,
-) -> @core.View[Msg] {
-  @common.flex_layout(
-    children~,
-    axis=@core.Axis::Horizontal,
-    spacing~,
-    main_axis_alignment=justify.core(),
-    cross_axis_alignment=align.core(),
-  )
-}
-
-///|
-fn[Msg] column(
-  children : Array[@core.View[Msg]],
-  spacing? : Double = 10.0,
-  justify? : @style.MainAlign = @style.MainAlign::Start,
-  align? : @style.CrossAlign = @style.CrossAlign::Stretch,
-) -> @core.View[Msg] {
-  @common.flex_layout(
-    children~,
-    axis=@core.Axis::Vertical,
-    spacing~,
-    main_axis_alignment=justify.core(),
-    cross_axis_alignment=align.core(),
-  )
-}
+// Local helpers for data/: package-local layout pieces not shared
+// with other view sub-packages (row/column live in @style).
 
 ///|
 fn[Msg] overlay(
@@ -50,7 +18,7 @@ fn[Msg] empty_state(
   theme~ : @core.Theme,
 ) -> @core.View[Msg] {
   @container.container(
-    column(
+    @layout.column(
       [
         @text.text(
           title,

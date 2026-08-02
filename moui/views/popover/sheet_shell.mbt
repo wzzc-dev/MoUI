@@ -91,7 +91,7 @@ impl @core.ViewNode for SheetShell with fn child_constraints(self, constraints) 
 
 ///|
 impl @core.ViewNode for SheetShell with fn layout(self, ctx) {
-  let child_size = first_child_size(ctx.child_sizes)
+  let child_size = @common.first_child_size(ctx.child_sizes)
   let measured = ctx.constraints.constrain(
     child_size.inflate(sheet_content_insets()),
   )

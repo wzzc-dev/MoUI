@@ -23,7 +23,7 @@ pub fn[Msg] radio_group(
       ).semantics_selected(selected=item.id == selected),
     )
   }
-  column(rows, spacing~, align=@style.CrossAlign::Start).semantics_role(
+  @layout.column(rows, spacing~, align=@style.CrossAlign::Start).semantics_role(
     @core.SemanticsRole::Group,
   )
 }
@@ -49,7 +49,7 @@ pub fn[Msg] checkbox_group(
       ).semantics_checked(checked~),
     )
   }
-  column(rows, spacing~, align=@style.CrossAlign::Start).semantics_role(
+  @layout.column(rows, spacing~, align=@style.CrossAlign::Start).semantics_role(
     @core.SemanticsRole::Group,
   )
 }

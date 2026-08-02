@@ -51,7 +51,7 @@ pub fn[Msg] section_nav(
     }
     item_views.push(
       @container.container(
-        column(
+        @layout.column(
           rows,
           spacing=resolved_theme.spacing_scale.xs,
           align=@style.CrossAlign::Start,
@@ -75,9 +75,9 @@ pub fn[Msg] section_nav(
   }
   let body = match orientation {
     @core.Axis::Horizontal =>
-      row(item_views, spacing~, align=@style.CrossAlign::Start)
+      @layout.row(item_views, spacing~, align=@style.CrossAlign::Start)
     @core.Axis::Vertical =>
-      column(item_views, spacing~, align=@style.CrossAlign::Start)
+      @layout.column(item_views, spacing~, align=@style.CrossAlign::Start)
   }
   let rows : Array[@core.View[Msg]] = []
   let title_height = if title == "" {
@@ -102,7 +102,7 @@ pub fn[Msg] section_nav(
       item_height * item_views.length().to_double() + spacing * gap_count
   }
   @container.container(
-    column(rows, spacing~, align=@style.CrossAlign::Start),
+    @layout.column(rows, spacing~, align=@style.CrossAlign::Start),
     width~,
     height=title_height + body_height + item_padding * 2.0,
     variant=@style.ContainerVariant::Base,

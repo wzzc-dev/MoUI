@@ -8,12 +8,12 @@
 /// `create_skia_hybrid_provider` and use `resolve_surface_route` for route
 /// calculation instead of the removed central selection matrix.
 pub(all) enum NativeGpuPlatform {
-  Macos
+  MacOS
   Windows
   Linux
   Android
-  Ios
-  HarmonyOs
+  IOS
+  HarmonyOS
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -107,10 +107,10 @@ pub fn GpuHostSurfaceDescriptor::egl_native_window(
 ///|
 pub impl NativePlatformSurface for NativeGpuPlatform with fn surface_route(self) {
   match self {
-    Macos | Ios => SkiaSurfaceRoute::MetalGpuSurfaceRoute
+    MacOS | IOS => SkiaSurfaceRoute::MetalGpuSurfaceRoute
     Windows => SkiaSurfaceRoute::Direct3DGpuSurfaceRoute
     Linux | Android => SkiaSurfaceRoute::VulkanGpuSurfaceRoute
-    HarmonyOs => SkiaSurfaceRoute::EglGpuSurfaceRoute
+    HarmonyOS => SkiaSurfaceRoute::EglGpuSurfaceRoute
   }
 }
 
@@ -127,12 +127,12 @@ pub impl NativePlatformSurface for NativeGpuPlatform with fn platform_label(
   self,
 ) {
   match self {
-    Macos => "macos"
+    MacOS => "macos"
     Windows => "windows"
     Linux => "linux"
     Android => "android"
-    Ios => "ios"
-    HarmonyOs => "harmonyos"
+    IOS => "ios"
+    HarmonyOS => "harmonyos"
   }
 }
 

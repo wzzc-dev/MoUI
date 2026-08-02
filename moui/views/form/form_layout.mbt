@@ -6,7 +6,7 @@ pub fn[Msg] form(
   width? : Double,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  column(children, spacing~, align=@style.CrossAlign::Stretch)
+  @layout.column(children, spacing~, align=@style.CrossAlign::Stretch)
   .frame(width?)
   .semantics_role(@core.SemanticsRole::Form)
   .accessibility_label("Form")
@@ -60,7 +60,7 @@ pub fn[Msg] form_section(
     rows.push(child)
   }
   @container.container(
-    column(rows, spacing~, align=@style.CrossAlign::Stretch),
+    @layout.column(rows, spacing~, align=@style.CrossAlign::Stretch),
     width?,
     variant=@style.ContainerVariant::Base,
     theme=resolved_theme,

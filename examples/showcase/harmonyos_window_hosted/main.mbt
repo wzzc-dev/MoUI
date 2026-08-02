@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted HarmonyOS Showcase entrypoint.
 fn main {
-  let app = @harmonyos_host.HarmonyOsEmbeddedRuntimeBackend::new(
+  let app = @harmonyos_host.HarmonyOSEmbeddedRuntimeBackend::new(
     title="MoUI Showcase (harmonyos window-hosted)",
     runtime_factory=metrics => {
       @runtime.new_program(

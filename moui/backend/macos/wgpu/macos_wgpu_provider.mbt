@@ -133,7 +133,7 @@ fn create_renderer(
           Some(
             host_renderer_from_wgpu(
               @wgpu_renderer.create_with_host_surface_and_text_engine(
-                renderer_metrics_from_host(metrics),
+                @platform_bridge.renderer_metrics_from_host(metrics),
                 create_macos_host_surface_from_layer(layer),
                 text_engine=macos_text_engine(options.text_engine),
               ),
@@ -256,17 +256,6 @@ fn host_renderer_from_wgpu(
         renderer.apply_image_resource_load_completion(completion)
       }),
     ),
-  )
-}
-
-///|
-fn renderer_metrics_from_host(
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::new(
-    logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
   )
 }
 

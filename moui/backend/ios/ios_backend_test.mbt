@@ -53,7 +53,7 @@ test "ios runtime session renders through supplied provider" {
         ),
       )
     },
-    sync_view=(_view, _metrics) => sync_count.val = sync_count.val + 1,
+    sync_surface=(_view, _metrics) => sync_count.val = sync_count.val + 1,
   )
   let metrics = @host.HostSurfaceMetrics::from_logical(
     size=@core.Size::new(width=120.0, height=80.0),
@@ -65,7 +65,7 @@ test "ios runtime session renders through supplied provider" {
   match
     create_session(
       runtime~,
-      view=IosViewHandle::new(raw=42UL),
+      surface=IosSurfaceHandle::new(raw=42UL),
       metrics~,
       provider~,
     ) {
