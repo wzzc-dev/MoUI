@@ -16,7 +16,7 @@ script. When it is still taste, keep it here and clear AI residue in small PRs.
 
 ## Mainline honesty
 
-6. **Native Skia is mainline; native WGPU is diagnostic** — do not soft-reclassify in docs or examples.
+6. **Native Skia is mainline; native WGPU is experimental (engineering gate `diagnostic`)** — do not soft-reclassify in docs or examples; do not present WGPU as product-capable.
 7. **Mobile claims need evidence grades** — `passed` / `partial` / `failed` only via manifests; packaging ≠ runtime proof.
 8. **Embedded runtime backends are canonical for Android/iOS/HarmonyOS** — `wzzc-dev/window` owns platform lifecycle, surface, and input; examples keep only thin MoonBit entrypoints.
 

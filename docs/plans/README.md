@@ -20,7 +20,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 |-------|----------------|
 | App package imports, sugar packages, `@core` vs prefixes | [moui-app-package-boundary.md](../moui-app-package-boundary.md) |
 | Public API tiers and guards | [api-surface.md](../api-surface.md) |
-| Facade / domain facade decision | [decisions/0003-domain-sugar-and-root-facade.md](../decisions/0003-domain-sugar-and-root-facade.md) |
+| Facade / domain facade decision | [decisions/0003-core-package-and-api.md](../decisions/0003-core-package-and-api.md) |
 | Agent workflow | [ai-collaboration.md](../ai-collaboration.md), [AGENTS.md](../../AGENTS.md) |
 | Harness map + invariant mechanization | [done/harness-mechanize-invariants-batch1.md](done/harness-mechanize-invariants-batch1.md) |
 

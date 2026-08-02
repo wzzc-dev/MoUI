@@ -24,7 +24,7 @@ foundation for future runtime damage computation improvements.
 | `moui/render/skia/skia_renderer_frame_cache_wbtest.mbt` | Replaced Array index access (`layer_cache_admissions[0]`) with Map iteration for 2 existing tests | Array→Map migration |
 | `moui/render/skia/skia_renderer_test_helpers_wbtest.mbt` | Added `skia_test_draw_frame_with_damage` helper | Part B test infrastructure |
 | `moui/render/skia/skia_renderer_damage_wbtest.mbt` | New file — 5 tests: FullSurface baseline, Rects partial clear, Empty fallback, DrawCachedLayer skip, scope fallback | Part B coverage |
-| `docs/decisions/0007-skia-layer-cache-indexing-and-damage-region.md` | New ADR | Formal decision record |
+| `docs/decisions/0007-renderer-and-skia.md` | New ADR | Formal decision record |
 | `docs/decisions/README.md` | Added 0007 to index | ADR index |
 | `memories/repo/skia-renderer-perf.md` | New quick-reference facts file | Agent auto-load reference |
 
@@ -94,4 +94,4 @@ sh scripts/check.sh --profile daily                   # exit 0
       could also be skipped when bounds are outside damage rects.
 - [ ] Scope command granular fallback — track scope depth instead of
       falling back to `FullSurface` whenever any scope command exists.
-- [ ] Related ADR: `docs/decisions/0007-skia-layer-cache-indexing-and-damage-region.md`
+- [ ] Related ADR: `docs/decisions/0007-renderer-and-skia.md`

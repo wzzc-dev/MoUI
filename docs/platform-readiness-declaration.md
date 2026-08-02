@@ -107,7 +107,7 @@ moon run examples/showcase/macos_skia --target native
 | Repository | `https://github.com/wzzc-dev/MoUI` |
 | Main branch | `main` |
 | Declaration scope | Framework core + rendering pipeline + platform backends + text system + example applications |
-| Rendering backends | Skia Raster Native (mainline), WebGPU wasm-gc (Web), WGPU (diagnostic) |
+| Rendering backends | Skia Raster Native (mainline), WebGPU wasm-gc (Web), WGPU (experimental; engineering gate `diagnostic`) |
 
 ## II. Target Platforms and Evidence Levels
 

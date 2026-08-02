@@ -27,27 +27,19 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 
 ## Index
 
+ADRs are grouped by theme; each original decision keeps its number as an
+in-file section anchor (e.g. `## 0017: Theme layering ...` inside
+`0017-theme-and-host-contract.md`).
+
 | # | Title | Date | Status |
 |---|-------|------|--------|
-| 0021 | [Mobile platforms downgraded to experimental product class](0021-mobile-platform-experimental-downgrade.md) | 2026-08-02 | Accepted |
-| 0020 | [Platform Bridge convergence and duplication budget](0020-platform-adapter-convergence-and-duplication-budget.md) | 2026-07-28 (amended 2026-07-29) | Accepted |
-| 0019 | [Renderer provider plugin architecture](0019-renderer-provider-plugin-architecture.md) | 2026-07-28 | Accepted |
-| 0018 | [Host contract split — runtime/render ownership leaves backend/host](0018-host-contract-split-and-runtime-render-ownership.md) | 2026-07-28 | Accepted |
-| 0017 | [Theme layering and views-owned ControlThemeSet](0017-theme-layering-and-control-theme-set.md) | 2026-07-28 | Accepted |
-| 0016 | [Declaration invalidation and committed Agent semantics](0016-declaration-invalidation-and-committed-agent-semantics.md) | 2026-07-27 | Accepted |
-| 0015 | [Public object-safe ViewNode with typed View adapters](0015-public-view-node-trait.md) | 2026-07-26 | Accepted |
-| 0014 | [Core owns value types; domain packages are facades only](0014-core-owns-domain-facades.md) | 2026-07-16 | Accepted |
-| 0013 | [Showcase unified shell](0013-showcase-unified-shell.md) | 2026-07-16 | Accepted |
-| 0012 | [Showcase consolidation and moui_cli quick start](0012-showcase-consolidation-and-moui-cli-quickstart.md) | 2026-07-16 | Accepted |
-| 0011 | [Platform product class and mobile readiness](0011-platform-product-class-and-mobile-readiness.md) | 2026-07-16 (amended 2026-08-02) | Accepted (product-class decision superseded in part by ADR 0021) |
-| 0009 | [DrawFrame clear ownership and Skia damage clipping](0009-draw-frame-clear-and-skia-damage-clip.md) | 2026-07-14 | Accepted |
-| 0008 | [MoonBit-native browser Playground](0008-moonbit-native-playground.md) | 2026-07-13 | Accepted |
-| 0007 | [Skia layer cache indexing and damage region partial clear](0007-skia-layer-cache-indexing-and-damage-region.md) | 2026-07-12 | Accepted |
-| 0006 | [Mobile GPU surface and render thread ownership](0006-mobile-gpu-surface-and-render-thread.md) | 2026-07-11 | Accepted |
-| 0005 | [Mobile host channel ownership](0005-mobile-host-channel-ownership.md) | 2026-07-11 | Accepted |
-| 0004 | [Views API visibility migration](0004-views-api-visibility-migration.md) | 2026-07-10 | Accepted |
-| 0003 | [Domain facade and root app-loop facade](0003-domain-sugar-and-root-facade.md) | 2026-07-04 | Accepted |
-| 0002 | [MouiRichtext optimization](0002-moui-richtext-optimization.md) | 2026-06-29 | Accepted |
-| 0001 | [Markdown session virtual scrolling](0001-markdown-session-virtual-scrolling.md) | 2026-06-28 | Accepted |
+| 0017–0018 | [Theme and host contract](0017-theme-and-host-contract.md) | 2026-07-28 | Accepted |
+| 0015–0016 | [Core protocols](0015-core-protocols.md) | 2026-07-26 | Accepted |
+| 0011–0021 | [Platform class and convergence](0011-platform-class-and-convergence.md) | 2026-07-16 (amended 2026-08-02) | Accepted |
+| 0008–0013 | [Tools and examples](0008-tools-and-examples.md) | 2026-07-13 | Accepted |
+| 0007–0022 | [Renderer and Skia](0007-renderer-and-skia.md) | 2026-07-12 | Accepted |
+| 0005–0006 | [Mobile host and GPU](0005-mobile-host-and-gpu.md) | 2026-07-11 | Accepted |
+| 0003–0014 | [Core package and API](0003-core-package-and-api.md) | 2026-07-04 | Accepted |
+| 0001–0002 | [Editor and rich text](0001-editor-and-richtext.md) | 2026-06-28 | Accepted |
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->
