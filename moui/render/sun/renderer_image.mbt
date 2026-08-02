@@ -573,170 +573,49 @@ fn sun_image_placement(
   image_size : @core.Size,
   fit : @core.ImageFit,
 ) -> SunImagePlacement {
-  if image_size.width <= 0.0 ||
-    image_size.height <= 0.0 ||
-    frame.size.width <= 0.0 ||
-    frame.size.height <= 0.0 {
-    return { frame, src_rect: None }
-  }
-  let image_ratio = image_size.width / image_size.height
-  let frame_ratio = frame.size.width / frame.size.height
-  match fit {
-    @core.ImageFit::Stretch => { frame, src_rect: None }
-    @core.ImageFit::ScaleDown =>
-      if image_size.width <= frame.size.width &&
-        image_size.height <= frame.size.height {
-        {
-          frame: @core.Rect::new(
-            x=frame.origin.x + (frame.size.width - image_size.width) / 2.0,
-            y=frame.origin.y + (frame.size.height - image_size.height) / 2.0,
-            width=image_size.width,
-            height=image_size.height,
+  let placement = @render.image_placement(frame, image_size, fit)
+  match placement.crop_axis {
+    @render.ImageCropAxis::None => { frame: placement.frame, src_rect: None }
+    @render.ImageCropAxis::Horizontal => {
+      let crop_width = (image_size.width * placement.visible)
+        .round()
+        .to_int()
+      let left = ((image_size.width - crop_width.to_double()) * 0.5)
+        .round()
+        .to_int()
+      {
+        frame: placement.frame,
+        src_rect: Some(
+          @sun_graphics.PixelRect::new(
+            x=left,
+            y=0,
+            width=crop_width,
+            height=image_size.height.round().to_int(),
           ),
-          src_rect: None,
-        }
-      } else {
-        sun_contain_image_placement(frame, image_size)
-      }
-    @core.ImageFit::FitWidth =>
-      sun_fit_width_image_placement(frame, image_size, image_ratio)
-    @core.ImageFit::FitHeight =>
-      sun_fit_height_image_placement(frame, image_size, image_ratio)
-    @core.ImageFit::Contain => sun_contain_image_placement(frame, image_size)
-    @core.ImageFit::Cover =>
-      if image_ratio > frame_ratio {
-        let visible = frame_ratio / image_ratio
-        let crop_width = (image_size.width * visible).round().to_int()
-        let left = ((image_size.width - crop_width.to_double()) * 0.5)
-          .round()
-          .to_int()
-        {
-          frame,
-          src_rect: Some(
-            @sun_graphics.PixelRect::new(
-              x=left,
-              y=0,
-              width=crop_width,
-              height=image_size.height.round().to_int(),
-            ),
-          ),
-        }
-      } else {
-        let visible = image_ratio / frame_ratio
-        let crop_height = (image_size.height * visible).round().to_int()
-        let top = ((image_size.height - crop_height.to_double()) * 0.5)
-          .round()
-          .to_int()
-        {
-          frame,
-          src_rect: Some(
-            @sun_graphics.PixelRect::new(
-              x=0,
-              y=top,
-              width=image_size.width.round().to_int(),
-              height=crop_height,
-            ),
-          ),
-        }
-      }
-  }
-}
-
-///|
-fn sun_fit_width_image_placement(
-  frame : @core.Rect,
-  image_size : @core.Size,
-  image_ratio : Double,
-) -> SunImagePlacement {
-  let scaled_height = frame.size.width / image_ratio
-  if scaled_height <= frame.size.height {
-    {
-      frame: @core.Rect::new(
-        x=frame.origin.x,
-        y=frame.origin.y + (frame.size.height - scaled_height) / 2.0,
-        width=frame.size.width,
-        height=scaled_height,
-      ),
-      src_rect: None,
-    }
-  } else {
-    let visible = frame.size.height / scaled_height
-    let crop_height = (image_size.height * visible).round().to_int()
-    let top = ((image_size.height - crop_height.to_double()) * 0.5)
-      .round()
-      .to_int()
-    {
-      frame,
-      src_rect: Some(
-        @sun_graphics.PixelRect::new(
-          x=0,
-          y=top,
-          width=image_size.width.round().to_int(),
-          height=crop_height,
         ),
-      ),
+      }
     }
-  }
-}
-
-///|
-fn sun_fit_height_image_placement(
-  frame : @core.Rect,
-  image_size : @core.Size,
-  image_ratio : Double,
-) -> SunImagePlacement {
-  let scaled_width = frame.size.height * image_ratio
-  if scaled_width <= frame.size.width {
-    {
-      frame: @core.Rect::new(
-        x=frame.origin.x + (frame.size.width - scaled_width) / 2.0,
-        y=frame.origin.y,
-        width=scaled_width,
-        height=frame.size.height,
-      ),
-      src_rect: None,
-    }
-  } else {
-    let visible = frame.size.width / scaled_width
-    let crop_width = (image_size.width * visible).round().to_int()
-    let left = ((image_size.width - crop_width.to_double()) * 0.5)
-      .round()
-      .to_int()
-    {
-      frame,
-      src_rect: Some(
-        @sun_graphics.PixelRect::new(
-          x=left,
-          y=0,
-          width=crop_width,
-          height=image_size.height.round().to_int(),
+    @render.ImageCropAxis::Vertical => {
+      let crop_height = (image_size.height * placement.visible)
+        .round()
+        .to_int()
+      let top = ((image_size.height - crop_height.to_double()) * 0.5)
+        .round()
+        .to_int()
+      {
+        frame: placement.frame,
+        src_rect: Some(
+          @sun_graphics.PixelRect::new(
+            x=0,
+            y=top,
+            width=image_size.width.round().to_int(),
+            height=crop_height,
+          ),
         ),
-      ),
+      }
     }
   }
 }
-
-///|
-fn sun_contain_image_placement(
-  frame : @core.Rect,
-  image_size : @core.Size,
-) -> SunImagePlacement {
-  let scale = (frame.size.width / image_size.width).min(
-    frame.size.height / image_size.height,
-  )
-  let width = image_size.width * scale
-  let height = image_size.height * scale
-  {
-    frame: @core.Rect::new(
-      x=frame.origin.x + (frame.size.width - width) / 2.0,
-      y=frame.origin.y + (frame.size.height - height) / 2.0,
-      width~,
-      height~,
-    ),
-    src_rect: None,
-  }
-}
-
 ///|
 fn sun_image_record_needs_ready_update(
   record : @render.ImageResourceRecord?,

@@ -17,7 +17,15 @@ pub fn grow_capacity(UInt64) -> UInt64
 
 pub fn import_svg(String) -> SvgImportResult
 
+pub fn lower_draw_commands(Array[@core.DrawCommand]) -> DrawPlan
+
 pub fn plan_renderer_command_fallbacks(Array[@core.DrawCommand]) -> RendererCommandPlan
+
+pub fn plan_scope_name(PlanScopeKind) -> String
+
+pub fn plan_scope_pop_command(PlanScopeKind) -> String
+
+pub fn plan_scope_push_command(PlanScopeKind) -> String
 
 pub fn rect_batches_to_vertices(Array[RectBatch], @core.Size) -> Array[RectVertex]
 
@@ -65,6 +73,16 @@ pub fn BoundSurface::kind(Self) -> RendererPresentationModel
 pub fn BoundSurface::metrics(Self) -> RendererSurfaceMetrics
 pub fn BoundSurface::new(kind~ : RendererPresentationModel, route~ : SkiaSurfaceRoute, metrics~ : RendererSurfaceMetrics) -> Self
 pub fn BoundSurface::route(Self) -> SkiaSurfaceRoute
+
+pub(all) struct DrawPlan {
+  ops : Array[PlanOp]
+  diagnostics : Array[DrawPlanDiagnostic]
+}
+
+pub(all) struct DrawPlanDiagnostic {
+  command : String
+  reason : String
+} derive(Eq, @debug.Debug)
 
 pub enum GpuHostSurfaceDescriptor {
   MetalLayer(UInt64)
@@ -413,6 +431,45 @@ pub struct PathVertex {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PathVertex::components(Self) -> Array[Double]
 
+pub(all) enum PlanOp {
+  Clear(@core.Color)
+  FillRect(@core.Rect, @core.Color)
+  StrokeRect(@core.Rect, @core.Color, Double)
+  FillRoundedRect(@core.RoundedRect, @core.Color)
+  StrokeRoundedRect(@core.RoundedRect, @core.Color, Double)
+  FillRoundedRectBrush(@core.RoundedRect, @core.Brush)
+  StrokeRoundedRectBrush(@core.RoundedRect, @core.Brush, Double)
+  DrawShadow(@core.ShadowSpec)
+  DrawText(@core.TextRun)
+  DrawImage(@core.ImageRun)
+  PushClip(@core.Rect)
+  PopClip
+  PushRoundedClip(@core.RoundedRect)
+  PopRoundedClip
+  PushTransform(@core.Transform2D)
+  PopTransform
+  PushOpacity(Double)
+  PopOpacity
+  PushLayer(@core.LayerSpec)
+  PopLayer
+  BeginCachedLayer(@core.CachedLayerSpec)
+  EndCachedLayer(String)
+  DrawCachedLayer(@core.CachedLayerSpec)
+  PushFilter(@core.FilterEffect)
+  PopFilter
+  DrawPath(@core.PathSpec)
+  DrawShaderEffect(@core.ShaderEffectSpec)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum PlanScopeKind {
+  Clip
+  RoundedClip
+  Transform
+  Opacity
+  Layer
+  Filter
+} derive(Eq)
+
 pub(all) enum RecoveryResult {
   RecoverySucceeded
   RecoveryFailed(String)
@@ -557,7 +614,6 @@ pub(all) enum RendererBackendKind {
   NativeWgpu
   WebGpuWasm
   SkiaRasterNative
-  SkiaRasterWeb
   SkiaGpuNative
   SunRasterNative
   Canvas2DWasm

@@ -246,15 +246,16 @@ pub fn SkiaRasterRenderer::render(
       )
       self.unsupported_command_count = 0
       self.unsupported_command_diagnostics.clear()
-      let canvas_scopes : Array[SkiaCanvasScopeKind] = []
-      for command in commands {
-        self.render_command(canvas, command, canvas_scopes)
+      let canvas_scopes : Array[@render.PlanScopeKind] = []
+      let plan = @render.lower_draw_commands(commands)
+      for op in plan.ops {
+        self.render_command(canvas, op, canvas_scopes)
       }
       if !canvas_scopes.is_empty() {
         for scope in canvas_scopes {
           self.record_unsupported_command(
-            skia_scope_push_command(scope),
-            "command stream ended with an open \{skia_scope_name(scope)} scope",
+            @render.plan_scope_push_command(scope),
+            "command stream ended with an open \{@render.plan_scope_name(scope)} scope",
           )
         }
       }
@@ -482,12 +483,13 @@ fn SkiaRasterRenderer::draw_frame_to_canvas(
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
   let stats = SkiaCachedLayerFrameStats::new()
-  let canvas_scopes : Array[SkiaCanvasScopeKind] = []
+  let canvas_scopes : Array[@render.PlanScopeKind] = []
+  let plan = @render.lower_draw_commands(frame.commands)
   let complete = self.render_cached_command_range(
     canvas,
-    frame.commands,
+    plan.ops,
     start_index=0,
-    end_index=frame.commands.length(),
+    end_index=plan.ops.length(),
     canvas_scopes,
     stats,
     damage=effective_damage,
@@ -495,8 +497,8 @@ fn SkiaRasterRenderer::draw_frame_to_canvas(
   if !canvas_scopes.is_empty() {
     for scope in canvas_scopes {
       self.record_unsupported_command(
-        skia_scope_push_command(scope),
-        "command stream ended with an open \{skia_scope_name(scope)} scope",
+        @render.plan_scope_push_command(scope),
+        "command stream ended with an open \{@render.plan_scope_name(scope)} scope",
       )
     }
   }

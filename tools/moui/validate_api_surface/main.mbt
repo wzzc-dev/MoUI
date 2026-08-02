@@ -299,8 +299,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "runtime facade",
       path: "moui/runtime/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/runtime\"",
-      max_lines: 819,
-      max_pub_lines: 446,
+      max_lines: 827,
+      max_pub_lines: 450,
       max_pub_all_lines: 35,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend/host\"", "\"wzzc-dev/moui/render\"",
@@ -433,9 +433,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "renderer facade",
       path: "moui/render/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render\"",
-      max_lines: 790,
-      max_pub_lines: 270,
-      max_pub_all_lines: 47,
+      max_lines: 846,
+      max_pub_lines: 274,
+      max_pub_all_lines: 51,
       required_tokens: [
         "RendererBackendKind", "RendererDescriptor", "RendererProviderBinding", "HostWindowRenderer",
         "RenderFrameResult",

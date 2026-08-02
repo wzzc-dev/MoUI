@@ -78,7 +78,7 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/runtime/pkg.generated.mbti",
       category: "runtime_diagnostic",
-      max_count: 447,
+      max_count: 451,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",
@@ -118,12 +118,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/render/pkg.generated.mbti",
       category: "renderer_contract",
-      max_count: 271,
+      max_count: 275,
     },
     {
       path: "moui/render/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 47,
+      max_count: 51,
     },
     {
       path: "moui/render/pkg.generated.mbti",

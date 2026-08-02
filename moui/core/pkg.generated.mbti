@@ -134,6 +134,7 @@ pub(all) enum AnimationStatus {
 
 pub(all) struct AnyModifier[Msg] {
   identity_kind : String
+  identity_key : Key?
   declaration : ViewDeclaration
   child_constraints : (Constraints) -> Constraints
   child_environment : (Environment) -> Environment

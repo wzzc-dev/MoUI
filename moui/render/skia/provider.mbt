@@ -164,61 +164,26 @@ fn skia_feature_note(feature : @render.RendererFeature) -> String {
 fn skia_negotiate_raster_surface(
   surface : @render.SurfaceDescriptor,
 ) -> @render.SurfaceNegotiationResult {
-  match surface {
-    @render.SurfaceDescriptor::CpuRaster(width, height, scale) =>
-      if width >= 1.0 && height >= 1.0 && scale > 0.0 {
-        @render.SurfaceNegotiationResult::SurfaceAccepted(
-          @render.BoundSurface::new(
-            kind=@render.RendererPresentationModel::CpuPixelFrame,
-            route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
-            metrics=@render.RendererSurfaceMetrics::from_logical(
-              size=@core.Size::new(width~, height~),
-              scale_factor=scale,
-            ),
-          ),
-        )
-      } else {
-        @render.SurfaceNegotiationResult::SurfaceRejected(
-          "invalid raster surface dimensions: \\{width}x\\{height} @ \\{scale}x",
-        )
-      }
-    @render.SurfaceDescriptor::GpuSurface(_, _, _, _) =>
-      @render.SurfaceNegotiationResult::SurfaceRejected(
-        "skia-raster provider does not accept GPU surfaces",
-      )
-  }
+  @render.negotiate_cpu_raster_surface(
+    surface,
+    label="raster",
+    id="skia-raster",
+    presentation_model=@render.RendererPresentationModel::CpuPixelFrame,
+  )
 }
 
 ///|
 /// GPU surface negotiation: accepts GPU surfaces with a Metal, Vulkan,
-/// EGL, or D3D12 handle.
+/// EGL, or D3D12 handle; the route is resolved from the handle kind.
 fn skia_negotiate_gpu_surface(
   surface : @render.SurfaceDescriptor,
 ) -> @render.SurfaceNegotiationResult {
-  match surface {
-    @render.SurfaceDescriptor::GpuSurface(handle, width, height, scale) =>
-      if width >= 1.0 && height >= 1.0 && scale > 0.0 {
-        let route = skia_route_for_gpu_handle(handle)
-        @render.SurfaceNegotiationResult::SurfaceAccepted(
-          @render.BoundSurface::new(
-            kind=@render.RendererPresentationModel::HostGpuSurface,
-            route~,
-            metrics=@render.RendererSurfaceMetrics::from_logical(
-              size=@core.Size::new(width~, height~),
-              scale_factor=scale,
-            ),
-          ),
-        )
-      } else {
-        @render.SurfaceNegotiationResult::SurfaceRejected(
-          "invalid GPU surface dimensions: \\{width}x\\{height} @ \\{scale}x",
-        )
-      }
-    @render.SurfaceDescriptor::CpuRaster(_, _, _) =>
-      @render.SurfaceNegotiationResult::SurfaceRejected(
-        "skia-gpu provider does not accept CPU raster surfaces",
-      )
-  }
+  @render.negotiate_gpu_surface(
+    surface,
+    label="GPU",
+    id="skia-gpu",
+    route_for=skia_route_for_gpu_handle,
+  )
 }
 
 ///|
@@ -245,28 +210,11 @@ fn skia_create_instance(
   create_raster~ : (@render.RendererSurfaceMetrics) -> SkiaRasterRenderer,
 ) -> @render.RendererInstance {
   let renderer = create_raster(metrics)
-  let disposed = Ref(false)
-  @render.RendererInstance::{
-    render_frame: frame => {
-      if disposed.val {
-        return @render.RenderFrameResult::new(presented=false)
-      }
-      renderer.render_frame(frame)
-    },
-    recover: reason => {
-      let _ = reason
-      if disposed.val {
-        return @render.RecoveryResult::RecoveryFailed("renderer is disposed")
-      }
-      @render.RecoveryResult::FallbackToCpu
-    },
-    dispose: () => {
-      if !disposed.val {
-        disposed.val = true
-        renderer.dispose()
-      }
-    },
-  }
+  @render.new_provider_instance(
+    render_frame=frame => renderer.render_frame(frame),
+    recover=_reason => @render.RecoveryResult::FallbackToCpu,
+    dispose=() => renderer.dispose(),
+  )
 }
 
 ///|
@@ -275,26 +223,11 @@ fn skia_create_hybrid_instance(
   create_hybrid~ : (@render.RendererSurfaceMetrics) -> SkiaHybridRenderer,
 ) -> @render.RendererInstance {
   let hybrid = create_hybrid(metrics)
-  let disposed = Ref(false)
-  @render.RendererInstance::{
-    render_frame: frame => {
-      if disposed.val {
-        return @render.RenderFrameResult::new(presented=false)
-      }
-      hybrid.render_frame(frame)
+  @render.new_provider_instance(
+    render_frame=frame => hybrid.render_frame(frame),
+    recover=_reason => @render.RecoveryResult::FallbackToCpu,
+    dispose=() => {
+      let _ = hybrid.drain_present_completions()
     },
-    recover: reason => {
-      let _ = reason
-      if disposed.val {
-        return @render.RecoveryResult::RecoveryFailed("renderer is disposed")
-      }
-      @render.RecoveryResult::FallbackToCpu
-    },
-    dispose: () => {
-      if !disposed.val {
-        disposed.val = true
-        let _ = hybrid.drain_present_completions()
-      }
-    },
-  }
+  )
 }

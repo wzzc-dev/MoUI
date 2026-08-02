@@ -1,8 +1,8 @@
 ///|
 fn SunRasterRenderer::render_command(
   self : SunRasterRenderer,
-  command : @core.DrawCommand,
-  canvas_scopes : Array[SunCanvasScopeKind],
+  command : @render.PlanOp,
+  canvas_scopes : Array[@render.PlanScopeKind],
   opacity_stack : Array[Double],
   blend_mode_stack : Array[@sun_graphics.BlendMode],
   layer_spec_stack : Array[SunLayerScope],
@@ -10,8 +10,8 @@ fn SunRasterRenderer::render_command(
 ) -> Unit {
   let opacity = sun_current_opacity(opacity_stack)
   match command {
-    @core.DrawCommand::Clear(color) => self.canvas.clear(sun_color(color))
-    @core.DrawCommand::FillRect(rect, color) =>
+    @render.PlanOp::Clear(color) => self.canvas.clear(sun_color(color))
+    @render.PlanOp::FillRect(rect, color) =>
       self.canvas.fill_rect(
         rect.origin.x,
         rect.origin.y,
@@ -19,7 +19,7 @@ fn SunRasterRenderer::render_command(
         rect.size.height,
         sun_paint(color, opacity),
       )
-    @core.DrawCommand::StrokeRect(rect, color, width) =>
+    @render.PlanOp::StrokeRect(rect, color, width) =>
       self.canvas.stroke_rect(
         rect.origin.x,
         rect.origin.y,
@@ -27,44 +27,44 @@ fn SunRasterRenderer::render_command(
         rect.size.height,
         sun_stroke_paint(color, width, opacity),
       )
-    @core.DrawCommand::FillRoundedRect(rounded, color) =>
+    @render.PlanOp::FillRoundedRect(rounded, color) =>
       self.fill_rounded_rect(rounded, @core.Brush::solid(color), opacity)
-    @core.DrawCommand::StrokeRoundedRect(rounded, color, width) =>
+    @render.PlanOp::StrokeRoundedRect(rounded, color, width) =>
       self.stroke_rounded_rect(
         rounded,
         @core.Brush::solid(color),
         width,
         opacity,
       )
-    @core.DrawCommand::FillRoundedRectBrush(rounded, brush) =>
+    @render.PlanOp::FillRoundedRectBrush(rounded, brush) =>
       self.fill_rounded_rect(rounded, brush, opacity)
-    @core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width) =>
+    @render.PlanOp::StrokeRoundedRectBrush(rounded, brush, width) =>
       self.stroke_rounded_rect(rounded, brush, width, opacity)
-    @core.DrawCommand::DrawShadow(shadow) => self.draw_shadow(shadow, opacity)
-    @core.DrawCommand::DrawText(run) => self.draw_text(run, opacity)
-    @core.DrawCommand::DrawImage(image) => self.draw_image(image, opacity)
-    @core.DrawCommand::PushClip(rect) => {
+    @render.PlanOp::DrawShadow(shadow) => self.draw_shadow(shadow, opacity)
+    @render.PlanOp::DrawText(run) => self.draw_text(run, opacity)
+    @render.PlanOp::DrawImage(image) => self.draw_image(image, opacity)
+    @render.PlanOp::PushClip(rect) => {
       self.canvas.save()
-      canvas_scopes.push(SunCanvasScopeKind::Clip)
+      canvas_scopes.push(@render.PlanScopeKind::Clip)
       self.canvas.intersect_clip_rect(
         sun_transformed_rect_bounds(self.canvas.get_transform(), rect),
       )
     }
-    @core.DrawCommand::PopClip =>
+    @render.PlanOp::PopClip =>
       self.pop_canvas_scope(
         canvas_scopes,
         opacity_stack,
-        SunCanvasScopeKind::Clip,
+        @render.PlanScopeKind::Clip,
       )
-    @core.DrawCommand::PushRoundedClip(rounded) => {
+    @render.PlanOp::PushRoundedClip(rounded) => {
       self.rounded_clip_stack.push(rounded)
       rounded_clip_transform_stack.push(self.canvas.get_transform())
       self.push_transparent_offscreen_canvas()
-      canvas_scopes.push(SunCanvasScopeKind::RoundedClip)
+      canvas_scopes.push(@render.PlanScopeKind::RoundedClip)
     }
-    @core.DrawCommand::PopRoundedClip =>
+    @render.PlanOp::PopRoundedClip =>
       match canvas_scopes.pop() {
-        Some(SunCanvasScopeKind::RoundedClip) => {
+        Some(@render.PlanScopeKind::RoundedClip) => {
           let layer_pixmap = self.canvas.get_pixmap()
           match self.canvas_stack.pop() {
             Some(parent_canvas) =>
@@ -105,7 +105,7 @@ fn SunRasterRenderer::render_command(
           canvas_scopes.push(other)
           self.record_unsupported_command(
             "PopRoundedClip",
-            "pop did not match active \{sun_scope_name(other)} scope",
+            "pop did not match active \{@render.plan_scope_name(other)} scope",
           )
         }
         None =>
@@ -113,36 +113,36 @@ fn SunRasterRenderer::render_command(
             "PopRoundedClip", "pop has no matching push scope",
           )
       }
-    @core.DrawCommand::PushTransform(transform) => {
+    @render.PlanOp::PushTransform(transform) => {
       self.canvas.save()
-      canvas_scopes.push(SunCanvasScopeKind::Transform)
+      canvas_scopes.push(@render.PlanScopeKind::Transform)
       self.canvas.concat_transform(sun_transform(transform))
     }
-    @core.DrawCommand::PopTransform =>
+    @render.PlanOp::PopTransform =>
       self.pop_canvas_scope(
         canvas_scopes,
         opacity_stack,
-        SunCanvasScopeKind::Transform,
+        @render.PlanScopeKind::Transform,
       )
-    @core.DrawCommand::PushOpacity(opacity) => {
-      canvas_scopes.push(SunCanvasScopeKind::Opacity)
+    @render.PlanOp::PushOpacity(opacity) => {
+      canvas_scopes.push(@render.PlanScopeKind::Opacity)
       opacity_stack.push(sun_clamp_unit(opacity))
     }
-    @core.DrawCommand::PopOpacity =>
+    @render.PlanOp::PopOpacity =>
       self.pop_canvas_scope(
         canvas_scopes,
         opacity_stack,
-        SunCanvasScopeKind::Opacity,
+        @render.PlanScopeKind::Opacity,
       )
-    @core.DrawCommand::PushLayer(spec) => {
+    @render.PlanOp::PushLayer(spec) => {
       blend_mode_stack.push(sun_blend_mode(spec.blend_mode))
       layer_spec_stack.push({ spec, transform: self.canvas.get_transform() })
       self.push_transparent_offscreen_canvas()
-      canvas_scopes.push(SunCanvasScopeKind::Layer)
+      canvas_scopes.push(@render.PlanScopeKind::Layer)
     }
-    @core.DrawCommand::PopLayer =>
+    @render.PlanOp::PopLayer =>
       match canvas_scopes.pop() {
-        Some(SunCanvasScopeKind::Layer) => {
+        Some(@render.PlanScopeKind::Layer) => {
           let layer_pixmap = self.canvas.get_pixmap()
           let layer_blend = match blend_mode_stack.pop() {
             Some(m) => m
@@ -177,7 +177,7 @@ fn SunRasterRenderer::render_command(
           canvas_scopes.push(other)
           self.record_unsupported_command(
             "PopLayer",
-            "pop did not match active \{sun_scope_name(other)} scope",
+            "pop did not match active \{@render.plan_scope_name(other)} scope",
           )
         }
         None =>
@@ -185,7 +185,7 @@ fn SunRasterRenderer::render_command(
             "PopLayer", "pop has no matching push scope",
           )
       }
-    @core.DrawCommand::PushFilter(effect) => {
+    @render.PlanOp::PushFilter(effect) => {
       self.filter_stack.push(sun_filter_effect(effect))
       match effect {
         @core.FilterEffect::Blur(radius) =>
@@ -193,14 +193,14 @@ fn SunRasterRenderer::render_command(
         _ => self.blur_radius_stack.push(0.0)
       }
       self.push_transparent_offscreen_canvas()
-      canvas_scopes.push(SunCanvasScopeKind::Filter)
+      canvas_scopes.push(@render.PlanScopeKind::Filter)
     }
-    @core.DrawCommand::PopFilter => {
+    @render.PlanOp::PopFilter => {
       let filter = self.filter_stack.pop()
       let blur_radius_entry = self.blur_radius_stack.pop()
       let blur_radius = blur_radius_entry.unwrap_or(0.0)
       match canvas_scopes.pop() {
-        Some(SunCanvasScopeKind::Filter) => {
+        Some(@render.PlanScopeKind::Filter) => {
           let layer_pixmap = self.canvas.get_pixmap()
           let effective_pixmap = if blur_radius > 0.0 {
             sun_box_blur_pixmap(layer_pixmap, blur_radius)
@@ -249,7 +249,7 @@ fn SunRasterRenderer::render_command(
           }
           self.record_unsupported_command(
             "PopFilter",
-            "pop did not match active \{sun_scope_name(other)} scope",
+            "pop did not match active \{@render.plan_scope_name(other)} scope",
           )
         }
         None => {
@@ -267,18 +267,18 @@ fn SunRasterRenderer::render_command(
         }
       }
     }
-    @core.DrawCommand::DrawPath(path) => self.draw_path(path, opacity)
-    @core.DrawCommand::DrawShaderEffect(spec) =>
+    @render.PlanOp::DrawPath(path) => self.draw_path(path, opacity)
+    @render.PlanOp::DrawShaderEffect(spec) =>
       self.draw_shader_effect(spec, opacity)
-    @core.DrawCommand::BeginCachedLayer(_) =>
+    @render.PlanOp::BeginCachedLayer(_) =>
       self.record_unsupported_command(
         "BeginCachedLayer", "cached layer scope not intercepted by render_cached_command_range",
       )
-    @core.DrawCommand::EndCachedLayer(_) =>
+    @render.PlanOp::EndCachedLayer(_) =>
       self.record_unsupported_command(
         "EndCachedLayer", "cached layer scope intercepted by render_cached_command_range",
       )
-    @core.DrawCommand::DrawCachedLayer(_) =>
+    @render.PlanOp::DrawCachedLayer(_) =>
       self.record_unsupported_command(
         "DrawCachedLayer", "cached layer draw not intercepted by render_cached_command_range",
       )
@@ -347,27 +347,27 @@ fn SunRasterRenderer::draw_path(
 ///|
 fn SunRasterRenderer::pop_canvas_scope(
   self : SunRasterRenderer,
-  canvas_scopes : Array[SunCanvasScopeKind],
+  canvas_scopes : Array[@render.PlanScopeKind],
   opacity_stack : Array[Double],
-  expected : SunCanvasScopeKind,
+  expected : @render.PlanScopeKind,
 ) -> Unit {
   match canvas_scopes.pop() {
     Some(actual) =>
       if actual == expected {
         match actual {
-          SunCanvasScopeKind::Opacity => ignore(opacity_stack.pop())
+          @render.PlanScopeKind::Opacity => ignore(opacity_stack.pop())
           _ => ignore(self.canvas.restore())
         }
       } else {
         canvas_scopes.push(actual)
         self.record_unsupported_command(
-          sun_scope_pop_command(expected),
-          "pop did not match active \{sun_scope_name(actual)} scope",
+          @render.plan_scope_pop_command(expected),
+          "pop did not match active \{@render.plan_scope_name(actual)} scope",
         )
       }
     None =>
       self.record_unsupported_command(
-        sun_scope_pop_command(expected),
+        @render.plan_scope_pop_command(expected),
         "pop has no matching push scope",
       )
   }
@@ -381,42 +381,6 @@ fn SunRasterRenderer::record_unsupported_command(
 ) -> Unit {
   self.unsupported_command_count = self.unsupported_command_count + 1
   self.unsupported_command_diagnostics.push({ command, reason })
-}
-
-///|
-fn sun_scope_name(scope : SunCanvasScopeKind) -> String {
-  match scope {
-    Clip => "clip"
-    RoundedClip => "rounded-clip"
-    Transform => "transform"
-    Opacity => "opacity"
-    Layer => "layer"
-    Filter => "filter"
-  }
-}
-
-///|
-fn sun_scope_push_command(scope : SunCanvasScopeKind) -> String {
-  match scope {
-    Clip => "PushClip"
-    RoundedClip => "PushRoundedClip"
-    Transform => "PushTransform"
-    Opacity => "PushOpacity"
-    Layer => "PushLayer"
-    Filter => "PushFilter"
-  }
-}
-
-///|
-fn sun_scope_pop_command(scope : SunCanvasScopeKind) -> String {
-  match scope {
-    Clip => "PopClip"
-    RoundedClip => "PopRoundedClip"
-    Transform => "PopTransform"
-    Opacity => "PopOpacity"
-    Layer => "PopLayer"
-    Filter => "PopFilter"
-  }
 }
 
 ///|

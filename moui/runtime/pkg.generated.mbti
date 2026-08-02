@@ -26,6 +26,10 @@ pub fn drain_to_runtime_slots(@host.HostWindowCommands, @host.HostWindowRegistry
 
 pub fn[Msg] effect_plan_summary(@core.Effect[Msg]) -> EffectPlanSummary
 
+pub fn finish_first_frame_smoke_auto_exit(platform_name~ : String, title~ : String, flag~ : Bool, finish~ : () -> Unit) -> Bool
+
+pub fn install_platform_view_plugins(Array[@host.PlatformViewPlugin], (UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit
+
 pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> AppRuntime
 
 pub fn[Model, Msg] new_program_with_dimensions(program~ : @core.Program[Model, Msg], width~ : Double, height~ : Double, environment? : @core.Environment) -> AppRuntime
@@ -39,6 +43,10 @@ pub fn runtime_slot_needs_redraw(HostWindowRuntimeSlot) -> Bool
 pub fn semantics_action_label(@core.SemanticsAction) -> String
 
 pub fn[Msg] subscription_plan_summary(@core.Subscription[Msg]) -> SubscriptionPlanSummary
+
+pub fn sync_platform_view_plugins(Array[@host.PlatformViewPlugin], UInt64, @core.DrawFrame, content_offset? : Double) -> Unit
+
+pub fn timer_host_source(start~ : (FuncRef[(() -> Unit) -> Unit], Double, () -> Unit) -> UInt64, cancel~ : (UInt64) -> Unit, clock? : (() -> Double)?) -> HostTimerSource
 
 pub fn to_host_id(@render.RenderWindowId) -> @host.HostWindowId
 

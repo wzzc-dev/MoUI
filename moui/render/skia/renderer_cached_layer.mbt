@@ -76,10 +76,10 @@ fn SkiaCachedLayerFrameStats::to_render_frame_result(
 fn SkiaRasterRenderer::render_cached_command_range(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
-  commands : Array[@core.DrawCommand],
+  commands : Array[@render.PlanOp],
   start_index~ : Int,
   end_index~ : Int,
-  canvas_scopes : Array[SkiaCanvasScopeKind],
+  canvas_scopes : Array[@render.PlanScopeKind],
   stats : SkiaCachedLayerFrameStats,
   damage? : @core.DamageRegion = @core.DamageRegion::full(
     "offscreen layer render",
@@ -88,7 +88,7 @@ fn SkiaRasterRenderer::render_cached_command_range(
   let mut index = start_index
   while index < end_index {
     match commands[index] {
-      @core.DrawCommand::BeginCachedLayer(spec) =>
+      @render.PlanOp::BeginCachedLayer(spec) =>
         match find_cached_layer_end(commands, index + 1, spec.key) {
           Some(layer_end) => {
             if !self.update_cached_layer(
@@ -111,8 +111,8 @@ fn SkiaRasterRenderer::render_cached_command_range(
             return false
           }
         }
-      @core.DrawCommand::EndCachedLayer(_) => return true
-      @core.DrawCommand::DrawCachedLayer(spec) =>
+      @render.PlanOp::EndCachedLayer(_) => return true
+      @render.PlanOp::DrawCachedLayer(spec) =>
         if self.should_skip_command_for_damage(spec.frame, damage) {
           // Outside damage rects: skip draw without counting hit or miss.
           index = index + 1
@@ -160,15 +160,15 @@ fn SkiaRasterRenderer::should_skip_command_for_damage(
 
 ///|
 fn find_cached_layer_end(
-  commands : Array[@core.DrawCommand],
+  commands : Array[@render.PlanOp],
   start_index : Int,
   key : String,
 ) -> Int? {
   let mut depth = 0
   for index in start_index..<commands.length() {
     match commands[index] {
-      @core.DrawCommand::BeginCachedLayer(_) => depth = depth + 1
-      @core.DrawCommand::EndCachedLayer(end_key) =>
+      @render.PlanOp::BeginCachedLayer(_) => depth = depth + 1
+      @render.PlanOp::EndCachedLayer(end_key) =>
         if depth == 0 {
           if end_key == key {
             return Some(index)
@@ -189,7 +189,7 @@ fn SkiaRasterRenderer::update_cached_layer(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   spec : @core.CachedLayerSpec,
-  commands : Array[@core.DrawCommand],
+  commands : Array[@render.PlanOp],
   start_index~ : Int,
   end_index~ : Int,
   stats : SkiaCachedLayerFrameStats,
@@ -235,7 +235,7 @@ fn SkiaRasterRenderer::update_cached_layer(
               Float::from_double(0.0 - spec.frame.origin.y),
             ),
           )
-          let layer_scopes : Array[SkiaCanvasScopeKind] = []
+          let layer_scopes : Array[@render.PlanScopeKind] = []
           let complete = self.render_cached_command_range(
             layer_canvas,
             commands,
@@ -247,8 +247,8 @@ fn SkiaRasterRenderer::update_cached_layer(
           if !layer_scopes.is_empty() {
             for scope in layer_scopes {
               self.record_unsupported_command(
-                skia_scope_push_command(scope),
-                "cached layer command stream ended with an open \{skia_scope_name(scope)} scope",
+                @render.plan_scope_push_command(scope),
+                "cached layer command stream ended with an open \{@render.plan_scope_name(scope)} scope",
               )
             }
           }
@@ -369,7 +369,7 @@ fn SkiaRasterRenderer::render_uncached_layer_to_canvas(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   spec : @core.CachedLayerSpec,
-  commands : Array[@core.DrawCommand],
+  commands : Array[@render.PlanOp],
   start_index~ : Int,
   end_index~ : Int,
   stats : SkiaCachedLayerFrameStats,
@@ -382,7 +382,7 @@ fn SkiaRasterRenderer::render_uncached_layer_to_canvas(
       offscreen=true,
     ),
   )
-  let layer_scopes : Array[SkiaCanvasScopeKind] = []
+  let layer_scopes : Array[@render.PlanScopeKind] = []
   let complete = self.render_cached_command_range(
     canvas,
     commands,
@@ -394,8 +394,8 @@ fn SkiaRasterRenderer::render_uncached_layer_to_canvas(
   if !layer_scopes.is_empty() {
     for scope in layer_scopes {
       self.record_unsupported_command(
-        skia_scope_push_command(scope),
-        "uncached fallback layer command stream ended with an open \{skia_scope_name(scope)} scope",
+        @render.plan_scope_push_command(scope),
+        "uncached fallback layer command stream ended with an open \{@render.plan_scope_name(scope)} scope",
       )
     }
   }

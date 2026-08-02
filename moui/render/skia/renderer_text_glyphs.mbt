@@ -210,67 +210,13 @@ fn skia_default_fallback_draw_font(font : @core.FontSpec) -> @skia_native.Font? 
 ///|
 fn skia_text_contains_emoji_hint(text : String) -> Bool {
   for ch in text {
-    if skia_codepoint_is_emoji_hint(ch.to_int()) {
+    if @render.codepoint_is_emoji_hint(ch.to_int()) {
       return true
     }
   }
   false
 }
 
-///|
-fn skia_codepoint_is_emoji_hint(codepoint : Int) -> Bool {
-  codepoint == 0x200D ||
-  codepoint == 0xFE0F ||
-  (codepoint >= 0x2600 && codepoint <= 0x27BF) ||
-  (codepoint >= 0x1F000 && codepoint <= 0x1FAFF)
-}
-
-///|
-fn skia_codepoint_is_hangul_cluster_codepoint(codepoint : Int) -> Bool {
-  skia_codepoint_is_hangul_l(codepoint) ||
-  skia_codepoint_is_hangul_v(codepoint) ||
-  skia_codepoint_is_hangul_t(codepoint) ||
-  skia_codepoint_is_hangul_lv(codepoint) ||
-  skia_codepoint_is_hangul_lvt(codepoint)
-}
-
-///|
-fn skia_codepoint_is_hangul_l(codepoint : Int) -> Bool {
-  (codepoint >= 0x1100 && codepoint <= 0x115F) ||
-  (codepoint >= 0xA960 && codepoint <= 0xA97C)
-}
-
-///|
-fn skia_codepoint_is_hangul_v(codepoint : Int) -> Bool {
-  (codepoint >= 0x1160 && codepoint <= 0x11A7) ||
-  (codepoint >= 0xD7B0 && codepoint <= 0xD7C6)
-}
-
-///|
-fn skia_codepoint_is_hangul_t(codepoint : Int) -> Bool {
-  (codepoint >= 0x11A8 && codepoint <= 0x11FF) ||
-  (codepoint >= 0xD7CB && codepoint <= 0xD7FB)
-}
-
-///|
-fn skia_codepoint_is_hangul_lv(codepoint : Int) -> Bool {
-  skia_codepoint_is_hangul_syllable(codepoint) && (codepoint - 0xAC00) % 28 == 0
-}
-
-///|
-fn skia_codepoint_is_hangul_lvt(codepoint : Int) -> Bool {
-  skia_codepoint_is_hangul_syllable(codepoint) && (codepoint - 0xAC00) % 28 != 0
-}
-
-///|
-fn skia_codepoint_is_hangul_syllable(codepoint : Int) -> Bool {
-  codepoint >= 0xAC00 && codepoint <= 0xD7A3
-}
-
-///|
-fn skia_codepoint_is_hangul_compatibility_jamo(codepoint : Int) -> Bool {
-  codepoint >= 0x3130 && codepoint <= 0x318F
-}
 
 ///|
 fn skia_codepoint_is_hebrew_script(codepoint : Int) -> Bool {
@@ -444,14 +390,14 @@ fn skia_push_language_tag(tags : Array[String], tag : String) -> Unit {
 fn skia_script_language_tag_for_codepoint(codepoint : Int) -> String? {
   if codepoint <= 0 {
     None
-  } else if skia_codepoint_is_emoji_hint(codepoint) {
+  } else if @render.codepoint_is_emoji_hint(codepoint) {
     Some("und-Zsye")
-  } else if skia_codepoint_is_kana(codepoint) {
+  } else if @render.codepoint_is_kana(codepoint) {
     Some("ja")
-  } else if skia_codepoint_is_cjk_ideograph(codepoint) {
+  } else if @render.codepoint_is_cjk_ideograph(codepoint) {
     Some("zh-Hans")
-  } else if skia_codepoint_is_hangul_cluster_codepoint(codepoint) ||
-    skia_codepoint_is_hangul_compatibility_jamo(codepoint) {
+  } else if @render.codepoint_is_hangul_cluster_codepoint(codepoint) ||
+    @render.codepoint_is_hangul_compatibility_jamo(codepoint) {
     Some("ko")
   } else if skia_codepoint_is_hebrew_script(codepoint) {
     Some("he")
