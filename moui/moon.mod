@@ -13,7 +13,7 @@ import {
   "Milky2018/moon_swash@0.1.10",
   "Milky2018/moon_zeno@0.1.3",
   "Milky2018/wgpu_mbt@0.14.8",
-  "mizchi/image@0.4.2",
+  "mizchi/image@0.4.3",
   "mizchi/pixelmatch@0.6.1",
   "mizchi/svg@0.2.1",
   "moonbitlang/async@0.20.2",
