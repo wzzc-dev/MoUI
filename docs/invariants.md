@@ -28,6 +28,7 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | # | Constraint | Detection | Exemption |
 |---|-----------|-----------|-----------|
 | R1 | Native Skia is the mainline; native WGPU is diagnostic | code review | RFC-required to reclassify |
+| R7 | Sun CPU raster (`moui_sun` + `moui/render/sun`) is an experimental renderer: no product commitment, not on default composition roots, no `auto` selection; new sun capabilities are exceptions requiring an ADR note (ADR 0023) | code review | ADR 0023 |
 | R2 | `SkiaGpuNative` is the product `auto` default on all native Skia platforms when a host GPU surface is available; `SkiaRasterNative` remains the explicit mode and sticky recovery fallback | `validate-renderer-provider-manifests.mjs` | none |
 | R3 | Desktop entrypoints honor `--renderer auto\|skia-gpu\|skia-raster` (or `MOUI_SKIA_RENDERER`). Embedded-runtime entrypoints use `*_window_hosted`, import `wzzc-dev/window/<platform>`, construct `*EmbeddedRuntimeBackend`, and call `EventLoop.run_app`; the platform event loop is the only lifecycle, surface, and input path. | `validate-harness-invariants.mjs` (provider + window-hosted entrypoint + prepare support) | none |
 | R4 | `moon.work` must not list `./window/modules/window` or `./window/modules/windowing` by default; use `sh scripts/window-dev-mode.sh on/off` | `validate-window-dependency.mjs` (daily CI) | explicit Provider Phase E consumer-proof window only: exact `checks/window-dependency-exception.txt`; turn dev mode off and remove it after the proof |
