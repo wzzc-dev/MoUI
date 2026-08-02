@@ -898,13 +898,6 @@ fn WindowsNativeHostBackend::sync_runtime_slot(
 }
 
 ///|
-fn WindowsNativeHostBackend::sync_runtime_slots(
-  self : WindowsNativeHostBackend,
-) -> Unit {
-  self.coordinator.sync_runtime_slots()
-}
-
-///|
 fn WindowsNativeHostBackend::apply_window_lifecycle(
   self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,

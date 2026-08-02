@@ -8,20 +8,6 @@
 .mooncakes/
 _build/
 artifacts/
-# Retired moui/views facade placeholders — merged into the aggregate facades
-# (data.mbt, navigation.mbt, popover.mbt, form.mbt, control.mbt). These files
-# were removed from the index via `git rm --cached`; the leftover working-tree
-# stubs are ignored so they cannot be re-added.
-/moui/views/data_*.mbt
-/moui/views/navigation_*.mbt
-/moui/views/popover_*.mbt
-/moui/views/form_*.mbt
-/moui/views/control_style*.mbt
-/moui/views/control_theme*.mbt
-/moui/views/control_choice.mbt
-/moui/views/control_progress.mbt
-/moui/views/control_slider.mbt
-/moui/views/datepicker.mbt
 .skia-cache/
 dist/
 .local_repos/
@@ -49,3 +35,4 @@ examples/showcase/harmonyos_app/entry/.cxx/*
 build/wechat/*
 .agnes/*
 .freebuff/*
+deliverables/*
