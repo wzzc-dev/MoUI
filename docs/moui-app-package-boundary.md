@@ -104,14 +104,15 @@ must not be reversed by moving them back into `core`.
   tokens. The picker’s low-level option representation is private implementation
   detail of the `views` package; ordinary apps use `@views.PickerItem` /
   `@views.picker`.
-- **The component theme schema remains in core (S1)**: `ComponentThemes` /
-  `ButtonTheme` / `ControlStateTokens` / `ControlStateStyle` and related types
-  are attached to `@core.Theme.components` for resolver and `moui_theme`
-  projection use. Because `core` cannot depend on `views`, their **definitions**
-  remain in `core` until the RFC that splits `Theme` by removing its `components`
-  field. App-side control appearance should still preferentially use
-  `@views.*Style` and `light_theme`/`theme`. See
-  `docs/plans/active/core-component-theme-to-views.md`.
+- **Control theming lives in `views` (ADR 0017)**: `Theme` carries only
+  neutral palette/spacing/typography — no `components` field. Control tokens
+  (`ControlThemeSet`, `ButtonTheme`, `ControlStateTokens`, `ControlStateStyle`)
+  live in `moui/views/style/` (`control_theme_tokens.mbt`,
+  `control_theme_set.mbt`, `control_style.mbt`). App-side control appearance
+  should read `@views.ControlThemeSet` via
+  `@style.views_ambient_control_theme(theme)` and use `@views.*Style` /
+  `light_theme`/`theme`. See `docs/plans/done/core-component-theme-to-views.md`
+  (superseded by ADR 0017).
 - **WebView ownership has moved out**: `WebViewSpec`, `WebViewCommand`,
   `WebViewEvent`, and `WebViewNavigationPolicy` are owned by
   `moui/backend/host`. `core` retains only renderer-neutral

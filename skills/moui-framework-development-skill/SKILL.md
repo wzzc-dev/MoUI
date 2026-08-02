@@ -87,6 +87,33 @@ Read only what the task needs:
 Do not add a new public package until the existing owning packages cannot
 naturally own the capability.
 
+## Architecture Convergence Pointers (ADR 0017–0020, 0023)
+
+When touching a convergence surface, run its matching gate in addition to the
+focused checks below:
+
+- **Host split (ADR 0018)**: `HostRuntimeDriver`, `RedrawScheduler`, and
+  `HostWallClock` live in `moui/runtime`; render completion / GPU recovery
+  live in `moui/render`. `moui/backend/host` stays contracts-only in default
+  imports. Gate: `node scripts/validate-host-import-baseline.mjs`.
+- **Renderer provider (ADR 0019)**: renderer implementations and
+  provider-ID capability reporting go in `moui/render/*` as
+  `RendererProvider` / `RendererProviderBinding`; composition roots assemble
+  ordered bindings; `RendererBackendKind` is diagnostic metadata only. Gate:
+  `node scripts/validate-renderer-provider-open-extension.mjs`.
+- **Platform bridge (ADR 0020)**: neutral close/focus/resize/scale/redraw/
+  surface lifecycle and logical-coordinate normalization go through
+  `moui/backend/platform_bridge`; native pointer/keyboard/IME/drag decode
+  stays platform-local. Gate:
+  `node scripts/validate-platform-adapter-duplication.mjs`.
+- **Theme layering (ADR 0017)**: `moui/core` carries no control vocabulary;
+  control theme tokens live in `moui/views` as `ControlThemeSet`. Gate:
+  `node scripts/validate-core-theme-no-control-surface.mjs`.
+- **Sun CPU raster (ADR 0023)**: `moui_sun` + `moui/render/sun` is an
+  experimental renderer — no product commitment, not on default composition
+  roots, capability freeze by default. New sun capabilities are exceptions
+  requiring an ADR note.
+
 ## Public API Workflow
 
 1. Locate the owning package and inspect `moon.pkg`.
@@ -241,11 +268,13 @@ owning-package boundaries clear.
   remain outside `render/skia`.
 - `render/wgpu/`: experimental native wgpu renderer, including source decode
   completion helpers used by provider-owned native image loader hooks.
-- `render/sun/`: native Sun CPU raster renderer over the repo-local `moui_sun`
-  workspace. It renders rects, rounded rects, paths, gradients, text (via
-  moui_sun/text FontFace), images (PNG/BMP data URIs), shadows, layers,
-  filters, and shader effects. TextShaping, EmojiText, and AsyncImage remain
-  tracked as gaps.
+- `render/sun/`: **experimental** Sun CPU raster renderer over the
+  repo-local `moui_sun` workspace (ADR 0023: experimental, capability freeze
+  by default, not on default composition roots). It renders rects, rounded
+  rects, paths, gradients, text (via moui_sun/text FontFace), images
+  (PNG/BMP data URIs), shadows, layers, filters, and shader effects.
+  TextShaping, EmojiText, and AsyncImage remain tracked as gaps; new
+  capabilities are exceptions requiring an ADR note.
 - `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
 - `render/wgpu/coretext/`: macOS CoreText provider.
 - `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
@@ -504,6 +533,10 @@ Focused checks:
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-api-surface.mjs
+node scripts/validate-core-theme-no-control-surface.mjs
+node scripts/validate-host-import-baseline.mjs
+node scripts/validate-renderer-provider-open-extension.mjs
+node scripts/validate-platform-adapter-duplication.mjs
 node scripts/smoke-check.mjs --check
 moon check
 moon test moui/core --target native
