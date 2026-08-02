@@ -127,7 +127,7 @@ owners. Classification:
 | `web-bundle-tools.mjs` | Size measurement uses zlib; path helpers tied to build outputs | **Intentional hybrid shell** (moon build + gzip/brotli + FS) |
 | `record-*-smoke.mjs` / CDP runners | Assertions already call MoonBit validators where formal | **Intentional hybrid shell** (browser/device/process) |
 | `external-consumer-ci.mjs`, `lint-scripts.mjs`, `check.mjs` | Orchestration only | **Intentional hybrid shell** |
-| `test-*.mjs` | Integration tests of shells | **Keep as Node tests** |
+| `test-*.mjs` | Integration tests of shells | **2026-08 修订**:validator 自测已删除(见 `docs/plans/active/validation-hygiene-cleanup.md`);仅保留产品行为/构建测试(浏览器运行时、DOM 语义、WebGPU、Canvas2D fallback、prebuild、打包产物) |
 
 ### Intentional non-goals (host/orchestration)
 

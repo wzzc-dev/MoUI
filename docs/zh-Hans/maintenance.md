@@ -30,7 +30,7 @@ MoUI 保持窄而明确的默认维护基线，让框架可以持续增长，而
 
 该 guard 跟踪三类预算：
 
-- 当前热点的超大文件 ratchet，例如 `moui/core/view.mbt`、`moui/runtime/runtime_view_smoke_wbtest.mbt`、`moui/views/views_test.mbt`、`moui/backend/host/host_test.mbt`、Skia 渲染器文本/测试，以及大型示例应用文件；
+- 当前热点的超大文件 ratchet，例如 `moui/core/unicode/grapheme_data.mbt`、`moui/runtime/view_tree.mbt`、`moui/views/form/form_validation_test.mbt`、`moui/backend/host/host_test.mbt`、Skia 渲染器文本/测试，以及大型示例应用文件；
 - core、views、host、render、主线示例、Mo Workbench、PDF Workbench 和 Website 的直接包源码 `pub(all)` 数量；
 - `moui/moui.mbt` 中根 facade 的 `pub type` 转发数量。
 

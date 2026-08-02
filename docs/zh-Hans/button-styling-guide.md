@@ -25,7 +25,7 @@ Button 的 paint-time 外观经过四层。编辑之前，始终先沿这些层�
    - Disabled = normal 的 foreground/background/border alpha 乘以 `disabled_alpha`，并移除 shadow。
    - 因此 Primary button 的 hover/press shade **不是**手写的，而是近黑色 primary 加上一层半透明 primary wash；这就是默认 Primary button 的 hover/press 几乎不可见的原因。
 
-4. **控件绘制** - `button_control`（`moui/views/button/button.mbt`），由 `button`（同文件；经 `moui/views/button.mbt` 重导出为 `@views.button`）调用。
+4. **控件绘制** - `button_control`（`moui/views/button/button.mbt`），由 `button`（同文件；经 `moui/views/button/button.mbt` 重导出为 `@views.button`）调用。
    - `resolved_style = style? | variant.style(control_set)` - 显式 `style=` 参数是一次性覆盖；否则 variant 从 `control_set.button` 解析（第 2/3 层）。
    - `variant.style(control_set)`（`moui/views/style/style_api.mbt`）将 `ButtonVariant` → `ButtonVariantToken` → `ButtonTheme::resolve`；签名接受 `ControlThemeSet`，不是 `Theme`。
    - `ControlThemeSet` 在 paint time 通过 `@style.views_ambient_control_theme(theme)` 以 ambient 方式解析，因此 dark-mode/a11y/reduced-motion 变化无需 caller 重建 view tree 即可生效。
@@ -142,10 +142,10 @@ Minimal light palette：`foreground=0.145`、`surface=0.984`、`surface_variant=
 
 被问到“showcase button”时，最可能是以下之一：
 
-- `examples/showcase/app/navigation.mbt` - `sidebar_item`（selected = `Primary`，unselected = `Ghost`）和 `header` action button（Overview/Examples 在 `Primary` 和 `Ghost` 之间切换）。
-- `examples/showcase/app/controls_section.mbt` - controls gallery 的 Primary button。
-- `examples/showcase/app/components.mbt` - capability/animation card。
-- `examples/showcase/app/interaction_lab_section.mbt` - interaction lab variant demo。
+- `examples/showcase/app/diagnostics/navigation.mbt` - `sidebar_item`（selected = `Primary`，unselected = `Ghost`）和 `header` action button（Overview/Examples 在 `Primary` 和 `Ghost` 之间切换）。
+- `examples/showcase/app/components/component_controls.mbt` - controls gallery 的 Primary button。
+- `examples/showcase/app/diagnostics/components.mbt` - capability/animation card。
+- `examples/showcase/app/diagnostics/interaction_lab_section.mbt` - interaction lab variant demo。
 
 Theme 在 `ShowcaseModel::view`（`examples/showcase/app/app.mbt`）中通过 `@views.light_theme()` / `@views.dark_theme()` 构建一次，并通过 `theme` 参数传入每个 section。在那里应用策略 B 会一致影响所有这些 button。
 

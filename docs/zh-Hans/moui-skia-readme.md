@@ -240,7 +240,7 @@ GitHub Actions 回退 workflow 在 Windows 和 Linux 上镜像此门控。
 可选 shaped-text 边界默认关闭，以便小型 Skia 构建仍可使用。在 macOS 上，当 Skia
 library directory 还包含 `libskshaper`、`libskunicode_core`、
 `libskunicode_icu`、`libharfbuzz` 和 `libicu` 时，将 `--enable-skshaper`
-传给 `scripts/macos-skia-smoke.sh`。该 wrapper 会添加
+传给 `moui_skia/scripts/macos-skia-smoke.sh`。该 wrapper 会添加
 `-DMOUI_SKIA_HAS_SKSHAPER`，链接这些 module libraries，并验证原生 smoke log
 包含 shaped-run marker。
 
@@ -252,7 +252,7 @@ include/lib/flag 值。默认 link mode 是 static；在支持 dynamic 的路由
 `MOUI_SKIA_LINK_MODE=dynamic` 或 `--link-mode dynamic` 显式选择：
 
 ```bash
-bash scripts/fetch-release-skia.sh --platform auto --arch auto --print-env
+bash moui_skia/scripts/fetch-release-skia.sh --platform auto --arch auto --print-env
 ```
 
 HarmonyOS 使用 platform-specific 的 `harmonyos_release` provider entry，因为第一批
@@ -262,7 +262,7 @@ provider release。HarmonyOS `auto` / `skia-gpu` 必须使用完整的 static as
 dynamic 只对显式 `skia-raster` 有效。用以下命令选择支持 GPU 的 asset：
 
 ```bash
-bash scripts/fetch-release-skia.sh --platform harmonyos --arch arm64 --link-mode static --print-env
+bash moui_skia/scripts/fetch-release-skia.sh --platform harmonyos --arch arm64 --link-mode static --print-env
 ```
 
 ```powershell
@@ -300,7 +300,7 @@ workflow 将同一 helper 暴露为 manual job，供已经有此类 Skia 构建�
 传入其 include 和 library paths：
 
 ```bash
-bash scripts/linux-accept-real-skia-smoke.sh --log-dir logs \
+bash moui_skia/scripts/linux-accept-real-skia-smoke.sh --log-dir logs \
   --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
@@ -319,7 +319,7 @@ stdout/stderr 与 wrapper log 分开保存。
 在 macOS 上配合已有 Skia 构建，使用验收 wrapper：
 
 ```bash
-bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
+bash moui_skia/scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
   --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
@@ -347,7 +347,7 @@ desktop host platform。HarmonyOS GPU cross-build 必须解析为 static；dynam
 要为 macOS 冒烟测试从源码构建一个小型 CPU-only Skia，运行：
 
 ```bash
-bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
+bash moui_skia/scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
   --skia-provider source \
   --work-dir .skia-cache/macos
 ```
@@ -359,12 +359,12 @@ Actions job。
 运行：
 
 ```bash
-bash scripts/install-linux-smoke-deps.sh
-bash scripts/linux-accept-real-skia-smoke.sh --work-dir .skia-cache/linux
+bash moui_skia/scripts/install-linux-smoke-deps.sh
+bash moui_skia/scripts/linux-accept-real-skia-smoke.sh --work-dir .skia-cache/linux
 ```
 
 在已经准备好的 Ubuntu runner 上，
-`bash scripts/install-linux-smoke-deps.sh --check` 会验证 workflow 在投入原生冒烟工作前安装的同一组
+`bash moui_skia/scripts/install-linux-smoke-deps.sh --check` 会验证 workflow 在投入原生冒烟工作前安装的同一组
 apt packages。这包括 `libwayland-dev`、`libwayland-bin` 和 `wayland-protocols`，
 它们是 `wzzc-dev/window` 在准备原生 smoke dependency graph 并生成 xdg-shell client
 header 时需要的。Linux source-build 默认安装 `clang` 以及 fontconfig/FreeType/HarfBuzz
@@ -383,7 +383,7 @@ helpers 写入该值。不要把 release-provider commits 写入
 并验证该 pin：
 
 ```bash
-bash scripts/linux-accept-and-pin-skia.sh --work-dir .skia-cache/linux
+bash moui_skia/scripts/linux-accept-and-pin-skia.sh --work-dir .skia-cache/linux
 ```
 
 它会拒绝 dry runs 和 existing-build Skia paths，因此只有真实 source-built
@@ -392,7 +392,7 @@ Linux 验收才能建立初始仓库 pin。它会在开始昂贵构建前检查 
 `--skip-deps-check`。
 
 如果没有 `--skia-include` / `--skia-lib-dir`，验收 wrapper 会通过
-`scripts/linux-real-skia-smoke.sh` checkout 并构建 Skia，捕获 wrapper 和原生
+`moui_skia/scripts/linux-real-skia-smoke.sh` checkout 并构建 Skia，捕获 wrapper 和原生
 executable logs，验证 `native/moon.pkg` 已恢复，并检查 executable 打印
 `moui_skia native smoke test passed`，证明真实 smoke 到达最终断言。
 `Linux Real Skia Smoke` workflow 对真实运行使用同一验收 wrapper；其可选输入既可以从
@@ -405,7 +405,7 @@ acceptance summary log，作为 `linux-real-skia-smoke-log` artifact。真实运
 它还会 grep `logs/linux-native-smoke-output.log` 查找
 `moui_skia native smoke test passed`，并在 workflow summary 中记录 marker check。
 同一 artifact check 可用
-`scripts/verify-native-smoke-log.sh logs/linux-native-smoke-output.log` 手动重新运行。
+`moui_skia/scripts/verify-native-smoke-log.sh logs/linux-native-smoke-output.log` 手动重新运行。
 summary 会记录所选模式、dry-run 设置、artifact 名称、关键 Skia 输入、
 预期 log paths、marker check，以及
 临时 package rewrites 在运行后是否已恢复。

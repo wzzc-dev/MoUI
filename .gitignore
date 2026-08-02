@@ -37,3 +37,4 @@ build/wechat/*
 .freebuff/*
 deliverables/*
 .reasonix/
+reasonix.toml

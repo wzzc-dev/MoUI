@@ -70,6 +70,8 @@ Pre-push static trio (every commit that touches guidance, API, or package layout
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-api-surface.mjs
 node scripts/validate-guidance-consistency.mjs
+node scripts/validate-renderer-capability-consistency.mjs
+node scripts/validate-doc-references.mjs
 ```
 
 Profiles (catalog: `checks/profiles.json`; policy: `docs/testing.md`):
@@ -93,7 +95,7 @@ sh scripts/ci-web-runtime-presentation.sh
 scripts/run-window-package-smoke.sh <macos|web|windows|linux> --run
 ```
 
-Smoke catalog: `node scripts/smoke-gate.mjs --tier nightly --dry-run --json`.
+Smoke catalog: `node scripts/smoke-check.mjs --check`.
 
 ## Script Tooling Policy
 
