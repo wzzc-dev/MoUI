@@ -14,16 +14,6 @@ pub fn SunRendererError::message(self : SunRendererError) -> String {
 }
 
 ///|
-priv enum SunCanvasScopeKind {
-  Clip
-  RoundedClip
-  Transform
-  Opacity
-  Layer
-  Filter
-} derive(Eq)
-
-///|
 pub struct SunRasterRenderer {
   mut metrics : @render.RendererSurfaceMetrics
   target : SunPresentTarget
@@ -152,16 +142,17 @@ pub fn SunRasterRenderer::render(
   self.canvas.scale(sx=self.metrics.scale_factor, sy=self.metrics.scale_factor)
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
-  let canvas_scopes : Array[SunCanvasScopeKind] = []
+  let plan = @render.lower_draw_commands(commands)
+  let canvas_scopes : Array[@render.PlanScopeKind] = []
   let opacity_stack : Array[Double] = []
   let blend_mode_stack : Array[@sun_graphics.BlendMode] = []
   let layer_spec_stack : Array[SunLayerScope] = []
   let rounded_clip_transform_stack : Array[@sun_graphics.Transform] = []
   ignore(
     self.render_cached_command_range(
-      commands,
+      plan.ops,
       0,
-      commands.length(),
+      plan.ops.length(),
       canvas_scopes,
       opacity_stack,
       blend_mode_stack,
@@ -173,8 +164,8 @@ pub fn SunRasterRenderer::render(
   if !canvas_scopes.is_empty() {
     for scope in canvas_scopes {
       self.record_unsupported_command(
-        sun_scope_push_command(scope),
-        "command stream ended with an open \{sun_scope_name(scope)} scope",
+        @render.plan_scope_push_command(scope),
+        "command stream ended with an open \{@render.plan_scope_name(scope)} scope",
       )
     }
     while !self.canvas_stack.is_empty() {

@@ -28,16 +28,7 @@ pub fn wgpu_provider_capabilities(
   backend~ : @render.RendererBackendKind,
 ) -> Array[@render.RendererBackendFeatureCapability] {
   @render.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
-    let status = match feature {
-      @render.RendererFeature::Gradient
-      | @render.RendererFeature::Transform
-      | @render.RendererFeature::FilterEffect
-      | @render.RendererFeature::ShaderEffect
-      | @render.RendererFeature::TextShaping
-      | @render.RendererFeature::EmojiText =>
-        @render.RendererFeatureStatus::Partial
-      _ => @render.RendererFeatureStatus::Supported
-    }
+    let status = @render.RendererFeatureStatus::Supported
     (status, "Native WGPU provider declares \{feature.label()} support.")
   })
 }
@@ -48,29 +39,12 @@ pub fn wgpu_provider_capabilities(
 fn wgpu_negotiate_surface(
   surface : @render.SurfaceDescriptor,
 ) -> @render.SurfaceNegotiationResult {
-  match surface {
-    @render.SurfaceDescriptor::GpuSurface(_handle, width, height, scale) =>
-      if width >= 1.0 && height >= 1.0 && scale > 0.0 {
-        @render.SurfaceNegotiationResult::SurfaceAccepted(
-          @render.BoundSurface::new(
-            kind=@render.RendererPresentationModel::HostGpuSurface,
-            route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
-            metrics=@render.RendererSurfaceMetrics::from_logical(
-              size=@core.Size::new(width~, height~),
-              scale_factor=scale,
-            ),
-          ),
-        )
-      } else {
-        @render.SurfaceNegotiationResult::SurfaceRejected(
-          "invalid WGPU surface dimensions: \\{width}x\\{height} @ \\{scale}x",
-        )
-      }
-    @render.SurfaceDescriptor::CpuRaster(_, _, _) =>
-      @render.SurfaceNegotiationResult::SurfaceRejected(
-        "wgpu provider does not accept CPU raster surfaces",
-      )
-  }
+  @render.negotiate_gpu_surface(
+    surface,
+    label="WGPU",
+    id="wgpu",
+    route_for=_handle => @render.SkiaSurfaceRoute::RasterSurfaceRoute,
+  )
 }
 
 ///|
@@ -79,27 +53,12 @@ fn wgpu_create_instance(
   create_wgpu~ : (@render.RendererSurfaceMetrics) -> WgpuRenderer,
 ) -> @render.RendererInstance {
   let renderer = create_wgpu(metrics)
-  let disposed = Ref(false)
-  @render.RendererInstance::{
-    render_frame: frame => {
-      if disposed.val {
-        return @render.RenderFrameResult::new(presented=false)
-      }
+  @render.new_provider_instance(
+    render_frame=frame => {
       renderer.render(frame.commands)
       @render.RenderFrameResult::new(presented=true)
     },
-    recover: reason => {
-      let _ = reason
-      if disposed.val {
-        return @render.RecoveryResult::RecoveryFailed("renderer is disposed")
-      }
-      @render.RecoveryResult::FallbackToCpu
-    },
-    dispose: () => {
-      if !disposed.val {
-        disposed.val = true
-        renderer.dispose()
-      }
-    },
-  }
+    recover=_reason => @render.RecoveryResult::FallbackToCpu,
+    dispose=() => renderer.dispose(),
+  )
 }

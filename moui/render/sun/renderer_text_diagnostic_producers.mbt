@@ -88,7 +88,7 @@ pub fn SunRasterRenderer::emoji_font_fallback_diagnostic(
   let glyph_format = "coverage-mask"
   let font_source = "sun-registered-font-chain"
   let shaper = "font-fallback-plan"
-  let fallback_character = sun_representative_fallback_codepoint(text)
+  let fallback_character = @render.representative_fallback_codepoint(text, skip_joiners=true)
   let resolved_fallback_face_index = @sun_text.select_font_face_index_for_char(
     faces, fallback_character,
   )
@@ -326,36 +326,11 @@ fn sun_font_family_label(family : @core.FontFamily) -> String {
 ///|
 fn sun_text_contains_emoji_hint(text : String) -> Bool {
   for ch in text {
-    if sun_codepoint_is_emoji_hint(ch.to_int()) {
+    if @render.codepoint_is_emoji_hint(ch.to_int()) {
       return true
     }
   }
   false
-}
-
-///|
-fn sun_representative_fallback_codepoint(text : String) -> Int {
-  let mut first = 0
-  let mut first_non_ascii = 0
-  for ch in text {
-    let codepoint = ch.to_int()
-    if first == 0 {
-      first = codepoint
-    }
-    if first_non_ascii == 0 && codepoint >= 0x80 {
-      first_non_ascii = codepoint
-    }
-    if sun_codepoint_is_emoji_hint(codepoint) &&
-      codepoint != 0x200D &&
-      codepoint != 0xFE0F {
-      return codepoint
-    }
-  }
-  if first_non_ascii > 0 {
-    first_non_ascii
-  } else {
-    first
-  }
 }
 
 ///|
@@ -403,7 +378,7 @@ fn sun_positive_pixel_extent(value : Double) -> Int {
 ///|
 fn sun_font_fallback_language_tags(text : String) -> Array[String] {
   let tags : Array[String] = []
-  let representative = sun_representative_fallback_codepoint(text)
+  let representative = @render.representative_fallback_codepoint(text, skip_joiners=true)
   match sun_script_language_tag_for_codepoint(representative) {
     Some(tag) => sun_push_language_tag(tags, tag)
     None => ()
@@ -427,14 +402,14 @@ fn sun_fallback_script_tag(tags : Array[String]) -> String {
 fn sun_script_language_tag_for_codepoint(codepoint : Int) -> String? {
   if codepoint <= 0 {
     None
-  } else if sun_codepoint_is_emoji_hint(codepoint) {
+  } else if @render.codepoint_is_emoji_hint(codepoint) {
     Some("und-Zsye")
-  } else if sun_codepoint_is_kana(codepoint) {
+  } else if @render.codepoint_is_kana(codepoint) {
     Some("ja")
-  } else if sun_codepoint_is_cjk_ideograph(codepoint) {
+  } else if @render.codepoint_is_cjk_ideograph(codepoint) {
     Some("zh-Hans")
-  } else if sun_codepoint_is_hangul_cluster_codepoint(codepoint) ||
-    sun_codepoint_is_hangul_compatibility_jamo(codepoint) {
+  } else if @render.codepoint_is_hangul_cluster_codepoint(codepoint) ||
+    @render.codepoint_is_hangul_compatibility_jamo(codepoint) {
     Some("ko")
   } else if sun_codepoint_is_hebrew_script(codepoint) {
     Some("he")
@@ -466,76 +441,6 @@ fn sun_push_language_tag(tags : Array[String], tag : String) -> Unit {
   }
 }
 
-///|
-fn sun_codepoint_is_emoji_hint(codepoint : Int) -> Bool {
-  (codepoint >= 0x1F000 && codepoint <= 0x1FAFF) ||
-  (codepoint >= 0x2600 && codepoint <= 0x27BF) ||
-  codepoint == 0xFE0F ||
-  codepoint == 0x200D ||
-  (codepoint >= 0x1F1E6 && codepoint <= 0x1F1FF)
-}
-
-///|
-fn sun_codepoint_is_cjk_ideograph(codepoint : Int) -> Bool {
-  (codepoint >= 0x3400 && codepoint <= 0x4DBF) ||
-  (codepoint >= 0x4E00 && codepoint <= 0x9FFF) ||
-  (codepoint >= 0xF900 && codepoint <= 0xFAFF) ||
-  (codepoint >= 0x20000 && codepoint <= 0x2FA1F)
-}
-
-///|
-fn sun_codepoint_is_kana(codepoint : Int) -> Bool {
-  codepoint >= 0x3040 && codepoint <= 0x30FF
-}
-
-///|
-fn sun_codepoint_is_hangul_cluster_codepoint(codepoint : Int) -> Bool {
-  sun_codepoint_is_hangul_l(codepoint) ||
-  sun_codepoint_is_hangul_v(codepoint) ||
-  sun_codepoint_is_hangul_t(codepoint) ||
-  sun_codepoint_is_hangul_lv(codepoint) ||
-  sun_codepoint_is_hangul_lvt(codepoint)
-}
-
-///|
-fn sun_codepoint_is_hangul_l(codepoint : Int) -> Bool {
-  (codepoint >= 0x1100 && codepoint <= 0x115F) ||
-  (codepoint >= 0xA960 && codepoint <= 0xA97C)
-}
-
-///|
-fn sun_codepoint_is_hangul_v(codepoint : Int) -> Bool {
-  (codepoint >= 0x1160 && codepoint <= 0x11A7) ||
-  (codepoint >= 0xD7B0 && codepoint <= 0xD7C6)
-}
-
-///|
-fn sun_codepoint_is_hangul_t(codepoint : Int) -> Bool {
-  (codepoint >= 0x11A8 && codepoint <= 0x11FF) ||
-  (codepoint >= 0xD7CB && codepoint <= 0xD7FB)
-}
-
-///|
-fn sun_codepoint_is_hangul_lv(codepoint : Int) -> Bool {
-  sun_codepoint_is_hangul_syllable(codepoint) && (codepoint - 0xAC00) % 28 == 0
-}
-
-///|
-fn sun_codepoint_is_hangul_lvt(codepoint : Int) -> Bool {
-  sun_codepoint_is_hangul_syllable(codepoint) && (codepoint - 0xAC00) % 28 != 0
-}
-
-///|
-fn sun_codepoint_is_hangul_syllable(codepoint : Int) -> Bool {
-  codepoint >= 0xAC00 && codepoint <= 0xD7A3
-}
-
-///|
-fn sun_codepoint_is_hangul_compatibility_jamo(codepoint : Int) -> Bool {
-  codepoint >= 0x3130 && codepoint <= 0x318F
-}
-
-///|
 fn sun_codepoint_is_hebrew_script(codepoint : Int) -> Bool {
   codepoint >= 0x0590 && codepoint <= 0x05FF
 }

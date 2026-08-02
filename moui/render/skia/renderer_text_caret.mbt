@@ -173,7 +173,7 @@ fn skia_shaped_caret_positions_are_usable(
   if carets.length() != chars.length() + 1 {
     return false
   }
-  let clusters = skia_grapheme_cluster_texts(text)
+  let clusters = @render.text_grapheme_clusters(text)
   if clusters.length() != chars.length() || chars.length() <= 2 {
     return true
   }

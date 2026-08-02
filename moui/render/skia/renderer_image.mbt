@@ -295,144 +295,32 @@ fn skia_image_placement(
   image_size : @core.Size,
   fit : @core.ImageFit,
 ) -> SkiaImagePlacement {
-  if image_size.width <= 0.0 ||
-    image_size.height <= 0.0 ||
-    frame.size.width <= 0.0 ||
-    frame.size.height <= 0.0 {
-    return { frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0 }
-  }
-  let image_ratio = image_size.width / image_size.height
-  let frame_ratio = frame.size.width / frame.size.height
-  match fit {
-    @core.ImageFit::Stretch => { frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0 }
-    @core.ImageFit::ScaleDown =>
-      if image_size.width <= frame.size.width &&
-        image_size.height <= frame.size.height {
-        {
-          frame: @core.Rect::new(
-            x=frame.origin.x + (frame.size.width - image_size.width) / 2.0,
-            y=frame.origin.y + (frame.size.height - image_size.height) / 2.0,
-            width=image_size.width,
-            height=image_size.height,
-          ),
-          u0: 0.0,
-          v0: 0.0,
-          u1: 1.0,
-          v1: 1.0,
-        }
-      } else {
-        skia_contain_image_placement(frame, image_ratio, frame_ratio)
+  let placement = @render.image_placement(frame, image_size, fit)
+  match placement.crop_axis {
+    @render.ImageCropAxis::None =>
+      { frame: placement.frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0 }
+    @render.ImageCropAxis::Horizontal => {
+      let inset = (1.0 - placement.visible) / 2.0
+      {
+        frame: placement.frame,
+        u0: inset,
+        v0: 0.0,
+        u1: 1.0 - inset,
+        v1: 1.0,
       }
-    @core.ImageFit::FitWidth =>
-      skia_fit_width_image_placement(frame, image_ratio)
-    @core.ImageFit::FitHeight =>
-      skia_fit_height_image_placement(frame, image_ratio)
-    @core.ImageFit::Contain =>
-      skia_contain_image_placement(frame, image_ratio, frame_ratio)
-    @core.ImageFit::Cover =>
-      if image_ratio > frame_ratio {
-        let visible = frame_ratio / image_ratio
-        let inset = (1.0 - visible) / 2.0
-        { frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0 }
-      } else {
-        let visible = image_ratio / frame_ratio
-        let inset = (1.0 - visible) / 2.0
-        { frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset }
+    }
+    @render.ImageCropAxis::Vertical => {
+      let inset = (1.0 - placement.visible) / 2.0
+      {
+        frame: placement.frame,
+        u0: 0.0,
+        v0: inset,
+        u1: 1.0,
+        v1: 1.0 - inset,
       }
-  }
-}
-
-///|
-fn skia_fit_width_image_placement(
-  frame : @core.Rect,
-  image_ratio : Double,
-) -> SkiaImagePlacement {
-  let scaled_height = frame.size.width / image_ratio
-  if scaled_height <= frame.size.height {
-    {
-      frame: @core.Rect::new(
-        x=frame.origin.x,
-        y=frame.origin.y + (frame.size.height - scaled_height) / 2.0,
-        width=frame.size.width,
-        height=scaled_height,
-      ),
-      u0: 0.0,
-      v0: 0.0,
-      u1: 1.0,
-      v1: 1.0,
-    }
-  } else {
-    let visible = frame.size.height / scaled_height
-    let inset = (1.0 - visible) / 2.0
-    { frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset }
-  }
-}
-
-///|
-fn skia_fit_height_image_placement(
-  frame : @core.Rect,
-  image_ratio : Double,
-) -> SkiaImagePlacement {
-  let scaled_width = frame.size.height * image_ratio
-  if scaled_width <= frame.size.width {
-    {
-      frame: @core.Rect::new(
-        x=frame.origin.x + (frame.size.width - scaled_width) / 2.0,
-        y=frame.origin.y,
-        width=scaled_width,
-        height=frame.size.height,
-      ),
-      u0: 0.0,
-      v0: 0.0,
-      u1: 1.0,
-      v1: 1.0,
-    }
-  } else {
-    let visible = frame.size.width / scaled_width
-    let inset = (1.0 - visible) / 2.0
-    { frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0 }
-  }
-}
-
-///|
-fn skia_contain_image_placement(
-  frame : @core.Rect,
-  image_ratio : Double,
-  frame_ratio : Double,
-) -> SkiaImagePlacement {
-  if image_ratio > frame_ratio {
-    let scaled_height = frame.size.width / image_ratio
-    let offset_y = (frame.size.height - scaled_height) / 2.0
-    {
-      frame: @core.Rect::new(
-        x=frame.origin.x,
-        y=frame.origin.y + offset_y,
-        width=frame.size.width,
-        height=scaled_height,
-      ),
-      u0: 0.0,
-      v0: 0.0,
-      u1: 1.0,
-      v1: 1.0,
-    }
-  } else {
-    let scaled_width = frame.size.height * image_ratio
-    let offset_x = (frame.size.width - scaled_width) / 2.0
-    {
-      frame: @core.Rect::new(
-        x=frame.origin.x + offset_x,
-        y=frame.origin.y,
-        width=scaled_width,
-        height=frame.size.height,
-      ),
-      u0: 0.0,
-      v0: 0.0,
-      u1: 1.0,
-      v1: 1.0,
     }
   }
 }
-
 ///|
 pub fn SkiaRasterRenderer::image_resources(
   self : SkiaRasterRenderer,
