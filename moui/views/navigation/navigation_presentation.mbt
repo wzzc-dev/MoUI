@@ -48,9 +48,9 @@ pub fn[Msg] wizard(
     )
   }
   @container.container(
-    column(
+    @layout.column(
       [
-        row(
+        @layout.row(
           step_buttons,
           spacing=resolved_theme.spacing_scale.xs,
           align=@style.CrossAlign::Center,
@@ -87,7 +87,7 @@ pub fn[Msg] dialog_host(
         } else {
           presented_dialog
         }
-        stack([child, scrim, presented_dialog])
+        @layout.stack([child, scrim, presented_dialog])
       }
       None => child
     }

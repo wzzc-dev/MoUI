@@ -17,7 +17,7 @@ window/<platform>/template / native Activity|UIApp|Ability
         → EventLoop.pump / run_app
         → *EmbeddedRuntimeBackend (moui/backend/{android,ios,harmonyos})
         → platform_bridge (neutral lifecycle/surface conversion)
-        → AndroidRuntimeSession / IosRuntimeSession / HarmonyOsRuntimeSession
+        → AndroidRuntimeSession / IosRuntimeSession / HarmonyOSRuntimeSession
         → Skia HostWindowRenderer
 ```
 
@@ -36,7 +36,7 @@ platform callback path.
 |-------|------|
 | Android embedded runtime backend | `moui/backend/android/window_hosted.mbt` (`AndroidEmbeddedRuntimeBackend`) |
 | iOS embedded runtime backend | `moui/backend/ios/window_hosted.mbt` (`IosEmbeddedRuntimeBackend`) |
-| HarmonyOS embedded runtime backend | `moui/backend/harmonyos/window_hosted.mbt` (`HarmonyOsEmbeddedRuntimeBackend`) |
+| HarmonyOS embedded runtime backend | `moui/backend/harmonyos/window_hosted.mbt` (`HarmonyOSEmbeddedRuntimeBackend`) |
 | Counter entries | `examples/counter/{android,ios,harmonyos}_window_hosted` |
 | window contract | `window/docs/mobile-hosted-backend.md` |
 | mobile status | `checks/platforms/{android,ios,harmonyos}.json` |

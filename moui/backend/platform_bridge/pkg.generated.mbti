@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/platform_bridge"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
   "wzzc-dev/window/dpi",
 }
 
@@ -25,6 +26,12 @@ pub fn menu_command_response(Array[@wzzc-dev/moui/core.ActionCommand], Int) -> @
 pub fn menu_command_response_with_unavailable(Array[@wzzc-dev/moui/core.ActionCommand], Int) -> @host.HostServiceResponse
 
 pub fn normalize_pointer_position(@dpi.PhysicalPositionF64, scale_factor~ : Double) -> @wzzc-dev/moui/core.Point
+
+pub fn renderer_metrics_from_host(@host.HostSurfaceMetrics) -> @render.RendererSurfaceMetrics
+
+pub fn skia_host_renderer_bridge_preflight_desktop() -> String
+
+pub fn skia_host_renderer_bridge_preflight_mobile() -> String
 
 pub fn transform_cross_platform_event(@wzzc-dev/window/core.WindowEvent, scale_factor~ : Double, surface_size? : @dpi.PhysicalSize?) -> TransformedWindowEvent
 

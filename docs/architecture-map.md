@@ -60,6 +60,12 @@ Canvas2D fallback; WGPU and Sun remain diagnostic/experimental-only
 compositions). Renderer selection is **provider negotiation**
 (`select_renderer_provider_binding`), never a central switch.
 `RendererBackendKind` is diagnostic metadata only (ADR 0019, invariant P6).
+Extension cost (2026-08-03 audit): `moui/core` has ~210 enum variants of
+which ~2 are platform-related (~1%); adding a renderer costs one
+`RendererBackendKind` diagnostic variant plus a provider package — no core
+or host contract changes. New platform types extend via the open
+`NativePlatformSurface` trait; renderer preference (`NativeRendererMode`)
+stays a closed enum by design.
 
 **Cross-layer edges (imports, beyond the tree above):**
 

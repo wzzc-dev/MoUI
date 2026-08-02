@@ -20,7 +20,7 @@ pub fn[Msg] input_group(
     None => ()
   }
   @container.container(
-    row(
+    @layout.row(
       rows,
       spacing=resolved_theme.spacing_scale.xs,
       align=@style.CrossAlign::Center,

@@ -32,7 +32,7 @@ test "harmonyos runtime session renders through supplied provider" {
   let create_count = Ref(0)
   let dispose_count = Ref(0)
   let completion_drain_count = Ref(0)
-  let provider = HarmonyOsRendererProvider::new(
+  let provider = HarmonyOSRendererProvider::new(
     create_renderer=(_surface, _metrics) => {
       create_count.val = create_count.val + 1
       Some(
@@ -65,7 +65,7 @@ test "harmonyos runtime session renders through supplied provider" {
   match
     create_session(
       runtime~,
-      surface=HarmonyOsSurfaceHandle::new(raw=42UL),
+      surface=HarmonyOSSurfaceHandle::new(raw=42UL),
       metrics~,
       provider~,
     ) {

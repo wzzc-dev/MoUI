@@ -7,7 +7,7 @@ pub fn[Msg] split_view(
   height? : Double = 320.0,
   spacing? : Double = @style.default_theme().spacing_scale.md,
 ) -> @core.View[Msg] {
-  row(
+  @layout.row(
     [
       primary.frame(width=primary_width, height~),
       detail.frame(width=detail_width, height~),
@@ -54,7 +54,7 @@ pub fn[Msg] resizable_split_view(
         ),
       )
     })
-  row(
+  @layout.row(
     [
       primary.frame(width~, height~),
       handle,

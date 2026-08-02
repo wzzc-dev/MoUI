@@ -94,7 +94,11 @@ fn[Msg] form_validation_error_summary(
     None => ()
   }
   @container.container(
-    column(rows, spacing=theme.spacing_scale.xs, align=@style.CrossAlign::Start),
+    @layout.column(
+      rows,
+      spacing=theme.spacing_scale.xs,
+      align=@style.CrossAlign::Start,
+    ),
     width~,
     height=form_validation_summary_height(summary, action, base=70.0),
     background=style.background,
@@ -152,7 +156,7 @@ fn[Msg] form_validation_success(
   let summary_view : @core.View[Msg] = match style {
     Some(value) =>
       @container.container(
-        column(
+        @layout.column(
           rows,
           spacing=theme.spacing_scale.xs,
           align=@style.CrossAlign::Start,
@@ -171,7 +175,7 @@ fn[Msg] form_validation_success(
       )
     None =>
       @container.container(
-        column(
+        @layout.column(
           rows,
           spacing=theme.spacing_scale.xs,
           align=@style.CrossAlign::Start,

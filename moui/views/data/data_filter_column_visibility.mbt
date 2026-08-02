@@ -61,7 +61,7 @@ pub fn[Msg] column_visibility_panel(
     }
   }
   @container.container(
-    column(
+    @layout.column(
       rows,
       spacing=resolved_theme.spacing_scale.xs,
       align=@style.CrossAlign::Start,
@@ -88,7 +88,7 @@ fn[Msg] column_visibility_row(
 ) -> @core.View[Msg] {
   let status = if visible { "Shown" } else { "Hidden" }
   let label_width = @common.view_max_double(92.0, width - 84.0)
-  row(
+  @layout.row(
     [
       @checkbox.checkbox(
         column.label,

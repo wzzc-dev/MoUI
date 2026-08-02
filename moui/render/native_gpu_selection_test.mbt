@@ -11,17 +11,17 @@ test "resolve_surface_route auto remains raster when promotion flag is false" {
 
 ///|
 test "all native platforms promote gpu for auto by default" {
-  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Macos))
+  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::MacOS))
   assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Windows))
   assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Linux))
   assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Android))
-  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Ios))
-  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::HarmonyOs))
+  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::IOS))
+  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::HarmonyOS))
   let macos = resolve_surface_route(
-    NativeGpuPlatform::Macos,
+    NativeGpuPlatform::MacOS,
     NativeRendererMode::Auto,
     gpu_available=true,
-    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Macos),
+    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::MacOS),
   )
   assert_true(macos == SkiaSurfaceRoute::MetalGpuSurfaceRoute)
   let windows = resolve_surface_route(
@@ -46,18 +46,18 @@ test "all native platforms promote gpu for auto by default" {
   )
   assert_true(android == SkiaSurfaceRoute::VulkanGpuSurfaceRoute)
   let ios = resolve_surface_route(
-    NativeGpuPlatform::Ios,
+    NativeGpuPlatform::IOS,
     NativeRendererMode::Auto,
     gpu_available=true,
-    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Ios),
+    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::IOS),
   )
   assert_true(ios == SkiaSurfaceRoute::MetalGpuSurfaceRoute)
   let harmony = resolve_surface_route(
-    NativeGpuPlatform::HarmonyOs,
+    NativeGpuPlatform::HarmonyOS,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=NativePlatformSurface::gpu_promoted(
-      NativeGpuPlatform::HarmonyOs,
+      NativeGpuPlatform::HarmonyOS,
     ),
   )
   assert_true(harmony == SkiaSurfaceRoute::EglGpuSurfaceRoute)
@@ -77,7 +77,7 @@ test "resolve_surface_route explicit gpu resolves platform route" {
 ///|
 test "resolve_surface_route auto selects gpu after promotion" {
   let route = resolve_surface_route(
-    NativeGpuPlatform::HarmonyOs,
+    NativeGpuPlatform::HarmonyOS,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=true,
@@ -129,7 +129,7 @@ test "native GPU host surface descriptors reject zero handles" {
 ///|
 test "resolve_surface_route returns gpu route when available and promoted" {
   let route = resolve_surface_route(
-    NativeGpuPlatform::Macos,
+    NativeGpuPlatform::MacOS,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=true,
@@ -162,7 +162,7 @@ test "resolve_surface_route respects explicit skia-raster request" {
 ///|
 test "NativePlatformSurface trait dispatches platform_label" {
   assert_true(
-    NativePlatformSurface::platform_label(NativeGpuPlatform::Macos) == "macos",
+    NativePlatformSurface::platform_label(NativeGpuPlatform::MacOS) == "macos",
   )
   assert_true(
     NativePlatformSurface::platform_label(NativeGpuPlatform::Windows) ==
@@ -176,10 +176,10 @@ test "NativePlatformSurface trait dispatches platform_label" {
     "android",
   )
   assert_true(
-    NativePlatformSurface::platform_label(NativeGpuPlatform::Ios) == "ios",
+    NativePlatformSurface::platform_label(NativeGpuPlatform::IOS) == "ios",
   )
   assert_true(
-    NativePlatformSurface::platform_label(NativeGpuPlatform::HarmonyOs) ==
+    NativePlatformSurface::platform_label(NativeGpuPlatform::HarmonyOS) ==
     "harmonyos",
   )
 }
@@ -187,7 +187,7 @@ test "NativePlatformSurface trait dispatches platform_label" {
 ///|
 test "NativePlatformSurface trait dispatches surface_route per platform" {
   assert_true(
-    NativePlatformSurface::surface_route(NativeGpuPlatform::Macos) ==
+    NativePlatformSurface::surface_route(NativeGpuPlatform::MacOS) ==
     SkiaSurfaceRoute::MetalGpuSurfaceRoute,
   )
   assert_true(
@@ -199,7 +199,7 @@ test "NativePlatformSurface trait dispatches surface_route per platform" {
     SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
   )
   assert_true(
-    NativePlatformSurface::surface_route(NativeGpuPlatform::HarmonyOs) ==
+    NativePlatformSurface::surface_route(NativeGpuPlatform::HarmonyOS) ==
     SkiaSurfaceRoute::EglGpuSurfaceRoute,
   )
 }

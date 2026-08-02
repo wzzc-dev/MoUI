@@ -28,7 +28,7 @@ fn[Msg] dropdown_menu(
     )
   }
   scroll_view(
-    column(rows, spacing=theme.spacing_scale.xs),
+    @layout.column(rows, spacing=theme.spacing_scale.xs),
     width~,
     height=max_height,
   )

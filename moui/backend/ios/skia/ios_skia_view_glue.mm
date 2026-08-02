@@ -13,7 +13,7 @@
 /// `UIView` subclass whose backing layer is a `CAMetalLayer` instead of the
 /// default `CALayer`. Host apps that want the Skia Metal direct-present path
 /// should create this view (via `moui_ios_skia_create_metal_view`) and pass
-/// its raw handle to `IosViewHandle::new`. The existing CPU raster path
+/// its raw handle to `IosSurfaceHandle::new`. The existing CPU raster path
 /// continues to work with a plain `UIView`; `ios_skia_metal_layer_for_view`
 /// returns 0 for a non-Metal view, causing the provider to fall back to
 /// raster automatically.

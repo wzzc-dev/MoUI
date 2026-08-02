@@ -70,7 +70,7 @@ pub fn[Msg] tooltip(
   visible? : Bool = false,
 ) -> @core.View[Msg] {
   if visible {
-    stack([
+    @layout.stack([
       child,
       @container.container(
         @text.text(message, width=180.0, height=24.0).semantics_role(

@@ -32,7 +32,7 @@ pub fn[Msg] drop_zone(
     )
   }
   let zone = @container.container(
-      column(
+      @layout.column(
         rows,
         spacing=resolved_theme.spacing_scale.xs,
         align=@style.CrossAlign::Center,
@@ -127,7 +127,7 @@ pub fn[Msg] file_import_panel(
   )
   rows.push(list)
   @container.container(
-    column(
+    @layout.column(
       rows,
       spacing=resolved_theme.spacing_scale.sm,
       align=@style.CrossAlign::Start,
@@ -183,7 +183,11 @@ fn[Msg] file_selection_list(
         ),
       )
     }
-    column(rows, spacing=theme.spacing_scale.xs, align=@style.CrossAlign::Start)
+    @layout.column(
+      rows,
+      spacing=theme.spacing_scale.xs,
+      align=@style.CrossAlign::Start,
+    )
   }
 }
 

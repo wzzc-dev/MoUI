@@ -13,7 +13,7 @@ pub fn[Msg] data_filter_bar(
   let search_width = @common.view_max_double(160.0, width * 0.46)
   let meta_width = @common.view_max_double(88.0, width - search_width - 96.0)
   let rows : Array[@core.View[Msg]] = [
-    row(
+    @layout.row(
       [
         @controls.searchbar(
           query~,
@@ -63,7 +63,7 @@ pub fn[Msg] data_filter_bar(
     )
   }
   @container.container(
-    column(
+    @layout.column(
       rows,
       spacing=resolved_theme.spacing_scale.sm,
       align=@style.CrossAlign::Stretch,

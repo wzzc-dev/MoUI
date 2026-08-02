@@ -40,7 +40,7 @@ pub fn[Msg] alert(
     ),
   )
   @container.container(
-    column(
+    @layout.column(
       [
         @text.text(
           title,
@@ -56,7 +56,7 @@ pub fn[Msg] alert(
           width=content_width,
           height=54.0,
         ),
-        row(
+        @layout.row(
           actions,
           spacing=resolved_theme.spacing_scale.sm,
           justify=@style.MainAlign::End,

@@ -57,7 +57,7 @@ fn[Msg] table_header(
       ),
     )
   }
-  row(cells, spacing=0.0, align=@style.CrossAlign::Start)
+  @layout.row(cells, spacing=0.0, align=@style.CrossAlign::Start)
 }
 
 ///|
@@ -110,7 +110,7 @@ fn[Msg] table_row(
       ),
     )
   }
-  let base = row(cells, spacing=0.0, align=@style.CrossAlign::Start)
+  let base = @layout.row(cells, spacing=0.0, align=@style.CrossAlign::Start)
     .semantics_role(@core.SemanticsRole::ListItem)
     .semantics_selected(selected~)
   match on_row_select {

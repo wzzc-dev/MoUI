@@ -39,7 +39,7 @@ pub fn[Msg] sheet_host(
     } else {
       aligned_sheet
     }
-    stack([child, scrim_with_tap, aligned_sheet])
+    @layout.stack([child, scrim_with_tap, aligned_sheet])
   } else {
     child
   }

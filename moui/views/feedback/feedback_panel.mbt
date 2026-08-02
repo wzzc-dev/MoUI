@@ -34,14 +34,14 @@ fn[Msg] feedback_panel(
       height=28.0,
     ),
   )
-  let body = column(
+  let body = @layout.column(
     rows,
     spacing=theme.spacing_scale.xs,
     align=@style.CrossAlign::Start,
   )
   let content : @core.View[Msg] = match action {
     Some(action) =>
-      row(
+      @layout.row(
         [
           body.expanded(),
           @button.button(
