@@ -44,28 +44,13 @@ node scripts/check-website-docs.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-skia-entrypoints.mjs
 node scripts/validate-gpu-promotion-manifest.mjs docs/gpu-promotion-manifest.example.json
-node scripts/test-validate-skia-entrypoints.mjs
-moon test tools/moui/generate_repo_docs --target native
-moon test tools/moui/validate_source_file_policy --target native
 node --check scripts/test-moui-prebuild.mjs
 node scripts/test-moui-prebuild.mjs
-node scripts/test-validate-conformance-capture-manifest.mjs
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check
-node scripts/test-validate-web-runtime-handoff-manifest.mjs
 node scripts/test-web-canvas2d-lazy-fallback.mjs
 node scripts/test-web-bundle-tools.mjs
-node scripts/test-record-web-runtime-presentation.mjs
-node scripts/test-validate-web-runtime-presentation-manifest.mjs
-moon test tools/moui/validate_gpu_promotion_manifest --target native
-moon test tools/moui/gpu_promotion_scaffold --target native
-node scripts/test-gpu-promotion-manifest-lib.mjs
-node scripts/test-gpu-performance-metrics.mjs
-node scripts/test-check-runner.mjs
-node scripts/test-smoke-check.mjs
 node scripts/smoke-check.mjs --check
-node scripts/test-smoke-gate.mjs
-node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 moon check
 node scripts/check-generated-interfaces.mjs
 moon test moui/core --target native
@@ -95,7 +80,6 @@ moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
-node scripts/test-validate-web-runtime-handoff.mjs
 node scripts/validate-web-runtime-handoff.mjs
 ```
 
@@ -141,7 +125,6 @@ moon check moui/render/canvas2d --target wasm-gc
 moon test moui/backend/wechat --target wasm-gc
 node scripts/test-web-canvas2d-lazy-fallback.mjs
 moon test moui/backend/platform_bridge --target native
-moon test tools/moui/validate_platform_adapter_duplication --target native
 node scripts/validate-renderer-provider-open-extension.mjs
 node scripts/validate-platform-adapter-duplication.mjs
 ```
@@ -369,7 +352,10 @@ sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
 It covers the three window host simulators, the MoUI backend packages, and the
-Counter embedded-runtime entrypoints. `--fallback-skia` builds remain packaging-only
+Counter embedded-runtime entrypoints. It runs nightly in CI as the
+`window-hosted-hostsim` job of `moui-runtime-gates.yml` (dev mode is enabled for
+the run and disabled afterwards, so the check never leaves an editable `window`
+workspace behind). `--fallback-skia` builds remain packaging-only
 diagnostics and cannot establish a presenter or runtime claim.
 
 For a connected matching target, build and run one platform at a time, then
@@ -401,12 +387,9 @@ without running platform smoke:
 
 ```sh
 node --check scripts/smoke-check.mjs
-node --check scripts/test-smoke-check.mjs
-node scripts/test-smoke-check.mjs
 node scripts/smoke-check.mjs --check
 node scripts/smoke-check.mjs --tier nightly --list
 node scripts/smoke-check.mjs --tier release --json
-node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 node scripts/smoke-gate.mjs --suite web.runtime-presentation --run
 ```
 

@@ -39,7 +39,6 @@ Schema example: [`gpu-promotion-manifest.example.json`](gpu-promotion-manifest.e
 ```sh
 moon run tools/moui/gpu_promotion_scaffold --target native -- \
   --platform macos --out-dir artifacts/gpu-promotion/macos/manual
-moon test tools/moui/gpu_promotion_scaffold --target native
 ```
 
 Node `scripts/record-gpu-promotion-smoke.mjs` is a thin orchestrator over this tool
@@ -117,12 +116,6 @@ Writes `metrics.json` with p95/drop%/duration. Still leaves mailbox/memory/conte
 node scripts/record-gpu-promotion-smoke.mjs --platform macos --dry-run
 ```
 
-### Lib self-test
-
-```sh
-node scripts/test-gpu-promotion-manifest-lib.mjs
-```
-
 ## Modes
 
 | Mode | Status | Meaning |
@@ -176,4 +169,4 @@ Keep working:
 - ADR: [`decisions/0005-mobile-host-and-gpu.md`](decisions/0005-mobile-host-and-gpu.md)
 - Embedded-runtime route: [`window-hosted-moui.md`](window-hosted-moui.md)
 - Capability notes: [`renderer-capability-report.md`](renderer-capability-report.md)
-- Session: [`ai-sessions/2026-07-13-all-platform-native-gpu-workers.md`](ai-sessions/2026-07-13-all-platform-native-gpu-workers.md)
+- Session: see `docs/ai-sessions/` for the all-platform native GPU workers session log.

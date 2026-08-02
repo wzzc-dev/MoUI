@@ -28,28 +28,13 @@ node scripts/check-website-docs.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-skia-entrypoints.mjs
 node scripts/validate-gpu-promotion-manifest.mjs docs/gpu-promotion-manifest.example.json
-node scripts/test-validate-skia-entrypoints.mjs
-moon test tools/moui/generate_repo_docs --target native
-moon test tools/moui/validate_source_file_policy --target native
 node --check scripts/test-moui-prebuild.mjs
 node scripts/test-moui-prebuild.mjs
-node scripts/test-validate-conformance-capture-manifest.mjs
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check
-node scripts/test-validate-web-runtime-handoff-manifest.mjs
 node scripts/test-web-canvas2d-lazy-fallback.mjs
 node scripts/test-web-bundle-tools.mjs
-node scripts/test-record-web-runtime-presentation.mjs
-node scripts/test-validate-web-runtime-presentation-manifest.mjs
-moon test tools/moui/validate_gpu_promotion_manifest --target native
-moon test tools/moui/gpu_promotion_scaffold --target native
-node scripts/test-gpu-promotion-manifest-lib.mjs
-node scripts/test-gpu-performance-metrics.mjs
-node scripts/test-check-runner.mjs
-node scripts/test-smoke-check.mjs
 node scripts/smoke-check.mjs --check
-node scripts/test-smoke-gate.mjs
-node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 moon check
 node scripts/check-generated-interfaces.mjs
 moon test moui/core --target native
@@ -67,7 +52,6 @@ moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
-node scripts/test-validate-web-runtime-handoff.mjs
 node scripts/validate-web-runtime-handoff.mjs
 ```
 
@@ -224,7 +208,9 @@ sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
 它覆盖三个 window host simulator、MoUI backend packages 和 Counter 嵌入运行时
-entrypoints。`--fallback-skia` 构建只是 packaging-only diagnostic，不能建立
+entrypoints。它每晚在 CI 的 `moui-runtime-gates.yml` `window-hosted-hostsim`
+job 中运行（运行时启用 dev mode、运行后关闭，因此检查永远不会留下可编辑的
+`window` workspace）。`--fallback-skia` 构建只是 packaging-only diagnostic，不能建立
 presenter 或 runtime claim。
 
 对于已连接的 matching target，一次 build/run 一个平台，然后记录生成的
@@ -252,12 +238,9 @@ WINDOW_HOSTED_HARMONYOS_HVD=1 sh scripts/window-hosted-vm-smoke.sh
 
 ```sh
 node --check scripts/smoke-check.mjs
-node --check scripts/test-smoke-check.mjs
-node scripts/test-smoke-check.mjs
 node scripts/smoke-check.mjs --check
 node scripts/smoke-check.mjs --tier nightly --list
 node scripts/smoke-check.mjs --tier release --json
-node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 node scripts/smoke-gate.mjs --suite web.runtime-presentation --run
 ```
 

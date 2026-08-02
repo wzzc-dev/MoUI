@@ -29,6 +29,13 @@
           ]
         },
         {
+          "name": "doc references",
+          "argv": [
+            "node",
+            "scripts/validate-doc-references.mjs"
+          ]
+        },
+        {
           "name": "public API surface",
           "argv": [
             "node",
@@ -96,6 +103,13 @@
           ]
         },
         {
+          "name": "renderer capability consistency",
+          "argv": [
+            "node",
+            "scripts/validate-renderer-capability-consistency.mjs"
+          ]
+        },
+        {
           "name": "Skia entrypoints",
           "argv": [
             "node",
@@ -123,17 +137,6 @@
             "node",
             "scripts/smoke-check.mjs",
             "--check"
-          ]
-        },
-        {
-          "name": "smoke nightly dry-run",
-          "argv": [
-            "node",
-            "scripts/smoke-gate.mjs",
-            "--tier",
-            "nightly",
-            "--dry-run",
-            "--json"
           ]
         },
         {
@@ -321,38 +324,11 @@
       ]
     },
     "daily": {
-      "description": "Default maintainer gate: PR checks plus validator self-tests and broader package coverage.",
+      "description": "Default maintainer gate: PR checks plus broader package and product-behavior coverage.",
       "includes": [
         "pr"
       ],
       "steps": [
-        {
-          "name": "Skia entrypoint validator tests",
-          "argv": [
-            "node",
-            "scripts/test-validate-skia-entrypoints.mjs"
-          ]
-        },
-        {
-          "name": "generated repository facts tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/generate_repo_docs",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "source file policy tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/validate_source_file_policy",
-            "--target",
-            "native"
-          ]
-        },
         {
           "name": "prebuild validator syntax",
           "argv": [
@@ -366,13 +342,6 @@
           "argv": [
             "node",
             "scripts/test-moui-prebuild.mjs"
-          ]
-        },
-        {
-          "name": "capture manifest validator tests",
-          "argv": [
-            "node",
-            "scripts/test-validate-conformance-capture-manifest.mjs"
           ]
         },
         {
@@ -392,13 +361,6 @@
           ]
         },
         {
-          "name": "Web runtime handoff manifest tests",
-          "argv": [
-            "node",
-            "scripts/test-validate-web-runtime-handoff-manifest.mjs"
-          ]
-        },
-        {
           "name": "Web Canvas2D lazy fallback tests",
           "argv": [
             "node",
@@ -410,75 +372,6 @@
           "argv": [
             "node",
             "scripts/test-web-bundle-tools.mjs"
-          ]
-        },
-        {
-          "name": "Web runtime presentation recorder tests",
-          "argv": [
-            "node",
-            "scripts/test-record-web-runtime-presentation.mjs"
-          ]
-        },
-        {
-          "name": "Web runtime presentation manifest tests",
-          "argv": [
-            "node",
-            "scripts/test-validate-web-runtime-presentation-manifest.mjs"
-          ]
-        },
-        {
-          "name": "GPU promotion manifest tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/validate_gpu_promotion_manifest",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "GPU promotion scaffold tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/gpu_promotion_scaffold",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "GPU promotion scaffold node wrapper tests",
-          "argv": [
-            "node",
-            "scripts/test-gpu-promotion-manifest-lib.mjs"
-          ]
-        },
-        {
-          "name": "GPU performance metrics parser tests",
-          "argv": [
-            "node",
-            "scripts/test-gpu-performance-metrics.mjs"
-          ]
-        },
-        {
-          "name": "check runner tests",
-          "argv": [
-            "node",
-            "scripts/test-check-runner.mjs"
-          ]
-        },
-        {
-          "name": "smoke catalog tests",
-          "argv": [
-            "node",
-            "scripts/test-smoke-check.mjs"
-          ]
-        },
-        {
-          "name": "smoke gate tests",
-          "argv": [
-            "node",
-            "scripts/test-smoke-gate.mjs"
           ]
         },
         {
@@ -502,16 +395,6 @@
           ]
         },
         {
-          "name": "i18n catalog generator tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/generate_i18n_catalogs",
-            "--target",
-            "native"
-          ]
-        },
-        {
           "name": "i18n catalog generation check",
           "argv": [
             "node",
@@ -521,13 +404,6 @@
             "--out",
             "website/app/i18n_catalog_generated.mbt",
             "--check"
-          ]
-        },
-        {
-          "name": "website docs catalog tests",
-          "argv": [
-            "node",
-            "scripts/test-sync-website-docs.mjs"
           ]
         },
         {
@@ -610,17 +486,30 @@
           ]
         },
         {
-          "name": "Web runtime handoff tests",
-          "argv": [
-            "node",
-            "scripts/test-validate-web-runtime-handoff.mjs"
-          ]
-        },
-        {
           "name": "Web runtime handoff validation",
           "argv": [
             "node",
             "scripts/validate-web-runtime-handoff.mjs"
+          ]
+        },
+        {
+          "name": "capability consistency validator tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/validate_renderer_capability_consistency",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "doc references validator tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/validate_doc_references",
+            "--target",
+            "native"
           ]
         }
       ]

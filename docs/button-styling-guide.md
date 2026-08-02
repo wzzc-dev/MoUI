@@ -66,7 +66,7 @@ dual-source drift this unification removed. New controls should read
 
 4. **Control paint** — `button_control` (`moui/views/button/button.mbt`)
    called by `button` (same file; re-exported as `@views.button` via
-   `moui/views/button.mbt`).
+   `moui/views/button/button.mbt`).
    - `resolved_style = style? | variant.style(control_set)` — an explicit
      `style=` argument is a one-shot override; otherwise the variant resolves
      from `control_set.button` (layer 2/3).
@@ -218,13 +218,13 @@ same lerp expression tracks both because `foreground`/`surface` flip.
 
 When asked about "the showcase button", it is most likely one of:
 
-- `examples/showcase/app/navigation.mbt` — `sidebar_item` (selected =
+- `examples/showcase/app/diagnostics/navigation.mbt` — `sidebar_item` (selected =
   `Primary`, unselected = `Ghost`) and `header` action buttons (Overview/
   Examples toggle between `Primary` and `Ghost`).
-- `examples/showcase/app/controls_section.mbt` — the controls gallery Primary
+- `examples/showcase/app/components/component_controls.mbt` — the controls gallery Primary
   button.
-- `examples/showcase/app/components.mbt` — capability/animation cards.
-- `examples/showcase/app/interaction_lab_section.mbt` — interaction lab
+- `examples/showcase/app/diagnostics/components.mbt` — capability/animation cards.
+- `examples/showcase/app/diagnostics/interaction_lab_section.mbt` — interaction lab
   variant demos.
 
 The theme is built once in `ShowcaseModel::view` (`examples/showcase/app/app.mbt`)

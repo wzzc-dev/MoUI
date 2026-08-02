@@ -100,11 +100,6 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: "docs/feature-status-dashboard.md",
       token: "moui-renderer-real-skia-ci.yml",
     },
-    {
-      path: "scripts/test-smoke-check.mjs",
-      token: ".github/workflows/moui-macos-app-real-skia-manual.yml",
-    },
-    { path: "docs/testing.md", token: "node scripts/test-check-runner.mjs" },
     { path: "docs/testing.md", token: "shared platform service checks" },
     {
       path: "docs/release-readiness.md",

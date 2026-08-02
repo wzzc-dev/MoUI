@@ -272,7 +272,7 @@ Core 现在暴露 `TextGraphemeBoundaries`，作为单一 UAX 风格 cluster 边
 
 仓库现在有一个离线 `GraphemeBreakTest.txt` 风格 fixture 和 generator guard
 （`scripts/generate-grapheme-break-fixtures.mjs --check`），覆盖策展样本，以及一个从
-`moui/core/testdata/GraphemeBreakTest-17.0.0.txt` 生成的 vendored Unicode 17.0 默认字素断点 fixture。
+`moui/core/unicode/testdata/GraphemeBreakTest-17.0.0.txt` 生成的 vendored Unicode 17.0 默认字素断点 fixture。
 `moon test moui/core --target native` 会运行策展 fixture、完整边界 fixture，以及一个完整编辑 fixture，
 检查 `is_boundary`、floor/ceil/nearest boundary snapping、折叠和展开 range 规范化、surrounding delete ranges、
 raw boundary 到 UTF-8 offset 转换，以及每个 Unicode 17 样本上 every-index

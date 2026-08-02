@@ -1,0 +1,17 @@
+import {
+  "moonbitlang/core/env",
+  "moonbitlang/x/sys",
+  "wzzc-dev/moui_tools" @tools,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/skia" @render_skia,
+  "wzzc-dev/moui/render/sun" @render_sun,
+  "wzzc-dev/moui/render/wgpu" @render_wgpu,
+}
+
+import {
+  "moonbitlang/core/test",
+} for "wbtest"
+
+supported_targets = "+native"
+
+pkgtype(kind: "executable")
