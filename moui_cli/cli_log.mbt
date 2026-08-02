@@ -20,12 +20,6 @@ fn log_warn(message : String) -> Unit {
 }
 
 ///|
-/// Log an error message to stderr with the `[moui:error]` prefix.
-fn log_error(message : String) -> Unit {
-  write_stderr("[moui:error] " + message)
-}
-
-///|
 /// Print the argv that will be executed, prefixed with `label`. Only emits
 /// when `MOUI_DEBUG=1` is set in the environment. Used to trace build pipelines.
 fn log_command(label : String, argv : Array[String]) -> Unit {

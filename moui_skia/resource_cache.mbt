@@ -40,7 +40,7 @@ fn non_negative_i64(value : Int64) -> Int64 {
 ///|
 pub fn[K, V] ResourceCache::new(max_bytes? : Int64 = 0L) -> ResourceCache[K, V] {
   {
-    entries: Map::default(),
+    entries: Default::default(),
     max_bytes: non_negative_i64(max_bytes),
     current_bytes: 0L,
     clock: 0L,

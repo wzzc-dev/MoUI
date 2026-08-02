@@ -8,13 +8,12 @@
 pub fn timer_host_source(
   start~ : (FuncRef[(() -> Unit) -> Unit], Double, () -> Unit) -> UInt64,
   cancel~ : (UInt64) -> Unit,
-  clock~ : (() -> Double)? = None,
+  clock? : (() -> Double)? = None,
 ) -> HostTimerSource {
   HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
     let tick = match clock {
-      None => () => {
-        dispatch(@core.Frame::new(time_ms=0.0, delta_ms=interval_ms))
-      }
+      None =>
+        () => dispatch(@core.Frame::new(time_ms=0.0, delta_ms=interval_ms))
       Some(now) => {
         let last_time_ms = Ref(now())
         () => {

@@ -9,7 +9,7 @@ priv struct Observation {
   name : String
   value : String
   passed : Bool
-} derive(Eq)
+}
 
 ///|
 priv struct ProbeResult {
@@ -192,6 +192,7 @@ fn probe_android(
   timeout_seconds : Int,
 ) -> ProbeResult {
   let _ = host
+  let _ = timeout_seconds
   let adb = match find_in_path("adb", detect_host_platform()) {
     Some(path) => path
     None =>

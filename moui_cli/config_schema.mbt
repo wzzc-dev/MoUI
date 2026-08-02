@@ -9,7 +9,7 @@ priv struct HarmonyosConfig {
   hvigorw : String?
   ohpm : String?
   signing_config_file : String?
-} derive(Eq)
+}
 
 ///|
 priv struct AndroidConfig {
@@ -18,21 +18,21 @@ priv struct AndroidConfig {
   abi : Array[String]
   compile_sdk : Int?
   target_sdk : Int?
-} derive(Eq)
+}
 
 ///|
 priv struct IosConfig {
   sdk : String?
   arch : String?
   deployment_target : Int?
-} derive(Eq)
+}
 
 ///|
 priv struct PathsConfig {
   moon_home : String?
   moui_root : String?
   skia_root : String?
-} derive(Eq)
+}
 
 ///|
 priv struct CliConfig {
@@ -41,7 +41,7 @@ priv struct CliConfig {
   android : AndroidConfig
   ios : IosConfig
   paths : PathsConfig
-} derive(Eq)
+}
 
 ///|
 fn default_harmonyos_config() -> HarmonyosConfig {

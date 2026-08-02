@@ -6,17 +6,17 @@
 
 ///|
 test "test_parse_dotted_version_simple" {
-  inspect(parse_dotted_version("15.4"), content="[15, 4]")
-  inspect(parse_dotted_version("16.0.1"), content="[16, 0, 1]")
-  inspect(parse_dotted_version("17"), content="[17]")
+  debug_inspect(parse_dotted_version("15.4"), content="[15, 4]")
+  debug_inspect(parse_dotted_version("16.0.1"), content="[16, 0, 1]")
+  debug_inspect(parse_dotted_version("17"), content="[17]")
 }
 
 ///|
 test "test_parse_dotted_version_invalid" {
-  inspect(parse_dotted_version("abc"), content="[]")
-  inspect(parse_dotted_version("15.x"), content="[]")
-  inspect(parse_dotted_version(""), content="[]")
-  inspect(parse_dotted_version("15a.4"), content="[]")
+  debug_inspect(parse_dotted_version("abc"), content="[]")
+  debug_inspect(parse_dotted_version("15.x"), content="[]")
+  debug_inspect(parse_dotted_version(""), content="[]")
+  debug_inspect(parse_dotted_version("15a.4"), content="[]")
 }
 
 ///|

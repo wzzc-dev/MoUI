@@ -460,7 +460,9 @@ test "views facade exposes control-specific contracts" {
   assert_true(views.forbidden_tokens.contains("RawDatePickerDisplayMode"))
   assert_true(views.forbidden_tokens.contains("RawPickerOption"))
   assert_true(required.contains("pub using @navigation {type RouteLocation}"))
-  assert_true(required.contains("pub using @navigation {type RouteHistoryState}"))
+  assert_true(
+    required.contains("pub using @navigation {type RouteHistoryState}"),
+  )
   assert_true(required.contains("type RouteFocusStore"))
   assert_true(required.contains("type RouterState"))
   assert_false(required.contains("pub using @core {type RouteHistoryState}"))
@@ -882,9 +884,7 @@ test "platform similarity budgets are unique and in range" {
     let key = budget.path_a + "|" + budget.path_b
     assert_false(seen.contains(key), msg="duplicate budget " + key)
     seen.set(key, true)
-    assert_true(
-      budget.max_similarity > 0.0 && budget.max_similarity <= 1.0,
-    )
+    assert_true(budget.max_similarity > 0.0 && budget.max_similarity <= 1.0)
     assert_true(budget.label.length() > 0)
   }
 }
@@ -929,14 +929,10 @@ test "similarity gate rejects unregistered near-duplicate platform files" {
   let body = "fn f() -> Int {\n  let macos_a = 1\n  let macos_b = 2\n" +
     "  return macos_a + macos_b\n}\n"
   write_similarity_fixture_file(
-    root,
-    "moui/backend/macos/macos_window_requests.mbt",
-    body,
+    root, "moui/backend/macos/macos_window_requests.mbt", body,
   )
   write_similarity_fixture_file(
-    root,
-    "moui/backend/linux/linux_window_requests.mbt",
-    body,
+    root, "moui/backend/linux/linux_window_requests.mbt", body,
   )
   let failures : Array[String] = []
   validate_platform_file_similarity(root, failures)
@@ -956,13 +952,13 @@ test "similarity gate accepts registered budget pair" {
     root,
     "moui/backend/android/window_hosted.mbt",
     "fn f() -> Int {\n  let android_a = 1\n  let android_b = 2\n" +
-      "  return android_a + android_b\n}\n",
+    "  return android_a + android_b\n}\n",
   )
   write_similarity_fixture_file(
     root,
     "moui/backend/ios/window_hosted.mbt",
     "fn f() -> Int {\n  let ios_a = 1\n  let ios_b = 2\n" +
-      "  let ios_extra = 3\n  return ios_a + ios_b + ios_extra\n}\n",
+    "  let ios_extra = 3\n  return ios_a + ios_b + ios_extra\n}\n",
   )
   let failures : Array[String] = []
   validate_platform_file_similarity(root, failures)

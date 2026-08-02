@@ -43,7 +43,7 @@ test "mobile config reads window-hosted metadata" {
     None => fail("missing Android config")
   }
   match app.ios {
-    Some(ios) => inspect(ios.deployment_target, content="15.0")
+    Some(ios) => inspect(ios.bundle_id, content="dev.example.counter")
     None => fail("missing iOS config")
   }
   remove_tree(root)

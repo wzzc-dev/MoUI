@@ -303,6 +303,6 @@ fn runtime_expect_semantics_action(
       precondition: SemanticsGenerationPrecondition::Exact(generation),
     }) {
     Ok(receipt) => receipt
-    Err(error) => abort("unexpected semantics action error: \{to_repr(error)}")
+    Err(error) => abort("unexpected semantics action error: \{Repr(error)}")
   }
 }
