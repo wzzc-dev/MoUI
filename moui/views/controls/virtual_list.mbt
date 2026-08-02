@@ -60,7 +60,7 @@ pub fn scroll_to_index(
   index~ : Int,
   item_height? : Double = 44.0,
   spacing? : Double = 0.0,
-) -> ScrollToIndexIntent {
+) -> @layout.ScrollToIndexIntent {
   let index = @common.view_max_int(0, index)
   let offset = @core.Point::new(
     x=state.offset().x,

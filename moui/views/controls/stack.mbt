@@ -1,10 +1,6 @@
 ///|
-pub using @layout {stack, overlay}
-
-///|
-/// `scroll_view` stays on the root facade: it composes `@controls` scroll
-/// primitives (`component_host` / `scroll_container`) and the `layout/`
-/// sub-package cannot depend on `controls/` (which already depends on it).
+/// Scroll view composes the `@controls` scroll primitives (`component_host` /
+/// `scroll_container`) into the public `scroll_view` entrypoint.
 pub fn[Msg] scroll_view(
   child : @core.View[Msg],
   offset? : @core.Point = @core.Point::new(x=0.0, y=0.0),
@@ -20,9 +16,9 @@ pub fn[Msg] scroll_view(
   }
   match state {
     Some(scroll_state) =>
-      @controls.component_host(context => {
+      component_host(context => {
         let current_offset = context.watch_scroll(scroll_state)
-        @controls.scroll_container(
+        scroll_container(
           child~,
           offset=current_offset,
           viewport~,
@@ -32,7 +28,7 @@ pub fn[Msg] scroll_view(
         )
       })
     None =>
-      @controls.scroll_container(
+      scroll_container(
         child~,
         offset~,
         viewport~,

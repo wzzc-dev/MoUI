@@ -1,11 +1,11 @@
 ///|
 pub fn[T, Msg] sectioned_list(
-  sections : Array[SectionListSection[T]],
+  sections : Array[@layout.SectionListSection[T]],
   key : (T) -> String,
   row : (T) -> @core.View[Msg],
   state? : @core.ScrollState = @core.ScrollState::new(),
-  header? : (SectionListSection[T]) -> @core.View[Msg] = section => {
-    text(section.title)
+  header? : (@layout.SectionListSection[T]) -> @core.View[Msg] = section => {
+    @text.text(section.title)
   },
   item_height? : Double = 44.0,
   header_height? : Double = 30.0,
@@ -56,7 +56,7 @@ pub fn[T, Msg] sectioned_list(
     let virtual_children : Array[@core.View[Msg]] = []
     if first_visible > 0 {
       virtual_children.push(
-        spacer(
+        @container.spacer(
           min_length=sectioned_entries_height(
             entries, 0, first_visible, header_height, item_height, spacing,
           ),
@@ -69,7 +69,7 @@ pub fn[T, Msg] sectioned_list(
     }
     if last_visible + 1 < entries.length() {
       virtual_children.push(
-        spacer(
+        @container.spacer(
           min_length=sectioned_entries_height(
             entries,
             last_visible + 1,
@@ -83,7 +83,7 @@ pub fn[T, Msg] sectioned_list(
       )
     }
     scroll_view(
-      list(virtual_children, spacing~),
+      @layout.list(virtual_children, spacing~),
       offset=state.offset(),
       width=0.0,
       height=viewport_height,
@@ -94,13 +94,13 @@ pub fn[T, Msg] sectioned_list(
 
 ///|
 priv enum SectionedListEntry[T] {
-  SectionHeader(SectionListSection[T])
+  SectionHeader(@layout.SectionListSection[T])
   SectionItem(T)
 }
 
 ///|
 fn[T] sectioned_list_entries(
-  sections : Array[SectionListSection[T]],
+  sections : Array[@layout.SectionListSection[T]],
 ) -> Array[SectionedListEntry[T]] {
   let entries : Array[SectionedListEntry[T]] = []
   for section in sections {
@@ -127,7 +127,7 @@ fn[T] sectioned_entry_height(
 ///|
 fn[T, Msg] sectioned_entry_view(
   entry : SectionedListEntry[T],
-  header : (SectionListSection[T]) -> @core.View[Msg],
+  header : (@layout.SectionListSection[T]) -> @core.View[Msg],
   row : (T) -> @core.View[Msg],
   _key : (T) -> String,
 ) -> @core.View[Msg] {

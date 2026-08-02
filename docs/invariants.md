@@ -72,7 +72,7 @@ minimal_control_theme_set/minimal_state_layer → ButtonVariant::style/to_token 
 ButtonStyle::filled/tonal/outline/ghost/control_state → button/button_control paint
 ```
 
-Files involved: `moui/core/theme.mbt` (neutral palette/spacing/typography only — no `components` field per ADR 0017), `moui/views/style/control_theme_tokens.mbt`, `moui/views/style/control_theme_set.mbt` (incl. `views_ambient_control_theme` resolver), `moui/views/style/style_api.mbt` (ButtonVariant::style), `moui/views/style_api.mbt` (@style re-export facade), `moui/views/style/control_style.mbt`, `moui/views/style/control_primitives.mbt`, `moui/views/button/button.mbt` (button/button_control), `moui/views/button.mbt` (re-export).
+Files involved: `moui/core/theme.mbt` (neutral palette/spacing/typography only — no `components` field per ADR 0017), `moui/views/style/control_theme_tokens.mbt`, `moui/views/style/control_theme_set.mbt` (incl. `views_ambient_control_theme` resolver), `moui/views/style/style_api.mbt` (ButtonVariant::style), `moui/views/views.mbt` (@style re-export facade), `moui/views/style/control_style.mbt`, `moui/views/style/control_primitives.mbt`, `moui/views/button/button.mbt` (button/button_control).
 Prefer app-level overrides over framework edits.
 
 ## Pre-push Validation

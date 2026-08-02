@@ -1,12 +1,16 @@
 ///|
-pub using @popover {sheet}
+fn[Msg] modal_scrim(alpha~ : Double) -> @core.View[Msg] {
+  @container.empty().background_brush(
+    @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha)),
+  )
+}
 
 ///|
 pub fn[Msg] sheet_host(
   child~ : @core.View[Msg],
   sheet? : @core.View[Msg]? = None,
   presented? : Bool = false,
-  presentation_mode? : SheetPresentationMode = SheetPresentationMode::Modal,
+  presentation_mode? : @style.SheetPresentationMode = @style.SheetPresentationMode::Modal,
   theme? : @core.Theme,
   on_dismiss? : Msg? = None,
   trap_focus? : Bool = true,
@@ -20,12 +24,12 @@ pub fn[Msg] sheet_host(
     }
     // The sheet content
     let aligned_sheet = match presentation_mode {
-      SheetPresentationMode::Modal =>
+      @style.SheetPresentationMode::Modal =>
         sheet_spec
         .frame(width=400.0, height=400.0)
         .corner_radius(resolved_theme.radius_scale.lg)
         .align()
-      SheetPresentationMode::BottomSheet =>
+      @style.SheetPresentationMode::BottomSheet =>
         sheet_spec
         .corner_radius(resolved_theme.radius_scale.lg)
         .align(alignment=@core.Alignment::new(x=0.0, y=1.0))
