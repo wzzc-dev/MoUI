@@ -96,7 +96,7 @@ pub fn ios_skia_provider_preflight_summary(
   }
   let host_preflight = @ios_host.ios_capability_summary().preflight_fields()
   let gpu_runtime_available = @skia_native.Surface::metal_gpu_context_runtime_available()
-  "iOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{options.surface_route.label()}; presenter=\{ios_skia_presenter_description()}; gpu_presenter=\{ios_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; metal_view_factory=available; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=ios-simulator-smoke-required; runtime_status=runtime_partial; unavailable=\"\{ios_skia_unavailable_message()}\""
+  "iOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{options.surface_route.label()}; presenter=\{ios_skia_presenter_description()}; gpu_presenter=\{ios_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; metal_view_factory=available; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=ios-simulator-smoke-required; runtime_status=experimental; unavailable=\"\{ios_skia_unavailable_message()}\""
 }
 
 ///|

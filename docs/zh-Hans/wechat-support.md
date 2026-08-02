@@ -1,9 +1,11 @@
 # 微信小程序支持
 
-微信小程序支持是一个 **runtime_partial** 的 Canvas 2D WebAssembly 路径。
+微信小程序支持是一个 **experimental** 的 Canvas 2D WebAssembly
+路径（product_class `experimental`，`ready=false`）。
 与 Android、iOS 和 HarmonyOS 不同，它不使用原生移动端的 `window` 事件循环；
-小程序模板直接调用 canvas host callbacks。该路径可用于开发和演示，但在真实小程序
-像素 smoke、触摸事件验证和 wx API 服务集成完成前，不应视为产品级支持。
+小程序模板直接调用 canvas host callbacks。该路径可编译，但在真实小程序
+像素 smoke、触摸事件验证和 wx API 服务集成完成前，**不**做任何
+开发/演示可用性或产品承诺。
 
 Skyline 渲染引擎为小程序提供增强的 Canvas 2D 性能。MoonBit 包支持 `wasm` 和
 `wasm-gc`；仓库构建辅助脚本当前以 `wasm` 为 WXWebAssembly 生成目标，再在

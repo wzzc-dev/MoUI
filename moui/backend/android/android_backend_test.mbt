@@ -1,5 +1,5 @@
 ///|
-test "android backend reports usable runtime_partial capabilities" {
+test "android backend reports experimental readiness" {
   let info = backend_info()
   assert_true(info.host_info.backend == @host.HostBackendKind::Native)
   inspect(info.capabilities.embedded_surface, content="true")
@@ -10,10 +10,10 @@ test "android backend reports usable runtime_partial capabilities" {
   inspect(info.capabilities.accessibility, content="true")
   inspect(info.capabilities.async_image, content="true")
   inspect(info.services.clipboard, content="true")
-  inspect(info.readiness.ready, content="true")
-  inspect(info.readiness.status, content="runtime_partial")
+  inspect(info.readiness.ready, content="false")
+  inspect(info.readiness.status, content="experimental")
   assert_true(info.readiness.blocked_by.length() >= 1)
-  assert_true(info.readiness.blocked_by[0].contains("window-hosted Android"))
+  assert_true(info.readiness.blocked_by[0].contains("experimental"))
   let summary = android_capability_summary()
   inspect(summary.label, content="Android host")
   inspect(summary.window_lifecycle, content="true")

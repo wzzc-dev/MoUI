@@ -1,9 +1,9 @@
 # 0011: Platform product class and mobile readiness semantics
 
 - **Date**: 2026-07-16
-- **Status**: Accepted
+- **Status**: Accepted (product-class decision superseded in part by ADR 0021 on 2026-08-02)
 - **Deciders**: Agent-assisted (wzzc-dev)
-- **Related**: `docs/platform-readiness-declaration.md`, ADR 0006, ADR 0010
+- **Related**: `docs/platform-readiness-declaration.md`, ADR 0006, ADR 0010, ADR 0021
 
 ## Context
 
@@ -62,3 +62,12 @@ truth stays in checks JSON, smoke manifests, and product_class docs.
 - Guidance, README, Gallery, and support docs share one product_class table.
 - Follow-up: matching-device re-smokes and signed HarmonyOS full suite before any
   product_class promotion.
+
+## Amendment (2026-08-02, ADR 0021)
+
+ADR 0021 downgrades Android / iOS / HarmonyOS / WeChat Mini Program from
+`runtime_partial` to **`experimental`** (`ready=false`): the code paths compile
+and host-sim tests pass, but no development/demonstration usability or product
+commitment is made without matching-device evidence. Decision points 1, 2, 3,
+and 5 above are superseded in part by ADR 0021. The capability/service wiring
+and host-sim coverage this ADR describes remain intact.
