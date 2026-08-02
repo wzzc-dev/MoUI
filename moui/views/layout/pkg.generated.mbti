@@ -3,10 +3,13 @@ package "wzzc-dev/moui/views/layout"
 
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/style",
 }
 
 // Values
 pub fn available_width(Double, @core.Constraints) -> Double
+
+pub fn[Msg] column(Array[@core.View[Msg]], spacing? : Double, justify? : @style.MainAlign, align? : @style.CrossAlign) -> @core.View[Msg]
 
 pub fn[Msg] container_box(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, kind? : String, key? : String?) -> @core.View[Msg]
 
@@ -36,6 +39,8 @@ pub fn min_double(Double, Double) -> Double
 
 pub fn min_int(Int, Int) -> Int
 
+pub fn[Msg] overlay(@core.View[Msg], @core.View[Msg]) -> @core.View[Msg]
+
 pub fn[Msg] padding(@core.View[Msg], Double) -> @core.View[Msg]
 
 pub fn[Msg] padding_edges(@core.View[Msg], top? : Double, right? : Double, bottom? : Double, left? : Double) -> @core.View[Msg]
@@ -47,6 +52,10 @@ pub fn[Msg] padding_layout(child~ : @core.View[Msg], insets~ : @core.Insets, kin
 pub fn[Msg] padding_xy(@core.View[Msg], horizontal? : Double, vertical? : Double) -> @core.View[Msg]
 
 pub fn placement_width(Double, @core.Rect) -> Double
+
+pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : @style.MainAlign, align? : @style.CrossAlign) -> @core.View[Msg]
+
+pub fn[Msg] stack(Array[@core.View[Msg]]) -> @core.View[Msg]
 
 pub fn[Msg] wrap(Array[@core.View[Msg]], width? : Double, spacing? : Double, row_spacing? : Double) -> @core.View[Msg]
 

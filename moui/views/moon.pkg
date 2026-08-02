@@ -2,7 +2,8 @@
 // Sub-packages (in dependency order):
 //   common/    ← pure @core helpers
 //   style/     ← control_style_*, control_theme_*, style_api, theme, control_primitives
-//   layout/    ← layout_*, flex, stack, padding, frame, grid, spacer, scroll_view
+//   layout/    ← layout_*, flex, stack, padding, frame, grid, spacer
+//                (scroll_view stays on the root facade: it needs @controls)
 //   canvas/    ← canvas, command_palette, virtual_list
 //   controls/  ← button, text, icon, checkbox, container, divider, toolbar, control_*, choice_*, picker*
 //   text/      ← text_input_*, text_area_*, text_editing_*

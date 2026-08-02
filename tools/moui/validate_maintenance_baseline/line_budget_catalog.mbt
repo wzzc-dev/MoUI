@@ -312,7 +312,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/sectioned_list.mbt", max_lines: 185 },
     { path: "moui/views/lazy_grid.mbt", max_lines: 95 },
     { path: "moui/views/layout_helpers.mbt", max_lines: 180 },
-    { path: "moui/views/layout_metrics.mbt", max_lines: 90 },
+    { path: "moui/views/layout/layout_metrics.mbt", max_lines: 90 },
     { path: "moui/views/layout/layout_flow.mbt", max_lines: 155 },
     { path: "moui/views/layout_responsive_grid.mbt", max_lines: 155 },
     { path: "moui/views/layout_baseline_form.mbt", max_lines: 160 },

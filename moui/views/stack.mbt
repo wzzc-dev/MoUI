@@ -1,17 +1,10 @@
 ///|
-pub fn[Msg] stack(children : Array[@core.View[Msg]]) -> @core.View[Msg] {
-  @common.stack_layout(children~)
-}
+pub using @layout {stack, overlay}
 
 ///|
-pub fn[Msg] overlay(
-  base : @core.View[Msg],
-  overlay : @core.View[Msg],
-) -> @core.View[Msg] {
-  stack([base, overlay])
-}
-
-///|
+/// `scroll_view` stays on the root facade: it composes `@controls` scroll
+/// primitives (`component_host` / `scroll_container`) and the `layout/`
+/// sub-package cannot depend on `controls/` (which already depends on it).
 pub fn[Msg] scroll_view(
   child : @core.View[Msg],
   offset? : @core.Point = @core.Point::new(x=0.0, y=0.0),
