@@ -4,11 +4,17 @@ This page describes draw-command coverage for concrete renderer providers. The
 live report is built from the provider array registered by a composition root;
 its index is `RendererProvider.id`, never `RendererBackendKind`. The latter is
 kept solely as diagnostic classification metadata. The historical grouped table
-below remains a readable product summary, not a central selection matrix.
-Showcase receives the composition root's provider list and renderer support
+below remains a readable product summary, not a central selection matrix.Showcase receives the composition root's provider list and renderer support
 claims still require this report plus provider tests. The current product order
 is native Skia, WebGPU with Canvas2D fallback, native WGPU diagnostics, then
 Sun CPU raster.
+
+**Sun CPU raster is an experimental renderer (ADR 0023).** It is not part of
+the product `auto` selection, is not registered in default composition roots,
+and makes no usability/performance claim. New draw-command capabilities are
+not required to be implemented in sun; it only needs to keep compiling and
+passing its renderer-local and platform provider tests.
+
 Platform readiness is tracked separately from renderer capability. A macOS
 Skia smoke log can support a macOS-only runtime note, but it does not upgrade
 Windows/Linux platform status and does not promote global Skia typography or
