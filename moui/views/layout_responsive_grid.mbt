@@ -45,18 +45,18 @@ fn responsive_grid_measure(
   column_spacing : Double,
   constraints : @core.Constraints,
 ) -> @core.Size {
-  let available = available_width(width, constraints)
+  let available = @layout.available_width(width, constraints)
   let columns = responsive_grid_columns(
     available, min_column_width, column_spacing,
   )
-  let rows = layout_ceil_div(sizes.length(), columns)
+  let rows = @layout.layout_ceil_div(sizes.length(), columns)
   let mut height = 0.0
   for row_index in 0..<rows {
     let mut row_height = 0.0
     let start = row_index * columns
-    let end = layout_min_int(sizes.length(), start + columns)
+    let end = @layout.min_int(sizes.length(), start + columns)
     for index in start..<end {
-      row_height = layout_max_double(row_height, sizes[index].height)
+      row_height = @layout.max_double(row_height, sizes[index].height)
     }
     height = height + row_height
     if row_index + 1 < rows {
@@ -76,7 +76,7 @@ fn responsive_grid_place(
   column_spacing : Double,
   direction : @core.LayoutDirection,
 ) -> Array[@core.Rect] {
-  let available = placement_width(width, frame)
+  let available = @layout.placement_width(width, frame)
   let columns = responsive_grid_columns(
     available, min_column_width, column_spacing,
   )
@@ -85,13 +85,13 @@ fn responsive_grid_place(
   )
   let rects : Array[@core.Rect] = []
   let mut y = frame.origin.y
-  let rows = layout_ceil_div(sizes.length(), columns)
+  let rows = @layout.layout_ceil_div(sizes.length(), columns)
   for row_index in 0..<rows {
     let start = row_index * columns
-    let end = layout_min_int(sizes.length(), start + columns)
+    let end = @layout.min_int(sizes.length(), start + columns)
     let mut row_height = 0.0
     for index in start..<end {
-      row_height = layout_max_double(row_height, sizes[index].height)
+      row_height = @layout.max_double(row_height, sizes[index].height)
     }
     for index in start..<end {
       let column = index - start
@@ -99,7 +99,7 @@ fn responsive_grid_place(
         column.to_double() * (column_width + column_spacing)
       rects.push(
         @core.Rect::new(
-          x=layout_mirror_x(frame, x - frame.origin.x, column_width, direction),
+          x=@layout.layout_mirror_x(frame, x - frame.origin.x, column_width, direction),
           y~,
           width=column_width,
           height=sizes[index].height,
@@ -117,7 +117,7 @@ fn responsive_grid_columns(
   min_column_width : Double,
   column_spacing : Double,
 ) -> Int {
-  let min_column_width = layout_max_double(1.0, min_column_width)
+  let min_column_width = @layout.max_double(1.0, min_column_width)
   let mut columns = 1
   let mut candidate = 2
   let mut needed = candidate.to_double() * min_column_width +
@@ -137,8 +137,8 @@ fn responsive_grid_column_width(
   columns : Int,
   column_spacing : Double,
 ) -> Double {
-  let columns = layout_max_int(1, columns)
-  layout_max_double(
+  let columns = @layout.max_int(1, columns)
+  @layout.max_double(
     1.0,
     (width - (columns - 1).to_double() * column_spacing) / columns.to_double(),
   )

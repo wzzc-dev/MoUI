@@ -39,7 +39,7 @@ test "tracked budgets include current maintenance hotspots" {
     paths.contains("moui/runtime/program_runtime_diagnostics.mbt"),
     content="true",
   )
-  inspect(paths.contains("moui/views/layout_metrics.mbt"), content="true")
+  inspect(paths.contains("moui/views/layout/layout_metrics.mbt"), content="true")
   inspect(
     paths.contains("tools/moui/validate_guidance_consistency/main.mbt"),
     content="true",

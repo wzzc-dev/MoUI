@@ -60,7 +60,7 @@ fn baseline_form_measure(
     }
   }
   constraints.constrain(
-    @core.Size::new(width=available_width(width, constraints), height~),
+    @core.Size::new(width=@layout.available_width(width, constraints), height~),
   )
 }
 
@@ -77,8 +77,8 @@ fn baseline_form_place(
 ) -> Array[@core.Rect] {
   let rects : Array[@core.Rect] = []
   let row_count = sizes.length() / 2
-  let available = placement_width(width, frame)
-  let control_width = layout_max_double(
+  let available = @layout.placement_width(width, frame)
+  let control_width = @layout.max_double(
     0.0,
     available - label_width - column_spacing,
   )
@@ -90,12 +90,12 @@ fn baseline_form_place(
     let control_size = sizes[control_index]
     let label_baseline = baseline_at(baselines, label_index, label_size)
     let control_baseline = baseline_at(baselines, control_index, control_size)
-    let shared_baseline = layout_max_double(label_baseline, control_baseline)
+    let shared_baseline = @layout.max_double(label_baseline, control_baseline)
     let label_y = y + shared_baseline - label_baseline
     let control_y = y + shared_baseline - control_baseline
     rects.push(
       @core.Rect::new(
-        x=layout_mirror_x(frame, 0.0, label_width, direction),
+        x=@layout.layout_mirror_x(frame, 0.0, label_width, direction),
         y=label_y,
         width=label_width,
         height=label_size.height,
@@ -103,7 +103,7 @@ fn baseline_form_place(
     )
     rects.push(
       @core.Rect::new(
-        x=layout_mirror_x(
+        x=@layout.layout_mirror_x(
           frame,
           label_width + column_spacing,
           control_width,
@@ -131,8 +131,8 @@ fn baseline_form_row_height(
   let control_size = sizes[control_index]
   let label_baseline = baseline_at(baselines, label_index, label_size)
   let control_baseline = baseline_at(baselines, control_index, control_size)
-  let shared = layout_max_double(label_baseline, control_baseline)
-  layout_max_double(
+  let shared = @layout.max_double(label_baseline, control_baseline)
+  @layout.max_double(
     shared + label_size.height - label_baseline,
     shared + control_size.height - control_baseline,
   )
