@@ -22,8 +22,7 @@ pub fn sun_feature_status(
     | @render.RendererFeature::ShaderEffect
     | @render.RendererFeature::AsyncImage =>
       @render.RendererFeatureStatus::Supported
-    @render.RendererFeature::TextShaping
-    | @render.RendererFeature::EmojiText =>
+    @render.RendererFeature::TextShaping | @render.RendererFeature::EmojiText =>
       @render.RendererFeatureStatus::Partial
   }
 }

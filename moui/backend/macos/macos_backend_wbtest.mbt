@@ -96,7 +96,7 @@ test "macos coordinator exposes async image loader hook" {
     text_system=() => @core.TextSystem::fallback(),
   )
   let tracker = @render.HostImageResourceRepaintTracker::new()
-    let completion = @render.HostImageResourceCompletionSource::new(
+  let completion = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
@@ -180,9 +180,7 @@ test "macos surface frame pending handoff must persist clear or the next redraw 
 }
 
 ///|
-fn run_frame_pending_handoff(
-  persist_clear~ : Bool,
-) -> (Bool, Int) {
+fn run_frame_pending_handoff(persist_clear~ : Bool) -> (Bool, Int) {
   let coordinator = @runtime.WindowHostCoordinator::new(
     window_requests=@host.HostWindowRequestQueue::new(),
     scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
@@ -229,7 +227,7 @@ fn run_frame_pending_handoff(
         renderer_resize=_ => (),
         set_minimized=_ => (),
         set_visible=_ => (),
-        request_redraw=() => { redraws.val = redraws.val + 1 },
+        request_redraw=() => redraws.val = redraws.val + 1,
         request_ime_update=_ => (),
         drop=() => (),
         native_view_handle=() => None,

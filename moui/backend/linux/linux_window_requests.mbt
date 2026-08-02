@@ -32,13 +32,9 @@ fn LinuxNativeHostBackend::dispatch_host_event(
     Some(slot) => slot.extra
     None => LinuxClientDecorationState::new(active=false)
   }
-  self.coordinator.dispatch_host_event(
-    window_id,
-    host_event,
-    adjust=event => {
-      linux_adjust_host_event_for_client_decorations(event, decorations)
-    },
-  )
+  self.coordinator.dispatch_host_event(window_id, host_event, adjust=event => {
+    linux_adjust_host_event_for_client_decorations(event, decorations)
+  })
 }
 
 ///|
@@ -86,14 +82,18 @@ fn LinuxNativeHostBackend::apply_window_request(
             match self.coordinator.surface_actions(id) {
               Some(actions) => {
                 (actions.sync_surface)(surface_metrics)
-                (actions.renderer_resize)(@runtime.to_render_metrics(surface_metrics))
+                (actions.renderer_resize)(
+                  @runtime.to_render_metrics(surface_metrics),
+                )
               }
               None => ()
             }
           }
           None => {
             ignore(
-              window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)),
+              window.request_surface_size(
+                @host.host_metrics_to_dpi_size(metrics),
+              ),
             )
             (self.renderer_provider.sync_surface)(window, metrics)
           }
@@ -166,7 +166,9 @@ fn LinuxNativeHostBackend::create_resolved_window(
   )
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
-    .with_surface_size(@host.host_metrics_to_dpi_size(requested_surface_metrics))
+    .with_surface_size(
+      @host.host_metrics_to_dpi_size(requested_surface_metrics),
+    )
   let linux_attributes = @window_linux.WindowAttributesLinux::default().with_app_id(
     "dev.wzzc.moui.showcase",
   )
@@ -244,13 +246,13 @@ fn LinuxNativeHostBackend::attach_resolved_window(
       )
       ignore(
         self.platform_slots.insert(
-        @platform_bridge.WindowSlot::new(
-          host_id=resolved.id,
-          platform_id=window.id(),
-          window~,
-          extra=decorations,
+          @platform_bridge.WindowSlot::new(
+            host_id=resolved.id,
+            platform_id=window.id(),
+            window~,
+            extra=decorations,
+          ),
         ),
-      ),
       )
       ignore(
         self.coordinator.attach_surface(
@@ -364,7 +366,9 @@ fn LinuxNativeHostBackend::linux_surface_actions(
   @runtime.WindowSurfaceActions::new(
     focus=fn() { window.focus_window() },
     request_surface_size=fn(metrics) {
-      ignore(window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)))
+      ignore(
+        window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)),
+      )
     },
     sync_surface=fn(metrics) {
       (self.renderer_provider.sync_surface)(window, metrics)
@@ -394,4 +398,3 @@ fn LinuxNativeHostBackend::linux_surface_actions(
     },
   )
 }
-

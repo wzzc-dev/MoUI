@@ -106,7 +106,10 @@ test "ios runtime session renders through supplied provider" {
       inspect(sync_count.val, content="2")
       ignore(session.render_frame())
       inspect(render_count.val, content="2")
-      (renderer_provider_adapter_from_ios(provider).sync)(84UL, session.metrics())
+      (renderer_provider_adapter_from_ios(provider).sync)(
+        84UL,
+        session.metrics(),
+      )
       inspect(sync_count.val, content="3")
       session.dispose()
       inspect(session.disposed(), content="true")

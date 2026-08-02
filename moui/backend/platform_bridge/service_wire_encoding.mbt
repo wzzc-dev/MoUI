@@ -3,6 +3,7 @@
 /// menus and file-dialog options into the same byte layout and decode
 /// selections back; these helpers live in the bridge so every platform
 /// shares one implementation instead of three local copies.
+
 ///|
 pub fn encode_menu_commands(commands : Array[@core.ActionCommand]) -> Bytes {
   let rows : Array[String] = []
@@ -22,7 +23,11 @@ pub fn menu_command_response(
   commands : Array[@core.ActionCommand],
   selected_index : Int,
 ) -> @host.HostServiceResponse {
-  menu_command_response_with_unavailable_sentinel(commands, selected_index, None)
+  menu_command_response_with_unavailable_sentinel(
+    commands,
+    selected_index,
+    None,
+  )
 }
 
 ///|
@@ -32,7 +37,11 @@ pub fn menu_command_response_with_unavailable(
   commands : Array[@core.ActionCommand],
   selected_index : Int,
 ) -> @host.HostServiceResponse {
-  menu_command_response_with_unavailable_sentinel(commands, selected_index, Some(-2))
+  menu_command_response_with_unavailable_sentinel(
+    commands,
+    selected_index,
+    Some(-2),
+  )
 }
 
 ///|
@@ -86,7 +95,7 @@ pub fn encode_host_filter_list(filters : Array[String]) -> Bytes {
 /// preserve the raw bytes.
 pub fn decode_file_dialog_selection(
   bytes : Bytes,
-  trim_paths~ : Bool = false,
+  trim_paths? : Bool = false,
 ) -> Array[String] {
   let text = @utf8.decode_lossy(bytes[:], ignore_bom=false)
   let paths : Array[String] = []

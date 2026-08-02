@@ -81,7 +81,11 @@ fn SkiaRasterRenderer::render_command(
       canvas_scopes.push(@render.PlanScopeKind::Opacity)
     }
     @render.PlanOp::PopOpacity =>
-      self.pop_canvas_scope(canvas, canvas_scopes, @render.PlanScopeKind::Opacity)
+      self.pop_canvas_scope(
+        canvas,
+        canvas_scopes,
+        @render.PlanScopeKind::Opacity,
+      )
     @render.PlanOp::PushLayer(layer) => {
       self.push_layer(canvas, layer)
       canvas_scopes.push(@render.PlanScopeKind::Layer)
@@ -110,7 +114,11 @@ fn SkiaRasterRenderer::render_command(
       canvas_scopes.push(@render.PlanScopeKind::Filter)
     }
     @render.PlanOp::PopFilter =>
-      self.pop_canvas_scope(canvas, canvas_scopes, @render.PlanScopeKind::Filter)
+      self.pop_canvas_scope(
+        canvas,
+        canvas_scopes,
+        @render.PlanScopeKind::Filter,
+      )
     @render.PlanOp::DrawPath(path) => self.draw_path(canvas, path)
     @render.PlanOp::DrawShaderEffect(spec) =>
       self.draw_shader_effect(canvas, spec)

@@ -36,7 +36,8 @@ pub fn image_placement(
   let image_ratio = image_size.width / image_size.height
   let frame_ratio = frame.size.width / frame.size.height
   match fit {
-    @core.ImageFit::Stretch => { frame, crop_axis: ImageCropAxis::None, visible: 1.0 }
+    @core.ImageFit::Stretch =>
+      { frame, crop_axis: ImageCropAxis::None, visible: 1.0 }
     @core.ImageFit::ScaleDown =>
       if image_size.width <= frame.size.width &&
         image_size.height <= frame.size.height {
@@ -53,10 +54,8 @@ pub fn image_placement(
       } else {
         image_contain_placement(frame, image_size)
       }
-    @core.ImageFit::FitWidth =>
-      image_fit_width_placement(frame, image_ratio)
-    @core.ImageFit::FitHeight =>
-      image_fit_height_placement(frame, image_ratio)
+    @core.ImageFit::FitWidth => image_fit_width_placement(frame, image_ratio)
+    @core.ImageFit::FitHeight => image_fit_height_placement(frame, image_ratio)
     @core.ImageFit::Contain => image_contain_placement(frame, image_size)
     @core.ImageFit::Cover =>
       if image_ratio > frame_ratio {

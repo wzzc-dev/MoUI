@@ -73,12 +73,11 @@ fn run_app_with_renderer_provider_internal(
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  @runtime.install_platform_view_plugins(
-    options.platform_view_plugins,
-    (window_ptr, id, event) => {
-      app.dispatch_platform_view_event_from_plugin(window_ptr, id, event)
-    },
-  )
+  @runtime.install_platform_view_plugins(options.platform_view_plugins, (
+    window_ptr,
+    id,
+    event,
+  ) => app.dispatch_platform_view_event_from_plugin(window_ptr, id, event))
   event_loop.run_app(app)
 }
 

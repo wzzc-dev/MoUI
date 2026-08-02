@@ -25,7 +25,8 @@ pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match self.coordinator.platform_windows.lookup_host(platform_window_id) {
+  let window_id = match
+    self.coordinator.platform_windows.lookup_host(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }

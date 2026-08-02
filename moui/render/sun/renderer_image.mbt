@@ -577,9 +577,7 @@ fn sun_image_placement(
   match placement.crop_axis {
     @render.ImageCropAxis::None => { frame: placement.frame, src_rect: None }
     @render.ImageCropAxis::Horizontal => {
-      let crop_width = (image_size.width * placement.visible)
-        .round()
-        .to_int()
+      let crop_width = (image_size.width * placement.visible).round().to_int()
       let left = ((image_size.width - crop_width.to_double()) * 0.5)
         .round()
         .to_int()
@@ -596,9 +594,7 @@ fn sun_image_placement(
       }
     }
     @render.ImageCropAxis::Vertical => {
-      let crop_height = (image_size.height * placement.visible)
-        .round()
-        .to_int()
+      let crop_height = (image_size.height * placement.visible).round().to_int()
       let top = ((image_size.height - crop_height.to_double()) * 0.5)
         .round()
         .to_int()
@@ -616,6 +612,7 @@ fn sun_image_placement(
     }
   }
 }
+
 ///|
 fn sun_image_record_needs_ready_update(
   record : @render.ImageResourceRecord?,

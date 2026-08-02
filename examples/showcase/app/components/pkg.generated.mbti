@@ -4,6 +4,7 @@ package "examples/showcase/app/components"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/style",
 }
 
 // Values
@@ -47,6 +48,7 @@ pub(all) struct CatalogItem {
   title : String
   summary : String
   badge : String
+  tone : @style.BadgeTone
 } derive(Eq, @debug.Debug)
 
 pub(all) enum ComponentGalleryItemId {

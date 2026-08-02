@@ -1,4 +1,3 @@
-
 ///|
 /// Window-hosted native surface handle.
 pub(all) struct HarmonyOsSurfaceHandle {
@@ -128,10 +127,10 @@ pub fn renderer_provider_adapter_from_harmonyos(
 ) -> @embedded_runtime_backend.RendererProviderAdapter {
   @embedded_runtime_backend.RendererProviderAdapter::new(
     create_renderer=fn(raw, metrics) {
-      provider.create(HarmonyOsSurfaceHandle::new(raw=raw), metrics)
+      provider.create(HarmonyOsSurfaceHandle::new(raw~), metrics)
     },
     sync=fn(raw, metrics) {
-      provider.sync(HarmonyOsSurfaceHandle::new(raw=raw), metrics)
+      provider.sync(HarmonyOsSurfaceHandle::new(raw~), metrics)
     },
     image_loader=provider.image_loader,
   )
@@ -182,7 +181,8 @@ pub fn harmonyos_readiness() -> HarmonyOsBackendReadiness {
     ready: false,
     status: "experimental",
     blocked_by: [
-      "product_class=experimental: no development/demonstration usability commitment without signed-device evidence", "commercial/signed-device window-hosted smoke is not yet status=passed", "checked-in smoke still lacks a complete attach/resize/input/IME/clipboard suite",
+      "product_class=experimental: no development/demonstration usability commitment without signed-device evidence",
+      "commercial/signed-device window-hosted smoke is not yet status=passed", "checked-in smoke still lacks a complete attach/resize/input/IME/clipboard suite",
       "actualPresenterRoute remains unverified; GPU seven-gate promotion is not claimed",
     ],
     next_steps: [
@@ -229,4 +229,3 @@ pub fn harmonyos_capability_summary(
     description="HarmonyOS embedded runtime backend with window HostCmd lifecycle and an ApplicationHandler session. The window embedder owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
   )
 }
-

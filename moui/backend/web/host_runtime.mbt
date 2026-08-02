@@ -387,6 +387,7 @@ fn WebApp::dispose_window(
     set_web_async_host_service_queue(None)
   }
 }
+
 ///|
 fn surface_metrics_from_physical(
   size : @dpi.PhysicalSize,
@@ -394,4 +395,3 @@ fn surface_metrics_from_physical(
 ) -> @host.HostSurfaceMetrics {
   @host.surface_metrics_from_physical(size, scale_factor~)
 }
-

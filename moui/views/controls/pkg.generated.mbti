@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/common",
+  "wzzc-dev/moui/views/layout",
   "wzzc-dev/moui/views/style",
 }
 
@@ -14,6 +15,10 @@ pub fn[Msg] accordion(Array[WizardStep[Msg]], expanded~ : Array[String], on_togg
 pub fn[Msg] action_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> ActionItem[Msg]
 
 pub fn[Msg] alert(String, String, primary_action~ : StateViewAction[Msg], secondary_action? : StateViewAction[Msg]?, tone? : @style.FeedbackTone, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] align(@core.View[Msg], alignment? : @core.Alignment) -> @core.View[Msg]
+
+pub fn[Msg] aspect_ratio(@core.View[Msg], Double) -> @core.View[Msg]
 
 pub fn[Msg] button_group(Array[ActionItem[Msg]], selected? : String, theme? : @core.Theme, button_width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -25,13 +30,19 @@ pub fn[Msg] choice_chip(String, selected~ : Bool, on_select~ : Msg, theme? : @co
 
 pub fn choice_item(String, String) -> ChoiceItem
 
+pub fn[Msg] clearable_text_field(String, on_input~ : (String) -> Msg, on_clear~ : Msg, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] collapsible_panel(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] command_bar(Array[ActionItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn command_menu_section(title~ : String, commands~ : Array[@core.ActionCommand]) -> CommandMenuSection
 
+pub fn[Msg] component((@core.ComponentContext) -> @core.View[Msg]) -> @core.View[Msg]
+
 pub fn[Msg] component_host((@core.ComponentContext) -> @core.View[Msg], kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint~ : (@common.PaintContext, @core.Rect) -> Unit, semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
 
 pub fn[Msg] custom_children_layout_control(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint~ : (@common.PaintContext, @core.Rect) -> Unit, semantics_role? : @core.SemanticsRole, semantics_label? : String, kind? : String, key? : String?) -> @core.View[Msg]
 
@@ -40,6 +51,8 @@ pub fn[Msg] custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ :
 pub fn[Msg] dialog(String, content~ : @core.View[Msg], subtitle? : String, primary_action? : StateViewAction[Msg]?, secondary_action? : StateViewAction[Msg]?, dismiss_action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] disclosure(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] expanded(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
 pub fn feedback_accent(@style.FeedbackTone, @style.FeedbackStyle) -> @core.Color
 
@@ -51,15 +64,29 @@ pub fn feedback_tone_style(@style.FeedbackTone, @style.FeedbackStyle) -> @style.
 
 pub fn[Msg] filter_chip(String, selected~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] flexible(@core.View[Msg], weight? : Double) -> @core.View[Msg]
+
 pub fn[Msg] focus_ring(@core.View[Msg], focused~ : Bool, label? : String, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double, radius? : Double) -> @core.View[Msg]
 
 pub fn[Msg] input_group(child~ : @core.View[Msg], prefix? : @core.View[Msg]?, suffix? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double) -> @core.View[Msg]
+
+pub fn[Msg] intrinsic_height(@core.View[Msg]) -> @core.View[Msg]
+
+pub fn[Msg] intrinsic_width(@core.View[Msg]) -> @core.View[Msg]
+
+pub fn[Msg] layout_priority(@core.View[Msg], Double) -> @core.View[Msg]
+
+pub fn[T, Msg] lazy_grid(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, columns? : Int, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double, shows_indicator? : Bool) -> @core.View[Msg]
+
+pub fn[T, Msg] lazy_list(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] menu_button(String, on_click? : Msg, variant? : @style.ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] menu_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> MenuItem[Msg]
 
 pub fn[Msg] number_field(String, on_input~ : (String) -> Msg, on_step? : ((Double) -> Msg)?, step? : Double, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] password_field(String, on_input~ : (String) -> Msg, revealed~ : Bool, on_toggle_reveal~ : Msg, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] picker(Array[@style.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, max_height? : Double) -> @core.View[Msg]
 
@@ -69,9 +96,19 @@ pub fn[Msg] radio_group(Array[ChoiceItem], selected~ : String, on_select~ : (Str
 
 pub fn[Msg] resizable_panel(content~ : @core.View[Msg], size~ : Double, theme? : @core.Theme, height? : Double, min_size? : Double, max_size? : Double, on_drag? : ((Double) -> Msg)?) -> @core.View[Msg]
 
+pub fn[Msg] responsive_grid(Array[@core.View[Msg]], width? : Double, min_column_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] rounded_clip(@core.View[Msg], radius? : Double) -> @core.View[Msg]
+
 pub fn[Msg] scroll_container(child~ : @core.View[Msg], offset? : @core.Point, viewport? : @core.Size?, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?, shows_indicator? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
 
+pub fn scroll_to_index(@core.ScrollState, index~ : Int, item_height? : Double, spacing? : Double) -> @layout.ScrollToIndexIntent
+
+pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?, shows_indicator? : Bool) -> @core.View[Msg]
+
 pub fn[Msg] searchbar(query~ : String, on_input~ : (String) -> Msg, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
+
+pub fn[T, Msg] sectioned_list(Array[@layout.SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, header? : (@layout.SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
 
 pub fn[Msg] segmented_control(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : @style.SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -92,6 +129,8 @@ pub fn[Msg, Style] themeable_control(String, theme? : @core.Theme, (@style.Contr
 pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
+
+pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
 
 // Errors
 

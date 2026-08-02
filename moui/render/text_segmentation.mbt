@@ -116,7 +116,10 @@ pub fn text_grapheme_clusters(text : String) -> Array[String] {
 /// Classify a text segment for fallback planning: 1 emoji, 2 CJK, 3 Hangul,
 /// 4 RTL script, 5 combining marks, 0 other.
 pub fn text_segment_class(text : String) -> Int {
-  let representative = representative_fallback_codepoint(text, skip_joiners=false)
+  let representative = representative_fallback_codepoint(
+    text,
+    skip_joiners=false,
+  )
   if codepoint_is_emoji_hint(representative) {
     1
   } else if codepoint_is_cjk(representative) {

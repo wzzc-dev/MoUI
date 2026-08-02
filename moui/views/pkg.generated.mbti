@@ -8,6 +8,7 @@ import {
   "wzzc-dev/moui/views/data",
   "wzzc-dev/moui/views/feedback",
   "wzzc-dev/moui/views/form",
+  "wzzc-dev/moui/views/layout",
   "wzzc-dev/moui/views/navigation",
   "wzzc-dev/moui/views/popover",
   "wzzc-dev/moui/views/presence_dot",
@@ -295,7 +296,7 @@ pub fn[Msg] router_stack(@navigation.RouterState, Array[@navigation.NavigationDe
 
 pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : @style.MainAlign, align? : @style.CrossAlign) -> @core.View[Msg]
 
-pub fn scroll_to_index(@core.ScrollState, index~ : Int, item_height? : Double, spacing? : Double) -> ScrollToIndexIntent
+pub fn scroll_to_index(@core.ScrollState, index~ : Int, item_height? : Double, spacing? : Double) -> @layout.ScrollToIndexIntent
 
 pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?, shows_indicator? : Bool) -> @core.View[Msg]
 
@@ -305,7 +306,7 @@ pub fn[Msg] section_nav(String, Array[@navigation.SectionNavItem[Msg]], selected
 
 pub fn[Msg] section_nav_item(id~ : String, label~ : String, message~ : Msg, summary? : String, enabled? : Bool) -> @navigation.SectionNavItem[Msg]
 
-pub fn[T, Msg] sectioned_list(Array[SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, header? : (SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
+pub fn[T, Msg] sectioned_list(Array[@layout.SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, header? : (@layout.SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
 
 pub fn[Msg] segmented_control(Array[@controls.ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : @style.SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -390,17 +391,6 @@ pub fn[Msg] wizard_step(@controls.WizardStep[Msg]) -> @core.View[Msg]
 // Errors
 
 // Types and methods
-pub struct ScrollToIndexIntent {
-  index : Int
-  offset : @core.Point
-}
-
-pub struct SectionListSection[T] {
-  id : String
-  title : String
-  items : Array[T]
-}
-pub fn[T] SectionListSection::new(id~ : String, title~ : String, items~ : Array[T]) -> Self[T]
 
 // Type aliases
 pub using @core {type ActionCommand}
@@ -554,6 +544,10 @@ pub using @navigation {type RouteQueryParam}
 pub using @navigation {type RouterSnapshot}
 
 pub using @navigation {type RouterState}
+
+pub using @layout {type ScrollToIndexIntent}
+
+pub using @layout {type SectionListSection}
 
 pub using @navigation {type SectionNavItem}
 

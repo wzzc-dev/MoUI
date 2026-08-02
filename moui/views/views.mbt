@@ -393,12 +393,7 @@ pub using @style {minimal_control_theme_set, new_control_state_style}
 pub using @style {type ColorPalette, type TypographyScale}
 
 ///|
-pub using @style {
-  light_theme,
-  dark_theme,
-  default_theme,
-  theme,
-  environment,
-}
+pub using @style {light_theme, dark_theme, default_theme, theme, environment}
 
-pub using @common { type PaintContext}
+///|
+pub using @common {type PaintContext}

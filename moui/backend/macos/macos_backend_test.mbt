@@ -453,11 +453,12 @@ test "macos backend converts keyboard input event" {
     Some("a"),
     Some("A"),
   )
-  let event = match @host.window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::KeyboardInput(None, key_event, false),
-    @core.Point::new(x=0.0, y=0.0),
-    @core.KeyModifiers::new(shift=true),
-  ) {
+  let event = match
+    @host.window_event_to_host_with_modifiers(
+      @window_core.WindowEvent::KeyboardInput(None, key_event, false),
+      @core.Point::new(x=0.0, y=0.0),
+      @core.KeyModifiers::new(shift=true),
+    ) {
     Some(host_event) => host_event.to_core()
     None => None
   }

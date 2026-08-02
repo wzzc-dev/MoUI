@@ -174,12 +174,11 @@ fn run_app_with_renderer_provider_internal(
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  @runtime.install_platform_view_plugins(
-    options.platform_view_plugins,
-    (window_ptr, id, event) => {
-      app.dispatch_platform_view_event_from_plugin(window_ptr, id, event)
-    },
-  )
+  @runtime.install_platform_view_plugins(options.platform_view_plugins, (
+    window_ptr,
+    id,
+    event,
+  ) => app.dispatch_platform_view_event_from_plugin(window_ptr, id, event))
   event_loop.run_app(app)
 }
 
@@ -400,7 +399,10 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn can_create
         primary=true,
       )
       ignore(
-        self.coordinator.platform_windows.bind(platform_id=window.id(), host_id=window_id),
+        self.coordinator.platform_windows.bind(
+          platform_id=window.id(),
+          host_id=window_id,
+        ),
       )
       self.register_primary_runtime_slot(window_id)
       self.driver.set_redraw_scheduler(() => {
@@ -512,14 +514,14 @@ fn WindowsNativeHostBackend::redraw_window(
           )
           self.coordinator.sync_text_input_session()
           if @runtime.finish_first_frame_smoke_auto_exit(
-            platform_name="Windows",
-            title=runtime_slot.record.title,
-            flag=self.first_frame_smoke_auto_exit,
-            finish=fn() {
-              self.first_frame_smoke_auto_exit = false
-              self.dispose_window(window_id)
-            },
-          ) {
+              platform_name="Windows",
+              title=runtime_slot.record.title,
+              flag=self.first_frame_smoke_auto_exit,
+              finish=fn() {
+                self.first_frame_smoke_auto_exit = false
+                self.dispose_window(window_id)
+              },
+            ) {
             return true
           }
           if !@runtime.runtime_slot_needs_redraw(runtime_slot) {
@@ -637,7 +639,7 @@ fn WindowsNativeHostBackend::dispatch_window_event(
     _ => ()
   }
   match
-@host.window_event_to_host_with_modifiers(
+    @host.window_event_to_host_with_modifiers(
       event,
       self.last_pointer,
       self.modifiers,
@@ -656,7 +658,13 @@ fn WindowsNativeHostBackend::dispatch_host_event(
   window_id : @host.HostWindowId,
   host_event : @host.HostEvent,
 ) -> Unit {
-  ignore(self.coordinator.runtime_slots.apply_host_event(self.coordinator.windows, window_id, host_event))
+  ignore(
+    self.coordinator.runtime_slots.apply_host_event(
+      self.coordinator.windows,
+      window_id,
+      host_event,
+    ),
+  )
   match self.coordinator.runtime_slots.lookup(window_id) {
     Some(slot) =>
       match host_event {
@@ -718,7 +726,9 @@ fn WindowsNativeHostBackend::apply_window_request(
       })
     @host.HostWindowRequest::ResizeWindow(id, metrics) =>
       self.apply_platform_window_request(id, request, window => {
-        ignore(window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)))
+        ignore(
+          window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)),
+        )
         (self.renderer_provider.sync_surface)(window, metrics)
         match self.coordinator.surface_actions(id) {
           Some(actions) =>
@@ -750,7 +760,10 @@ fn WindowsNativeHostBackend::apply_platform_window_request(
 ) -> @host.HostWindowRequestResult {
   match self.platform_slots.lookup_host(id) {
     Some(slot) => {
-      let result = self.coordinator.runtime_slots.apply_request(self.coordinator.windows, request)
+      let result = self.coordinator.runtime_slots.apply_request(
+        self.coordinator.windows,
+        request,
+      )
       match result {
         @host.HostWindowRequestResult::WindowRejected(_) => ()
         _ => apply(slot.window)
@@ -770,8 +783,7 @@ fn WindowsNativeHostBackend::open_window(
   event_loop : @win.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
-  match
-    self.coordinator.open_resolution(request) {
+  match self.coordinator.open_resolution(request) {
     @runtime.HostWindowOpenResolution::OpenRejected(message) =>
       @host.HostWindowRequestResult::WindowRejected(message)
     @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
@@ -961,7 +973,9 @@ fn WindowsNativeHostBackend::windows_surface_actions(
   @runtime.WindowSurfaceActions::new(
     focus=fn() { window.focus_window() },
     request_surface_size=fn(metrics) {
-      ignore(window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)))
+      ignore(
+        window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)),
+      )
     },
     sync_surface=fn(metrics) {
       (self.renderer_provider.sync_surface)(window, metrics)
@@ -1000,4 +1014,3 @@ fn size_dim_to_int(value : Double) -> Int {
     value.to_int()
   }
 }
-
