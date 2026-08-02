@@ -5,4 +5,7 @@ import {
   "wzzc-dev/moui/views/common",
   "wzzc-dev/moui/views/style",
   "wzzc-dev/moui/views/icon",
+  "wzzc-dev/moui/views/text",
+  "wzzc-dev/moui/views/layout",
+  "wzzc-dev/moui/views/container",
 }
