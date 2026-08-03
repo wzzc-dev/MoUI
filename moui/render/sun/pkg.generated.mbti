@@ -17,6 +17,8 @@ pub fn create_sun_provider(create_sun~ : (@render.RendererSurfaceMetrics) -> Sun
 
 pub fn create_with_present_target(@render.RendererSurfaceMetrics, SunPresentTarget, async_image_loading? : Bool) -> SunRasterRenderer raise SunRendererError
 
+pub fn raster() -> @render.RendererBindingFactory
+
 pub fn renderer_descriptor() -> @render.RendererDescriptor
 
 pub fn sun_feature_capabilities() -> Array[@render.RendererBackendFeatureCapability]
@@ -175,6 +177,7 @@ pub fn SunRasterRenderer::text_maturity_diagnostic(Self, text? : String, font? :
 pub fn SunRasterRenderer::text_selection_geometry_diagnostic(Self, text? : String, selection? : @core.TextRange?, font? : @core.FontSpec, max_width? : Double) -> SunTextSelectionGeometryDiagnostic
 pub fn SunRasterRenderer::text_system(Self) -> @core.TextSystem
 pub fn SunRasterRenderer::text_visual_order_diagnostic(Self, String, font? : @core.FontSpec, max_width? : Double) -> SunTextVisualOrderDiagnostic?
+pub fn SunRasterRenderer::to_host_window_renderer(Self) -> @render.HostWindowRenderer
 pub fn SunRasterRenderer::unsupported_command_count(Self) -> Int
 pub fn SunRasterRenderer::unsupported_command_diagnostics(Self) -> Array[SunUnsupportedCommandDiagnostic]
 

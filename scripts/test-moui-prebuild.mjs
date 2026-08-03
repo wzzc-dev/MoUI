@@ -50,8 +50,8 @@ const fallback = runPrebuild({ MOUI_SKIA_DISABLE_PREBUILD_SKIA: "1" });
 if (fallback.vars.MOUI_SKIA_STUB_CC_FLAGS !== "") {
   throw new Error("fallback prebuild should expose empty MOUI_SKIA_STUB_CC_FLAGS");
 }
-if (fallback.vars.MOUI_SKIA_ANDROID_LINK_FLAGS !== "") {
-  throw new Error("fallback prebuild should expose empty MOUI_SKIA_ANDROID_LINK_FLAGS");
+if (fallback.vars.MOUI_ANDROID_HOST_LINK_FLAGS !== "") {
+  throw new Error("host-native fallback should not expose Android link flags");
 }
 
 const realSkia = runPrebuild();
@@ -61,8 +61,16 @@ if (!realSkia.vars.MOUI_SKIA_STUB_CC_FLAGS.includes("-DMOUI_SKIA_HAS_SKIA")) {
 if (!realSkia.vars.MOUI_SKIA_STUB_CC_FLAGS.includes("/tmp/moui-skia-include")) {
   throw new Error("real Skia prebuild should reuse moui_skia include flags");
 }
-if (!realSkia.vars.MOUI_SKIA_ANDROID_LINK_FLAGS.includes("-landroid")) {
-  throw new Error("real Skia prebuild should expose Android presenter link flags");
+if (realSkia.vars.MOUI_ANDROID_HOST_LINK_FLAGS !== "") {
+  throw new Error("host-native prebuild should not expose Android link flags");
+}
+
+const android = runPrebuild({
+  MOUI_SKIA_DISABLE_PREBUILD_SKIA: "1",
+  MOUI_SKIA_PLATFORM: "android",
+});
+if (!android.vars.MOUI_ANDROID_HOST_LINK_FLAGS.includes("-landroid")) {
+  throw new Error("Android cross-build should expose Android host link flags");
 }
 
 const linkPackages = new Set(
@@ -79,15 +87,15 @@ const flagsFor = (name) =>
       ?.link_flags || "",
   );
 
-// Linux host/skia/wgpu are always emitted; fontconfig libs only on Linux hosts.
+// Platform system libraries stay on host packages. Renderer libraries stay on
+// renderer packages; fontconfig libraries are emitted only on Linux hosts.
 requirePackage("wzzc-dev/moui/backend/linux");
-requirePackage("wzzc-dev/moui/backend/linux/skia");
-requirePackage("wzzc-dev/moui/backend/linux/wgpu");
+requirePackage("wzzc-dev/moui/render/skia");
 if (!flagsFor("wzzc-dev/moui/backend/linux").includes("-lz")) {
   throw new Error("linux host link_configs should include -lz");
 }
-if (!flagsFor("wzzc-dev/moui/backend/linux/skia").includes("/tmp/libskia.a")) {
-  throw new Error("linux/skia link_configs should include Skia link flags");
+if (!flagsFor("wzzc-dev/moui/render/skia").includes("/tmp/libskia.a")) {
+  throw new Error("render/skia link_configs should include Skia link flags");
 }
 if (process.platform === "linux") {
   requirePackage("wzzc-dev/moui/render/wgpu/fontconfig");
@@ -98,22 +106,13 @@ if (process.platform === "linux") {
   throw new Error("fontconfig link_configs should be omitted off Linux");
 }
 
-// Windows skia + directwrite are always emitted.
-requirePackage("wzzc-dev/moui/backend/windows/skia");
+// DirectWrite is a renderer text implementation and remains renderer-owned.
 requirePackage("wzzc-dev/moui/render/wgpu/directwrite");
-if (!flagsFor("wzzc-dev/moui/backend/windows/skia").includes("/tmp/libskia.a")) {
-  throw new Error("windows/skia link_configs should include Skia link flags");
-}
 
 if (process.platform === "darwin") {
   requirePackage("wzzc-dev/moui/backend/macos");
-  requirePackage("wzzc-dev/moui/backend/macos/skia");
-  requirePackage("wzzc-dev/moui/backend/macos/wgpu");
-  if (!flagsFor("wzzc-dev/moui/backend/macos/skia").includes("AppKit")) {
-    throw new Error("macos/skia link_configs should include AppKit");
-  }
-  if (!flagsFor("wzzc-dev/moui/backend/macos/skia").includes("/tmp/libskia.a")) {
-    throw new Error("macos/skia link_configs should include Skia link flags");
+  if (!flagsFor("wzzc-dev/moui/backend/macos").includes("AppKit")) {
+    throw new Error("macOS backend link_configs should include AppKit");
   }
   if (!String(fallback.vars.MOUI_MACOS_BACKEND_HOST_LINK_FLAGS || "").includes("AppKit")) {
     throw new Error("fallback should still expose macOS host framework vars");

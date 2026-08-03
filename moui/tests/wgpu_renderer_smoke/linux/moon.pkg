@@ -1,5 +1,6 @@
 import {
-  "wzzc-dev/moui/backend/linux/wgpu" @linux_wgpu,
+  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
+  "wzzc-dev/moui/render/wgpu/fontconfig" @wgpu_fontconfig,
   "Milky2018/wgpu_mbt",
 }
 

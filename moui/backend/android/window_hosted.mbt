@@ -9,27 +9,93 @@ pub struct AndroidEmbeddedRuntimeBackend {
 }
 
 ///|
+/// Android host options captured by the platform entrypoint.
+///
+/// `status_bar_immersive` enables edge-to-edge content behind the visible
+/// status bar. It does not hide the status bar or navigation bar.
+pub struct AndroidHostAppOptions {
+  priv status_bar_immersive : Bool
+}
+
+///|
+pub fn AndroidHostAppOptions::new(
+  status_bar_immersive? : Bool = false,
+) -> AndroidHostAppOptions {
+  { status_bar_immersive, }
+}
+
+///|
+pub fn AndroidHostAppOptions::status_bar_immersive(
+  self : AndroidHostAppOptions,
+) -> Bool {
+  self.status_bar_immersive
+}
+
+///|
+pub fn AndroidHostAppOptions::with_status_bar_immersive(
+  self : AndroidHostAppOptions,
+  enabled : Bool,
+) -> AndroidHostAppOptions {
+  let _ = self
+  { status_bar_immersive: enabled }
+}
+
+///|
 pub fn AndroidEmbeddedRuntimeBackend::new(
   title? : String = "MoUI",
   runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
-  provider_factory~ : () -> AndroidRendererProvider,
+  renderer_factories~ : Array[@render.RendererBindingFactory],
   auto_exit_after_frames? : Int? = None,
+) -> AndroidEmbeddedRuntimeBackend {
+  new_android_embedded_runtime_backend(
+    title~,
+    runtime_factory~,
+    surface_binding_factory=() => android_surface_binding(renderer_factories),
+    auto_exit_after_frames~,
+  )
+}
+
+///|
+/// Application-builder entry for the Android window-hosted event loop.
+pub fn entry(
+  options? : AndroidHostAppOptions = AndroidHostAppOptions::new(),
+  auto_exit_after_frames? : Int? = None,
+) -> @runtime.PlatformEntry {
+  @runtime.PlatformEntry::new(id="android", launch=request => {
+    ignore(
+      android_set_status_bar_immersive(
+        if options.status_bar_immersive {
+          1
+        } else {
+          0
+        },
+      ),
+    )
+    let runtime = request.runtime()
+    let app = AndroidEmbeddedRuntimeBackend::new(
+      title=request.title(),
+      runtime_factory=_metrics => runtime,
+      renderer_factories=request.renderer_factories(),
+      auto_exit_after_frames~,
+    )
+    let event_loop = @window_android.EventLoop::new()
+    event_loop.run_app(app)
+  })
+}
+
+///|
+fn new_android_embedded_runtime_backend(
+  title~ : String,
+  runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
+  surface_binding_factory~ : () -> AndroidSurfaceBinding,
+  auto_exit_after_frames~ : Int?,
 ) -> AndroidEmbeddedRuntimeBackend {
   {
     backend: @embedded_runtime_backend.HostedWindowBackend::new(
       title~,
       runtime_factory~,
-      provider_factory=() => {
-        let provider = provider_factory()
-        @embedded_runtime_backend.RendererProviderAdapter::new(
-          create_renderer=fn(raw, metrics) {
-            provider.create(AndroidSurfaceHandle::new(raw~), metrics)
-          },
-          sync=fn(raw, metrics) {
-            provider.sync(AndroidSurfaceHandle::new(raw~), metrics)
-          },
-          image_loader=provider.image_loader,
-        )
+      surface_binding_factory=() => {
+        host_surface_binding_from_android(surface_binding_factory())
       },
       auto_exit_after_frames~,
     ),

@@ -53,7 +53,7 @@ pub struct SkiaRasterRenderer {
   priv target : SkiaPresentTarget
   priv gpu_target : HostGpuPresentTarget?
   priv font_resolution : SkiaFontResolution
-  priv surface_route : @render.SkiaSurfaceRoute
+  priv surface_route : @render.SurfaceRoute
   priv gpu_context : @skia_native.GpuContext?
   priv mut surface : @skia_native.Surface
   priv mut gpu_surface_attached : Bool
@@ -149,7 +149,7 @@ pub fn skia_gpu_native_descriptor() -> @render.RendererDescriptor {
       provider_id="skia-hybrid",
       backend=@render.RendererBackendKind::SkiaGpuNative,
     ),
-    description="Native Skia GPU renderer identity for direct host GPU surfaces. Providers must prove a matching Metal, Vulkan, EGL/GLES, or Direct3D surface before selecting it; resolve_surface_route picks the platform-appropriate SkiaSurfaceRoute (metal/vulkan/egl/direct3d) and the matching HostGpuPresentTarget wiring. Per ADR 0006, SkiaGpuNative is descriptive only until per-platform promotion manifests pass; Auto resolves to SkiaRasterNative.",
+    description="Native Skia GPU renderer identity for direct host GPU surfaces. Providers must prove a matching Metal, Vulkan, EGL/GLES, or Direct3D surface before selecting it; resolve_surface_route picks the platform-appropriate SurfaceRoute (metal/vulkan/egl/direct3d) and the matching HostGpuPresentTarget wiring. Auto prefers SkiaGpuNative when the host exposes a usable GPU surface; SkiaRasterNative remains the explicit mode and sticky recovery fallback.",
   )
 }
 
@@ -175,7 +175,7 @@ pub fn create_with_present_target(
 pub fn create_with_present_target_and_route(
   metrics : @render.RendererSurfaceMetrics,
   target : SkiaPresentTarget,
-  surface_route? : @render.SkiaSurfaceRoute = @render.SkiaSurfaceRoute::RasterSurfaceRoute,
+  surface_route? : @render.SurfaceRoute = @render.SurfaceRoute::RasterSurfaceRoute,
   gpu_target? : HostGpuPresentTarget? = None,
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
   async_image_loading? : Bool = false,

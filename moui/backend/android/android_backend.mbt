@@ -23,7 +23,7 @@ pub fn AndroidSurfaceHandle::raw(self : AndroidSurfaceHandle) -> UInt64 {
 pub(all) struct AndroidBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
-  renderer_provider : Bool
+  surface_binding : Bool
   pointer : Bool
   scroll : Bool
   keyboard : Bool
@@ -61,36 +61,90 @@ pub(all) struct AndroidBackendInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub struct AndroidRendererProvider {
-  priv create_renderer : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
+pub struct AndroidSurfaceBinding {
+  priv create_renderer : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
   priv sync_surface : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> Unit
   priv image_loader : @render.HostAsyncImageLoader?
 }
 
 ///|
-pub fn AndroidRendererProvider::new(
-  create_renderer~ : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
+pub fn AndroidSurfaceBinding::new(
+  create_renderer~ : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
   sync_surface? : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
     _surface,
     _metrics,
   ) => (),
   image_loader? : @render.HostAsyncImageLoader? = None,
-) -> AndroidRendererProvider {
+) -> AndroidSurfaceBinding {
   { create_renderer, sync_surface, image_loader }
 }
 
 ///|
-fn AndroidRendererProvider::create(
-  self : AndroidRendererProvider,
+/// Bind renderer factories to an Android window-hosted surface without
+/// exposing the native window type outside this package.
+pub fn android_surface_binding(
+  factories : Array[@render.RendererBindingFactory],
+) -> AndroidSurfaceBinding {
+  let image_source = @host_image_source.from_filesystem()
+  AndroidSurfaceBinding::new(create_renderer=(surface, metrics) => {
+    let renderer_metrics = @render.RendererSurfaceMetrics::new(
+      logical_size=metrics.logical_size,
+      physical_size=metrics.physical_size,
+      scale_factor=metrics.scale_factor,
+    )
+    let present = @render.HostPresentTarget::new(
+      description="Android host CPU presenter",
+      present=frame => {
+        android_present_pixels_to_surface(
+          surface.raw(),
+          frame.width(),
+          frame.height(),
+          frame.row_bytes(),
+          frame.pixels(),
+          frame.pixels().length(),
+        ) !=
+        0
+      },
+    )
+    let gpu_surface = match
+      @render.GpuHostSurfaceDescriptor::android_vulkan_window(surface.raw()) {
+      Some(descriptor) =>
+        Some(
+          @render.HostGpuSurfaceBridge::new(
+            descriptor~,
+            create_surface=_ => None,
+            present=_ => true,
+          ),
+        )
+      None => None
+    }
+    let kit = @render.HostSurfaceKit::new(
+      surface=@render.SurfaceDescriptor::cpu_raster(
+        width=renderer_metrics.logical_size.width,
+        height=renderer_metrics.logical_size.height,
+        scale_factor=renderer_metrics.scale_factor,
+      ),
+      metrics=renderer_metrics,
+      cpu_present=Some(present),
+      gpu_surface~,
+      image_source=Some(image_source),
+    )
+    @render.resolve_host_renderer(factories, kit)
+  })
+}
+
+///|
+fn AndroidSurfaceBinding::create(
+  self : AndroidSurfaceBinding,
   surface : AndroidSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
-) -> @render.HostWindowRenderer? {
+) -> @render.HostRendererResolution? {
   (self.create_renderer)(surface, metrics)
 }
 
 ///|
-fn AndroidRendererProvider::sync(
-  self : AndroidRendererProvider,
+fn AndroidSurfaceBinding::sync(
+  self : AndroidSurfaceBinding,
   surface : AndroidSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
 ) -> Unit {
@@ -98,8 +152,8 @@ fn AndroidRendererProvider::sync(
 }
 
 ///|
-pub fn AndroidRendererProvider::has_async_image_loader(
-  self : AndroidRendererProvider,
+pub fn AndroidSurfaceBinding::has_async_image_loader(
+  self : AndroidSurfaceBinding,
 ) -> Bool {
   self.image_loader is Some(_)
 }
@@ -109,28 +163,27 @@ pub fn create_session(
   runtime~ : @runtime.AppRuntime,
   surface~ : AndroidSurfaceHandle,
   metrics~ : @host.HostSurfaceMetrics,
-  provider~ : AndroidRendererProvider,
+  binding~ : AndroidSurfaceBinding,
 ) -> @embedded_runtime_backend.HostedRuntimeSession? {
   @embedded_runtime_backend.HostedRuntimeSession::create(
     runtime~,
     raw_handle=surface.raw(),
     metrics~,
-    adapter=renderer_provider_adapter_from_android(provider),
+    binding=host_surface_binding_from_android(binding),
   )
 }
 
 ///|
-pub fn renderer_provider_adapter_from_android(
-  provider : AndroidRendererProvider,
-) -> @embedded_runtime_backend.RendererProviderAdapter {
-  @embedded_runtime_backend.RendererProviderAdapter::new(
+pub fn host_surface_binding_from_android(
+  binding : AndroidSurfaceBinding,
+) -> @embedded_runtime_backend.HostSurfaceBinding {
+  @embedded_runtime_backend.HostSurfaceBinding::new(
     create_renderer=fn(raw, metrics) {
-      provider.create(AndroidSurfaceHandle::new(raw~), metrics)
+      binding.create(AndroidSurfaceHandle::new(raw~), metrics)
     },
     sync=fn(raw, metrics) {
-      provider.sync(AndroidSurfaceHandle::new(raw~), metrics)
+      binding.sync(AndroidSurfaceHandle::new(raw~), metrics)
     },
-    image_loader=provider.image_loader,
   )
 }
 
@@ -160,7 +213,7 @@ pub fn android_capability_matrix() -> AndroidBackendCapabilities {
   {
     embedded_surface: true,
     external_event_loop: true,
-    renderer_provider: true,
+    surface_binding: true,
     pointer: true,
     scroll: true,
     keyboard: true,
@@ -202,7 +255,7 @@ pub fn backend_info() -> AndroidBackendInfo {
     services: android_service_capabilities(),
     input: android_input_capabilities(),
     readiness: android_readiness(),
-    description: "Android backend exposes a native-session contract: wzzc-dev/window/android supplies an ANativeWindow surface and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until window-hosted matching-device L3 and presenter verification close remaining gaps.",
+    description: "Android backend exposes a native-session contract: wzzc-dev/window/android supplies an ANativeWindow surface and lifecycle/input callbacks, while application-supplied factories bind the renderer. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until window-hosted matching-device L3 and presenter verification close remaining gaps.",
   }
 }
 

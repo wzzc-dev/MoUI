@@ -17,18 +17,22 @@ fn main {
         )
     }
   })
-  @macos_skia_backend.run_app_with_options(
+  @moui.run_app(
     "MoUI Multi-Window",
     runtime_for(
       @multi_window_app.Scene::Main,
       windows,
       @geometry.Size::new(width=640.0, height=420.0),
     ),
-    options=@macos_skia_backend.MacosSkiaAppOptions::new(
-      scene_resolver=resolver,
-    ),
-    window_requests=queue,
   )
+  .render_all(@render_skia.from_env())
+  .backend(
+    @macos_backend.entry(
+      options=@macos_backend.MacosHostAppOptions::new(scene_resolver=resolver),
+    ),
+  )
+  .window_requests(queue)
+  .run()
 }
 
 ///|

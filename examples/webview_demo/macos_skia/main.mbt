@@ -5,15 +5,21 @@ fn main {
   let capabilities = @webview_host.HostWebViewCapabilities::native_available(
     description="macOS WKWebView native embedding is available.",
   )
-  @macos_skia_backend.run_app_with_options(
+  @moui.run_app(
     "MoUI WebView Demo",
     @runtime.new_program_with_dimensions(
       program=@webview_demo.program(commands~, capabilities~),
       width=1120.0,
       height=760.0,
     ),
-    options=@macos_skia_backend.MacosSkiaAppOptions::new(platform_view_plugins=[
-      plugin,
-    ]),
   )
+  .render_all(@render_skia.from_env())
+  .backend(
+    @macos_backend.entry(
+      options=@macos_backend.MacosHostAppOptions::new(platform_view_plugins=[
+        plugin,
+      ]),
+    ),
+  )
+  .run()
 }

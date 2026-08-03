@@ -64,6 +64,7 @@ pub fn WindowSurfaceActions::new(
 struct CoordinatedSurface {
   host_id : @backend_host.HostWindowId
   renderer : @render.HostWindowRenderer
+  image_loader : @render.HostAsyncImageLoader?
   actions : WindowSurfaceActions
   mut frame_pending : Bool
 }
@@ -73,8 +74,8 @@ struct CoordinatedSurface {
 ///
 /// Owns the window request queue, registry, runtime slots, platform window
 /// map, image repaint tracker, IME session, subscription sources, services
-/// bridge, and async image loader shared by every native desktop backend.
-/// Platform adapters embed one coordinator and keep only native decode,
+/// bridge, and per-surface async image loaders selected during renderer
+/// negotiation. Platform adapters embed one coordinator and keep only native decode,
 /// window creation, and frame production local.
 pub struct WindowHostCoordinator {
   window_requests : @backend_host.HostWindowRequestQueue
@@ -86,7 +87,6 @@ pub struct WindowHostCoordinator {
   event_sources : HostPlatformEventSources?
   text_input_session : @backend_host.TextInputSession
   services : @backend_host.HostServiceBridge
-  image_loader : @render.HostAsyncImageLoader?
   mut surfaces : Array[CoordinatedSurface]
 }
 
@@ -96,7 +96,6 @@ pub fn WindowHostCoordinator::new(
   scene_resolver~ : HostWindowSceneResolver,
   services~ : @backend_host.HostServiceBridge,
   event_sources~ : HostPlatformEventSources?,
-  image_loader~ : @render.HostAsyncImageLoader?,
 ) -> WindowHostCoordinator {
   {
     window_requests,
@@ -108,7 +107,6 @@ pub fn WindowHostCoordinator::new(
     event_sources,
     text_input_session: @backend_host.TextInputSession::new(),
     services,
-    image_loader,
     surfaces: [],
   }
 }
@@ -126,13 +124,20 @@ pub fn WindowHostCoordinator::attach_surface(
   host_id : @backend_host.HostWindowId,
   renderer : @render.HostWindowRenderer,
   actions : WindowSurfaceActions,
+  image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> Bool {
   for surface in self.surfaces {
     if surface.host_id == host_id {
       return false
     }
   }
-  self.surfaces.push({ host_id, renderer, actions, frame_pending: false })
+  self.surfaces.push({
+    host_id,
+    renderer,
+    image_loader,
+    actions,
+    frame_pending: false,
+  })
   true
 }
 
@@ -538,7 +543,7 @@ pub fn WindowHostCoordinator::schedule_image_resource_loads(
   renderer : @render.HostWindowRenderer,
   completion_source : @render.HostImageResourceCompletionSource,
 ) -> @render.HostAsyncImageLoadScheduleResult? {
-  match self.image_loader {
+  match self.surface_image_loader(window_id) {
     Some(loader) =>
       Some(
         loader.schedule_loading_resources(
@@ -556,10 +561,23 @@ pub fn WindowHostCoordinator::cancel_image_resource_loads(
   self : WindowHostCoordinator,
   window_id : @backend_host.HostWindowId,
 ) -> Int {
-  match self.image_loader {
+  match self.surface_image_loader(window_id) {
     Some(loader) => loader.cancel_window(to_render_id(window_id))
     None => 0
   }
+}
+
+///|
+fn WindowHostCoordinator::surface_image_loader(
+  self : WindowHostCoordinator,
+  window_id : @backend_host.HostWindowId,
+) -> @render.HostAsyncImageLoader? {
+  for surface in self.surfaces {
+    if surface.host_id == window_id {
+      return surface.image_loader
+    }
+  }
+  None
 }
 
 ///|

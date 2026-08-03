@@ -43,6 +43,13 @@
           ]
         },
         {
+          "name": "root facade dependency boundary",
+          "argv": [
+            "node",
+            "scripts/validate-root-facade-deps.mjs"
+          ]
+        },
+        {
           "name": "generated repository facts",
           "argv": [
             "node",
@@ -69,6 +76,13 @@
           "argv": [
             "node",
             "scripts/validate-maintenance-baseline.mjs"
+          ]
+        },
+        {
+          "name": "backend renderer boundary",
+          "argv": [
+            "node",
+            "scripts/validate-backend-renderer-boundary.mjs"
           ]
         },
         {
@@ -536,12 +550,12 @@
           ]
         },
         {
-          "name": "macOS Skia provider tests",
+          "name": "macOS Skia composition check",
           "host": "darwin",
           "argv": [
             "moon",
-            "test",
-            "moui/backend/macos/skia",
+            "check",
+            "examples/showcase/macos_skia",
             "--target",
             "native"
           ]
@@ -558,12 +572,12 @@
           ]
         },
         {
-          "name": "Linux Skia provider tests",
+          "name": "Linux Skia composition check",
           "host": "linux",
           "argv": [
             "moon",
-            "test",
-            "moui/backend/linux/skia",
+            "check",
+            "examples/showcase/linux_skia",
             "--target",
             "native"
           ]
@@ -580,12 +594,12 @@
           ]
         },
         {
-          "name": "Windows Skia provider tests",
+          "name": "Windows Skia composition check",
           "host": "windows",
           "argv": [
             "moon",
-            "test",
-            "moui/backend/windows/skia",
+            "check",
+            "examples/showcase/windows_skia",
             "--target",
             "native"
           ]

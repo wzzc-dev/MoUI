@@ -63,7 +63,7 @@ adding auto-exit flags to Showcase or Markdown Editor packages.
 ## Link Flags
 
 Windows Skia/Ganesh libraries are injected by `moui/build.js` prebuild
-`link_configs` for `wzzc-dev/moui/backend/windows/skia` (from
+`link_configs` for `wzzc-dev/moui/render/skia` (from
 `MOUI_SKIA_CC_LINK_FLAGS`). Win32 system libraries for the window host come
 from `window/windows` prebuild `link_configs`. DirectWrite WGPU text uses
 `render/wgpu/directwrite` link_configs (`-lz`).
@@ -85,9 +85,10 @@ The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as
 macOS, with platform-specific ownership limited to Win32 window handles,
 services, lifecycle, resize handling, text-input session synchronization, and
 redraw requests. Concrete rendering is injected through
-`WindowsRendererProvider`; `backend/windows/wgpu` owns HWND/HINSTANCE WGPU
-surface creation for diagnostics and `backend/windows/skia` owns the GDI pixel
-presenter for the native mainline. Text
+ordered `RendererBindingFactory` values at the application entrypoint.
+`backend/windows` supplies a neutral HWND GPU descriptor, GDI CPU presenter,
+and raw-byte `HostImageSource`; concrete Skia/WGPU construction stays in
+`render/skia` and `render/wgpu`. Text
 clipboard requests are implemented through the Win32
 `CF_UNICODETEXT` clipboard API and normalized to UTF-8 at the host-service
 boundary. The Windows service bridge also opens URLs through `ShellExecuteW`,
@@ -105,7 +106,7 @@ the selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/windows` backend are
 normalized through `HostEvent::DragDrop` and dispatched to
 `View::on_file_drop` targets, matching the macOS host path.
-`backend/windows/wgpu` remains the WGPU diagnostic path and installs the sibling
+The `render/wgpu.native(...)` diagnostic factory installs the sibling
 `render/wgpu/directwrite` provider
 through the same renderer/runtime boundary used by macOS CoreText and composes
 it with `render/wgpu/cosmic_text` as fallback. That provider is currently an
@@ -116,8 +117,7 @@ DirectWrite-private raster payloads. It also routes raster glyph bytes through
 the shared single-channel raster parser. Its native stub advertises the
 DirectWrite integration point while returning no platform layout/raster data,
 so the composed Cosmic fallback handles native text until the real DirectWrite
-engine lands. Choose `MoonCosmic` with
-`WindowsWgpuAppOptions::new(text_engine=...)`.
+engine lands. Choose `MoonCosmic` through the factory's `text_engine` argument.
 The `examples/showcase/windows_wgpu` and `examples/showcase/windows_wgpu_cosmic`
 entrypoints remain WGPU diagnostics; `windows_wgpu_cosmic` selects `MoonCosmic`
 explicitly for comparison with the WGPU DirectWrite scaffold plus Cosmic
@@ -128,39 +128,31 @@ workflow.
 The Markdown Editor also has `examples/markdown_editor/windows_wgpu_cosmic` for the
 same explicit text-provider comparison on the editing workflow.
 
-## Skia Provider
+## Skia Renderer
 
-Select Skia by importing `wzzc-dev/moui/backend/windows/skia` and using
-`WindowsSkiaAppOptions`. The provider creates `render/skia.SkiaRasterRenderer`
+Select Skia by importing `wzzc-dev/moui/render/skia`, adding
+`@render_skia.from_env()` to the app builder, and capturing
+`WindowsHostAppOptions` in `@windows.entry`. The factory creates
+`render/skia.SkiaRasterRenderer`
 and presents the CPU pixel frame through the Win32 presenter. The C presenter
 copies the RGBA premultiplied readback into a top-down 32-bit BGRA DIB buffer
 and blits it to the client DC with `StretchDIBits`. If `moui_skia/native` is only
 in fallback mode, renderer creation is rejected with a diagnostic instead of
 opening an empty HWND.
-`windows_skia_provider_preflight_summary()` exposes package-level preflight
-observation for the selected font resolution, renderer availability,
-`moui_skia/native` availability, the GDI presenter path, inherited Win32 host
-service/input/window readiness, explicit clipboard/menu/file-dialog/open
-URL/system-theme/async-service readiness, the `HostWindowRenderer` bridge that
-forwards Skia text-system, image-resource, present-count, and disposal
-diagnostics, native context-menu and host-modal
-file-dialog readiness, native accessibility status, and the matching-host
-runtime boundary, including whether the first-frame smoke option is enabled.
-Treat that summary and its package test as provider/preflight diagnostic only;
 The Windows host loop records the renderer image-resource revision after each
 present, routes later observed revision changes through the matching HWND's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
-calls the optional provider-owned `HostAsyncImageLoader` after the presented
+calls the selected factory's neutral `HostAsyncImageLoader` after the presented
 revision is baselined, and removes tracked image revisions plus in-flight image
-loads when a host window is disposed. The Windows Skia provider creates
-renderers with post-present async image loading, but the required async
+loads when a host window is disposed. Windows reads local files as raw bytes;
+the selected renderer owns decode and completion. The required async
 second-frame artifact remains matching-host pending until a Windows/MSVC run
-records it from the Skia entrypoints or provider smoke.
+records it from a Skia composition root.
 Passed Windows runtime observation still needs a Windows/MSVC host running the
 Showcase or Markdown Editor Skia entrypoints with recorded artifacts. On
 non-Windows hosts, the Win32 presenter and service stubs may fail C compilation
 because they require `windows.h`, so a Darwin failure of
-`moui/backend/windows/skia` is a host/toolchain limit rather than Windows
+`moui/backend/windows` or `moui/render/skia` is a host/toolchain limit rather than Windows
 runtime observation.
 
 To use a preseeded local `wgpu-native` release for WGPU diagnostics instead of

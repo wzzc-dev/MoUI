@@ -35,7 +35,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 - `moui/runtime/` 暴露 app/host `AppRuntime` 构造入口，并拥有 runtime state、tree/layout/paint、event dispatch、program message drain、effect task、subscription lifecycle 和 diagnostics。
 - `moui/views/` 为 app 代码返回面向应用的 `@moui.View[Msg]` 值。
 - `moui/backend/host/` 定义共享 host contract；平台 backend 将窗口和输入事件规范化为 `HostEvent`。
-- `moui/backend/<platform>/skia` 选择原生 Skia 光栅化主线 provider；`moui/backend/<platform>/wgpu` 保留原生 WGPU 诊断能力。
+- `moui/backend/<platform>` 只提供中立宿主 surface/presenter；应用通过 `render/skia` 或 `render/wgpu` factory 显式组合渲染器。
 - `moui/render/` 提供 renderer facade；原生 Skia 光栅化、WebGPU adapter 和实验性原生 WGPU 实现分别位于 `render/skia/`、`render/webgpu_adapter/` 和 `render/wgpu/`。
 - `moui_theme/` 是可选 addon workspace member，用于带源码映射的 Material、Carbon、Primer、Fluent 主题预览，以及一方 Smartisan-inspired Sickle 拟物/扁平混合主题。
 - `examples/*/app/` 包含共享 app 逻辑，而平台子包是很薄的入口。

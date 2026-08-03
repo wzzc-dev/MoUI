@@ -79,7 +79,7 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 2042,
+      "maxLines": 2048,
       "reason": "Existing API validator with explicit declaration and semantic contract audits."
     },
     {
@@ -129,7 +129,7 @@
     },
     {
       "path": "moui/render/wgpu/native_renderer.mbt",
-      "maxLines": 1570,
+      "maxLines": 1574,
       "reason": "Existing diagnostic WGPU renderer implementation."
     },
     {
@@ -181,11 +181,6 @@
       "path": "examples/mo_workbench/app/workbench_wbtest.mbt",
       "maxLines": 1441,
       "reason": "Existing workbench integration test with declaration invalidation coverage."
-    },
-    {
-      "path": "moui/backend/windows/windows_backend.mbt",
-      "maxLines": 1308,
-      "reason": "Existing Win32 backend implementation after extracting the host-service bridge."
     },
     {
       "path": "moui/render/skia/skia_renderer_text_wbtest.mbt",
@@ -244,7 +239,7 @@
     },
     {
       "path": "moui/render/wgpu/native_smoke.mbt",
-      "maxLines": 1248,
+      "maxLines": 1250,
       "reason": "Existing native WGPU diagnostic smoke."
     },
     {

@@ -1,20 +1,16 @@
 ///|
 /// Window-hosted iOS Showcase entrypoint.
 fn main {
-  let app = @ios_host.IosEmbeddedRuntimeBackend::new(
-    title="MoUI Showcase (ios window-hosted)",
-    runtime_factory=metrics => {
-      @runtime.new_program(
-        program=@app.ShowcaseApp::new().program_with_initial_route(
-          "platform/mobile-service-probe",
-        ),
-        size=metrics.logical_size,
-      )
-    },
-    provider_factory=() => @ios_skia_backend.renderer_provider(),
-    auto_exit_after_frames=None,
+  let runtime = @runtime.new_program_with_dimensions(
+    program=@app.ShowcaseApp::new().program_with_initial_route(
+      "platform/mobile-service-probe",
+    ),
+    width=320.0,
+    height=640.0,
   )
   println("moui-window-hosted ios: waiting for HostCmd surface")
-  let event_loop = @window_ios.EventLoop::new()
-  event_loop.run_app(app)
+  @moui.run_app("MoUI Showcase (ios window-hosted)", runtime)
+  .render_all(@render_skia.from_env())
+  .backend(@ios_host.entry())
+  .run()
 }

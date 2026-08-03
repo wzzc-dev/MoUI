@@ -10,5 +10,15 @@ fn main {
     height=640.0,
   )
   runtime.set_action_commands(app.action_commands(services~))
-  @windows_wgpu_backend.run_app("MoUI Markdown Editor", runtime)
+  @moui.run_app("MoUI Markdown Editor", runtime)
+  .render(
+    @render_wgpu.native(
+      text_engine=@render_wgpu.native_platform_text_engine_with_fallback(
+        @wgpu_directwrite.directwrite_text_provider(),
+        fallback=@wgpu_cosmic.cosmic_text_engine(),
+      ),
+    ),
+  )
+  .backend(@windows_host.entry())
+  .run()
 }

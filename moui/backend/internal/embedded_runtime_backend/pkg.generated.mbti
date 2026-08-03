@@ -174,13 +174,20 @@ pub(all) struct EmbeddingSemanticsUpdate {
   issues : Array[@runtime.SemanticsIssue]
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct HostSurfaceBinding {
+  create_renderer : (UInt64, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
+  sync : (UInt64, @host.HostSurfaceMetrics) -> Unit
+  image_loader : @render.HostAsyncImageLoader?
+}
+pub fn HostSurfaceBinding::new(create_renderer~ : (UInt64, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?, sync~ : (UInt64, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
+
 pub struct HostedRuntimeSession {
   mut raw_handle : UInt64
   core : EmbeddedRuntimeBackendCore
 }
 pub fn HostedRuntimeSession::advance_time(Self, Double) -> Unit
-pub fn HostedRuntimeSession::attach(Self, raw_handle~ : UInt64, metrics~ : @host.HostSurfaceMetrics, adapter~ : RendererProviderAdapter) -> Bool
-pub fn HostedRuntimeSession::create(runtime~ : @runtime.AppRuntime, raw_handle~ : UInt64, metrics~ : @host.HostSurfaceMetrics, adapter~ : RendererProviderAdapter) -> Self?
+pub fn HostedRuntimeSession::attach(Self, raw_handle~ : UInt64, metrics~ : @host.HostSurfaceMetrics, binding~ : HostSurfaceBinding) -> Bool
+pub fn HostedRuntimeSession::create(runtime~ : @runtime.AppRuntime, raw_handle~ : UInt64, metrics~ : @host.HostSurfaceMetrics, binding~ : HostSurfaceBinding) -> Self?
 pub fn HostedRuntimeSession::detach(Self) -> Bool
 pub fn HostedRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
 pub fn HostedRuntimeSession::dispatch_host_response(Self, EmbeddingHostResponse) -> Bool
@@ -214,7 +221,7 @@ pub fn HostedWindow::new(scale_factor~ : () -> Double, inner_size~ : () -> @dpi.
 pub struct HostedWindowBackend {
   title : String
   runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
-  provider_factory : () -> RendererProviderAdapter
+  surface_binding_factory : () -> HostSurfaceBinding
   ime_sync : ((@runtime.AppRuntime?) -> Unit)?
   mut window : HostedWindow?
   mut runtime : @runtime.AppRuntime?
@@ -236,17 +243,10 @@ pub fn HostedWindowBackend::frames_presented(Self) -> Int
 pub fn HostedWindowBackend::handle_window_event(Self, @wzzc-dev/window/core.WindowEvent, exit~ : () -> Unit) -> Unit
 pub fn HostedWindowBackend::has_session(Self) -> Bool
 pub fn HostedWindowBackend::has_window(Self) -> Bool
-pub fn HostedWindowBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> RendererProviderAdapter, ime_sync? : ((@runtime.AppRuntime?) -> Unit)?, auto_exit_after_frames? : Int?) -> Self
+pub fn HostedWindowBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, surface_binding_factory~ : () -> HostSurfaceBinding, ime_sync? : ((@runtime.AppRuntime?) -> Unit)?, auto_exit_after_frames? : Int?) -> Self
 pub fn HostedWindowBackend::session_attached(Self) -> Bool
 pub fn HostedWindowBackend::surface_generation(Self) -> Int
 pub fn HostedWindowBackend::title(Self) -> String
-
-pub struct RendererProviderAdapter {
-  create_renderer : (UInt64, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-  sync : (UInt64, @host.HostSurfaceMetrics) -> Unit
-  image_loader : @render.HostAsyncImageLoader?
-}
-pub fn RendererProviderAdapter::new(create_renderer~ : (UInt64, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync~ : (UInt64, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
 // Type aliases
 

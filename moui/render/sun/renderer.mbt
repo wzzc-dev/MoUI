@@ -300,8 +300,29 @@ pub fn SunRasterRenderer::apply_image_resource_load_completion(
   self : SunRasterRenderer,
   completion : @render.ImageResourceLoadCompletion,
 ) -> @render.ImageResourceSnapshot {
+  let completion_to_apply = if completion.has_decoded_rgba_payload() {
+    match
+      self.resources
+      .get_image_cache()
+      .get_or_decode_rgba_result(
+        completion.source,
+        completion.width,
+        completion.height,
+        completion.decoded_pixels,
+      ) {
+      Ok(_) => completion
+      Err(_) =>
+        @render.ImageResourceLoadCompletion::failed(
+          completion.source,
+          diagnostic="Sun decoded image payload invalid",
+          background_io=completion.background_io,
+        )
+    }
+  } else {
+    completion
+  }
   let previous_revision = self.image_lifecycle.revision()
-  let snapshot = self.image_lifecycle.apply_load_completion(completion)
+  let snapshot = self.image_lifecycle.apply_load_completion(completion_to_apply)
   self.notify_image_resource_change_if_needed(previous_revision)
   snapshot
 }

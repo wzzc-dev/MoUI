@@ -44,7 +44,7 @@ fn MacosNativeHostBackend::record_native_ime_runtime_smoke(
       }
       let title = runtime_slot.record.title
       let app_token = macos_native_ime_app_token(title)
-      let prefix = "MoUI native IME runtime matching-host native-app renderer=skia " +
+      let prefix = "MoUI native IME runtime matching-host native-app renderer=application " +
         app_token +
         " platform-protocol=macos-marked-text NSTextInputClient"
       match self.native_ime_runtime_smoke_phase {

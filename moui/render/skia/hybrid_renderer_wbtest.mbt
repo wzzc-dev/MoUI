@@ -16,13 +16,13 @@ test "skia hybrid renderer presents next frame through raster after terminal rec
   let hybrid = SkiaHybridRenderer::{
     renderer,
     worker: @render.GpuRenderWorker::new(),
-    surface_route: @render.resolve_surface_route(
-      @render.NativeGpuPlatform::MacOS,
-      @render.NativeRendererMode::SkiaGpu,
+    surface_route: resolve_surface_route(
+      NativeGpuPlatform::MacOS,
+      NativeRendererMode::SkiaGpu,
       gpu_available=true,
       gpu_promoted=false,
     ),
-    requested: @render.NativeRendererMode::SkiaGpu,
+    requested: NativeRendererMode::SkiaGpu,
     fallback_to_raster: false,
     pending_completions: [],
   }

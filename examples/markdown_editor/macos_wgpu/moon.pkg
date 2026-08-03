@@ -1,8 +1,11 @@
 import {
+  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_host,
-  "wzzc-dev/moui/backend/macos/wgpu" @macos_wgpu_backend,
+  "wzzc-dev/moui/render/wgpu" @render_wgpu,
+  "wzzc-dev/moui/render/wgpu/coretext" @wgpu_coretext,
+  "wzzc-dev/moui/render/wgpu/cosmic_text" @wgpu_cosmic,
   "examples/markdown_editor/app",
 }
 

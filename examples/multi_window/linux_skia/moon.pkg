@@ -1,7 +1,9 @@
 import {
+  "wzzc-dev/moui",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/geometry",
-  "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
+  "wzzc-dev/moui/backend/linux" @linux_backend,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/moui/runtime",
   "examples/multi_window/app" @multi_window_app,
 }

@@ -55,7 +55,8 @@ node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 
 Android, iOS, and HarmonyOS use the embedded runtime backend route. The matching
 `wzzc-dev/window` template owns native lifecycle, surface creation, and input;
-the MoUI `*_window_hosted` entrypoint supplies the program and Skia provider.
+the MoUI `*_window_hosted` entrypoint composes the program, `render/skia`
+factories, and the platform `entry()` through `@moui.run_app`.
 There is no app-specific native export table or second lifecycle bridge.
 
 Use host-sim checks before invoking platform toolchains:
@@ -95,7 +96,7 @@ local workspace members from `moon.work`. The exact list is generated into
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.4-0.1.2",
+  "wzzc-dev/window@0.5.4-0.1.3",
   "wzzc-dev/moui_skia@0.1.7",
 }
 ```
@@ -104,7 +105,7 @@ The MoonBit package ecosystem is still not as mature as older language
 ecosystems. A failing build can come from registry cache state, package
 publication mistakes, or dependency regressions as well as from MoUI code. When
 dependency-related failures appear, first run `moon update`, inspect the
-resolved package versions, and check whether `wzzc-dev/window@0.5.4-0.1.2` or
+resolved package versions, and check whether `wzzc-dev/window@0.5.4-0.1.3` or
 another package changed behavior.
 
 The `window` package still carries MoUI smoke helpers and evidence docs. Use
@@ -185,13 +186,8 @@ sh scripts/window-dev-mode.sh off     # remove ./window; resolve from mooncakes.
 ```
 
 `scripts/validate-window-dependency.mjs` (run by `check.sh --profile daily` and
-CI) normally fails if `moon.work` lists either nested window module. The tracked
-Provider Phase E migration is the sole temporary exception: it must use
-`checks/window-dependency-exception.txt` containing exactly
-`provider-phase-e-local-window` and both nested members, which the validator
-verifies. Do not use this exception for ordinary local development. At Phase E
-close-out, run `sh scripts/window-dev-mode.sh off`, remove the exception file,
-then run the package-consumer proof. After
+CI) fails if `moon.work` lists either nested window module. Use dev mode only
+while editing window source, then turn it off before normal checks. After
 publishing a new window version,
 update the pinned version in `moui/moon.mod`, `moui_skia/moon.mod`,
 `moui_webview/moon.mod`, and `examples/markdown_editor/moon.mod`, then run

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createWebGpuImports } from "../moui/backend/web/runtime.js";
+import { createWebGpuImports } from "../moui/render/webgpu_adapter/runtime.js";
 
 globalThis.GPUBufferUsage = { VERTEX: 1, COPY_DST: 2 };
 globalThis.GPUTextureUsage = {

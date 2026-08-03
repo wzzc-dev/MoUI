@@ -19,12 +19,14 @@ fn main {
       "MOUI_LINUX_SUN_EXIT_AFTER_FIRST_PRESENT",
     ) ==
     Some("1")
-  @linux_sun_backend.run_smoke_app_with_options(
-    "MoUI Showcase",
-    runtime,
-    options=@linux_sun_backend.LinuxSunAppOptions::new(),
-    smoke_options=@linux_sun_backend.LinuxSunSmokeOptions::new(
-      first_frame_smoke_auto_exit=exit_after_first_present,
+  @moui.run_app("MoUI Showcase", runtime)
+  .render(@render_sun.raster())
+  .backend(
+    @linux_backend.entry(
+      smoke_options=@linux_backend.LinuxHostSmokeOptions::new(
+        first_frame_smoke_auto_exit=exit_after_first_present,
+      ),
     ),
   )
+  .run()
 }

@@ -17,7 +17,11 @@ pub fn create_with_host_surface(@render.RendererSurfaceMetrics, HostWgpuSurface)
 
 pub fn create_with_host_surface_and_text_engine(@render.RendererSurfaceMetrics, HostWgpuSurface, text_engine~ : NativeTextEngine) -> WgpuRenderer raise @wgpu_mbt.WgpuError
 
+pub fn native(text_engine~ : NativeTextEngine) -> @render.RendererBindingFactory
+
 pub fn native_image_load_completion(String) -> @render.ImageResourceLoadCompletion
+
+pub fn native_image_load_completion_from_bytes(String, Bytes, background_io? : Bool) -> @render.ImageResourceLoadCompletion
 
 pub fn native_platform_glyph_key(cache_key~ : String, payload~ : Bytes) -> NativeGlyphKey
 
@@ -126,6 +130,7 @@ pub fn WgpuRenderer::present_count(Self) -> Int
 pub fn WgpuRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
 pub fn WgpuRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit
 pub fn WgpuRenderer::text_system(Self) -> @core.TextSystem
+pub fn WgpuRenderer::to_host_window_renderer(Self) -> @render.HostWindowRenderer
 pub fn WgpuRenderer::unsupported_command_count(Self) -> Int
 
 // Type aliases

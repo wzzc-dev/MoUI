@@ -187,7 +187,7 @@ const main = async () => {
     MOUI_MACOS_SKIA_PERF_WARM_UP_PRESENTS: String(options.warmUpPresents),
     MOUI_MACOS_SKIA_PERF_REFRESH_HZ: String(options.refreshHz),
     // Ensure first-frame auto-exit is not also set.
-    MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT: "0",
+    MOUI_FIRST_FRAME_EXIT: "0",
     MOUI_MARKDOWN_EDITOR_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT: "0",
   };
   if (options.promotionLifecycle) {

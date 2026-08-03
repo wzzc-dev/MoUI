@@ -163,6 +163,14 @@ test "default macOS project file plan is exact" {
     content="true",
   )
   inspect(html.contains("build/example/sample_app/web_wasm"), content="false")
+  let desktop_pkg = test_planned_text(files, "macos_skia/moon.pkg")
+  let desktop_main = test_planned_text(files, "macos_skia/main.mbt")
+  assert_true(desktop_pkg.contains("wzzc-dev/moui/backend/macos"))
+  assert_true(desktop_pkg.contains("wzzc-dev/moui/render/skia"))
+  assert_false(desktop_pkg.contains("wzzc-dev/moui/backend/macos/"))
+  assert_true(desktop_main.contains("@moui.run_app"))
+  assert_true(desktop_main.contains(".render_all(@render_skia.from_env())"))
+  assert_true(desktop_main.contains(".backend(@platform_host.entry())"))
 }
 
 ///|
@@ -185,17 +193,25 @@ test "mobile config contains window-hosted platform defaults" {
       files,
       platform + "_window_hosted/main.mbt",
     )
-    inspect(
-      package_text.contains("wzzc-dev/window/" + platform),
-      content="true",
-    )
+    inspect(package_text.contains("wzzc-dev/moui"), content="true")
     inspect(
       package_text.contains("wzzc-dev/moui/backend/" + platform),
       content="true",
     )
-    inspect(main_text.contains("EmbeddedRuntimeBackend"), content="true")
-    inspect(main_text.contains("EventLoop::new"), content="true")
-    inspect(main_text.contains("run_app(app)"), content="true")
+    inspect(package_text.contains("wzzc-dev/moui/render/skia"), content="true")
+    inspect(
+      package_text.contains("wzzc-dev/moui/backend/" + platform + "/"),
+      content="false",
+    )
+    inspect(main_text.contains("@moui.run_app"), content="true")
+    inspect(
+      main_text.contains(".render_all(@render_skia.from_env())"),
+      content="true",
+    )
+    inspect(
+      main_text.contains(".backend(@platform_host.entry())"),
+      content="true",
+    )
   }
   let parsed = @json.parse(mobile) catch {
     _ => fail("generated moui.mobile.json must parse")

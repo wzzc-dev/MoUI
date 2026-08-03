@@ -9,7 +9,7 @@ Collects Linux platform runtime evidence by:
 1. Configuring the repository for real Skia linking (release provider)
 2. Building the Showcase and first-frame smoke test with release Skia
 3. Starting a headless Weston Wayland compositor
-4. Running the first-frame smoke test (auto-exits after first present)
+4. Running raster, GPU, and automatic-fallback first-frame smokes
 5. Collecting evidence logs under artifacts/platform-evidence/linux/
 
 Options:
@@ -58,6 +58,8 @@ case "$log_dir" in
 esac
 
 first_frame_log="$resolved_log_dir/linux-skia-first-frame.log"
+first_frame_raster_log="$resolved_log_dir/linux-skia-raster-first-frame.log"
+first_frame_gpu_log="$resolved_log_dir/linux-skia-gpu-first-frame.log"
 preflight_log="$resolved_log_dir/linux-platform-evidence-preflight.log"
 summary_log="$resolved_log_dir/linux-platform-evidence-summary.log"
 weston_log="$resolved_log_dir/weston-headless.log"
@@ -153,9 +155,12 @@ cp "$showcase_pkg" "$showcase_backup"
 
 cat > "$showcase_pkg" <<PKGEOF
 import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui" @moui,
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/linux" @linux_backend,
-  "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "examples/showcase/app" @showcase_app,
 }
 
@@ -181,8 +186,9 @@ cp "$first_frame_pkg" "$first_frame_backup"
 
 cat > "$first_frame_pkg" <<PKGEOF
 import {
-  "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui" @moui,
+  "wzzc-dev/moui/backend/linux",
+  "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/moui_tester/fixtures/text_input_app" @fixture,
 }
 
@@ -271,24 +277,30 @@ cleanup_weston() {
 trap 'cleanup_weston; restore_packages' EXIT
 
 #
-# Step 6: Run first-frame smoke test (auto-exits after first present)
+# Step 6: Run raster, GPU, and automatic-fallback first-frame smoke tests
 #
-echo "=== Step 6: Run first-frame smoke test ===" | tee -a "$preflight_log"
+echo "=== Step 6: Run renderer-mode first-frame smoke tests ===" | tee -a "$preflight_log"
 cd "$REPO_ROOT"
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-  moon run moui_tester/linux_skia_first_frame_smoke --target native > "$first_frame_log" 2>&1
-first_frame_status=$?
+run_first_frame_mode() {
+  local mode="$1"
+  local output="$2"
+  echo "  Running MOUI_SKIA_RENDERER=$mode" | tee -a "$preflight_log"
+  MOUI_FIRST_FRAME_EXIT=1 \
+    MOUI_SKIA_RENDERER="$mode" \
+    MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+    moon run moui_tester/linux_skia_first_frame_smoke --target native \
+      > "$output" 2>&1
+  if ! grep -Fq "Linux renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" "$output"; then
+    echo "Missing first-frame marker for MOUI_SKIA_RENDERER=$mode" >&2
+    return 1
+  fi
+  echo "  Verified $mode first-frame marker." | tee -a "$preflight_log"
+}
 
-echo "  First-frame smoke exit status: $first_frame_status" | tee -a "$preflight_log"
-
-# The first-frame test hardcodes first_frame_smoke_auto_exit=true, so it should
-# present one frame and then exit cleanly with status 0.
-if grep -Fq "Linux renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" "$first_frame_log"; then
-  echo "  Verified first-frame smoke marker." | tee -a "$preflight_log"
-else
-  echo "  WARNING: First-frame smoke marker not found." | tee -a "$preflight_log"
-fi
+run_first_frame_mode "skia-raster" "$first_frame_raster_log"
+run_first_frame_mode "skia-gpu" "$first_frame_gpu_log"
+run_first_frame_mode "auto" "$first_frame_log"
 
 #
 # Step 7: Generate summary
@@ -297,8 +309,12 @@ echo "=== Step 7: Generate evidence summary ===" | tee -a "$preflight_log"
 {
   echo "Linux platform evidence summary:"
   echo "  skia_commit=$skia_commit"
-  echo "  first_frame_exit_status=$first_frame_status"
+  echo "  raster_first_frame_status=passed"
+  echo "  gpu_first_frame_status=passed"
+  echo "  auto_first_frame_status=passed"
   echo "  preflight_log=$preflight_log"
+  echo "  raster_first_frame_log=$first_frame_raster_log"
+  echo "  gpu_first_frame_log=$first_frame_gpu_log"
   echo "  first_frame_log=$first_frame_log"
   echo "  weston_log=$weston_log"
   echo "  summary_log=$summary_log"
@@ -306,7 +322,9 @@ echo "=== Step 7: Generate evidence summary ===" | tee -a "$preflight_log"
 
 echo ""
 echo "Linux platform evidence collected. Logs:"
-echo "  First-frame:   $first_frame_log"
+echo "  Raster:        $first_frame_raster_log"
+echo "  GPU:           $first_frame_gpu_log"
+echo "  Auto fallback: $first_frame_log"
 echo "  Weston:        $weston_log"
 echo "  Summary:       $summary_log"
 echo "  Preflight:     $preflight_log"

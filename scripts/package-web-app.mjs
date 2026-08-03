@@ -12,6 +12,7 @@ import {
   packageRoot,
   parseCommonArgs,
   rewriteIndexForPackage,
+  rewriteRuntimeForPackage,
   runtimeAssetPaths,
   usageAndExit,
   wasmArtifactPath,
@@ -58,7 +59,16 @@ try {
   copiedFiles.push(packagedIndexPath);
   copyTracked(wasmPath, wasmFileName);
   for (const assetPath of runtimeAssetPaths) {
-    copyTracked(join(repoRoot, assetPath), basename(assetPath));
+    if (basename(assetPath) === "runtime.js") {
+      const destination = join(outDir, "runtime.js");
+      writeFileSync(
+        destination,
+        rewriteRuntimeForPackage(readFileSync(join(repoRoot, assetPath), "utf8")),
+      );
+      copiedFiles.push(destination);
+    } else {
+      copyTracked(join(repoRoot, assetPath), basename(assetPath));
+    }
   }
   const packagedAssetsRoot = join(outDir, "assets");
   copyDirectory(join(sourceRoot, "assets"), packagedAssetsRoot);

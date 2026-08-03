@@ -4,14 +4,11 @@ package "wzzc-dev/moui/backend/windows"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn run_app_with_renderer_provider(String, @runtime.AppRuntime, provider~ : WindowsRendererProvider, options? : WindowsHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
-
-pub fn run_app_with_renderer_provider_smoke(String, @runtime.AppRuntime, provider~ : WindowsRendererProvider, options? : WindowsHostAppOptions, smoke_options? : WindowsHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn entry(options? : WindowsHostAppOptions, smoke_options? : WindowsHostSmokeOptions) -> @runtime.PlatformEntry
 
 pub fn windows_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessibilityBridge
 
@@ -52,11 +49,6 @@ pub fn WindowsHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool) -> Self
 
 type WindowsNativeHostBackend
 pub impl @wzzc-dev/window/windows.ApplicationHandler for WindowsNativeHostBackend
-
-pub struct WindowsRendererProvider {
-  // private fields
-}
-pub fn WindowsRendererProvider::new(create_renderer~ : (@wzzc-dev/window/windows.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/windows.Window, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
 // Type aliases
 

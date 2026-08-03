@@ -15,9 +15,16 @@ fn main {
     height=680.0,
   )
   runtime.set_action_commands(@showcase_app.action_command_map())
-  @windows_skia_backend.run_app_with_options(
-    "MoUI Showcase",
-    runtime,
-    options=@windows_skia_backend.WindowsSkiaAppOptions::new(),
+  let exit_after_first_present = @env.get_env_var("MOUI_FIRST_FRAME_EXIT") ==
+    Some("1")
+  @moui.run_app("MoUI Showcase", runtime)
+  .render_all(@render_skia.from_env())
+  .backend(
+    @windows_backend.entry(
+      smoke_options=@windows_backend.WindowsHostSmokeOptions::new(
+        first_frame_smoke_auto_exit=exit_after_first_present,
+      ),
+    ),
   )
+  .run()
 }

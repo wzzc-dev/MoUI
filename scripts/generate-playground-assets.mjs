@@ -5,7 +5,12 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statS
 import { homedir } from "node:os";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
-import { buildWebPackage, runtimeAssetPaths, wasmArtifactPath } from "./web-bundle-tools.mjs";
+import {
+  buildWebPackage,
+  rewriteRuntimeForPackage,
+  runtimeAssetPaths,
+  wasmArtifactPath,
+} from "./web-bundle-tools.mjs";
 import { repoRoot } from "./lib/moonbit-tool-runner.mjs";
 
 const COMPILER_VERSION = "0.1.202607062";
@@ -60,7 +65,7 @@ const compilerWorkerRevision = hashFile(
 
 let index = readFileSync(join(repoRoot, "website/playground/web_wasm/index.html"), "utf8");
 index = index
-  .replaceAll("../../../moui/backend/web/runtime.js", "./runtime.js")
+  .replaceAll("../../../moui/render/webgpu_adapter/runtime.js", "./runtime.js")
   .replaceAll(
     "../../../_build/wasm-gc/debug/build/website/playground/web_wasm/web_wasm.wasm",
     `./playground.wasm?v=${wasmRevision}`,
@@ -72,7 +77,15 @@ index = index
   );
 writeFileSync(join(outDir, "index.html"), index);
 
-for (const asset of runtimeAssetPaths) copy(join(repoRoot, asset), join(outDir, basename(asset)));
+for (const asset of runtimeAssetPaths) {
+  const source = join(repoRoot, asset);
+  const destination = join(outDir, basename(asset));
+  if (basename(asset) === "runtime.js") {
+    writeFileSync(destination, rewriteRuntimeForPackage(readFileSync(source, "utf8")));
+  } else {
+    copy(source, destination);
+  }
+}
 for (const name of ["compiler-worker.js", "playground-bridge.js", "preview-host.js"]) {
   copy(join(repoRoot, "website/playground/host", name), join(outDir, "host", name));
 }

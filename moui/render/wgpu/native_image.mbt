@@ -237,12 +237,7 @@ pub fn native_image_load_completion(
   source : String,
 ) -> @render.ImageResourceLoadCompletion {
   match load_native_image_data(source) {
-    Some(decoded) =>
-      @render.ImageResourceLoadCompletion::ready(
-        source,
-        width=decoded.width,
-        height=decoded.height,
-      )
+    Some(decoded) => native_image_completion_from_decoded(source, decoded)
     None =>
       @render.ImageResourceLoadCompletion::failed(
         source,
@@ -252,13 +247,43 @@ pub fn native_image_load_completion(
 }
 
 ///|
+pub fn native_image_load_completion_from_bytes(
+  source : String,
+  bytes : Bytes,
+  background_io? : Bool = false,
+) -> @render.ImageResourceLoadCompletion {
+  match decode_native_image_bytes(bytes) {
+    Some(decoded) =>
+      native_image_completion_from_decoded(source, decoded, background_io~)
+    None =>
+      @render.ImageResourceLoadCompletion::failed(
+        source,
+        diagnostic="native image decode failed",
+        background_io~,
+      )
+  }
+}
+
+///|
+fn native_image_completion_from_decoded(
+  source : String,
+  decoded : NativeDecodedImage,
+  background_io? : Bool = false,
+) -> @render.ImageResourceLoadCompletion {
+  @render.ImageResourceLoadCompletion::ready_decoded_rgba(
+    source,
+    width=decoded.width,
+    height=decoded.height,
+    row_bytes=decoded.width * 4,
+    decoded.data,
+    background_io~,
+  )
+}
+
+///|
 fn native_image_source_bytes(source : String) -> Bytes? {
   if source.has_prefix("data:") {
     native_image_data_uri_bytes(source)
-  } else if @fs.path_exists(source) {
-    Some(@fs.read_file_to_bytes(source)) catch {
-      _ => None
-    }
   } else {
     None
   }
@@ -358,7 +383,11 @@ fn RendererHandle::ensure_native_image_resource(
     )
     return None
   }
-  guard load_native_image_data(source) is Some(image) else {
+  let decoded = match self.decoded_image_cache.get(source) {
+    Some(image) => Some(image)
+    None => load_native_image_data(source)
+  }
+  guard decoded is Some(image) else {
     if native_image_source_is_pending(source) {
       ignore(self.image_lifecycle.mark_loading(source))
       return None
@@ -401,6 +430,7 @@ fn RendererHandle::ensure_native_image_resource(
         bind_group,
       }
       self.image_cache[source] = resource
+      ignore(self.decoded_image_cache.remove(source))
       ignore(
         self.image_lifecycle.mark_ready(
           source,
@@ -424,7 +454,7 @@ fn RendererHandle::ensure_native_image_resource(
 
 ///|
 fn native_image_source_is_pending(source : String) -> Bool {
-  !source.has_prefix("data:") && !@fs.path_exists(source)
+  !source.has_prefix("data:")
 }
 
 ///|

@@ -13,7 +13,9 @@ import {
 // Values
 pub fn backend_info() -> HarmonyOSBackendInfo
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : HarmonyOSSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : HarmonyOSRendererProvider) -> @embedded_runtime_backend.HostedRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : HarmonyOSSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, binding~ : HarmonyOSSurfaceBinding) -> @embedded_runtime_backend.HostedRuntimeSession?
+
+pub fn entry(auto_exit_after_frames? : Int?) -> @runtime.PlatformEntry
 
 pub fn harmonyos_capability_matrix() -> HarmonyOSBackendCapabilities
 
@@ -25,9 +27,11 @@ pub fn harmonyos_readiness() -> HarmonyOSBackendReadiness
 
 pub fn harmonyos_service_capabilities() -> @host.HostServiceCapabilities
 
+pub fn harmonyos_surface_binding(Array[@render.RendererBindingFactory]) -> HarmonyOSSurfaceBinding
+
 pub fn harmonyos_window_hosted_pump_host_sim(HarmonyOSEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
-pub fn renderer_provider_adapter_from_harmonyos(HarmonyOSRendererProvider) -> @embedded_runtime_backend.RendererProviderAdapter
+pub fn host_surface_binding_from_harmonyos(HarmonyOSSurfaceBinding) -> @embedded_runtime_backend.HostSurfaceBinding
 
 // Errors
 
@@ -35,7 +39,7 @@ pub fn renderer_provider_adapter_from_harmonyos(HarmonyOSRendererProvider) -> @e
 pub(all) struct HarmonyOSBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
-  renderer_provider : Bool
+  surface_binding : Bool
   pointer : Bool
   scroll : Bool
   keyboard : Bool
@@ -68,16 +72,16 @@ pub struct HarmonyOSEmbeddedRuntimeBackend {
 }
 pub fn HarmonyOSEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn HarmonyOSEmbeddedRuntimeBackend::has_session(Self) -> Bool
-pub fn HarmonyOSEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> HarmonyOSRendererProvider, auto_exit_after_frames? : Int?) -> Self
+pub fn HarmonyOSEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererBindingFactory], auto_exit_after_frames? : Int?) -> Self
 pub fn HarmonyOSEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn HarmonyOSEmbeddedRuntimeBackend::surface_generation(Self) -> Int
 pub impl @wzzc-dev/window/harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend
 
-pub struct HarmonyOSRendererProvider {
+pub struct HarmonyOSSurfaceBinding {
   // private fields
 }
-pub fn HarmonyOSRendererProvider::has_async_image_loader(Self) -> Bool
-pub fn HarmonyOSRendererProvider::new(create_renderer~ : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
+pub fn HarmonyOSSurfaceBinding::has_async_image_loader(Self) -> Bool
+pub fn HarmonyOSSurfaceBinding::new(create_renderer~ : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?, sync_surface? : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
 pub(all) struct HarmonyOSSurfaceHandle {
   raw : UInt64

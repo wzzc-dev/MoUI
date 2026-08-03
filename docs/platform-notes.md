@@ -2,7 +2,7 @@
 
 ## Window Package Dependency
 
-MoUI resolves the modified window host as `wzzc-dev/window@0.5.4-0.1.2` from
+MoUI resolves the modified window host as `wzzc-dev/window@0.5.4-0.1.3` from
 the MoonBit registry. A repo-local window checkout is no longer part of normal
 development. The fork package currently supplies target support that the
 upstream package does not yet cover for MoUI.
@@ -44,33 +44,32 @@ Once the platform reports a window as closed, queued commands for that window
 are rejected rather than being replayed against stale runtime slots, and those
 rejections are recorded as normal request completions.
 Web creates the primary window through the same registry/slot path and supports
-resolver-backed `OpenWindow` requests through `run_app_with_options` and
-`WebAppOptions`. Native host cores create platform windows through the same
-registry/slot path but do not choose concrete renderer families themselves.
-Instead, public native entrypoints live in `backend/<platform>/wgpu` and
-`backend/<platform>/skia`; those packages call
-`backend/<platform>.run_app_with_renderer_provider` with a platform-local
-`RendererProvider`. A resolved native window asks that provider for a
-renderer-neutral `HostWindowRenderer`, then registers a `HostRuntimeDriver`,
+resolver-backed `OpenWindow` requests through `WebAppOptions` captured by
+`@web.entry`. Native host cores create platform windows through the same path
+but do not choose concrete renderer families. Application entrypoints supply
+ordered `RendererBindingFactory` values and one platform `PlatformEntry` to
+`@moui.run_app`. A resolved native window creates a neutral `HostSurfaceKit`,
+resolves a `HostWindowRenderer`, then registers a `HostRuntimeDriver`,
 platform binding, and platform slot, and routes redraw, events, context menus,
 host service completions, IME sync, and disposal by `HostWindowId`. Without a
 scene resolver, hosts reject `OpenWindow` with the shared unavailable-resolver
 response.
 
-Native renderer choice is package selection, not a field on host-core app
-options. Use `backend/<platform>/skia` for the native Skia raster mainline.
-Use `backend/<platform>/wgpu` only for native WGPU experimental diagnostics.
+Native renderer choice is application composition, not a field on host-core app
+options. Use `render/skia.from_env()` for the native Skia mainline and
+`render/wgpu.native(...)` only for native WGPU experimental diagnostics.
 Android, iOS, and HarmonyOS use `wzzc-dev/window` as the embedded runtime
 backend's embedder. The template sends `HostCmd` through its `EventLoop` to the
 matching `*EmbeddedRuntimeBackend`, which assembles the MoUI runtime session and
-renderer. Lifecycle, surface, and input must not bypass this route. HarmonyOS
+attaches the `HostWindowRenderer` resolved from application-supplied factories.
+Lifecycle, surface, and input must not bypass this route. HarmonyOS
 XComponent callbacks are the sole source for surface, pointer, resize, and
 detach. Fallback builds are build-system evidence only; matching-device or
 simulator smoke is still required for a runtime claim.
 
-Current-platform provider tests are included by
-`sh scripts/check.sh --profile platform`. Run provider packages
-directly only when you are already on the matching host and toolchain.
+Current-platform backend and renderer tests are included by
+`sh scripts/check.sh --profile platform`. Run matching-host renderer smoke only
+when the required host and toolchain are available.
 
 The boundary is:
 
@@ -97,13 +96,10 @@ constructors and platform event conversion.
   navigation emits `WebViewEvent::NavigationRequested`, and the app commits by
   updating the view `url` or sending `WebViewCommand::LoadUrl` through the host
   command queue.
-- Sun provider preflights explicitly report renderer-side platform-view pixel
-  wiring. macOS, Windows, and Linux Sun report
-  `renderer_platform_view_pixels=SunRasterRenderer.draw_platform_view_pixels`
-  when their `HostWindowRenderer` wrappers forward offscreen platform-view
-  pixels into the Sun frame. This is renderer-composition wiring; matching-host
-  runtime smoke is still required before making a broader platform runtime
-  readiness claim.
+- The Sun factory forwards offscreen platform-view pixels through the neutral
+  `HostWindowRenderer` capability. This is renderer composition wiring;
+  matching-host runtime smoke is still required before making a broader
+  platform runtime readiness claim.
 - Typed host services are routed through `HostServiceBridge`, with explicit
   capability flags for clipboard, menus, file dialogs, text-file access, URL
   opening, and system theme. Unsupported services should return `Unavailable` responses instead of
@@ -122,10 +118,9 @@ constructors and platform event conversion.
   native WebView readiness. Web, macOS, Windows, and Linux expose package-local
   summary helpers, and Showcase displays the injected summary in its Runtime
   section.
-  `HostCapabilitySummary::preflight_fields()` provides the renderer-neutral
-  ready/gap field string used by native Skia provider preflight summaries, so
-  provider packages can expose audit logs without duplicating host capability
-  formatting or importing concrete renderer policy into host cores.
+  `HostCapabilitySummary::preflight_fields()` provides a renderer-neutral
+  ready/gap field string for diagnostics without importing concrete renderer
+  policy into host cores.
 - Permission- or callback-driven host services can use `HostServiceAsyncQueue`
   and return `HostServiceResponse::Pending` instead of blocking the runtime.
   Hosts drain pending requests into in-flight platform work, complete them with
@@ -167,7 +162,7 @@ For detailed platform-specific setup, requirements, and runtime evidence:
   and service bridge details.
 - [Windows](platform-notes-windows.md) — MSVC toolchain, Skia/WGPU setup, WebView2
   auto-detection, and host architecture.
-- [Linux](platform-notes-linux.md) — Wayland host, runtime requirements, Skia provider,
+- [Linux](platform-notes-linux.md) — Wayland host, runtime requirements, Skia composition,
   runtime evidence, and remaining gaps.
 - [Android](android-support.md) (**experimental**) — window-hosted Activity,
   APK packaging, and matching-device evidence requirements.

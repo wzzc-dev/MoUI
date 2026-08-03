@@ -1,14 +1,14 @@
 ///|
 fn main {
-  @windows_wgpu_backend.run_app_with_options(
+  @moui.run_app(
     "MoUI Counter App",
     @runtime.new_program_with_dimensions(
       program=@counter_app.program(),
       width=520.0,
       height=360.0,
     ),
-    options=@windows_wgpu_backend.WindowsWgpuAppOptions::new(
-      text_engine=@wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
-    ),
   )
+  .render(@render_wgpu.native(text_engine=@wgpu_cosmic.cosmic_text_engine()))
+  .backend(@windows_backend.entry())
+  .run()
 }

@@ -5,7 +5,8 @@
 /// native platform-view embedding (web views, video, maps, …) without a
 /// compile-time dependency on the addon package that implements them. The
 /// concrete plugin factory lives in `<addon>/backend/<platform>` and is wired
-/// in by the user at startup via the host/skia options' `platform_view_plugins`
+/// in by the user at startup through the platform host options'
+/// `platform_view_plugins`
 /// list.
 ///
 /// All data flows through `@core` types (`DrawFrame`, `PlatformViewEvent`,
