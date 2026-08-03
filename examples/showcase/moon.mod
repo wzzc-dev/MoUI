@@ -6,6 +6,6 @@ preferred_target = "native"
 
 import {
   "wzzc-dev/moui@0.1.7",
-  "wzzc-dev/window@0.5.4-0.1.2",
+  "wzzc-dev/window@0.5.4-0.1.3",
   "wzzc-dev/moui_richtext@0.1.7",
 }
