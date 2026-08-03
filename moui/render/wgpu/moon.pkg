@@ -2,6 +2,7 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "Milky2018/wgpu_mbt",
+  "Milky2018/wgpu_mbt/c" @wgpu_c,
   "moonbitlang/x/fs",
   "moonbitlang/core/encoding/base64",
   "mizchi/image",
@@ -11,5 +12,6 @@ supported_targets = "native"
 
 options(
   link: { "native": { "cc-link-flags": "-lz" } },
+  "native-stub": [ "binding_surface.c" ],
   targets: { },
 )

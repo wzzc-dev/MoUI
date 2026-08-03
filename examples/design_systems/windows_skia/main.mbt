@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @windows_skia_backend.run_app(
+  @moui.run_app(
     "MoUI Design Systems",
     @runtime.new_program_with_dimensions(
       program=@design_systems_app.program(),
@@ -8,4 +8,7 @@ fn main {
       height=680.0,
     ),
   )
+  .render_all(@render_skia.from_env())
+  .backend(@windows_backend.entry())
+  .run()
 }

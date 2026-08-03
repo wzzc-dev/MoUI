@@ -17,16 +17,18 @@ fn main {
         )
     }
   })
-  @web.run_app_with_options(
+  @moui.run_app(
     "MoUI Multi-Window",
     runtime_for(
       @multi_window_app.Scene::Main,
       windows,
       @geometry.Size::new(width=640.0, height=420.0),
     ),
-    options=@web.WebAppOptions::new(scene_resolver=resolver),
-    window_requests=queue,
   )
+  .render_all(@webgpu_adapter.from_env())
+  .backend(@web.entry(options=@web.WebAppOptions::new(scene_resolver=resolver)))
+  .window_requests(queue)
+  .run()
 }
 
 ///|

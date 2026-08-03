@@ -119,13 +119,13 @@ pub fn HostGpuPresentTarget::description(self : HostGpuPresentTarget) -> String 
 }
 
 ///|
-/// `SkiaSurfaceRoute` now lives in the cross-platform `moui/render` package
+/// `SurfaceRoute` now lives in the cross-platform `moui/render` package
 /// (see `moui/render/skia_surface_route.mbt`) so cross-runtime packages such
 /// as `moui/backend/host` can carry the route on their value types without
 /// pulling in the native-only `moui/render/skia` dependency graph. Existing
 /// consumers that already import `@skia_renderer` should switch to
-/// `@render.SkiaSurfaceRoute`; new cross-runtime consumers must use
-/// `@render.SkiaSurfaceRoute`.
+/// `@render.SurfaceRoute`; new cross-runtime consumers must use
+/// `@render.SurfaceRoute`.
 
 ///|
 priv struct SkiaRasterSurfacePreflight {
@@ -261,12 +261,64 @@ pub fn SkiaPixelFrame::pixels(self : SkiaPixelFrame) -> Bytes {
 }
 
 ///|
+/// Adapt a live Skia renderer to the renderer-neutral host lifecycle.
+pub fn SkiaRasterRenderer::to_host_window_renderer(
+  self : SkiaRasterRenderer,
+) -> @render.HostWindowRenderer {
+  @render.HostWindowRenderer::new(
+    resize=metrics => {
+      self.resize(metrics) catch {
+        err => println("error resizing Skia renderer: \{err.message()}")
+      }
+    },
+    render=commands => {
+      self.render(commands) catch {
+        err => println("error rendering Skia frame: \{err.message()}")
+      }
+    },
+    render_frame=Some(frame => self.render_frame(frame)),
+    text_system=() => self.text_system(),
+    present_count=() => self.present_count(),
+    dispose=() => self.dispose(),
+    image=@render.HostRendererImageCapability::new(
+      image_resources=() => self.image_resources(),
+      image_resource_snapshot=Some(() => self.image_resource_snapshot()),
+      apply_image_resource_load_completion=Some(completion => {
+        self.apply_image_resource_load_completion(completion)
+      }),
+      set_image_resource_change_callback=callback => {
+        self.set_image_resource_change_callback(callback)
+      },
+    ),
+    platform_view=@render.HostRendererPlatformViewCapability::new(
+      draw_platform_view_pixels=fn(
+        pixels,
+        src_width,
+        src_height,
+        src_stride,
+        dst_x,
+        dst_y,
+        dst_width,
+        dst_height,
+      ) {
+        self.draw_platform_view_pixels(
+          pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height,
+        )
+      },
+      set_platform_view_draw_fn=draw_fn => {
+        self.set_platform_view_draw_fn(draw_fn)
+      },
+    ),
+  )
+}
+
+///|
 fn create_gpu_context(
-  surface_route : @render.SkiaSurfaceRoute,
+  surface_route : @render.SurfaceRoute,
 ) -> @skia_native.GpuContext? raise SkiaRendererError {
   match surface_route {
-    @render.SkiaSurfaceRoute::RasterSurfaceRoute => None
-    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute => {
+    @render.SurfaceRoute::RasterSurfaceRoute => None
+    @render.SurfaceRoute::MetalGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::metal(
         b"moui-render-skia-metal-gpu",
       )
@@ -282,7 +334,7 @@ fn create_gpu_context(
         }
       }
     }
-    @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute => {
+    @render.SurfaceRoute::Direct3DGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::direct3d12(
         b"moui-render-skia-direct3d-gpu",
       )
@@ -298,7 +350,7 @@ fn create_gpu_context(
         }
       }
     }
-    @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute => {
+    @render.SurfaceRoute::VulkanGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::vulkan(
         b"moui-render-skia-vulkan-gpu",
       )
@@ -314,7 +366,7 @@ fn create_gpu_context(
         }
       }
     }
-    @render.SkiaSurfaceRoute::EglGpuSurfaceRoute => {
+    @render.SurfaceRoute::EglGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::opengl(
         b"moui-render-skia-egl-gpu",
       )
@@ -336,17 +388,17 @@ fn create_gpu_context(
 ///|
 fn create_surface(
   metrics : @render.RendererSurfaceMetrics,
-  surface_route : @render.SkiaSurfaceRoute,
+  surface_route : @render.SurfaceRoute,
   gpu_context : @skia_native.GpuContext?,
 ) -> @skia_native.Surface raise SkiaRendererError {
   let target = skia_surface_target(metrics, surface_route, gpu_context)
   match surface_route {
-    @render.SkiaSurfaceRoute::RasterSurfaceRoute =>
+    @render.SurfaceRoute::RasterSurfaceRoute =>
       match @skia_native.Surface::for_target(target) {
         Some(surface) => surface
         None => raise SkiaRendererError::SurfaceUnavailable
       }
-    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute =>
+    @render.SurfaceRoute::MetalGpuSurfaceRoute =>
       match gpu_context {
         None =>
           raise SkiaRendererError::GpuContextUnavailable(
@@ -361,7 +413,7 @@ fn create_surface(
             None => raise SkiaRendererError::SurfaceUnavailable
           }
       }
-    @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute =>
+    @render.SurfaceRoute::Direct3DGpuSurfaceRoute =>
       match gpu_context {
         None =>
           raise SkiaRendererError::GpuContextUnavailable(
@@ -376,7 +428,7 @@ fn create_surface(
             None => raise SkiaRendererError::SurfaceUnavailable
           }
       }
-    @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute =>
+    @render.SurfaceRoute::VulkanGpuSurfaceRoute =>
       match gpu_context {
         None =>
           raise SkiaRendererError::GpuContextUnavailable(
@@ -391,7 +443,7 @@ fn create_surface(
             None => raise SkiaRendererError::SurfaceUnavailable
           }
       }
-    @render.SkiaSurfaceRoute::EglGpuSurfaceRoute =>
+    @render.SurfaceRoute::EglGpuSurfaceRoute =>
       match gpu_context {
         None =>
           raise SkiaRendererError::GpuContextUnavailable(
@@ -412,7 +464,7 @@ fn create_surface(
 ///|
 fn skia_surface_target(
   metrics : @render.RendererSurfaceMetrics,
-  surface_route : @render.SkiaSurfaceRoute,
+  surface_route : @render.SurfaceRoute,
   gpu_context : @skia_native.GpuContext?,
 ) -> @moui_skia.SurfaceTargetDescriptor {
   let size = @moui_skia.ISize::new(
@@ -425,13 +477,13 @@ fn skia_surface_target(
 ///|
 fn skia_surface_target_for_physical_size(
   size : @moui_skia.ISize,
-  surface_route : @render.SkiaSurfaceRoute,
+  surface_route : @render.SurfaceRoute,
   gpu_context : @skia_native.GpuContext?,
 ) -> @moui_skia.SurfaceTargetDescriptor {
   match surface_route {
-    @render.SkiaSurfaceRoute::RasterSurfaceRoute =>
+    @render.SurfaceRoute::RasterSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::raster_n32_premul(size)
-    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute =>
+    @render.SurfaceRoute::MetalGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -439,7 +491,7 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
-    @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute =>
+    @render.SurfaceRoute::Direct3DGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -447,7 +499,7 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
-    @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute =>
+    @render.SurfaceRoute::VulkanGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -455,7 +507,7 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
-    @render.SkiaSurfaceRoute::EglGpuSurfaceRoute =>
+    @render.SurfaceRoute::EglGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -553,7 +605,7 @@ fn SkiaRasterRenderer::ensure_gpu_window_surface(
 ///|
 pub fn SkiaRasterRenderer::surface_route(
   self : SkiaRasterRenderer,
-) -> @render.SkiaSurfaceRoute {
+) -> @render.SurfaceRoute {
   self.surface_route
 }
 

@@ -8,7 +8,7 @@ Usage: scripts/macos-platform-evidence.sh [options]
 Collects macOS platform runtime evidence by:
 1. Configuring the repository for real Skia linking (release provider)
 2. Building and running the Showcase macos_skia entrypoint with the
-   first-frame auto-exit marker (MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1)
+   first-frame auto-exit marker (MOUI_FIRST_FRAME_EXIT=1)
 3. Building and running the Markdown Editor macos_skia entrypoint with its
    first-frame auto-exit marker
 4. Collecting evidence logs under artifacts/platform-evidence/macos/
@@ -162,10 +162,11 @@ fi
 cat > "$showcase_pkg" <<PKGEOF
 import {
   "moonbitlang/core/env",
+  "wzzc-dev/moui" @moui,
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_backend,
-  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "examples/showcase/app",
 }
 
@@ -187,13 +188,12 @@ echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
 if [[ -f "$markdown_pkg" ]]; then
   cat > "$markdown_pkg" <<PKGEOF
 import {
-  "moonbitlang/core/env",
+  "wzzc-dev/moui" @moui,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_host,
-  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/window/dpi",
   "wzzc-dev/window/macos" @window_macos,
   "examples/markdown_editor/app",
@@ -251,7 +251,7 @@ if [[ $run_showcase -eq 1 ]]; then
   cd "$REPO_ROOT"
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
     MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-    MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+    MOUI_FIRST_FRAME_EXIT=1 \
     moon run examples/showcase/macos_skia --target native \
     > "$showcase_log" 2>&1 &
   showcase_pid=$!

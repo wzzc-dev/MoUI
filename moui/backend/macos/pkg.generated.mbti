@@ -4,13 +4,14 @@ package "wzzc-dev/moui/backend/macos"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/window/dpi",
 }
 
 // Values
 pub fn backend_info() -> MacosBackendInfo
+
+pub fn entry(options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions) -> @runtime.PlatformEntry
 
 pub fn macos_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessibilityBridge
 
@@ -29,12 +30,6 @@ pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 pub fn macos_timer_source() -> @runtime.HostTimerSource
 
 pub fn macos_wall_clock() -> @runtime.HostWallClock
-
-pub fn run_app_with_renderer_provider(String, @runtime.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
-
-pub async fn run_app_with_renderer_provider_async_pump(String, @runtime.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue, frame_interval_ms? : Int) -> Unit
-
-pub fn run_app_with_renderer_provider_smoke(String, @runtime.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 // Errors
 
@@ -68,11 +63,6 @@ pub fn MacosHostSmokeOptions::performance_enabled(Self) -> Bool
 
 type MacosNativeHostBackend
 pub impl @wzzc-dev/window/macos.ApplicationHandler for MacosNativeHostBackend
-
-pub struct MacosRendererProvider {
-  // private fields
-}
-pub fn MacosRendererProvider::new(create_renderer~ : (@wzzc-dev/window/macos.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/macos.Window, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
 // Type aliases
 

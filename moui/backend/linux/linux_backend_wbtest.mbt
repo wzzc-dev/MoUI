@@ -62,7 +62,6 @@ test "linux coordinator exposes async image loader hook" {
     scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
     services=linux_service_bridge(system_theme=@core.ColorScheme::Light),
     event_sources=None,
-    image_loader=Some(loader),
   )
   let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
@@ -74,6 +73,26 @@ test "linux coordinator exposes async image loader hook" {
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
+  )
+  ignore(
+    coordinator.attach_surface(
+      @host.HostWindowId::new(1),
+      renderer,
+      @runtime.WindowSurfaceActions::new(
+        focus=() => (),
+        request_surface_size=_ => (),
+        sync_surface=_ => (),
+        renderer_resize=_ => (),
+        set_minimized=_ => (),
+        set_visible=_ => (),
+        request_redraw=() => (),
+        request_ime_update=_ => (),
+        drop=() => (),
+        native_view_handle=() => None,
+        dispose_platform_views=() => (),
+      ),
+      image_loader=Some(loader),
+    ),
   )
   match
     coordinator.schedule_image_resource_loads(
@@ -101,7 +120,6 @@ test "linux coordinator async image hook defaults to unavailable" {
     scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
     services=linux_service_bridge(system_theme=@core.ColorScheme::Light),
     event_sources=None,
-    image_loader=None,
   )
   let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),

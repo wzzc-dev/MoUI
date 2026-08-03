@@ -1,6 +1,13 @@
 # MoUI 渲染器与后端解耦架构方案
 
-- 文档状态：Proposal（待评审）
+> **[NG] 部分作废（2026-08-03）**：本文档的**目录形态结论**已被 `docs/plans/active/backend-renderer-extraction.md` 取代，Phase 1-5 停止执行。
+>
+> - **被推翻的章节**：§3.6（`:724-744`，「不新增包 / 不删包」）、§5 迁移矩阵的 D 列（`:850-868`，「保留 `moui/backend/**` 下 13 个渲染器绑定子包」）、§3.5.3（`:717-723`，「`MOUI_SKIA_RENDERER` 字面量必须留在 `moui/backend/*/skia/*_skia_provider.mbt`」——该条已按接替方案 §5.1.1 U1 裁决改为落在 `moui/render/skia` 的 `from_env`）。
+> - **继续有效并被继承的章节**：§3.5.1（`:691-712`，`native_gpu_selection.mbt` 中立载荷与 skia 家族策略的拆分边界）、§5.1（`:868-881`，MoonBit `moon.pkg` 无特性开关导致「一个 (平台,渲染器) 组合 = 一个包 = 一个链接单元」的硬约束）、§6（`:893-1032`，能力协商与不变量论述）。
+> - **接替方案的核心差异**：删除全部 13 个绑定子包，装配上移到应用入口（composition root），以 `@runtime.run_app().render(...).backend(...)` 流式 API 表达；净减约 7729 行，`moui/backend` 包数 25 → 11，`backend → render` 依赖边 15 → 0。
+> - 两份文档暂时并存于 `docs/plans/active/`，**冲突时以接替方案为准**；接替方案完成后两份一并移入 `docs/plans/done/`。
+
+- 文档状态：已取代（2026-08-03；目录形态与执行结论以 `backend-renderer-extraction.md` 为准）
 - 作者：高见远（首席架构师）
 - 日期：2026-08
 - 适用仓库：`/Volumes/Data/Code/moon/MoUI`
@@ -536,13 +543,13 @@ pub fn run_app_with_options(
 /// options are passed through as `@macos_host.MacosHostAppOptions`.
 pub struct MacosSkiaRendererOptions {
   priv font_resolution : @skia_renderer.SkiaFontResolution
-  priv surface_route : @render.SkiaSurfaceRoute
+  priv surface_route : @render.SurfaceRoute
 }
 
 ///|
 pub fn MacosSkiaRendererOptions::new(
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
-  surface_route? : @render.SkiaSurfaceRoute = @skia_renderer.desktop_surface_route(
+  surface_route? : @render.SurfaceRoute = @skia_renderer.desktop_surface_route(
     platform=@render.NativeGpuPlatform::MacOS,
     gpu_available=@skia_native.Surface::metal_gpu_context_runtime_available(),
     route_override_env="MOUI_MACOS_SKIA_SURFACE_ROUTE",
@@ -638,20 +645,20 @@ fn renderer_metrics(metrics : @host.HostSurfaceMetrics) -> @render.RendererSurfa
 
 收敛目标包选择：**`moui/render/skia`**，理由有三：
 
-1. 它是 native-only（`render/skia/moon.pkg:16 supported_targets = "native"`），可安全承载 Skia 族专有的「字符串 → `NativeRendererMode` → `SkiaSurfaceRoute`」解析决策（见 §3.5.3）；`moui/render` 是 `+native+wasm-gc+wasm`，**不能**放那里。按 B5 边界，env 读取点（`@env.get_env_var("MOUI_SKIA_RENDERER")`）留在各平台 provider，不下沉到此处。
+1. 它是 native-only（`render/skia/moon.pkg:16 supported_targets = "native"`），可安全承载 Skia 族专有的「字符串 → `NativeRendererMode` → `SurfaceRoute`」解析决策（见 §3.5.3）；`moui/render` 是 `+native+wasm-gc+wasm`，**不能**放那里。按 B5 边界，env 读取点（`@env.get_env_var("MOUI_SKIA_RENDERER")`）留在各平台 provider，不下沉到此处。
 2. 它**已经** import `moonbitlang/core/env`（`render/skia/moon.pkg:5`），零新增依赖，不触发 A2。
-3. `SkiaSurfaceRoute` 与 `NativeRendererMode` 都是 Skia 族概念，R2/R3 也只约束 Skia 路径。放这里语义正确，且不会把 Skia 策略泄漏给 sun/wgpu。
+3. `SurfaceRoute` 与 `NativeRendererMode` 都是 Skia 族概念，R2/R3 也只约束 Skia 路径。放这里语义正确，且不会把 Skia 策略泄漏给 sun/wgpu。
 
 ```moonbit
 // moui/render/skia/desktop_selection.mbt  (下沉：仅「mode -> route」决策逻辑)
 ///|
 /// Skia-only decision helper: maps a resolved `NativeRendererMode` to a
-/// `SkiaSurfaceRoute`. It does NOT read env (B5 边界：env 读取点留在 provider).
+/// `SurfaceRoute`. It does NOT read env (B5 边界：env 读取点留在 provider).
 pub fn[P : @render.NativePlatformSurface] desktop_surface_route(
   platform~ : P,
   gpu_available~ : Bool,
   requested~ : @render.NativeRendererMode,
-) -> @render.SkiaSurfaceRoute {
+) -> @render.SurfaceRoute {
   @render.resolve_surface_route(
     platform,
     requested,
@@ -665,7 +672,7 @@ pub fn[P : @render.NativePlatformSurface] desktop_surface_route(
 
 ```moonbit
 // moui/backend/<platform>/skia/*_provider.mbt
-fn select_route(platform~ : P, gpu_available~ : Bool) -> @render.SkiaSurfaceRoute {
+fn select_route(platform~ : P, gpu_available~ : Bool) -> @render.SurfaceRoute {
   let requested = match @env.get_env_var("MOUI_SKIA_RENDERER") {
     Some(value) =>
       @render.NativeRendererMode::parse(value).unwrap_or(@render.NativeRendererMode::Auto)
@@ -675,7 +682,7 @@ fn select_route(platform~ : P, gpu_available~ : Bool) -> @render.SkiaSurfaceRout
 }
 ```
 
-签名依据实测的 `pub fn[P : NativePlatformSurface] resolve_surface_route(P, NativeRendererMode, gpu_available~ : Bool, gpu_promoted~ : Bool) -> SkiaSurfaceRoute`（`moui/render/pkg.generated.mbti:92`）。
+签名依据实测的 `pub fn[P : NativePlatformSurface] resolve_surface_route(P, NativeRendererMode, gpu_available~ : Bool, gpu_promoted~ : Bool) -> SurfaceRoute`（`moui/render/pkg.generated.mbti:92`）。
 
 三个桌面 skia 绑定包各自退化为一行调用（示例见 §3.3 的 `MacosSkiaRendererOptions::new` 默认值）。
 
@@ -689,7 +696,7 @@ fn select_route(platform~ : P, gpu_available~ : Bool) -> @render.SkiaSurfaceRout
 
 **必须留在 `moui/render`（跨渲染器契约载荷）—— `GpuHostSurfaceDescriptor`**
 - `provider_contract.mbt:9` 作为 `SurfaceDescriptor::GpuSurface` 载荷、`:220` 构造参数
-- `provider_shell.mbt:91` `route_for~ : (GpuHostSurfaceDescriptor) -> SkiaSurfaceRoute` 字段签名
+- `provider_shell.mbt:91` `route_for~ : (GpuHostSurfaceDescriptor) -> SurfaceRoute` 字段签名
 - 5 个平台 skia provider 的构造器调用（macos:483 / linux:316 / windows:326 / android:117 / ios:136）
 - `render/skia/provider.mbt:191-202` 模式匹配
 - 它是中立层的 surface 句柄载荷，**不能动**。
@@ -709,7 +716,7 @@ fn select_route(platform~ : P, gpu_available~ : Bool) -> @render.SkiaSurfaceRout
 
 ### 3.5.3 M5 与 R3 校验器的硬边界（B5）
 
-**边界**：env 变量名与 `get_env("MOUI_SKIA_RENDERER")` 读取点**保留在各平台 skia provider**（R3 校验器 `has_env` 硬依赖）；下沉到 skia 族的只是「字符串 → `NativeRendererMode` → `SkiaSurfaceRoute`」的解析与决策逻辑。provider 侧改为调用 `resolve_surface_route`，满足 R3 的 `has_parse` OR 分支。
+**边界**：env 变量名与 `get_env("MOUI_SKIA_RENDERER")` 读取点**保留在各平台 skia provider**（R3 校验器 `has_env` 硬依赖）；下沉到 skia 族的只是「字符串 → `NativeRendererMode` → `SurfaceRoute`」的解析与决策逻辑。provider 侧改为调用 `resolve_surface_route`，满足 R3 的 `has_parse` OR 分支。
 
 - `has_parse` 是 OR——M5 把 `NativeRendererMode::parse` 下沉走之后，只要 desktop skia provider 文件体里仍出现 `resolve_surface_route`，R3 依然通过。**M5 有安全通道，不会被 R3 卡死。**
 - `has_env` 是硬条件——`MOUI_SKIA_RENDERER` 字面量必须**留在 provider 文件里**。M5 如果把 env 读取一起下沉到 skia 包，R3 立即 fail。
@@ -958,7 +965,7 @@ node scripts/validate-options-field-drift.mjs   # 预期 18（macos/sun 的 even
 moon check moui/backend/wechat --target wasm-gc
 moon check moui/backend/web --target wasm-gc
 moon check moui/backend/web/webgpu --target wasm-gc
-moon test moui/backend/wechat/canvas --target wasm-gc
+moon test moui/render/canvas2d --target wasm-gc
 node scripts/validate-host-import-baseline.mjs
 node scripts/validate-renderer-provider-open-extension.mjs
 node scripts/validate-options-field-drift.mjs   # 预期 18（web/wechat 不在本矩阵，D4 单独归零）
@@ -982,10 +989,10 @@ sh scripts/check.sh --profile pr
 
 验证：
 ```
-moon check moui/backend/macos/skia
-moon check moui/backend/linux/skia
-moon check moui/backend/windows/skia
-moon test moui/backend/macos/skia --target native
+moon check moui/render/skia
+moon check moui/render/skia
+moon check moui/render/skia
+moon test moui/render/skia --target native
 MOUI_SKIA_RENDERER=skia-raster sh scripts/macos-skia-renderer-smoke.sh
 MOUI_SKIA_RENDERER=skia-gpu    sh scripts/macos-skia-renderer-smoke.sh
 MOUI_SKIA_RENDERER=auto        sh scripts/macos-skia-renderer-smoke.sh

@@ -1,5 +1,9 @@
 import {
-  "wzzc-dev/moui/backend/linux/wgpu" @linux_wgpu_backend,
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/backend/linux" @linux_backend,
+  "wzzc-dev/moui/render/wgpu" @render_wgpu,
+  "wzzc-dev/moui/render/wgpu/fontconfig" @wgpu_fontconfig,
+  "wzzc-dev/moui/render/wgpu/cosmic_text" @wgpu_cosmic,
   "wzzc-dev/moui/runtime",
   "examples/counter/app" @counter_app,
 }

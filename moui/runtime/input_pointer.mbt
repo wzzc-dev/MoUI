@@ -375,17 +375,48 @@ fn ElementNode::dispatch_pointer_to_target(
   text_system~ : TextSystem,
   now_ms? : Double = 0.0,
 ) -> ElementEventResult? {
+  let (result, _) = self.dispatch_pointer_to_target_with_scroll_ancestor(
+    target,
+    event,
+    render,
+    environment~,
+    style~,
+    text_system~,
+    now_ms~,
+  )
+  result
+}
+
+///|
+/// Deliver a captured event to its target and, for Move/Up/Cancel, let the
+/// nearest scroll-view ancestor observe the same stream. A child control can
+/// keep its normal capture/click semantics while a surrounding scroll view
+/// still recognizes a touch drag that started on that control.
+fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
+  self : ElementNode,
+  target : ElementId,
+  event : PointerEvent,
+  render : RenderNode,
+  environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
+  text_system~ : TextSystem,
+  now_ms? : Double = 0.0,
+  bubble_scroll? : Bool = true,
+) -> (ElementEventResult?, Bool) {
   if self.id == target {
-    Some(
-      self.dispatch_pointer(
-        event,
-        render,
-        environment~,
-        style~,
-        text_system~,
-        capture_lookup=false,
-        now_ms~,
+    (
+      Some(
+        self.dispatch_pointer(
+          event,
+          render,
+          environment~,
+          style~,
+          text_system~,
+          capture_lookup=false,
+          now_ms~,
+        ),
       ),
+      false,
     )
   } else {
     let child_environment = self.view_node.child_environment(environment)
@@ -394,7 +425,7 @@ fn ElementNode::dispatch_pointer_to_target(
     while index < self.children.length() {
       if index < render.children.length() {
         match
-          self.children[index].dispatch_pointer_to_target(
+          self.children[index].dispatch_pointer_to_target_with_scroll_ancestor(
             target,
             event,
             render.children[index],
@@ -402,18 +433,97 @@ fn ElementNode::dispatch_pointer_to_target(
             style=child_style,
             text_system~,
             now_ms~,
+            bubble_scroll~,
           ) {
-          Some(result) => {
+          (Some(result), bubbled) => {
+            if bubble_scroll &&
+              !bubbled &&
+              event.phase != PointerPhase::Down &&
+              self.is_scroll_view_node() {
+              let own = self.dispatch_view_event(
+                self.view_node,
+                AppEvent::Pointer(event),
+                render,
+                text_system,
+                environment~,
+                style~,
+                now_ms~,
+              )
+              if !own.captured {
+                if result.changed {
+                  self.mark_pointer_paint_dirty()
+                }
+                return (Some(result), bubbled)
+              }
+              let combined = merge_element_event_results(result, own)
+              let combined = if event.phase == PointerPhase::Move &&
+                own.changed &&
+                result.captured {
+                let cancel_event = PointerEvent::new(
+                  position=event.position,
+                  phase=PointerPhase::Cancel,
+                )
+                match
+                  self.children[index].dispatch_pointer_to_target_with_scroll_ancestor(
+                    target,
+                    cancel_event,
+                    render.children[index],
+                    environment=child_environment,
+                    style=child_style,
+                    text_system~,
+                    now_ms~,
+                    bubble_scroll=false,
+                  ) {
+                  (Some(cancelled), _) =>
+                    merge_element_event_results(combined, cancelled)
+                  (None, _) => combined
+                }
+              } else {
+                combined
+              }
+              if combined.changed {
+                self.mark_pointer_paint_dirty()
+              }
+              return (Some(combined), true)
+            }
             if result.changed {
               self.mark_pointer_paint_dirty()
             }
-            return Some(result)
+            return (Some(result), bubbled)
           }
-          None => ()
+          (None, _) => ()
         }
       }
       index = index + 1
     }
-    None
+    (None, false)
   }
+}
+
+///|
+fn merge_element_event_results(
+  first : ElementEventResult,
+  second : ElementEventResult,
+) -> ElementEventResult {
+  let deliveries = first.deliveries.copy()
+  deliveries.append(second.deliveries)
+  {
+    changed: first.changed || second.changed,
+    activated: first.activated || second.activated,
+    captured: first.captured || second.captured,
+    capture_target: match first.capture_target {
+      Some(target) => Some(target)
+      None => second.capture_target
+    },
+    focused: match second.focused {
+      Some(value) => Some(value)
+      None => first.focused
+    },
+    deliveries,
+  }
+}
+
+///|
+fn ElementNode::is_scroll_view_node(self : ElementNode) -> Bool {
+  self.view_node.semantics().role == Some(@core.SemanticsRole::ScrollView)
 }

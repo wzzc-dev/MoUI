@@ -23,7 +23,7 @@ pub(all) enum SurfaceNegotiationResult {
 /// Skia surface route (for Skia-family renderers), and metrics.
 pub(all) struct BoundSurface {
   kind : RendererPresentationModel
-  route : SkiaSurfaceRoute
+  route : SurfaceRoute
   metrics : RendererSurfaceMetrics
 }
 
@@ -93,6 +93,11 @@ pub(all) struct RendererProvider {
   /// Create a renderer instance from metrics and a negotiated
   /// bound surface. The returned instance is ready to render.
   create : (RendererSurfaceMetrics, BoundSurface) -> RendererInstance
+}
+
+///|
+pub fn RendererProvider::id(self : RendererProvider) -> String {
+  self.id
 }
 
 ///|
@@ -236,7 +241,7 @@ pub fn RendererProviderRegistry::from_providers(
 ///|
 pub fn BoundSurface::new(
   kind~ : RendererPresentationModel,
-  route~ : SkiaSurfaceRoute,
+  route~ : SurfaceRoute,
   metrics~ : RendererSurfaceMetrics,
 ) -> BoundSurface {
   { kind, route, metrics }
@@ -248,7 +253,7 @@ pub fn BoundSurface::kind(self : BoundSurface) -> RendererPresentationModel {
 }
 
 ///|
-pub fn BoundSurface::route(self : BoundSurface) -> SkiaSurfaceRoute {
+pub fn BoundSurface::route(self : BoundSurface) -> SurfaceRoute {
   self.route
 }
 

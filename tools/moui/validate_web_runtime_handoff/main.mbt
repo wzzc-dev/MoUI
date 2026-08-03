@@ -309,7 +309,7 @@ fn validate_runtime_assets(
   let failures : Array[String] = []
   for
     path in [
-      "moui/backend/web/runtime.js", "moui/backend/web/browser_runtime.js",
+      "moui/render/webgpu_adapter/runtime.js", "moui/backend/web/browser_runtime.js",
     ] {
     match read_repo_bytes(root, path) {
       Ok(bytes) =>
@@ -323,13 +323,14 @@ fn validate_runtime_assets(
       Err(message) => failures.push(message)
     }
   }
-  match read_repo_text(root, "moui/backend/web/runtime.js") {
+  match read_repo_text(root, "moui/render/webgpu_adapter/runtime.js") {
     Ok(text) => {
       push_includes_check(
-        text, "Browser WebGPU is required", "moui/backend/web/runtime.js", failures,
+        text, "Browser WebGPU renderer runtime", "moui/render/webgpu_adapter/runtime.js",
+        failures,
       )
       push_includes_check(
-        text, "bootMouiWasmGcApp", "moui/backend/web/runtime.js", failures,
+        text, "bootMouiWasmGcApp", "moui/render/webgpu_adapter/runtime.js", failures,
       )
     }
     Err(message) => failures.push(message)
@@ -360,7 +361,7 @@ fn validate_target(
       push_includes_check(html, "bootMouiWasmGcApp", target.html_path, failures)
       push_includes_check(
         html,
-        "../../../moui/backend/web/runtime.js",
+        "../../../moui/render/webgpu_adapter/runtime.js",
         target.html_path,
         failures,
       )
@@ -516,7 +517,7 @@ fn manifest_text(
   write_json_string(builder, observation_boundary)
   builder.write_string(",\n")
   builder.write_string("  \"runtimeAssets\": [\n")
-  builder.write_string("    \"moui/backend/web/runtime.js\",\n")
+  builder.write_string("    \"moui/render/webgpu_adapter/runtime.js\",\n")
   builder.write_string("    \"moui/backend/web/browser_runtime.js\"\n")
   builder.write_string("  ],\n")
   builder.write_string("  \"targets\": [\n")
@@ -545,7 +546,7 @@ fn manifest_text(
     write_string_array(builder, item.compiled_wasm_exports)
     builder.write_string(",\n")
     builder.write_string(
-      "      \"htmlRuntimeImport\": \"../../../moui/backend/web/runtime.js\",\n",
+      "      \"htmlRuntimeImport\": \"../../../moui/render/webgpu_adapter/runtime.js\",\n",
     )
     builder.write_string("      \"canvasHostSelector\": \"#canvas-host\",\n")
     builder.write_string("      \"wasmBytes\": ")

@@ -107,14 +107,11 @@ Provider 包刻意保持分离：
 - `render/wgpu/text_protocol/`：用于 UTF-32 输入、版本化 `FontSpec` 编码、measure/run/raster
   信封和嵌入字体注册载荷的共享 native-stub 载荷协议。
 
-原生 WGPU 文本引擎选择属于 WGPU provider 包，而不属于平台 host cores。通过
-`backend/<platform>/wgpu.run_app_with_options` 使用
-`MacosWgpuAppOptions::new(text_engine=...)`、
-`WindowsWgpuAppOptions::new(text_engine=...)` 或
-`LinuxWgpuAppOptions::new(text_engine=...)`。`PlatformDefault` 将平台 provider 与 Cosmic fallback
+原生 WGPU 文本引擎选择属于 WGPU renderer factory，而不属于平台 host cores。入口调用
+`@wgpu_renderer.native(text_engine=...)` 并与平台 `entry()` 组合。平台默认引擎将原生 provider 与 Cosmic fallback
 组合；`MoonCosmic` 直接选择 Cosmic provider。Showcase 也有显式的 `macos_wgpu_cosmic`、
 `windows_wgpu_cosmic` 和 `linux_wgpu_cosmic` 入口，用于比较这些路径。单独的 Showcase 和
-Markdown Editor `*_skia` 入口选择 Skia provider 包，而不是 WGPU 文本 provider 变体。
+Markdown Editor `*_skia` 入口选择 `render/skia` factory，而不是 WGPU 文本 provider 变体。
 默认情况下，Skia 基本文本测量和绘制会通过 `moui_skia` 的 `FontMgr` 和 `Font`
 解析 MoUI `FontSpec` family stack、weight 和 style。系统 `FontMgr` 路径现在构造
 `FontFallbackRequest`，其中包含代表性覆盖字符：优先 emoji hints，其次非 ASCII code point，
@@ -153,7 +150,7 @@ Skia 文本系统通过原生 `Paragraph` wrapper 路由段落布局，通过绑
 `RectHeightStyle::kMax` 加 `RectWidthStyle::kTight`。无效或不可用的 SkParagraph 几何会回退到既有
 core 段落结果，而不会提升这些就绪标志。原生绑定也暴露可选 SkParagraph paint，用于段落路线 smoke
 覆盖；MoUI 的单行 `TextRun` 主路径仍使用 shaped glyph/TextBlob-equivalent glyph-run 路线，而不是
-SkParagraph paint。macOS、Windows 和 Linux Skia provider 默认使用系统 `FontMgr` 路径，因此普通原生
+SkParagraph paint。macOS、Windows 和 Linux 的 Skia factory 默认使用系统 `FontMgr` 路径，因此普通原生
 Skia 入口会覆盖平台字体查找、emoji retry 和可选 SkShaper（如果已链接）。渲染器包也直接暴露
 `skia_text_system()`，使 Skia 测量路径可以纳入原生诊断文本一致性，而不需要平台窗口，也不把 provider
 检查视为运行时观察。这些诊断断言混合 CJK、emoji、ZWJ emoji、Indic mark、Arabic mark、Thai mark、
@@ -204,7 +201,7 @@ cursor 几何）、Skia 文本系统几何以及捕获的文本字段 compositio
 原生 IME 运行时观察。平台运行时观察会进一步拆分原生 IME 就绪性：原生 `status=passed` 条目还必须从
 匹配宿主 Showcase artifacts 记录 `imeSurroundingText`、`imeCommitDelete`、`imeCursorUpdate`、
 `imeScrollAnchor`、`imeScaleDprAnchor` 和 `imeResizeAnchor` 观察。这些日志必须携带
-matching-host runtime、native-app、`renderer=skia`、匹配应用 marker、platform-protocol、
+matching-host runtime、native-app、`renderer=application`、匹配应用 marker、platform-protocol、
 candidate-window、surrounding-text、composition-visual、commit/delete、cursor-update、scroll、
 scale/DPR 和 resize markers，因此仅包级 composition 测试和粗粒度 `textInput` 观察不能单独提升原生
 IME 就绪性。这些字段让 CI artifacts 更容易审计，但尚不保证精确的跨平台 typeface identity、

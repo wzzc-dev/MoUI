@@ -1,8 +1,6 @@
 ///|
 async fn main {
-  // Surface route defaults via MacosSkiaAppOptions (auto -> GPU when available;
-  // override with MOUI_SKIA_RENDERER or MOUI_MACOS_SKIA_SURFACE_ROUTE).
-  let app_options = @macos_skia_backend.MacosSkiaAppOptions::new(
+  let app_options = @macos_host.MacosHostAppOptions::new(
     transparent_titlebar=true,
   )
   let host_services = @host.HostAppServices::new(
@@ -66,11 +64,10 @@ async fn main {
         height=680.0,
       )
       let window_task : async () -> Unit = async fn() {
-        @macos_skia_backend.run_app_with_options_async_pump(
-          "Mo Workbench",
-          runtime,
-          options=app_options,
-        )
+        @moui.run_app("Mo Workbench", runtime)
+        .render_all(@render_skia.from_env())
+        .backend(@macos_host.entry(options=app_options))
+        .run_async_pump()
       }
       let worker_task : async () -> Unit = async fn() {
         @acp_transport.acp_worker_loop(b.owner)
@@ -96,11 +93,10 @@ async fn main {
             height=680.0,
           )
           let window_task : async () -> Unit = async fn() {
-            @macos_skia_backend.run_app_with_options_async_pump(
-              "Mo Workbench",
-              runtime,
-              options=app_options,
-            )
+            @moui.run_app("Mo Workbench", runtime)
+            .render_all(@render_skia.from_env())
+            .backend(@macos_host.entry(options=app_options))
+            .run_async_pump()
           }
           let worker_task : async () -> Unit = async fn() {
             @openseek_transport.openseek_worker_loop(b.owner)
@@ -127,11 +123,10 @@ async fn main {
             width=1300.0,
             height=680.0,
           )
-          @macos_skia_backend.run_app_with_options_async_pump(
-            "Mo Workbench",
-            runtime,
-            options=app_options,
-          ) catch {
+          @moui.run_app("Mo Workbench", runtime)
+          .render_all(@render_skia.from_env())
+          .backend(@macos_host.entry(options=app_options))
+          .run_async_pump() catch {
             err => println("App exited with error: \{err}")
           }
         }

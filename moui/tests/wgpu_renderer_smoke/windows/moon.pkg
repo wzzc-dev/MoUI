@@ -1,5 +1,6 @@
 import {
-  "wzzc-dev/moui/backend/windows/wgpu" @windows_wgpu,
+  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
+  "wzzc-dev/moui/render/wgpu/directwrite" @wgpu_directwrite,
   "Milky2018/wgpu_mbt",
 }
 

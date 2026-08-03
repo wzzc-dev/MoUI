@@ -1,6 +1,8 @@
 import {
+  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/windows/skia" @windows_skia_backend,
+  "wzzc-dev/moui/backend/windows" @windows_backend,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "examples/design_systems/app" @design_systems_app,
 }
 

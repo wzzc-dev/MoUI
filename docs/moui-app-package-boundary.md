@@ -273,8 +273,8 @@ Ordinary apps must not directly depend on:
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/render/*`
 - `wzzc-dev/moui/backend/{web,macos,windows,linux}`
-- `wzzc-dev/moui/backend/{macos,windows,linux,android}/skia`
-- `wzzc-dev/moui/backend/{macos,windows,linux}/wgpu`
+- concrete renderer packages; renderer factories belong in platform composition
+  roots and are not dependencies of shared app packages.
 - `moui_theme/*`, unless the app itself is a design-system addon or preview app.
 
 The known exceptions appear in “Target Boundary Declaration” above:
@@ -519,13 +519,20 @@ root `moui` facade.
 Platform entrypoint packages are executable packages such as
 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_window_hosted,ios_window_hosted,harmonyos_window_hosted}`.
 They create the runtime, connect a platform backend, and select a renderer.
+Desktop/Web/Wechat roots import `wzzc-dev/moui`, one concrete renderer package,
+and one platform backend, then use
+`@moui.run_app(...)`, `.render(...)` or `.render_all(...)`, and
+`.backend(...).run()`. Platform options are
+captured by `backend/<platform>.entry(...)`; renderer options are captured by
+the renderer factory. A composition root never imports a renderer-specific
+backend subpackage.
 
 The three embedded runtime routes use the matching `wzzc-dev/window` template and a
-`*_window_hosted` entrypoint. Their `main.mbt` files construct the program,
-select the renderer provider, and pass the resulting `*EmbeddedRuntimeBackend` to the
-platform `EventLoop`. `HostCmd` and `ApplicationHandler` are the only path for
-lifecycle, surface, and input callbacks; mobile executable roots do not export
-or forward a second embedding ABI.
+`*_window_hosted` entrypoint. Their `main.mbt` files construct the program and
+compose renderer factories with the platform `entry()` through `AppBuilder`.
+`HostCmd` and `ApplicationHandler` remain the only path for lifecycle, surface,
+and input callbacks; mobile executable roots do not export or forward a second
+embedding ABI.
 
 Android, iOS, and HarmonyOS templates own their native lifecycle and surface
 bridges. `AndroidEmbeddedRuntimeBackend`, `IosEmbeddedRuntimeBackend`, and
@@ -536,15 +543,15 @@ source for surface, pointer, resize, and detach events.
 Platform entrypoint packages may depend on:
 
 - `wzzc-dev/moui/runtime`
+- `wzzc-dev/moui`
 - `wzzc-dev/moui/backend/web`
 - `wzzc-dev/moui/backend/host`
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}`
-- `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia`
-- `wzzc-dev/moui/render/skia`
+- one of `wzzc-dev/moui/render/{skia,wgpu,sun,canvas2d,webgpu_adapter}`
 - `wzzc-dev/window/{android,ios,harmonyos}` in the matching mobile entrypoint
 - The corresponding shared app package, such as `examples/showcase/app`
 
-WGPU-related backend/render packages are for experimental or diagnostic
+WGPU-related renderer packages are for experimental or diagnostic
 entrypoints only; they are not recommended dependencies for ordinary apps or
 default platform entrypoints.
 

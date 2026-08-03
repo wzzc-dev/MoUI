@@ -48,6 +48,131 @@ priv struct ScrollContainer {
 }
 
 ///|
+/// Transient pointer state for touch/mouse dragging over the scroll surface.
+/// The runtime owns this value so it survives the rebuild triggered by a
+/// scroll-state update without leaking platform pointer state into controls.
+priv struct ScrollDragState {
+  active : Bool
+  dragging : Bool
+  origin : @core.Point
+  last_position : @core.Point
+}
+
+///|
+impl @core.ViewStateValue for ScrollDragState with fn view_state_type_key() {
+  @core.DeclarationKey::string("moui.views.ScrollDragState.v1")
+}
+
+///|
+impl @core.ViewStateValue for ScrollDragState with fn encode_view_state(self) {
+  let output = Buffer(size_hint=34)
+  output.write_byte(if self.active { 1 } else { 0 })
+  output.write_byte(if self.dragging { 1 } else { 0 })
+  output.write_double_be(self.origin.x)
+  output.write_double_be(self.origin.y)
+  output.write_double_be(self.last_position.x)
+  output.write_double_be(self.last_position.y)
+  output.to_bytes()
+}
+
+///|
+impl @core.ViewStateValue for ScrollDragState with fn decode_view_state(
+  _self,
+  bytes,
+) {
+  if bytes.length() == 17 {
+    // Accept the pre-slop state encoding so a saved pointer state can be
+    // discarded cleanly when upgrading an already-mounted view.
+    let active = match bytes[0] {
+      0 => Some(false)
+      1 => Some(true)
+      _ => None
+    }
+    let x = @core.ViewStateValue::decode_view_state(0.0, bytes[1:9].to_owned())
+    let y = @core.ViewStateValue::decode_view_state(0.0, bytes[9:17].to_owned())
+    match (active, x, y) {
+      (Some(active), Some(x), Some(y)) => {
+        let position = @core.Point::new(x~, y~)
+        Some({
+          active,
+          dragging: false,
+          origin: position,
+          last_position: position,
+        })
+      }
+      _ => None
+    }
+  } else if bytes.length() == 34 {
+    let active = match bytes[0] {
+      0 => Some(false)
+      1 => Some(true)
+      _ => None
+    }
+    let dragging = match bytes[1] {
+      0 => Some(false)
+      1 => Some(true)
+      _ => None
+    }
+    let origin_x = @core.ViewStateValue::decode_view_state(
+      0.0,
+      bytes[2:10].to_owned(),
+    )
+    let origin_y = @core.ViewStateValue::decode_view_state(
+      0.0,
+      bytes[10:18].to_owned(),
+    )
+    let last_x = @core.ViewStateValue::decode_view_state(
+      0.0,
+      bytes[18:26].to_owned(),
+    )
+    let last_y = @core.ViewStateValue::decode_view_state(
+      0.0,
+      bytes[26:34].to_owned(),
+    )
+    match (active, dragging, origin_x, origin_y, last_x, last_y) {
+      (
+        Some(active),
+        Some(dragging),
+        Some(origin_x),
+        Some(origin_y),
+        Some(last_x),
+        Some(last_y),
+      ) =>
+        Some({
+          active,
+          dragging,
+          origin: @core.Point::new(x=origin_x, y=origin_y),
+          last_position: @core.Point::new(x=last_x, y=last_y),
+        })
+      _ => None
+    }
+  } else {
+    None
+  }
+}
+
+///|
+fn scroll_drag_state_slot() -> @core.ViewStateSlot[ScrollDragState] {
+  @core.ViewStateSlot::new(
+    key=@core.DeclarationKey::string("moui.views.scroll.drag"),
+    initial=ScrollDragState::{
+      active: false,
+      dragging: false,
+      origin: @core.Point::new(x=0.0, y=0.0),
+      last_position: @core.Point::new(x=0.0, y=0.0),
+    },
+  )
+}
+
+///|
+/// A small pointer movement is ordinary click jitter, especially for a mouse.
+/// Do not cancel a child control until the pointer has moved far enough to be a
+/// deliberate scroll gesture.
+fn scroll_drag_slop() -> Double {
+  4.0
+}
+
+///|
 impl @core.ViewNode for ScrollContainer with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
@@ -154,6 +279,8 @@ fn[Msg] scroll_container_event(
           state~,
           on_scroll~,
         )
+      } else if scroll_container_drag_handles_event(node, ctx, event) {
+        scroll_container_drag_event(node, ctx, event, state, on_scroll)
       } else if ctx.frame.contains(event.position) &&
         (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
         match (state, on_scroll) {
@@ -221,6 +348,147 @@ fn[Msg] scroll_container_event(
         @core.ViewEventResult::ignored()
       }
     _ => @core.ViewEventResult::ignored()
+  }
+}
+
+///|
+fn scroll_container_drag_handles_event(
+  node : ScrollContainer,
+  ctx : @core.ViewEventContext,
+  event : @core.PointerEvent,
+) -> Bool {
+  if !node.scrollable {
+    return false
+  }
+  let drag = ctx.state.read_slot(scroll_drag_state_slot())
+  match event.phase {
+    @core.PointerPhase::Down => ctx.frame.contains(event.position)
+    @core.PointerPhase::Move
+    | @core.PointerPhase::Up
+    | @core.PointerPhase::Cancel
+    | @core.PointerPhase::Exit => drag.active
+  }
+}
+
+///|
+fn[Msg] scroll_container_drag_event(
+  node : ScrollContainer,
+  ctx : @core.ViewEventContext,
+  event : @core.PointerEvent,
+  state : @core.ScrollState?,
+  on_scroll : ((@core.Point) -> Msg)?,
+) -> @core.ViewEventResult[Msg] {
+  let slot = scroll_drag_state_slot()
+  let drag = ctx.state.read_slot(slot)
+  match event.phase {
+    @core.PointerPhase::Down => {
+      let next = ScrollDragState::{
+        active: true,
+        dragging: false,
+        origin: event.position,
+        last_position: event.position,
+      }
+      {
+        changed: false,
+        activated: false,
+        focused: false,
+        captured: true,
+        state: Some(ctx.state.with_slot(slot, next)),
+        text_control: None,
+        dirty: @core.ViewDirtyHint::ViewClean,
+        messages: [],
+      }
+    }
+    @core.PointerPhase::Move => {
+      if !drag.active {
+        return @core.ViewEventResult::ignored()
+      }
+      let delta = @core.Point::new(
+        x=event.position.x - drag.last_position.x,
+        y=event.position.y - drag.last_position.y,
+      )
+      let distance_x = event.position.x - drag.origin.x
+      let distance_y = event.position.y - drag.origin.y
+      let starts_dragging = !drag.dragging &&
+        distance_x * distance_x + distance_y * distance_y >=
+        scroll_drag_slop() * scroll_drag_slop()
+      let is_dragging = drag.dragging || starts_dragging
+      let next_drag = {
+        ..drag,
+        dragging: is_dragging,
+        last_position: event.position,
+      }
+      let next_context = ctx.state.with_slot(slot, next_drag)
+      if !is_dragging {
+        return {
+          changed: false,
+          activated: false,
+          focused: false,
+          // Keep the pointer stream alive without making the ancestor appear
+          // to have started a drag. This preserves a child button click.
+          captured: false,
+          state: Some(next_context),
+          text_control: None,
+          dirty: @core.ViewDirtyHint::ViewClean,
+          messages: [],
+        }
+      }
+      let has_delta = delta.x != 0.0 || delta.y != 0.0
+      let viewport_size = node.viewport.unwrap_or(ctx.frame.size)
+      let child_size = first_child_frame_size(ctx.child_frames, viewport_size)
+      let current = scroll_offset(node.offset, state)
+      let next = scroll_offset_after_wheel(
+        current, delta, viewport_size, child_size,
+      )
+      let moved = next != current
+      match state {
+        Some(scroll_state) =>
+          if moved {
+            scroll_state.scroll_to(x=next.x, y=next.y)
+          }
+        None => ()
+      }
+      let dispatch = match state {
+        Some(_) => moved
+        None => has_delta && on_scroll is Some(_)
+      }
+      {
+        changed: moved || (state is None && dispatch),
+        activated: dispatch && on_scroll is Some(_),
+        focused: false,
+        captured: true,
+        state: Some(next_context),
+        text_control: None,
+        dirty: if moved && state is Some(_) {
+          @core.ViewDirtyHint::ViewBuildDirty
+        } else if dispatch {
+          @core.ViewDirtyHint::ViewPaintDirty
+        } else {
+          @core.ViewDirtyHint::ViewClean
+        },
+        messages: match on_scroll {
+          Some(handler) => if dispatch { [handler(delta)] } else { [] }
+          None => []
+        },
+      }
+    }
+    @core.PointerPhase::Up
+    | @core.PointerPhase::Cancel
+    | @core.PointerPhase::Exit => {
+      if !drag.active {
+        return @core.ViewEventResult::ignored()
+      }
+      {
+        changed: false,
+        activated: false,
+        focused: false,
+        captured: true,
+        state: Some(ctx.state.without_slot(slot)),
+        text_control: None,
+        dirty: @core.ViewDirtyHint::ViewClean,
+        messages: [],
+      }
+    }
   }
 }
 

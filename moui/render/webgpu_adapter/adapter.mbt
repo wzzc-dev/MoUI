@@ -154,7 +154,7 @@ fn web_canvas_negotiate_surface(
         @render.SurfaceNegotiationResult::SurfaceAccepted(
           @render.BoundSurface::new(
             kind=@render.RendererPresentationModel::WebCanvas,
-            route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
+            route=@render.SurfaceRoute::RasterSurfaceRoute,
             metrics=@render.RendererSurfaceMetrics::from_logical(
               size=@core.Size::new(width~, height~),
               scale_factor~,

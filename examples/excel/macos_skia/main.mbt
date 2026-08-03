@@ -10,9 +10,8 @@ fn main {
     height=@excel_app.shell_height,
   )
   runtime.set_action_commands(@excel_app.action_commands(app, services~))
-  @macos_skia_backend.run_app_with_options(
-    "Excel",
-    runtime,
-    options=@macos_skia_backend.MacosSkiaAppOptions::new(),
-  )
+  @moui.run_app("Excel", runtime)
+    .render_all(@render_skia.from_env())
+    .backend(@macos_host.entry())
+    .run()
 }

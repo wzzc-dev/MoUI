@@ -236,8 +236,8 @@ real native WebView to the next `DrawFrame.platform_views` rectangle. Buttons
 exercise the host command queue for load, reload, stop, back, forward, and
 JavaScript evaluation.
 
-Native entrypoints pass the same `HostWebViewCommandQueue` to the Skia provider
-options so macOS `WKWebView`, Windows WebView2 builds, and Linux WebKitGTK
+Native entrypoints pass the same `HostWebViewCommandQueue` through platform
+host options captured by `.backend(@platform.entry(...))`, so macOS `WKWebView`, Windows WebView2 builds, and Linux WebKitGTK
 builds can drain commands after rendering. Web wasm passes an unavailable
 capability and renders fallback UI; it does not create an iframe overlay.
 	Windows real WebView builds are auto-detected by the prebuild from
@@ -627,9 +627,9 @@ fetches.
 
 ## macOS Native
 
-macOS examples use the shared app package plus the macOS host core and renderer
-provider packages. The recommended native entrypoints import
-`backend/macos/skia` through the `_skia` packages:
+macOS examples use the shared app package plus `backend/macos` and an explicit
+renderer package. The recommended `_skia` entrypoints import `render/skia` and
+compose it with `@macos.entry()` through `@moui.run_app`:
 
 ```sh
 moon build examples/showcase/macos_skia --target native
@@ -717,8 +717,8 @@ inspected without parsing `Info.plist`.
 ## Windows Native
 
 Windows native examples use the MSVC toolchain and vcpkg `zlib:x64-windows`.
-The recommended native entrypoints import `backend/windows/skia` through the
-`_skia` packages and select the native Skia raster provider explicitly.
+The recommended `_skia` entrypoints import `backend/windows` plus
+`render/skia` and compose them explicitly through `@moui.run_app`.
 `windows_wgpu` and `windows_wgpu_cosmic` packages remain available as native WGPU
 diagnostics; the build/package helpers download and bundle `wgpu_native.dll`
 only for those WGPU packages.
@@ -769,9 +769,9 @@ through `run.cmd`.
 
 ## Linux Native
 
-Linux examples use the `wzzc-dev/window@0.5.4-0.1.2` Wayland host core. The
-recommended native entrypoints use `backend/linux/skia` and present Skia CPU
-pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
+Linux examples use the `wzzc-dev/window@0.5.4-0.1.3` Wayland host core. The
+recommended native entrypoints compose `backend/linux` with `render/skia` and
+present Skia CPU pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
 host with a Wayland compositor and real Skia link flags:
 
 ```sh

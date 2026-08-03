@@ -15,12 +15,10 @@ async fn main {
   let host = @agent.RuntimeAgentHost::new(runtime)
   // Task 1: the on-screen window pump (renders the counter; runs until close).
   let window_task : async () -> Unit = async fn() -> Unit {
-    @macos_skia_backend.run_app_with_options_async_pump(
-      "MoUI Agent Counter",
-      runtime,
-      options=@macos_skia_backend.MacosSkiaAppOptions::new(),
-      frame_interval_ms=16,
-    )
+    @moui.run_app("MoUI Agent Counter", runtime)
+    .render_all(@render_skia.from_env())
+    .backend(@macos_backend.entry())
+    .run_async_pump(frame_interval_ms=16)
   }
   // Task 2: the MCP stdio server loop. Shares the host with the window, so an
   // typed actions repaint the live window the user is watching.

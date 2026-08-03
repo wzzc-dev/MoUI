@@ -1,7 +1,7 @@
 ///|
 fn main {
   let commands = @webview_host.HostWebViewCommandQueue::new()
-  @web.run_app(
+  @moui.run_app(
     "MoUI WebView Demo",
     @runtime.new_program_with_dimensions(
       program=@webview_demo.program(
@@ -14,6 +14,9 @@ fn main {
       height=760.0,
     ),
   )
+  .render_all(@webgpu_adapter.from_env())
+  .backend(@web.entry())
+  .run()
 }
 
 ///|

@@ -38,7 +38,7 @@ pub fn canvas_metrics(
 pub fn web_host_info() -> @host.HostAppInfo {
   @host.HostAppInfo::new(
     backend=@host.HostBackendKind::Web,
-    description="window/web canvas + wasm-gc browser WebGPU host",
+    description="window/web canvas surface + wasm-gc browser host",
   )
 }
 
@@ -100,7 +100,7 @@ pub fn web_capability_summary(
     drag_drop_available=true,
     async_services~,
     native_accessibility_available=false,
-    description="Browser multi-canvas host with WebGPU imports, async clipboard/file dialogs, logical pointer coordinates, and app-level file drops; it does not manage browser popup windows or tabs.",
+    description="Browser multi-canvas host with async clipboard/file dialogs, logical pointer coordinates, and app-level file drops; it does not manage browser popup windows or tabs.",
   )
 }
 

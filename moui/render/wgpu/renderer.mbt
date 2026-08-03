@@ -141,8 +141,16 @@ pub fn WgpuRenderer::apply_image_resource_load_completion(
   let snapshot = self.backend.image_lifecycle.apply_load_completion(completion)
   if snapshot.revision > previous_revision {
     match completion.status {
-      @render.ImageResourceLoadCompletionStatus::ImageLoadReady =>
+      @render.ImageResourceLoadCompletionStatus::ImageLoadReady => {
         ignore(self.backend.failed_images.remove(completion.source))
+        if completion.has_decoded_rgba_payload() {
+          self.backend.decoded_image_cache[completion.source] = {
+            width: completion.width,
+            height: completion.height,
+            data: completion.decoded_pixels,
+          }
+        }
+      }
       @render.ImageResourceLoadCompletionStatus::ImageLoadFailed =>
         self.backend.failed_images[completion.source] = true
     }

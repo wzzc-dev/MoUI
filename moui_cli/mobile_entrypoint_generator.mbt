@@ -5,10 +5,10 @@ fn mobile_entrypoint_pkg_text(
 ) -> String {
   let template =
     #|import {
+    #|  "wzzc-dev/moui",
     #|  "wzzc-dev/moui/runtime",
     #|  "wzzc-dev/moui/backend/__PLATFORM__" @platform_host,
-    #|  "wzzc-dev/moui/backend/__PLATFORM__/skia" @platform_skia,
-    #|  "wzzc-dev/window/__PLATFORM__" @window_host,
+    #|  "wzzc-dev/moui/render/skia" @render_skia,
     #|  "__MODULE__/app" @app,
     #|}
     #|
@@ -26,30 +26,23 @@ fn mobile_entrypoint_pkg_text(
 
 ///|
 fn mobile_entrypoint_main_text(platform : String) -> String {
-  let app_type = match platform {
-    "android" => "AndroidEmbeddedRuntimeBackend"
-    "ios" => "IosEmbeddedRuntimeBackend"
-    "harmonyos" => "HarmonyOSEmbeddedRuntimeBackend"
+  match platform {
+    "android" | "ios" | "harmonyos" => ()
     _ => abort("unsupported embedded-runtime platform: " + platform)
   }
   let template =
     #|///|
-    #|/// Embedded runtime backend entrypoint: `window` owns lifecycle, surface,
-    #|/// and input callbacks; this package supplies the MoUI program and renderer.
+    #|/// Embedded runtime composition root.
     #|fn main {
-    #|  let app = @platform_host.__APP_TYPE__::new(
-    #|    title="MoUI app (window-hosted)",
-    #|    runtime_factory=metrics => {
-    #|      @runtime.new_program(
-    #|        program=@app.program(),
-    #|        size=metrics.logical_size,
-    #|      )
-    #|    },
-    #|    provider_factory=() => @platform_skia.renderer_provider(),
-    #|    auto_exit_after_frames=None,
+    #|  let runtime = @runtime.new_program_with_dimensions(
+    #|    program=@app.program(),
+    #|    width=320.0,
+    #|    height=640.0,
     #|  )
-    #|  let event_loop = @window_host.EventLoop::new()
-    #|  event_loop.run_app(app)
+    #|  @moui.run_app("MoUI app (window-hosted)", runtime)
+    #|    .render_all(@render_skia.from_env())
+    #|    .backend(@platform_host.entry())
+    #|    .run()
     #|}
-  template.replace_all(old="__APP_TYPE__", new=app_type)
+  template
 }

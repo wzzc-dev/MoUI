@@ -12,17 +12,26 @@ fn main {
   let w = wechat_screen_width()
   let h = wechat_screen_height()
   let scale = wechat_pixel_ratio()
-  @wechat.run_app(
-    canvas_id="moui-canvas",
-    runtime=@runtime.new_program_with_dimensions(
+  @moui.run_app(
+    "MoUI Counter",
+    @runtime.new_program_with_dimensions(
       program=@counter_app.program(),
       width=w,
       height=h,
     ),
-    logical_width=w,
-    logical_height=h,
-    scale_factor=scale,
   )
+  .render(@render_canvas2d.canvas())
+  .backend(
+    @wechat.entry(
+      @wechat.WechatAppOptions::new(
+        canvas_id="moui-canvas",
+        logical_width=w,
+        logical_height=h,
+        scale_factor=scale,
+      ),
+    ),
+  )
+  .run()
 }
 
 ///|

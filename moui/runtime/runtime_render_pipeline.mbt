@@ -95,12 +95,14 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   let previous_render = self.render_tree
   let dirty_ids = self.dirty.dirty_paint_elements.copy()
-  let force_full_reason = if self.dirty.needs_rebuild {
-    Some("rebuild requested")
-  } else if previous_render.root.element_id.value() == 0 {
-    Some("initial frame")
-  } else {
-    None
+  let force_full_reason = match self.dirty.full_damage_reason {
+    Some(reason) => Some(reason)
+    None =>
+      if previous_render.root.element_id.value() == 0 {
+        Some("initial frame")
+      } else {
+        None
+      }
   }
   self.ensure_layout_tree()
   self.stats.paint_pass_count = self.stats.paint_pass_count + 1
@@ -134,6 +136,7 @@ fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
     dirty_ids,
     force_full_reason~,
   )
+  self.dirty.full_damage_reason = None
   self.dirty.needs_rebuild = false
   self.dirty.needs_layout = false
   self.dirty.needs_paint = false

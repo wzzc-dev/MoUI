@@ -47,17 +47,15 @@ Web、macOS、Windows 和 Linux 应将其原生窗口事件转换为 `HostEvent`
 主 `HostWindowRuntimeSlot`，把平台窗口 id 绑定到宿主 id，通过该映射路由传入的平台窗口事件，通过
 注册表应用调整大小/聚焦/关闭 `HostEvent` 值，在生命周期变化后同步槽位记录，并在宿主窗口释放时
 移除槽位、平台绑定和记录。这使多窗口生命周期状态成为共享宿主职责，而不是未来某个平台特定重写。
-平台入口点还通过其携带选项的运行器接收共享 `HostWindowRequestQueue`，并在平台边缘排空聚焦、关闭、
+平台入口点通过 `AppBuilder::window_requests` 接收共享 `HostWindowRequestQueue`，并在平台边缘排空聚焦、关闭、
 调整大小、最小化、显示和设为主窗口请求。同一队列会记录有序的请求完成记录，使已接受操作和
 显式拒绝可观察。活动后端使用共享队列排空辅助方法，因此完成记录保持为宿主契约，而不是
 平台本地循环。
 `HostWindowCommands` 是建立在同一队列之上的更高层命令门面，提供面向应用的打开/聚焦/调整大小/最小化/
 显示/关闭辅助方法，并共享排空到注册表或窗口运行时槽位的逻辑。
-Web 直接暴露 `run_app_with_options`，因为浏览器渲染器是该宿主的一部分。原生宿主核心则暴露
-`run_app_with_renderer_provider`；公共原生入口点位于 `backend/<platform>/wgpu` 和
-`backend/<platform>/skia`。这些提供方包携带面向用户的 `run_app`、`run_app_with_options`、
-渲染器特定选项，以及 `renderer_provider` 构造器。有解析器时，`OpenWindow` 请求把场景解析为新的
-`AppRuntime`，创建另一个平台窗口，向提供方请求 `HostWindowRenderer`，注册逐窗口
+每个应用入口调用 `@moui.run_app`，提供有序 `RendererBindingFactory` 与一个平台 `entry`，再调用
+`run`。渲染器选项由 factory 捕获，平台选项由 platform entry 捕获。有解析器时，`OpenWindow` 请求把场景解析为新的
+`AppRuntime`，创建另一个平台窗口和中立 `HostSurfaceKit`，解析 `HostWindowRenderer`，注册逐窗口
 `HostRuntimeDriver`，绑定平台 id，然后通过按窗口索引的槽位路由重绘、事件、上下文菜单、服务完成记录、
 IME 同步和释放。没有解析器时，宿主用共享的解析器不可用消息拒绝 `OpenWindow`。
 
@@ -67,10 +65,7 @@ IME 同步和释放。没有解析器时，宿主用共享的解析器不可用�
 `HostRendererGpuRecoveryCapability` 记录中。当提供方省略某项能力时，现有实例方法保持空操作/默认
 语义，因此宿主不会根据渲染器实现细节分支。共享图片重绘跟踪器消费渲染器中立的图片快照，以便按打开窗口路由
 迟到图片重绘，并暴露已跟踪窗口版本号加上加载中/就绪/失败/已释放状态计数诊断，包括重绘结果中的
-之前/当前计数。宿主核心只依赖 `core`/`backend/host` 加平台 `window` 包；它们不导入
-`render/wgpu`、`render/skia`、`wgpu_mbt` 或 `moui_skia`。Skia 提供方包拥有原生主线渲染器创建、
-像素呈现器桥和 Skia 可用性诊断。WGPU 提供方包保留 GPU 表面桥、`wgpu-native` 和
-原生 WGPU 文本提供方组合，作为实验诊断。
+之前/当前计数。宿主核心只依赖 `core`、`runtime`、`backend/host`、中立 `render` 契约和平台 `window` 包；它们不导入任何具体 renderer。平台 backend 拥有窗口句柄、中立 CPU presenter、GPU 描述符和生命周期/I/O 回调；renderer 包拥有创建、解码、native binding、协商和诊断。
 
 `HostImageResourceCompletionSource` 是原生异步图片加载器完成结果的宿主层边界。原生提供方/平台加载器通过
 `HostWindowRenderer::apply_image_resource_load_completion` 发布 `@render.ImageResourceLoadCompletion`

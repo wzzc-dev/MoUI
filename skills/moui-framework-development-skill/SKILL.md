@@ -62,21 +62,14 @@ Read only what the task needs:
   runtime, native windows, and event-loop integration.
 - `moui/backend/{android,ios,harmonyos}`: embedded runtime backends. The
   platform `wzzc-dev/window` embedder owns lifecycle, surfaces, input, and the
-  event loop; MoUI owns the attached runtime session and renderer composition.
-- `moui/backend/<platform>/skia`: native Skia mainline renderer providers.
-  Android Skia presents copied pixel frames to an embedder-supplied
-  `ANativeWindow`; iOS Skia presents copied pixel frames to a UIKit
-  `UIImageView` child in an embedder-supplied `UIView`; HarmonyOS Skia presents
-  copied pixel frames to an embedder-supplied XComponent native-window handle.
-  Raster presenters remain the explicit/recovery path. Product `auto` prefers
-  `SkiaGpuNative` worker-owned Metal/D3D12/Vulkan/EGL window paths when
-  available; matching-device seven-gate evidence remains the quality bar, not the
-  product-default gate.
-- `moui/backend/<platform>/wgpu`: native WGPU diagnostic providers.
+  event loop; MoUI owns the attached runtime session and neutral presenter.
+- `moui/backend/<platform>` owns native windows/handles, CPU presentation, GPU
+  descriptors, host I/O, and lifecycle only. It must not import or construct a
+  concrete renderer.
 - `moui/render`: renderer facade, provider-ID capability aggregation, and the
-  `RendererProviderBinding` contract. Composition roots register ordered
-  bindings and negotiate a surface; `RendererBackendKind` is diagnostic only.
-- `moui/render/skia`: native Skia renderer facade over `moui_skia`.
+  `HostSurfaceKit`/`RendererBindingFactory` contracts. Application entrypoints
+  register ordered factories and one platform entry; `RendererBackendKind` is diagnostic only.
+- `moui/render/skia`: native Skia CPU/GPU factories and renderer over `moui_skia`.
 - `moui/render/webgpu_adapter`: browser WebGPU host-import adapter for
   `wasm-gc`.
 - `moui/render/wgpu`: experimental native WGPU renderer.
@@ -206,37 +199,32 @@ owning-package boundaries clear.
   accessibility adapter. Web reports `web_view` unavailable and must not use an
   iframe overlay as a substitute for native WebView.
 - `backend/macos/`: AppKit/window host, resolver-backed multi-window slots,
-  native WKWebView platform-view sync, and CAMetalLayer WGPU surface creation.
+  native WKWebView platform-view sync, CPU presenter, and neutral CAMetalLayer surface.
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
-  optional WebView2 platform-view sync, and HWND WGPU surface creation.
-- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.4-0.1.2`, Linux
+  optional WebView2 platform-view sync, CPU presenter, and neutral HWND surface.
+- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.4-0.1.3`, Linux
   host-service bridge, text-input/IME request sync, drag/drop conversion, a
-  native Skia mainline presenter path plus native WGPU diagnostic surface path,
+  neutral CPU presenter plus Wayland GPU surface descriptor,
   optional WebKitGTK platform-view sync, shared host event conversion, and
   explicit native menu/AT-SPI follow-up reporting.
 - `backend/android/`: Android embedded runtime backend. `window/android` owns
   the Kotlin/AndroidX template, native event queue, lifecycle, surface, and
-  input; the backend translates window events and supplies the renderer
-  provider. Package checks are not runtime platform evidence.
-- `backend/android/skia/`: Android Skia provider over `render/skia`, with an
-  `ANativeWindow` RGBA pixel presenter and preflight summary. Use
+  input; the backend translates window events and supplies a neutral
+  `ANativeWindow` presenter/surface kit. Package checks are not runtime platform evidence. Use
   `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia
   cross-build checks.
 - `backend/ios/`: iOS embedded runtime backend. `window/ios` owns the UIKit
   template and event-loop callbacks; the backend translates them and supplies
-  the renderer provider. Package checks are not runtime platform evidence.
-- `backend/ios/skia/`: iOS Skia provider over `render/skia`, with a UIKit
-  `UIImageView` RGBA pixel presenter and preflight summary. Use
+  a neutral UIKit/Metal presenter/surface kit. Package checks are not runtime platform evidence. Use
   `MOUI_SKIA_PLATFORM=iosSim` plus `MOUI_SKIA_ARCH=<arch>` for iOS Simulator
   Skia cross-build checks.
 - `backend/harmonyos/`: HarmonyOS embedded runtime backend. `window/harmonyos`
   owns Stage Ability/XComponent/NAPI lifecycle, native surface acquisition, and
-  input callbacks; the backend translates them and supplies the renderer
-  provider. Package checks are not runtime platform evidence.
+  input callbacks; the backend translates them and supplies a neutral native-
+  window presenter/surface kit. Package checks are not runtime platform evidence.
   API 20 is the compatibility floor. Native XComponent callbacks exclusively
   own surface/pointer/resize/detach; ArkTS owns displaySync and platform services.
-- `backend/harmonyos/skia/`: HarmonyOS Skia provider over `render/skia`, with an
-  XComponent native-window RGBA pixel presenter and preflight summary. Use
+- HarmonyOS composition entrypoints supply `render/skia` factories. Use
   `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and static linking
   for `auto` / `skia-gpu` HarmonyOS cross-build checks. The locked
   `libskia.so` hides Ganesh internal symbols required by the separate
@@ -259,15 +247,15 @@ owning-package boundaries clear.
   `moui_skia` binding, including renderer-local command/reason diagnostics for
   unsupported Skia fallbacks, renderer-local image-resource lifecycle change
   callbacks, and `skia_image_load_completion` source decode completion payloads
-  plus opt-in post-present async image loading for native providers. The
+  through renderer-owned decode of backend-supplied `HostImageSource` bytes. The
   binding/renderer may expose an explicit macOS Metal/Ganesh GPU context and
   offscreen GPU surface preflight, but provider/window GPU presentation remains
   separate matching-host evidence and must not replace the raster mainline
-  without real smoke proof. Host-layer completion routing and native
-  provider/platform redraw scheduling from async image load/error notifications
+  without real smoke proof. Host-layer completion routing and platform redraw
+  scheduling from async image load/error notifications
   remain outside `render/skia`.
-- `render/wgpu/`: experimental native wgpu renderer, including source decode
-  completion helpers used by provider-owned native image loader hooks.
+- `render/wgpu/`: experimental native wgpu renderer, including a renderer-owned
+  byte decoder used by factory-created image loader hooks.
 - `render/sun/`: **experimental** Sun CPU raster renderer over the
   repo-local `moui_sun` workspace (ADR 0023: experimental, capability freeze
   by default, not on default composition roots). It renders rects, rounded
@@ -340,7 +328,7 @@ sh scripts/check.sh --profile daily
 
 The daily check runs `node scripts/validate-window-dependency.mjs`, which
 confirms that all known consumers pin the same published
-`wzzc-dev/window@0.5.4-0.1.2` version and that `moon.work` does not include a
+`wzzc-dev/window@0.5.4-0.1.3` version and that `moon.work` does not include a
 local window checkout.
 Keep the root README focused on reviewer/user quick paths; detailed `window/`
 submodule and local-source instructions belong in `docs/development.md` and this
@@ -359,9 +347,8 @@ Treat those window smoke helpers as dependency-level matching-host evidence,
 not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
 validation.
 `moui_sun` is a repo-local editable workspace member under the single
-`wzzc-dev/moui_sun` module. Keep Sun graphics/text/softbuffer surface area in
-that workspace and keep MoUI integration in `render/sun` plus
-`backend/<platform>/sun`.
+`wzzc-dev/moui_sun` module. Keep Sun graphics/text/softbuffer surface area and
+its factory in `render/sun`; platform presentation stays renderer-neutral.
 The daily profile also runs `moon test moui_skia --target native`. The binding
 status/capability files and `verify-platform-status.sh` /
 `verify-native-capability-contract.sh` are validated by the dedicated
@@ -451,7 +438,7 @@ Linux, and WebGPU wasm proof
 artifacts to validate as passed before mainline capability promotion; native
 WGPU diagnostic artifacts are uploaded separately but do not block the summary.
 The platform evidence manifest is schema v2 and records the
-`wzzc-dev/window@0.5.4-0.1.2` package monitor/cursor probe as
+`wzzc-dev/window@0.5.4-0.1.3` package monitor/cursor probe as
 `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native passed
 entries must also set `imeCandidateAnchor`, `imeSurroundingText`,
@@ -476,12 +463,14 @@ entries cannot be marked `passed` unless their Skia evidence is also `passed`.
 Use `record-native-ime-evidence.mjs` for matching-host IME logs when you only
 want to validate and update native IME observations; it deliberately leaves the
 broader platform runtime status unchanged and rejects generic host unit-test or
-package logs without matching-host runtime, native-app, `renderer=skia`,
+package logs without matching-host runtime, native-app, `renderer=application`,
 matching app, platform-protocol,
 candidate-anchor, surrounding-text, composition, commit/delete, cursor, scroll,
-scale/DPR, resize, and Showcase markers. The `renderer=skia`, app, and
+scale/DPR, resize, and Showcase markers. The `renderer=application`, app, and
 platform-protocol markers are exact whitespace-delimited tokens; suffixed
-labels are not matching-host runtime IME evidence.
+labels are not matching-host runtime IME evidence. Renderer-route identity
+comes from the recorded composition-root command and renderer artifact, not
+from a concrete renderer name emitted by the backend.
 For macOS, the first-party producer is the Showcase native Skia
 entrypoint with
 `MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/showcase/macos_skia --target native`;
@@ -505,7 +494,7 @@ first-frame line, respectively.
 Use `record-macos-platform-runtime-evidence.mjs` only for macOS platform
 promotion after macOS `skiaEvidence` is passed and every native IME observation
 has already been recorded by `record-native-ime-evidence.mjs`. The macOS helper
-validates the `wzzc-dev/window@0.5.4-0.1.2` package runtime smoke transcript
+validates the `wzzc-dev/window@0.5.4-0.1.3` package runtime smoke transcript
 through `--window-smoke-log` for window/open/resize/redraw/input/monitor/cursor/shutdown
 source observations, and validates a Showcase or Markdown Editor `macos_skia`
 first-frame source log through `--app-runtime-log` before delegating to the
@@ -535,6 +524,7 @@ node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-api-surface.mjs
 node scripts/validate-core-theme-no-control-surface.mjs
 node scripts/validate-host-import-baseline.mjs
+node scripts/validate-backend-renderer-boundary.mjs
 node scripts/validate-renderer-provider-open-extension.mjs
 node scripts/validate-platform-adapter-duplication.mjs
 node scripts/smoke-check.mjs --check
@@ -544,11 +534,11 @@ moon test moui/views --target native
 moon test moui/render/skia --target native
 moon test moui/backend/host --target native
 moon test moui/backend/android --target native
-moon test moui/backend/android/skia --target native
+moon check examples/showcase/android_window_hosted --target native
 moon test moui/backend/ios --target native
-moon test moui/backend/ios/skia --target native
+moon check examples/showcase/ios_window_hosted --target native
 moon test moui/backend/harmonyos --target native
-moon test moui/backend/harmonyos/skia --target native
+moon check examples/showcase/harmonyos_window_hosted --target native
 sh scripts/window-hosted-hostsim-smoke.sh
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
@@ -605,6 +595,9 @@ mutation.
 
 - Native Skia is the native mainline. Keep Skia provider wiring, renderer tests,
   `moui_skia` capability contracts, and docs in sync.
+- Product `auto` prefers `SkiaGpuNative` when the host exposes a usable GPU
+  surface; `SkiaRasterNative` remains the explicit mode and sticky recovery
+  fallback. This policy belongs to `moui/render/skia`, never a platform backend.
 - Web rendering goes through `moui/backend/web` and
   `moui/render/webgpu_adapter` on `wasm-gc`.
 - Native WGPU is diagnostic; keep it opt-in through `--wgpu-experimental`.

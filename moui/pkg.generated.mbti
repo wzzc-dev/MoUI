@@ -3,9 +3,11 @@ package "wzzc-dev/moui"
 
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
+pub fn run_app(String, @runtime.AppRuntime) -> @runtime.AppBuilder
 
 // Errors
 

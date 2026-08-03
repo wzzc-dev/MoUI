@@ -198,7 +198,7 @@ jobs:
           . .\scripts\windows\msvc_env.ps1
           moon test moui/backend/windows --target native
           Enable-MsvcC11Atomics
-          moon test moui/backend/windows/skia --target native
+          moon check examples/showcase/windows_skia --target native
 
       - name: Build Showcase Windows Skia entrypoint with MSVC
         shell: pwsh

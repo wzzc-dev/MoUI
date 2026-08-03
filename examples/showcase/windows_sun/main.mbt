@@ -19,12 +19,14 @@ fn main {
       "MOUI_WINDOWS_SUN_EXIT_AFTER_FIRST_PRESENT",
     ) ==
     Some("1")
-  @windows_sun_backend.run_smoke_app_with_options(
-    "MoUI Showcase",
-    runtime,
-    options=@windows_sun_backend.WindowsSunAppOptions::new(),
-    smoke_options=@windows_sun_backend.WindowsSunSmokeOptions::new(
-      first_frame_smoke_auto_exit=exit_after_first_present,
+  @moui.run_app("MoUI Showcase", runtime)
+  .render(@render_sun.raster())
+  .backend(
+    @windows_backend.entry(
+      smoke_options=@windows_backend.WindowsHostSmokeOptions::new(
+        first_frame_smoke_auto_exit=exit_after_first_present,
+      ),
     ),
   )
+  .run()
 }

@@ -18,12 +18,12 @@ through the CanvasRenderingContext2D API.
 ## Ownership
 
 - `moui/backend/wechat` exposes the canvas host callbacks, owns the canvas
-  surface host, and provides the `run_app` entry point for Mini Program
-  applications.
-- `moui/backend/wechat/canvas` wraps `moui/render/canvas2d` and creates
-  `HostWindowRenderer` instances backed by the Canvas 2D API.
+  surface host, and provides a neutral `entry(WechatAppOptions)` platform
+  closure.
 - `moui/render/canvas2d` implements the Canvas 2D renderer producing
-  `HostWindowRenderer` closures with wasm-gc FFI imports to the JS runtime.
+  `RendererBindingFactory`/`HostWindowRenderer` values with wasm FFI imports.
+- `examples/*/wechat_canvas` composes both sides with
+  `@moui.run_app(...).render(@render_canvas2d.canvas()).backend(@wechat.entry(...))`.
 - `window/wechat/template` owns the Mini Program project template and its JS
   bridge to the exported MoonBit callbacks.
 - `scripts/build-wechat-demo.sh` is the canonical build script for demo
@@ -50,7 +50,7 @@ through the CanvasRenderingContext2D API.
 │  │  └──────────────────────────────────────┘  │ │
 │  │  ┌──────────────────────────────────────┐  │ │
 │  │  │  moui/backend/wechat                 │  │ │
-│  │  │  run_app + HostRuntimeDriver         │  │ │
+│  │  │  PlatformEntry + HostRuntimeDriver   │  │ │
 │  │  └──────────────────────────────────────┘  │ │
 │  └────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────┘

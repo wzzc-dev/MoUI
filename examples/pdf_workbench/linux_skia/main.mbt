@@ -14,11 +14,10 @@ fn main {
     width=1120.0,
     height=720.0,
   )
-  @linux_skia_backend.run_app_with_options(
-    "MoUI PDF Workbench",
-    runtime,
-    options=@linux_skia_backend.LinuxSkiaAppOptions::new(),
-  )
+  @moui.run_app("MoUI PDF Workbench", runtime)
+  .render_all(@render_skia.from_env())
+  .backend(@linux_host.entry())
+  .run()
 }
 
 ///|

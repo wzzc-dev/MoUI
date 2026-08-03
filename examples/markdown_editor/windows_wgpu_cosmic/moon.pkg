@@ -1,10 +1,11 @@
 import {
+  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/windows" @windows_host,
-  "wzzc-dev/moui/backend/windows/wgpu" @windows_wgpu_backend,
+  "wzzc-dev/moui/render/wgpu" @render_wgpu,
+  "wzzc-dev/moui/render/wgpu/cosmic_text" @wgpu_cosmic,
   "examples/markdown_editor/app" @markdown_app,
-  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
 }
 
 supported_targets = "native"

@@ -5,11 +5,10 @@ fn main {
     width=1280.0,
     height=820.0,
   )
-  @web.run_app_with_options(
-    "MoUI Playground",
-    runtime,
-    options=@web.WebAppOptions::new(),
-  )
+  @moui.run_app("MoUI Playground", runtime)
+  .render_all(@webgpu_adapter.from_env())
+  .backend(@web.entry())
+  .run()
 }
 
 ///|

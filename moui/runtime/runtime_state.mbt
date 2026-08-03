@@ -390,6 +390,9 @@ fn RuntimeState::request_component_rebuild(
     self.queue_dirty_element(id)
     self.queue_build_dirty(id)
     self.dirty.needs_rebuild = true
+    if id == self.element_tree.id() {
+      self.dirty.full_damage_reason = Some("root component rebuild")
+    }
     self.request_rebuild_wakeup()
   }
 }
@@ -403,6 +406,7 @@ fn RuntimeState::request_activation_rebuild(self : RuntimeState) -> Unit {
   }
   self.dirty.needs_rebuild = self.element_tree.root.has_dirty_build()
   if self.dirty.needs_rebuild {
+    self.dirty.full_damage_reason = Some("activation rebuild")
     self.request_rebuild_wakeup()
   }
 }
@@ -416,6 +420,9 @@ priv struct DirtyTracking {
   mut needs_paint : Bool
   mut needs_semantics : Bool
   mut needs_platform : Bool
+  // Rebuilding can remove pixels that no current render node covers. Keep a
+  // full-surface damage request until the rebuilt tree has been painted.
+  mut full_damage_reason : String?
   mut rebuild_wakeup_redraw : Bool
   dirty_elements : Array[ElementId]
   dirty_build_elements : Array[ElementId]
@@ -473,6 +480,7 @@ fn DirtyTracking::new() -> DirtyTracking {
     needs_paint: true,
     needs_semantics: true,
     needs_platform: true,
+    full_damage_reason: None,
     rebuild_wakeup_redraw: false,
     dirty_elements: [],
     dirty_build_elements: [],
@@ -497,6 +505,7 @@ fn DirtyTracking::clear(self : DirtyTracking) -> Unit {
   self.needs_paint = false
   self.needs_semantics = false
   self.needs_platform = false
+  self.full_damage_reason = None
   self.rebuild_wakeup_redraw = false
   self.dirty_elements.clear()
   self.dirty_build_elements.clear()

@@ -183,9 +183,10 @@ test "Skia doctor resolves the nearest repository workspace" {
 ///|
 fn doctor_mobile_entrypoint_contract_text() -> String {
   let text =
-    #|let app = @android_host.AndroidEmbeddedRuntimeBackend::new(...)
-    #|let event_loop = @window_android.EventLoop::new()
-    #|event_loop.run_app(app)
+    #|@moui.run_app("app", runtime)
+    #|  .render_all(@render_skia.from_env())
+    #|  .backend(@platform_host.entry())
+    #|  .run()
   text
 }
 
@@ -215,7 +216,7 @@ test "mobile entrypoint requires nonempty package and main files" {
     }
   }
   @fs.write_string_to_file(
-    package_path, "wzzc-dev/moui/backend/android\nwzzc-dev/window/android\n",
+    package_path, "wzzc-dev/moui\nwzzc-dev/moui/backend/android\nwzzc-dev/moui/render/skia\n",
   ) catch {
     _ => {
       remove_tree(root)
@@ -242,7 +243,7 @@ test "mobile entrypoint accepts the repository app layout" {
   }
   let contract = doctor_mobile_entrypoint_contract_text()
   @fs.write_string_to_file(
-    package_path, "wzzc-dev/moui/backend/android\nwzzc-dev/window/android\n",
+    package_path, "wzzc-dev/moui\nwzzc-dev/moui/backend/android\nwzzc-dev/moui/render/skia\n",
   ) catch {
     _ => {
       remove_tree(root)

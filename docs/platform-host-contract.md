@@ -87,8 +87,8 @@ incoming platform window events through that mapping, apply resize/focus/close
 `HostEvent` values through the registry, sync slot records after lifecycle
 changes, and remove slot, platform binding, and record when a host window is
 disposed. That makes multi-window lifecycle state a shared host concern instead
-of a future platform-specific rewrite. Platform entrypoints also accept a
-shared `HostWindowRequestQueue` through their options-bearing runner and drain
+of a future platform-specific rewrite. Platform entries also accept a shared
+`HostWindowRequestQueue` through `AppBuilder::window_requests` and drain
 focus, close, resize, minimize, show, and set-primary requests at the platform
 edge. The same queue records ordered request completions, making accepted
 operations and explicit rejections observable. Active backends use the shared
@@ -97,14 +97,12 @@ platform-local loop.
 `HostWindowCommands` is the higher-level command facade over the same queue for
 app-facing open/focus/resize/minimize/show/close helpers and shared draining
 into a registry or window runtime slots.
-Web exposes `run_app_with_options` directly because the browser renderer is part
-of that host. Native host cores instead expose
-`run_app_with_renderer_provider`; public native entrypoints live in
-`backend/<platform>/wgpu` and `backend/<platform>/skia`. Those provider packages
-carry the user-facing `run_app`, `run_app_with_options`, renderer-specific
-options, and `renderer_provider` constructor. With a resolver, `OpenWindow`
+Every application entrypoint calls `@moui.run_app`, supplies ordered
+`RendererBindingFactory` values, supplies one platform `entry`, and calls
+`run`. Renderer-specific options are captured by renderer factories; platform-
+specific options are captured by the platform entry. With a resolver, `OpenWindow`
 requests resolve a scene into a new `AppRuntime`, create another platform
-window, ask the provider for a `HostWindowRenderer`, register a per-window
+window, create a neutral `HostSurfaceKit`, resolve a `HostWindowRenderer`, register a per-window
 `HostRuntimeDriver`, bind the platform id, and then route redraw, events,
 context menus, service completions, IME sync, and disposal through
 window-indexed slots. Without a resolver, hosts reject `OpenWindow` with the
@@ -121,13 +119,13 @@ branch on renderer implementation details. The shared image repaint tracker
 consumes renderer-neutral image snapshots to route
 late-image redraws per open window and expose tracked-window revision plus
 loading/ready/failed/disposed status-count diagnostics, including
-previous/current counts on repaint results. Host cores depend only on
-`core`/`backend/host` plus the platform `window` package; they do not import
-`render/wgpu`, `render/skia`, `wgpu_mbt`, or `moui_skia`. Skia provider
-packages own the native mainline renderer creation, pixel presenter bridges,
-and Skia availability diagnostics. WGPU provider packages retain GPU surface
-bridges, `wgpu-native`, and native WGPU text provider composition as
-experimental diagnostics.
+previous/current counts on repaint results. Host cores depend on `core`,
+`runtime`, `backend/host`, the neutral `render` contract, and the platform
+`window` package. They do not import `render/wgpu`, `render/skia`, `wgpu_mbt`,
+`moui_skia`, or another concrete renderer. Platform backends own native window
+handles, neutral CPU presenters, GPU descriptors, and lifecycle/I/O callbacks.
+Renderer packages own creation, decode, native renderer bindings, provider
+negotiation, and renderer diagnostics.
 
 `HostImageResourceCompletionSource` is the host-layer boundary for native async
 image loader completions. Native provider/platform loaders publish
@@ -136,8 +134,8 @@ image loader completions. Native provider/platform loaders publish
 `@render.ImageResourceSnapshot`; the host routes that snapshot through
 `HostImageResourceRepaintTracker`, requests redraw only for matching open
 windows, ignores stale lower revisions, and discards closed-window completions.
-`HostAsyncImageLoader` is the host-side scheduler adapter for that boundary: it
-scans renderer snapshots for loading records, starts a platform/provider loader,
+`HostAsyncImageLoader` is the neutral scheduler adapter for that boundary: it
+scans renderer snapshots for loading records, starts the selected factory's loader,
 deduplicates in-flight `(window, source)` work, and gates late or cancelled
 completion callbacks before they can apply to a renderer. `HostNativeAsyncImageSource`
 is the host-owned deferred request source for platform loaders that need to
@@ -145,24 +143,16 @@ record pending `(window, source)` work and deliver a completion later from an
 independent native callback. It proves the host boundary can receive late
 completion callbacks after scheduling returns, and platform runtime artifacts
 record host-level observation separately from renderer capability status. The native macOS,
-Windows, and Linux host cores call the optional provider-owned loader hook after
+Windows, and Linux host cores call the optional factory-owned loader hook after
 the presented image-resource revision has been baselined, then cancel in-flight
-window loads during disposal. Native WGPU provider packages now supply a
-provider-owned loader that turns renderer-owned PNG/JPEG/BMP source decode
-results into `ImageResourceLoadCompletion` payloads. Native Skia provider
-packages now install the same provider-owned loader
-boundary around decoded image completions, and provider-created Skia renderers
-opt into post-present async image loading so the first presented snapshot can
-contain loading records before the host routes ready/failed completions into a
-repaint. Local-file provider workers read and decode Skia images off the main
-thread, then deliver decoded RGBA pixels, dimensions, row bytes,
-`background_io`, and `background_decode` through `ImageResourceLoadCompletion`.
-Skia applies decoded ready completions directly into the renderer image cache,
-while data URI sources complete through the renderer decode path. This is
-provider completion and smoke-log evidence at the renderer/host boundary. The
-host source and scheduler do not decode images, mutate renderer caches, or live
-in `core`;
-renderer/provider packages still own concrete loading and lifecycle records.
+window loads during disposal. Platform backends expose `HostImageSource`, which
+reads only raw bytes. Each renderer factory supplies a `RendererImageDecoder`
+that owns format detection, decode, and `ImageResourceLoadCompletion` creation.
+The first presented snapshot can contain loading records before the host routes
+ready/failed completions into a repaint. Skia, Sun, and WGPU apply ready
+completions to their own caches. The host source and scheduler do not decode
+images, mutate renderer caches, or live in `core`; renderer packages own
+concrete decode, loading, and lifecycle records.
 
 `RendererDescriptor` and `RendererSelection` remain renderer facade reporting tools:
 they describe static capability identity and matching, not native host runtime

@@ -12,25 +12,47 @@ pub struct IosEmbeddedRuntimeBackend {
 pub fn IosEmbeddedRuntimeBackend::new(
   title? : String = "MoUI",
   runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
-  provider_factory~ : () -> IosRendererProvider,
+  renderer_factories~ : Array[@render.RendererBindingFactory],
   auto_exit_after_frames? : Int? = None,
+) -> IosEmbeddedRuntimeBackend {
+  new_ios_embedded_runtime_backend(
+    title~,
+    runtime_factory~,
+    surface_binding_factory=() => ios_surface_binding(renderer_factories),
+    auto_exit_after_frames~,
+  )
+}
+
+///|
+/// Application-builder entry for the iOS window-hosted event loop.
+pub fn entry(auto_exit_after_frames? : Int? = None) -> @runtime.PlatformEntry {
+  @runtime.PlatformEntry::new(id="ios", launch=request => {
+    let runtime = request.runtime()
+    let app = IosEmbeddedRuntimeBackend::new(
+      title=request.title(),
+      runtime_factory=_metrics => runtime,
+      renderer_factories=request.renderer_factories(),
+      auto_exit_after_frames~,
+    )
+    let event_loop = @window_ios.EventLoop::new()
+    event_loop.run_app(app)
+  })
+}
+
+///|
+fn new_ios_embedded_runtime_backend(
+  title~ : String,
+  runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
+  surface_binding_factory~ : () -> IosSurfaceBinding,
+  auto_exit_after_frames~ : Int?,
 ) -> IosEmbeddedRuntimeBackend {
   let ime_sink = IosImeSink::new()
   {
     backend: @embedded_runtime_backend.HostedWindowBackend::new(
       title~,
       runtime_factory~,
-      provider_factory=() => {
-        let provider = provider_factory()
-        @embedded_runtime_backend.RendererProviderAdapter::new(
-          create_renderer=fn(raw, metrics) {
-            provider.create(IosSurfaceHandle::new(raw~), metrics)
-          },
-          sync=fn(raw, metrics) {
-            provider.sync(IosSurfaceHandle::new(raw~), metrics)
-          },
-          image_loader=provider.image_loader,
-        )
+      surface_binding_factory=() => {
+        host_surface_binding_from_ios(surface_binding_factory())
       },
       ime_sync=Some(fn(runtime) {
         match runtime {

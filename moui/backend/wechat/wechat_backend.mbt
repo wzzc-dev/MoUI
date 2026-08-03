@@ -126,6 +126,6 @@ pub fn wechat_backend_full_info() -> WechatBackendInfo {
     services: wechat_service_capabilities(),
     input: wechat_input_capabilities(),
     readiness: wechat_readiness(),
-    description: "WeChat Mini Program backend with Skyline Canvas 2D rendering",
+    description: "WeChat Mini Program backend with a Skyline canvas host surface",
   }
 }

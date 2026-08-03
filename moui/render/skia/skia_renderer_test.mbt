@@ -46,12 +46,10 @@ test "skia gpu metal preflight reports explicit opt-in route" {
 
 ///|
 test "skia surface routes keep raster default and gate metal gpu explicitly" {
-  assert_false(@render.SkiaSurfaceRoute::RasterSurfaceRoute.is_gpu())
-  assert_true(@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute.is_gpu())
-  assert_true(@render.SkiaSurfaceRoute::RasterSurfaceRoute.label() == "raster")
-  assert_true(
-    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute.label() == "metal-gpu",
-  )
+  assert_false(@render.SurfaceRoute::RasterSurfaceRoute.is_gpu())
+  assert_true(@render.SurfaceRoute::MetalGpuSurfaceRoute.is_gpu())
+  assert_true(@render.SurfaceRoute::RasterSurfaceRoute.label() == "raster")
+  assert_true(@render.SurfaceRoute::MetalGpuSurfaceRoute.label() == "metal-gpu")
 
   let target = SkiaPresentTarget::new(description="test", present=_frame => true)
   let metrics = @render.RendererSurfaceMetrics::from_logical(
@@ -62,7 +60,7 @@ test "skia surface routes keep raster default and gate metal gpu explicitly" {
       create_with_present_target_and_route(
         metrics,
         target,
-        surface_route=@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+        surface_route=@render.SurfaceRoute::MetalGpuSurfaceRoute,
       )
     catch {
       err =>
@@ -82,7 +80,7 @@ test "skia surface routes keep raster default and gate metal gpu explicitly" {
       let renderer = create_with_present_target_and_route(
         metrics,
         target,
-        surface_route=@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+        surface_route=@render.SurfaceRoute::MetalGpuSurfaceRoute,
       ) catch {
         err => fail("expected GPU renderer route, got \{err.message()}")
       }
@@ -101,7 +99,7 @@ test "skia surface routes keep raster default and gate metal gpu explicitly" {
         create_with_present_target_and_route(
           metrics,
           target,
-          surface_route=@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+          surface_route=@render.SurfaceRoute::MetalGpuSurfaceRoute,
         )
       catch {
         err =>

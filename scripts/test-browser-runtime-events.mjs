@@ -355,7 +355,7 @@ assert(
 );
 
 const browserSource = readFileSync(new URL("../moui/backend/web/browser_runtime.js", import.meta.url), "utf8");
-const rendererSource = readFileSync(new URL("../moui/backend/web/runtime.js", import.meta.url), "utf8");
+const rendererSource = readFileSync(new URL("../moui/render/webgpu_adapter/runtime.js", import.meta.url), "utf8");
 assert(!/dispatchEvent\(new (?:PointerEvent|MouseEvent|WheelEvent)/.test(browserSource), "browser input router must not synthesize DOM input");
 assert(!/dispatchEvent\(new (?:PointerEvent|MouseEvent|WheelEvent)/.test(rendererSource), "renderer overlays must not synthesize DOM input");
 

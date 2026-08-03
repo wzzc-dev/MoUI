@@ -17,18 +17,24 @@ fn main {
         )
     }
   })
-  @windows_skia_backend.run_app_with_options(
+  @moui.run_app(
     "MoUI Multi-Window",
     runtime_for(
       @multi_window_app.Scene::Main,
       windows,
       @geometry.Size::new(width=640.0, height=420.0),
     ),
-    options=@windows_skia_backend.WindowsSkiaAppOptions::new(
-      scene_resolver=resolver,
-    ),
-    window_requests=queue,
   )
+  .render_all(@render_skia.from_env())
+  .backend(
+    @windows_backend.entry(
+      options=@windows_backend.WindowsHostAppOptions::new(
+        scene_resolver=resolver,
+      ),
+    ),
+  )
+  .window_requests(queue)
+  .run()
 }
 
 ///|

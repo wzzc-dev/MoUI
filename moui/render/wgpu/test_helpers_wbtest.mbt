@@ -128,6 +128,7 @@ fn new_test_renderer_handle_with_text_engine(
     white_view: None,
     white_bind_group: None,
     image_cache: Map([]),
+    decoded_image_cache: Map([]),
     failed_images: Map([]),
     image_lifecycle: @render.ImageResourceLifecycle::new(),
     font_cache: NativeFontCache::new_with_engine(text_engine),

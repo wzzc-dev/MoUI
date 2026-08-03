@@ -203,7 +203,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 390,
+      max_lines: 394,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -211,7 +211,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/moonbit_tool_wrapper_budget.mbt",
-      max_lines: 139,
+      max_lines: 142,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/repo_scan_helpers.mbt",
@@ -238,7 +238,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/render/image_resource_completions.mbt", max_lines: 101 },
     { path: "moui/render/image_resource_records.mbt", max_lines: 70 },
     { path: "moui/render/image_resource_types.mbt", max_lines: 47 },
-    { path: "moui/render/sun/renderer.mbt", max_lines: 363 },
+    { path: "moui/render/sun/renderer.mbt", max_lines: 373 },
     { path: "moui/render/sun/renderer_commands.mbt", max_lines: 853 },
     { path: "moui/render/sun/renderer_surface_model.mbt", max_lines: 73 },
     { path: "moui/render/sun/renderer_text_draw.mbt", max_lines: 664 },
@@ -314,7 +314,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/layout/layout_metrics.mbt", max_lines: 90 },
     { path: "moui/views/layout/layout_flow.mbt", max_lines: 155 },
     { path: "moui/views/navigation/navigation_state.mbt", max_lines: 110 },
-    { path: "moui/views/navigation/command_palette.mbt", max_lines: 130 },
+    { path: "moui/views/navigation/command_palette.mbt", max_lines: 141 },
     { path: "moui/views/navigation/menu_commands.mbt", max_lines: 220 },
     { path: "moui/views/controls/input_text_wrappers.mbt", max_lines: 95 },
     { path: "moui/views/controls/layout_helpers.mbt", max_lines: 180 },

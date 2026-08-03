@@ -179,11 +179,13 @@ const RUNNER_SOURCE = `fn main {
     width=960.0,
     height=640.0,
   )
-  @web.run_app_with_options(
+  @moui.run_app(
     "MoUI Playground Preview",
     runtime,
-    options=@web.WebAppOptions::new(),
   )
+  .render_all(@webgpu_adapter.from_env())
+  .backend(@web.entry())
+  .run()
 }
 
 pub fn web_dispatch_event(kind : Int, raw_id : Int, arg0 : Int, arg1 : Int, argd : Double, text_id : Int) -> Unit {
@@ -242,8 +244,10 @@ async function compile(request) {
 
   const runnerImports = [
     { path: manifest.userPackage, alias: "user" },
+    { path: "wzzc-dev/moui", alias: "moui" },
     { path: "wzzc-dev/moui/runtime", alias: "runtime" },
     { path: "wzzc-dev/moui/backend/web", alias: "web" },
+    { path: "wzzc-dev/moui/render/webgpu_adapter", alias: "webgpu_adapter" },
     prelude,
   ];
   let runner;

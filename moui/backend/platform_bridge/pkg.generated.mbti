@@ -29,10 +29,6 @@ pub fn normalize_pointer_position(@dpi.PhysicalPositionF64, scale_factor~ : Doub
 
 pub fn renderer_metrics_from_host(@host.HostSurfaceMetrics) -> @render.RendererSurfaceMetrics
 
-pub fn skia_host_renderer_bridge_preflight_desktop() -> String
-
-pub fn skia_host_renderer_bridge_preflight_mobile() -> String
-
 pub fn transform_cross_platform_event(@wzzc-dev/window/core.WindowEvent, scale_factor~ : Double, surface_size? : @dpi.PhysicalSize?) -> TransformedWindowEvent
 
 // Errors

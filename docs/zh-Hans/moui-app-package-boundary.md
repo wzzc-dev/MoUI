@@ -212,8 +212,7 @@ capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/render/*`
 - `wzzc-dev/moui/backend/{web,macos,windows,linux}`
-- `wzzc-dev/moui/backend/{macos,windows,linux,android}/skia`
-- `wzzc-dev/moui/backend/{macos,windows,linux}/wgpu`
+- 具体 renderer package；renderer factory 应由平台 composition root 导入，不能成为共享 app 包依赖。
 - `moui_theme/*`,除非该 app 本身是设计系统 addon 或 preview app。
 
 已知例外见上方“目标边界声明”:`showcase/app` 暂时依赖 `@render` 用于 capability 报告,
@@ -414,8 +413,8 @@ MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 const
 这类 executable package。它们负责创建 runtime、连接平台 backend、选择 renderer。
 
 三个嵌入运行时路径使用匹配的 `wzzc-dev/window` template 和 `*_window_hosted` 入口。
-它们的 `main.mbt` 创建 program、选择 renderer provider，并把
-`*EmbeddedRuntimeBackend` 传给平台 `EventLoop`。`HostCmd` 和 `ApplicationHandler` 是
+它们的 `main.mbt` 创建 program，并通过 AppBuilder 显式组合 renderer factory 与
+platform `entry()`。`HostCmd` 和 `ApplicationHandler` 由 backend entry 内部拥有，是
 lifecycle、surface 和 input callbacks 的唯一通路；嵌入运行时 executable 根包不再导出或
 转发第二套 embedding ABI。
 
@@ -430,7 +429,7 @@ XComponent callbacks 仍是 surface、pointer、resize 和 detach events 的唯�
 - `wzzc-dev/moui/backend/web`
 - `wzzc-dev/moui/backend/host`
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}`
-- `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia`
+- 具体 renderer package；平台入口应从 `moui/render/*` 选择 factory。
 - `wzzc-dev/moui/render/skia`
 - 匹配的移动端入口可使用 `wzzc-dev/window/{android,ios,harmonyos}`
 - 对应的 shared app package，例如 `examples/showcase/app`

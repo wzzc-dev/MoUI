@@ -203,6 +203,49 @@ test "host recognizes secondary pointer context menu requests" {
 }
 
 ///|
+test "host maps touch button events to core pointer phases" {
+  let touch_down = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::PointerButton(
+      None,
+      @window_core.ElementState::Pressed,
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(24.0, 48.0),
+      true,
+      @window_core.ButtonSource::Touch(@window_core.FingerId::from_raw(0), None),
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match touch_down {
+    Some(
+      HostEvent::Pointer(
+        {
+          phase: @core.PointerPhase::Down,
+          button: 0,
+          position: { x: 12.0, y: 24.0 },
+          ..,
+        }
+      )
+    ) => ()
+    _ => fail("expected touch down pointer event")
+  }
+  let touch_up = window_event_to_host(
+    @window_core.WindowEvent::PointerButton(
+      None,
+      @window_core.ElementState::Released,
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(24.0, 48.0),
+      true,
+      @window_core.ButtonSource::Touch(@window_core.FingerId::from_raw(0), None),
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match touch_up {
+    Some(HostEvent::Pointer({ phase: @core.PointerPhase::Up, .. })) => ()
+    _ => fail("expected touch up pointer event")
+  }
+}
+
+///|
 test "surface host resizes through host event" {
   let surface = SurfaceHostState::new(
     metrics=HostSurfaceMetrics::from_logical(

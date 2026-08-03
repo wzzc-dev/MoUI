@@ -60,13 +60,15 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can
       self.driver.set_redraw_scheduler(() => {
         self.request_redraw_window_if_needed(window_id)
       })
-      match (self.renderer_provider.create_renderer)(window, surface_metrics) {
-        Some(renderer) => {
+      match (self.surface_binding.create_renderer)(window, surface_metrics) {
+        Some(resolution) => {
+          let renderer = resolution.renderer()
           ignore(
             self.coordinator.attach_surface(
               window_id,
               renderer,
               self.linux_surface_actions(window, renderer),
+              image_loader=resolution.image_loader(),
             ),
           )
           self.bind_renderer_image_resource_changes(window_id)
@@ -162,10 +164,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
             @host.HostEvent::Resized(_) => {
               slot.set_extra(extra=linux_client_decoration_state(slot.window))
               let surface_metrics = linux_window_surface_metrics(slot.window)
-              (self.renderer_provider.sync_surface)(
-                slot.window,
-                surface_metrics,
-              )
+              (self.surface_binding.sync_surface)(slot.window, surface_metrics)
               match self.coordinator.surface_actions(window_id) {
                 Some(actions) => {
                   (actions.renderer_resize)(
@@ -205,7 +204,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
           )
           ignore(self.coordinator.windows.resize(window_id, metrics))
           self.coordinator.sync_runtime_slot(window_id)
-          (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
+          (self.surface_binding.sync_surface)(slot.window, surface_metrics)
           match self.coordinator.surface_actions(window_id) {
             Some(actions) => {
               (actions.renderer_resize)(
@@ -237,7 +236,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
           )
           ignore(self.coordinator.windows.resize(window_id, metrics))
           self.coordinator.sync_runtime_slot(window_id)
-          (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
+          (self.surface_binding.sync_surface)(slot.window, surface_metrics)
           match self.coordinator.surface_actions(window_id) {
             Some(actions) => {
               (actions.renderer_resize)(

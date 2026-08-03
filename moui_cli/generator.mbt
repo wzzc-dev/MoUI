@@ -396,7 +396,7 @@ fn web_html_text(title : String) -> String {
     #|  <body>
     #|    <div id="canvas-host" aria-label="MoUI canvas host"></div>
     #|    <script type="module">
-    #|      import { bootMouiWasmGcApp } from "../.mooncakes/wzzc-dev/moui/backend/web/runtime.js";
+    #|      import { bootMouiWasmGcApp } from "../.mooncakes/wzzc-dev/moui/render/webgpu_adapter/runtime.js";
     #|      bootMouiWasmGcApp({
     #|        wasmUrl: new URL("../_build/wasm-gc/debug/build/web_wasm/web_wasm.wasm", import.meta.url),
     #|        canvasHost: "#canvas-host",
@@ -411,8 +411,10 @@ fn web_html_text(title : String) -> String {
 fn desktop_pkg_text(module_name : String, platform : String) -> String {
   let template =
     #|import {
-    #|  "wzzc-dev/moui/backend/__PLATFORM__/skia" @platform_skia,
+    #|  "wzzc-dev/moui",
     #|  "wzzc-dev/moui/runtime",
+    #|  "wzzc-dev/moui/backend/__PLATFORM__" @platform_host,
+    #|  "wzzc-dev/moui/render/skia" @render_skia,
     #|  "__MODULE__/app" @app,
     #|}
     #|
@@ -435,14 +437,15 @@ fn desktop_main_text(title : String) -> String {
   let template =
     #|///|
     #|fn main {
-    #|  @platform_skia.run_app(
-    #|    "__TITLE__",
-    #|    @runtime.new_program_with_dimensions(
-    #|      program=@app.program(),
-    #|      width=720.0,
-    #|      height=480.0,
-    #|    ),
+    #|  let runtime = @runtime.new_program_with_dimensions(
+    #|    program=@app.program(),
+    #|    width=720.0,
+    #|    height=480.0,
     #|  )
+    #|  @moui.run_app("__TITLE__", runtime)
+    #|    .render_all(@render_skia.from_env())
+    #|    .backend(@platform_host.entry())
+    #|    .run()
     #|}
   template.replace_all(old="__TITLE__", new=title)
 }

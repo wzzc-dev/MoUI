@@ -25,7 +25,7 @@ pub fn HostWindowActions::unavailable() -> HostWindowActions {
 ///|
 /// Shared request queue used by the host entrypoint. Prefer the typed helpers
 /// below from app code; entrypoints may pass this queue into
-/// `run_app_with_options`.
+/// `AppBuilder::window_requests`.
 pub fn HostWindowActions::queue(
   self : HostWindowActions,
 ) -> HostWindowRequestQueue {
