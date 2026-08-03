@@ -3,7 +3,7 @@
 Android 使用**嵌入运行时后端**路径，目前状态为 **experimental**（product_class `experimental`，`ready=false`）：代码路径可编译且 host-sim tests 通过，但在匹配设备证据落地前，不做任何开发/演示可用性或产品承诺。
 `wzzc-dev/window/android` 拥有 Android 生命周期、Surface 与输入队列；
 `moui/backend/android` 将这些回调转换为 MoUI runtime session，
-`moui/backend/android/skia` 提供呈现器。
+`moui/render/skia` 提供呈现器。
 
 ## 入口
 
@@ -17,6 +17,20 @@ Android 使用**嵌入运行时后端**路径，目前状态为 **experimental**
 
 入口创建 `AndroidEmbeddedRuntimeBackend` 并通过 `window/android::EventLoop` 运行。
 不要在 window event loop 之外增加第二套生命周期、Surface 或输入桥接。
+
+Android 状态栏布局由应用通过 host options 控制，默认使用普通 inset 布局。
+设置 `status_bar_immersive=true` 后，MoUI surface 会延伸到可见状态栏下方；
+该选项不会隐藏状态栏或底部导航栏：
+
+```moonbit
+.backend(
+  @android_host.entry(
+    options=@android_host.AndroidHostAppOptions::new(
+      status_bar_immersive=true,
+    ),
+  ),
+)
+```
 
 ## 工具链
 

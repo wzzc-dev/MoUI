@@ -57,7 +57,7 @@ test "skia renderer decodes jpeg and bmp data uris through encoded image api" {
 }
 
 ///|
-test "skia renderer decodes jpeg and bmp local files through encoded image api" {
+test "skia renderer decodes host-provided jpeg and bmp file bytes" {
   guard skia_available() else { return () }
   let jpeg_path = skia_test_temp_path("moui-skia-local-image-fixture.jpg")
   let bmp_path = skia_test_temp_path("moui-skia-local-image-fixture.bmp")
@@ -87,10 +87,23 @@ test "skia renderer decodes jpeg and bmp local files through encoded image api" 
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     SkiaPresentTarget::new(description="test", present=_ => true),
+    async_image_loading=true,
   ) catch {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
 
+  assert_true(renderer.skia_image_for_source(jpeg_path) is None)
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      skia_image_load_completion_from_bytes(
+        jpeg_path,
+        @fs.read_file_to_bytes(jpeg_path) catch {
+          _ => fail("expected host JPEG byte read")
+        },
+        background_io=true,
+      ),
+    ),
+  )
   match renderer.skia_image_for_source(jpeg_path) {
     None => fail("expected Skia local JPEG decode")
     Some(image) => {
@@ -103,6 +116,18 @@ test "skia renderer decodes jpeg and bmp local files through encoded image api" 
   }
   assert_true(jpeg_ready.status == @render.ImageResourceStatus::ImageReady)
 
+  assert_true(renderer.skia_image_for_source(bmp_path) is None)
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      skia_image_load_completion_from_bytes(
+        bmp_path,
+        @fs.read_file_to_bytes(bmp_path) catch {
+          _ => fail("expected host BMP byte read")
+        },
+        background_io=true,
+      ),
+    ),
+  )
   match renderer.skia_image_for_source(bmp_path) {
     None => fail("expected Skia local BMP decode")
     Some(image) => {
@@ -303,6 +328,7 @@ test "skia renderer applies image load completions and notifies revision callbac
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
+    async_image_loading=true,
   ) catch {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
@@ -583,6 +609,7 @@ test "skia renderer retries local image failures when the file appears" {
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
+    async_image_loading=true,
   ) catch {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
@@ -598,11 +625,17 @@ test "skia renderer retries local image failures when the file appears" {
     err => fail("expected Skia placeholder render: \{err.message()}")
   }
   assert_true(renderer.image_cache.get(source) is None)
-  assert_true(renderer.failed_images.get(source) is Some(_))
+  assert_true(renderer.failed_images.get(source) is None)
   guard renderer.image_lifecycle.lookup(source) is Some(failed) else {
-    fail("expected failed local image lifecycle record")
+    fail("expected loading local image lifecycle record")
   }
-  assert_true(failed.status == @render.ImageResourceStatus::ImageFailed)
+  assert_true(failed.status == @render.ImageResourceStatus::ImageLoading)
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      skia_image_load_completion(source),
+    ),
+  )
+  assert_true(renderer.failed_images.get(source) is Some(_))
 
   match skia_image_data_uri_bytes(skia_test_png_data_uri()) {
     Some(bytes) =>
@@ -611,16 +644,19 @@ test "skia renderer retries local image failures when the file appears" {
       }
     None => fail("expected embedded test PNG bytes")
   }
-  renderer.render([
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
-      source,
-      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
-      opacity: 1.0,
-      fit: @core.ImageFit::Contain,
-    }),
-  ]) catch {
-    err => fail("expected Skia retry image render: \{err.message()}")
-  }
+  renderer.mark_image_loading(source)
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      skia_image_load_completion_from_bytes(
+        source,
+        @fs.read_file_to_bytes(source) catch {
+          _ => fail("expected host retry byte read")
+        },
+        background_io=true,
+      ),
+    ),
+  )
+  ignore(renderer.skia_image_for_source(source))
   @fs.remove_file(source) catch {
     _ => ()
   }

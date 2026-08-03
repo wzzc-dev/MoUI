@@ -8,7 +8,10 @@ fn main {
     height=640.0,
   )
   runtime.set_action_commands(app.action_commands(services~))
-  @web.run_app("MoUI Markdown Editor", runtime)
+  @moui.run_app("MoUI Markdown Editor", runtime)
+  .render_all(@webgpu_adapter.from_env())
+  .backend(@web.entry())
+  .run()
 }
 
 ///|

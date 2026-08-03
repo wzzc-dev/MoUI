@@ -1,0 +1,6 @@
+import {
+  "moonbitlang/x/fs",
+  "wzzc-dev/moui/render",
+}
+
+supported_targets = "native"

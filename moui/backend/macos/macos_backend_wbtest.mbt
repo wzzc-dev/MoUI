@@ -88,7 +88,6 @@ test "macos coordinator exposes async image loader hook" {
     scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
     services=macos_service_bridge(),
     event_sources=None,
-    image_loader=Some(loader),
   )
   let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
@@ -100,6 +99,26 @@ test "macos coordinator exposes async image loader hook" {
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
+  )
+  ignore(
+    coordinator.attach_surface(
+      @host.HostWindowId::new(1),
+      renderer,
+      @runtime.WindowSurfaceActions::new(
+        focus=() => (),
+        request_surface_size=_ => (),
+        sync_surface=_ => (),
+        renderer_resize=_ => (),
+        set_minimized=_ => (),
+        set_visible=_ => (),
+        request_redraw=() => (),
+        request_ime_update=_ => (),
+        drop=() => (),
+        native_view_handle=() => None,
+        dispose_platform_views=() => (),
+      ),
+      image_loader=Some(loader),
+    ),
   )
   match
     coordinator.schedule_image_resource_loads(
@@ -127,7 +146,6 @@ test "macos coordinator async image hook defaults to unavailable" {
     scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
     services=macos_service_bridge(),
     event_sources=None,
-    image_loader=None,
   )
   let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
@@ -186,7 +204,6 @@ fn run_frame_pending_handoff(persist_clear~ : Bool) -> (Bool, Int) {
     scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
     services=macos_service_bridge(),
     event_sources=None,
-    image_loader=None,
   )
   let window_id = @host.HostWindowId::new(7)
   let completions_drained = Ref(0)

@@ -2,9 +2,6 @@
 pub(all) struct WebBackendInfo {
   host_info : @host.HostAppInfo
   uses_window_web_backend : Bool
-  requires_browser_webgpu_renderer : Bool
-  renderer_info : @render.RendererBackendInfo
-  surface_contract : @render.WgpuSurfaceContract
   description : String
 } derive(Eq, Debug, ToJson)
 
@@ -16,6 +13,7 @@ struct WebApp {
   services : @host.HostServiceBridge
   async_services : @host.HostServiceAsyncQueue
   coordinator : @runtime.WindowHostCoordinator
+  renderer_factories : Array[@render.RendererBindingFactory]
   platform_slots : WebWindowPlatformSlots
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
@@ -40,59 +38,18 @@ pub fn backend_info() -> WebBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Web,
-      description="canonical wzzc-dev/window web host for wasm-gc WebGPU",
+      description="canonical wzzc-dev/window browser host for wasm-gc",
     ),
     uses_window_web_backend: true,
-    requires_browser_webgpu_renderer: true,
-    renderer_info: webgpu_renderer_backend_info(),
-    surface_contract: webgpu_canvas_surface_contract(),
-    description: "Canonical web path: window/web owns canvas events and redraw scheduling on wasm-gc; rendering is provided by the browser WebGPU host import module. No JS target fallback is kept.",
+    description: "Canonical web path: window/web owns canvas events, canvas surface identifiers, and redraw scheduling on wasm-gc; the application supplies renderer factories.",
   }
 }
 
 ///|
-pub fn renderer_backend_info() -> @render.RendererBackendInfo {
-  webgpu_renderer_backend_info()
-}
-
-///|
-pub fn wasm_renderer_ready() -> Bool {
-  true
-}
-
-///|
-pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract {
-  webgpu_canvas_surface_contract()
-}
-
-///|
-pub fn run_app(title : String, runtime : @runtime.AppRuntime) -> Unit {
-  run_app_with_options(
-    title,
-    runtime,
-    options=WebAppOptions::new(),
-    window_requests=@host.HostWindowRequestQueue::new(),
-  )
-}
-
-///|
-pub fn run_app_with_window_requests(
+fn run_app_internal(
   title : String,
   runtime : @runtime.AppRuntime,
-  window_requests : @host.HostWindowRequestQueue,
-) -> Unit {
-  run_app_with_options(
-    title,
-    runtime,
-    options=WebAppOptions::new(),
-    window_requests~,
-  )
-}
-
-///|
-pub fn run_app_with_options(
-  title : String,
-  runtime : @runtime.AppRuntime,
+  renderer_factories : Array[@render.RendererBindingFactory],
   options~ : WebAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
@@ -122,7 +79,6 @@ pub fn run_app_with_options(
     scene_resolver=options.scene_resolver,
     services~,
     event_sources=options.event_sources,
-    image_loader=None,
   )
   let app = WebApp::{
     title,
@@ -131,6 +87,7 @@ pub fn run_app_with_options(
     services,
     async_services,
     coordinator,
+    renderer_factories,
     platform_slots: WebWindowPlatformSlots::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
@@ -138,6 +95,21 @@ pub fn run_app_with_options(
   web_active_app.val = Some(app)
   app.driver.set_redraw_scheduler(() => ())
   event_loop.spawn_app(app)
+}
+
+///|
+pub fn entry(
+  options? : WebAppOptions = WebAppOptions::new(),
+) -> @runtime.PlatformEntry {
+  @runtime.PlatformEntry::new(id="web", launch=request => {
+    run_app_internal(
+      request.title(),
+      request.runtime(),
+      request.renderer_factories(),
+      options~,
+      window_requests=request.window_requests(),
+    )
+  })
 }
 
 ///|
@@ -191,19 +163,18 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
       self.driver.set_redraw_scheduler(() => {
         self.coordinator.request_redraw_window_if_needed(window_id)
       })
-      try
-        WebRenderer::create(
-          canvas_id=window_web_default_canvas_id(window.id().into_raw()),
-          metrics~,
-        )
-      catch {
-        err => {
-          let _ = err
+      match
+        resolve_web_renderer(
+          self.renderer_factories,
+          window_web_default_canvas_id(window.id().into_raw()),
+          metrics,
+        ) {
+        None => {
           window.drop()
           event_loop.exit()
         }
-      } noraise {
-        renderer => {
+        Some(resolution) => {
+          let renderer = resolution.renderer()
           self.driver.set_text_system(renderer.text_system())
           match self.coordinator.runtime_slot_lookup(window_id) {
             Some(slot) =>
@@ -213,8 +184,9 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
           ignore(
             self.coordinator.attach_surface(
               window_id,
-              renderer.host_renderer,
+              renderer,
               self.web_surface_actions(window, renderer),
+              image_loader=resolution.image_loader(),
             ),
           )
           ignore(
@@ -323,7 +295,14 @@ fn WebApp::resize_renderer(
   metrics : @host.HostSurfaceMetrics,
 ) -> Unit {
   match self.platform_slots.lookup_host(window_id) {
-    Some(slot) => slot.renderer.resize(metrics)
+    Some(slot) =>
+      slot.renderer.resize(
+        @render.RendererSurfaceMetrics::new(
+          logical_size=metrics.logical_size,
+          physical_size=metrics.physical_size,
+          scale_factor=metrics.scale_factor,
+        ),
+      )
     None => ()
   }
 }
@@ -335,7 +314,7 @@ fn WebApp::resize_renderer(
 fn WebApp::web_surface_actions(
   _self : WebApp,
   window : @window_web.Window,
-  renderer : WebRenderer,
+  renderer : @render.HostWindowRenderer,
 ) -> @runtime.WindowSurfaceActions {
   @runtime.WindowSurfaceActions::new(
     focus=fn() { window.focus_window() },
@@ -345,15 +324,7 @@ fn WebApp::web_surface_actions(
       )
     },
     sync_surface=fn(_metrics) { () },
-    renderer_resize=fn(metrics) {
-      renderer.resize(
-        @host.HostSurfaceMetrics::new(
-          logical_size=metrics.logical_size,
-          physical_size=metrics.physical_size,
-          scale_factor=metrics.scale_factor,
-        ),
-      )
-    },
+    renderer_resize=fn(metrics) { renderer.resize(metrics) },
     set_minimized=fn(minimized) { window.set_minimized(minimized) },
     set_visible=fn(visible) { window.set_visible(visible) },
     request_redraw=fn() { window.request_redraw() },
@@ -374,6 +345,29 @@ fn WebApp::web_surface_actions(
       unregister_web_semantics_runtime(window.id().into_raw())
     },
   )
+}
+
+///|
+fn resolve_web_renderer(
+  factories : Array[@render.RendererBindingFactory],
+  surface_id : String,
+  metrics : @host.HostSurfaceMetrics,
+) -> @render.HostRendererResolution? {
+  let renderer_metrics = @render.RendererSurfaceMetrics::new(
+    logical_size=metrics.logical_size,
+    physical_size=metrics.physical_size,
+    scale_factor=metrics.scale_factor,
+  )
+  let kit = @render.HostSurfaceKit::new(
+    surface=@render.SurfaceDescriptor::cpu_raster(
+      width=metrics.logical_size.width,
+      height=metrics.logical_size.height,
+      scale_factor=metrics.scale_factor,
+    ),
+    surface_id~,
+    metrics=renderer_metrics,
+  )
+  @render.resolve_host_renderer(factories, kit)
 }
 
 ///|

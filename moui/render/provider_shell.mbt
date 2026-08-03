@@ -58,7 +58,7 @@ pub fn negotiate_cpu_raster_surface(
         SurfaceNegotiationResult::SurfaceAccepted(
           BoundSurface::new(
             kind=presentation_model,
-            route=SkiaSurfaceRoute::RasterSurfaceRoute,
+            route=SurfaceRoute::RasterSurfaceRoute,
             metrics=RendererSurfaceMetrics::from_logical(
               size=@core.Size::new(width~, height~),
               scale_factor=scale,
@@ -88,7 +88,7 @@ pub fn negotiate_gpu_surface(
   surface : SurfaceDescriptor,
   label~ : String,
   id~ : String,
-  route_for~ : (GpuHostSurfaceDescriptor) -> SkiaSurfaceRoute,
+  route_for~ : (GpuHostSurfaceDescriptor) -> SurfaceRoute,
 ) -> SurfaceNegotiationResult {
   match surface {
     SurfaceDescriptor::GpuSurface(handle, width, height, scale) =>

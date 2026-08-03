@@ -36,6 +36,149 @@ test "direct pointer input reports scroll consumption at boundaries" {
 }
 
 ///|
+test "direct pointer input drags a scroll view" {
+  let state = @core.ScrollState::new()
+  let root : @core.View[Unit] = @views.scroll_view(
+    runtime_test_rect(width=20.0, height=200.0, color=@core.Color::blue()),
+    width=20.0,
+    height=40.0,
+    state=Some(state),
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=20.0, height=40.0),
+  )
+  ignore(runtime.layout())
+  let down = runtime.dispatch_pointer_input(
+    @core.PointerEvent::new(
+      position=@core.Point::new(x=5.0, y=30.0),
+      phase=@core.PointerPhase::Down,
+    ),
+  )
+  if down.host_flags() != 3 {
+    fail("expected a scroll view to capture pointer down")
+  }
+  let move_result = runtime.dispatch_pointer_input(
+    @core.PointerEvent::new(
+      position=@core.Point::new(x=5.0, y=10.0),
+      phase=@core.PointerPhase::Move,
+    ),
+  )
+  if move_result.host_flags() != 1 {
+    fail("expected a scroll drag to be handled")
+  }
+  assert_true(state.offset() == @core.Point::new(x=0.0, y=20.0))
+  let up = runtime.dispatch_pointer_input(
+    @core.PointerEvent::new(
+      position=@core.Point::new(x=5.0, y=10.0),
+      phase=@core.PointerPhase::Up,
+    ),
+  )
+  if up.host_flags() != 5 {
+    fail("expected a scroll view to release pointer capture")
+  }
+}
+
+///|
+test "direct pointer input drags a scroll view from a child control" {
+  let state = @core.ScrollState::new()
+  let received : Array[String] = []
+  let root : @core.View[String] = @views.scroll_view(
+    @views.column(
+      [
+        @views.button("Tap", on_click="clicked", width=20.0, height=20.0),
+        runtime_test_rect(width=20.0, height=180.0, color=@core.Color::blue()),
+      ],
+      spacing=0.0,
+    ),
+    width=20.0,
+    height=40.0,
+    state=Some(state),
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=20.0, height=40.0),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(runtime.layout())
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=5.0, y=10.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=5.0, y=0.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  assert_true(state.offset().y > 0.0)
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=5.0, y=0.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  assert_true(received.is_empty())
+}
+
+///|
+test "direct pointer input keeps a child click within scroll drag slop" {
+  let state = @core.ScrollState::new()
+  let received : Array[String] = []
+  let root : @core.View[String] = @views.scroll_view(
+    @views.column(
+      [
+        @views.button("Tap", on_click="clicked", width=20.0, height=20.0),
+        runtime_test_rect(width=20.0, height=180.0, color=@core.Color::blue()),
+      ],
+      spacing=0.0,
+    ),
+    width=20.0,
+    height=40.0,
+    state=Some(state),
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=20.0, height=40.0),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=5.0, y=10.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=6.0, y=11.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  assert_true(state.offset() == @core.Point::new(x=0.0, y=0.0))
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=6.0, y=11.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(received.join(","), content="clicked")
+}
+
+///|
 test "direct pointer input keeps a button target from down through up" {
   let received : Array[String] = []
   let runtime = AppRuntime::new_view(
@@ -79,6 +222,55 @@ test "direct pointer input keeps a button target across a redraw" {
   inspect(down.host_flags(), content="3")
   inspect(up.host_flags(), content="5")
   inspect(received.join(","), content="clicked")
+}
+
+///|
+fn runtime_damage_rebuild_program() -> @core.Program[Bool, Unit] {
+  @core.Program::simple(init=false, update=(visible, _message) => !visible, view=visible => {
+    if visible {
+      @views.column(
+        [
+          @views.button("Open", on_click=(), width=60.0, height=24.0),
+          runtime_test_rect(width=120.0, height=56.0, color=@core.Color::blue()),
+        ],
+        spacing=0.0,
+      )
+    } else {
+      @views.column(
+        [
+          @views.button("Open", on_click=(), width=60.0, height=24.0),
+          runtime_test_rect(
+            width=120.0,
+            height=56.0,
+            color=@core.Color::rgba(r=0.86, g=0.12, b=0.12),
+          ),
+        ],
+        spacing=0.0,
+      )
+    }
+  })
+}
+
+///|
+test "component rebuild requests full damage after replacing content" {
+  let runtime = AppRuntime::new_program(
+    program=runtime_damage_rebuild_program(),
+    size=@core.Size::new(width=120.0, height=80.0),
+  )
+  ignore(runtime.draw_frame())
+  let position = @core.Point::new(x=8.0, y=8.0)
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up),
+    ),
+  )
+  let frame = runtime.draw_frame()
+  assert_true(frame.damage is @core.DamageRegion::FullSurface(_))
 }
 
 ///|

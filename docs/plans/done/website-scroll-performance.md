@@ -16,7 +16,7 @@
 
 | Area | Owner |
 |---|---|
-| Text-selection DOM reconciliation and wheel forwarding | `moui/backend/web/runtime.js` |
+| Text-selection DOM reconciliation and wheel forwarding | `moui/render/webgpu_adapter/runtime.js` |
 | Semantic DOM reconciliation | `moui/backend/web/semantics_dom.js` |
 | Screenshot asset generation and Website asset mapping | `scripts/gen-website-showcase-assets.mjs`, `website/app` |
 | Product enablement of selectable text | `website/web_wasm` |

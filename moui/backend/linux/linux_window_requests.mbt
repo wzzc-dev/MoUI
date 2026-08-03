@@ -95,7 +95,7 @@ fn LinuxNativeHostBackend::apply_window_request(
                 @host.host_metrics_to_dpi_size(metrics),
               ),
             )
-            (self.renderer_provider.sync_surface)(window, metrics)
+            (self.surface_binding.sync_surface)(window, metrics)
           }
         }
         window.request_redraw()
@@ -209,8 +209,9 @@ fn LinuxNativeHostBackend::attach_resolved_window(
   }
   let surface_metrics = linux_window_surface_metrics(window)
   let metrics = linux_content_metrics_for_surface(surface_metrics, decorations)
-  match (self.renderer_provider.create_renderer)(window, surface_metrics) {
-    Some(renderer) => {
+  match (self.surface_binding.create_renderer)(window, surface_metrics) {
+    Some(resolution) => {
+      let renderer = resolution.renderer()
       ignore(self.coordinator.windows.resize(resolved.id, metrics))
       ignore(
         self.coordinator.runtime_slots.sync_open_from_registry(
@@ -259,6 +260,7 @@ fn LinuxNativeHostBackend::attach_resolved_window(
           resolved.id,
           renderer,
           self.linux_surface_actions(window, renderer),
+          image_loader=resolution.image_loader(),
         ),
       )
       self.bind_renderer_image_resource_changes(resolved.id)
@@ -371,7 +373,7 @@ fn LinuxNativeHostBackend::linux_surface_actions(
       )
     },
     sync_surface=fn(metrics) {
-      (self.renderer_provider.sync_surface)(window, metrics)
+      (self.surface_binding.sync_surface)(window, metrics)
     },
     renderer_resize=fn(metrics) { renderer.resize(metrics) },
     set_minimized=fn(minimized) { window.set_minimized(minimized) },

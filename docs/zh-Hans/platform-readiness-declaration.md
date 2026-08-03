@@ -149,14 +149,14 @@ moon run examples/showcase/macos_skia --target native
 |----------|------|----------|-------------|
 | L0: `moon check` | ✅ 通过 | `ci.yml → windows-native` → `moon check`（跨平台，不在 Win CI 中单独跑但受 `check.sh --profile daily` 保护） | 每次 PR |
 | L0: `moon info` | ✅ 无漂移 | `ci.yml → api-surface` | 每次 PR |
-| L1: Windows 后端测试 | ✅ 通过 | `ci.yml → windows-native` → `moon test moui/backend/windows --target native` + `moon test moui/backend/windows/skia --target native` | 每次 PR，运行记录 [28964136358](https://github.com/wzzc-dev/MoUI/actions/runs/28964136358) |
-| L1: Windows Skia 提供者预检 | ✅ 通过 | 同一作业中 `windows_skia_provider_preflight_summary()` | 每次 PR |
+| L1: Windows 后端测试 | ✅ 通过 | `ci.yml → windows-native` → `moon test moui/backend/windows --target native` + `moon test moui/render/skia --target native` | 每次 PR，运行记录 [28964136358](https://github.com/wzzc-dev/MoUI/actions/runs/28964136358) |
+| L1: Windows Skia composition wiring | ✅ 通过 | 同一作业构建 `examples/showcase/windows_skia`，并运行 backend 与 renderer package tests | 每次 PR |
 | L1: Windows MSVC 构建 | ✅ 通过 | `ci.yml → windows-native` → MSVC Skia 入口点构建成功，制品上传 | 每次 PR |
 | L2: 真实 Skia 渲染器（Windows） | ✅ 通过 | `moui-renderer-real-skia-ci.yml → windows-real-skia` | 每次 PR |
 | L2: Windows 文本/表情符号 | ✅ 通过 | `moui-renderer-real-skia-ci.yml → windows-real-skia --run-text-emoji-smoke` | 每次 PR |
 | L2: Windows 异步图像 | ✅ 通过 | `moui-renderer-real-skia-ci.yml → windows-real-skia --run-renderer-smoke` | 每次 PR |
 | L3: Windows 平台运行时证据 | ⏳ **待补** | 需要 MSVC 匹配宿主上通过以下流程产生: | — |
-| L3: Windows 首帧呈现 | ⏳ **待补** | `MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/windows_skia --target native` | — |
+| L3: Windows 首帧呈现 | ⏳ **待补** | `MOUI_FIRST_FRAME_EXIT=1 moon run examples/showcase/windows_skia --target native` | — |
 | L3: Windows IME 运行时 | ⏳ **待补** | 需要在 MSVC 环境下运行全长平台证据记录流程 | — |
 
 #### Windows L3 证据补全方案
@@ -168,7 +168,7 @@ Windows 平台运行时证据目前在 `platform-runtime-evidence.json` 中标�
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly
 
 # 2. 运行首帧退出测试
-set MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1
+set MOUI_FIRST_FRAME_EXIT=1
 moon run examples/showcase/windows_skia --target native
 
 # 3. 收集运行时日志至 artifacts/platform-evidence/windows/
@@ -315,7 +315,7 @@ bash window/scripts/capture_moui_runtime_evidence.sh linux \
 
 | 缺失项 | 补全动作 | 前置条件 | 预估工期 |
 |--------|---------|----------|---------|
-| Showcase Windows 首帧日志 | `moon run examples/showcase/windows_skia --target native` 加 `MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` | Windows MSVC 环境 + 真实 Skia provider | 1 次 CI 手动触发 |
+| Showcase Windows 首帧日志 | `moon run examples/showcase/windows_skia --target native` 加 `MOUI_FIRST_FRAME_EXIT=1` | Windows MSVC 环境 + 真实 Skia provider | 1 次 CI 手动触发 |
 | Markdown Editor Windows 首帧日志 | 同上，Markdown Editor 入口点 | 同上 | 1 次 CI 手动触发 |
 | Windows IME 运行时观测 | `window/scripts/capture_moui_runtime_evidence.sh` windows 流程 + `record_moui_evidence.sh` windows | Windows 主机 + MSVC + 真实 Skia | 1 次本地或 CI 运行 |
 | Windows 全证据清单更新 | 将结果写入 `platform-runtime-evidence.json` windows 条目 | 以上三项完成 | 1 次 PR |
@@ -375,13 +375,13 @@ moon run moui_skia/scripts/native_smoke --target native
 moon run moui/tests/skia_text_emoji_smoke/native --target native
 
 # L3 — macOS 平台运行时证据（macOS 主机）
-MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/macos_skia --target native
+MOUI_FIRST_FRAME_EXIT=1 moon run examples/showcase/macos_skia --target native
 
 # L3 — Linux 首帧 / Wayland route 证据（Wayland 主机）
 moon run moui_tester/linux_skia_first_frame_smoke --target native
 
 # L3 — Windows 平台运行时证据（MSVC 主机）（需要安装、配置 MSVC 工具链）
-set MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1
+set MOUI_FIRST_FRAME_EXIT=1
 moon run examples/showcase/windows_skia --target native
 
 # Web 运行时呈现记录

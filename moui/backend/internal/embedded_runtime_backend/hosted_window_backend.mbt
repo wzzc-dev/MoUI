@@ -27,21 +27,21 @@ pub fn HostedWindow::new(
 }
 
 ///|
-/// Renderer provider projection. Platform providers (`{P}RendererProvider`)
-/// are struct-of-closures already; platform packages adapt them to this
-/// neutral shape with raw (UInt64) surface handles.
-pub struct RendererProviderAdapter {
-  create_renderer : (UInt64, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
+/// Neutral host-surface projection used by embedded platform backends.
+/// Platform packages adapt their typed surface handles to this shape with
+/// raw (`UInt64`) handles.
+pub struct HostSurfaceBinding {
+  create_renderer : (UInt64, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
   sync : (UInt64, @host.HostSurfaceMetrics) -> Unit
   image_loader : @render.HostAsyncImageLoader?
 }
 
 ///|
-pub fn RendererProviderAdapter::new(
-  create_renderer~ : (UInt64, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
+pub fn HostSurfaceBinding::new(
+  create_renderer~ : (UInt64, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
   sync~ : (UInt64, @host.HostSurfaceMetrics) -> Unit,
   image_loader? : @render.HostAsyncImageLoader? = None,
-) -> RendererProviderAdapter {
+) -> HostSurfaceBinding {
   { create_renderer, sync, image_loader }
 }
 
@@ -60,22 +60,23 @@ pub fn HostedRuntimeSession::raw_handle(self : HostedRuntimeSession) -> UInt64 {
 }
 
 ///|
-/// Create a session from a fresh surface handle and renderer provider.
+/// Create a session from a fresh surface handle and neutral host binding.
 pub fn HostedRuntimeSession::create(
   runtime~ : @runtime.AppRuntime,
   raw_handle~ : UInt64,
   metrics~ : @host.HostSurfaceMetrics,
-  adapter~ : RendererProviderAdapter,
+  binding~ : HostSurfaceBinding,
 ) -> HostedRuntimeSession? {
-  match (adapter.create_renderer)(raw_handle, metrics) {
-    Some(renderer) => {
+  match (binding.create_renderer)(raw_handle, metrics) {
+    Some(resolution) => {
+      let renderer = resolution.renderer()
       let core = EmbeddedRuntimeBackendCore::new(
         runtime~,
         renderer~,
-        image_loader=adapter.image_loader,
+        image_loader=resolution.image_loader(),
         metrics~,
       )
-      (adapter.sync)(raw_handle, metrics)
+      (binding.sync)(raw_handle, metrics)
       Some({ raw_handle, core })
     }
     None => None
@@ -87,21 +88,23 @@ pub fn HostedRuntimeSession::attach(
   self : HostedRuntimeSession,
   raw_handle~ : UInt64,
   metrics~ : @host.HostSurfaceMetrics,
-  adapter~ : RendererProviderAdapter,
+  binding~ : HostSurfaceBinding,
 ) -> Bool {
-  match (adapter.create_renderer)(raw_handle, metrics) {
-    Some(renderer) =>
+  match (binding.create_renderer)(raw_handle, metrics) {
+    Some(resolution) => {
+      let renderer = resolution.renderer()
       if self.core.attach_surface(
           renderer~,
           metrics~,
-          image_loader=adapter.image_loader,
+          image_loader=resolution.image_loader(),
         ) {
         self.raw_handle = raw_handle
-        (adapter.sync)(raw_handle, metrics)
+        (binding.sync)(raw_handle, metrics)
         true
       } else {
         false
       }
+    }
     None => false
   }
 }
@@ -268,7 +271,7 @@ pub fn HostedRuntimeSession::dispose(self : HostedRuntimeSession) -> Unit {
 pub struct HostedWindowBackend {
   title : String
   runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
-  provider_factory : () -> RendererProviderAdapter
+  surface_binding_factory : () -> HostSurfaceBinding
   ime_sync : ((@runtime.AppRuntime?) -> Unit)?
   mut window : HostedWindow?
   mut runtime : @runtime.AppRuntime?
@@ -285,14 +288,14 @@ pub struct HostedWindowBackend {
 pub fn HostedWindowBackend::new(
   title? : String = "MoUI",
   runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
-  provider_factory~ : () -> RendererProviderAdapter,
+  surface_binding_factory~ : () -> HostSurfaceBinding,
   ime_sync? : ((@runtime.AppRuntime?) -> Unit)? = None,
   auto_exit_after_frames? : Int? = None,
 ) -> HostedWindowBackend {
   {
     title,
     runtime_factory,
-    provider_factory,
+    surface_binding_factory,
     ime_sync,
     window: None,
     runtime: None,
@@ -370,15 +373,15 @@ pub fn HostedWindowBackend::attach_session(
     }
   }
   self.window = Some(window)
-  let adapter = (self.provider_factory)()
+  let binding = (self.surface_binding_factory)()
   match self.session {
     Some(session) => {
-      ignore(session.attach(raw_handle~, metrics~, adapter~))
+      ignore(session.attach(raw_handle~, metrics~, binding~))
       self.last_generation = session.session_generation()
     }
     None =>
       match
-        HostedRuntimeSession::create(runtime~, raw_handle~, metrics~, adapter~) {
+        HostedRuntimeSession::create(runtime~, raw_handle~, metrics~, binding~) {
         Some(session) => {
           self.session = Some(session)
           self.last_generation = session.session_generation()

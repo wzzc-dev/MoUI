@@ -257,6 +257,7 @@ fn create_headless_proof_renderer(
     white_view: Some(white_view),
     white_bind_group: Some(white_bind_group),
     image_cache: Map([]),
+    decoded_image_cache: Map([]),
     failed_images: Map([]),
     image_lifecycle: @render.ImageResourceLifecycle::new(),
     font_cache: NativeFontCache::new_with_engine(text_engine),

@@ -35,6 +35,7 @@ node scripts/generate-repo-docs.mjs --check
 node scripts/validate-window-dependency.mjs
 node scripts/validate-harness-invariants.mjs
 node scripts/validate-maintenance-baseline.mjs
+node scripts/validate-backend-renderer-boundary.mjs
 node scripts/validate-renderer-provider-open-extension.mjs
 node scripts/validate-platform-adapter-duplication.mjs
 node scripts/validate-core-theme-no-control-surface.mjs
@@ -200,11 +201,11 @@ moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/host --target native
 moon test moui/backend/android --target native
-moon test moui/backend/android/skia --target native
+moon check examples/showcase/android_window_hosted --target native
 moon test moui/backend/ios --target native
-moon test moui/backend/ios/skia --target native
+moon check examples/showcase/ios_window_hosted --target native
 moon test moui/backend/harmonyos --target native
-moon test moui/backend/harmonyos/skia --target native
+moon check examples/showcase/harmonyos_window_hosted --target native
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
 moon test moui_devtools --target native
@@ -415,10 +416,8 @@ For Linux Skia first-frame evidence, use the matching Wayland host and keep
 Showcase, Markdown Editor, and window-package smoke logs separate:
 
 ```sh
-MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+MOUI_FIRST_FRAME_EXIT=1 MOUI_SKIA_RENDERER=auto \
   moon run examples/showcase/linux_skia --target native
-MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
-  moon run examples/markdown_editor/linux_skia --target native
 scripts/run-window-package-smoke.sh linux --run
 ```
 

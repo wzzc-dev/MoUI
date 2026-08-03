@@ -17,7 +17,7 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | P3 | Cross-runtime protocols + value types go in `moui/core`. Core carries no control vocabulary (ADR 0017); control theme tokens (`ButtonTheme`, `ControlStateTokens`, …) live in `moui/views` as `ControlThemeSet`. | `validate-core-theme-no-control-surface.mjs` | none |
 | P4 | Runtime lifecycle, element/layout/render tree execution go in `moui/runtime` | code review | none |
 | P5 | Host service contracts go in `moui/backend/host` (ADR 0018: contracts only — `HostRuntimeDriver`, `RedrawScheduler`, `HostWallClock` moved to `moui/runtime`; render completion moved to `moui/render`); concrete platform behavior in platform backends | `validate-host-import-baseline.mjs` | none |
-| P6 | Renderer implementation and provider-ID capability reporting go in `moui/render/*`; platform composition roots own `RendererProviderBinding` assembly, while `RendererBackendKind` is diagnostic metadata only | `validate-renderer-provider-open-extension.mjs` + code review | none |
+| P6 | Renderer implementations, native bindings, decode logic, factories, and provider-ID reporting live in `moui/render/*`. `moui/backend/*` may depend only on the neutral `moui/render` contract and must not import, contain, or assemble a concrete renderer. Executable composition roots must import both one platform backend and one renderer and combine them through `@moui.run_app(...)`, `.render(...)` or `.render_all(...)`, `.backend(...)`, and `.run()`; cooperative async roots may end with `.run_async_pump()`. | `validate-backend-renderer-boundary.mjs` + `validate-renderer-provider-open-extension.mjs` | none |
 | P10 | Neutral close/focus/resize/scale/redraw/surface lifecycle and logical-coordinate conversion go through `moui/backend/platform_bridge`; native pointer/keyboard/IME/drag decode stays platform-local | `validate-platform-adapter-duplication.mjs` (pr) | WeChat `direct-canvas-callback`, validated without a `WindowEvent` import |
 | P7 | Native Skia binding ownership + FFI borrow rules go in `moui_skia` | code review | none |
 | P8 | App packages import `wzzc-dev/moui` + domain facades (`geometry`/`graphics`/`animation`/`text`/`state`) + `views` only | `validate-maintenance-baseline.mjs` | `showcase/app` for diagnostics; `for "test"` imports |
@@ -33,7 +33,7 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | R7 | Sun CPU raster (`moui_sun` + `moui/render/sun`) is an experimental renderer: no product commitment, not on default composition roots, no `auto` selection; new sun capabilities are exceptions requiring an ADR note (ADR 0023) | code review | ADR 0023 |
 | R2 | `SkiaGpuNative` is the product `auto` default on all native Skia platforms when a host GPU surface is available; `SkiaRasterNative` remains the explicit mode and sticky recovery fallback | `validate-renderer-provider-manifests.mjs` | none |
 | R3 | Desktop entrypoints honor `--renderer auto\|skia-gpu\|skia-raster` (or `MOUI_SKIA_RENDERER`). Embedded-runtime entrypoints use `*_window_hosted`, import `wzzc-dev/window/<platform>`, construct `*EmbeddedRuntimeBackend`, and call `EventLoop.run_app`; the platform event loop is the only lifecycle, surface, and input path. | `validate-harness-invariants.mjs` (provider + window-hosted entrypoint + prepare support) | none |
-| R4 | `moon.work` must not list `./window/modules/window` or `./window/modules/windowing` by default; use `sh scripts/window-dev-mode.sh on/off` | `validate-window-dependency.mjs` (daily CI) | explicit Provider Phase E consumer-proof window only: exact `checks/window-dependency-exception.txt`; turn dev mode off and remove it after the proof |
+| R4 | `moon.work` must not list `./window/modules/window` or `./window/modules/windowing` by default; use `sh scripts/window-dev-mode.sh on/off` | `validate-window-dependency.mjs` (daily CI) | none |
 | R5 | `moon.work` must not list `./openseek`; `examples/mo_workbench` uses registry pin | `validate-maintenance-baseline.mjs` | none |
 | R6 | Do not claim mobile runtime support as `passed` without matching-device evidence (pixels changed, input received, detach, IME, clipboard, accessibility, async image) recorded in `checks/platforms/*.json`. | code review + platform-status schema validation | fallback APK builds are packaging evidence only |
 
@@ -41,9 +41,9 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 
 | # | Constraint | Detection | Exemption |
 |---|-----------|-----------|-----------|
-| M1 | Android: `window/android` owns Activity/JNI/CMake/Gradle template lifecycle and `HostCmd`; `backend/android` owns the typed adapter and contracts, and `backend/android/skia` owns the `ANativeWindow` Skia presenter. | code review | none |
+| M1 | Android: `window/android` owns Activity/JNI/CMake/Gradle template lifecycle and `HostCmd`; `backend/android` owns the typed adapter, neutral `ANativeWindow` surface/presenter, and host contracts; concrete renderer binding stays in `render/*` and the application entrypoint. | boundary validator + code review | none |
 | M2 | Android frames paced by `Choreographer`; input/resize must request redraw, not present synchronously | code review | none |
-| M3 | iOS: `window/ios` owns UIKit lifecycle and template glue; `backend/ios` owns the typed adapter and contracts, while `backend/ios/skia` owns the UIKit presenter. | code review | none |
+| M3 | iOS: `window/ios` owns UIKit lifecycle and template glue; `backend/ios` owns the typed adapter, neutral UIKit/Metal surface presenter, and contracts; concrete renderer binding stays in `render/*` and the application entrypoint. | boundary validator + code review | none |
 | M4 | iOS frames are paced by the platform event loop; keep `UILaunchScreen` and `UIApplicationSupportsMultipleScenes=false` in template Info.plists. | code review | none |
 | M5 | HarmonyOS: `window/harmonyos` owns the ArkTS Stage Ability/XComponent/NAPI template at API 20; XComponent is the only pointer/surface/resize/detach source and ArkTS owns `displaySync`. | code review | none |
 | M6 | Embedded runtime backends translate neutral lifecycle callbacks through `platform_bridge` into `HostCmd`/`HostEvent`; native input decode and runtime-session assembly stay platform-private. | API import whitelist + duplication validator + code review | none |
@@ -85,6 +85,7 @@ Prefer app-level overrides over framework edits.
 | `node scripts/validate-core-theme-no-control-surface.mjs` | every commit |
 | `node scripts/validate-host-import-baseline.mjs` | every commit |
 | `node scripts/validate-renderer-provider-open-extension.mjs` | renderer changes |
+| `node scripts/validate-backend-renderer-boundary.mjs` | backend, renderer, or composition-root changes |
 | `node scripts/validate-platform-adapter-duplication.mjs` | platform/backend changes |
 | `moon check <package>` | during editing |
 | `moon test <package> --target native` | during editing |

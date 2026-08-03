@@ -1,8 +1,10 @@
 import {
+  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/macos" @macos_backend,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/moui_webview/host" @webview_host,
   "wzzc-dev/moui_webview/backend/macos" @macos_webview,
-  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "examples/webview_demo/app" @webview_demo,
 }
 

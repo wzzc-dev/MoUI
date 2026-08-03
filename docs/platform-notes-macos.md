@@ -2,11 +2,11 @@
 
 The macOS host core uses `wzzc-dev/window/macos` for AppKit windows, lifecycle,
 events, services, text-input session synchronization, renderer resize calls, and
-redraw requests. It receives concrete rendering through
-`MacosRendererProvider`; `backend/macos/skia` is the recommended native
-mainline and presents CPU pixel frames through an `NSImageView`, while
-`backend/macos/wgpu` installs a `CAMetalLayer` on the window `NSView` for
-native WGPU diagnostics.
+redraw requests. It creates a renderer-neutral `HostSurfaceKit` with an
+`NSImageView` CPU presenter, an opaque `CAMetalLayer` GPU descriptor, and a
+`HostImageSource`. The application supplies ordered factories from
+`render/skia`, `render/sun`, or `render/wgpu`; `backend/macos` never imports or
+constructs those renderers.
 macOS native WebView support uses `WKWebView` as a host platform view attached
 to the window content view. `backend/macos` reports native WebView available
 when the WebKit-backed stub is linked, syncs placements from
@@ -32,7 +32,7 @@ File drag/drop events emitted by the local `window/macos` backend are normalized
 through `HostEvent::DragDrop` and dispatched to `View::on_file_drop`
 targets.
 Native WGPU diagnostics can use either the shared Moon Cosmic provider or a platform
-provider. `backend/macos/wgpu` defaults to the CoreText/CoreGraphics provider
+provider. `render/wgpu` defaults to the CoreText/CoreGraphics provider
 for runtime measurement and glyph rasterization, explicitly composed with the
 Moon Cosmic provider as fallback; the Objective-C CoreText stub lives in
 `render/wgpu/coretext`, while the selectable/composed Cosmic provider lives in
@@ -42,64 +42,49 @@ maps generic CSS families such as `ui-monospace` and `serif` to suitable macOS
 fonts, registers app-provided font bytes under their requested family alias when
 CoreText accepts them, and falls back to the system font for unavailable names
 before the renderer tries the composed Cosmic fallback.
-Choose the text engine with
-`@macos_wgpu.run_app_with_options(..., options=MacosWgpuAppOptions::new(text_engine=...))`.
-The same options value can carry a `HostWindowSceneResolver` for
-resolver-backed secondary windows and `first_frame_smoke_auto_exit` for first-frame
-smoke tests. `core` still owns only the neutral `FontSpec`, `TextSystem`
+Choose the text engine with `@wgpu_renderer.native(text_engine=...)`, then
+compose it with `@macos_host.entry(options=...)`. Host options can carry a
+`HostWindowSceneResolver`; renderer options stay captured by the factory.
+`core` still owns only the neutral `FontSpec`, `TextSystem`
 contract, and deterministic fallback text system; it does not name concrete
 macOS font files.
 The `examples/showcase/macos_wgpu` and `examples/showcase/macos_wgpu_cosmic` entrypoints
 remain WGPU diagnostics; `macos_wgpu_cosmic` selects `MoonCosmic` explicitly for
 comparison with the WGPU CoreText path.
-`backend/macos` also exposes an async pump variant for native app entrypoints
-that must run `moonbitlang/async` side work on the same thread as the AppKit
-event pump. `backend/macos/skia.run_app_with_options_async_pump` keeps the
-default blocking `run_app_with_options` behavior unchanged, but lets
+`AppBuilder::run_async_pump` uses the optional async launch closure exposed by
+`backend/macos` for native app entrypoints that must run `moonbitlang/async`
+side work on the same thread as the AppKit event pump. It lets
 `examples/mo_workbench/macos_skia` interleave the Skia window pump with its
 owned Pi JSONL transport worker.
 
-Select the native mainline Skia provider by importing
-`wzzc-dev/moui/backend/macos/skia` and using `MacosSkiaAppOptions`. The
-provider creates `render/skia.SkiaRasterRenderer`,
+Select the native mainline Skia renderer by importing
+`wzzc-dev/moui/render/skia`, adding `@render_skia.from_env()` to the app
+builder, and capturing `MacosHostAppOptions` in `@macos.entry`. The factory
+creates `render/skia.SkiaRasterRenderer`,
 draws into a CPU raster surface in physical pixels, scales the canvas by the
 host scale factor, reads premultiplied pixels back after each frame, and sends
 them to a macOS presenter. The Objective-C presenter builds a `CGImage` from the
 pixel bytes and installs it on a dedicated `NSImageView` attached to the content
 view. macOS Skia options default to the same system `FontMgr` text path as the
-Windows and Linux Skia providers; tester-owned first-frame smoke entrypoints
+Windows and Linux Skia factories; tester-owned first-frame smoke entrypoints
 explicitly select `EmptyTypeface`. This path is intentionally separate from the experimental
-`backend/macos/wgpu`; Skia is a provider package, not a host-core
+`render/wgpu` factory; Skia is a renderer package, not a host-core
 `NativeRenderer` variant.
 For local real Skia configuration, direct `moon run`/`moon build` commands use
 the `moui_skia` prebuild hook and `MOUI_SKIA_LINK_MODE=dynamic|static|auto` to
 choose the Skia library mode. Helper smoke runs can pass
 `--link-mode dynamic|static|auto` to override the environment for that
 invocation.
-`macos_skia_provider_preflight_summary()` exposes package-level preflight
-observation for the selected font resolution, renderer availability,
-`moui_skia/native` availability, the `NSImageView` presenter path, inherited
-AppKit host service/input/window readiness, explicit
-`HostWindowRenderer` bridge forwarding for Skia text-system, image-resource,
-image-resource change callbacks, present-count, and disposal diagnostics,
-clipboard/menu/file-dialog/open URL/system-theme/async-service readiness,
-native context-menu and host-modal file-dialog readiness, native accessibility
-status, and the runtime observation boundary. Treat that summary as
-provider/package observation
-only; MoUI macOS Skia runtime smoke still comes from the real Skia renderer
-pixel smoke plus tester-owned first-frame/IME markers. Markdown Editor build
-coverage remains optional example coverage and is not a platform runtime
-observation gate.
 The macOS host loop records the renderer image-resource revision after each
 present, routes later observed revision changes through the matching window's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
-calls the optional provider-owned `HostAsyncImageLoader` after the presented
+calls the selected factory's neutral `HostAsyncImageLoader` after the presented
 revision is baselined, and removes tracked image revisions plus in-flight image
-loads when a host window is disposed. The macOS Skia provider creates
-renderers with post-present async image loading so local/data URI image sources
-can be baselined as loading, completed through `skia_image_load_completion`,
-and repainted on a second frame; the real Skia smoke records that as a
-matching-host artifact only when the async second-frame marker is present.
+loads when a host window is disposed. `backend/macos` reads local files as raw
+bytes through `HostImageSource`; the selected renderer's `RendererImageDecoder`
+owns format detection, decoding, and `ImageResourceLoadCompletion`. The real
+Skia smoke records matching-host async second-frame evidence only when the
+completion and repaint markers are present.
 
 ## Link Flags
 
@@ -107,7 +92,7 @@ macOS host/Skia frameworks and Skia/Ganesh libraries are injected by
 `moui/build.js` prebuild `link_configs` for:
 
 - `wzzc-dev/moui/backend/macos`
-- `wzzc-dev/moui/backend/macos/skia` (host frameworks + `MOUI_SKIA_CC_LINK_FLAGS`)
+- `wzzc-dev/moui/render/skia` (host frameworks + `MOUI_SKIA_CC_LINK_FLAGS`)
 
 Example `macos_skia` entrypoints should not repeat AppKit/Metal/Skia paths.
 They only need an empty `cc-link-flags` override so Moon disables `tcc -run`
@@ -121,8 +106,8 @@ link: {
 },
 ```
 
-`backend/macos/wgpu` packages still declare their own provider `cc-link-flags`
-for CoreText/WebKit surface symbols. Missing `_objc_msgSend`,
+The host and renderer packages declare their own link flags for AppKit,
+CoreText, WebKit, and Skia symbols. Missing `_objc_msgSend`,
 `___CFConstantStringClassReference`, `CAMetalLayer`, or Skia Ganesh symbols
 usually means the prebuild `link_configs` did not apply or `tcc -run` was not
 disabled.

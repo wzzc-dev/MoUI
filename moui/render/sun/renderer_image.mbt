@@ -360,16 +360,13 @@ fn sun_decode_jpeg_image_with_cache(
 pub fn sun_image_load_completion(
   source : String,
 ) -> @render.ImageResourceLoadCompletion {
-  let cache = @sun_graphics.PixmapCache::with_capacity(1)
-  match sun_decode_image_source_with_cache(cache, source) {
-    Ok(pixmap) =>
-      @render.ImageResourceLoadCompletion::ready(
+  match sun_image_source_bytes(source) {
+    Some({ data, .. }) => sun_image_load_completion_from_bytes(source, data)
+    None =>
+      @render.ImageResourceLoadCompletion::failed(
         source,
-        width=pixmap.get_width(),
-        height=pixmap.get_height(),
+        diagnostic="Sun renderer could not decode image source: \{source}",
       )
-    Err(diagnostic) =>
-      @render.ImageResourceLoadCompletion::failed(source, diagnostic~)
   }
 }
 
@@ -382,10 +379,12 @@ pub fn sun_image_load_completion_from_bytes(
   let cache = @sun_graphics.PixmapCache::with_capacity(1)
   match sun_decode_image_bytes_with_cache(cache, source, data) {
     Ok(pixmap) =>
-      @render.ImageResourceLoadCompletion::ready(
+      @render.ImageResourceLoadCompletion::ready_decoded_rgba(
         source,
         width=pixmap.get_width(),
         height=pixmap.get_height(),
+        row_bytes=pixmap.get_width() * 4,
+        pixmap.to_rgba_bytes(),
         background_io~,
       )
     Err(diagnostic) =>
@@ -420,16 +419,6 @@ priv struct SunImagePlacement {
 fn sun_image_source_bytes(source : String) -> SunImageSourceBytes? {
   if source.has_prefix("data:") {
     sun_parse_data_uri(source)
-  } else if @fs.path_exists(source) {
-    let data = Some(@fs.read_file_to_bytes(source)) catch { _ => None }
-    match data {
-      Some(bytes) =>
-        match sun_image_format_for_source_or_bytes(source, "", bytes) {
-          Some(format) => Some({ format, data: bytes })
-          None => None
-        }
-      None => None
-    }
   } else {
     None
   }
@@ -437,7 +426,8 @@ fn sun_image_source_bytes(source : String) -> SunImageSourceBytes? {
 
 ///|
 fn sun_image_failed_record_can_retry(source : String) -> Bool {
-  !source.has_prefix("data:") && @fs.path_exists(source)
+  let _ = source
+  false
 }
 
 ///|

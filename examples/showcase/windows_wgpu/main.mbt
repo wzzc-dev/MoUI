@@ -15,5 +15,15 @@ fn main {
     height=680.0,
   )
   runtime.set_action_commands(@showcase_app.action_command_map())
-  @windows_wgpu_backend.run_app("MoUI Showcase", runtime)
+  @moui.run_app("MoUI Showcase", runtime)
+  .render(
+    @render_wgpu.native(
+      text_engine=@render_wgpu.native_platform_text_engine_with_fallback(
+        @wgpu_directwrite.directwrite_text_provider(),
+        fallback=@wgpu_cosmic.cosmic_text_engine(),
+      ),
+    ),
+  )
+  .backend(@windows_backend.entry())
+  .run()
 }

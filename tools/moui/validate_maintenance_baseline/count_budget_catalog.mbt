@@ -35,7 +35,8 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/render",
       path: "moui/render",
-      // 61 = 47 (prior baseline) + 10 for ADR 0019 RendererProvider plugin
+      // 62 includes the host-neutral surface kit added for application-owned
+      // renderer/backend composition.
       // system (RendererProvider, RendererInstance, RendererProviderRegistry,
       // SurfaceDescriptor, BoundSurface, SurfaceNegotiationResult,
       // RendererRecoveryKind, RendererProviderDescriptor, provider factory
@@ -44,7 +45,7 @@ fn pub_all_budgets() -> Array[CountBudget] {
       // lowering helpers, text segmentation pipeline, image placement
       // geometry, and the provider shell assembler. Integration types stay
       // budgeted here rather than leaking into the app facade.
-      max_count: 61,
+      max_count: 62,
     },
     {
       kind: "pub(all)",

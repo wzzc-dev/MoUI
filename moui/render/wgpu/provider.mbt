@@ -48,7 +48,7 @@ fn wgpu_negotiate_surface(
   surface : @render.SurfaceDescriptor,
 ) -> @render.SurfaceNegotiationResult {
   @render.negotiate_gpu_surface(surface, label="WGPU", id="wgpu", route_for=_handle => {
-    @render.SkiaSurfaceRoute::RasterSurfaceRoute
+    @render.SurfaceRoute::RasterSurfaceRoute
   })
 }
 

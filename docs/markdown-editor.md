@@ -504,7 +504,7 @@ The ordinary `windows_skia` entrypoint is an interactive app entrypoint. Keep
 matching-host first-frame smoke in tester/backend smoke runners rather than
 adding auto-exit flags to the app package.
 
-Linux native Skia uses the Linux Skia provider package and should be run on a
+Linux native Skia composes `backend/linux` with `render/skia` and should be run on a
 matching Wayland host with real Skia link flags before claiming runtime pixels:
 
 ```sh

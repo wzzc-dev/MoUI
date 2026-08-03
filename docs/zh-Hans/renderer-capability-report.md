@@ -36,7 +36,7 @@ Windows/Linux 平台状态，也不会提升全局 Skia 字体排印或 native p
 | 着色器效果 | supported | supported | supported | supported | Skia procedural solid、checker、linear-gradient-debug 和 vignette effects 有 renderer-local pixel tests 以及真实 native renderer 像素 smoke 覆盖；unknown names 仍使用 fallback paths。Sun CPU raster 现在会在 unknown shader name 回退到 spec fallback brush 时记录相同的 unsupported-command diagnostic shape。 |
 | 文本 shaping | supported | supported | supported | supported | Skia 映射 `FontSpec` family、weight 和 style，在常规 family matching 之前用 representative emoji/non-ASCII coverage characters 加 inferred BCP47 script language tags 构造 `FontFallbackRequest` values，将 mixed-script text 拆成 grapheme-safe fallback segments 以便 per-run `FontMgr` resolution，返回 Skia font-metric baseline/height，并在链接 SkShaper 时返回 shaped-run cluster carets，否则返回 measured prefix carets，通过共享 UAX-style `TextGraphemeBoundaries` scanner 稳定 cluster interiors，暴露 `TextSystem::layout_paragraph()` line metrics、paragraph caret rectangles、selection rectangles 和 hit-test geometry，在可用时通过 native SkParagraph 路由 paragraph layout，在 system `FontMgr` 路径上为 emoji-hint text 重试 emoji-family fonts，并可在链接后绘制可选 SkShaper shaped glyph runs。Sun raster 在 `moui_sun/text` 之上暴露 renderer-backed `TextSystem`，其 requested-family-first fallback chain resolution 覆盖已注册 faces；renderer-local tests 覆盖 mixed Latin-plus-emoji measurement、有覆盖绘制时没有 missing fallback diagnostic、TextRun frame clipping 和 paragraph metadata。共享 scanner 使用生成的 Unicode 17.0 property predicates，`moui/core` 运行 curated 和 full vendored Unicode 17.0 default grapheme fixtures，`moui/render/skia` 通过 `skia_grapheme_cluster_texts` 运行同一 fixture。真实 Skia smoke 通过 `--run-text-emoji-smoke` 在 macOS/Linux/Windows 上获得 bidi Arabic 和 mixed-direction visual-order markers，以及 paragraph wrapping、selection rectangles、hit testing、grapheme editing 和 IME candidate/composition markers。 |
 | Emoji 文本 | supported | supported | supported | supported | Skia 检测 representative single-codepoint、variation-selector、keycap、emoji-modifier、ZWJ、regional-indicator、emoji tag-sequence、Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples 和 Hangul Jamo grapheme cluster samples，在 system `FontMgr` `FontFallbackRequest` matching 中优先使用 emoji coverage characters 和 inferred language tags，稳定 representative cluster interior carets，在 default-font fallback 之前重试 platform emoji font candidates，并通过 `Typeface::has_color_glyphs` 和 glyph format metadata 报告 deterministic color emoji readiness。Sun raster 在 requested-family-first fallback chain 之上使用 `moui_sun/text FontFallbackPlan`，因此可在 Latin primary face 之后选择已注册 emoji coverage；renderer-local tests 覆盖 mixed Latin-plus-emoji measurement 和 covered draw diagnostics。text/emoji smoke 记录 high-saturation glyph/raster observation 以及 font/glyph metadata，其 non-empty source/script/fallback-request-character-aware glyph key 与已记录的 source、text-system、shaper、script、fallback language tag payload、language-count、fallback request character 和 format metadata 匹配，并通过 `--run-text-emoji-smoke` 在 macOS/Linux/Windows 上获得 keycap、regional-indicator 和 skin-tone-modifier fallback diagnostic markers。 |
-| 异步图像 | supported | supported | supported | supported | Renderer-neutral lifecycle records、`ImageResourceLoadCompletion` ready/failed results 和 monotonic revision snapshots 是共享的。Native WGPU 和 Skia providers 通过 `HostWindowRenderer` 暴露 renderer image-resource snapshots；`HostWindowRenderer::apply_image_resource_load_completion` 是 renderer-neutral apply port，会将 loader completions 转成 revisioned snapshots；WGPU 为 PNG/JPEG/BMP data URI 和 local-file decode completion payloads 暴露 `native_image_load_completion`，macOS/Windows/Linux WGPU providers 为该路径安装 provider-owned `HostAsyncImageLoader` hooks。Skia 暴露 `skia_image_load_completion`，macOS/Windows/Linux Skia providers 安装 provider-owned loader hooks，并且 provider-created Skia renderers 选择启用 off-main-thread async image loading，其中 local-file sources 会通过平台 C++ stubs（macOS 上 GCD，Linux 上 pthread，Windows 上 CreateThread）在后台 native workers 上读取并解码成 RGBA pixels，再交付 decoded completion。`HostAsyncImageLoader` 会去重 in-flight work，并在通过 `HostImageResourceCompletionSource` 路由前拦截 late/cancelled callbacks；hosts 跟踪 presented revisions，按 window 路由 repaint requests，为 disposed windows 取消 in-flight loader work，并丢弃 closed-window image changes。Skia 会在 placeholder drawing 之前缓存带 diagnostics 的 immutable failed sources，在文件出现后重试先前失败的 local-file sources，在 renderer disposal 期间记录 disposed cached image resources，暴露 renderer-local image-resource change callbacks，并将 decoded ready completions 直接应用到 renderer image cache。Decoded completions 携带 `background_io`、`background_decode`、decoded dimensions、row bytes 和 RGBA pixels；provider tests 验证 decoded payload path，真实 Skia smoke 通过 `--run-renderer-smoke` 在 macOS/Linux/Windows 上获得 second-frame/deferred-completion markers。 |
+| 异步图像 | supported | supported | supported | supported | 共享层提供 renderer-neutral lifecycle records、ImageResourceLoadCompletion 与 monotonic revision snapshots。平台 backend 通过 HostImageSource 只读取原始字节；已选 RendererBindingFactory 提供 renderer-owned RendererImageDecoder，Skia、Sun 和 WGPU 各自负责格式检测、解码、cache update 与 ready/failed completion。HostAsyncImageLoader 负责 in-flight 去重与 cancellation，HostImageResourceRepaintTracker 按窗口路由 revision 变化。Package tests 覆盖 completion/repaint sequencing，真实 renderer 与 matching-host smoke 单独记录。 |
 
 ## 渲染器描述符
 
@@ -58,10 +58,9 @@ Windows/Linux 平台状态，也不会提升全局 Skia 字体排印或 native p
 [功能状态仪表板](../feature-status-dashboard.md)。
 
 `RendererDescriptor` 描述静态渲染器能力身份。Native host runtime assembly
-则由平台 renderer providers 处理：`backend/<platform>/skia` 选择 native Skia
-route（product `auto` 在可用时优先选择 GPU），`backend/<platform>/wgpu`
-选择 `NativeWgpu` diagnostic route。`backend/<platform>/sun` 选择
-`SunRasterNative` CPU raster route。`RendererSelection` helper 对按 families
+由应用拥有的 renderer factories 处理：`render/skia.from_env()` 在 `auto` 下
+注册 GPU 后再注册 raster，`render/wgpu.native(...)` 选择 diagnostic route，
+`render/sun.raster()` 选择 CPU raster route。`RendererSelection` helper 对按 families
 或 backend ids 匹配的 reports 和 tests 仍然有用，但它不是 native host-core
 option 或 provider contract。Web 继续使用 WebGPU wasm backend。
 
@@ -168,47 +167,10 @@ diagnostic snapshot；在每个 repaint result 上报告 previous/current lifecy
 `ImageResourceLoadCompletion` 是 native async loaders 的 renderer-neutral ready/failed
 payload，`HostWindowRenderer::apply_image_resource_load_completion` 是 host facade port，
 让 renderer/provider packages 可以在返回 revisioned snapshot 前应用该 payload。
-`HostImageResourceCompletionSource` 随后为 native provider/platform loaders 提供
-host-layer boundary 来路由这些 snapshots；它不解码 images、不修改 renderer caches，
-也不证明 matching-host loader/runtime behavior。`HostAsyncImageLoader` 通过扫描 loading
-records、去重 in-flight source loads，并在 late completion callbacks 被取消后应用到 renderer
-state 之前忽略它们，为该 boundary 添加 host scheduler adapter。
-`HostNativeAsyncImageSource` 记录 pending native `(window, source)` requests，并允许
-platform callback 稍后通过同一 scheduler 和 repaint route 交付
-`ImageResourceLoadCompletion`；这是 deferred completion delivery 的 host-boundary
-observation，不是 matching-host off-main runtime observation。macOS、Windows 和 Linux
-WGPU、Skia、Sun provider package tests 现在也证明 deferred native-source callbacks
-在 renderer lifecycle apply 和 redraw routing 之前携带 renderer decode-helper payloads；
-这仍是 package-local observation。macOS、Windows 和 Linux host cores 现在会在每个
-presented revision 被 baselined 后调用可选的 provider-owned loader hook，并在 window
-disposed 时取消 in-flight loader work。WGPU providers 现在安装 provider-owned loader，
-将 native PNG/JPEG/BMP data URI 和 local-file decode results 通过
-`native_image_load_completion` 映射到 `ImageResourceLoadCompletion` payloads；native
-WGPU provider tests 也通过 deferred native-source callback 覆盖该 helper。这是 provider
-completion observation，不是 matching-host off-main runtime smoke。
-Skia 现在暴露 `skia_image_load_completion` 供 Skia encoded-image source decode
-completion payloads 使用，native Skia providers 围绕该 helper 安装 provider-owned loader
-hooks，同时也通过 `HostWindowRenderer` 转发 renderer-local image-resource change callback
-setter；native Skia provider tests 也通过 deferred native-source callback 覆盖该 helper，
-Linux Skia provider test 固定 loading-frame、deferred-completion、repaint-request 和
-second-presented-frame status sequence。Provider-created Skia renderers 选择启用
-off-main-thread async image loading，其中 data URI sources 在 main thread 同步解码，
-local-file sources 通过 background native workers（macOS 上 GCD，Linux 上 pthread，
-Windows 上 CreateThread）读取并解码成 RGBA pixels 后交付 decoded completion，因此
-data URI 和 local-file images 可以先以 loading 呈现一次，再通过
-`HostImageResourceCompletionSource` 完成，请求 shared tracker repaint，并在第二帧绘制。
-helper 报告带 decoded payloads 的 ready/failed lifecycle completions。Skia 将 decoded
-ready completions 直接应用到 renderer caches，provider completion/smoke logs 仍与
-matching-host runtime smoke 分开。macOS/Windows/Linux hosts 安装 baseline-guarded
-callbacks，为 post-present image revisions 请求 redraw。Off-main-thread file I/O 和 Skia
-decode 已通过 platform native workers 为 local-file sources 实现；每个 decoded completion
-现在都携带 `background_io`、`background_decode`、decoded dimensions、row bytes 和 RGBA
-pixels。三个平台的 provider tests 都会创建 local file、轮询 native result queue，并断言
-decoded payload provenance。Data URI sources 在 main thread 同步解码。
-Linux Skia package proof 只覆盖 host completion/repaint sequencing。macOS、Windows 和
-Linux 上的 Sun provider package tests 通过 `sun_image_load_completion` 覆盖等价的
-loading-frame、deferred-completion、repaint-request 和 second-presented-frame status
-sequence；这仍是 package-local observation，不声明 matching-host Sun runtime smoke。
+HostImageResourceCompletionSource 为 native factory/platform loader 提供 host-layer snapshot 路由边界；它不解码图片、不修改 renderer cache，也不证明 matching-host loader/runtime behavior。HostAsyncImageLoader 扫描 loading records、去重 in-flight source loads，并在 cancellation 后忽略 late completion。HostNativeAsyncImageSource 记录 pending native window/source requests，并允许 platform callback 稍后通过同一 scheduler 与 repaint route 交付 ImageResourceLoadCompletion。
+
+平台 backend 现在只创建读取原始字节的 HostImageSource。已选 RendererBindingFactory 提供 renderer-owned RendererImageDecoder；Skia、Sun 与 WGPU 各自完成格式检测、解码、cache update 和 ready/failed completion。Native host core 在每个 presented revision 建立基线后调用已选 factory 的中立 loader，并在 window dispose 时取消 in-flight work。Package tests 覆盖 completion/repaint sequencing；matching-host runtime smoke 保持独立。
+
 Sun renderer-local tests 也覆盖 JPEG data URI/local-file decode、
 `ImageFit::Contain` letterboxing、`ImageFit::Cover` source crops、
 `ImageFit::Stretch` full-frame sampling、`ImageFit::ScaleDown`

@@ -12,23 +12,39 @@ pub fn adapter_info() -> WebGpuHostAdapterInfo
 
 pub fn backend_info() -> @render.RendererBackendInfo
 
+pub fn browser_canvas2d_fallback_capabilities(provider_id~ : String, backend~ : @render.RendererBackendKind) -> Array[@render.RendererBackendFeatureCapability]
+
+pub fn canvas2d_fallback() -> @render.RendererBindingFactory
+
 pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract
+
+pub fn create_browser_canvas2d_fallback_provider(create_canvas2d~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer) -> @render.RendererProvider
 
 pub fn create_renderer(canvas_id~ : String, logical_size~ : @core.Size, scale_factor? : Double, port~ : WebGpuHostRendererPort) -> WebGpuWasmRenderer raise WebGpuHostError
 
 pub fn create_surface(canvas_id~ : String, logical_size~ : @core.Size, scale_factor? : Double, port~ : WebGpuHostRendererPort) -> WebGpuHostSurface raise WebGpuHostError
 
+pub fn create_webgpu_provider(create_webgpu~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer) -> @render.RendererProvider
+
 pub fn create_webgpu_renderer(canvas_id~ : String, logical_size~ : @core.Size, scale_factor? : Double) -> WebGpuWasmRenderer raise WebGpuHostError
 
 pub fn draw_commands_to_host_calls(Array[@core.DrawCommand], @core.Size) -> Array[WebGpuHostCall]
 
+pub fn from_env() -> Array[@render.RendererBindingFactory]
+
 pub fn host_import_info() -> WebGpuHostImportInfo
+
+pub fn provider_bindings(canvas_id~ : String) -> Array[@render.RendererProviderBinding]
 
 pub fn renderer_descriptor() -> @render.RendererDescriptor
 
 pub fn required_capabilities() -> WebGpuHostCapabilities
 
 pub fn wasm_gc_host_port() -> WebGpuHostRendererPort
+
+pub fn webgpu() -> @render.RendererBindingFactory
+
+pub fn webgpu_provider_capabilities(provider_id~ : String, backend~ : @render.RendererBackendKind) -> Array[@render.RendererBackendFeatureCapability]
 
 // Errors
 pub(all) suberror WebGpuHostError {
@@ -137,6 +153,7 @@ pub fn WebGpuWasmRenderer::render_frame(Self, @core.DrawFrame) -> @render.Render
 pub fn WebGpuWasmRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
 pub fn WebGpuWasmRenderer::surface(Self) -> WebGpuHostSurface
 pub fn WebGpuWasmRenderer::text_system(Self) -> @core.TextSystem
+pub fn WebGpuWasmRenderer::to_host_window_renderer(Self) -> @render.HostWindowRenderer
 
 // Type aliases
 

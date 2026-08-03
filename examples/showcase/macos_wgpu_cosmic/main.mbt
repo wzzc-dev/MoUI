@@ -15,11 +15,8 @@ fn main {
     height=680.0,
   )
   runtime.set_action_commands(@app.action_command_map())
-  @macos_wgpu_backend.run_app_with_options(
-    "MoUI Showcase",
-    runtime,
-    options=@macos_wgpu_backend.MacosWgpuAppOptions::new(
-      text_engine=@wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
-    ),
-  )
+  @moui.run_app("MoUI Showcase", runtime)
+  .render(@render_wgpu.native(text_engine=@wgpu_cosmic.cosmic_text_engine()))
+  .backend(@macos_backend.entry())
+  .run()
 }

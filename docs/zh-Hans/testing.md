@@ -95,11 +95,11 @@ moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/host --target native
 moon test moui/backend/android --target native
-moon test moui/backend/android/skia --target native
+moon test moui/render/skia --target native
 moon test moui/backend/ios --target native
-moon test moui/backend/ios/skia --target native
+moon test moui/render/skia --target native
 moon test moui/backend/harmonyos --target native
-moon test moui/backend/harmonyos/skia --target native
+moon test moui/render/skia --target native
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
 moon test moui_devtools --target native
@@ -253,7 +253,7 @@ Native Skia smoke log 可以显示 renderer pixels、async image second-frame be
 Linux Skia first-frame evidence 请使用匹配的 Wayland host，并保持 Showcase、Markdown Editor 和 window-package smoke log 分离：
 
 ```sh
-MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+MOUI_FIRST_FRAME_EXIT=1 \
   moon run examples/showcase/linux_skia --target native
 MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
   moon run examples/markdown_editor/linux_skia --target native

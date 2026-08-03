@@ -89,10 +89,8 @@ surface, written in MoUI itself.
   They are depended on by app platform entrypoints, not by `moui` core.
 - `backend/host/` defines shared host contracts; platform backends normalize
   window and input events into `HostEvent`.
-  - `backend/<platform>/skia` selects the native Skia raster mainline provider
-    (the recommended route).
-  - `backend/<platform>/wgpu` keeps native WGPU available as an experimental
-    diagnostic provider.
+  - `backend/<platform>/` owns only the neutral host surface and lifecycle;
+    composition roots select renderer factories from `render/*`.
   - Host-core packages do not import concrete renderer implementations.
 - `render/` provides the renderer facade, with native Skia raster, WebGPU
   adapter, and experimental native WGPU implementations under `render/skia/`,
@@ -128,7 +126,7 @@ addon diagnostic coverage; run `sh scripts/check.sh --profile theme`
 when changing `moui_theme` or `examples/design_systems`.
 
 MoUI resolves `wzzc-dev/window` from the MoonBit registry as
-`wzzc-dev/window@0.5.4-0.1.2`; `moon.work` does not include local window
+`wzzc-dev/window@0.5.4-0.1.3`; `moon.work` does not include local window
 modules by default. `scripts/validate-window-dependency.mjs` enforces that pin
 and the absence of repo-local window workspace members. To edit window source
 locally, run `sh scripts/window-dev-mode.sh on` (adds
@@ -162,7 +160,7 @@ also recorded the macOS platform runtime evidence with `github-actions`
 provenance and uploaded the matching artifact bundle. Windows and Linux
 remain pending until their matching hosts record equivalent
 platform-runtime artifacts. Native passed entries include the
-`wzzc-dev/window@0.5.4-0.1.2` package smoke monitor/cursor probe as
+`wzzc-dev/window@0.5.4-0.1.3` package smoke monitor/cursor probe as
 `monitorCursor=yes`; Web browser-session evidence may leave that field
 pending because CDP does not prove native monitor/current-monitor or cursor
 behavior. A passed entry must carry provenance from either a non-skipped
@@ -443,7 +441,7 @@ macOS Skia and Linux Skia only.
 
 ## Linux Native
 
-Linux native examples use the `wzzc-dev/window@0.5.4-0.1.2` Wayland backend.
+Linux native examples use the `wzzc-dev/window@0.5.4-0.1.3` Wayland backend.
 The recommended mainline entrypoints select native Skia raster and present
 CPU pixel frames through Wayland `wl_shm`. Run them on a Linux host with a
 Wayland compositor and configured real Skia link flags:

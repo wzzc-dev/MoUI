@@ -5,16 +5,16 @@
 pub struct SkiaHybridRenderer {
   priv renderer : SkiaRasterRenderer
   priv worker : @render.GpuRenderWorker
-  priv surface_route : @render.SkiaSurfaceRoute
-  priv requested : @render.NativeRendererMode
+  priv surface_route : @render.SurfaceRoute
+  priv requested : NativeRendererMode
   priv mut fallback_to_raster : Bool
   priv pending_completions : Array[@render.RenderPresentCompletion]
 }
 
 ///|
 pub fn create_hybrid_renderer(
-  platform : @render.NativeGpuPlatform,
-  requested : @render.NativeRendererMode,
+  platform : NativeGpuPlatform,
+  requested : NativeRendererMode,
   metrics : @render.RendererSurfaceMetrics,
   target : SkiaPresentTarget,
   gpu_available~ : Bool,
@@ -23,7 +23,7 @@ pub fn create_hybrid_renderer(
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
   async_image_loading? : Bool = false,
 ) -> SkiaHybridRenderer raise SkiaRendererError {
-  let surface_route = @render.resolve_surface_route(
+  let surface_route = resolve_surface_route(
     platform,
     requested,
     gpu_available~,
@@ -51,14 +51,14 @@ pub fn create_hybrid_renderer(
 ///|
 pub fn SkiaHybridRenderer::surface_route(
   self : SkiaHybridRenderer,
-) -> @render.SkiaSurfaceRoute {
+) -> @render.SurfaceRoute {
   self.surface_route
 }
 
 ///|
 pub fn SkiaHybridRenderer::requested_mode(
   self : SkiaHybridRenderer,
-) -> @render.NativeRendererMode {
+) -> NativeRendererMode {
   self.requested
 }
 

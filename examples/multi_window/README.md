@@ -36,7 +36,7 @@ Each platform entrypoint:
 2. Builds `HostWindowActions` on that queue
 3. Installs a `HostWindowSceneResolver` that maps `main` / `inspector` to a new
    `AppRuntime`
-4. Passes the queue into `run_app_with_options`
+4. Passes the queue through `AppBuilder::window_requests`
 
 See `docs/platform-host-contract.md` for the host registry and request-queue
 contracts.

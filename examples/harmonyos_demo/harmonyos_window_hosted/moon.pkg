@@ -1,8 +1,8 @@
 import {
+  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/harmonyos" @harmonyos_host,
-  "wzzc-dev/moui/backend/harmonyos/skia" @harmonyos_skia_backend,
-  "wzzc-dev/window/harmonyos" @window_harmonyos,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "examples/harmonyos_demo/app" @demo_app,
 }
 

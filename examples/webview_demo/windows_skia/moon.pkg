@@ -1,8 +1,10 @@
 import {
+  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/windows" @windows_backend,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/moui_webview/host" @webview_host,
   "wzzc-dev/moui_webview/backend/windows" @windows_webview,
-  "wzzc-dev/moui/backend/windows/skia" @windows_skia_backend,
   "examples/webview_demo/app" @webview_demo,
 }
 

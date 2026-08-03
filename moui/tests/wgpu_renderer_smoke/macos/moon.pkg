@@ -1,5 +1,6 @@
 import {
-  "wzzc-dev/moui/backend/macos/wgpu" @macos_wgpu,
+  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
+  "wzzc-dev/moui/render/wgpu/coretext" @wgpu_coretext,
   "Milky2018/wgpu_mbt",
 }
 

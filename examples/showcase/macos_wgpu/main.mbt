@@ -15,5 +15,15 @@ fn main {
     height=680.0,
   )
   runtime.set_action_commands(@app.action_command_map())
-  @macos_wgpu_backend.run_app("MoUI Showcase", runtime)
+  @moui.run_app("MoUI Showcase", runtime)
+  .render(
+    @render_wgpu.native(
+      text_engine=@render_wgpu.native_platform_text_engine_with_fallback(
+        @wgpu_coretext.coretext_text_provider(),
+        fallback=@wgpu_cosmic.cosmic_text_engine(),
+      ),
+    ),
+  )
+  .backend(@macos_backend.entry())
+  .run()
 }

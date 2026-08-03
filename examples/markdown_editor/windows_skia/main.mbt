@@ -11,9 +11,8 @@ fn main {
     height=640.0,
   )
   runtime.set_action_commands(app.action_commands(services~))
-  @windows_skia_backend.run_app_with_options(
-    "MoUI Markdown Editor",
-    runtime,
-    options=@windows_skia_backend.WindowsSkiaAppOptions::new(),
-  )
+  @moui.run_app("MoUI Markdown Editor", runtime)
+  .render_all(@render_skia.from_env())
+  .backend(@windows_host.entry())
+  .run()
 }

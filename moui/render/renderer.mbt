@@ -2,7 +2,7 @@
 /// MoUI renderer facade. Core value types (`RendererBackendKind`,
 /// `RendererSurfaceMetrics`, `RenderFrameResult`, …) are defined in this
 /// file. The package also owns the renderer-surface bridge types
-/// (`SkiaSurfaceRoute`, `ImageResourceRecord`, …), capability reporting
+/// (`SurfaceRoute`, `ImageResourceRecord`, …), capability reporting
 /// (`RendererFeature`, `RendererFeatureCapability`, …), and the
 /// **RendererProvider plugin system** (ADR 0019) in `provider_contract.mbt`.
 ///

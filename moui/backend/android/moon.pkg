@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/internal/host_image_source",
   "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
   "wzzc-dev/moui/render",
   "wzzc-dev/window/core" @window_core,
@@ -13,11 +14,16 @@ import {
 } for "test"
 
 import {
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/views",
 } for "wbtest"
 
 supported_targets = "native"
 
 options(
+  link: {
+    "native": { "cc-link-flags": "${build.MOUI_ANDROID_HOST_LINK_FLAGS}" },
+  },
+  "native-stub": [ "android_present.cpp" ],
   targets: { },
 )

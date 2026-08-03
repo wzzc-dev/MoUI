@@ -5,7 +5,8 @@ iOS uses the **embedded runtime backend** route and is currently
 compile and host-sim tests pass, but no development/demonstration usability or
 product commitment is made without matching-simulator/device evidence. `wzzc-dev/window/ios` owns UIKit lifecycle, surface, and
 input callbacks; `moui/backend/ios` assembles the MoUI runtime session and
-`moui/backend/ios/skia` provides presentation.
+exposes the neutral UIKit/Metal presenter surface. The entrypoint supplies
+`moui/render/skia` factories; the backend has no Skia dependency.
 
 ## Entry Points
 

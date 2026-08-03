@@ -1,8 +1,8 @@
 import {
+  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/android" @android_host,
-  "wzzc-dev/moui/backend/android/skia" @android_skia_backend,
-  "wzzc-dev/window/android" @window_android,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "examples/counter/app" @counter_app,
 }
 

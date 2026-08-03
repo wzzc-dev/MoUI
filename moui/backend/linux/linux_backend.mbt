@@ -56,10 +56,9 @@ pub struct LinuxHostSmokeOptions {
 }
 
 ///|
-pub struct LinuxRendererProvider {
-  priv create_renderer : (@window_linux.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-  priv sync_surface : (@window_linux.Window, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @render.HostAsyncImageLoader?
+priv struct LinuxSurfaceBinding {
+  create_renderer : (@window_linux.Window, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
+  sync_surface : (@window_linux.Window, @host.HostSurfaceMetrics) -> Unit
 }
 
 ///|
@@ -78,7 +77,7 @@ struct LinuxNativeHostBackend {
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
   coordinator : @runtime.WindowHostCoordinator
-  renderer_provider : LinuxRendererProvider
+  surface_binding : LinuxSurfaceBinding
   services : @host.HostServiceBridge
   platform_slots : @platform_bridge.WindowSlotMap[
     @window_linux.Window,
@@ -117,15 +116,14 @@ pub fn LinuxHostSmokeOptions::new(
 }
 
 ///|
-pub fn LinuxRendererProvider::new(
-  create_renderer~ : (@window_linux.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
+fn LinuxSurfaceBinding::new(
+  create_renderer~ : (@window_linux.Window, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
   sync_surface? : (@window_linux.Window, @host.HostSurfaceMetrics) -> Unit = (
     _window,
     _metrics,
   ) => (),
-  image_loader? : @render.HostAsyncImageLoader? = None,
-) -> LinuxRendererProvider {
-  { create_renderer, sync_surface, image_loader }
+) -> LinuxSurfaceBinding {
+  { create_renderer, sync_surface }
 }
 
 ///|

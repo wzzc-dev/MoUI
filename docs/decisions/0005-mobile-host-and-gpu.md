@@ -103,7 +103,7 @@ no longer the product default.
 | Windows | Direct3D 12 | `Direct3DGpuSurfaceRoute` | Worker-owned source; MSVC build and hardware validation pending |
 | Linux | Vulkan (Wayland) | `VulkanGpuSurfaceRoute` | Worker-owned source; matching Wayland build/validation pending |
 
-The cross-platform `SkiaSurfaceRoute` enum lives in `moui/render` so it can be
+The cross-platform `SurfaceRoute` enum lives in `moui/render` so it can be
 referenced from both native-only `moui/render/skia` and the wasm-gc-compatible
 `moui/render::NativeRendererSelection`. `HostGpuPresentTarget` takes a
 flushed `@skia_native.Surface` and bypasses `read_frame()` on the GPU route.

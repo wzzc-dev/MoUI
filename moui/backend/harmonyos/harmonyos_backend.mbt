@@ -23,7 +23,7 @@ pub fn HarmonyOSSurfaceHandle::raw(self : HarmonyOSSurfaceHandle) -> UInt64 {
 pub(all) struct HarmonyOSBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
-  renderer_provider : Bool
+  surface_binding : Bool
   pointer : Bool
   scroll : Bool
   keyboard : Bool
@@ -61,8 +61,8 @@ pub(all) struct HarmonyOSBackendInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub struct HarmonyOSRendererProvider {
-  priv create_renderer : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
+pub struct HarmonyOSSurfaceBinding {
+  priv create_renderer : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
   priv sync_surface : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> Unit
   priv image_loader : @render.HostAsyncImageLoader?
 }
@@ -70,29 +70,81 @@ pub struct HarmonyOSRendererProvider {
 ///|
 
 ///|
-pub fn HarmonyOSRendererProvider::new(
-  create_renderer~ : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
+pub fn HarmonyOSSurfaceBinding::new(
+  create_renderer~ : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
   sync_surface? : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
     _surface,
     _metrics,
   ) => (),
   image_loader? : @render.HostAsyncImageLoader? = None,
-) -> HarmonyOSRendererProvider {
+) -> HarmonyOSSurfaceBinding {
   { create_renderer, sync_surface, image_loader }
 }
 
 ///|
-fn HarmonyOSRendererProvider::create(
-  self : HarmonyOSRendererProvider,
+pub fn harmonyos_surface_binding(
+  factories : Array[@render.RendererBindingFactory],
+) -> HarmonyOSSurfaceBinding {
+  let image_source = @host_image_source.from_filesystem()
+  HarmonyOSSurfaceBinding::new(create_renderer=(surface, metrics) => {
+    let renderer_metrics = @render.RendererSurfaceMetrics::new(
+      logical_size=metrics.logical_size,
+      physical_size=metrics.physical_size,
+      scale_factor=metrics.scale_factor,
+    )
+    let present = @render.HostPresentTarget::new(
+      description="HarmonyOS host CPU presenter",
+      present=frame => {
+        harmonyos_present_pixels_to_surface(
+          surface.raw(),
+          frame.width(),
+          frame.height(),
+          frame.row_bytes(),
+          frame.pixels(),
+          frame.pixels().length(),
+        ) !=
+        0
+      },
+    )
+    let gpu_surface = match
+      @render.GpuHostSurfaceDescriptor::egl_native_window(surface.raw()) {
+      Some(descriptor) =>
+        Some(
+          @render.HostGpuSurfaceBridge::new(
+            descriptor~,
+            create_surface=_ => None,
+            present=_ => true,
+          ),
+        )
+      None => None
+    }
+    let kit = @render.HostSurfaceKit::new(
+      surface=@render.SurfaceDescriptor::cpu_raster(
+        width=renderer_metrics.logical_size.width,
+        height=renderer_metrics.logical_size.height,
+        scale_factor=renderer_metrics.scale_factor,
+      ),
+      metrics=renderer_metrics,
+      cpu_present=Some(present),
+      gpu_surface~,
+      image_source=Some(image_source),
+    )
+    @render.resolve_host_renderer(factories, kit)
+  })
+}
+
+///|
+fn HarmonyOSSurfaceBinding::create(
+  self : HarmonyOSSurfaceBinding,
   surface : HarmonyOSSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
-) -> @render.HostWindowRenderer? {
+) -> @render.HostRendererResolution? {
   (self.create_renderer)(surface, metrics)
 }
 
 ///|
-fn HarmonyOSRendererProvider::sync(
-  self : HarmonyOSRendererProvider,
+fn HarmonyOSSurfaceBinding::sync(
+  self : HarmonyOSSurfaceBinding,
   surface : HarmonyOSSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
 ) -> Unit {
@@ -100,8 +152,8 @@ fn HarmonyOSRendererProvider::sync(
 }
 
 ///|
-pub fn HarmonyOSRendererProvider::has_async_image_loader(
-  self : HarmonyOSRendererProvider,
+pub fn HarmonyOSSurfaceBinding::has_async_image_loader(
+  self : HarmonyOSSurfaceBinding,
 ) -> Bool {
   self.image_loader is Some(_)
 }
@@ -111,28 +163,27 @@ pub fn create_session(
   runtime~ : @runtime.AppRuntime,
   surface~ : HarmonyOSSurfaceHandle,
   metrics~ : @host.HostSurfaceMetrics,
-  provider~ : HarmonyOSRendererProvider,
+  binding~ : HarmonyOSSurfaceBinding,
 ) -> @embedded_runtime_backend.HostedRuntimeSession? {
   @embedded_runtime_backend.HostedRuntimeSession::create(
     runtime~,
     raw_handle=surface.raw(),
     metrics~,
-    adapter=renderer_provider_adapter_from_harmonyos(provider),
+    binding=host_surface_binding_from_harmonyos(binding),
   )
 }
 
 ///|
-pub fn renderer_provider_adapter_from_harmonyos(
-  provider : HarmonyOSRendererProvider,
-) -> @embedded_runtime_backend.RendererProviderAdapter {
-  @embedded_runtime_backend.RendererProviderAdapter::new(
+pub fn host_surface_binding_from_harmonyos(
+  binding : HarmonyOSSurfaceBinding,
+) -> @embedded_runtime_backend.HostSurfaceBinding {
+  @embedded_runtime_backend.HostSurfaceBinding::new(
     create_renderer=fn(raw, metrics) {
-      provider.create(HarmonyOSSurfaceHandle::new(raw~), metrics)
+      binding.create(HarmonyOSSurfaceHandle::new(raw~), metrics)
     },
     sync=fn(raw, metrics) {
-      provider.sync(HarmonyOSSurfaceHandle::new(raw~), metrics)
+      binding.sync(HarmonyOSSurfaceHandle::new(raw~), metrics)
     },
-    image_loader=provider.image_loader,
   )
 }
 
@@ -162,7 +213,7 @@ pub fn harmonyos_capability_matrix() -> HarmonyOSBackendCapabilities {
   {
     embedded_surface: true,
     external_event_loop: true,
-    renderer_provider: true,
+    surface_binding: true,
     pointer: true,
     scroll: true,
     keyboard: true,
@@ -204,7 +255,7 @@ pub fn backend_info() -> HarmonyOSBackendInfo {
     services: harmonyos_service_capabilities(),
     input: harmonyos_input_capabilities(),
     readiness: harmonyos_readiness(),
-    description: "HarmonyOS backend exposes a native-session contract: wzzc-dev/window/harmonyos supplies an XComponent native-window handle and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until signed-device full L3 smoke and presenter verification close remaining gaps.",
+    description: "HarmonyOS backend exposes a native-session contract: wzzc-dev/window/harmonyos supplies an XComponent native-window handle and lifecycle/input callbacks, while application-supplied factories bind the renderer. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until signed-device full L3 smoke and presenter verification close remaining gaps.",
   }
 }
 

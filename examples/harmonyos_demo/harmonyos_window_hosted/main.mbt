@@ -1,18 +1,14 @@
 ///|
 /// Window-hosted HarmonyOS demo entrypoint.
 fn main {
-  let app = @harmonyos_host.HarmonyOSEmbeddedRuntimeBackend::new(
-    title="HarmonyOS Demo (window-hosted)",
-    runtime_factory=metrics => {
-      @runtime.new_program(
-        program=@demo_app.program(),
-        size=metrics.logical_size,
-      )
-    },
-    provider_factory=() => @harmonyos_skia_backend.renderer_provider(),
-    auto_exit_after_frames=None,
+  let runtime = @runtime.new_program_with_dimensions(
+    program=@demo_app.program(),
+    width=320.0,
+    height=640.0,
   )
   println("moui-window-hosted harmonyos: waiting for HostCmd surface")
-  let event_loop = @window_harmonyos.EventLoop::new()
-  event_loop.run_app(app)
+  @moui.run_app("HarmonyOS Demo (window-hosted)", runtime)
+  .render_all(@render_skia.from_env())
+  .backend(@harmonyos_host.entry())
+  .run()
 }

@@ -1,32 +1,77 @@
 ///|
-/// WeChat Mini Program host runtime.
-/// Provides the run_app entry point for WeChat Mini Program applications.
-
-///|
-/// Module-level state for FFI access.
-/// After run_app() initializes the runtime, the driver and renderer
-/// are stored here so that JS-to-wasm FFI calls can dispatch events
-/// and trigger re-renders.
+/// WeChat Mini Program host runtime state. Concrete rendering remains behind
+/// the neutral host renderer selected from application-supplied factories.
 priv struct WechatState {
   mut driver : @runtime.HostRuntimeDriver?
-  mut renderer : @canvas2d.Canvas2DRenderer?
+  mut surface : @render.HostWindowRenderer?
+  mut renderer_factories : Array[@render.RendererBindingFactory]
+  mut surface_id : String
   mut needs_render : Bool
 }
 
 ///|
-let state : WechatState = { driver: None, renderer: None, needs_render: false }
+let state : WechatState = {
+  driver: None,
+  surface: None,
+  renderer_factories: [],
+  surface_id: "",
+  needs_render: false,
+}
 
 ///|
-pub fn run_app(
+pub(all) struct WechatAppOptions {
+  canvas_id : String
+  logical_width : Double
+  logical_height : Double
+  scale_factor : Double
+}
+
+///|
+pub fn WechatAppOptions::new(
   canvas_id~ : String,
-  runtime~ : @runtime.AppRuntime,
   logical_width~ : Double,
   logical_height~ : Double,
   scale_factor? : Double = 2.0,
-) -> Unit {
-  let d = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+) -> WechatAppOptions {
+  { canvas_id, logical_width, logical_height, scale_factor }
+}
 
-  let renderer_metrics = @render.RendererSurfaceMetrics::new(
+///|
+pub fn entry(options : WechatAppOptions) -> @runtime.PlatformEntry {
+  @runtime.PlatformEntry::new(id="wechat", launch=request => {
+    run_app_internal(request.runtime(), request.renderer_factories(), options)
+  })
+}
+
+///|
+fn run_app_internal(
+  runtime : @runtime.AppRuntime,
+  renderer_factories : Array[@render.RendererBindingFactory],
+  options : WechatAppOptions,
+) -> Unit {
+  state.driver = Some(
+    @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+      state.needs_render = true
+    }),
+  )
+  state.renderer_factories = renderer_factories
+  state.surface_id = options.canvas_id
+  state.attach_surface(
+    options.logical_width,
+    options.logical_height,
+    options.scale_factor,
+  )
+  wechat_render_frame()
+}
+
+///|
+fn WechatState::attach_surface(
+  self : WechatState,
+  logical_width : Double,
+  logical_height : Double,
+  scale_factor : Double,
+) -> Unit {
+  let metrics = @render.RendererSurfaceMetrics::new(
     logical_size=@core.Size::new(width=logical_width, height=logical_height),
     physical_size=@core.Size::new(
       width=logical_width * scale_factor,
@@ -34,21 +79,34 @@ pub fn run_app(
     ),
     scale_factor~,
   )
-  let r = @canvas2d.Canvas2DRenderer::new(canvas_id~)
-  r.resize(renderer_metrics)
-  d.set_text_system(r.text_system())
-
-  state.driver = Some(d)
-  state.renderer = Some(r)
-  state.needs_render = true
-
-  // Initial render
-  wechat_render_frame()
+  let kit = @render.HostSurfaceKit::new(
+    surface=@render.SurfaceDescriptor::cpu_raster(
+      width=logical_width,
+      height=logical_height,
+      scale_factor~,
+    ),
+    surface_id=self.surface_id,
+    metrics~,
+  )
+  match @render.resolve_host_renderer(self.renderer_factories, kit) {
+    Some(resolution) => {
+      match self.surface {
+        Some(surface) => surface.dispose()
+        None => ()
+      }
+      let surface = resolution.renderer()
+      self.surface = Some(surface)
+      match self.driver {
+        Some(driver) => driver.set_text_system(surface.text_system())
+        None => ()
+      }
+      self.needs_render = true
+    }
+    None => abort("wechat backend: no renderer accepts the host canvas surface")
+  }
 }
 
 ///|
-/// WeChat FFI dispatch stubs — called from JS runtime.
-/// Maps Mini Program events to MoUI runtime events.
 pub fn wechat_dispatch_event(
   _kind : Int,
   _raw_id : Int,
@@ -61,9 +119,6 @@ pub fn wechat_dispatch_event(
 }
 
 ///|
-/// Dispatch a pointer/touch event from the Mini Program.
-/// JS maps touch types: start→Down(1), move→Move(0), end→Up(2).
-/// Returns 1 if the app should close, 0 otherwise.
 pub fn wechat_dispatch_pointer_input(
   raw_id : Int,
   kind : Int,
@@ -77,20 +132,23 @@ pub fn wechat_dispatch_pointer_input(
   let _ = raw_id
   let _ = modifiers
   match state.driver {
-    Some(d) => {
+    Some(driver) => {
       let phase = match kind {
         0 => @core.PointerPhase::Move
         1 => @core.PointerPhase::Down
         2 => @core.PointerPhase::Up
         _ => @core.PointerPhase::Cancel
       }
-      let event = @core.PointerEvent::new(
-        position=@core.Point::new(x=x_px, y=y_px),
-        phase~,
-        button~,
-        wheel_delta=@core.Point::new(x=delta_x_px, y=delta_y_px),
+      let result = driver.dispatch(
+        @host.HostEvent::Pointer(
+          @core.PointerEvent::new(
+            position=@core.Point::new(x=x_px, y=y_px),
+            phase~,
+            button~,
+            wheel_delta=@core.Point::new(x=delta_x_px, y=delta_y_px),
+          ),
+        ),
       )
-      let result = d.dispatch(@host.HostEvent::Pointer(event))
       if result.needs_redraw {
         state.needs_render = true
       }
@@ -105,47 +163,46 @@ pub fn wechat_dispatch_pointer_input(
 }
 
 ///|
-/// Render a single frame. Called from the JS requestAnimationFrame loop.
-/// Only renders when the needs_render flag is set (e.g. after touch/scroll).
 pub fn wechat_render_frame() -> Unit {
   if !state.needs_render {
     return
   }
   state.needs_render = false
-  match state.driver {
-    Some(d) => {
-      d.begin_redraw()
-      d.finish_redraw()
-      let commands = d.draw_commands()
-      match state.renderer {
-        Some(r) => r.render(commands)
-        None => ()
-      }
+  match (state.driver, state.surface) {
+    (Some(driver), Some(surface)) => {
+      driver.begin_redraw()
+      let result = surface.render_frame(driver.draw_frame())
+      driver.apply_render_frame_result(result)
+      driver.finish_redraw()
     }
-    None => ()
+    _ => ()
   }
 }
 
 ///|
 pub fn wechat_surface_created(
-  _width : Double,
-  _height : Double,
-  _scale_factor : Double,
+  width : Double,
+  height : Double,
+  scale_factor : Double,
 ) -> Unit {
-
+  state.attach_surface(width, height, scale_factor)
 }
 
 ///|
 pub fn wechat_surface_destroyed() -> Unit {
-
+  match state.surface {
+    Some(surface) => surface.dispose()
+    None => ()
+  }
+  state.surface = None
 }
 
 ///|
 pub fn wechat_app_show() -> Unit {
-
+  state.needs_render = true
 }
 
 ///|
 pub fn wechat_app_hide() -> Unit {
-
+  ()
 }

@@ -1,8 +1,8 @@
 import {
+  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/ios" @ios_host,
-  "wzzc-dev/moui/backend/ios/skia" @ios_skia_backend,
-  "wzzc-dev/window/ios" @window_ios,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "examples/counter/app" @counter_app,
 }
 

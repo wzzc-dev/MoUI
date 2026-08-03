@@ -1,5 +1,7 @@
 import {
-  "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/backend/linux" @linux_backend,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/moui/runtime",
   "examples/code_editor/app" @code_editor,
 }

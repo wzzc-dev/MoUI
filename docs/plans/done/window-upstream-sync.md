@@ -92,4 +92,4 @@ desktop backend reviews.
 - The root guidance now uses the new version and nested workspace paths. While
   local development mode is intentionally enabled, its validator correctly
   rejects the two local members; published-mode validation remains pending the
-  `wzzc-dev/window@0.5.4-0.1.2` mooncakes release.
+  `wzzc-dev/window@0.5.4-0.1.3` mooncakes release.

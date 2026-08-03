@@ -23,7 +23,7 @@ pub fn IosSurfaceHandle::raw(self : IosSurfaceHandle) -> UInt64 {
 pub(all) struct IosBackendCapabilities {
   embedded_view : Bool
   external_event_loop : Bool
-  renderer_provider : Bool
+  surface_binding : Bool
   pointer : Bool
   scroll : Bool
   keyboard : Bool
@@ -61,8 +61,8 @@ pub(all) struct IosBackendInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub struct IosRendererProvider {
-  priv create_renderer : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
+pub struct IosSurfaceBinding {
+  priv create_renderer : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
   priv sync_surface : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> Unit
   priv image_loader : @render.HostAsyncImageLoader?
 }
@@ -70,29 +70,83 @@ pub struct IosRendererProvider {
 ///|
 
 ///|
-pub fn IosRendererProvider::new(
-  create_renderer~ : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
+pub fn IosSurfaceBinding::new(
+  create_renderer~ : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
   sync_surface? : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
     _view,
     _metrics,
   ) => (),
   image_loader? : @render.HostAsyncImageLoader? = None,
-) -> IosRendererProvider {
+) -> IosSurfaceBinding {
   { create_renderer, sync_surface, image_loader }
 }
 
 ///|
-fn IosRendererProvider::create(
-  self : IosRendererProvider,
+pub fn ios_surface_binding(
+  factories : Array[@render.RendererBindingFactory],
+) -> IosSurfaceBinding {
+  let image_source = @host_image_source.from_filesystem()
+  IosSurfaceBinding::new(create_renderer=(surface, metrics) => {
+    let renderer_metrics = @render.RendererSurfaceMetrics::new(
+      logical_size=metrics.logical_size,
+      physical_size=metrics.physical_size,
+      scale_factor=metrics.scale_factor,
+    )
+    let present = @render.HostPresentTarget::new(
+      description="iOS host CPU presenter",
+      present=frame => {
+        ios_present_pixels_to_view(
+          surface.raw(),
+          frame.width(),
+          frame.height(),
+          frame.row_bytes(),
+          frame.pixels(),
+          frame.pixels().length(),
+        ) !=
+        0
+      },
+    )
+    let gpu_surface = match
+      @render.GpuHostSurfaceDescriptor::metal_layer(
+        ios_metal_layer_for_view(surface.raw()),
+      ) {
+      Some(descriptor) =>
+        Some(
+          @render.HostGpuSurfaceBridge::new(
+            descriptor~,
+            create_surface=_ => None,
+            present=_ => true,
+          ),
+        )
+      None => None
+    }
+    let kit = @render.HostSurfaceKit::new(
+      surface=@render.SurfaceDescriptor::cpu_raster(
+        width=renderer_metrics.logical_size.width,
+        height=renderer_metrics.logical_size.height,
+        scale_factor=renderer_metrics.scale_factor,
+      ),
+      metrics=renderer_metrics,
+      cpu_present=Some(present),
+      gpu_surface~,
+      image_source=Some(image_source),
+    )
+    @render.resolve_host_renderer(factories, kit)
+  })
+}
+
+///|
+fn IosSurfaceBinding::create(
+  self : IosSurfaceBinding,
   surface : IosSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
-) -> @render.HostWindowRenderer? {
+) -> @render.HostRendererResolution? {
   (self.create_renderer)(surface, metrics)
 }
 
 ///|
-fn IosRendererProvider::sync(
-  self : IosRendererProvider,
+fn IosSurfaceBinding::sync(
+  self : IosSurfaceBinding,
   surface : IosSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
 ) -> Unit {
@@ -100,8 +154,8 @@ fn IosRendererProvider::sync(
 }
 
 ///|
-pub fn IosRendererProvider::has_async_image_loader(
-  self : IosRendererProvider,
+pub fn IosSurfaceBinding::has_async_image_loader(
+  self : IosSurfaceBinding,
 ) -> Bool {
   self.image_loader is Some(_)
 }
@@ -111,28 +165,25 @@ pub fn create_session(
   runtime~ : @runtime.AppRuntime,
   surface~ : IosSurfaceHandle,
   metrics~ : @host.HostSurfaceMetrics,
-  provider~ : IosRendererProvider,
+  binding~ : IosSurfaceBinding,
 ) -> @embedded_runtime_backend.HostedRuntimeSession? {
   @embedded_runtime_backend.HostedRuntimeSession::create(
     runtime~,
     raw_handle=surface.raw(),
     metrics~,
-    adapter=renderer_provider_adapter_from_ios(provider),
+    binding=host_surface_binding_from_ios(binding),
   )
 }
 
 ///|
-pub fn renderer_provider_adapter_from_ios(
-  provider : IosRendererProvider,
-) -> @embedded_runtime_backend.RendererProviderAdapter {
-  @embedded_runtime_backend.RendererProviderAdapter::new(
+pub fn host_surface_binding_from_ios(
+  binding : IosSurfaceBinding,
+) -> @embedded_runtime_backend.HostSurfaceBinding {
+  @embedded_runtime_backend.HostSurfaceBinding::new(
     create_renderer=fn(raw, metrics) {
-      provider.create(IosSurfaceHandle::new(raw~), metrics)
+      binding.create(IosSurfaceHandle::new(raw~), metrics)
     },
-    sync=fn(raw, metrics) {
-      provider.sync(IosSurfaceHandle::new(raw~), metrics)
-    },
-    image_loader=provider.image_loader,
+    sync=fn(raw, metrics) { binding.sync(IosSurfaceHandle::new(raw~), metrics) },
   )
 }
 
@@ -162,7 +213,7 @@ pub fn ios_capability_matrix() -> IosBackendCapabilities {
   {
     embedded_view: true,
     external_event_loop: true,
-    renderer_provider: true,
+    surface_binding: true,
     pointer: true,
     scroll: true,
     keyboard: true,
@@ -203,7 +254,7 @@ pub fn backend_info() -> IosBackendInfo {
     services: ios_service_capabilities(),
     input: ios_input_capabilities(),
     readiness: ios_readiness(),
-    description: "iOS backend exposes a native-session contract: wzzc-dev/window/ios supplies a view/Metal surface and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until window-hosted matching-simulator L3 and presenter verification close remaining gaps.",
+    description: "iOS backend exposes a native-session contract: wzzc-dev/window/ios supplies a view/Metal surface and lifecycle/input callbacks, while application-supplied factories bind the renderer. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until window-hosted matching-simulator L3 and presenter verification close remaining gaps.",
   }
 }
 

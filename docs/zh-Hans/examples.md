@@ -216,7 +216,7 @@ WebView Demo 展示原生 platform-view 路径，而不涉及渲染器绘制命�
 WebView commit 到下一个 `DrawFrame.platform_views` rectangle。按钮覆盖 host command
 queue，用于 load、reload、stop、back、forward 和 JavaScript evaluation。
 
-原生入口会把同一个 `HostWebViewCommandQueue` 传给 Skia provider options，因此 macOS
+原生入口会把同一个 `HostWebViewCommandQueue` 传给平台 backend 的 `entry(options)`，因此 macOS
 `WKWebView`、Windows WebView2 构建和 Linux WebKitGTK 构建可以在 rendering 后
 drain commands。Web wasm 传入 unavailable capability 并渲染 fallback UI；它不会创建
 iframe overlay。
@@ -554,8 +554,8 @@ cross-origin text-file fetches。
 
 ## macOS 原生
 
-macOS 示例使用共享应用包以及 macOS host core 和 renderer provider packages。推荐的原生入口通过
-`_skia` 包 import `backend/macos/skia`：
+macOS 示例使用共享应用包、`backend/macos` 和显式 renderer 包。推荐的 `_skia` 入口导入
+`render/skia`，并通过 `@moui.run_app` 与 `@macos.entry()` 组合：
 
 ```sh
 moon build examples/showcase/macos_skia --target native
@@ -633,8 +633,8 @@ bundle 包含并验证 schema version 1 `Contents/Resources/moui-package.json` m
 
 ## Windows 原生
 
-Windows 原生示例使用 MSVC toolchain 和 vcpkg `zlib:x64-windows`。推荐的原生入口通过 `_skia`
-包 import `backend/windows/skia`，并显式选择 native Skia raster provider。`windows_wgpu` 和
+Windows 原生示例使用 MSVC toolchain 和 vcpkg `zlib:x64-windows`。推荐的 `_skia` 入口导入
+`backend/windows` 与 `render/skia`，并通过 AppBuilder 显式组合它们。`windows_wgpu` 和
 `windows_wgpu_cosmic` 包仍作为 native WGPU diagnostics 可用；build/package helpers 只会为这些
 WGPU 包下载并打包 `wgpu_native.dll`。
 
@@ -656,7 +656,7 @@ powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
-`windows_skia` 遵循与 backend provider 相同的 Skia availability rules：如果
+`windows_skia` 遵循 renderer factory 的 Skia availability rules：如果
 `moui_skia/native` 只处于 fallback mode，renderer creation 会报告 diagnostic，而不是打开空
 HWND。
 Windows Skia 示例入口是 interactive app entrypoints。请把 matching-host first-frame smoke 放在
@@ -680,8 +680,9 @@ package 会写入 `dist\windows-msvc\MoUIShowcase`，并包含 schema version 1
 
 ## Linux 原生
 
-Linux 示例使用 `wzzc-dev/window@0.5.1-0.1.7-2` Wayland host core。推荐的原生入口使用
-`backend/linux/skia`，并通过 Wayland `wl_shm` path 呈现 Skia CPU pixel frames。请在已配置
+Linux 示例使用 `wzzc-dev/window@0.5.4-0.1.3` Wayland host core。推荐的原生入口导入
+`backend/linux` 与 `render/skia`，通过 AppBuilder 组合后由中立 Wayland `wl_shm` presenter
+呈现 Skia CPU pixel frames。请在已配置
 Wayland compositor 和真实 Skia link flags 的 Linux host 上运行：
 
 ```sh

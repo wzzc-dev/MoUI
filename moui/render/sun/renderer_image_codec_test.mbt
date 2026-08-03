@@ -143,10 +143,31 @@ test "sun renderer decodes jpeg data uri and local files" {
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     SunPresentTarget::new(description="test", present=_ => true),
+    async_image_loading=true,
   )
 
   renderer.render([sun_codec_test_image_command(data_uri_source)])
   renderer.render([sun_codec_test_image_command(local_source)])
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      sun_image_load_completion(data_uri_source),
+    ),
+  )
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      sun_image_load_completion_from_bytes(
+        local_source,
+        @fs.read_file_to_bytes(local_source) catch {
+          _ => fail("expected host JPEG byte read")
+        },
+        background_io=true,
+      ),
+    ),
+  )
+  renderer.render([
+    sun_codec_test_image_command(data_uri_source),
+    sun_codec_test_image_command(local_source),
+  ])
   let records = renderer.image_resources()
   sun_codec_test_assert_ready_jpeg(records, data_uri_source)
   sun_codec_test_assert_ready_jpeg(records, local_source)
@@ -169,10 +190,31 @@ test "sun renderer decodes bmp sources with uppercase type and extension" {
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     SunPresentTarget::new(description="test", present=_ => true),
+    async_image_loading=true,
   )
 
   renderer.render([sun_codec_test_image_command(data_uri_source)])
   renderer.render([sun_codec_test_image_command(local_source)])
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      sun_image_load_completion(data_uri_source),
+    ),
+  )
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      sun_image_load_completion_from_bytes(
+        local_source,
+        @fs.read_file_to_bytes(local_source) catch {
+          _ => fail("expected host BMP byte read")
+        },
+        background_io=true,
+      ),
+    ),
+  )
+  renderer.render([
+    sun_codec_test_image_command(data_uri_source),
+    sun_codec_test_image_command(local_source),
+  ])
   let records = renderer.image_resources()
   sun_codec_test_assert_ready_bmp(records, data_uri_source)
   sun_codec_test_assert_ready_bmp(records, local_source)
@@ -198,10 +240,31 @@ test "sun renderer decodes image sources by byte signature fallback" {
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     SunPresentTarget::new(description="test", present=_ => true),
+    async_image_loading=true,
   )
 
   renderer.render([sun_codec_test_image_command(data_uri_source)])
   renderer.render([sun_codec_test_image_command(local_source)])
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      sun_image_load_completion(data_uri_source),
+    ),
+  )
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      sun_image_load_completion_from_bytes(
+        local_source,
+        @fs.read_file_to_bytes(local_source) catch {
+          _ => fail("expected host signature-fallback byte read")
+        },
+        background_io=true,
+      ),
+    ),
+  )
+  renderer.render([
+    sun_codec_test_image_command(data_uri_source),
+    sun_codec_test_image_command(local_source),
+  ])
   let records = renderer.image_resources()
   sun_codec_test_assert_ready_bmp(records, data_uri_source)
   sun_codec_test_assert_ready_bmp(records, local_source)

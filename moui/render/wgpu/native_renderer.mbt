@@ -47,6 +47,7 @@ struct RendererHandle {
   mut white_view : @wgpu_mbt.TextureView?
   mut white_bind_group : @wgpu_mbt.BindGroup?
   image_cache : Map[String, NativeImageResource]
+  decoded_image_cache : Map[String, NativeDecodedImage]
   failed_images : Map[String, Bool]
   image_lifecycle : @render.ImageResourceLifecycle
   font_cache : NativeFontCache
@@ -278,6 +279,7 @@ fn create_with_surface(
     white_view: Some(white_view),
     white_bind_group: Some(white_bind_group),
     image_cache: Map([]),
+    decoded_image_cache: Map([]),
     failed_images: Map([]),
     image_lifecycle: @render.ImageResourceLifecycle::new(),
     font_cache: NativeFontCache::new_with_engine(text_engine),
@@ -377,6 +379,7 @@ fn RendererHandle::dispose(self : RendererHandle) -> Unit {
     resource.release()
   }
   self.image_cache.clear()
+  self.decoded_image_cache.clear()
   self.failed_images.clear()
   match self.image_pipeline {
     Some(pipeline) => pipeline.release()

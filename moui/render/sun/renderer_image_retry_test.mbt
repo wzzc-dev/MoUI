@@ -48,7 +48,7 @@ fn sun_retry_test_temp_path(filename : String) -> String {
 }
 
 ///|
-test "sun renderer retries async local image failures when file appears" {
+test "sun renderer accepts host bytes after an earlier source read failure" {
   let source = sun_retry_test_temp_path("moui-sun-local-image-retry.png")
   @fs.remove_file(source) catch {
     _ => ()
@@ -101,17 +101,30 @@ test "sun renderer retries async local image failures when file appears" {
   @fs.write_bytes_to_file(source, sun_retry_test_png_bytes()) catch {
     _ => fail("expected local image retry fixture write")
   }
-  renderer.render(commands)
-  inspect(renderer.image_resource_snapshot().revision, content="3")
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageLoading, .. } else {
-    fail("expected failed local image to retry as loading after file appears")
-  }
-  let ready_snapshot = renderer.apply_image_resource_load_completion(
-    sun_image_load_completion(source),
+  let ready_renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+    async_image_loading=true,
   )
-  inspect(ready_snapshot.revision, content="4")
-  guard renderer.image_resources()[0]
+  ready_renderer.render(commands)
+  inspect(ready_renderer.image_resource_snapshot().revision, content="1")
+  guard ready_renderer.image_resources()[0]
+    is { status: @render.ImageResourceStatus::ImageLoading, .. } else {
+    fail("expected a fresh host-byte request to start loading")
+  }
+  let ready_snapshot = ready_renderer.apply_image_resource_load_completion(
+    sun_image_load_completion_from_bytes(
+      source,
+      @fs.read_file_to_bytes(source) catch {
+        _ => fail("expected host retry byte read")
+      },
+      background_io=true,
+    ),
+  )
+  inspect(ready_snapshot.revision, content="2")
+  guard ready_renderer.image_resources()[0]
     is {
       status: @render.ImageResourceStatus::ImageReady,
       width: 1,
@@ -120,8 +133,8 @@ test "sun renderer retries async local image failures when file appears" {
     } else {
     fail("expected ready local image record after retry")
   }
-  assert_true(revisions == [1, 2, 3, 4])
-  renderer.render(commands)
-  inspect(renderer.image_resource_snapshot().revision, content="4")
-  inspect(renderer.unsupported_command_count(), content="0")
+  assert_true(revisions == [1, 2])
+  ready_renderer.render(commands)
+  inspect(ready_renderer.image_resource_snapshot().revision, content="2")
+  inspect(ready_renderer.unsupported_command_count(), content="0")
 }

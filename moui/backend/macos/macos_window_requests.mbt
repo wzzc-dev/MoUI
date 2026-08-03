@@ -118,8 +118,9 @@ fn MacosNativeHostBackend::attach_resolved_window(
     window.surface_size(),
     scale_factor=window.scale_factor(),
   )
-  match (self.renderer_provider.create_renderer)(window, metrics) {
-    Some(renderer) => {
+  match (self.surface_binding.create_renderer)(window, metrics) {
+    Some(resolution) => {
+      let renderer = resolution.renderer()
       ignore(self.coordinator.windows.resize(resolved.id, metrics))
       ignore(
         self.coordinator.runtime_slots.sync_open_from_registry(
@@ -168,6 +169,7 @@ fn MacosNativeHostBackend::attach_resolved_window(
           resolved.id,
           renderer,
           self.macos_surface_actions(window, renderer),
+          image_loader=resolution.image_loader(),
         ),
       )
       self.bind_renderer_image_resource_changes(resolved.id)
@@ -267,7 +269,7 @@ fn MacosNativeHostBackend::macos_surface_actions(
       )
     },
     sync_surface=fn(metrics) {
-      (self.renderer_provider.sync_surface)(window, metrics)
+      (self.surface_binding.sync_surface)(window, metrics)
     },
     renderer_resize=fn(metrics) { renderer.resize(metrics) },
     set_minimized=fn(minimized) { window.set_minimized(minimized) },

@@ -57,13 +57,15 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
       self.driver.set_redraw_scheduler(() => {
         self.coordinator.request_redraw_window_if_needed(window_id)
       })
-      match (self.renderer_provider.create_renderer)(window, metrics) {
-        Some(renderer) => {
+      match (self.surface_binding.create_renderer)(window, metrics) {
+        Some(resolution) => {
+          let renderer = resolution.renderer()
           ignore(
             self.coordinator.attach_surface(
               window_id,
               renderer,
               self.macos_surface_actions(window, renderer),
+              image_loader=resolution.image_loader(),
             ),
           )
           self.bind_renderer_image_resource_changes(window_id)
@@ -327,7 +329,7 @@ fn MacosNativeHostBackend::redraw_window(
           platform_slot.window.request_redraw()
         } else if result.queued && completion_terminal {
           // Dropped and terminal fallback completions retry against the same
-          // AppRuntime; the provider will select raster after fallback.
+          // AppRuntime; the application binding will select raster after fallback.
           platform_slot.window.request_redraw()
         }
         false

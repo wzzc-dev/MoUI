@@ -39,11 +39,11 @@ The package boundaries follow that pipeline:
 - `backend/host/` defines shared host contracts.
 - `backend/web/` is the browser wasm-gc host.
 - `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
-  cores that normalize platform events into `HostEvent` and receive concrete
-  renderers through platform renderer providers.
-- `backend/<platform>/skia` owns the native Skia raster mainline assembly;
-  `backend/<platform>/wgpu` remains available for explicit native WGPU
-  diagnostics.
+  cores that normalize platform events into `HostEvent` and expose neutral
+  host surfaces.
+- `render/skia` owns the native Skia mainline factories; `render/wgpu` remains
+  available for explicit native WGPU diagnostics. Applications compose either
+  with one platform backend.
 - `backend/linux/` is a Wayland host core with runtime-evidence, IME,
   clipboard, file dialog, directory listing, accessibility, and async image
   loading all wired through matching-host CI providers.

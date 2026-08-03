@@ -145,16 +145,14 @@ Provider packages are intentionally separate:
   input, versioned `FontSpec` encoding, measure/run/raster envelopes, and
   embedded-font registration payloads.
 
-Native WGPU text-engine selection belongs to the WGPU provider packages, not to
-the platform host cores. Use
-`MacosWgpuAppOptions::new(text_engine=...)`,
-`WindowsWgpuAppOptions::new(text_engine=...)`, or
-`LinuxWgpuAppOptions::new(text_engine=...)` through
-`backend/<platform>/wgpu.run_app_with_options`. `PlatformDefault` composes the
-platform provider with Cosmic fallback; `MoonCosmic` selects the Cosmic provider
+Native WGPU text-engine selection belongs to the WGPU renderer factory, not to
+the platform host core. Entrypoints call
+`@wgpu_renderer.native(text_engine=@wgpu_<platform>.<engine>())` and combine it
+with the platform `entry()`. Platform-default engines compose the native text
+provider with Cosmic fallback; explicit Cosmic entrypoints select Cosmic
 directly. Showcase also has explicit `macos_wgpu_cosmic`, `windows_wgpu_cosmic`, and
 `linux_wgpu_cosmic` entrypoints for comparing those paths. The separate Showcase and
-Markdown Editor `*_skia` entrypoints select Skia provider packages, not WGPU
+Markdown Editor `*_skia` entrypoints select `render/skia` factories, not WGPU
 text-provider variants. By default, Skia basic text
 measurement and drawing
 resolve the MoUI `FontSpec` family stack, weight, and style through `moui_skia`
@@ -218,7 +216,7 @@ SkParagraph geometry falls back to the existing core paragraph result without
 promoting those readiness flags. The native binding also exposes optional
 SkParagraph paint for paragraph-route smoke coverage; MoUI's single-line
 `TextRun` main path still uses the shaped glyph/TextBlob-equivalent glyph-run
-route rather than SkParagraph paint. The macOS, Windows, and Linux Skia providers default
+route rather than SkParagraph paint. The macOS, Windows, and Linux Skia composition roots default
 to the system `FontMgr` path, so normal native Skia entrypoints exercise
 platform font lookup, emoji retry, and optional SkShaper when linked. The
 renderer package also exposes `skia_text_system()` directly so the Skia
@@ -301,11 +299,13 @@ Platform runtime observation splits native IME readiness further: native
 `imeCommitDelete`, `imeCursorUpdate`, `imeScrollAnchor`,
 `imeScaleDprAnchor`, and `imeResizeAnchor` observations from matching-host
 Showcase artifacts. Those logs must carry
-matching-host runtime, native-app, `renderer=skia`, the matching app marker,
+matching-host runtime, native-app, `renderer=application`, the matching app marker,
 platform-protocol, candidate-window, surrounding-text, composition-visual,
 commit/delete, cursor-update, scroll, scale/DPR, and resize markers, so
 package-only composition tests and coarse `textInput`
-observations cannot promote native IME readiness by themselves.
+observations cannot promote native IME readiness by themselves. The application
+marker stays renderer-neutral; the Skia route is established by the recorded
+composition-root command and renderer smoke artifact.
 These fields make CI artifacts easier to audit, but they are not yet a
 guarantee of exact cross-platform typeface identity, glyph-id determinism,
 native IME behavior, or full Unicode bidi layout parity.

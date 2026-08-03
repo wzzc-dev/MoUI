@@ -65,10 +65,7 @@ fn core_control_fns() -> Array[String] {
 
 ///|
 fn desktop_skia_providers() -> Array[String] {
-  [
-    "moui/backend/macos/skia/macos_skia_provider.mbt", "moui/backend/windows/skia/windows_skia_provider.mbt",
-    "moui/backend/linux/skia/linux_skia_provider.mbt",
-  ]
+  ["moui/render/skia/binding_factory.mbt"]
 }
 
 ///|
@@ -437,18 +434,20 @@ fn check_r3_provider_text(path : String, text : String?) -> HarnessFinding {
         rule: "R3",
         ok: false,
         path,
-        hint: "missing desktop Skia provider. Fix: restore provider that reads MOUI_SKIA_RENDERER. See docs/invariants.md#R3",
+        hint: "missing render/skia binding factory. See docs/invariants.md#R3",
       }
     Some(body) => {
       let has_env = body.contains("MOUI_SKIA_RENDERER")
-      let has_parse = body.contains("NativeRendererMode::parse") ||
-        body.contains("resolve_surface_route")
+      let has_parse = body.contains("NativeRendererMode::parse") &&
+        body.contains("pub fn from_env()") &&
+        body.contains("pub fn raster(") &&
+        body.contains("pub fn gpu(")
       if !has_env || !has_parse {
         {
           rule: "R3",
           ok: false,
           path,
-          hint: "desktop Skia provider must honor MOUI_SKIA_RENDERER (auto|skia-gpu|skia-raster) via NativeRendererMode/resolve_surface_route. Fix: restore env-driven selection. See docs/invariants.md#R3",
+          hint: "render/skia must own MOUI_SKIA_RENDERER selection and expose raster/gpu/from_env factories. See docs/invariants.md#R3",
         }
       } else {
         { rule: "R3", ok: true, path, hint: "" }
@@ -468,15 +467,20 @@ fn check_r3_mobile_main(path : String, text : String?) -> HarnessFinding {
         hint: "mobile entry missing main.mbt. See docs/invariants.md#R3",
       }
     Some(body) => {
-      let has_window_app = body.contains("EmbeddedRuntimeBackend") &&
-        body.contains("EventLoop::new") &&
-        body.contains("run_app")
-      if !has_window_app {
+      // The composition root delegates lifecycle ownership to the platform
+      // backend entry. The concrete ApplicationHandler/EventLoop remains in
+      // the backend package and must not be duplicated in every app.
+      let has_composition = body.contains("@moui.run_app(") &&
+        (body.contains(".render(") || body.contains(".render_all("))
+      let has_backend_entry = body.contains(".backend(") &&
+        body.contains(".entry()") &&
+        body.contains(".run()")
+      if !has_composition || !has_backend_entry {
         {
           rule: "R3",
           ok: false,
           path,
-          hint: "embedded-runtime main.mbt must use window HostCmd ApplicationHandler (*EmbeddedRuntimeBackend / EventLoop.run_app). See docs/invariants.md#R3",
+          hint: "embedded-runtime main.mbt must explicitly compose renderer and backend entry; backend entry owns the window HostCmd ApplicationHandler/EventLoop. See docs/invariants.md#R3",
         }
       } else {
         { rule: "R3", ok: true, path, hint: "" }
@@ -496,8 +500,9 @@ fn check_r3_mobile_pkg(path : String, text : String?) -> HarnessFinding {
         hint: "mobile entry missing moon.pkg. See docs/invariants.md#R3",
       }
     Some(body) => {
-      let has_window = body.contains("wzzc-dev/window/")
-      let ok = has_window
+      let has_backend = body.contains("wzzc-dev/moui/backend/")
+      let has_renderer = body.contains("wzzc-dev/moui/render/")
+      let ok = has_backend && has_renderer
       {
         rule: "R3",
         ok,
@@ -505,7 +510,7 @@ fn check_r3_mobile_pkg(path : String, text : String?) -> HarnessFinding {
         hint: if ok {
           ""
         } else {
-          "window-hosted embedded-runtime moon.pkg must import wzzc-dev/window/*. See docs/invariants.md#R3"
+          "window-hosted embedded-runtime moon.pkg must import a platform backend and renderer; window lifecycle imports belong to the backend package. See docs/invariants.md#R3"
         },
       }
     }

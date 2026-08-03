@@ -4,7 +4,6 @@ package "wzzc-dev/moui/backend/linux"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
 
@@ -12,6 +11,8 @@ import {
 pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
+
+pub fn entry(options? : LinuxHostAppOptions, smoke_options? : LinuxHostSmokeOptions) -> @runtime.PlatformEntry
 
 pub fn linux_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessibilityBridge
 
@@ -34,10 +35,6 @@ pub fn linux_surface_metrics_for_content(@host.HostSurfaceMetrics, LinuxClientDe
 pub fn linux_timer_source() -> @runtime.HostTimerSource
 
 pub fn readiness() -> LinuxBackendReadiness
-
-pub fn run_app_with_renderer_provider(String, @runtime.AppRuntime, provider~ : LinuxRendererProvider, options? : LinuxHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
-
-pub fn run_app_with_renderer_provider_smoke(String, @runtime.AppRuntime, provider~ : LinuxRendererProvider, options? : LinuxHostAppOptions, smoke_options? : LinuxHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub fn scaffold_input_host() -> @host.InputHostState
 
@@ -123,11 +120,6 @@ pub fn LinuxHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool) -> Self
 
 type LinuxNativeHostBackend
 pub impl @wzzc-dev/window/linux.ApplicationHandler for LinuxNativeHostBackend
-
-pub struct LinuxRendererProvider {
-  // private fields
-}
-pub fn LinuxRendererProvider::new(create_renderer~ : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
 // Type aliases
 

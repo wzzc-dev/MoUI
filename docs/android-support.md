@@ -5,7 +5,9 @@ Android uses the **embedded runtime backend** route and is currently
 compile and host-sim tests pass, but no development/demonstration usability or
 product commitment is made without matching-device evidence. `wzzc-dev/window/android` owns the Android lifecycle,
 surface, and input queue; `moui/backend/android` converts those callbacks into
-the MoUI runtime session and `moui/backend/android/skia` provides presentation.
+the MoUI runtime session, exposes neutral CPU/GPU surface capabilities, and
+owns the platform presenter. The entrypoint supplies `moui/render/skia`
+factories; the backend has no Skia dependency.
 
 ## Entry Points
 
@@ -20,6 +22,21 @@ the MoUI runtime session and `moui/backend/android/skia` provides presentation.
 The entrypoint constructs `AndroidEmbeddedRuntimeBackend` and runs it through
 `window/android::EventLoop`. Do not add another lifecycle, surface, or input
 bridge beside the window event loop.
+
+Android status-bar layout is an application-owned host option. It defaults to
+the normal inset layout; set `status_bar_immersive=true` to draw the MoUI
+surface edge-to-edge behind the visible status bar. The option does not hide
+the status bar or navigation bar:
+
+```moonbit
+.backend(
+  @android_host.entry(
+    options=@android_host.AndroidHostAppOptions::new(
+      status_bar_immersive=true,
+    ),
+  ),
+)
+```
 
 ## Toolchain
 

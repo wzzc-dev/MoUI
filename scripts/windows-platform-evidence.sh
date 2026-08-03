@@ -8,7 +8,7 @@ Usage: scripts/windows-platform-evidence.sh [options]
 Collects Windows platform runtime evidence by:
 1. Configuring the repository for real Skia linking (release provider)
 2. Building and running the Showcase windows_skia entrypoint with the
-   first-frame auto-exit marker (MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1)
+   first-frame auto-exit marker (MOUI_FIRST_FRAME_EXIT=1)
 3. Building and running the Markdown Editor windows_skia entrypoint with its
    first-frame auto-exit marker
 4. Collecting evidence logs under artifacts/platform-evidence/windows/
@@ -182,10 +182,11 @@ write_example_pkg() {
   cat > "$pkg_path" <<PKGEOF
 import {
   "moonbitlang/core/env",
+  "wzzc-dev/moui" @moui,
   "wzzc-dev/moui/runtime",
 ${host_import}
   "wzzc-dev/moui/backend/windows" @${backend_alias},
-  "wzzc-dev/moui/backend/windows/skia" @windows_skia_backend,
+  "wzzc-dev/moui/render/skia" @render_skia,
   "${app_import}" @${app_alias},
 }
 
@@ -259,7 +260,7 @@ if [[ $run_showcase -eq 1 ]]; then
   cd "$REPO_ROOT"
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
     MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-    MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+    MOUI_FIRST_FRAME_EXIT=1 \
     moon run examples/showcase/windows_skia --target native \
     > "$showcase_log" 2>&1 &
   showcase_pid=$!

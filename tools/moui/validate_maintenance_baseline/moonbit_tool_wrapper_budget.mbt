@@ -10,6 +10,7 @@ fn moonbit_tool_wrapper_budgets() -> Array[WrapperBudget] {
     { path: "scripts/validate-api-surface.mjs", max_lines: 12 },
     { path: "scripts/validate-check-profiles.mjs", max_lines: 12 },
     { path: "scripts/validate-conformance-capture-manifest.mjs", max_lines: 28 },
+    { path: "scripts/validate-doc-references.mjs", max_lines: 12 },
     { path: "scripts/validate-guidance-consistency.mjs", max_lines: 12 },
     { path: "scripts/validate-harness-invariants.mjs", max_lines: 16 },
     { path: "scripts/validate-gpu-promotion-manifest.mjs", max_lines: 20 },
@@ -17,6 +18,10 @@ fn moonbit_tool_wrapper_budgets() -> Array[WrapperBudget] {
     { path: "scripts/validate-maintenance-baseline.mjs", max_lines: 12 },
     { path: "scripts/validate-package-manifest.mjs", max_lines: 28 },
     { path: "scripts/validate-renderer-provider-manifests.mjs", max_lines: 12 },
+    {
+      path: "scripts/validate-renderer-capability-consistency.mjs",
+      max_lines: 12,
+    },
     { path: "scripts/validate-platform-adapter-duplication.mjs", max_lines: 12 },
     { path: "scripts/validate-skia-entrypoints.mjs", max_lines: 16 },
     { path: "scripts/validate-web-runtime-handoff-manifest.mjs", max_lines: 28 },

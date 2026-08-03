@@ -233,6 +233,80 @@ test "scroll indicator is opt-in and draggable" {
 }
 
 ///|
+test "scroll view drags content from pointer movement" {
+  let state = @core.ScrollState::new()
+  let view = scroll_test_container(
+    scroll_test_rect(width=100.0, height=500.0),
+    state,
+  )
+  let layout = view.layout(
+    scroll_test_layout_context(
+      child_size=@core.Size::new(width=100.0, height=500.0),
+    ),
+  )
+  let initial_state = scroll_test_state_context()
+  let down = view.event({
+    frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+    child_frames: layout.child_frames,
+    event: @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=50.0, y=50.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+    focused: false,
+    state: initial_state,
+    text_control: scroll_test_text_control_context(),
+    text_system: @core.TextSystem::fallback(),
+    environment: @core.Environment::neutral(),
+    style: @core.ViewStyle::empty(),
+    now_ms: 0.0,
+  })
+  assert_true(down.captured)
+  let move_state = down.state.unwrap_or(initial_state)
+  let move_result = view.event({
+    frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+    child_frames: layout.child_frames,
+    event: @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=50.0, y=20.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+    focused: false,
+    state: move_state,
+    text_control: scroll_test_text_control_context(),
+    text_system: @core.TextSystem::fallback(),
+    environment: @core.Environment::neutral(),
+    style: @core.ViewStyle::empty(),
+    now_ms: 0.0,
+  })
+  assert_true(move_result.captured)
+  assert_true(state.offset() == @core.Point::new(x=0.0, y=30.0))
+  let up_state = move_result.state.unwrap_or(move_state)
+  let up = view.event({
+    frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+    child_frames: layout.child_frames,
+    event: @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=50.0, y=20.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+    focused: false,
+    state: up_state,
+    text_control: scroll_test_text_control_context(),
+    text_system: @core.TextSystem::fallback(),
+    environment: @core.Environment::neutral(),
+    style: @core.ViewStyle::empty(),
+    now_ms: 0.0,
+  })
+  assert_true(up.captured)
+  let released_state = up.state.unwrap_or(up_state)
+  assert_false(released_state.read_slot(scroll_drag_state_slot()).active)
+}
+
+///|
 test "scroll view watches external scroll state and rebuilds its snapshot" {
   let state = @core.ScrollState::new()
   let runtime = @runtime.AppRuntime::new_view(

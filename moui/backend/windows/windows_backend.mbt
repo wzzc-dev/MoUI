@@ -50,10 +50,9 @@ pub struct WindowsHostSmokeOptions {
 }
 
 ///|
-pub struct WindowsRendererProvider {
-  priv create_renderer : (@win.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-  priv sync_surface : (@win.Window, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @render.HostAsyncImageLoader?
+priv struct WindowsSurfaceBinding {
+  create_renderer : (@win.Window, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
+  sync_surface : (@win.Window, @host.HostSurfaceMetrics) -> Unit
 }
 
 ///|
@@ -66,7 +65,7 @@ struct WindowsNativeHostBackend {
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
   coordinator : @runtime.WindowHostCoordinator
-  renderer_provider : WindowsRendererProvider
+  surface_binding : WindowsSurfaceBinding
   services : @host.HostServiceBridge
   platform_slots : @platform_bridge.WindowSlotMap[@win.Window, Unit]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
@@ -92,59 +91,87 @@ pub fn WindowsHostSmokeOptions::new(
 }
 
 ///|
-pub fn WindowsRendererProvider::new(
-  create_renderer~ : (@win.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
+fn WindowsSurfaceBinding::new(
+  create_renderer~ : (@win.Window, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
   sync_surface? : (@win.Window, @host.HostSurfaceMetrics) -> Unit = (
     _window,
     _metrics,
   ) => (),
-  image_loader? : @render.HostAsyncImageLoader? = None,
-) -> WindowsRendererProvider {
-  { create_renderer, sync_surface, image_loader }
+) -> WindowsSurfaceBinding {
+  { create_renderer, sync_surface }
 }
 
 ///|
-pub fn run_app_with_renderer_provider(
-  title : String,
-  runtime : @runtime.AppRuntime,
-  provider~ : WindowsRendererProvider,
-  options? : WindowsHostAppOptions = WindowsHostAppOptions::new(),
-  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
-) -> Unit {
-  run_app_with_renderer_provider_internal(
-    title,
-    runtime,
-    provider~,
-    options~,
-    smoke_options=WindowsHostSmokeOptions::new(),
-    window_requests~,
-  )
-}
-
-///|
-pub fn run_app_with_renderer_provider_smoke(
-  title : String,
-  runtime : @runtime.AppRuntime,
-  provider~ : WindowsRendererProvider,
+/// Renderer-neutral Windows composition entry. Renderer factories are
+/// resolved after Win32 has created a window handle.
+pub fn entry(
   options? : WindowsHostAppOptions = WindowsHostAppOptions::new(),
   smoke_options? : WindowsHostSmokeOptions = WindowsHostSmokeOptions::new(),
-  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
-) -> Unit {
-  run_app_with_renderer_provider_internal(
-    title,
-    runtime,
-    provider~,
-    options~,
-    smoke_options~,
-    window_requests~,
-  )
+) -> @runtime.PlatformEntry {
+  @runtime.PlatformEntry::new(id="windows", launch=request => {
+    let factories = request.renderer_factories()
+    let image_source = @host_image_source.from_filesystem()
+    let binding = WindowsSurfaceBinding::new(create_renderer=(window, metrics) => {
+      let renderer_metrics = @platform_bridge.renderer_metrics_from_host(
+        metrics,
+      )
+      let host_present = @render.HostPresentTarget::new(
+        description="Windows host CPU presenter",
+        present=frame => {
+          windows_present_pixels_to_hwnd(
+            window.native_window_handle(),
+            frame.width(),
+            frame.height(),
+            frame.row_bytes(),
+            frame.pixels(),
+            frame.pixels().length(),
+          ) ==
+          0
+        },
+      )
+      let gpu_surface = match
+        @render.GpuHostSurfaceDescriptor::d3d12_hwnd(
+          window.native_window_handle(),
+        ) {
+        Some(descriptor) =>
+          Some(
+            @render.HostGpuSurfaceBridge::new(
+              descriptor~,
+              create_surface=_ => None,
+              present=_ => true,
+            ),
+          )
+        None => None
+      }
+      let kit = @render.HostSurfaceKit::new(
+        surface=@render.SurfaceDescriptor::cpu_raster(
+          width=renderer_metrics.logical_size.width,
+          height=renderer_metrics.logical_size.height,
+          scale_factor=renderer_metrics.scale_factor,
+        ),
+        metrics=renderer_metrics,
+        cpu_present=Some(host_present),
+        gpu_surface~,
+        image_source=Some(image_source),
+      )
+      @render.resolve_host_renderer(factories, kit)
+    })
+    launch_windows_app(
+      request.title(),
+      request.runtime(),
+      binding~,
+      options~,
+      smoke_options~,
+      window_requests=request.window_requests(),
+    )
+  })
 }
 
 ///|
-fn run_app_with_renderer_provider_internal(
+fn launch_windows_app(
   title : String,
   runtime : @runtime.AppRuntime,
-  provider~ : WindowsRendererProvider,
+  binding~ : WindowsSurfaceBinding,
   options~ : WindowsHostAppOptions,
   smoke_options~ : WindowsHostSmokeOptions,
   window_requests~ : @host.HostWindowRequestQueue,
@@ -163,9 +190,8 @@ fn run_app_with_renderer_provider_internal(
       scene_resolver=options.scene_resolver,
       services~,
       event_sources=options.event_sources,
-      image_loader=provider.image_loader,
     ),
-    renderer_provider: provider,
+    surface_binding: binding,
     services,
     platform_slots: @platform_bridge.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
@@ -408,13 +434,15 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn can_create
       self.driver.set_redraw_scheduler(() => {
         self.request_redraw_window_if_needed(window_id)
       })
-      match (self.renderer_provider.create_renderer)(window, metrics) {
-        Some(renderer) => {
+      match (self.surface_binding.create_renderer)(window, metrics) {
+        Some(resolution) => {
+          let renderer = resolution.renderer()
           ignore(
             self.coordinator.attach_surface(
               window_id,
               renderer,
               self.windows_surface_actions(window, renderer),
+              image_loader=resolution.image_loader(),
             ),
           )
           self.bind_renderer_image_resource_changes(window_id)
@@ -729,7 +757,7 @@ fn WindowsNativeHostBackend::apply_window_request(
         ignore(
           window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)),
         )
-        (self.renderer_provider.sync_surface)(window, metrics)
+        (self.surface_binding.sync_surface)(window, metrics)
         match self.coordinator.surface_actions(id) {
           Some(actions) =>
             (actions.renderer_resize)(@runtime.to_render_metrics(metrics))
@@ -827,8 +855,9 @@ fn WindowsNativeHostBackend::attach_resolved_window(
     logical_size=@host.physical_size_to_core(window.surface_size()),
     physical_size=@host.physical_size_to_core(window.surface_size()),
   )
-  match (self.renderer_provider.create_renderer)(window, metrics) {
-    Some(renderer) => {
+  match (self.surface_binding.create_renderer)(window, metrics) {
+    Some(resolution) => {
+      let renderer = resolution.renderer()
       ignore(self.coordinator.windows.resize(resolved.id, metrics))
       ignore(
         self.coordinator.runtime_slots.sync_open_from_registry(
@@ -877,6 +906,7 @@ fn WindowsNativeHostBackend::attach_resolved_window(
           resolved.id,
           renderer,
           self.windows_surface_actions(window, renderer),
+          image_loader=resolution.image_loader(),
         ),
       )
       self.bind_renderer_image_resource_changes(resolved.id)
@@ -978,7 +1008,7 @@ fn WindowsNativeHostBackend::windows_surface_actions(
       )
     },
     sync_surface=fn(metrics) {
-      (self.renderer_provider.sync_surface)(window, metrics)
+      (self.surface_binding.sync_surface)(window, metrics)
     },
     renderer_resize=fn(metrics) { renderer.resize(metrics) },
     set_minimized=fn(minimized) { window.set_minimized(minimized) },

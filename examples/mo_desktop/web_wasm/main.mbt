@@ -2,7 +2,7 @@
 fn main {
   let services = @web.web_app_services()
   let timer_source = @web.web_timer_source()
-  @web.run_app(
+  @moui.run_app(
     "Mo Desktop",
     @runtime.new_program_with_dimensions(
       program=@mo_desktop_app.program(
@@ -15,6 +15,9 @@ fn main {
       height=800.0,
     ),
   )
+  .render_all(@webgpu_adapter.from_env())
+  .backend(@web.entry())
+  .run()
 }
 
 ///|

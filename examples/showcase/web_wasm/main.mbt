@@ -9,7 +9,7 @@ fn main {
     dispatch_command=dispatch_showcase_route_command,
   )
   let renderer_providers = @render.renderer_provider_binding_providers(
-    @web.web_renderer_provider_bindings(canvas_id="moonbit-window-web-showcase"),
+    @webgpu_adapter.provider_bindings(canvas_id="moonbit-window-web-showcase"),
   )
   let model = match showcase_initial_section_code() {
     1 =>
@@ -29,11 +29,12 @@ fn main {
     width=1100.0,
     height=680.0,
   )
-  @web.run_app_with_options(
-    "MoUI Showcase Wasm Host",
-    runtime,
-    options=@web.WebAppOptions::new(route_source=Some(route_source)),
+  @moui.run_app("MoUI Showcase Wasm Host", runtime)
+  .render_all(@webgpu_adapter.from_env())
+  .backend(
+    @web.entry(options=@web.WebAppOptions::new(route_source=Some(route_source))),
   )
+  .run()
 }
 
 ///|

@@ -15,8 +15,8 @@ fn usage() -> String {
   let text =
     #|Usage: tools/moui/validate_renderer_provider_manifests [options]
     #|
-    #|Checks native backend provider package manifests for forbidden renderer
-    #|and binding dependencies.
+    #|Checks platform host and renderer package manifests for forbidden
+    #|cross-layer dependencies.
     #|
     #|Options:
     #|  --repo-root PATH   Repository root used to resolve package paths. Defaults to cwd.
@@ -52,30 +52,44 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 ///|
 fn provider_rules() -> Array[ProviderRule] {
   let rules : Array[ProviderRule] = []
-  for platform in ["macos", "windows", "linux"] {
+  for
+    platform in [
+      "macos", "windows", "linux", "android", "ios", "harmonyos", "web", "wechat",
+    ] {
     rules.push({
       path: "moui/backend/" + platform + "/moon.pkg",
       forbidden: [
-        "wzzc-dev/moui/render/wgpu", "wzzc-dev/moui/render/skia", "Milky2018/wgpu_mbt",
-        "wzzc-dev/moui_skia",
+        "wzzc-dev/moui/render/skia", "wzzc-dev/moui/render/sun", "wzzc-dev/moui/render/wgpu",
+        "wzzc-dev/moui/render/canvas2d", "wzzc-dev/moui/render/webgpu_adapter", "Milky2018/wgpu_mbt",
+        "wzzc-dev/moui_skia", "wzzc-dev/moui_sun",
       ],
     })
-    rules.push({
-      path: "moui/backend/" + platform + "/skia/moon.pkg",
-      forbidden: [
-        "wzzc-dev/moui/render/wgpu",
-        "Milky2018/wgpu_mbt",
-        "wzzc-dev/moui/backend/" + platform + "/wgpu",
-      ],
-    })
-    rules.push({
-      path: "moui/backend/" + platform + "/wgpu/moon.pkg",
-      forbidden: [
-        "wzzc-dev/moui/render/skia",
-        "wzzc-dev/moui_skia",
-        "wzzc-dev/moui/backend/" + platform + "/skia",
-      ],
-    })
+  }
+  let renderer_forbidden : Array[(String, Array[String])] = [
+    (
+      "skia",
+      ["wzzc-dev/moui/backend/", "Milky2018/wgpu_mbt", "wzzc-dev/moui_sun"],
+    ),
+    (
+      "sun",
+      ["wzzc-dev/moui/backend/", "wzzc-dev/moui_skia", "Milky2018/wgpu_mbt"],
+    ),
+    (
+      "wgpu",
+      ["wzzc-dev/moui/backend/", "wzzc-dev/moui_skia", "wzzc-dev/moui_sun"],
+    ),
+    (
+      "canvas2d",
+      ["wzzc-dev/moui/backend/", "wzzc-dev/moui_skia", "Milky2018/wgpu_mbt"],
+    ),
+    (
+      "webgpu_adapter",
+      ["wzzc-dev/moui/backend/", "wzzc-dev/moui_skia", "Milky2018/wgpu_mbt"],
+    ),
+  ]
+  for item in renderer_forbidden {
+    let (renderer, forbidden) = item
+    rules.push({ path: "moui/render/" + renderer + "/moon.pkg", forbidden })
   }
   rules
 }

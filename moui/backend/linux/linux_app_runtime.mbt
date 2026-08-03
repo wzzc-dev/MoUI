@@ -1,45 +1,74 @@
 ///|
-pub fn run_app_with_renderer_provider(
-  title : String,
-  runtime : @runtime.AppRuntime,
-  provider~ : LinuxRendererProvider,
-  options? : LinuxHostAppOptions = LinuxHostAppOptions::new(),
-  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
-) -> Unit {
-  run_app_with_renderer_provider_internal(
-    title,
-    runtime,
-    provider~,
-    options~,
-    smoke_options=LinuxHostSmokeOptions::new(),
-    window_requests~,
-  )
-}
-
-///|
-pub fn run_app_with_renderer_provider_smoke(
-  title : String,
-  runtime : @runtime.AppRuntime,
-  provider~ : LinuxRendererProvider,
+/// Renderer-neutral Linux composition entry. Concrete renderer factories are
+/// supplied by the application and are resolved only after a native window
+/// exists and can provide its host surface kit.
+pub fn entry(
   options? : LinuxHostAppOptions = LinuxHostAppOptions::new(),
   smoke_options? : LinuxHostSmokeOptions = LinuxHostSmokeOptions::new(),
-  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
-) -> Unit {
-  run_app_with_renderer_provider_internal(
-    title,
-    runtime,
-    provider~,
-    options~,
-    smoke_options~,
-    window_requests~,
-  )
+) -> @runtime.PlatformEntry {
+  @runtime.PlatformEntry::new(id="linux", launch=request => {
+    let factories = request.renderer_factories()
+    let image_source = @host_image_source.from_filesystem()
+    let binding = LinuxSurfaceBinding::new(create_renderer=(window, metrics) => {
+      let renderer_metrics = @platform_bridge.renderer_metrics_from_host(
+        metrics,
+      )
+      let host_present = @render.HostPresentTarget::new(
+        description="Linux host CPU presenter",
+        present=frame => {
+          window.present_rgba_pixels(
+            frame.width(),
+            frame.height(),
+            frame.row_bytes(),
+            frame.pixels(),
+          ) ==
+          0
+        },
+      )
+      let gpu_surface = match
+        @render.GpuHostSurfaceDescriptor::wayland_vulkan_surface(
+          window.wl_display(),
+          window.wl_surface(),
+        ) {
+        Some(descriptor) =>
+          Some(
+            @render.HostGpuSurfaceBridge::new(
+              descriptor~,
+              create_surface=_ => None,
+              present=_ => true,
+            ),
+          )
+        None => None
+      }
+      let kit = @render.HostSurfaceKit::new(
+        surface=@render.SurfaceDescriptor::cpu_raster(
+          width=renderer_metrics.logical_size.width,
+          height=renderer_metrics.logical_size.height,
+          scale_factor=renderer_metrics.scale_factor,
+        ),
+        metrics=renderer_metrics,
+        cpu_present=Some(host_present),
+        gpu_surface~,
+        image_source=Some(image_source),
+      )
+      @render.resolve_host_renderer(factories, kit)
+    })
+    launch_linux_app(
+      request.title(),
+      request.runtime(),
+      binding~,
+      options~,
+      smoke_options~,
+      window_requests=request.window_requests(),
+    )
+  })
 }
 
 ///|
-fn run_app_with_renderer_provider_internal(
+fn launch_linux_app(
   title : String,
   runtime : @runtime.AppRuntime,
-  provider~ : LinuxRendererProvider,
+  binding~ : LinuxSurfaceBinding,
   options~ : LinuxHostAppOptions,
   smoke_options~ : LinuxHostSmokeOptions,
   window_requests~ : @host.HostWindowRequestQueue,
@@ -60,9 +89,8 @@ fn run_app_with_renderer_provider_internal(
       scene_resolver=options.scene_resolver,
       services~,
       event_sources=options.event_sources,
-      image_loader=provider.image_loader,
     ),
-    renderer_provider: provider,
+    surface_binding: binding,
     services,
     platform_slots: @platform_bridge.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,

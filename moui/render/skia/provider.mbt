@@ -154,7 +154,7 @@ fn skia_feature_note(feature : @render.RendererFeature) -> String {
     EmojiText =>
       "Skia raster detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark, and Hangul Jamo grapheme cluster samples, prefers emoji coverage characters and inferred language tags in system FontMgr FontFallbackRequest matching, stabilizes representative cluster interior carets, retries platform emoji font candidates before default-font fallback, and reports deterministic color emoji readiness through Typeface::has_color_glyphs and glyph format metadata."
     AsyncImage =>
-      "Skia raster image lifecycle uses the same renderer-neutral records, ImageResourceLoadCompletion apply helper, and revisioned snapshot contract, exposes renderer-local image-resource change callbacks when lifecycle revisions advance, native Skia providers create renderers with off-main-thread async image loading where data URI sources complete through the renderer decode path and local-file sources read and decode to RGBA pixels on background native workers via platform C++ stubs (GCD on macOS, pthread on Linux, CreateThread on Windows) before decoded completion delivery, forward snapshots and callback setters through HostWindowRenderer, HostWindowRenderer exposes apply_image_resource_load_completion as the renderer-neutral completion apply port, HostAsyncImageLoader scans loading records and gates late/cancelled callbacks before HostImageResourceCompletionSource routes native async loader completion snapshots through HostImageResourceRepaintTracker, macOS/Windows/Linux hosts install baseline-guarded callbacks, call optional provider-owned async image loaders after present baseline, and request redraw for post-present image revisions, immutable failed sources are cached with diagnostics before placeholder drawing, local-file failures retry once the file appears, hosts discard closed-window image changes, real Skia observation covers PNG/JPEG/BMP data URI decode, PNG/JPEG/BMP local-file decode, failed-image placeholder, failed-cache snapshot, local-file retry, image-resource callback snapshots, HostWindowRenderer callback bridge coverage, async image second-frame smoke, and dispose-record diagnostics, and decoded completions carry background_io, background_decode, decoded dimensions, row bytes, and RGBA pixels."
+      "Skia raster image lifecycle uses renderer-neutral records, ImageResourceLoadCompletion, and revisioned snapshots. Platform backends expose local-file bytes through HostImageSource without decoding them; the Skia factory owns RendererImageDecoder format detection, RGBA decode, and completion creation. HostAsyncImageLoader de-duplicates in-flight work and gates late or cancelled callbacks before HostImageResourceRepaintTracker routes revision changes to the matching window. Skia caches immutable failures, retries a missing local file after it appears, applies ready completions to its renderer-local cache, and records callback, second-frame repaint, and disposal diagnostics."
   }
 }
 
@@ -189,18 +189,18 @@ fn skia_negotiate_gpu_surface(
 ///|
 fn skia_route_for_gpu_handle(
   handle : @render.GpuHostSurfaceDescriptor,
-) -> @render.SkiaSurfaceRoute {
+) -> @render.SurfaceRoute {
   match handle {
     @render.GpuHostSurfaceDescriptor::MetalLayer(_) =>
-      @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute
+      @render.SurfaceRoute::MetalGpuSurfaceRoute
     @render.GpuHostSurfaceDescriptor::D3D12Hwnd(_) =>
-      @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute
+      @render.SurfaceRoute::Direct3DGpuSurfaceRoute
     @render.GpuHostSurfaceDescriptor::AndroidVulkanWindow(_) =>
-      @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute
+      @render.SurfaceRoute::VulkanGpuSurfaceRoute
     @render.GpuHostSurfaceDescriptor::WaylandVulkanSurface(_, _) =>
-      @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute
+      @render.SurfaceRoute::VulkanGpuSurfaceRoute
     @render.GpuHostSurfaceDescriptor::EglNativeWindow(_) =>
-      @render.SkiaSurfaceRoute::EglGpuSurfaceRoute
+      @render.SurfaceRoute::EglGpuSurfaceRoute
   }
 }
 

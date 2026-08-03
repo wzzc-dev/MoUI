@@ -74,21 +74,21 @@ fn WebApp::attach_resolved_window(
     window.surface_size(),
     window.scale_factor(),
   )
-  try
-    WebRenderer::create(
-      canvas_id=window_web_default_canvas_id(window.id().into_raw()),
-      metrics~,
-    )
-  catch {
-    _ => {
+  match
+    resolve_web_renderer(
+      self.renderer_factories,
+      window_web_default_canvas_id(window.id().into_raw()),
+      metrics,
+    ) {
+    None => {
       window.drop()
       self.coordinator.rollback_window_record(resolved.id)
       @host.HostWindowRequestResult::WindowRejected(
         "failed to create Web renderer",
       )
     }
-  } noraise {
-    renderer => {
+    Some(resolution) => {
+      let renderer = resolution.renderer()
       ignore(self.coordinator.windows.resize(resolved.id, metrics))
       self.coordinator.sync_runtime_slots()
       let record = match self.coordinator.windows.lookup(resolved.id) {
@@ -121,8 +121,9 @@ fn WebApp::attach_resolved_window(
       ignore(
         self.coordinator.attach_surface(
           resolved.id,
-          renderer.host_renderer,
+          renderer,
           self.web_surface_actions(window, renderer),
+          image_loader=resolution.image_loader(),
         ),
       )
       ignore(

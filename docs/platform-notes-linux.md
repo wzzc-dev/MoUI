@@ -1,13 +1,14 @@
 # Linux Platform Notes
 
 `backend/linux` is a minimal native Wayland host core. It uses the
-`wzzc-dev/window@0.5.4-0.1.2` Linux package for Wayland event-loop and window handles,
+`wzzc-dev/window@0.5.4-0.1.3` Linux package for Wayland event-loop and window handles,
 normalizes window/input events through the shared `HostEvent` contract, and runs
 the Showcase entrypoints through the same renderer/runtime boundary as macOS
-and Windows. Concrete rendering is injected through `LinuxRendererProvider`;
-`backend/linux/skia` is the native mainline and reuses the window package's
-`Window::present_rgba_pixels` presenter, while `backend/linux/wgpu` creates
-native WGPU surfaces from `wl_display` and `wl_surface` for diagnostics.
+and Windows. Application entrypoints supply ordered
+`RendererBindingFactory` values for concrete rendering.
+`backend/linux` exposes the window package's `Window::present_rgba_pixels`
+presenter, raw-byte image I/O, and an opaque Wayland GPU descriptor; Skia and
+WGPU construction stays in `render/skia` and `render/wgpu`.
 
 The Wayland window path requests server-side decorations when the compositor
 exposes `xdg-decoration`. If the compositor falls back to client-side
@@ -38,7 +39,7 @@ Linux runtime requirements are intentionally native:
   validation can use Mesa llvmpipe through `vulkan-swrast`/Lavapipe when
   hardware Vulkan is not available.
 - Wayland development headers and generated xdg-shell protocol sources for the
-  `wzzc-dev/window@0.5.4-0.1.2` native stub.
+  `wzzc-dev/window@0.5.4-0.1.3` native stub.
 - `wl_data_device_manager` from the compositor for native clipboard selection
   and file drag/drop runtime behavior.
 - XDG desktop integration for Linux services: OpenURI goes through
@@ -52,8 +53,7 @@ Linux runtime requirements are intentionally native:
   silently returns cancelled, and the app prints a diagnostic message to stdout.
 - zlib / pthread / fontconfig system libraries for the final native link.
   `moui/build.js` injects them through prebuild `link_configs` for
-  `backend/linux`, `backend/linux/skia`, `backend/linux/sun`,
-  `backend/linux/wgpu`, and `render/wgpu/fontconfig`. Linux example entrypoints
+  `backend/linux`, `render/skia`, and `render/wgpu/fontconfig`. Linux example entrypoints
   should not repeat `-lz` or fontconfig stacks; they only need an empty
   `cc-link-flags` override so Moon disables `tcc -run` when required.
 - glib-2.0 development headers and runtime library. `backend/linux`
@@ -98,22 +98,23 @@ be corrupted by cross-host reuse.
 
 ## WGPU Diagnostics
 
-The WGPU diagnostic text path in `backend/linux/wgpu` composes the Linux
-`render/wgpu/fontconfig` provider with the shared Moon Cosmic fallback.
+The WGPU diagnostic factory composes the Linux `render/wgpu/fontconfig`
+provider with the shared Moon Cosmic fallback.
 The fontconfig provider includes real fontconfig family resolution, FreeType
 rasterization (loaded via dlopen), HarfBuzz shaping, embedded-font registration,
 and a narrow color-emoji path; MoonBit tests verify protocol versioning and
 native payload parsing on all platforms, while the full shaping/measurement/raster
-path runs on Linux with the required C libraries. Choose `MoonCosmic` with
-`LinuxWgpuAppOptions::new(text_engine=...)`;
+path runs on Linux with the required C libraries. Choose the engine through
+`@wgpu_renderer.native(text_engine=...)`;
 `examples/showcase/linux_wgpu_cosmic` selects the Moon Cosmic provider explicitly for
 comparison.
 
-## Skia Provider
+## Skia Renderer
 
-Select the native mainline Skia provider by importing
-`wzzc-dev/moui/backend/linux/skia` and using `LinuxSkiaAppOptions`. The
-provider creates `render/skia.SkiaRasterRenderer` and presents the CPU pixel
+Select the native mainline Skia renderer by importing
+`wzzc-dev/moui/render/skia`, adding `@render_skia.from_env()` to the app
+builder, and capturing `LinuxHostAppOptions` in `@linux.entry`. The factory
+creates `render/skia.SkiaRasterRenderer` and presents the CPU pixel
 frame through a narrow API exposed by
 `wzzc-dev/window/linux`. That window package owns the Wayland objects and
 provides `Window::present_rgba_pixels`, implemented with reusable `wl_shm`
@@ -130,30 +131,19 @@ after frame rendering. macOS, Windows, and Linux native bridges enforce the
 shared `WebViewNavigationPolicy` before committing a navigation; blocked URLs
 produce a `NavigationFailed` event. Matching-host smoke is still required before
 promoting Linux WebView runtime observation beyond package-level compile coverage.
-`linux_skia_provider_preflight_summary()` exposes package-level preflight
-observation for the selected font resolution, renderer availability,
-`moui_skia/native` availability, the `wl_shm` presenter path, inherited Wayland
-host service/input/window readiness, explicit Linux clipboard/file-dialog/text-file/open
-URL/menu/system-theme readiness, native menu readiness, async-service gap,
-text-input/IME/drag-drop readiness, native context-menu readiness and native
-accessibility readiness, host-modal
-file-dialog readiness, `HostWindowRenderer` bridge
-forwarding for Skia text-system, image-resource, present-count, and disposal
-diagnostics, and the matching-host runtime boundary, including whether the first-frame smoke
-option is enabled. The Linux host loop records the renderer image-resource
+The Linux host loop records the renderer image-resource
 revision after each present, routes later observed revision changes through the
 matching Wayland window's `request_redraw`, exposes tracked-window revision
-snapshots for diagnostics, calls the optional provider-owned
+snapshots for diagnostics, calls the selected factory's neutral
 `HostAsyncImageLoader` after the presented revision is baselined, and removes
 tracked image revisions plus in-flight image loads when a host window is
-disposed. The Linux Skia provider package now covers the host route from a
-loading first-frame image record through deferred `skia_image_load_completion`,
-repaint request, and second presented-frame status recording. The required
+disposed. Linux reads local files into `HostImageSource` bytes; the selected
+renderer owns decode and completion. Package tests cover the host route from a
+loading first-frame image record through completion, repaint request, and
+second presented-frame status recording. The required
 async second-frame runtime artifact remains matching-host pending until a
-Wayland run records it from the Skia entrypoints or provider smoke. The summary
-is useful for provider/package
-audits, but it does not prove a real Wayland compositor presented Showcase or
-Markdown Editor frames;
+Wayland run records it from a Skia composition root. Package tests do not prove
+a real Wayland compositor presented Showcase or Markdown Editor frames;
 those claims still require matching-host runtime runs and smoke logs
 manifest entries.
 
@@ -163,7 +153,7 @@ For Linux Skia runtime evidence, record these as separate ignored
 `artifacts/` logs on the matching Wayland host:
 
 ```sh
-MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \\
+MOUI_FIRST_FRAME_EXIT=1 \\
   moon run examples/showcase/linux_skia --target native
 MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \\
   moon run examples/markdown_editor/linux_skia --target native
@@ -187,7 +177,7 @@ writes, desktop URL opening, IME composition/cursor geometry, and file
 drag/drop are implemented host-service/input paths, but they remain
 matching-host runtime evidence boundaries: cite only logs that exercised the
 actual desktop/compositor service, not the package preflight summary alone.
-Record dependency-level facts from the `wzzc-dev/window@0.5.4-0.1.2`
+Record dependency-level facts from the `wzzc-dev/window@0.5.4-0.1.3`
 package smoke artifacts; keep the MoUI Showcase
 `linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
 application-level observation. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic

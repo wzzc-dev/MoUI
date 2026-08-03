@@ -49,9 +49,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 - `moui/views/` returns app-facing `@moui.View[Msg]` values for app code.
 - `moui/backend/host/` defines shared host contracts; platform backends
   normalize window and input events into `HostEvent`.
-- `moui/backend/<platform>/skia` selects the native Skia raster mainline
-  provider; `moui/backend/<platform>/wgpu` keeps native WGPU diagnostics
-  available.
+- `moui/backend/<platform>/` owns only the neutral host; applications select
+  `moui/render/skia` or another renderer factory in the composition root.
 - `moui/render/` provides the renderer facade, with native Skia raster, WebGPU
   adapter, and experimental native WGPU implementations under `render/skia/`,
   `render/webgpu_adapter/`, and `render/wgpu/`.

@@ -347,7 +347,7 @@ test "native image decodes bmp data uri through mizchi image" {
 }
 
 ///|
-test "native image decodes local png file through mizchi image" {
+test "native image decodes host-provided local png bytes through mizchi image" {
   let path = "moui_native_image_test.tmp.png"
   let png = @image.encode_png({ width: 1, height: 1, data: b"\xff\x00\x40\xff" }) catch {
     _ => panic()
@@ -355,19 +355,22 @@ test "native image decodes local png file through mizchi image" {
   @fs.write_bytes_to_file(path, png) catch {
     _ => panic()
   }
-  guard load_native_image_data(path) is Some(decoded) else {
-    @fs.remove_file(path) catch {
-      _ => ()
-    }
-    fail("expected decoded local image")
-  }
+  let completion = native_image_load_completion_from_bytes(
+    path,
+    @fs.read_file_to_bytes(path) catch {
+      _ => panic()
+    },
+    background_io=true,
+  )
   @fs.remove_file(path) catch {
     _ => ()
   }
-  inspect(decoded.width, content="1")
-  inspect(decoded.height, content="1")
-  inspect(decoded.data[0].to_int(), content="255")
-  inspect(decoded.data[2].to_int(), content="64")
+  assert_true(completion.has_decoded_rgba_payload())
+  inspect(completion.width, content="1")
+  inspect(completion.height, content="1")
+  inspect(completion.decoded_pixels[0].to_int(), content="255")
+  inspect(completion.decoded_pixels[2].to_int(), content="64")
+  assert_true(completion.background_io)
 }
 
 ///|

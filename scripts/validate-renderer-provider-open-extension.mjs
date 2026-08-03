@@ -63,18 +63,6 @@ function walkMbtFiles(dir, relativeTo = REPO_ROOT) {
 // RendererBackendKind in branching logic.
 // ---------------------------------------------------------------------------
 const SELECTION_ALLOWLIST_PREFIXES = [
-  "moui/backend/macos/skia",
-  "moui/backend/linux/skia",
-  "moui/backend/windows/skia",
-  "moui/backend/android/skia",
-  "moui/backend/ios/skia",
-  "moui/backend/harmonyos/skia",
-  "moui/backend/macos/wgpu",
-  "moui/backend/linux/wgpu",
-  "moui/backend/windows/wgpu",
-  "moui/backend/macos/sun",
-  "moui/backend/linux/sun",
-  "moui/backend/windows/sun",
   "moui/render/skia",
   "moui/render/wgpu",
   "moui/render/sun",

@@ -426,8 +426,8 @@ fn window_subscriptions(
 }
 ```
 
-桌面 Skia 入口会通过 `MacosSkiaAppOptions` / `WindowsSkiaAppOptions` /
-`LinuxSkiaAppOptions` 传入 `event_sources`。Web 使用 `WebAppOptions::event_sources`。
+桌面 Skia 入口会通过 `MacosHostAppOptions` / `WindowsHostAppOptions` /
+`LinuxHostAppOptions` 传入 `event_sources`。Web 使用 `WebAppOptions::event_sources`。
 
 推荐检查：
 

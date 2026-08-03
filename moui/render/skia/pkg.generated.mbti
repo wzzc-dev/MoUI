@@ -11,7 +11,7 @@ import {
 // Values
 pub fn backend_info() -> @render.RendererBackendInfo
 
-pub fn create_hybrid_renderer(@render.NativeGpuPlatform, @render.NativeRendererMode, @render.RendererSurfaceMetrics, SkiaPresentTarget, gpu_available~ : Bool, gpu_promoted~ : Bool, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool) -> SkiaHybridRenderer raise SkiaRendererError
+pub fn create_hybrid_renderer(NativeGpuPlatform, NativeRendererMode, @render.RendererSurfaceMetrics, SkiaPresentTarget, gpu_available~ : Bool, gpu_promoted~ : Bool, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool) -> SkiaHybridRenderer raise SkiaRendererError
 
 pub fn create_skia_hybrid_host_binding(create_host_renderer~ : (@render.RendererSurfaceMetrics, @render.BoundSurface) -> @render.HostWindowRenderer) -> @render.RendererProviderBinding
 
@@ -23,9 +23,17 @@ pub fn create_skia_raster_provider(create_raster~ : (@render.RendererSurfaceMetr
 
 pub fn create_with_present_target(@render.RendererSurfaceMetrics, SkiaPresentTarget, font_resolution? : SkiaFontResolution, async_image_loading? : Bool, on_image_resource_change? : ((@render.ImageResourceSnapshot) -> Unit)?) -> SkiaRasterRenderer raise SkiaRendererError
 
-pub fn create_with_present_target_and_route(@render.RendererSurfaceMetrics, SkiaPresentTarget, surface_route? : @render.SkiaSurfaceRoute, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool, on_image_resource_change? : ((@render.ImageResourceSnapshot) -> Unit)?) -> SkiaRasterRenderer raise SkiaRendererError
+pub fn create_with_present_target_and_route(@render.RendererSurfaceMetrics, SkiaPresentTarget, surface_route? : @render.SurfaceRoute, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool, on_image_resource_change? : ((@render.ImageResourceSnapshot) -> Unit)?) -> SkiaRasterRenderer raise SkiaRendererError
+
+pub fn from_env() -> Array[@render.RendererBindingFactory]
+
+pub fn gpu(font_resolution? : SkiaFontResolution) -> @render.RendererBindingFactory
+
+pub fn raster(font_resolution? : SkiaFontResolution) -> @render.RendererBindingFactory
 
 pub fn renderer_descriptor() -> @render.RendererDescriptor
+
+pub fn[P : NativePlatformSurface] resolve_surface_route(P, NativeRendererMode, gpu_available~ : Bool, gpu_promoted~ : Bool) -> @render.SurfaceRoute
 
 pub fn skia_available() -> Bool
 
@@ -74,6 +82,24 @@ pub struct HostGpuPresentTarget {
 pub fn HostGpuPresentTarget::description(Self) -> String
 pub fn HostGpuPresentTarget::new(description~ : String, create_window_surface~ : (@native.GpuContext?, @render.RendererSurfaceMetrics) -> @native.Surface?, present_gpu~ : (@native.GpuContext?, @native.Surface) -> HostGpuPresentOutcome) -> Self
 
+pub(all) enum NativeGpuPlatform {
+  MacOS
+  Windows
+  Linux
+  Android
+  IOS
+  HarmonyOS
+} derive(Eq, ToJson, @debug.Debug)
+pub impl NativePlatformSurface for NativeGpuPlatform
+
+pub(all) enum NativeRendererMode {
+  Auto
+  SkiaGpu
+  SkiaRaster
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeRendererMode::label(Self) -> String
+pub fn NativeRendererMode::parse(String) -> Self?
+
 pub struct SkiaEmojiFontFallbackDiagnostic {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
@@ -112,8 +138,8 @@ pub struct SkiaHybridRenderer {
 pub fn SkiaHybridRenderer::drain_present_completions(Self) -> Array[@render.RenderPresentCompletion]
 pub fn SkiaHybridRenderer::fallback_to_raster(Self) -> Bool
 pub fn SkiaHybridRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
-pub fn SkiaHybridRenderer::requested_mode(Self) -> @render.NativeRendererMode
-pub fn SkiaHybridRenderer::surface_route(Self) -> @render.SkiaSurfaceRoute
+pub fn SkiaHybridRenderer::requested_mode(Self) -> NativeRendererMode
+pub fn SkiaHybridRenderer::surface_route(Self) -> @render.SurfaceRoute
 
 pub struct SkiaPixelFrame {
   // private fields
@@ -156,9 +182,10 @@ pub fn SkiaRasterRenderer::set_image_resource_change_callback(Self, ((@render.Im
 pub fn SkiaRasterRenderer::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
 pub fn SkiaRasterRenderer::surface_diagnostic_summary(Self) -> String
 pub fn SkiaRasterRenderer::surface_is_gpu(Self) -> Bool
-pub fn SkiaRasterRenderer::surface_route(Self) -> @render.SkiaSurfaceRoute
+pub fn SkiaRasterRenderer::surface_route(Self) -> @render.SurfaceRoute
 pub fn SkiaRasterRenderer::target_kind(Self) -> SkiaPresentKind
 pub fn SkiaRasterRenderer::text_system(Self) -> @core.TextSystem
+pub fn SkiaRasterRenderer::to_host_window_renderer(Self) -> @render.HostWindowRenderer
 pub fn SkiaRasterRenderer::unsupported_command_count(Self) -> Int
 pub fn SkiaRasterRenderer::unsupported_command_diagnostics(Self) -> Array[SkiaUnsupportedCommandDiagnostic]
 
@@ -198,4 +225,9 @@ pub fn SkiaUnsupportedCommandDiagnostic::reason(Self) -> String
 // Type aliases
 
 // Traits
+pub(open) trait NativePlatformSurface {
+  fn surface_route(Self) -> @render.SurfaceRoute
+  fn gpu_promoted(Self) -> Bool
+  fn platform_label(Self) -> String
+}
 

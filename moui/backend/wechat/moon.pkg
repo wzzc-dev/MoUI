@@ -3,7 +3,6 @@ import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/render",
-  "wzzc-dev/moui/render/canvas2d",
   "wzzc-dev/window/dpi",
 }
 

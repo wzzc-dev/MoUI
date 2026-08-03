@@ -4,7 +4,7 @@ fn main {
     bridge=@macos_backend.macos_service_bridge(),
   )
   let timer_source = @macos_backend.macos_timer_source()
-  @macos_skia_backend.run_app(
+  @moui.run_app(
     "Mo Desktop",
     @runtime.new_program_with_dimensions(
       program=@mo_desktop_app.program(
@@ -16,4 +16,7 @@ fn main {
       height=800.0,
     ),
   )
+  .render_all(@render_skia.from_env())
+  .backend(@macos_backend.entry())
+  .run()
 }

@@ -1196,7 +1196,7 @@ if [[ $run_ime_smoke -eq 1 ]]; then
   if [[ $ime_status -ne 0 ]]; then
     exit "$ime_status"
   fi
-  ime_prefix="MoUI native IME runtime matching-host native-app renderer=skia app=text-input-fixture platform-protocol=macos-marked-text NSTextInputClient"
+  ime_prefix="MoUI native IME runtime matching-host native-app renderer=application app=text-input-fixture platform-protocol=macos-marked-text NSTextInputClient"
   for marker in \
     "$ime_prefix MoUI native IME candidate anchor passed" \
     "$ime_prefix MoUI native IME surrounding text passed" \

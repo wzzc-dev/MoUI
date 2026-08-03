@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @windows_wgpu_backend.run_app(
+  @moui.run_app(
     "MoUI Counter",
     @runtime.new_program_with_dimensions(
       program=@counter_app.program(),
@@ -8,4 +8,14 @@ fn main {
       height=360.0,
     ),
   )
+  .render(
+    @render_wgpu.native(
+      text_engine=@render_wgpu.native_platform_text_engine_with_fallback(
+        @wgpu_directwrite.directwrite_text_provider(),
+        fallback=@wgpu_cosmic.cosmic_text_engine(),
+      ),
+    ),
+  )
+  .backend(@windows_backend.entry())
+  .run()
 }

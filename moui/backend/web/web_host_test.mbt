@@ -1,19 +1,7 @@
 ///|
-test "web backend is wasm-gc only and rejects js fallback semantics" {
+test "web backend is window hosted" {
   let info = backend_info()
   inspect(info.uses_window_web_backend, content="true")
-  inspect(info.requires_browser_webgpu_renderer, content="true")
-  assert_true(
-    info.renderer_info.backend == @render.RendererBackendKind::WebGpuWasm,
-  )
-  assert_true(
-    info.renderer_info.status == @render.RendererCapabilityStatus::Supported,
-  )
-  assert_true(
-    info.surface_contract.source ==
-    @render.WgpuSurfaceSourceKind::WebCanvasSurface,
-  )
-  inspect(info.surface_contract.ready, content="true")
 }
 
 ///|

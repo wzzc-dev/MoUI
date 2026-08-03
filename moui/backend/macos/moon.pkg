@@ -6,6 +6,7 @@ import {
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/internal/host_image_source",
   "wzzc-dev/moui/backend/platform_bridge",
   "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/dpi",
@@ -32,6 +33,7 @@ options(
     "macos_service_host.m",
     "macos_timer_host.m",
     "macos_perf_clock.c",
+    "macos_present.mm",
   ],
   targets: { },
 )

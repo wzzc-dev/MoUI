@@ -6,9 +6,8 @@ fn main {
     height=760.0,
   )
   runtime.set_action_commands(@code_editor.code_editor_action_command_map())
-  @linux_skia_backend.run_app_with_options(
-    "MoUI Code Editor",
-    runtime,
-    options=@linux_skia_backend.LinuxSkiaAppOptions::new(),
-  )
+  @moui.run_app("MoUI Code Editor", runtime)
+  .render_all(@render_skia.from_env())
+  .backend(@linux_backend.entry())
+  .run()
 }

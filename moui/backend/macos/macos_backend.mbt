@@ -50,10 +50,9 @@ pub struct MacosHostSmokeOptions {
 }
 
 ///|
-pub struct MacosRendererProvider {
-  priv create_renderer : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-  priv sync_surface : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @render.HostAsyncImageLoader?
+priv struct MacosSurfaceBinding {
+  create_renderer : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
+  sync_surface : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit
 }
 
 ///|
@@ -66,7 +65,7 @@ struct MacosNativeHostBackend {
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
   coordinator : @runtime.WindowHostCoordinator
-  renderer_provider : MacosRendererProvider
+  surface_binding : MacosSurfaceBinding
   services : @host.HostServiceBridge
   platform_slots : @platform_bridge.WindowSlotMap[@window_macos.Window, Unit]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
@@ -184,13 +183,12 @@ pub fn macos_native_view_handle(window : @window_macos.Window) -> UInt64? {
 }
 
 ///|
-pub fn MacosRendererProvider::new(
-  create_renderer~ : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
+fn MacosSurfaceBinding::new(
+  create_renderer~ : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
   sync_surface? : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit = (
     _window,
     _metrics,
   ) => (),
-  image_loader? : @render.HostAsyncImageLoader? = None,
-) -> MacosRendererProvider {
-  { create_renderer, sync_surface, image_loader }
+) -> MacosSurfaceBinding {
+  { create_renderer, sync_surface }
 }

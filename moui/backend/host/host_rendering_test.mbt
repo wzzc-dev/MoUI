@@ -114,56 +114,6 @@ test "native accessibility bridge forwards generation checked typed actions" {
 }
 
 ///|
-test "native renderer auto mode requires availability and promotion" {
-  let pending = @render.resolve_surface_route(
-    @render.NativeGpuPlatform::MacOS,
-    @render.NativeRendererMode::Auto,
-    gpu_available=true,
-    gpu_promoted=false,
-  )
-  assert_true(pending == @render.SkiaSurfaceRoute::RasterSurfaceRoute)
-  let promoted = @render.resolve_surface_route(
-    @render.NativeGpuPlatform::MacOS,
-    @render.NativeRendererMode::Auto,
-    gpu_available=true,
-    gpu_promoted=true,
-  )
-  assert_true(promoted == @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute)
-  let unavailable = @render.resolve_surface_route(
-    @render.NativeGpuPlatform::Android,
-    @render.NativeRendererMode::SkiaGpu,
-    gpu_available=false,
-    gpu_promoted=false,
-  )
-  assert_true(unavailable == @render.SkiaSurfaceRoute::RasterSurfaceRoute)
-}
-
-///|
-test "native renderer surface route reflects platform selection" {
-  let android = @render.resolve_surface_route(
-    @render.NativeGpuPlatform::Android,
-    @render.NativeRendererMode::SkiaGpu,
-    gpu_available=true,
-    gpu_promoted=false,
-  )
-  assert_true(android == @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute)
-  let harmonyos = @render.resolve_surface_route(
-    @render.NativeGpuPlatform::HarmonyOS,
-    @render.NativeRendererMode::SkiaGpu,
-    gpu_available=true,
-    gpu_promoted=false,
-  )
-  assert_true(harmonyos == @render.SkiaSurfaceRoute::EglGpuSurfaceRoute)
-  let windows = @render.resolve_surface_route(
-    @render.NativeGpuPlatform::Windows,
-    @render.NativeRendererMode::SkiaGpu,
-    gpu_available=true,
-    gpu_promoted=false,
-  )
-  assert_true(windows == @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute)
-}
-
-///|
 test "present completion helpers distinguish terminal outcomes" {
   let completion = status => {
     @render.RenderPresentCompletion::new(

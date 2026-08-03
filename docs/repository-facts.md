@@ -16,12 +16,9 @@ This file is generated from repository manifests and validator reports.
 | ./moui_devtools |
 | ./moui_agent |
 | ./moui_agent_mcp |
-| ./window/modules/window |
-| ./window/modules/windowing |
 | ./examples/agent_counter |
 | ./tools |
 | ./moui_cli |
-| ./third_party/mizchi_image |
 | ./moui_skia |
 | ./moui_theme |
 | ./moui_sun |
@@ -49,21 +46,21 @@ This file is generated from repository manifests and validator reports.
 
 | Package | Interface lines | Public | pub(all) |
 |---|---:|---:|---:|
-| root facade (app-loop sugar) (moui/pkg.generated.mbti) | 31 | 8 | 0 |
+| root facade (app-loop sugar) (moui/pkg.generated.mbti) | 33 | 9 | 0 |
 | geometry sugar (moui/geometry/pkg.generated.mbti) | 33 | 9 | 0 |
 | graphics sugar (moui/graphics/pkg.generated.mbti) | 47 | 16 | 0 |
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 35 | 10 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 827 | 450 | 35 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 863 | 468 | 35 |
 | core (moui/core/pkg.generated.mbti) | 2094 | 615 | 177 |
-| views facade (moui/views/pkg.generated.mbti) | 616 | 294 | 0 |
+| views facade (moui/views/pkg.generated.mbti) | 610 | 293 | 0 |
 | host contracts (moui/backend/host/pkg.generated.mbti) | 671 | 240 | 44 |
-| renderer facade (moui/render/pkg.generated.mbti) | 846 | 274 | 51 |
-| skia renderer (moui/render/skia/pkg.generated.mbti) | 200 | 114 | 4 |
-| sun renderer (moui/render/sun/pkg.generated.mbti) | 238 | 142 | 1 |
-| webgpu adapter (moui/render/webgpu_adapter/pkg.generated.mbti) | 143 | 60 | 2 |
-| native wgpu renderer (moui/render/wgpu/pkg.generated.mbti) | 133 | 63 | 2 |
+| renderer facade (moui/render/pkg.generated.mbti) | 979 | 345 | 50 |
+| skia renderer (moui/render/skia/pkg.generated.mbti) | 232 | 122 | 6 |
+| sun renderer (moui/render/sun/pkg.generated.mbti) | 241 | 144 | 1 |
+| webgpu adapter (moui/render/webgpu_adapter/pkg.generated.mbti) | 160 | 69 | 2 |
+| native wgpu renderer (moui/render/wgpu/pkg.generated.mbti) | 138 | 66 | 2 |
 | native text protocol (moui/render/wgpu/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
 
 ## Workspace Examples

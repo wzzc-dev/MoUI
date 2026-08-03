@@ -297,10 +297,10 @@ fn validate_target(
       label + ".htmlRuntimeImport",
       failures,
     ) !=
-    "../../../moui/backend/web/runtime.js" {
+    "../../../moui/render/webgpu_adapter/runtime.js" {
     failures.push(
       label +
-      ".htmlRuntimeImport must be '../../../moui/backend/web/runtime.js'",
+      ".htmlRuntimeImport must be '../../../moui/render/webgpu_adapter/runtime.js'",
     )
   }
   if require_string(
@@ -350,7 +350,7 @@ fn validate_target_expected_field(
 
 ///|
 fn allowed_file_check_path(path : String) -> Bool {
-  if path == "moui/backend/web/runtime.js" ||
+  if path == "moui/render/webgpu_adapter/runtime.js" ||
     path == "moui/backend/web/browser_runtime.js" {
     return true
   }
@@ -447,7 +447,9 @@ fn validate_manifest_fields(manifest : Map[String, Json]) -> Array[String] {
   assert_string_array(runtime_assets, "runtimeAssets", failures)
   assert_includes_all(
     runtime_assets,
-    ["moui/backend/web/runtime.js", "moui/backend/web/browser_runtime.js"],
+    [
+      "moui/render/webgpu_adapter/runtime.js", "moui/backend/web/browser_runtime.js",
+    ],
     "runtimeAssets",
     failures,
   )

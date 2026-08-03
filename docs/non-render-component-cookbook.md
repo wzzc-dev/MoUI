@@ -449,7 +449,7 @@ fn window_subscriptions(
 ```
 
 Desktop Skia entrypoints pass `event_sources` through
-`MacosSkiaAppOptions` / `WindowsSkiaAppOptions` / `LinuxSkiaAppOptions`.
+`MacosHostAppOptions` / `WindowsHostAppOptions` / `LinuxHostAppOptions`.
 Web uses `WebAppOptions::event_sources`.
 
 Recommended checks:

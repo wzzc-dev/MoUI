@@ -10,11 +10,8 @@ fn main {
     height=640.0,
   )
   runtime.set_action_commands(app.action_commands(services~))
-  @windows_wgpu_backend.run_app_with_options(
-    "MoUI Markdown Editor",
-    runtime,
-    options=@windows_wgpu_backend.WindowsWgpuAppOptions::new(
-      text_engine=@wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
-    ),
-  )
+  @moui.run_app("MoUI Markdown Editor", runtime)
+  .render(@render_wgpu.native(text_engine=@wgpu_cosmic.cosmic_text_engine()))
+  .backend(@windows_host.entry())
+  .run()
 }

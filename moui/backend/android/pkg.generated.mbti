@@ -21,13 +21,17 @@ pub fn android_readiness() -> AndroidBackendReadiness
 
 pub fn android_service_capabilities() -> @host.HostServiceCapabilities
 
+pub fn android_surface_binding(Array[@render.RendererBindingFactory]) -> AndroidSurfaceBinding
+
 pub fn android_window_hosted_pump_host_sim(AndroidEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
 pub fn backend_info() -> AndroidBackendInfo
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : AndroidSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : AndroidRendererProvider) -> @embedded_runtime_backend.HostedRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : AndroidSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, binding~ : AndroidSurfaceBinding) -> @embedded_runtime_backend.HostedRuntimeSession?
 
-pub fn renderer_provider_adapter_from_android(AndroidRendererProvider) -> @embedded_runtime_backend.RendererProviderAdapter
+pub fn entry(options? : AndroidHostAppOptions, auto_exit_after_frames? : Int?) -> @runtime.PlatformEntry
+
+pub fn host_surface_binding_from_android(AndroidSurfaceBinding) -> @embedded_runtime_backend.HostSurfaceBinding
 
 // Errors
 
@@ -35,7 +39,7 @@ pub fn renderer_provider_adapter_from_android(AndroidRendererProvider) -> @embed
 pub(all) struct AndroidBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
-  renderer_provider : Bool
+  surface_binding : Bool
   pointer : Bool
   scroll : Bool
   keyboard : Bool
@@ -68,16 +72,23 @@ pub struct AndroidEmbeddedRuntimeBackend {
 }
 pub fn AndroidEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn AndroidEmbeddedRuntimeBackend::has_session(Self) -> Bool
-pub fn AndroidEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> AndroidRendererProvider, auto_exit_after_frames? : Int?) -> Self
+pub fn AndroidEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererBindingFactory], auto_exit_after_frames? : Int?) -> Self
 pub fn AndroidEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn AndroidEmbeddedRuntimeBackend::surface_generation(Self) -> Int
 pub impl @wzzc-dev/window/android.ApplicationHandler for AndroidEmbeddedRuntimeBackend
 
-pub struct AndroidRendererProvider {
+pub struct AndroidHostAppOptions {
   // private fields
 }
-pub fn AndroidRendererProvider::has_async_image_loader(Self) -> Bool
-pub fn AndroidRendererProvider::new(create_renderer~ : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
+pub fn AndroidHostAppOptions::new(status_bar_immersive? : Bool) -> Self
+pub fn AndroidHostAppOptions::status_bar_immersive(Self) -> Bool
+pub fn AndroidHostAppOptions::with_status_bar_immersive(Self, Bool) -> Self
+
+pub struct AndroidSurfaceBinding {
+  // private fields
+}
+pub fn AndroidSurfaceBinding::has_async_image_loader(Self) -> Bool
+pub fn AndroidSurfaceBinding::new(create_renderer~ : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?, sync_surface? : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
 pub(all) struct AndroidSurfaceHandle {
   raw : UInt64

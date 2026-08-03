@@ -24,7 +24,7 @@ platform entrypoints        moui/runtime     # trees, dispatch, effects
 thin wiring only                   ▼
         │                   moui/backend/host   # HostEvent, services, EmbedderHostChannel
         │                          │
-        └────────────►     backend/<platform>  (+ /skia, /wgpu providers)
+        └────────────►     backend/<platform>  # neutral host only
                                    │
                                    ▼
                            moui/render/*  ──►  moui_skia / webgpu_adapter / wgpu
@@ -53,9 +53,9 @@ thin wiring only                   ▼
 | Host 服务与 embedder 通道 | `moui/backend/host` |
 | 原生宿主后端 | `moui/backend/{macos,windows,linux}` |
 | 嵌入运行时后端 | `moui/backend/{android,ios,harmonyos}` |
-| Skia 主线 providers | `moui/backend/<platform>/skia` |
-| WGPU 诊断 providers | `moui/backend/<platform>/wgpu` |
-| Renderer 门面 | `moui/render`, `render/skia`, `render/webgpu_adapter`, `render/wgpu` |
+| 中立宿主 surface/presenter | `moui/backend/<platform>` |
+| Renderer factory 与实现 | `moui/render/{skia,wgpu,sun,canvas2d,webgpu_adapter}` |
+| 应用组合 | `@moui.run_app(...)` 后调用 `.render(...)` 或 `.render_all(...)`，再调用 `.backend(...).run()` |
 | Skia FFI / native capability | `moui_skia` |
 | 嵌入运行时模板与事件循环 | `wzzc-dev/window/{android,ios,harmonyos}` |
 | 富文本领域 | `moui_richtext` |

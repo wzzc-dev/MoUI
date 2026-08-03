@@ -28,7 +28,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 - `backend/host/` 定义共享 host contract。
 - `backend/web/` 是 browser wasm-gc host。
 - `backend/macos/`、`backend/windows/` 和 `backend/linux/` 是 native host core，它们把平台 event 规范化为 `HostEvent`，并通过平台 renderer provider 接收具体渲染器。
-- `backend/<platform>/skia` 拥有 native Skia raster 主线组装；`backend/<platform>/wgpu` 仍可用于显式 native WGPU diagnostics。
+- `render/skia` 拥有 native Skia 主线 factories；`render/wgpu` 保留显式 native WGPU diagnostics，应用将其与一个平台 backend 组合。
 - `backend/linux/` 是 Wayland host core，runtime-evidence、IME、clipboard、file dialog、directory listing、accessibility 和 async image loading 都通过匹配主机 CI provider 接线。
 - `render/` 拥有 renderer facade 和能力报告。
 - `render/skia/` 实现 native Skia raster renderer facade。

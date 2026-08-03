@@ -1,6 +1,6 @@
 # Linux 平台说明
 
-`backend/linux` 是最小原生 Wayland 宿主核心。它使用 `wzzc-dev/window@0.5.1-0.1.7-2` Linux 包处理 Wayland 事件循环和窗口句柄，通过共享 `HostEvent` 契约归一化窗口/输入事件，并让 Showcase 入口点通过与 macOS 和 Windows 相同的渲染器/运行时边界运行。具体渲染通过 `LinuxRendererProvider` 注入；`backend/linux/skia` 是原生主线，并复用 window 包的 `Window::present_rgba_pixels` presenter，而 `backend/linux/wgpu` 从 `wl_display` 和 `wl_surface` 创建原生 WGPU surface，用于诊断。
+`backend/linux` 是最小原生 Wayland 宿主核心。它使用 `wzzc-dev/window@0.5.4-0.1.3` Linux 包处理 Wayland 事件循环和窗口句柄，通过共享 `HostEvent` 契约归一化窗口/输入事件，并向应用选择的 renderer factory 提供中立 `HostSurfaceKit`。backend 只拥有 Wayland CPU presenter、raw-byte image I/O 与不透明 GPU 描述符；Skia、Sun 和 WGPU 的构造分别留在 `render/skia`、`render/sun` 与 `render/wgpu`。
 
 Wayland 窗口路径在 compositor 暴露 `xdg-decoration` 时请求服务端装饰。如果 compositor 回退到客户端装饰，`backend/linux` 会在 MoUI 内容上方保留一个小标题栏带，把窗口标题和基本控件绘制进渲染器命令流，并转换输入坐标，使应用视图仍接收以内容为原点的坐标空间。
 同一适配器消费 window 包的 Wayland key/modifier 映射和当前指针坐标：Linux 后端测试覆盖修饰键传播到共享键盘事件，以及使用窗口事件携带的位置而不是陈旧指针状态的按钮事件。该 fork 还向 MoUI 暴露 Wayland data-device 剪贴板 selection 和文件拖放事件；拖放路径在到达 `View::on_file_drop` 之前继续经过 `HostEvent::DragDrop`。
@@ -12,14 +12,14 @@ Linux 运行时要求有意保持原生：
 
 - Wayland compositor。要执行可重复的 headless 检查，使用 headless backend 运行 Weston，并把 `WAYLAND_DISPLAY` 指向其 socket。
 - 只有在运行 WGPU 诊断时才需要可用 Vulkan stack。当硬件 Vulkan 不可用时，headless 软件验证可以通过 `vulkan-swrast`/Lavapipe 使用 Mesa llvmpipe。
-- `wzzc-dev/window@0.5.1-0.1.7-2` 原生 stub 需要 Wayland 开发头文件和生成的 xdg-shell protocol source。
+- `wzzc-dev/window@0.5.4-0.1.3` 原生 stub 需要 Wayland 开发头文件和生成的 xdg-shell protocol source。
 - compositor 提供的 `wl_data_device_manager`，用于原生剪贴板 selection 和文件拖放运行时行为。
 - Linux 服务需要 XDG desktop 集成：OpenURI 在可用时通过 xdg-desktop-portal，否则回退到 desktop opener；文件对话框选择使用 xdg-desktop-portal，并以 `zenity` 作为 fallback 对话框 provider。如果 portal 不可用，请安装 `zenity`：
   ```sh
   sudo apt-get install zenity
   ```
   当 portal 和 zenity 都不可用时，文件和文件夹选择会静默返回 cancelled，应用会向 stdout 打印诊断消息。
-- 最终原生链接需要 zlib / pthread / fontconfig 系统库。`moui/build.js` 通过 prebuild `link_configs` 为 `backend/linux`、`backend/linux/skia`、`backend/linux/sun`、`backend/linux/wgpu` 和 `render/wgpu/fontconfig` 注入这些库。Linux 示例入口点不应重复 `-lz` 或 fontconfig 栈；它们只需要一个空的 `cc-link-flags` 覆盖，让 Moon 在需要时禁用 `tcc -run`。
+- 最终原生链接需要 zlib / pthread / fontconfig 系统库。`moui/build.js` 通过 prebuild `link_configs` 为 `backend/linux`、`render/skia` 和 `render/wgpu/fontconfig` 注入这些库。Linux 示例入口点不应重复 `-lz` 或 fontconfig 栈；它们只需要一个空的 `cc-link-flags` 覆盖，让 Moon 在需要时禁用 `tcc -run`。
 - glib-2.0 开发头文件和运行时库。`backend/linux` 无条件通过 GLib main loop（`g_timeout_add` / `g_source_remove`）驱动 `HostTimerSource` subscription，因此 `moui` prebuild 通过 `pkg-config` 解析 `glib-2.0`，把得到的 `-I` include 标志送入 `stub-cc-flags`，并把 libs 合并进 `backend/linux` `link_configs` 条目。在 `pkg-config` 找不到 `glib-2.0` 的宿主上，两者都会解析为空（C stub 主体由 `#ifdef __linux__` 保护，并且只在 Linux 上有意义）。发行版特定设置可以用 `MOUI_LINUX_GLIB_STUB_CC_FLAGS` 和 `MOUI_LINUX_GLIB_CC_LINK_FLAGS` 覆盖解析出的标志。
 - 原生 WebView 支持需要 WebKitGTK 开发包（`libwebkit2gtk-4.1-dev` 或 `4.0`）。`moui_webview` prebuild 通过 `pkg-config` 自动检测带 `webkit2gtk-4.1` 或 `webkit2gtk-4.0` 的 `gtk+-3.0`；如果找到，则启用原生桥。fallback 构建不链接 WebKitGTK，并报告 WebView 不可用。发行版特定设置可以用 `MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` 和 `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS` 覆盖检测。
 
@@ -41,20 +41,20 @@ moon run examples/markdown_editor/linux_skia --target native
 
 ## WGPU 诊断
 
-`backend/linux/wgpu` 中的 WGPU 诊断文本路径会把 Linux `render/wgpu/fontconfig` provider 与共享 Moon Cosmic fallback 组合。fontconfig provider 包括真实 fontconfig family 解析、FreeType 光栅化（通过 dlopen 加载）、HarfBuzz shaping、嵌入字体注册和狭窄 color-emoji 路径；MoonBit 测试在所有平台验证 protocol versioning 和原生 payload 解析，而完整 shaping/measurement/raster 路径会在具备所需 C 库的 Linux 上运行。使用 `LinuxWgpuAppOptions::new(text_engine=...)` 选择 `MoonCosmic`；`examples/showcase/linux_wgpu_cosmic` 显式选择 Moon Cosmic provider 用于比较。
+WGPU 诊断 factory 会把 Linux `render/wgpu/fontconfig` provider 与共享 Moon Cosmic fallback 组合。fontconfig provider 包括真实 fontconfig family 解析、FreeType 光栅化、HarfBuzz shaping、嵌入字体注册和 color-emoji 路径；通过 `@wgpu_renderer.native(text_engine=...)` 选择引擎，`examples/showcase/linux_wgpu_cosmic` 显式选择 Moon Cosmic provider 用于比较。
 
-## Skia Provider
+## Skia Renderer
 
-通过导入 `wzzc-dev/moui/backend/linux/skia` 并使用 `LinuxSkiaAppOptions` 选择原生主线 Skia provider。该 provider 创建 `render/skia.SkiaRasterRenderer`，并通过 `wzzc-dev/window/linux` 暴露的狭窄 API 呈现 CPU 像素帧。该 window 包拥有 Wayland 对象并提供 `Window::present_rgba_pixels`，其实现使用可复用 `wl_shm` buffer、buffer-release 跟踪、`wl_surface_attach`、damage、commit 和 display flush。把 `wl_shm` presenter 保留在 window 后端可避免在 MoUI 中重复 Wayland registry 和 buffer 所有权。
+通过导入 `wzzc-dev/moui/render/skia`、向 AppBuilder 添加 `@render_skia.from_env()`，并在 `@linux.entry` 中捕获 `LinuxHostAppOptions` 来选择原生主线 Skia renderer。factory 创建 `render/skia.SkiaRasterRenderer`，并通过 `wzzc-dev/window/linux` 暴露的狭窄 API 呈现 CPU 像素帧。该 window 包拥有 Wayland 对象并提供 `Window::present_rgba_pixels`，其实现使用可复用 `wl_shm` buffer、buffer-release 跟踪、`wl_surface_attach`、damage、commit 和 display flush。把 `wl_shm` presenter 保留在 window 后端可避免在 MoUI 中重复 Wayland registry 和 buffer 所有权。
 Linux 原生 WebView 支持通过 `pkg-config` 自动检测。安装 WebKitGTK 开发包时，宿主使用 Wayland surface 句柄从 `DrawFrame.platform_views` 同步位置，在需要时把位置偏移到客户端装饰下方，从 Linux 事件循环 wait 路径 pump GTK main context，通过 `HostEvent::WebView` 转发 navigation/title/history/JavaScript 事件，并在帧渲染后 drain `HostWebViewCommandQueue` 命令。macOS、Windows 和 Linux 原生桥在提交 navigation 前强制执行共享 `WebViewNavigationPolicy`；被阻止的 URL 会产生 `NavigationFailed` 事件。在把 Linux WebView 运行时观察提升到包级编译覆盖之外之前，仍需要匹配宿主 smoke。
-`linux_skia_provider_preflight_summary()` 暴露包级预检观察，包括所选字体解析、渲染器可用性、`moui_skia/native` 可用性、`wl_shm` presenter 路径、继承的 Wayland 宿主服务/输入/窗口就绪度、显式 Linux 剪贴板/文件对话框/文本文件/open URL/菜单/system-theme 就绪度、原生菜单就绪度、async-service 缺口、文本输入/IME/拖放就绪度、原生上下文菜单就绪度和原生无障碍就绪度、宿主 modal 文件对话框就绪度、Skia 文本系统/image-resource/present-count/释放诊断的 `HostWindowRenderer` 桥转发，以及匹配宿主运行时边界，包括首帧 smoke 选项是否启用。Linux 宿主循环在每次 present 后记录渲染器 image-resource revision，将稍后观察到的 revision 变化路由到匹配 Wayland 窗口的 `request_redraw`，为诊断暴露 tracked-window revision 快照，在 presented revision 建立基线后调用可选 provider 拥有的 `HostAsyncImageLoader`，并在宿主窗口释放时移除 tracked image revision 和飞行中的 image load。Linux Skia provider 包现在覆盖从 loading 首帧 image record 到延迟 `skia_image_load_completion`、repaint 请求和第二个 presented-frame 状态记录的宿主路径。必需的异步第二帧运行时 artifact 仍处于匹配宿主待办，直到 Wayland 运行从 Skia 入口点或 provider smoke 记录它。该 summary 对 provider/package 审计有用，但它不能证明真实 Wayland compositor 呈现了 Showcase 或 Markdown Editor 帧；这些声明仍需要匹配宿主运行时运行和 smoke 日志 manifest 条目。
+Linux 宿主循环在每次 present 后记录 renderer image-resource revision，将变化路由到匹配 Wayland 窗口的 `request_redraw`，为诊断暴露 tracked-window revision 快照，并在 presented revision 建立基线后调用已选 factory 返回的中立 `HostAsyncImageLoader`。`backend/linux` 只通过 `HostImageSource` 读取原始字节；renderer 的 `RendererImageDecoder` 负责解码与 completion。必需的异步第二帧 artifact 仍需要匹配 Wayland 运行记录；包测试和 capability summary 不能证明真实 compositor 呈现。
 
 ## 运行时证据
 
 对于 Linux Skia 运行时证据，在匹配 Wayland 宿主上把这些记录为单独的被忽略 `artifacts/` 日志：
 
 ```sh
-MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \\
+MOUI_FIRST_FRAME_EXIT=1 \\
   moon run examples/showcase/linux_skia --target native
 MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \\
   moon run examples/markdown_editor/linux_skia --target native
@@ -63,7 +63,7 @@ scripts/run-window-package-smoke.sh linux --run
 
 Showcase 和 Markdown Editor 日志必须包含宿主循环输出的 `Linux renderer presented first frame; exiting by request; title=...`，才能被引用为应用层运行时证据。window 包 smoke 仍是 Wayland 句柄、`present_rgba_pixels`、resize/redraw、IME request 状态和干净关闭的依赖层证据。
 
-window 包为该依赖表面携带 consumer 风格 Linux smoke。在匹配 Wayland 宿主上，运行 `scripts/run-window-package-smoke.sh linux --run` 来覆盖 surface 创建、公共 Wayland 句柄、`Window::present_rgba_pixels`、resize、redraw、IME request 状态和干净关闭。只有在观察到代表性指针/键盘输入时才添加 `--require-input` 或 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1`。Linux 剪贴板 selection、文件对话框、文本文件读写、desktop URL 打开、IME composition/cursor 几何和文件拖放都是已实现的宿主服务/输入路径，但它们仍是匹配宿主运行时证据边界：只引用实际覆盖了 desktop/compositor 服务的日志，而不是单独引用包预检 summary。从 `wzzc-dev/window@0.5.1-0.1.7-2` 包 smoke artifact 记录依赖层事实；把 MoUI Showcase `linux_skia` 和 Markdown Editor `linux_skia` 运行保持为独立主线应用层观察。当配置了 Vulkan/WGPU stack 时，把 `linux_wgpu` 和 `linux_wgpu_cosmic` 保持为 WGPU 诊断观察。
+window 包为该依赖表面携带 consumer 风格 Linux smoke。在匹配 Wayland 宿主上，运行 `scripts/run-window-package-smoke.sh linux --run` 来覆盖 surface 创建、公共 Wayland 句柄、`Window::present_rgba_pixels`、resize、redraw、IME request 状态和干净关闭。只有在观察到代表性指针/键盘输入时才添加 `--require-input` 或 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1`。Linux 剪贴板 selection、文件对话框、文本文件读写、desktop URL 打开、IME composition/cursor 几何和文件拖放都是已实现的宿主服务/输入路径，但它们仍是匹配宿主运行时证据边界：只引用实际覆盖了 desktop/compositor 服务的日志，而不是单独引用包预检 summary。从 `wzzc-dev/window@0.5.4-0.1.3` 包 smoke artifact 记录依赖层事实；把 MoUI Showcase `linux_skia` 和 Markdown Editor `linux_skia` 运行保持为独立主线应用层观察。当配置了 Vulkan/WGPU stack 时，把 `linux_wgpu` 和 `linux_wgpu_cosmic` 保持为 WGPU 诊断观察。
 
 对于已安装 WebKitGTK 的配置宿主上的 Linux WebView 运行时证据，构建或运行 demo，并把 smoke 日志与 Skia 首帧证据分开引用：
 

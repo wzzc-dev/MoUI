@@ -104,7 +104,7 @@ pub fn readiness() -> LinuxBackendReadiness {
     ready: true,
     blocked_by: [],
     next_steps: [
-      "keep matching-host Linux Showcase and Markdown Editor Skia first-frame observation current",
+      "keep matching-host Linux Showcase and Markdown Editor first-frame observation current",
       "capture full IME and platform service runtime evidence on matching Wayland host",
     ],
   }

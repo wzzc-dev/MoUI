@@ -4,7 +4,7 @@ test "harmonyos backend reports experimental readiness" {
   assert_true(info.host_info.backend == @host.HostBackendKind::Native)
   inspect(info.capabilities.embedded_surface, content="true")
   inspect(info.capabilities.external_event_loop, content="true")
-  inspect(info.capabilities.renderer_provider, content="true")
+  inspect(info.capabilities.surface_binding, content="true")
   inspect(info.capabilities.ime, content="true")
   inspect(info.capabilities.clipboard, content="true")
   inspect(info.capabilities.accessibility, content="true")
@@ -25,31 +25,34 @@ test "harmonyos backend reports experimental readiness" {
 }
 
 ///|
-test "harmonyos runtime session renders through supplied provider" {
+test "harmonyos runtime session renders through supplied surface binding" {
   let render_count = Ref(0)
   let resize_count = Ref(0)
   let sync_count = Ref(0)
   let create_count = Ref(0)
   let dispose_count = Ref(0)
   let completion_drain_count = Ref(0)
-  let provider = HarmonyOSRendererProvider::new(
+  let binding = HarmonyOSSurfaceBinding::new(
     create_renderer=(_surface, _metrics) => {
       create_count.val = create_count.val + 1
       Some(
-        @render.HostWindowRenderer::new(
-          resize=_ => resize_count.val = resize_count.val + 1,
-          render=_ => (),
-          render_frame=Some(_frame => {
-            render_count.val = render_count.val + 1
-            @render.RenderFrameResult::new(presented=true)
-          }),
-          drain_present_completions=Some(() => {
-            completion_drain_count.val = completion_drain_count.val + 1
-            []
-          }),
-          text_system=() => @core.TextSystem::fallback(),
-          present_count=() => render_count.val,
-          dispose=() => dispose_count.val = dispose_count.val + 1,
+        @render.HostRendererResolution::new(
+          renderer=@render.HostWindowRenderer::new(
+            resize=_ => resize_count.val = resize_count.val + 1,
+            render=_ => (),
+            render_frame=Some(_frame => {
+              render_count.val = render_count.val + 1
+              @render.RenderFrameResult::new(presented=true)
+            }),
+            drain_present_completions=Some(() => {
+              completion_drain_count.val = completion_drain_count.val + 1
+              []
+            }),
+            text_system=() => @core.TextSystem::fallback(),
+            present_count=() => render_count.val,
+            dispose=() => dispose_count.val = dispose_count.val + 1,
+          ),
+          image_loader=None,
         ),
       )
     },
@@ -67,7 +70,7 @@ test "harmonyos runtime session renders through supplied provider" {
       runtime~,
       surface=HarmonyOSSurfaceHandle::new(raw=42UL),
       metrics~,
-      provider~,
+      binding~,
     ) {
     Some(session) => {
       let first_generation = session.session_generation()
@@ -97,7 +100,7 @@ test "harmonyos runtime session renders through supplied provider" {
         session.attach(
           raw_handle=84UL,
           metrics=resized,
-          adapter=renderer_provider_adapter_from_harmonyos(provider),
+          binding=host_surface_binding_from_harmonyos(binding),
         ),
       )
       assert_true(session.raw_handle() == 84UL)
@@ -106,7 +109,7 @@ test "harmonyos runtime session renders through supplied provider" {
       inspect(sync_count.val, content="2")
       ignore(session.render_frame())
       inspect(render_count.val, content="2")
-      (renderer_provider_adapter_from_harmonyos(provider).sync)(
+      (host_surface_binding_from_harmonyos(binding).sync)(
         84UL,
         session.metrics(),
       )
