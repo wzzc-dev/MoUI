@@ -66,11 +66,11 @@ Run `moui doctor --platform harmonyos` before a native build.
 ## Build And Run
 
 ```sh
-moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
-moui build harmonyos harmonyos_demo \
-  --mobile-config "$PWD/examples/harmonyos_demo/moui.mobile.json"
-moui run harmonyos harmonyos_demo \
-  --mobile-config "$PWD/examples/harmonyos_demo/moui.mobile.json"
+moon check examples/showcase/harmonyos_window_hosted --target native
+moui build harmonyos showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json"
+moui run harmonyos showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json"
 ```
 
 `--prepare-only` stops before hvigor. `--fallback-skia` is packaging-only

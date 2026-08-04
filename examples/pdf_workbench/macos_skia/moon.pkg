@@ -1,8 +1,6 @@
 import {
   "moonbitlang/core/env",
-  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/render/skia" @render_skia,
   "examples/pdf_workbench/app",

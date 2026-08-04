@@ -24,15 +24,13 @@ let web_timer_registry : Ref[WebTimerRegistry] = Ref(WebTimerRegistry::new())
 /// Construct a browser timer source backed by the browser event-loop's
 /// monotonic `performance.now()` clock. The Web host drains due registrations
 /// on each event-loop turn, and the returned cleanup removes its registration.
-pub fn web_timer_source() -> @runtime.HostTimerSource {
+pub fn web_timer_source() -> @services.TimerSource {
   web_timer_source_from_clock(() => web_timer_now_ms().to_double())
 }
 
 ///|
-fn web_timer_source_from_clock(
-  clock : () -> Double,
-) -> @runtime.HostTimerSource {
-  @runtime.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
+fn web_timer_source_from_clock(clock : () -> Double) -> @services.TimerSource {
+  @services.TimerSource::new(start=(interval_ms, dispatch) => {
     let token = web_timer_registry.val.next_token
     web_timer_registry.val.next_token = token + 1
     web_timer_registry.val.registrations.push({

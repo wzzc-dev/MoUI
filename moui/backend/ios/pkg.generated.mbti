@@ -7,9 +7,12 @@ import {
   "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
 }
 
 // Values
+pub fn app_environment() -> @services.AppEnvironment
+
 pub fn backend_info() -> IosBackendInfo
 
 pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : IosSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, binding~ : IosSurfaceBinding) -> @embedded_runtime_backend.HostedRuntimeSession?

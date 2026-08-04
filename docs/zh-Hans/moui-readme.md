@@ -159,7 +159,7 @@ moon run examples/showcase/linux_skia --target native
 
 ### Markdown Editor
 
-Typora 风格的所见即所得 Markdown 编辑器。源码位于 `examples/markdown_editor/app`；平台入口很薄。
+Typora 风格的所见即所得 Markdown 编辑器。源码位于 `examples/markdown_editor/app`；保留的 macOS/Web 入口很薄。
 
 ```sh
 # Web (wasm-gc)
@@ -167,13 +167,6 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 
 # macOS Skia
 moon run examples/markdown_editor/macos_skia --target native
-
-# Windows Skia (run msvc_env.ps1 first in PowerShell)
-.\scripts\windows\msvc_env.ps1
-moon run examples/markdown_editor/windows_skia --target native
-
-# Linux Skia
-moon run examples/markdown_editor/linux_skia --target native
 ```
 
 ### Mo Workbench
@@ -184,35 +177,13 @@ moon run examples/markdown_editor/linux_skia --target native
 moon run examples/mo_workbench/macos_skia --target native
 ```
 
-### Showcase
-
-完整 MoUI view catalog 和可复用示例索引。共享 app 逻辑位于 `examples/showcase/app`。
-
-```sh
-# Web (wasm-gc)
-moon build examples/showcase/web_wasm --target wasm-gc
-
-# macOS Skia
-moon run examples/showcase/macos_skia --target native
-
-# Windows Skia (run msvc_env.ps1 first in PowerShell)
-.\scripts\windows\msvc_env.ps1
-moon run examples/showcase/windows_skia --target native
-
-# Linux Skia
-moon run examples/showcase/linux_skia --target native
-```
-
 ### Excel Viewer
 
-使用 MoUI data table 组件的 MoonBit Excel（`bobzhang/mbtexcel`）文件渲染器。共享 app 逻辑位于 `examples/excel/app`；目前 `macos_skia` 和 `linux_skia` 入口已接线。
+使用 MoUI data table 组件的 MoonBit Excel（`bobzhang/mbtexcel`）文件渲染器。共享 app 逻辑位于 `examples/excel/app`；保留的入口为 `macos_skia`。
 
 ```sh
 # macOS Skia
 moon run examples/excel/macos_skia --target native
-
-# Linux Skia
-moon run examples/excel/linux_skia --target native
 ```
 
 重点示例的聚焦 app-package 测试：

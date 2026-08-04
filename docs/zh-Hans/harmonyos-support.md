@@ -63,11 +63,11 @@ IMAGE_ROOT="$HOME/Library/Huawei/Sdk"
 ## 构建与运行
 
 ```sh
-moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
-moui build harmonyos harmonyos_demo \
-  --mobile-config "$PWD/examples/harmonyos_demo/moui.mobile.json"
-moui run harmonyos harmonyos_demo \
-  --mobile-config "$PWD/examples/harmonyos_demo/moui.mobile.json"
+moon check examples/showcase/harmonyos_window_hosted --target native
+moui build harmonyos showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json"
+moui run harmonyos showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json"
 ```
 
 `--prepare-only` 在执行 hvigor 前停止。`--fallback-skia` 只提供打包诊断覆盖，

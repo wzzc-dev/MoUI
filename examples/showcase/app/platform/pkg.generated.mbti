@@ -3,14 +3,11 @@ package "examples/showcase/app/platform"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
 }
 
 // Values
-pub fn action_command_map() -> @core.ActionCommandMap
-
 pub fn catalog_groups() -> Array[CatalogGroup]
 
 pub fn catalog_items() -> Array[CatalogItem]
@@ -19,11 +16,13 @@ pub fn normalize_platform_route(String) -> String
 
 pub fn platform_routes() -> Array[String]
 
-pub fn program(services? : @host.HostAppServices, timer_source? : @runtime.HostTimerSource?, window_events? : @runtime.HostWindowEventSource?, route? : String) -> @core.Program[Model, Msg]
+pub fn program(environment? : @services.AppEnvironment, route? : String) -> @core.Program[Model, Msg]
 
-pub fn subscriptions(Model) -> @core.Subscription[Msg]
+pub fn program_commands() -> Array[@core.ProgramCommand[Msg]]
 
-pub fn update(Model, Msg) -> (Model, @core.Effect[Msg])
+pub fn subscriptions(Model, timer_source? : @services.TimerSource?) -> @core.Subscription[Msg]
+
+pub fn update(Model, Msg, services? : @services.AppServices) -> (Model, @core.Effect[Msg])
 
 pub fn view(Model) -> @core.View[Msg]
 
@@ -53,21 +52,18 @@ pub struct Model {
   window_height : Double
   clipboard_text : String
   last_event : String
-  pending_service : @host.HostServiceRequestId?
+  pending_service : Int?
+  next_service : Int
   stroke_points : Array[@core.Point]
   anim_phase : Double
-  services : @host.HostAppServices
-  timer_source : @runtime.HostTimerSource?
-  window_events : @runtime.HostWindowEventSource?
   probe_text : String
   probe_action_count : Int
   probe_submit_count : Int
   host_label : String
 }
-pub fn Model::new(services? : @host.HostAppServices, timer_source? : @runtime.HostTimerSource?, window_events? : @runtime.HostWindowEventSource?, timer_running? : Bool, route? : String, host_label? : String) -> Self
+pub fn Model::new(timer_running? : Bool, route? : String, host_label? : String) -> Self
 pub fn Model::open(Self, String) -> Self
 pub fn Model::route(Self) -> String
-pub fn Model::with_host_adapters(Self, services? : @host.HostAppServices, timer_source? : @runtime.HostTimerSource?, window_events? : @runtime.HostWindowEventSource?) -> Self
 pub fn Model::with_host_label(Self, String) -> Self
 
 pub(all) enum Msg {
@@ -78,7 +74,9 @@ pub(all) enum Msg {
   WriteClipboard
   ReadClipboard
   OpenFile
-  HostCompleted(@host.HostCompletedServiceResponse)
+  ClipboardWriteCompleted(Int, @services.ServiceTaskResult[Unit])
+  ClipboardReadCompleted(Int, @services.ServiceTaskResult[String])
+  FileOpenCompleted(Int, @services.ServiceTaskResult[String])
   CanvasDrag(@core.Point)
   ClearCanvas
   AnimTick

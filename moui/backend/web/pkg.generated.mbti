@@ -5,9 +5,12 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
 }
 
 // Values
+pub fn app_environment(routes? : @services.RouteSource) -> @services.AppEnvironment
+
 pub fn aria_update_from_semantics_read(@runtime.SemanticsRead) -> AriaSemanticsUpdate?
 
 pub fn backend_info() -> WebBackendInfo
@@ -26,7 +29,7 @@ pub fn request_animation_frame_event() -> @host.HostEvent
 
 pub fn semantics_to_aria(@wzzc-dev/moui/core.SemanticsNode) -> AriaNode
 
-pub fn web_app_services(system_theme? : @wzzc-dev/moui/core.ColorScheme) -> @host.HostAppServices
+pub fn web_app_services(system_theme? : @wzzc-dev/moui/core.ColorScheme) -> @services.AppServices
 
 pub fn web_capability_summary(services? : @host.HostServiceCapabilities, async_services? : Bool) -> @host.HostCapabilitySummary
 
@@ -60,9 +63,9 @@ pub fn web_history_replace_route(String) -> Unit
 
 pub fn web_host_info() -> @host.HostAppInfo
 
-pub fn web_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool, clipboard? : Bool, clipboard_read? : Bool, clipboard_write? : (String) -> Bool, file_dialog? : Bool, file_access? : Bool, async_queue? : @host.HostServiceAsyncQueue?) -> @host.HostServiceBridge
+pub fn web_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool, clipboard? : Bool, clipboard_read? : Bool, clipboard_write? : (String) -> Bool, file_dialog? : Bool, file_access? : Bool, settings_available? : Bool, settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse, async_queue? : @host.HostServiceAsyncQueue?) -> @host.HostServiceBridge
 
-pub fn web_timer_source() -> @runtime.HostTimerSource
+pub fn web_timer_source() -> @services.TimerSource
 
 pub fn web_update_document_metadata(WebDocumentMetadata) -> Unit
 
@@ -115,9 +118,9 @@ pub impl @wzzc-dev/window/web.ApplicationHandler for WebApp
 pub(all) struct WebAppOptions {
   scene_resolver : @runtime.HostWindowSceneResolver
   event_sources : @runtime.HostPlatformEventSources?
-  route_source : @runtime.HostRouteSource?
+  route_source : @services.RouteSource?
 }
-pub fn WebAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, route_source? : @runtime.HostRouteSource?) -> Self
+pub fn WebAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, route_source? : @services.RouteSource?) -> Self
 
 type WebAsyncHostServiceKind derive(Eq, ToJson, @debug.Debug)
 

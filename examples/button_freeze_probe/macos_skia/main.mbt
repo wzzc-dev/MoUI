@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @moui.run_app(
+  @runtime.run_app(
     "MoUI Button Freeze Probe",
     @runtime.new_program_with_dimensions(
       program=@app.program(),

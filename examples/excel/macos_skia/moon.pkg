@@ -1,7 +1,5 @@
 import {
-  "wzzc-dev/moui" @moui,
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/render/skia" @render_skia,
   "examples/excel/app" @excel_app,
@@ -9,12 +7,9 @@ import {
 
 supported_targets = "native"
 
+pkgtype(kind: "executable")
+
 options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "",
-    },
-  },
+  link: { "native": { "cc-link-flags": "" } },
   targets: { "main.mbt": [ "native" ] },
 )

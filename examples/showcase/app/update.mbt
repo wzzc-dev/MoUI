@@ -3,14 +3,19 @@ pub fn ShowcaseModel::update(
   self : ShowcaseModel,
   message : ShowcaseMsg,
 ) -> ShowcaseModel {
-  self.update_with_route_host(message, None).0
+  self.update_with_environment(
+    message,
+    None,
+    @services.AppServices::unavailable(),
+  ).0
 }
 
 ///|
-fn ShowcaseModel::update_with_route_host(
+fn ShowcaseModel::update_with_environment(
   self : ShowcaseModel,
   message : ShowcaseMsg,
   route_host : ShowcaseRouteHost?,
+  services : @services.AppServices,
 ) -> (ShowcaseModel, @moui.Effect[ShowcaseMsg]) {
   match message {
     Navigate(route) => self.navigate(route, route_host, push=true)
@@ -80,7 +85,7 @@ fn ShowcaseModel::update_with_route_host(
       (next, @moui.Effect::none())
     }
     PlatformMsg(msg) => {
-      let (platform, effect) = @platform.update(self.platform, msg)
+      let (platform, effect) = @platform.update(self.platform, msg, services~)
       let next = {
         ..self,
         platform,
@@ -223,7 +228,7 @@ fn ShowcaseModel::with_route_history(
 ///|
 fn ShowcaseModel::with_host_route_event(
   self : ShowcaseModel,
-  event : @runtime.HostRouteEvent,
+  event : @services.RouteEvent,
 ) -> ShowcaseModel {
   let route = event.route()
   let parsed = ShowcaseRoute::parse(route)
@@ -247,8 +252,9 @@ fn ShowcaseRouteHistoryCommand::effect(
 ) -> @moui.Effect[ShowcaseMsg] {
   match route_host {
     Some(host) =>
-      @moui.Effect::host_service(
+      @moui.Effect::run(
         key="showcase:route-history",
+        kind="host-service",
         label=self.label(),
         run=_dispatch => (host.dispatch_command)(self),
       )

@@ -5,10 +5,15 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
   "wzzc-dev/window/dpi",
 }
 
 // Values
+pub fn app_environment() -> @services.AppEnvironment
+
+pub fn application_menu_on_ready(Array[@services.ApplicationMenu], @runtime.AppRuntime) -> () -> Unit
+
 pub fn backend_info() -> MacosBackendInfo
 
 pub fn entry(options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions) -> @runtime.PlatformEntry
@@ -23,11 +28,11 @@ pub fn macos_input_capabilities() -> @host.HostInputCapabilities
 
 pub fn macos_native_view_handle(@wzzc-dev/window/macos.Window) -> UInt64?
 
-pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
+pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
 
 pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
-pub fn macos_timer_source() -> @runtime.HostTimerSource
+pub fn macos_timer_source() -> @services.TimerSource
 
 pub fn macos_wall_clock() -> @runtime.HostWallClock
 

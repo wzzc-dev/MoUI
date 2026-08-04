@@ -2,7 +2,7 @@ import {
   "moonbitlang/core/json",
   "wzzc-dev/moui/views",
   "wzzc-dev/moui",
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/graphics",
   "wzzc-dev/moui/state",

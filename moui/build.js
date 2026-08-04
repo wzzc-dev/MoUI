@@ -79,7 +79,7 @@ function linuxGlibFlags(config) {
     return { stubCcFlags: explicitStub, linkFlags: explicitLink };
   }
   // glib-2.0 is a core Linux backend dependency: linux_timer_host.c drives
-  // HostTimerSource subscriptions via the GLib main loop. On non-Linux hosts
+  // TimerSource subscriptions via the GLib main loop. On non-Linux hosts
   // pkg-config will not find glib-2.0 and both flags resolve to "", which is
   // fine because the C stub body is guarded by `#ifdef __linux__`.
   return {

@@ -1,20 +1,20 @@
 ///|
-fn desktop_clock_time(clock : @runtime.HostWallClock) -> String {
+fn desktop_clock_time(clock : DesktopClock) -> String {
   "\{clock_two_digits(clock.hour)}:\{clock_two_digits(clock.minute)}"
 }
 
 ///|
-fn desktop_clock_menu_label(clock : @runtime.HostWallClock) -> String {
+fn desktop_clock_menu_label(clock : DesktopClock) -> String {
   "\{desktop_weekday_short(clock.weekday)} \{desktop_month_short(clock.month)} \{clock.day}  \{desktop_clock_time(clock)}"
 }
 
 ///|
-fn desktop_clock_lock_date(clock : @runtime.HostWallClock) -> String {
+fn desktop_clock_lock_date(clock : DesktopClock) -> String {
   "\{desktop_weekday_full(clock.weekday)}, \{desktop_month_full(clock.month)} \{clock.day}"
 }
 
 ///|
-fn desktop_month_year(clock : @runtime.HostWallClock) -> String {
+fn desktop_month_year(clock : DesktopClock) -> String {
   "\{desktop_month_full(clock.month)} \{clock.year}"
 }
 

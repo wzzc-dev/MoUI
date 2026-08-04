@@ -162,14 +162,14 @@ test "excel model supports copy paste undo redo and navigation" {
 test "excel app syncs copy and paste with system clipboard" {
   let clipboard = Ref("")
   let services = clipboard_services(clipboard)
-  let app = ExcelApp::new(services)
+  let app = ExcelApp::new()
   let model = ExcelModel::with_demo_data()
   app.model.set({ ..model, workbook: model.workbook.select_range(1, 0, 2, 1) })
-  ignore(ExcelApp::update(app, ExcelMsg::CopyCells))
+  ignore(excel_dispatch_message(app, services, ExcelMsg::CopyCells))
   inspect(clipboard.val, content="Widget A\t1200\nWidget B\t800")
   clipboard.val = "North\t10\nSouth\t20"
   app.model.set(app.model.get().select_cell(10, 0))
-  ignore(ExcelApp::update(app, ExcelMsg::PasteCells))
+  ignore(excel_dispatch_message(app, services, ExcelMsg::PasteCells))
   inspect(app.model.get().active_sheet().display_cell(10, 0), content="North")
   inspect(app.model.get().active_sheet().display_cell(10, 1), content="10")
   inspect(app.model.get().active_sheet().display_cell(11, 0), content="South")
@@ -177,7 +177,7 @@ test "excel app syncs copy and paste with system clipboard" {
   inspect(app.model.get().selected_ref(), content="A11:B12")
   inspect(app.model.get().cell_ref_input, content="A11:B12")
   app.model.set(app.model.get().select_cell(13, 0))
-  ignore(ExcelApp::update(app, ExcelMsg::PasteCells))
+  ignore(excel_dispatch_message(app, services, ExcelMsg::PasteCells))
   inspect(app.model.get().active_sheet().display_cell(13, 0), content="North")
   inspect(app.model.get().active_sheet().display_cell(13, 1), content="10")
   inspect(app.model.get().selected_ref(), content="A14:B15")
@@ -188,7 +188,7 @@ test "excel app syncs copy and paste with system clipboard" {
 test "excel app preserves formula references for app-originated clipboard text" {
   let clipboard = Ref("")
   let services = clipboard_services(clipboard)
-  let app = ExcelApp::new(services)
+  let app = ExcelApp::new()
   let sheet = @sheet.Sheet::new("Formulas", row_count=4, col_count=4)
     .set_raw_no_undo(0, 0, "10")
     .set_raw_no_undo(1, 1, "5")
@@ -202,10 +202,10 @@ test "excel app preserves formula references for app-originated clipboard text" 
       status="Ready",
     ),
   )
-  ignore(ExcelApp::update(app, ExcelMsg::CopyCells))
+  ignore(excel_dispatch_message(app, services, ExcelMsg::CopyCells))
   inspect(clipboard.val, content="20")
   app.model.set(app.model.get().select_cell(1, 2))
-  ignore(ExcelApp::update(app, ExcelMsg::PasteCells))
+  ignore(excel_dispatch_message(app, services, ExcelMsg::PasteCells))
   inspect(app.model.get().active_sheet().safe_raw(1, 2), content="=B2+$A$1")
   inspect(app.model.get().active_sheet().display_cell(1, 2), content="15")
 }
@@ -224,23 +224,19 @@ test "excel app applies pending clipboard read completions" {
       }
     },
   )
-  let services = @host.HostAppServices::new(bridge~, async_queue=Some(queue))
-  let app = ExcelApp::new(services)
+  let services = @host.app_services(bridge~, async_queue=Some(queue))
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data().select_cell(12, 0))
-  ignore(ExcelApp::update(app, ExcelMsg::PasteCells))
-  let pending = services.drain_pending()
+  let runtime = excel_dispatch_message(app, services, ExcelMsg::PasteCells)
+  let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
   assert_true(
-    services.complete(
+    queue.complete(
       pending[0].id,
       @host.HostServiceResponse::ClipboardText("Async\t42"),
     ),
   )
-  match services.take_completed(pending[0].id) {
-    Some(completion) =>
-      ignore(ExcelApp::update(app, ExcelMsg::HostCompleted(completion)))
-    None => fail("expected clipboard completion")
-  }
+  ignore(runtime)
   inspect(app.model.get().active_sheet().display_cell(12, 0), content="Async")
   inspect(app.model.get().active_sheet().display_cell(12, 1), content="42")
 }
@@ -399,10 +395,10 @@ test "excel runtime draws desktop shell" {
 
 ///|
 test "excel runtime formula input updates workbook" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data().select_cell(1, 1))
   let runtime = @runtime.new_program_with_dimensions(
-    program=program_with_services(app, @host.HostAppServices::unavailable()),
+    program=app.program(),
     width=shell_width,
     height=shell_height,
   )
@@ -417,10 +413,10 @@ test "excel runtime formula input updates workbook" {
 
 ///|
 test "excel runtime grid cell input updates workbook" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data())
   let runtime = @runtime.new_program_with_dimensions(
-    program=program_with_services(app, @host.HostAppServices::unavailable()),
+    program=app.program(),
     width=shell_width,
     height=shell_height,
   )
@@ -436,10 +432,10 @@ test "excel runtime grid cell input updates workbook" {
 
 ///|
 test "excel runtime direct typing replaces selected cell content" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data())
   let runtime = @runtime.new_program_with_dimensions(
-    program=program_with_services(app, @host.HostAppServices::unavailable()),
+    program=app.program(),
     width=shell_width,
     height=shell_height,
   )
@@ -460,14 +456,14 @@ test "excel runtime direct typing replaces selected cell content" {
 
 ///|
 test "excel action command map is available" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   let commands = action_commands(app)
   inspect(commands.commands().length().to_string(), content="79")
 }
 
 ///|
 test "excel action commands dispatch delete key clearing" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data().select_cell(1, 1))
   let commands = action_commands(app)
   assert_true(
@@ -486,7 +482,7 @@ test "excel action commands dispatch delete key clearing" {
 
 ///|
 test "excel action commands dispatch enter commit navigation" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(
     update(
       ExcelModel::with_demo_data().select_cell(1, 1),
@@ -514,7 +510,7 @@ test "excel action commands dispatch enter commit navigation" {
 
 ///|
 test "excel action commands dispatch f2 edit shortcut" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data().select_cell(1, 1))
   let commands = action_commands(app)
   assert_true(
@@ -526,7 +522,7 @@ test "excel action commands dispatch f2 edit shortcut" {
 
 ///|
 test "excel action commands dispatch formula autocomplete shortcuts" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(
     update(
       ExcelModel::with_demo_data().select_cell(1, 1),
@@ -555,7 +551,7 @@ test "excel action commands dispatch formula autocomplete shortcuts" {
 
 ///|
 test "excel action commands dispatch tab navigation" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data().select_cell(1, 1))
   let commands = action_commands(app)
   assert_true(
@@ -576,7 +572,7 @@ test "excel action commands dispatch tab navigation" {
 
 ///|
 test "excel action commands dispatch boundary navigation" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data().select_cell(5, 5).start_editing())
   let commands = action_commands(app)
   assert_true(
@@ -612,7 +608,7 @@ test "excel action commands dispatch boundary navigation" {
 
 ///|
 test "excel action commands dispatch page navigation" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   let commands = action_commands(app)
   app.model.set(ExcelModel::with_demo_data().select_cell(9, 1))
   assert_true(
@@ -651,7 +647,7 @@ test "excel action commands dispatch page navigation" {
 
 ///|
 test "excel action commands dispatch shift arrow selection" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data().select_cell(1, 1))
   let commands = action_commands(app)
   assert_true(
@@ -678,7 +674,7 @@ test "excel action commands dispatch shift arrow selection" {
 
 ///|
 test "excel action commands dispatch shift boundary selection" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   let commands = action_commands(app)
   app.model.set(ExcelModel::with_demo_data().select_cell(5, 5).start_editing())
   assert_true(
@@ -729,7 +725,7 @@ test "excel action commands dispatch shift boundary selection" {
 
 ///|
 test "excel action commands dispatch data edge navigation" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   let commands = action_commands(app)
   app.model.set(ExcelModel::with_demo_data().select_cell(1, 1))
   assert_true(
@@ -768,7 +764,7 @@ test "excel action commands dispatch data edge navigation" {
 
 ///|
 test "excel action commands dispatch undo and redo shortcuts" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(
     update(
       ExcelModel::with_demo_data().select_cell(1, 1),
@@ -816,7 +812,7 @@ test "excel action commands dispatch undo and redo shortcuts" {
 
 ///|
 test "excel action commands dispatch format shortcuts" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data().select_cell(1, 1))
   let commands = action_commands(app)
   assert_true(
@@ -853,7 +849,7 @@ test "excel action commands dispatch format shortcuts" {
 
 ///|
 test "excel action commands dispatch fill shortcuts" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   let sheet = @sheet.Sheet::new("Fill", row_count=4, col_count=4)
     .set_raw_no_undo(0, 0, "10")
     .set_raw_no_undo(1, 0, "20")
@@ -903,7 +899,7 @@ test "excel action commands dispatch fill shortcuts" {
 
 ///|
 test "excel action commands dispatch select all shortcuts" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data().select_cell(1, 1))
   let commands = action_commands(app)
   assert_true(
@@ -931,7 +927,7 @@ test "excel action commands dispatch select all shortcuts" {
 
 ///|
 test "excel action commands dispatch row and column selection shortcuts" {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
+  let app = ExcelApp::new()
   let commands = action_commands(app)
   app.model.set(ExcelModel::with_demo_data().select_cell(5, 5).start_editing())
   assert_true(
@@ -974,7 +970,75 @@ fn command_intent_label(intent : @core.CommandIntent?) -> String {
 }
 
 ///|
-fn clipboard_services(clipboard : Ref[String]) -> @host.HostAppServices {
+struct ExcelTestCommands {
+  app : ExcelApp
+}
+
+///|
+fn action_commands(app : ExcelApp) -> ExcelTestCommands {
+  { app, }
+}
+
+///|
+fn ExcelTestCommands::commands(
+  self : ExcelTestCommands,
+) -> Array[@core.ActionCommand] {
+  excel_test_runtime(self.app).action_commands()
+}
+
+///|
+fn ExcelTestCommands::dispatch_shortcut(
+  self : ExcelTestCommands,
+  event : @core.KeyboardEvent,
+) -> @core.CommandIntent? {
+  let runtime = excel_test_runtime(self.app)
+  let mut matched : @core.CommandIntent? = None
+  for command in runtime.action_commands() {
+    if command.matches(event) {
+      matched = Some(command.intent)
+      break
+    }
+  }
+  runtime.dispatch_event(@core.AppEvent::Keyboard(event))
+  matched
+}
+
+///|
+fn excel_test_runtime(app : ExcelApp) -> @runtime.AppRuntime {
+  @runtime.new_program_with_dimensions(
+    program=app.program(),
+    width=shell_width,
+    height=shell_height,
+  )
+}
+
+///|
+fn excel_dispatch_message(
+  app : ExcelApp,
+  services : @services.AppServices,
+  message : ExcelMsg,
+) -> @runtime.AppRuntime {
+  let program = app
+    .program(environment=@services.AppEnvironment::new(services~))
+    .with_commands(commands=_ => {
+      [
+        @moui.ProgramCommand::new(
+          command=@core.ActionCommand::new(intent=@core.CommandIntent::Activate),
+          message~,
+        ),
+      ]
+    })
+  let runtime = @runtime.new_program_with_dimensions(
+    program~,
+    width=shell_width,
+    height=shell_height,
+  )
+  ignore(runtime.dispatch_command(@core.CommandIntent::Activate))
+  runtime
+}
+
+///|
+fn clipboard_services(clipboard : Ref[String]) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(clipboard=true),
     handle=request => {
@@ -992,5 +1056,5 @@ fn clipboard_services(clipboard : Ref[String]) -> @host.HostAppServices {
       }
     },
   )
-  @host.HostAppServices::new(bridge~)
+  @host.app_services(bridge~)
 }

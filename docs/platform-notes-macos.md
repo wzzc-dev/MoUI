@@ -48,9 +48,8 @@ compose it with `@macos_host.entry(options=...)`. Host options can carry a
 `core` still owns only the neutral `FontSpec`, `TextSystem`
 contract, and deterministic fallback text system; it does not name concrete
 macOS font files.
-The `examples/showcase/macos_wgpu` and `examples/showcase/macos_wgpu_cosmic` entrypoints
-remain WGPU diagnostics; `macos_wgpu_cosmic` selects `MoonCosmic` explicitly for
-comparison with the WGPU CoreText path.
+The canonical `examples/showcase/macos_wgpu` entrypoint remains a WGPU
+diagnostic; it selects CoreText with Moon Cosmic as the internal fallback.
 `AppBuilder::run_async_pump` uses the optional async launch closure exposed by
 `backend/macos` for native app entrypoints that must run `moonbitlang/async`
 side work on the same thread as the AppKit event pump. It lets

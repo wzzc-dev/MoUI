@@ -46,17 +46,11 @@ matching `HostRuntimeDriver`, the backend publishes the same `HostEvent` with
 its `HostWindowId` so app-owned `Subscription::host_event` and
 `Subscription::window_event` adapters can observe real runtime events without
 moving platform event conversion into `core`.
-`HostTimerSource` is the matching host-layer subscription adapter for app-owned
-timer ticks: host/platform code provides the scheduler callback, while apps map
-`@core.Frame` ticks back into typed `Program` messages through
-`Subscription::timer`; cancellation runs the scheduler cleanup so late timer
-callbacks are ignored by the stale-dispatch guard.
-`HostRouteSource` is the matching host-layer subscription adapter for app-owned
-route/deep-link streams: host/platform code can publish `HostRouteEvent` values
-carrying `@core.RouteLocation` plus a source label, while apps map those events
-through `Subscription::route_event`; cancellation removes the publisher handler
-so late route events do not re-enter stale app state. The adapter does not
-mutate `RouteHistoryState` or synchronize browser/native history by itself.
+`@services.TimerSource` and `@services.RouteSource` are the app-facing
+subscription adapters. Platform schedulers and history/deep-link integrations
+adapt into those sources at the composition edge; cancellation runs their
+cleanup and stale callbacks cannot re-enter the Program. `backend/host` does not
+export a second app-facing timer or route model.
 `HostWindowRegistry::resolve_open_request` pairs a successful scene resolution
 with the created registry record so the host can keep window id, scene metadata,
 and runtime together. `HostWindowRuntimeSlot` then wraps that record with a
@@ -97,7 +91,7 @@ platform-local loop.
 `HostWindowCommands` is the higher-level command facade over the same queue for
 app-facing open/focus/resize/minimize/show/close helpers and shared draining
 into a registry or window runtime slots.
-Every application entrypoint calls `@moui.run_app`, supplies ordered
+Every application entrypoint calls `@runtime.run_app`, supplies ordered
 `RendererBindingFactory` values, supplies one platform `entry`, and calls
 `run`. Renderer-specific options are captured by renderer factories; platform-
 specific options are captured by the platform entry. With a resolver, `OpenWindow`
@@ -208,7 +202,7 @@ handler validation. Host adapters only transport the request and receipt; they
 must not repeat validation or convert an action back into screen-coordinate
 input. Web semantics-only commits are synchronized independently of redraw.
 
-Typed host services live on the same boundary. `HostServiceBridge` exposes
+Typed wire services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
 system-theme requests. Backends can report unavailable services without
 pretending that app code can call platform APIs directly.
@@ -219,25 +213,21 @@ and Showcase. Its `preflight_fields()` helper emits a renderer-neutral ready/gap
 field string for provider/package audits such as native Skia preflight logs;
 `HostServiceBridge`, `HostInputContract`, and platform backend setup remain the
 source of truth for actual behavior.
-`HostAppServices` is the app-facing facade over that same bridge, with helper
-methods for clipboard, file dialogs, URL opening, system theme, context menus,
-optional async queue completion handling, and an app-level
-`completion_subscription` adapter; the bridge remains the source of truth for
-capability routing and platform dispatch.
+Apps do not consume this bridge. `@host.app_services(...)` adapts it to
+`@services.AppServices`, and `@host.app_environment(...)` combines those
+services with optional `@services.TimerSource` and `@services.RouteSource`.
+Platform backends expose `app_environment()` to composition roots; Program
+closures capture the environment without placing it in business `Model` data.
 Services that cannot finish synchronously, especially browser clipboard reads
 and file dialogs that need a permission or picker callback, can return
 `HostServiceResponse::Pending` through `HostServiceAsyncQueue`. The host drains
 pending requests into an in-flight set at the platform edge, completes them with
 the original request attached, and records the completion. Runtime-owned
-effects such as async paste are handed to `HostRuntimeDriver`, while app-owned
-service flows should store pending request ids in model state and declare
-`HostAppServices::completion_subscription` from `Program` subscriptions so the
-completion re-enters the typed message loop without exposing platform APIs to
-`core`. When that subscription is canceled because the model leaves the pending
-state or the runtime is destroyed, the host queue releases its completion
-handler; a later platform response is retained as a normal completed record
-instead of dispatching through a dead app callback. The lower-level
-`HostAppServices::on_completed` callback remains available for custom adapters.
+effects such as async paste are handed to `HostRuntimeDriver`. The host adapter
+converts app-owned operations to `ServiceTask[T]`; apps receive
+`ServiceTaskResult::Success`, `Failure`, or `Cancelled` through their typed
+message loop. Request ids and queue handlers stay private to `backend/host`, and
+stale task dispatch is rejected by the runtime task lifecycle.
 The Web backend wires that queue to browser host imports and exported wasm
 completion callbacks for clipboard reads and file pickers.
 Web, macOS, and Windows entrypoints query that bridge at startup and install
@@ -267,8 +257,9 @@ platform backends skip ordinary pointer dispatch for those events, then native
 menu-capable hosts ask `HostServiceBridge::ShowMenu` to present the current
 runtime action commands and dispatch the selected intent back through
 `HostRuntimeDriver`.
-Application menu bars (L2) use `HostServiceRequest::SetApplicationMenu` /
-`HostAppServices::set_application_menu` with `HostApplicationMenu` descriptors.
+Application menu bars (L2) use `@services.MenuServices::install_application`
+with `ApplicationMenu` descriptors derived from the same typed Program command
+declarations.
 macOS installs native main-menu titles/items via the window package; Windows,
 Linux, and Web currently return `Unavailable`. Selection delivery still uses
 the platform action handler installed by the entrypoint (for example
@@ -283,10 +274,8 @@ File drop targets use the `View::on_file_drop` modifier; hosts normalize native
 file drag/drop positions and paths before the runtime dispatches typed messages
 to the hit view. `views.drop_zone` and `views.file_import_panel` are view-level
 workflow shells over that modifier; their browse action remains an app message,
-so effect-capable app code can return an `Effect::host_service` runner that calls
-`HostAppServices::open_file`, dispatch typed completion messages for
-unavailable or synchronous file dialog responses, and declare
-`HostAppServices::completion_subscription` for pending dialogs. Web file import may
+so effect-capable app code can call `AppServices::files().open_file(...)` and
+return its typed `ServiceTask::effect`. Web file import may
 expose browser-selected file names or handles rather than native filesystem
 paths, while native hosts can return platform paths through the same selection
 array.

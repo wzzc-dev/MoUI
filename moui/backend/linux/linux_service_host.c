@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <sys/wait.h>
 #include <moonbit.h>
 
@@ -553,6 +555,159 @@ static moonbit_bytes_t bytes_from_string(const char *text) {
   return bytes;
 }
 
+static char *moui_linux_settings_directory(void) {
+  const char *xdg = getenv("XDG_CONFIG_HOME");
+  const char *home = getenv("HOME");
+  char *base = NULL;
+  if (xdg && xdg[0]) {
+    base = strdup(xdg);
+  } else if (home && home[0]) {
+    size_t length = strlen(home) + strlen("/.config") + 1;
+    base = (char *)malloc(length);
+    if (base) {
+      snprintf(base, length, "%s/.config", home);
+    }
+  }
+  if (!base) {
+    return NULL;
+  }
+  size_t moui_length = strlen(base) + strlen("/moui") + 1;
+  char *moui = (char *)malloc(moui_length);
+  if (!moui) {
+    free(base);
+    return NULL;
+  }
+  snprintf(moui, moui_length, "%s/moui", base);
+  size_t settings_length = strlen(moui) + strlen("/settings") + 1;
+  char *settings = (char *)malloc(settings_length);
+  if (!settings) {
+    free(moui);
+    free(base);
+    return NULL;
+  }
+  snprintf(settings, settings_length, "%s/settings", moui);
+  if ((mkdir(base, 0700) != 0 && errno != EEXIST) ||
+      (mkdir(moui, 0700) != 0 && errno != EEXIST) ||
+      (mkdir(settings, 0700) != 0 && errno != EEXIST)) {
+    free(settings);
+    settings = NULL;
+  }
+  free(moui);
+  free(base);
+  return settings;
+}
+
+static char *moui_linux_settings_path(moonbit_bytes_t key) {
+  int32_t key_length = (int32_t)Moonbit_array_length(key);
+  if (key_length <= 0) {
+    return NULL;
+  }
+  char *directory = moui_linux_settings_directory();
+  if (!directory) {
+    return NULL;
+  }
+  static const char digits[] = "0123456789abcdef";
+  size_t directory_length = strlen(directory);
+  size_t path_length = directory_length + 1 + (size_t)key_length * 2 + 1;
+  char *path = (char *)malloc(path_length);
+  if (!path) {
+    free(directory);
+    return NULL;
+  }
+  memcpy(path, directory, directory_length);
+  path[directory_length] = '/';
+  for (int32_t i = 0; i < key_length; ++i) {
+    uint8_t byte = ((const uint8_t *)key)[i];
+    path[directory_length + 1 + (size_t)i * 2] = digits[byte >> 4];
+    path[directory_length + 2 + (size_t)i * 2] = digits[byte & 0x0f];
+  }
+  path[path_length - 1] = '\0';
+  free(directory);
+  return path;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_settings_has_value(moonbit_bytes_t key) {
+  char *path = moui_linux_settings_path(key);
+  if (!path) {
+    return 0;
+  }
+  int exists = access(path, F_OK) == 0 ? 1 : 0;
+  free(path);
+  return exists;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_linux_settings_read(moonbit_bytes_t key) {
+  char *path = moui_linux_settings_path(key);
+  if (!path) {
+    return moonbit_make_bytes(0, 0);
+  }
+  FILE *file = fopen(path, "rb");
+  free(path);
+  if (!file || fseek(file, 0, SEEK_END) != 0) {
+    if (file) fclose(file);
+    return moonbit_make_bytes(0, 0);
+  }
+  long size = ftell(file);
+  if (size < 0 || size > INT32_MAX || fseek(file, 0, SEEK_SET) != 0) {
+    fclose(file);
+    return moonbit_make_bytes(0, 0);
+  }
+  moonbit_bytes_t result = moonbit_make_bytes((int32_t)size, 0);
+  if (size > 0 && fread(result, 1, (size_t)size, file) != (size_t)size) {
+    fclose(file);
+    return moonbit_make_bytes(0, 0);
+  }
+  fclose(file);
+  return result;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_settings_write(moonbit_bytes_t key, moonbit_bytes_t value) {
+  char *path = moui_linux_settings_path(key);
+  if (!path) {
+    return 0;
+  }
+  size_t temp_length = strlen(path) + 48;
+  char *temp = (char *)malloc(temp_length);
+  if (!temp) {
+    free(path);
+    return 0;
+  }
+  snprintf(temp, temp_length, "%s.tmp.%ld", path, (long)getpid());
+  FILE *file = fopen(temp, "wb");
+  int32_t value_length = (int32_t)Moonbit_array_length(value);
+  int ok = file != NULL;
+  if (ok && value_length > 0) {
+    ok = fwrite(value, 1, (size_t)value_length, file) == (size_t)value_length;
+  }
+  if (file && fclose(file) != 0) {
+    ok = 0;
+  }
+  if (ok) {
+    chmod(temp, 0600);
+    ok = rename(temp, path) == 0;
+  }
+  if (!ok) {
+    unlink(temp);
+  }
+  free(temp);
+  free(path);
+  return ok ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_settings_remove(moonbit_bytes_t key) {
+  char *path = moui_linux_settings_path(key);
+  if (!path) {
+    return 0;
+  }
+  int ok = unlink(path) == 0 || errno == ENOENT;
+  free(path);
+  return ok ? 1 : 0;
+}
+
 MOONBIT_FFI_EXPORT
 int32_t moui_linux_open_url(const uint8_t *url, int32_t url_len) {
   char *url_text = copy_bytes(url, url_len, "");
@@ -840,6 +995,31 @@ MOONBIT_FFI_EXPORT
 int32_t moui_linux_open_url(const uint8_t *url, int32_t url_len) {
   (void)url;
   (void)url_len;
+  return 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_settings_has_value(moonbit_bytes_t key) {
+  (void)key;
+  return 0;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_linux_settings_read(moonbit_bytes_t key) {
+  (void)key;
+  return moonbit_make_bytes(0, 0);
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_settings_write(moonbit_bytes_t key, moonbit_bytes_t value) {
+  (void)key;
+  (void)value;
+  return 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_settings_remove(moonbit_bytes_t key) {
+  (void)key;
   return 0;
 }
 

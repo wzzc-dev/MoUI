@@ -55,7 +55,7 @@ thin wiring only                   ▼
 | 嵌入运行时后端 | `moui/backend/{android,ios,harmonyos}` |
 | 中立宿主 surface/presenter | `moui/backend/<platform>` |
 | Renderer factory 与实现 | `moui/render/{skia,wgpu,sun,canvas2d,webgpu_adapter}` |
-| 应用组合 | `@moui.run_app(...)` 后调用 `.render(...)` 或 `.render_all(...)`，再调用 `.backend(...).run()` |
+| 应用组合 | `@runtime.run_app(...)` 后调用 `.render(...)` 或 `.render_all(...)`，再调用 `.backend(...).run()` |
 | Skia FFI / native capability | `moui_skia` |
 | 嵌入运行时模板与事件循环 | `wzzc-dev/window/{android,ios,harmonyos}` |
 | 富文本领域 | `moui_richtext` |

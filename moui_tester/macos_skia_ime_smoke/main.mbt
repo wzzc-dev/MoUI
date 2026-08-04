@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @moui.run_app("MoUI Text Input Smoke", @fixture.runtime())
+  @runtime.run_app("MoUI Text Input Smoke", @fixture.runtime())
   .render(
     @render_skia.raster(
       font_resolution=@render_skia.SkiaFontResolution::EmptyTypeface,

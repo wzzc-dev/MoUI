@@ -98,29 +98,29 @@ HarmonyOS 可以运行在桌面硬件上；这不改变它们当前 MoUI 集成�
 - Web app route：shared app package -> `examples/<app>/web_wasm` composition ->
   `moui/backend/web` + `moui/render/webgpu_adapter`。
 - Native Skia route：shared app package -> platform `*_skia` entrypoint ->
-  `@moui.run_app(...).render_all(@render_skia.from_env()).backend(@platform.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@platform.entry())`
   -> 中立 platform surface + `moui/render/skia` -> `moui_skia`。
 - Android 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/android_window_hosted` composition，通过
-  `@moui.run_app(...).render_all(@render_skia.from_env()).backend(@android.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@android.entry())`
   -> `wzzc-dev/window/android` `HostCmd` / `EventLoop` -> 中立 Android
   surface binding -> `moui/render/skia` -> `moui_skia`。
   window template 拥有 Android lifecycle、surface acquisition 和 input；嵌入运行时
   backend 负责 runtime/session 与中立 surface 装配。
 - iOS 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/ios_window_hosted` composition，通过
-  `@moui.run_app(...).render_all(@render_skia.from_env()).backend(@ios.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@ios.entry())`
   -> `wzzc-dev/window/ios` `HostCmd` / `EventLoop` -> 中立 iOS surface
   binding -> `moui/render/skia` -> `moui_skia`。UIKit lifecycle、
   surface 和 touch callbacks 只能经由 window event loop 进入。
 - HarmonyOS 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/harmonyos_window_hosted` composition，通过
-  `@moui.run_app(...).render_all(@render_skia.from_env()).backend(@harmonyos.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@harmonyos.entry())`
   -> `wzzc-dev/window/harmonyos` `HostCmd` / `EventLoop` -> 中立 HarmonyOS
   surface binding -> `moui/render/skia` -> `moui_skia`。
   Native XComponent callbacks 是 surface、pointer、resize 和 detach events 的唯一来源。
 - Native WGPU route：shared app package -> platform `*_wgpu` entrypoint ->
-  `@moui.run_app(...).render(@render_wgpu.native(...)).backend(@platform.entry())`
+  `@runtime.run_app(...).render(@render_wgpu.native(...)).backend(@platform.entry())`
   -> `moui/render/wgpu`。这是实验性且诊断性的路线，不是默认主线。
 
 平台入口应保持很薄：创建 program/runtime，通过 AppBuilder 组合 backend 与 renderer factory，并传入 app-owned service adapters。业务 model/update/view 逻辑应留在 shared app package。
@@ -188,7 +188,7 @@ moui_theme/common/            addon construction surface: DesignPreset, DesignSy
 moui_theme/audit/             addon diagnostics: manifests, golden mappings, official-token/source-lock coverage, source-import records, runtime alignment, taxonomy/role/resolver/matrix reports (top-level pub fn, not DesignPreset methods)
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints: light/dark/high-contrast/system Theme helpers, tokens, and theme_for_variant over common
 moui_theme/sickle/            first-party hybrid skeuomorphic/flat Theme addon with light/dark and style-mode helpers
-moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
+moui/backend/host/            shared HostEvent, HostWindowEventSource, @services.TimerSource, @services.RouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
 moui/backend/windows/         Windows 原生宿主后端（仅中立 host surface/presenter）
 moui/backend/macos/           macOS 原生宿主后端（仅中立 host surface/presenter）
 moui/backend/linux/           Linux Wayland 原生宿主后端（仅中立 host surface/presenter）
@@ -212,45 +212,36 @@ moui/tests/skia_cached_layer_benchmark/ opt-in real Skia cached-layer benchmark 
 moui/tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
 moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
-examples/counter/{macos_skia,web_wasm,android_window_hosted,ios_window_hosted,harmonyos_window_hosted,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
-examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
+examples/counter/{macos_skia,web_wasm}/ retained Counter platform entrypoints
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
-examples/harmonyos_demo/harmonyos_window_hosted/ HarmonyOS demo window-hosted entrypoint
 examples/showcase/harmonyos_window_hosted/ Showcase HarmonyOS window-hosted entrypoint
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app
-examples/button_freeze_probe/{macos_skia,windows_skia,linux_skia}/ platform Button Freeze Probe entrypoints
+examples/button_freeze_probe/macos_skia/ retained Button Freeze Probe entrypoint
 examples/showcase/app/        root Showcase router/composition package
 examples/showcase/app/components/ focused reusable component catalog with app-safe dependencies
 examples/showcase/app/patterns/ Counter/Todo, forms, data, navigation, and workflow patterns
 examples/showcase/app/platform/ host Effect/Subscription, canvas, routes, and mobile service probe
-examples/showcase/app/diagnostics/ explicit runtime/renderer diagnostic exception
+examples/showcase/app/diagnostics/ pure diagnostic DTO/view package
+examples/showcase/diagnostics_integration/ runtime/renderer DTO adapter
 examples/design_systems/app/  dedicated addon diagnostic source-mapped design-system preview/parity example using moui_theme
-examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/ Design Systems addon diagnostic host entrypoints
+examples/design_systems/{web_wasm,macos_skia}/ retained Design Systems addon diagnostic host entrypoints
 examples/showcase/macos_skia/ macOS showcase selecting native Skia raster
 examples/showcase/macos_wgpu/      macOS native WGPU diagnostic showcase
-examples/showcase/macos_wgpu_cosmic/ macOS showcase selecting Moon Cosmic text
 examples/showcase/web_wasm/   Web showcase on wasm-gc
 examples/showcase/windows_skia/ Windows showcase selecting native Skia raster
 examples/showcase/windows_wgpu/    Windows native WGPU diagnostic showcase
-examples/showcase/windows_wgpu_cosmic/ Windows showcase selecting Moon Cosmic text
 examples/showcase/linux_skia/ Linux showcase selecting native Skia raster
 examples/showcase/linux_wgpu/      Linux Wayland native WGPU diagnostic showcase
-examples/showcase/linux_wgpu_cosmic/ Linux showcase selecting Moon Cosmic text
 examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
 examples/markdown_editor/macos_skia/ macOS Markdown editor selecting native Skia raster
-examples/markdown_editor/macos_wgpu/ macOS native WGPU diagnostic Markdown editor
 examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
-examples/markdown_editor/windows_skia/ Windows Markdown editor selecting native Skia raster
-examples/markdown_editor/windows_wgpu/ Windows native WGPU diagnostic Markdown editor
-examples/markdown_editor/windows_wgpu_cosmic/ Windows Markdown Editor selecting Moon Cosmic text
-examples/markdown_editor/linux_skia/ Linux Markdown editor selecting native Skia raster
 examples/code_editor/app/ shared native code editor and language-provider demo app
-examples/code_editor/{macos_skia,windows_skia,linux_skia}/ platform Code Editor Skia entrypoints
+examples/code_editor/macos_skia/ retained Code Editor Skia entrypoint
 examples/webview_demo/app/ shared native WebView demo app
-examples/webview_demo/{macos_skia,windows_skia,linux_skia,web_wasm}/ platform WebView demo entrypoints
+examples/webview_demo/{macos_skia,web_wasm}/ retained WebView demo entrypoints
 examples/pdf_workbench/app/  shared PDF reader/light editor app
-examples/pdf_workbench/{macos_skia,windows_skia,linux_skia}/ platform PDF Workbench Skia entrypoints
+examples/pdf_workbench/macos_skia/ retained PDF Workbench Skia entrypoint
 examples/pdf_workbench/{pdflite_adapter,pdflite_service_protocol,pdflite_service_native_transport,pdflite_service_cli,pdfium_adapter}/ app-private PDF parse/writeback/raster adapter and service subpackages
 examples/mo_workbench/app/   shared multi-backend agent desktop dogfood app
 examples/mo_workbench/openseek_native_transport/ app-private OpenSeek in-process agent backend (native)
@@ -285,7 +276,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 - `ScrollState`、`FocusState` 和 `NavigationState` 是 reusable app structure 的首选 state holders，而不是临时 view-local fields。
 - `ComponentContext::run_effect` 注册带 key 的 component-scoped effects 和 cleanup callbacks。带稳定 key 的 effects 会在 rebuilds 之间复用，keys 消失或 component 离开 tree 时运行 cleanup。`ComponentContext` 也为小型可保存 string、bool 和 int state 暴露 scoped save/restore helpers。
 - `AppRuntime` 拥有 app-level `Program` diagnostics，包括 dispatch、
-  update、message queue、effect plan、scheduled effect、区分 send、anonymous dispatch、structured run 和 cancellable task effects 的 effect-kind counters、active/completed/cancelled effect-task lifecycle counters、active subscription counts/kind summaries、subscription plan、start/reuse/cancel、duplicate effect descriptor-key counters/names、duplicate subscription-key counters/names，以及来自 completed、canceled 或 destroyed lifetimes 的 stale callbacks 的 ignored effect-task 和 subscription dispatch counters，还有 runtime destruction 后触发的 anonymous 或 structured effect dispatchers 的 ignored program-dispatch counters。Program message drains 是有界 runtime turns，因此同步 self-queued work 可以留下 pending messages，而不是独占当前 host callback。Program runtime 和 runtime inspector snapshots 暴露 active effect-task descriptors、effect-task lifecycle entries、active subscription descriptors、active subscription kind-count summaries 和 subscription lifecycle entries，使 tooling 能识别哪些 tasks 和 sources 已完成、被复用或被取消，而无需检查 app messages。Runtime inspector snapshots 还暴露 pending rebuild/layout/paint/redraw work 的 structured dirty-state summary，包括 dirty element ids 和 legacy reason strings。Inspector snapshots 读取 cached layout/render/semantics state，不会 drain pending dirty work，因此 devtools 可消费稳定字段而不是解析 captions。来自 `Effect::run`、`Effect::host_service`、`Effect::task` 和 `Effect::service_task` 的 structured effect descriptors 会通过 effect summaries 传递，使 tooling 能识别 planned host-service 或 service/task runners，而无需检查 `Msg` 值；duplicate descriptor-key counts/names 让 planned key conflicts 在执行前可见。Runtime inspector snapshots 还暴露 rebuild、layout、paint 和 draw-command building 的 platform-neutral pipeline pass counters。Dirty summaries 也携带 latest damage kind、dirty-rect count、full-surface reason、cache epoch 和 cached-layer count，使工具能区分 retained boundary updates 与 full redraws，而无需解析 command streams。它保留 latest effect summary、latest scheduled effect summary 和 latest subscription plan summary（包括 planned subscription descriptors）供 inspector tooling 使用。这不同于 component-local `ComponentContext::watch` 和 `ComponentContext::run_effect`；program subscriptions 建模持续的 app event sources，而 build-context subscriptions 建模 component-local state invalidation 和 lifecycle effects。
+  update、message queue、effect plan、scheduled effect、区分 send、anonymous dispatch、structured run 和 cancellable task effects 的 effect-kind counters、active/completed/cancelled effect-task lifecycle counters、active subscription counts/kind summaries、subscription plan、start/reuse/cancel、duplicate effect descriptor-key counters/names、duplicate subscription-key counters/names，以及来自 completed、canceled 或 destroyed lifetimes 的 stale callbacks 的 ignored effect-task 和 subscription dispatch counters，还有 runtime destruction 后触发的 anonymous 或 structured effect dispatchers 的 ignored program-dispatch counters。Program message drains 是有界 runtime turns，因此同步 self-queued work 可以留下 pending messages，而不是独占当前 host callback。Program runtime 和 runtime inspector snapshots 暴露 active effect-task descriptors、effect-task lifecycle entries、active subscription descriptors、active subscription kind-count summaries 和 subscription lifecycle entries，使 tooling 能识别哪些 tasks 和 sources 已完成、被复用或被取消，而无需检查 app messages。Runtime inspector snapshots 还暴露 pending rebuild/layout/paint/redraw work 的 structured dirty-state summary，包括 dirty element ids 和 legacy reason strings。Inspector snapshots 读取 cached layout/render/semantics state，不会 drain pending dirty work，因此 devtools 可消费稳定字段而不是解析 captions。来自 `Effect::run`、`ServiceTask::effect`、`Effect::task` 和 `Effect::service_task` 的 structured effect descriptors 会通过 effect summaries 传递，使 tooling 能识别 planned host-service 或 service/task runners，而无需检查 `Msg` 值；duplicate descriptor-key counts/names 让 planned key conflicts 在执行前可见。Runtime inspector snapshots 还暴露 rebuild、layout、paint 和 draw-command building 的 platform-neutral pipeline pass counters。Dirty summaries 也携带 latest damage kind、dirty-rect count、full-surface reason、cache epoch 和 cached-layer count，使工具能区分 retained boundary updates 与 full redraws，而无需解析 command streams。它保留 latest effect summary、latest scheduled effect summary 和 latest subscription plan summary（包括 planned subscription descriptors）供 inspector tooling 使用。这不同于 component-local `ComponentContext::watch` 和 `ComponentContext::run_effect`；program subscriptions 建模持续的 app event sources，而 build-context subscriptions 建模 component-local state invalidation 和 lifecycle effects。
 - Layout 使用 constraints down、measured size up，然后 parent placement，并将结果写入 `LayoutTree`。
 - Paint 消费 `LayoutTree` frames 来构建 `RenderTree`，并发出 platform-neutral `DrawCommand` 值。`RenderNode` entries 保留 paint bounds、content revisions 和 repaint-boundary cache keys。普通 host path 会向 `AppRuntime::draw_frame()` 请求 commands、`DamageRegion` 和 cache epoch。`DrawFrame.clear_color` 拥有 frame initialization，而其 command array 包含 view content，不包含前置 `Clear`；legacy command-only renderer adapters 在 lowering frame 时物化该 clear。Rect-damage renderers 必须在跳过 retained cached layers 前，将完整 command stream 约束到 effective damage clip。`DrawFrame.platform_views` 携带 `web_view` 等 native platform-view placements，而不把它们加入 `DrawCommand`。Legacy tests 仍可调用 `draw_commands()` 获取完整 command stream。Renderers 可以基于 capability degrade，但 view constructors 保留 brush、border、shadow、clip、image 和 text intent。
 - Backends 将 platform events 归一化为 `HostEvent`；它们不拥有 UI state，也不直接修改 element/render trees。

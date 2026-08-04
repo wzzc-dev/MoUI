@@ -16,7 +16,7 @@ pub(all) struct ShowcaseModel {
   sidebar_scroll : @state.ScrollState
   /// Right-hand detail canvas scroll.
   detail_scroll : @state.ScrollState
-  host_summary : @host.HostCapabilitySummary
+  diagnostics_input : @diagnostics.ShowcaseDiagnosticsInput
   components : @components.ComponentGalleryModel
   patterns : @patterns.Model
   platform : @platform.Model
@@ -29,7 +29,7 @@ pub(all) enum ShowcaseMsg {
   RouteBack
   RouteForward
   OpenRouteLink(String)
-  HostRouteChanged(@runtime.HostRouteEvent)
+  HostRouteChanged(@services.RouteEvent)
   SelectWorkspace(Workspace)
   NavQueryChanged(String)
   ShowMobileCatalog
@@ -49,7 +49,7 @@ pub(all) enum ShowcaseRouteHistoryCommand {
 
 ///|
 pub struct ShowcaseRouteHost {
-  route_source : @runtime.HostRouteSource
+  route_source : @services.RouteSource
   dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit
 }
 
@@ -60,7 +60,7 @@ pub fn ShowcaseApp::new() -> ShowcaseApp {
 
 ///|
 pub fn ShowcaseRouteHost::new(
-  route_source~ : @runtime.HostRouteSource,
+  route_source~ : @services.RouteSource,
   dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit,
 ) -> ShowcaseRouteHost {
   { route_source, dispatch_command }
@@ -68,14 +68,12 @@ pub fn ShowcaseRouteHost::new(
 
 ///|
 pub fn ShowcaseModel::new(
-  host_summary? : @host.HostCapabilitySummary = @host.HostCapabilitySummary::test_host(
-    label="Showcase test host",
-  ),
+  diagnostics_input? : @diagnostics.ShowcaseDiagnosticsInput = @diagnostics.ShowcaseDiagnosticsInput::fallback(),
   route? : String = ShowcaseRoute::default().format(),
 ) -> ShowcaseModel {
   let parsed = ShowcaseRoute::parse(route)
   let components = @components.ComponentGalleryModel::new(
-    active_platform=platform_id_from_host(host_summary),
+    active_platform=platform_id_from_host(diagnostics_input.host.label),
     active_item=match
       @components.gallery_item_id_from_string(
         if parsed.workspace == Components {
@@ -93,10 +91,12 @@ pub fn ShowcaseModel::new(
   )
   let platform = @platform.Model::new(
     route=if parsed.workspace == Platform { parsed.id } else { "host-services" },
-    host_label=host_summary.label,
+    host_label=diagnostics_input.host.label,
   )
   let diagnostics = {
-    let base = @diagnostics.ShowcaseModel::new().with_host_summary(host_summary)
+    let base = @diagnostics.ShowcaseModel::new().with_diagnostics_input(
+      diagnostics_input,
+    )
     if parsed.workspace == Diagnostics {
       base.open(parsed.id)
     } else {
@@ -116,7 +116,7 @@ pub fn ShowcaseModel::new(
     mobile_showing_detail: true,
     sidebar_scroll: @state.ScrollState::new(),
     detail_scroll: @state.ScrollState::new(),
-    host_summary,
+    diagnostics_input,
     components,
     patterns,
     platform,
@@ -125,48 +125,15 @@ pub fn ShowcaseModel::new(
 }
 
 ///|
-pub fn ShowcaseModel::with_host_summary(
+pub fn ShowcaseModel::with_diagnostics_input(
   self : ShowcaseModel,
-  host_summary : @host.HostCapabilitySummary,
+  diagnostics_input : @diagnostics.ShowcaseDiagnosticsInput,
 ) -> ShowcaseModel {
   {
     ..self,
-    host_summary,
-    platform: self.platform.with_host_label(host_summary.label),
-    diagnostics: self.diagnostics.with_host_summary(host_summary),
-  }
-}
-
-///|
-/// Supply the renderer providers registered by the platform composition root.
-/// Diagnostics deliberately receives identities rather than a backend matrix.
-pub fn ShowcaseModel::with_renderer_providers(
-  self : ShowcaseModel,
-  renderer_providers : Array[@render.RendererProvider],
-) -> ShowcaseModel {
-  {
-    ..self,
-    diagnostics: self.diagnostics.with_renderer_providers(renderer_providers),
-  }
-}
-
-///|
-/// Wire host-owned platform adapters (timer/services/window events) used by the
-/// Platform workspace. Desktop entrypoints should pass a real timer source so
-/// Canvas animation and host timers keep ticking.
-pub fn ShowcaseModel::with_platform_host(
-  self : ShowcaseModel,
-  services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-  timer_source? : @runtime.HostTimerSource? = None,
-  window_events? : @runtime.HostWindowEventSource? = None,
-) -> ShowcaseModel {
-  {
-    ..self,
-    platform: self.platform.with_host_adapters(
-      services~,
-      timer_source~,
-      window_events~,
-    ),
+    diagnostics_input,
+    platform: self.platform.with_host_label(diagnostics_input.host.label),
+    diagnostics: self.diagnostics.with_diagnostics_input(diagnostics_input),
   }
 }
 
@@ -181,10 +148,8 @@ pub fn ShowcaseModel::current_route_string(self : ShowcaseModel) -> String {
 }
 
 ///|
-fn platform_id_from_host(
-  host_summary : @host.HostCapabilitySummary,
-) -> @components.PlatformId {
-  let label = host_summary.label.to_lower()
+fn platform_id_from_host(host_label : String) -> @components.PlatformId {
+  let label = host_label.to_lower()
   if label.contains("android") {
     @components.PlatformId::Android
   } else if label.contains("ios") || label.contains("iphone") {

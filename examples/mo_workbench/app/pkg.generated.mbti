@@ -4,8 +4,8 @@ package "examples/mo_workbench/app"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
 }
 
 // Values
@@ -35,7 +35,7 @@ pub fn mo_workbench_first_openseek_supported_model(Array[String]) -> String?
 
 pub fn mo_workbench_model_supported_by_openseek(String) -> Bool
 
-pub fn program_with_backend(backend~ : AgentBackendRuntime, settings_load? : (() -> MoWorkbenchSettingsFile?)?, settings_persist? : ((MoWorkbenchSettingsFile) -> Unit)?, model_detect? : ((String, String, (Array[String]?) -> Unit) -> Unit)?, host_services? : @host.HostAppServices) -> @core.Program[WorkbenchModel, WorkbenchMsg]
+pub fn program_with_backend(backend~ : AgentBackendRuntime, settings_load? : (() -> MoWorkbenchSettingsFile?)?, settings_persist? : ((MoWorkbenchSettingsFile) -> Unit)?, model_detect? : ((String, String, (Array[String]?) -> Unit) -> Unit)?, environment? : @services.AppEnvironment) -> @core.Program[WorkbenchModel, WorkbenchMsg]
 
 pub fn session_summary(id~ : String, first_prompt~ : String, last_active_unix_seconds? : Int64?) -> SessionSummary
 
@@ -359,7 +359,6 @@ pub struct WorkbenchModel {
   settings_load : (() -> MoWorkbenchSettingsFile?)?
   settings_persist : ((MoWorkbenchSettingsFile) -> Unit)?
   model_detect : ((String, String, (Array[String]?) -> Unit) -> Unit)?
-  host_services : @host.HostAppServices
   animation_progress : Double
 }
 

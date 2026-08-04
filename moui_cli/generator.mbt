@@ -411,7 +411,6 @@ fn web_html_text(title : String) -> String {
 fn desktop_pkg_text(module_name : String, platform : String) -> String {
   let template =
     #|import {
-    #|  "wzzc-dev/moui",
     #|  "wzzc-dev/moui/runtime",
     #|  "wzzc-dev/moui/backend/__PLATFORM__" @platform_host,
     #|  "wzzc-dev/moui/render/skia" @render_skia,
@@ -442,7 +441,7 @@ fn desktop_main_text(title : String) -> String {
     #|    width=720.0,
     #|    height=480.0,
     #|  )
-    #|  @moui.run_app("__TITLE__", runtime)
+    #|  @runtime.run_app("__TITLE__", runtime)
     #|    .render_all(@render_skia.from_env())
     #|    .backend(@platform_host.entry())
     #|    .run()

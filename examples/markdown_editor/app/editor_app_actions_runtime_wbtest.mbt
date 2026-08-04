@@ -89,10 +89,8 @@ test "markdown editor actions apply actions at current caret context" {
 
 ///|
 test "markdown editor document context menu includes app commands" {
-  let app = MarkdownEditorApp::new()
-  let commands = app
-    .action_commands()
-    .commands()
+  let commands = markdown_editor_program_commands()
+    .map(command => command.command())
     .filter(command => command.context_menu)
   for
     label in [

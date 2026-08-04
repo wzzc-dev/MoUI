@@ -101,17 +101,11 @@ test "host service bridge applies system theme to runtime environment" {
 ///|
 test "host driver dispatches command intents through runtime action map" {
   let copied = Ref(0)
-  let runtime = host_test_runtime(
+  let runtime = host_test_runtime_with_commands(
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
-  )
-  runtime.set_action_commands(
-    @core.ActionCommandMap::new(bindings=[
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(intent=@core.CommandIntent::Copy),
-        handle=() => copied.val = copied.val + 1,
-      ),
-    ]),
+    commands=[@core.ActionCommand::new(intent=@core.CommandIntent::Copy)],
+    on_message=_ => copied.val = copied.val + 1,
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()

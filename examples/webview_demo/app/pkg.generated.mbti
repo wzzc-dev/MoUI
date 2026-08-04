@@ -3,13 +3,12 @@ package "examples/webview_demo/app"
 
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui_webview/host",
 }
 
 // Values
 pub let default_url : String
 
-pub fn program(commands~ : @host.HostWebViewCommandQueue, capabilities~ : @host.HostWebViewCapabilities) -> @core.Program[Model, Msg]
+pub fn program(command_sink~ : (WebViewCommand) -> Unit, capability~ : WebViewCapability) -> @core.Program[Model, Msg]
 
 pub fn update(Model, Msg) -> Model
 
@@ -27,10 +26,10 @@ pub struct Model {
   can_go_forward : Bool
   js_result : String
   logs : Array[String]
-  commands : @host.HostWebViewCommandQueue
-  capabilities : @host.HostWebViewCapabilities
+  web_view_available : Bool
+  web_view_description : String
 }
-pub fn Model::new(commands~ : @host.HostWebViewCommandQueue, capabilities~ : @host.HostWebViewCapabilities, url? : String) -> Self
+pub fn Model::new(capability~ : WebViewCapability, url? : String) -> Self
 
 pub(all) enum Msg {
   AddressChanged(String)
@@ -40,7 +39,35 @@ pub(all) enum Msg {
   GoBack
   GoForward
   EvaluateLocation
-  WebViewEvent(@host.WebViewEvent)
+  WebViewEvent(WebViewAppEvent)
+}
+
+pub(all) enum WebViewAppEvent {
+  NavigationRequested(String)
+  NavigationStarted(String)
+  NavigationCommitted(String)
+  NavigationFinished(String)
+  NavigationFailed(String, String)
+  TitleChanged(String)
+  CanGoBackChanged(Bool)
+  CanGoForwardChanged(Bool)
+  JavaScriptResult(String, String)
+}
+
+pub(all) struct WebViewCapability {
+  available : Bool
+  description : String
+}
+pub fn WebViewCapability::available(description? : String) -> Self
+pub fn WebViewCapability::unavailable(description? : String) -> Self
+
+pub(all) enum WebViewCommand {
+  LoadUrl(String)
+  Reload
+  Stop
+  GoBack
+  GoForward
+  EvaluateJavaScript(String, String)
 }
 
 // Type aliases

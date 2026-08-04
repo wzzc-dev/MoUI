@@ -5,9 +5,12 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
 }
 
 // Values
+pub fn app_environment() -> @services.AppEnvironment
+
 pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
@@ -28,11 +31,11 @@ pub fn linux_content_metrics_for_surface(@host.HostSurfaceMetrics, LinuxClientDe
 
 pub fn linux_input_capabilities() -> @host.HostInputCapabilities
 
-pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int, list_directory? : (String) -> @host.HostServiceResponse) -> @host.HostServiceBridge
+pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int, list_directory? : (String) -> @host.HostServiceResponse) -> @host.HostServiceBridge
 
 pub fn linux_surface_metrics_for_content(@host.HostSurfaceMetrics, LinuxClientDecorationState) -> @host.HostSurfaceMetrics
 
-pub fn linux_timer_source() -> @runtime.HostTimerSource
+pub fn linux_timer_source() -> @services.TimerSource
 
 pub fn readiness() -> LinuxBackendReadiness
 

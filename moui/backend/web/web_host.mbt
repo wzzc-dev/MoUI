@@ -85,6 +85,7 @@ pub fn web_capability_summary(
     file_access=true,
     open_url=true,
     system_theme=true,
+    settings=true,
   ),
   async_services? : Bool = true,
 ) -> @host.HostCapabilitySummary {
@@ -125,6 +126,12 @@ pub fn web_service_bridge(
   clipboard_write? : (String) -> Bool = _text => false,
   file_dialog? : Bool = false,
   file_access? : Bool = false,
+  settings_available? : Bool = false,
+  settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = request => {
+    @host.HostServiceResponse::Unavailable(
+      @host.HostServiceRequest::Settings(request).unavailable_message(),
+    )
+  },
   async_queue? : @host.HostServiceAsyncQueue? = None,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
@@ -134,6 +141,7 @@ pub fn web_service_bridge(
       file_access~,
       open_url=true,
       system_theme=true,
+      settings=settings_available,
     ),
     handle=request => {
       match request {
@@ -145,6 +153,8 @@ pub fn web_service_bridge(
           }
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
+        @host.HostServiceRequest::Settings(settings_request) =>
+          settings(settings_request)
         @host.HostServiceRequest::Clipboard(
           @host.HostClipboardRequest::WriteText(text)
         ) =>
@@ -252,9 +262,9 @@ pub fn web_service_bridge(
 ///|
 pub fn web_app_services(
   system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
-) -> @host.HostAppServices {
+) -> @services.AppServices {
   let async_queue = web_async_host_service_queue()
-  @host.HostAppServices::new(
+  @host.app_services(
     bridge=web_service_bridge(
       system_theme~,
       open_url=dispatch_web_open_url,
@@ -263,9 +273,24 @@ pub fn web_app_services(
       clipboard_write=dispatch_web_clipboard_write_text,
       file_dialog=true,
       file_access=true,
+      settings_available=true,
+      settings=dispatch_web_settings,
       async_queue=Some(async_queue),
     ),
     async_queue=Some(async_queue),
+  )
+}
+
+///|
+/// Construct the app-facing Web environment. The returned route source must be
+/// passed to `WebAppOptions` so browser history events reach the same Program.
+pub fn app_environment(
+  routes? : @services.RouteSource = @services.RouteSource::new(),
+) -> @services.AppEnvironment {
+  @services.AppEnvironment::new(
+    services=web_app_services(),
+    timer=Some(web_timer_source()),
+    routes=Some(routes),
   )
 }
 
@@ -293,6 +318,36 @@ fn dispatch_web_open_url(url : String) -> Bool {
 ///|
 fn dispatch_web_clipboard_write_text(text : String) -> Bool {
   web_clipboard_write_text(web_host_string(text))
+}
+
+///|
+fn dispatch_web_settings(
+  request : @host.HostSettingsRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    Read(key) =>
+      if web_settings_has_value(web_host_string(key)) {
+        @host.HostServiceResponse::SettingValue(
+          Some(
+            web_host_string_to_string(web_settings_read(web_host_string(key))),
+          ),
+        )
+      } else {
+        @host.HostServiceResponse::SettingValue(None)
+      }
+    Write(key, value) =>
+      if web_settings_write(web_host_string(key), web_host_string(value)) {
+        @host.HostServiceResponse::SettingWritten
+      } else {
+        @host.HostServiceResponse::Unavailable("settings write failed")
+      }
+    Remove(key) =>
+      if web_settings_remove(web_host_string(key)) {
+        @host.HostServiceResponse::SettingRemoved
+      } else {
+        @host.HostServiceResponse::Unavailable("settings remove failed")
+      }
+  }
 }
 
 ///|
@@ -346,6 +401,18 @@ fn web_open_url(url : WebHostString) -> Bool = "window_web" "open_url"
 
 ///|
 fn web_clipboard_write_text(text : WebHostString) -> Bool = "window_web" "clipboard_write_text"
+
+///|
+fn web_settings_read(key : WebHostString) -> WebHostString = "window_web" "settings_read"
+
+///|
+fn web_settings_has_value(key : WebHostString) -> Bool = "window_web" "settings_has_value"
+
+///|
+fn web_settings_write(key : WebHostString, value : WebHostString) -> Bool = "window_web" "settings_write"
+
+///|
+fn web_settings_remove(key : WebHostString) -> Bool = "window_web" "settings_remove"
 
 ///|
 extern "wasm" fn web_wall_clock_year() -> Int = "window_web" "wall_clock_year"

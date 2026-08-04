@@ -79,7 +79,7 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 2048,
+      "maxLines": 2019,
       "reason": "Existing API validator with explicit declaration and semantic contract audits."
     },
     {
@@ -133,11 +133,6 @@
       "reason": "Existing diagnostic WGPU renderer implementation."
     },
     {
-      "path": "examples/code_editor/app/app.mbt",
-      "maxLines": 1565,
-      "reason": "Existing code editor application logic."
-    },
-    {
       "path": "moui_richtext/rich_text_editor_caret_hit.mbt",
       "maxLines": 1555,
       "reason": "Existing caret and hit-testing algorithms."
@@ -168,18 +163,13 @@
       "reason": "Existing text rasterizer implementation."
     },
     {
-      "path": "examples/markdown_editor/app/document_io.mbt",
-      "maxLines": 1418,
-      "reason": "Existing Markdown document IO workflows."
-    },
-    {
       "path": "moui_sun/graphics/path_test.mbt",
       "maxLines": 1415,
       "reason": "Existing comprehensive path logic test."
     },
     {
       "path": "examples/mo_workbench/app/workbench_wbtest.mbt",
-      "maxLines": 1441,
+      "maxLines": 1437,
       "reason": "Existing workbench integration test with declaration invalidation coverage."
     },
     {
@@ -218,16 +208,6 @@
       "reason": "Existing browser presentation evidence orchestrator."
     },
     {
-      "path": "examples/design_systems/app/app.mbt",
-      "maxLines": 1296,
-      "reason": "Existing design-system diagnostic application."
-    },
-    {
-      "path": "examples/mo_workbench/app/update.mbt",
-      "maxLines": 1307,
-      "reason": "Existing workbench update state machine."
-    },
-    {
       "path": "moui/runtime/view_runtime_test.mbt",
       "maxLines": 1435,
       "reason": "Existing runtime virtual-view integration regression suite after typed semantics migration."
@@ -246,11 +226,6 @@
       "path": "moui_sun/renderer/renderer_image_sampling_cache.mbt",
       "maxLines": 1241,
       "reason": "Existing renderer image sampling cache."
-    },
-    {
-      "path": "examples/mo_desktop/app/view_finder.mbt",
-      "maxLines": 1218,
-      "reason": "Existing desktop file-finder application view composition."
     },
     {
       "path": "moui_sun/text/parser.mbt",

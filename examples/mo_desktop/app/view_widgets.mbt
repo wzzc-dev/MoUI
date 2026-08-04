@@ -163,7 +163,7 @@ fn desktop_widgets(
 /// query the host; we derive it from the current weekday/day so the grid is
 /// locally consistent). Today is highlighted with the accent capsule.
 fn calendar_month_grid(
-  clock : @runtime.HostWallClock,
+  clock : DesktopClock,
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {

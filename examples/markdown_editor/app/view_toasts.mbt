@@ -1,30 +1,4 @@
 ///|
-/// A monotonic counter for toast ids, so concurrent toasts never collide.
-let markdown_editor_toast_counter : @state.State[Int] = @state.State::new(0)
-
-///|
-/// Push a transient toast with the given tone. The toast self-dismisses after
-/// its TTL via the `DismissToastTick` timer subscription.
-fn MarkdownEditorApp::push_toast(
-  self : MarkdownEditorApp,
-  message : String,
-  tone? : @views.FeedbackTone = @views.FeedbackTone::Neutral,
-  ttl_ms? : Double = 3500.0,
-) -> Unit {
-  let counter = markdown_editor_toast_counter.get()
-  markdown_editor_toast_counter.set(counter + 1)
-  let id = "toast-" + counter.to_string()
-  let item = @views.ToastQueueItem::new(
-    id~,
-    message~,
-    tone~,
-    dismiss=Some(DismissToastTick),
-    ttl_ms~,
-  )
-  self.toasts.set(self.toasts.get().push(item))
-}
-
-///|
 /// Drop toasts whose TTL has elapsed. Called on each `DismissToastTick`. Since
 /// the timer fires roughly every second, we expire by the queue's own TTL
 /// semantics rather than tracking wall-clock precisely.

@@ -32,6 +32,22 @@ extern "C" fn linux_clipboard_write_image_bytes(
 extern "C" fn linux_clipboard_read_image_bytes() -> Bytes = "moui_linux_clipboard_read_image"
 
 ///|
+#borrow(key)
+extern "C" fn linux_settings_has_value(key : Bytes) -> Int = "moui_linux_settings_has_value"
+
+///|
+#borrow(key)
+extern "C" fn linux_settings_read_bytes(key : Bytes) -> Bytes = "moui_linux_settings_read"
+
+///|
+#borrow(key, value)
+extern "C" fn linux_settings_write_bytes(key : Bytes, value : Bytes) -> Int = "moui_linux_settings_write"
+
+///|
+#borrow(key)
+extern "C" fn linux_settings_remove_bytes(key : Bytes) -> Int = "moui_linux_settings_remove"
+
+///|
 pub fn capability_matrix() -> LinuxBackendCapabilities {
   {
     window: true,
@@ -57,6 +73,7 @@ pub fn service_capabilities() -> @host.HostServiceCapabilities {
     menus=true,
     open_url=true,
     system_theme=true,
+    settings=true,
   )
 }
 
@@ -191,6 +208,7 @@ pub fn linux_service_bridge(
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_linux_file_dialog,
   text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_linux_text_file,
   binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_linux_binary_file,
+  settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_linux_settings,
   menu? : (Array[@core.ActionCommand]) -> Int = dispatch_linux_menu,
   list_directory? : (String) -> @host.HostServiceResponse = dispatch_linux_list_directory,
 ) -> @host.HostServiceBridge {
@@ -212,6 +230,8 @@ pub fn linux_service_bridge(
         text_file(text_file_request)
       @host.HostServiceRequest::BinaryFile(binary_file_request) =>
         binary_file(binary_file_request)
+      @host.HostServiceRequest::Settings(settings_request) =>
+        settings(settings_request)
       @host.HostServiceRequest::ShowMenu(commands) =>
         @platform_bridge.menu_command_response_with_unavailable(
           commands,
@@ -226,6 +246,54 @@ pub fn linux_service_bridge(
         @host.HostServiceResponse::Unavailable(request.unavailable_message())
     }
   })
+}
+
+///|
+fn dispatch_linux_settings(
+  request : @host.HostSettingsRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    Read(key) => {
+      let key_bytes = @utf8.encode(key[:], bom=false)
+      if linux_settings_has_value(key_bytes) == 0 {
+        @host.HostServiceResponse::SettingValue(None)
+      } else {
+        @host.HostServiceResponse::SettingValue(
+          Some(
+            @utf8.decode_lossy(
+              linux_settings_read_bytes(key_bytes)[:],
+              ignore_bom=false,
+            ),
+          ),
+        )
+      }
+    }
+    Write(key, value) => {
+      let key_bytes = @utf8.encode(key[:], bom=false)
+      let value_bytes = @utf8.encode(value[:], bom=false)
+      if linux_settings_write_bytes(key_bytes, value_bytes) != 0 {
+        @host.HostServiceResponse::SettingWritten
+      } else {
+        @host.HostServiceResponse::Unavailable("settings write failed")
+      }
+    }
+    Remove(key) => {
+      let key_bytes = @utf8.encode(key[:], bom=false)
+      if linux_settings_remove_bytes(key_bytes) != 0 {
+        @host.HostServiceResponse::SettingRemoved
+      } else {
+        @host.HostServiceResponse::Unavailable("settings remove failed")
+      }
+    }
+  }
+}
+
+///|
+pub fn app_environment() -> @services.AppEnvironment {
+  @host.app_environment(
+    bridge=linux_service_bridge(),
+    timer=Some(linux_timer_source()),
+  )
 }
 
 ///|

@@ -22,10 +22,9 @@ MSVC 辅助脚本通过 `vswhere` 导入 `vcvarsall.bat`，把 `CC` 和 `CXX` �
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
-powershell -ExecutionPolicy Bypass -Command "& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
-普通 Windows Skia 入口点是交互式应用入口点。匹配宿主的首帧 smoke 应保留在测试者/后端 smoke runner 中，而不是向 Showcase 或 Markdown Editor 包添加自动退出标志。
+Showcase Windows Skia 路线是交互式应用入口。匹配宿主的首帧 smoke 应保留在 tester/backend smoke runner 中，而不是向 composition root 添加自动退出逻辑。
 
 ## 链接标志
 
@@ -46,13 +45,12 @@ Windows 宿主遵循与 macOS 相同的 `HostEvent` 和 `HostRuntimeDriver` 路�
 右键上下文菜单请求使用同一 `TrackPopupMenu` 路径，并通过 `HostRuntimeDriver` 分派选中的 `ActionCommand`。
 本地 `window/windows` 后端发出的文件拖放事件会通过 `HostEvent::DragDrop` 归一化，并分派给 `View::on_file_drop` 目标，与 macOS 宿主路径匹配。
 `render/wgpu.native(...)` 是 WGPU 诊断路径，并通过与 macOS CoreText 相同的渲染器/运行时边界安装同级 `render/wgpu/directwrite` provider，将其与 `render/wgpu/cosmic_text` 组合为 fallback。该 provider 目前是显式脚手架；通过 factory 的 `text_engine` 参数选择 `MoonCosmic`。
-`examples/showcase/windows_wgpu` 和 `examples/showcase/windows_wgpu_cosmic` 入口点仍是 WGPU 诊断；`windows_wgpu_cosmic` 显式选择 `MoonCosmic`，用于与 WGPU DirectWrite 脚手架加 Cosmic fallback 路径比较。`examples/showcase/windows_skia` 与 `examples/markdown_editor/windows_skia` 通过 `@render_skia.from_env()` 和 `@windows.entry()` 组合主线 Skia 路线。
-Markdown 编辑器还提供 `examples/markdown_editor/windows_wgpu_cosmic`，用于在编辑工作流上进行同样的显式文本 provider 比较。
+`examples/showcase/windows_wgpu` 是唯一 Windows WGPU 诊断入口，使用 DirectWrite provider，并把 Cosmic 作为内部 fallback。`examples/showcase/windows_skia` 通过 `@render_skia.from_env()` 和 `@windows.entry()` 组合主线 Skia 路线。
 
 ## Skia Renderer
 
 通过导入 `wzzc-dev/moui/render/skia`、向 AppBuilder 添加 `@render_skia.from_env()`，并在 `@windows.entry` 中捕获 `WindowsHostAppOptions` 来选择 Skia。factory 创建 `render/skia.SkiaRasterRenderer`，并通过 Win32 presenter 呈现 CPU 像素帧。C presenter 把 RGBA premultiplied readback 复制到 top-down 32-bit BGRA DIB buffer，并用 `StretchDIBits` blit 到 client DC。如果 `moui_skia/native` 只处于 fallback 模式，renderer factory 会带诊断拒绝绑定，而不是打开空 HWND。
 Windows 宿主循环在每次 present 后记录 renderer image-resource revision，将变化路由到匹配 HWND 的 `request_redraw`，并在 presented revision 建立基线后调用已选 factory 返回的中立 `HostAsyncImageLoader`。`backend/windows` 只读取原始字节；Skia 或 WGPU 的 `RendererImageDecoder` 负责解码。必需的异步第二帧 artifact 仍需要匹配 Windows/MSVC 运行记录。
-通过的 Windows 运行时观察仍需要 Windows/MSVC 宿主运行 Showcase 或 Markdown Editor Skia 入口点并记录 artifact。在非 Windows 宿主上，Win32 presenter 和 service stub 可能因需要 `windows.h` 而 C 编译失败，因此 Darwin 上 `moui/render/skia` 的失败是宿主/工具链限制，而不是 Windows 运行时观察。
+通过的 Windows 运行时观察仍需要 Windows/MSVC 宿主运行 Showcase Skia 入口并记录 artifact。在非 Windows 宿主上，Win32 presenter 和 service stub 可能因需要 `windows.h` 而 C 编译失败，因此 Darwin 上 `moui/render/skia` 的失败是宿主/工具链限制，而不是 Windows 运行时观察。
 
 要使用预置本地 `wgpu-native` release 进行 WGPU 诊断，而不是使用辅助脚本管理的副本，把 `MBT_WGPU_NATIVE_ROOT` 设置为已解压 MSVC release root，或把该路径作为 `-WgpuNativeRoot` 传给 Windows 辅助脚本。MSVC dynamic root 应包含 `lib\\wgpu_native.dll` 和 `wgpu-native-meta\\wgpu-native-git-tag`。

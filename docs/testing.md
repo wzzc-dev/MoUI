@@ -5,6 +5,16 @@ MoUI uses bounded validation by default. The main line is package tests, Web
 real platform, browser, or renderer must be observed. Do not commit generated
 `artifacts/`; they are local or CI evidence only.
 
+<!-- BEGIN GENERATED PLATFORM TIER MATRIX -->
+| Tier | Canonical routes | Gate |
+|---|---|---|
+| Tier 1 | `macOS Skia`, `Web wasm-gc WebGPU (Canvas2D fallback)` | Blocking: PR build/test, daily presentation, and release evidence |
+| Tier 2 | `Windows Skia`, `Linux Skia` | Blocking: L0-L2 and first frame; complete L3 may remain partial |
+| Tier 3 | `macOS WGPU (CoreText, Cosmic fallback)`, `Windows WGPU (DirectWrite, Cosmic fallback)`, `Linux WGPU (Fontconfig, Cosmic fallback)`, `Android window-hosted Skia`, `iOS window-hosted Skia`, `HarmonyOS window-hosted Skia`, `macOS Sun`, `Windows Sun`, `Linux Sun`, `WeChat Skyline Canvas2D` | Non-blocking: scheduled/manual build, run, and evidence |
+
+Tier, L0-L3 evidence, and `product_class`/`ready` are independent. Source: `checks/platform-matrix.json`; actual observations remain in `checks/platforms/*.json`.
+<!-- END GENERATED PLATFORM TIER MATRIX -->
+
 ## Daily
 
 Run the daily validation script for routine app or framework work:
@@ -223,10 +233,9 @@ moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdflite_service_protocol --target native
 moon test examples/pdf_workbench/pdflite_service_native_transport --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
-moon check examples/counter/android_window_hosted --target native
-moon check examples/counter/ios_window_hosted --target native
+moon check examples/showcase/android_window_hosted --target native
+moon check examples/showcase/ios_window_hosted --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_window_hosted --target native
 sh scripts/window-hosted-hostsim-smoke.sh
 ```
@@ -413,7 +422,7 @@ IME observations. They are direct pass/fail runtime logs, not a repository
 manifest gate.
 
 For Linux Skia first-frame evidence, use the matching Wayland host and keep
-Showcase, Markdown Editor, and window-package smoke logs separate:
+Showcase and window-package smoke logs separate:
 
 ```sh
 MOUI_FIRST_FRAME_EXIT=1 MOUI_SKIA_RENDERER=auto \

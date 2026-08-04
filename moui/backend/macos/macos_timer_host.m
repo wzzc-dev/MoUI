@@ -1,4 +1,4 @@
-// macOS timer host: drives HostTimerSource subscriptions via dispatch_source
+// macOS timer host: drives TimerSource subscriptions via dispatch_source
 // timers on the main queue. A repeating timer stores a trampoline + closure
 // pair and calls back into MoonBit on each fire; the returned handle cancels
 // the source via dispatch_source_cancel.

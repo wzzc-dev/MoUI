@@ -82,7 +82,7 @@ fn view(model : Model) -> @moui.View[Unit] {
         semantics_label="Tutorial animated orb",
       ),
       @views.text(
-        "Phase comes from the paint clock (now_ms). animated_canvas keeps frames flowing without HostTimerSource.",
+        "Phase comes from the paint clock (now_ms). animated_canvas keeps frames flowing without TimerSource.",
       ),
     ],
     spacing=12.0,

@@ -32,7 +32,7 @@ pub(all) enum CommandPaletteMsg {
   QueryChanged(String)
   CommandSelected(@views.CommandIntent)
   ShowNativeMenu
-  HostMenuCompleted(@host.HostServiceResponse)
+  MenuCompleted(@services.ServiceTaskResult[@views.ActionCommand])
   ToggleContextMenu
   HideContextMenu
   ClearLog
@@ -63,7 +63,7 @@ pub fn CommandPaletteModel::update(
     CommandSelected(intent) => self.dispatch_intent(intent)
     ShowNativeMenu =>
       { ..self, last_result: "Native menu requires host services" }
-    HostMenuCompleted(response) => self.apply_host_menu_response(response)
+    MenuCompleted(result) => self.apply_menu_result(result)
     ToggleContextMenu => { ..self, context_visible: !self.context_visible }
     HideContextMenu => { ..self, context_visible: false }
     ClearLog => { ..self, dispatched: [], last_result: "No command dispatched" }
@@ -74,21 +74,16 @@ pub fn CommandPaletteModel::update(
 pub fn CommandPaletteModel::update_with_services(
   self : CommandPaletteModel,
   message : CommandPaletteMsg,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> (CommandPaletteModel, @moui.Effect[CommandPaletteMsg]) {
   match message {
     ShowNativeMenu =>
       (
         { ..self, last_result: "Opening native menu" },
-        @moui.Effect::host_service(
-          key="host:command-menu",
-          label="Show command menu",
-          run=dispatch => {
-            dispatch(
-              HostMenuCompleted(services.show_context_menu(self.commands())),
-            )
-          },
-        ),
+        services
+        .menus()
+        .show_context(self.commands())
+        .effect(map=result => MenuCompleted(result)),
       )
     _ => (self.update(message), @moui.Effect::none())
   }
@@ -151,18 +146,15 @@ pub fn CommandPaletteModel::dispatch_intent(
 }
 
 ///|
-fn CommandPaletteModel::apply_host_menu_response(
+fn CommandPaletteModel::apply_menu_result(
   self : CommandPaletteModel,
-  response : @host.HostServiceResponse,
+  result : @services.ServiceTaskResult[@views.ActionCommand],
 ) -> CommandPaletteModel {
-  match response {
-    @host.HostServiceResponse::MenuAction(command) =>
-      self.dispatch_intent(command.intent)
-    @host.HostServiceResponse::MenuCommand(intent) =>
-      self.dispatch_intent(intent)
-    @host.HostServiceResponse::Unavailable(reason) =>
-      { ..self, last_result: "Native menu unavailable: " + reason }
-    _ => { ..self, last_result: "Native menu returned no command" }
+  match result {
+    Success(command) => self.dispatch_intent(command.intent)
+    Failure(error) =>
+      { ..self, last_result: "Native menu unavailable: " + error.message }
+    Cancelled => { ..self, last_result: "Native menu cancelled" }
   }
 }
 
@@ -289,49 +281,39 @@ pub fn CommandPaletteModel::view(
 ///|
 pub fn CommandPaletteApp::program(
   self : CommandPaletteApp,
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
   ignore(self)
-  program()
+  program(environment~)
 }
 
 ///|
-pub fn CommandPaletteApp::program_with_services(
-  self : CommandPaletteApp,
-  services : @host.HostAppServices,
+pub fn program(
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
-  ignore(self)
-  program_with_services(services)
-}
-
-///|
-pub fn program() -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
-  CommandPaletteModel::new().program()
-}
-
-///|
-pub fn program_with_services(
-  services : @host.HostAppServices,
-) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
-  CommandPaletteModel::new().program_with_services(services)
+  CommandPaletteModel::new().program(environment~)
 }
 
 ///|
 pub fn CommandPaletteModel::program(
   self : CommandPaletteModel,
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
-  @moui.Program::simple(init=self, update~, view~)
-}
-
-///|
-pub fn CommandPaletteModel::program_with_services(
-  self : CommandPaletteModel,
-  services : @host.HostAppServices,
-) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
+  let services = environment.services()
   @moui.Program::new(
     init=() => (self, @moui.Effect::none()),
     update=(model, message) => model.update_with_services(message, services),
     view~,
-  )
+  ).with_commands(commands=model => {
+    model
+    .commands()
+    .map(command => {
+      @moui.ProgramCommand::new(
+        command~,
+        message=CommandSelected(command.intent),
+      )
+    })
+  })
 }
 
 ///|
@@ -509,16 +491,6 @@ pub fn command_sections() -> Array[@views.CommandMenuSection] {
       }),
     ),
   ]
-}
-
-///|
-pub fn action_command_map() -> @views.ActionCommandMap {
-  let commands = command_palette_commands()
-  @views.ActionCommandMap::new(
-    bindings=commands.map(command => {
-      @views.CommandBinding::new(command~, handle=() => ())
-    }),
-  )
 }
 
 ///|

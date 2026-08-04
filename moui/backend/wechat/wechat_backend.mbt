@@ -103,6 +103,11 @@ pub fn wechat_capability_summary() -> @host.HostCapabilitySummary {
 }
 
 ///|
+pub fn app_environment() -> @services.AppEnvironment {
+  @services.AppEnvironment::new()
+}
+
+///|
 pub fn wechat_readiness() -> WechatBackendReadiness {
   {
     ready: false,

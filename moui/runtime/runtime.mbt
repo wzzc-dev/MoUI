@@ -80,6 +80,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
   let syncing_subscriptions = Ref(false)
   let message_batch_depth = Ref(0)
   let program_active = Ref(true)
+  let runtime_ref : Ref[AppRuntime?] = Ref(None)
   let process_ref : Ref[(() -> Unit)?] = Ref(None)
   let pending_count = () => pending_messages.length() - pending_index.val
   let dispatch = message => {
@@ -103,6 +104,23 @@ pub fn[Model, Msg] AppRuntime::new_program(
       dispatch,
     )
     syncing_subscriptions.val = false
+  }
+  let sync_commands = () => {
+    match runtime_ref.val {
+      Some(runtime) =>
+        runtime.state.set_action_commands(
+          ActionCommandMap::new(
+            bindings=program
+              .runtime_commands(model.get())
+              .map(program_command => {
+                @core.CommandBinding::new(command=program_command.command(), handle=() => {
+                  dispatch(program_command.message())
+                })
+              }),
+          ),
+        )
+      None => ()
+    }
   }
   let begin_message_batch = () => {
     message_batch_depth.val = message_batch_depth.val + 1
@@ -130,6 +148,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
         let (next_model, effect) = program.runtime_update(model.get(), message)
         program_runtime.record_update()
         model.set(next_model)
+        sync_commands()
         let effect_summary = effect_plan_summary(effect)
         let effect_count = run_effect(effect, dispatch, (descriptor, start) => {
           program_runtime.start_effect_task(descriptor, start, dispatch)
@@ -176,6 +195,8 @@ pub fn[Model, Msg] AppRuntime::new_program(
     program_runtime_snapshot_fn: () => program_runtime.snapshot(),
     destroy_program_runtime_fn: Ref(() => ()),
   }
+  runtime_ref.val = Some(runtime)
+  sync_commands()
   runtime.destroy_program_runtime_fn.val = () => {
     if program_active.val {
       program_active.val = false
@@ -393,14 +414,6 @@ pub fn AppRuntime::set_redraw_callback(
   callback : () -> Unit,
 ) -> Unit {
   self.state.set_redraw_callback(callback)
-}
-
-///|
-pub fn AppRuntime::set_action_commands(
-  self : AppRuntime,
-  commands : @core.ActionCommandMap,
-) -> Unit {
-  self.state.set_action_commands(commands)
 }
 
 ///|

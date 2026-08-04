@@ -17,7 +17,6 @@ fn MoWorkbenchApp::initial_state(
     settings_load=self.settings_load,
     settings_persist=self.settings_persist,
     model_detect=self.model_detect,
-    host_services=self.host_services,
   )
   (
     model,
@@ -35,7 +34,9 @@ pub fn MoWorkbenchApp::program_with_backend(
 ) -> @moui.Program[WorkbenchModel, WorkbenchMsg] {
   @moui.Program::new_with_environment(
     init=() => self.initial_state(),
-    update=(model, msg) => model.update(msg),
+    update=(model, msg) => {
+      model.update(msg, services=self.environment.services())
+    },
     view=(model, env) => workbench_view(model, env),
     subscriptions=workbench_subscriptions,
   )
@@ -48,13 +49,13 @@ pub fn program_with_backend(
   settings_load? : SettingsLoadFn? = None,
   settings_persist? : SettingsPersistFn? = None,
   model_detect? : ModelDetectFn? = None,
-  host_services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[WorkbenchModel, WorkbenchMsg] {
   MoWorkbenchApp::new(
     backend~,
     settings_load~,
     settings_persist~,
     model_detect~,
-    host_services~,
+    environment~,
   ).program_with_backend()
 }

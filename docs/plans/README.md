@@ -58,14 +58,22 @@ Historical topic pointers (pre-layout notes) remain useful:
 | Plan | Summary |
 |------|---------|
 | [mo-desktop-example](active/mo-desktop-example.md) | Add a responsive macOS-inspired MoUI desktop simulation with Web and macOS Skia entrypoints |
-| [moonbit-tooling-formalization](active/moonbit-tooling-formalization.md) | Move formalizable script rules/generators into `tools/moui`; keep host shells thin |
 | [window-cross-platform-parity](active/window-cross-platform-parity.md) | Align window (Windows/Linux/Web) with macOS reference in MoUI-ready semantics |
-| [all-target-diagnostics-cleanup](active/all-target-diagnostics-cleanup.md) | Restore moon check --target all and remove compiler warnings outside window/ packages |
+| [moui-support-upstream-workspace](active/moui-support-upstream-workspace.md) | Complete the published-dependency handoff for the upstream-layout window workspace |
+| [platform-adapter-duplication-remediation](active/platform-adapter-duplication-remediation.md) | Finish the remaining Linux adapter duplication ratchet |
+| [view-node-trait-refactor](active/view-node-trait-refactor.md) | Complete the public ViewNode trait migration |
+| [moui-tier-tea-debt-convergence](active/moui-tier-tea-debt-convergence.md) | Converge platform tiers, strict TEA boundaries, entrypoints, and documentation debt |
 
 ## Done (recent)
 
 | Plan | Summary |
 |------|---------|
+| [backend-renderer-extraction](done/backend-renderer-extraction.md) | Move renderer construction out of platform backends and into composition roots |
+| [renderer-backend-decoupling](done/renderer-backend-decoupling.md) | Historical predecessor superseded by backend renderer extraction |
+| [renderer-provider-trait-refactor](done/renderer-provider-trait-refactor.md) | Historical provider proposal superseded by architecture convergence |
+| [validation-hygiene-cleanup](done/validation-hygiene-cleanup.md) | Remove validator self-tests and retain product/evidence validation |
+| [moonbit-tooling-formalization](done/moonbit-tooling-formalization.md) | Move formalizable repository rules into MoonBit tools |
+| [all-target-diagnostics-cleanup](done/all-target-diagnostics-cleanup.md) | Restore clean `moon check --target all` output outside window packages |
 | [moui-architecture-convergence](done/moui-architecture-convergence.md) | Converge package ownership and dependency direction per ADRs 0014/0015/0017–0020 (Phases A–G) — complete |
 | [core-component-theme-to-views](done/core-component-theme-to-views.md) | Component theme → views control set (superseded by ADR 0017; `Theme.components` removed) — complete |
 | [i18n-website](done/i18n-website.md) | Add a pure i18n addon and localize the complete public website and docs |

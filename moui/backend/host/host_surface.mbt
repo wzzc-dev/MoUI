@@ -56,6 +56,7 @@ pub(all) struct HostServiceCapabilities {
   file_access : Bool
   open_url : Bool
   system_theme : Bool
+  settings : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -167,6 +168,7 @@ pub fn HostServiceCapabilities::none() -> HostServiceCapabilities {
     file_access: false,
     open_url: false,
     system_theme: false,
+    settings: false,
   }
 }
 
@@ -178,8 +180,17 @@ pub fn HostServiceCapabilities::new(
   file_access? : Bool = false,
   open_url? : Bool = false,
   system_theme? : Bool = false,
+  settings? : Bool = false,
 ) -> HostServiceCapabilities {
-  { clipboard, menus, file_dialogs, file_access, open_url, system_theme }
+  {
+    clipboard,
+    menus,
+    file_dialogs,
+    file_access,
+    open_url,
+    system_theme,
+    settings,
+  }
 }
 
 ///|

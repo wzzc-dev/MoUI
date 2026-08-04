@@ -66,7 +66,7 @@ impl @core.ViewNode for Canvas with fn semantics(self) {
 /// Like `canvas`, but the draw callback also receives the runtime paint clock
 /// (`now_ms`) and the paint plan is marked animating so the host keeps
 /// requesting frames. Use this for looping motion that should not depend on a
-/// `HostTimerSource` subscription.
+/// app-facing `TimerSource` subscription.
 ///
 /// `draw` args: paint context, allocated frame, `now_ms` (0.0 until the first
 /// `FrameTick` arrives).

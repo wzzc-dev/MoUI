@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/encoding/utf8",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
   "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/dpi",
 }

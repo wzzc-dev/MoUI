@@ -12,14 +12,10 @@ contextual commands, and editing workflows.
   model, source/visual mapping, command behavior, input transforms, Markdown
   parsing adapter, rich text document mapping, and focused white-box tests.
 - `examples/markdown_editor/web_wasm/`: Web wasm-gc entrypoint.
-- `examples/markdown_editor/macos_wgpu/`: macOS native entrypoint.
 - `examples/markdown_editor/macos_skia/`: macOS native entrypoint using the
   Skia renderer provider.
-- `examples/markdown_editor/windows_wgpu/`: Windows native entrypoint.
-- `examples/markdown_editor/windows_skia/`: Windows native entrypoint using the
-  Skia renderer provider.
-- `examples/markdown_editor/linux_skia/`: Linux native entrypoint using the
-  Skia renderer provider.
+- `examples/markdown_editor/composition/`: light environment/runtime wiring
+  shared by the two retained entrypoints.
 - `moui_richtext/facade.mbt`: public rich text editor wrappers (`markdown_editor`,
   `controlled_markdown_session_editor`) used by the example.
 - `moui_richtext/rich_text_document.mbt` plus `moui_richtext/rich_text_editor.mbt`:
@@ -278,12 +274,10 @@ The editor supports formatted editing for common block and inline structures:
   document generated from the same parsed Markdown snapshot, including
   headings, paragraphs, lists and task items, tables, code blocks, links,
   images, raw HTML blocks/inlines, footnotes, and escaped text/attributes.
-  The app exposes `MarkdownEditorApp::program_with_services`
-  for hosts/tests that inject `HostAppServices`. The macOS and Windows native
-  entrypoints pass their platform service bridges so file-dialog, text-file,
-  clipboard, and target-opening transfer works in those hosts; the Web wasm-gc
-  entrypoint injects `web_app_services` so browser async clipboard/file-dialog
-  transfer uses the backend-owned Web host-service queue. Open target commands
+  The app exposes `MarkdownEditorApp::program(environment)` and captures
+  `AppServices` in the Program closure. The macOS composition root supplies its
+  platform `AppEnvironment`; the Web wasm-gc root supplies the Web environment,
+  whose typed tasks adapt the backend-owned async host queue. Open target commands
   use the edited link or image target field when it is active, otherwise they
   resolve the link or image under the current selection or caret before asking
   the host to open it. Web `Open` imports the selected Markdown file's
@@ -465,13 +459,6 @@ moon build examples/markdown_editor/macos_skia --target native
 ./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
 ```
 
-The `macos_wgpu` entrypoint remains available for explicit WGPU diagnostics:
-
-```sh
-moon build examples/markdown_editor/macos_wgpu --target native
-./_build/native/debug/build/examples/markdown_editor/macos_wgpu/macos_wgpu.exe
-```
-
 The Skia entrypoint requires the same real native Skia link setup used by
 `examples/showcase/macos_skia`; `scripts/macos-skia-renderer-smoke.sh` can
 configure those flags temporarily while running Skia smoke checks. Use
@@ -479,41 +466,9 @@ configure those flags temporarily while running Skia smoke checks. Use
 when you need the renderer pixel smoke plus tester-owned first-frame Skia smoke
 logs on macOS.
 
-Windows native uses the shared renderer-aware MSVC helper. Use the
-`windows_skia` package for the mainline Markdown Editor route:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows_skia `
-  -BuildOnly
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
-```
-
-The `windows_wgpu` package remains available for explicit native WGPU
-diagnostics:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows_wgpu `
-  -BuildOnly
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_wgpu --target native }"
-```
-
-The ordinary `windows_skia` entrypoint is an interactive app entrypoint. Keep
-matching-host first-frame smoke in tester/backend smoke runners rather than
-adding auto-exit flags to the app package.
-
-Linux native Skia composes `backend/linux` with `render/skia` and should be run on a
-matching Wayland host with real Skia link flags before claiming runtime pixels:
-
-```sh
-moon build examples/markdown_editor/linux_skia --target native
-moon run examples/markdown_editor/linux_skia --target native
-```
-
-The ordinary Linux Skia entrypoint is also interactive. Use a dedicated
-tester/backend smoke runner for matching-host first-frame logs.
+Windows/Linux Skia and all native WGPU evidence use the canonical Showcase
+routes. The editor intentionally does not duplicate those platform/renderer
+composition roots.
 
 ## Validation
 
@@ -523,8 +478,6 @@ Focused checks:
 moon test examples/markdown_editor/app --target native
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon build examples/markdown_editor/macos_skia --target native
-moon check examples/markdown_editor/windows_skia --target native
-moon check examples/markdown_editor/linux_skia --target native
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 ```
 

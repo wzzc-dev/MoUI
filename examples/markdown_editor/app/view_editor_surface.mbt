@@ -960,7 +960,7 @@ fn editor_source_layout(
     side_children,
     spacing=0.0,
     align=@views.CrossAlign::Stretch,
-  )
+  ).frame(width=viewport_width)
   column(
     if target_kind == PlainSelection || !show_source {
       [editor_and_sidebars]

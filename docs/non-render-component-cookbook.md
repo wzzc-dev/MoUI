@@ -171,7 +171,7 @@ using @views {master_detail, sidebar, sidebar_item}
 enum Msg { SelectSection(String) }
 
 fn settings_shell(current : String, detail : @moui.View[Msg]) -> @moui.View[Msg] {
-  let focus_store = @core.RouteFocusStore::new()
+  let focus_store = @views.RouteFocusStore::new()
   focus_store.remember(route="account", focus_key="sidebar-item-account")
   focus_store.remember(route="appearance", focus_key="sidebar-item-appearance")
   master_detail(
@@ -188,7 +188,7 @@ fn settings_shell(current : String, detail : @moui.View[Msg]) -> @moui.View[Msg]
 }
 
 fn restore_settings_focus(
-  store : @core.RouteFocusStore,
+  store : @views.RouteFocusStore,
   runtime : @runtime.AppRuntime,
   route : String,
 ) -> Bool {
@@ -226,22 +226,18 @@ fn palette(commands : Array[@core.ActionCommand]) -> @moui.View[Msg] {
 ```
 
 View-level menus are overlay compositions. Native context menus and focused text
-clipboard commands should go through `HostServiceBridge` and `HostAppServices`
-instead of `views`.
+clipboard commands use `@services.AppServices`; host bridges and completion
+queues stay behind the platform adapter.
 
 ```moonbit nocheck
 fn request_native_menu(
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   commands : Array[@core.ActionCommand],
 ) -> @moui.Effect[Msg] {
-  @moui.Effect::host_service(
-    key="host:context-menu",
-    label="Show context menu",
-    run=dispatch => {
-      let response = services.show_context_menu(commands)
-      dispatch(HostMenuCompleted(response))
-    },
-  )
+  services
+  .menus()
+  .show_context(commands)
+  .effect(map=result => HostMenuCompleted(result))
 }
 ```
 
@@ -255,85 +251,67 @@ moon test examples/command_palette/app --target native
 
 ## Host Services
 
-Use `@host.HostAppServices` for clipboard, file dialogs, URL opening, system
-theme, and native context menus. Effect-capable apps should return
-`Effect::host_service` from `Program::new` updates when the host-service runner
-should carry a stable diagnostic key, call the service from the effect runner,
-and dispatch a typed completion message for `Unavailable`, synchronous
-responses, and pending async completions. Use `Effect::run` for custom
-structured effect kinds, `Effect::service_task` when a service-like one-shot
-async task needs runtime-owned cancellation, completion, and stale-dispatch
-diagnostics, and `Effect::task` for custom task descriptor kinds. For pending
-app-owned services, store the pending request id in the model and declare
-`HostAppServices::completion_subscription` from
-`subscriptions=model => ...` so the later host callback re-enters the same
-typed message loop and is canceled when the model no longer declares it.
-`views` should only emit messages such as `BrowseRequested` or
-`RecordFileDrop(paths)`. When a host-service workflow is implemented as a child
-feature, lift the child view with `View::map`, lift the child effect with
-`Effect::map`, and lift the child completion subscription with
-`Subscription::map` in the parent so the parent still owns the top-level
-message loop.
+Capture `@services.AppEnvironment` in the Program closure and keep it out of
+business `Model` data. Files, clipboard, URLs, settings, appearance, and menus
+return `ServiceTask[T]`; convert the typed `Success`, `Failure`, and
+`Cancelled` results to `Msg` with `ServiceTask::effect`. The task runtime
+owns cancellation and stale completion rejection, so app code never stores a
+host request id or subscribes to a completion queue.
 
 ```moonbit nocheck
 fn request_browse(
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> @moui.Effect[ImportMsg] {
-  @moui.Effect::host_service(
-    key="host:file-import",
-    label="Import files",
-    run=dispatch => {
-      let response = services.open_file(title="Import files", filters=["csv", "json"])
-      dispatch(HostCompleted(file_dialog_completion(response)))
-    },
+  services
+  .files()
+  .open_file(
+    options=@services.FileDialogOptions::new(
+      title="Import files",
+      filters=["csv", "json"],
+    ),
   )
+  .effect(map=result => FileDialogCompleted(result))
 }
 ```
+
+Handle all terminal results in `update`:
 
 ```moonbit nocheck
-fn subscriptions(
-  model : ImportModel,
-  services : @host.HostAppServices,
-) -> @moui.Subscription[ImportMsg] {
-  match model.pending_request {
-    Some(id) =>
-      services.completion_subscription(
-        id,
-        map=completion => HostCompleted(completion),
-        label="Import files completion",
-      )
-    None => @moui.Subscription::none()
-  }
+match msg {
+  FileDialogCompleted(Success(path)) => add_file(model, path)
+  FileDialogCompleted(Failure(error)) => { ..model, error: Some(error.message) }
+  FileDialogCompleted(Cancelled) => { ..model, status: "Cancelled" }
+  _ => model
 }
 ```
 
-Web hosts may expose file names or browser handles while native hosts can expose
-filesystem paths. Treat returned strings as host-provided import handles unless
-the active platform contract says otherwise.
+When a service workflow is a child feature, lift its view with `View::map` and
+its effect with `Effect::map`. Web hosts may return browser handles while
+native hosts may return filesystem paths; treat the value according to the
+active service contract.
 
 Recommended checks:
 
 ```sh
+moon test moui/services --target native
 moon test moui/backend/host --target native
-moon test moui/backend/web --target wasm-gc
 moon test examples/file_importer/app --target native
 moon test examples/showcase/app/platform --target native
 ```
 
 ## Timers
 
-Use `@host.HostTimerSource` from the platform entrypoint and pass it into the
-shared app as an optional dependency. Declare
-`source.subscription(interval_ms, key, map)` only while the model needs the
-tick (for example while a toast queue is non-empty or a stopwatch is running).
-Missing keys cancel automatically when `subscriptions` no longer returns them.
+Platform composition supplies an optional `@services.TimerSource` in
+`AppEnvironment`. Capture the environment in the Program closure and declare a
+subscription only while the model needs ticks. Missing keys cancel
+automatically.
 
 ```moonbit nocheck
 fn subscriptions(
   model : LabModel,
-  timer_source : @host.HostTimerSource?,
+  environment : @services.AppEnvironment,
 ) -> @moui.Subscription[LabMsg] {
-  match timer_source {
+  match environment.timer() {
     Some(source) =>
       if model.timer_running {
         source.subscription(
@@ -350,78 +328,78 @@ fn subscriptions(
 }
 ```
 
-Platform entrypoints own the concrete source, for example
-`@macos_host.macos_timer_source()` / `windows_timer_source` /
-`linux_timer_source`. Web does not yet expose a host timer adapter.
+Platform backends expose `app_environment()`; timer scheduler details stay
+outside the app package.
 
 Recommended checks:
 
 ```sh
-moon test moui/backend/host --target native
+moon test moui/services --target native
 moon test examples/showcase/app/platform --target native
 moon test examples/markdown_editor/app --target native
 ```
 
 ## Clipboard
 
-Clipboard is a host service, not a view. Write or read text through
-`HostAppServices`, return `Effect::host_service`, and subscribe to pending
-completions with `completion_subscription` the same way as file open.
+Clipboard is a service, not a view. Return the typed task effect and handle its
+result in `update`.
 
 ```moonbit nocheck
 fn write_clipboard(
-  services : @host.HostAppServices,
-  text : String,
+  services : @services.AppServices,
+  value : String,
 ) -> @moui.Effect[LabMsg] {
-  @moui.Effect::host_service(
-    key="host:clipboard-write",
-    label="Write clipboard",
-    run=dispatch => {
-      dispatch(HostCompleted(services.write_clipboard_text(text)))
-    },
-  )
+  services
+  .clipboard()
+  .write_text(value)
+  .effect(map=result => ClipboardWritten(result))
 }
 ```
 
 Recommended checks:
 
 ```sh
-moon test moui/backend/host --target native
+moon test moui/services --target native
 moon test examples/showcase/app/platform --target native
 moon test examples/markdown_editor/app --target native
 ```
 
 ## Keyboard Commands
 
-Prefer `@core.ActionCommand` / `@views.ActionCommandMap` installed on the
-runtime (`AppRuntime::set_action_commands`) for discoverable shortcuts. Keep
-disabled commands visible. Filter `HostEvent::Keyboard` only when you need
-chords that are not part of the command map.
+Declare discoverable shortcuts as typed `ProgramCommand[Msg]` values with
+`Program::with_commands`. Runtime maps keyboard, system-menu, and context-menu
+selection to the same FIFO Program queue; command callbacks do not mutate the
+model directly.
 
 ```moonbit nocheck
-fn action_command_map() -> @views.ActionCommandMap {
-  let command = @views.ActionCommand::new(
-    intent=@views.CommandIntent::Activate,
-    label="Lab tick",
-    shortcut=Some(
-      @views.KeyboardShortcut::new(
-        key="t",
-        modifiers=@views.KeyModifiers::new(meta=true),
+fn program() -> @moui.Program[LabModel, LabMsg] {
+  @moui.Program::simple(init=LabModel::new(), update~, view~)
+  .with_commands(commands=model => [
+    @moui.ProgramCommand::new(
+      command=@views.ActionCommand::new(
+        intent=@views.CommandIntent::Activate,
+        label="Lab tick",
+        shortcut=Some(
+          @views.KeyboardShortcut::new(
+            key="t",
+            modifiers=@views.KeyModifiers::new(meta=true),
+          ),
+        ),
+        group="Lab",
+        enabled=model.timer_running,
       ),
+      message=TimerTick,
     ),
-    group="Showcase Platform",
-  )
-  @views.ActionCommandMap::new(
-    bindings=[@views.CommandBinding::new(command~, handle=() => ())],
-  )
+  ])
 }
 ```
 
 Recommended checks:
 
 ```sh
+moon test moui/core --target native
+moon test moui/runtime --target native
 moon test examples/command_palette/app --target native
-moon test examples/showcase/app/platform --target native
 ```
 
 ## Window Resize
@@ -465,7 +443,7 @@ moon test examples/showcase/app/platform --target native
 | --- | --- |
 | `Effect::none` | Pure model update |
 | `Effect::send` | Re-enter the message loop immediately |
-| `Effect::host_service` | One-shot host bridge with diagnostics |
+| `ServiceTask::effect` | Typed app service with cancellation/stale lifecycle |
 | `Effect::run` | Custom structured one-shot runner |
 | `Effect::task` / `service_task` | Cancellable one-shot async with runtime lifecycle |
 
@@ -479,25 +457,29 @@ Menu levels:
 | Level | API | Status |
 | --- | --- | --- |
 | L0 content menus | `menu_bar` / `command_menu` / `context_menu_region` | Ready (view overlays) |
-| L1 context menu | `HostAppServices::show_context_menu` | Ready on menu-capable hosts |
-| L2 application menu bar | `HostAppServices::set_application_menu` | macOS installs native menus; Windows/Linux/Web return `Unavailable` |
+| L1 context menu | `MenuServices::show_context` | Ready on menu-capable hosts |
+| L2 application menu bar | `MenuServices::install_application` | macOS installs native menus; other hosts may return `Unavailable` |
+
+Build menu items from the same `ActionCommand` values used by
+`Program::with_commands`:
 
 ```moonbit nocheck
-fn install_app_menu(services : @host.HostAppServices) -> Unit {
-  let menu = @host.HostApplicationMenu::new(
-    title="File",
-    items=[
-      @host.HostApplicationMenuItem::new(title="Open…", action_id=1),
-      @host.HostApplicationMenuItem::separator(),
-    ],
-  )
-  ignore(services.set_application_menu([menu]))
+fn application_menus(
+  open : @views.ActionCommand,
+) -> Array[@services.ApplicationMenu] {
+  [
+    @services.ApplicationMenu::new(title="File", items=[
+      @services.ApplicationMenuItem::MenuCommand(open),
+      @services.ApplicationMenuItem::MenuSeparator,
+    ]),
+  ]
 }
 ```
 
-On macOS, install after the primary window is ready (`on_ready`) so the default
-AppKit menu does not overwrite the custom bar. See Showcase's Platform workspace and
-`examples/markdown_editor/macos_skia`.
+The composition package installs menus through
+`environment.services().menus().install_application(...)`. On macOS, install
+after the primary window is ready so AppKit does not replace the menu. Selection
+resolves the command metadata and enqueues the matching typed Program message.
 
 ## Toast Queues
 

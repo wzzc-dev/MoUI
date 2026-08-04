@@ -33,7 +33,7 @@ test "web app options carry scene resolver and platform event sources" {
   let options = WebAppOptions::new(
     scene_resolver=resolver,
     event_sources=Some(@runtime.HostPlatformEventSources::new()),
-    route_source=Some(@runtime.HostRouteSource::new()),
+    route_source=Some(@services.RouteSource::new()),
   )
   match options.event_sources {
     Some(sources) => {

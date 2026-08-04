@@ -23,7 +23,7 @@ through the CanvasRenderingContext2D API.
 - `moui/render/canvas2d` implements the Canvas 2D renderer producing
   `RendererBindingFactory`/`HostWindowRenderer` values with wasm FFI imports.
 - `examples/*/wechat_canvas` composes both sides with
-  `@moui.run_app(...).render(@render_canvas2d.canvas()).backend(@wechat.entry(...))`.
+  `@runtime.run_app(...).render(@render_canvas2d.canvas()).backend(@wechat.entry(...))`.
 - `window/wechat/template` owns the Mini Program project template and its JS
   bridge to the exported MoonBit callbacks.
 - `scripts/build-wechat-demo.sh` is the canonical build script for demo

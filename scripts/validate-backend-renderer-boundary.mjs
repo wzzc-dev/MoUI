@@ -122,7 +122,7 @@ function hasPlatformBackendImport(content) {
 
 function hasCompleteBuilderChain(content) {
   return (
-    /@moui\.run_app\s*\(/.test(content) &&
+    /@runtime\.run_app\s*\(/.test(content) &&
     /\.(?:render|render_all)\s*\(/.test(content) &&
     /\.backend\s*\(/.test(content) &&
     /\.(?:run|run_async_pump)\s*\(/.test(content)
@@ -170,10 +170,10 @@ const allFiles = walk(root);
 for (const source of allFiles.filter((path) => path.endsWith(".mbt"))) {
   if (isTestSource(source) || source.includes(`${join(root, "docs")}/`)) continue;
   const content = readFileSync(source, "utf8");
-  if (!/^\s*@moui\.run_app\s*\(/m.test(content)) continue;
+  if (!/^\s*@runtime\.run_app\s*\(/m.test(content)) continue;
   const pkg = findPackageFile(source);
   if (!pkg) {
-    violations.push(`${relative(root, source)} calls @moui.run_app without moon.pkg`);
+    violations.push(`${relative(root, source)} calls @runtime.run_app without moon.pkg`);
     continue;
   }
   const imports = productionMoonPkg(readFileSync(pkg, "utf8"));
@@ -186,7 +186,7 @@ for (const source of allFiles.filter((path) => path.endsWith(".mbt"))) {
   }
   if (!hasCompleteBuilderChain(content)) {
     violations.push(
-      `${relative(root, source)} composition root must call @moui.run_app(...).render[_all](...).backend(...).run[_async_pump]()`,
+      `${relative(root, source)} composition root must call @runtime.run_app(...).render[_all](...).backend(...).run[_async_pump]()`,
     );
   }
 }

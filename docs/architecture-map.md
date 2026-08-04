@@ -15,10 +15,10 @@ ViewDeclaration -> ElementTree
 ## Package layers (dependency direction)
 
 ```text
-examples/<app>/app          # platform-neutral product logic
+examples/<app>/app          # platform-neutral product logic, strict TEA
         │
         ▼
-wzzc-dev/moui  +  geometry/graphics/animation/text/state  +  views
+wzzc-dev/moui + geometry/graphics/animation/text/state + views + services
         │
         ▼
 moui/core                      # contracts & value types only
@@ -27,8 +27,8 @@ moui/core                      # contracts & value types only
         ├───────────────────────────────────────────┐
         ▼                                           ▼
 moui/runtime                    moui/backend/host   # host CONTRACTS only (ADR 0018):
-trees, dispatch, effects,       HostEvent/HostCmd,  #   imports core + window/core + dpi + utf8;
-HostRuntimeDriver,              services facade,    #   NO runtime/render in default imports;
+trees, dispatch, effects,       HostEvent/HostCmd,  #   wire protocol, HostServiceBridge,
+HostRuntimeDriver,              completion queue,   #   AppServices adapter; NO app facade;
 RedrawScheduler,                EmbedderHostChannel,#   NO platform_bridge (no reverse dep)
 HostWallClock,                  platform channel,
 window_host_coordinator         capability summary,
@@ -54,7 +54,7 @@ render/skia   render/wgpu  render/sun  render/canvas2d  render/webgpu_adapter
 ```
 
 Composition: an executable entrypoint builds an `AppBuilder` with
-`@moui.run_app`, supplies ordered `RendererBindingFactory` values with
+`@runtime.run_app`, supplies ordered `RendererBindingFactory` values with
 `.render`/`.render_all`, supplies a platform `PlatformEntry` with `.backend`,
 and calls `.run`. The backend creates a neutral `HostSurfaceKit` after its
 window exists; renderer factories bind and negotiate against that kit. No
@@ -71,7 +71,7 @@ stays a closed enum by design.
 **Cross-layer edges (imports, beyond the tree above):**
 
 - `moui/runtime` → `moui/backend/host` (`HostRuntimeDriver::dispatch` takes `@host.HostEvent`) and `moui/render` (`HostRuntimeDriver::apply_render_frame_result` takes `@render.RenderFrameResult`)
-- `backend/<platform>` → `moui/runtime` (`PlatformEntry`, host driver), `moui/backend/host` (services), `platform_bridge` (transforms), and only the neutral `moui/render` host-surface contract
+- `backend/<platform>` → `moui/runtime` (`PlatformEntry`, host driver), `moui/backend/host` (wire bridge/queue), `moui/services` (adapted `AppEnvironment`), `platform_bridge` (transforms), and only the neutral `moui/render` host-surface contract
 - `platform_bridge` imports `moui/backend/host` contracts; **host does not import `platform_bridge`** (no reverse dependency, Phase F gate)
 
 **Domain facades (ADR 0003 / 0014):** `geometry`/`graphics`/`animation`/`text`/`state` re-export curated `@core` types only; `core` never imports them.
@@ -86,7 +86,7 @@ renderers consume `DrawCommand` only.
 
 | From | Must not depend on |
 |---|---|
-| `examples/*/app` | `moui/runtime`, `moui/render/*`, concrete backends, providers |
+| `examples/*/app` | `moui/runtime`, `moui/backend/*`, `moui/render/*`, concrete backends, providers |
 | `moui/core` | `views`, runtime, backends, renderers |
 | `moui/backend/host` (default) | `moui/runtime`, `moui/render` (ADR 0018: contracts only) |
 | `moui/backend/host` | `moui/backend/platform_bridge` (no reverse dependency, Phase F gate) |
@@ -101,10 +101,11 @@ renderers consume `DrawCommand` only.
 | Area | Owner path |
 |---|---|
 | Public controls / themes helpers | `moui/views` |
+| App-facing files/clipboard/URL/settings/menu tasks and timer/route sources | `moui/services` |
 | Cross-runtime protocols | `moui/core` |
 | AppRuntime / trees / effects / HostRuntimeDriver / RedrawScheduler / HostWallClock | `moui/runtime` |
 | Window host coordination (shared) | `moui/runtime/window_host_coordinator.mbt` |
-| Host contracts only (HostEvent/HostCmd/services facade/EmbedderHostChannel/platform channel) | `moui/backend/host` |
+| Host wire contracts only (HostEvent/HostCmd/HostServiceBridge/completion queue/EmbedderHostChannel/platform channel) | `moui/backend/host` |
 | Neutral platform lifecycle bridge | `moui/backend/platform_bridge` |
 | Shared embedded-runtime host shell | `moui/backend/internal/embedded_runtime_backend` |
 | Native host backends (native decode + capability decl + neutral presenter/surface kit) | `moui/backend/{macos,windows,linux}` |
@@ -112,7 +113,7 @@ renderers consume `DrawCommand` only.
 | Web host backend | `moui/backend/web` |
 | Host surface kit + renderer provider/factory contracts | `moui/render` (`host_surface_kit.mbt`, `provider_contract.mbt`) |
 | Renderer implementations and factories | `moui/render/{skia,wgpu,sun,canvas2d,webgpu_adapter}` |
-| Application/platform composition | `examples/*/<platform>/main.mbt` through `@moui.run_app` |
+| Application/platform composition | `examples/*/<platform>/main.mbt` through `@runtime.run_app` |
 | Skia FFI / native capability | `moui_skia` |
 | CPU raster stack (experimental) | `moui_sun` |
 | Embedded-runtime templates and event loops | `wzzc-dev/window/{android,ios,harmonyos}` |

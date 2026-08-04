@@ -1,9 +1,8 @@
 import {
-  "wzzc-dev/moui",
   "wzzc-dev/moui/backend/wechat",
   "wzzc-dev/moui/render/canvas2d" @render_canvas2d,
   "wzzc-dev/moui/runtime",
-  "examples/showcase/app" @showcase_app,
+  "examples/showcase/composition",
 }
 
 supported_targets = "+wasm-gc+wasm"

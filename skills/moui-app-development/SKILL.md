@@ -65,6 +65,11 @@ examples/<name>/harmonyos_window_hosted/
 Mobile entrypoints use `wzzc-dev/window`; its platform template owns lifecycle,
 surface, and input callbacks. App code remains in `examples/<name>/app`.
 
+The Moon wasm linker exports executable-owned definitions, not `pub using`
+aliases. Keep Web/WeChat `abi.mbt` as the only permitted second production file:
+it contains the fixed direct backend delegations enforced by P1 and no app or
+platform logic.
+
 Showcase uses the standard `web_wasm`, `<platform>_skia`, and explicit
 renderer-diagnostic entrypoint names. Its embedded-runtime routes use the matching
 `*_window_hosted` entrypoint.
@@ -79,6 +84,7 @@ import {
   "wzzc-dev/moui/animation",
   "wzzc-dev/moui/text",
   "wzzc-dev/moui/state",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui/views",
 }
 ```
@@ -87,10 +93,12 @@ Import only the domain facades an app actually uses. Use `wzzc-dev/moui/core`
 only for advanced kernel/diagnostic types not exposed by a domain facade or
 `moui/views`; drawing and paint types belong behind `@graphics`, transition
 types behind `@animation`, text types behind `@text`, and focus scope types
-behind `@state`. Use `wzzc-dev/moui/backend/host` only for host service
-protocols. Do not import `runtime`, concrete platform backends, renderer
-packages, or `moui_theme` from ordinary apps unless the app is explicitly a
-showcase, diagnostic, or design-system preview.
+behind `@state`. Use `wzzc-dev/moui/services` for files, clipboard, URLs,
+settings, menus, timers, and routes. Production app imports must not include
+`runtime`, `backend/host`, concrete platform backends, or renderer packages.
+Design-system preview apps may depend on `moui_theme`; Showcase runtime/render
+inspection belongs in a sibling integration package that passes neutral DTOs
+into the app.
 
 ## App Pattern
 
@@ -129,6 +137,12 @@ Use `Program::new` when `update` returns effects. Use `Subscription` for
 ongoing model-driven sources. Lift child messages with `View::map` and child
 effects with `Effect::map`.
 
+Business models contain plain data. Capture `AppEnvironment` in the Program
+closure, convert `ServiceTaskResult`, timer ticks, routes, shortcuts, system
+menus, and context-menu actions to `Msg`, and declare typed shortcuts with
+`Program::with_commands`. Keep `State`/`Cell`/`ScrollState` for local rich-text,
+focus, and scroll transients only.
+
 ## UI Construction
 
 - Prefer constructors from `@views`: layout, controls, forms, data displays,
@@ -152,7 +166,8 @@ Rules:
 - Do not push app-specific types into `moui/core` or `moui/views`.
 - Keep protocol packages small and tested.
 - Convert host-service results into app messages at the app boundary.
-- Keep service tasks cancelable when using runtime effect helpers.
+- Use typed `ServiceTask[T]` and keep host request ids, bridges, and queues out
+  of app code and Model data.
 
 ## Validation
 
@@ -168,10 +183,10 @@ Common examples:
 
 ```sh
 moon test examples/counter/app --target native
-moon check examples/counter/android_window_hosted --target native
-moon check examples/counter/ios_window_hosted --target native
+moon check examples/showcase/android_window_hosted --target native
+moon check examples/showcase/ios_window_hosted --target native
 moon test examples/harmonyos_demo/app --target native
-moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
+moon check examples/showcase/harmonyos_window_hosted --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native

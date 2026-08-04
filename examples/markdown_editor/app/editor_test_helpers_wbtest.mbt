@@ -169,27 +169,51 @@ fn MarkdownEditorApp::transfer_status_label_for_test(
 }
 
 ///|
+fn MarkdownEditorApp::dispatch_message_for_test(
+  self : MarkdownEditorApp,
+  services : @services.AppServices,
+  message : MarkdownEditorMsg,
+) -> Unit {
+  let program = self
+    .program(environment=@services.AppEnvironment::new(services~))
+    .with_commands(commands=_ => {
+      [
+        @moui.ProgramCommand::new(
+          command=@core.ActionCommand::new(intent=@core.CommandIntent::Activate),
+          message~,
+        ),
+      ]
+    })
+  let runtime = @runtime.new_program_with_dimensions(
+    program~,
+    width=1120.0,
+    height=720.0,
+  )
+  ignore(runtime.dispatch_command(@core.CommandIntent::Activate))
+}
+
+///|
 fn MarkdownEditorApp::import_clipboard_for_test(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> Unit {
-  self.perform_clipboard_import(services)
+  self.dispatch_message_for_test(services, ImportFromClipboard)
 }
 
 ///|
 fn MarkdownEditorApp::export_clipboard_for_test(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> Unit {
-  self.perform_clipboard_export(services)
+  self.dispatch_message_for_test(services, ExportToClipboard)
 }
 
 ///|
 fn MarkdownEditorApp::export_html_for_test(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> Unit {
-  self.perform_html_export(services)
+  self.dispatch_message_for_test(services, ExportHtmlToClipboard)
 }
 
 ///|
@@ -200,45 +224,34 @@ fn MarkdownEditorApp::html_export_for_test(self : MarkdownEditorApp) -> String {
 ///|
 fn MarkdownEditorApp::save_as_dialog_for_test(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> Unit {
-  self.perform_file_save_as(services)
+  self.dispatch_message_for_test(services, SaveDocumentAs)
 }
 
 ///|
 fn MarkdownEditorApp::open_target_for_test(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> Unit {
-  self.perform_open_target(services)
+  self.dispatch_message_for_test(services, OpenTarget)
 }
 
 ///|
 fn MarkdownEditorApp::open_recent_for_test(
   self : MarkdownEditorApp,
   path : String,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> Unit {
-  self.perform_text_file_read(path, services)
+  self.dispatch_message_for_test(services, OpenRecentDocument(path))
 }
 
 ///|
 fn MarkdownEditorApp::pick_working_directory_for_test(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> Unit {
-  let response = services.pick_directory(title="Choose folder")
-  match response {
-    @host.HostServiceResponse::FileDialogSelection(paths) =>
-      if paths.length() > 0 {
-        self.load_tree_from_directory(paths[0], services)
-      }
-    @host.HostServiceResponse::Pending(_) => ()
-    _ =>
-      self.transfer_status.set(
-        TransferUnavailable("directory picker unavailable"),
-      )
-  }
+  self.dispatch_message_for_test(services, PickWorkingDirectory)
 }
 
 ///|
@@ -510,7 +523,7 @@ fn MarkdownEditorApp::runtime(
   height? : Double = 720.0,
 ) -> @runtime.AppRuntime {
   self.runtime_with_services(
-    @host.HostAppServices::unavailable(),
+    @services.AppServices::unavailable(),
     width~,
     height~,
   )
@@ -519,16 +532,15 @@ fn MarkdownEditorApp::runtime(
 ///|
 fn MarkdownEditorApp::runtime_with_services(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   width? : Double = 1120.0,
   height? : Double = 720.0,
 ) -> @runtime.AppRuntime {
   let runtime = @runtime.new_program_with_dimensions(
-    program=self.program_with_services(services),
+    program=self.program(environment=@services.AppEnvironment::new(services~)),
     width~,
     height~,
   )
-  runtime.set_action_commands(self.action_commands(services~))
   runtime
 }
 

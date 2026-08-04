@@ -33,7 +33,7 @@ pub struct WebsiteDocsCatalog {
 ///|
 pub enum WebsiteCatalogLoadState {
   CatalogNotLoaded
-  CatalogLoading(@host.HostServiceRequestId)
+  CatalogLoading(Int)
   CatalogLoaded(WebsiteDocsCatalog)
   CatalogFailed(String)
 }
@@ -47,7 +47,7 @@ pub struct WebsiteDocDocument {
 ///|
 pub enum WebsiteDocLoadState {
   DocNotLoaded
-  DocLoading(@host.HostServiceRequestId, String)
+  DocLoading(Int, String)
   DocLoaded(String, WebsiteDocDocument)
   DocFailed(String, String)
   DocNotFound(String)
@@ -61,7 +61,7 @@ priv enum WebsiteRouteCommand {
 
 ///|
 pub struct WebsiteRouteHost {
-  route_source : @runtime.HostRouteSource
+  route_source : @services.RouteSource
   push_route : (String) -> Unit
   scroll_to_key : (String, @core.ScrollAlignment) -> Unit
   apply_locale : (String) -> Unit
@@ -70,7 +70,7 @@ pub struct WebsiteRouteHost {
 
 ///|
 pub fn WebsiteRouteHost::new(
-  route_source~ : @runtime.HostRouteSource,
+  route_source~ : @services.RouteSource,
   push_route? : (String) -> Unit = _route => (),
   scroll_to_key? : (String, @core.ScrollAlignment) -> Unit = (_key, _alignment) => {
     ()
@@ -156,34 +156,6 @@ fn Model::website_doc_selected_entry(self : Model) -> WebsiteDocEntry? {
   match self.website_catalog() {
     Some(catalog) => catalog.entry_by_slug(self.selected_doc_slug)
     None => None
-  }
-}
-
-///|
-fn Model::website_doc_loading_path(self : Model) -> String {
-  match self.website_doc_selected_entry() {
-    Some(entry) => entry.path
-    None => ""
-  }
-}
-
-///|
-fn WebsiteCatalogLoadState::pending_id(
-  self : WebsiteCatalogLoadState,
-) -> @host.HostServiceRequestId? {
-  match self {
-    CatalogLoading(id) => Some(id)
-    _ => None
-  }
-}
-
-///|
-fn WebsiteDocLoadState::pending_id(
-  self : WebsiteDocLoadState,
-) -> @host.HostServiceRequestId? {
-  match self {
-    DocLoading(id, _) => Some(id)
-    _ => None
   }
 }
 

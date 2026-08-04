@@ -1,0 +1,46 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/mo_workbench/acp_native_transport"
+
+import {
+  "examples/mo_workbench/app",
+  "moonbitlang/async/aqueue",
+}
+
+// Values
+pub fn acp_backend_bundle(AcpNativeTransportConfig) -> AcpBackendBundle
+
+pub fn acp_backend_bundle_from_settings(@app.MoWorkbenchSettingsFile) -> AcpBackendBundle?
+
+pub fn acp_helper_args(String) -> Array[String]
+
+pub fn acp_initialize_request_line(String) -> String
+
+pub async fn acp_worker_loop(AcpBackendOwner) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct AcpBackendBundle {
+  runtime : @app.AgentBackendRuntime
+  owner : AcpBackendOwner
+}
+
+pub struct AcpBackendOwner {
+  config : AcpNativeTransportConfig
+  queue : @aqueue.Queue[AcpWork]
+}
+
+pub struct AcpNativeTransportConfig {
+  command : String
+  args : Array[String]
+  process_cwd : String
+  workspace : String
+}
+pub fn AcpNativeTransportConfig::new(command~ : String, args? : Array[String], process_cwd? : String, workspace? : String) -> Self
+
+type AcpWork
+
+// Type aliases
+
+// Traits
+

@@ -4,9 +4,8 @@ package "website/app"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui/views/navigation",
 }
 
@@ -15,7 +14,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog]
 
 pub fn program() -> @core.Program[Model, Msg]
 
-pub fn program_with_services(@host.HostAppServices, route_host? : WebsiteRouteHost?) -> @core.Program[Model, Msg]
+pub fn program_with_services(@services.AppServices, route_host? : WebsiteRouteHost?) -> @core.Program[Model, Msg]
 
 // Errors
 
@@ -50,6 +49,7 @@ pub struct Model {
   route_history : @navigation.RouteHistoryState
   pending_anchor : String?
   copied_text : String?
+  next_service_token : Int
 }
 
 pub enum Msg {
@@ -78,14 +78,15 @@ pub enum Msg {
   ToggleDocsDrawer
   CloseDocsDrawer
   SelectCompactHeroTab(String)
-  HostRouteChanged(@runtime.HostRouteEvent)
-  HostCatalogCompleted(@host.HostCompletedServiceResponse)
-  HostDocsCompleted(@host.HostCompletedServiceResponse)
+  HostRouteChanged(@services.RouteEvent)
+  HostCatalogCompleted(Int, @services.ServiceTaskResult[String])
+  HostDocsCompleted(Int, String, @services.ServiceTaskResult[String])
+  HostActionCompleted(@services.ServiceTaskResult[Unit])
 }
 
 pub enum WebsiteCatalogLoadState {
   CatalogNotLoaded
-  CatalogLoading(@host.HostServiceRequestId)
+  CatalogLoading(Int)
   CatalogLoaded(WebsiteDocsCatalog)
   CatalogFailed(String)
 }
@@ -111,7 +112,7 @@ pub struct WebsiteDocGroup {
 
 pub enum WebsiteDocLoadState {
   DocNotLoaded
-  DocLoading(@host.HostServiceRequestId, String)
+  DocLoading(Int, String)
   DocLoaded(String, WebsiteDocDocument)
   DocFailed(String, String)
   DocNotFound(String)
@@ -132,13 +133,13 @@ pub enum WebsitePage {
 } derive(Eq, @debug.Debug)
 
 pub struct WebsiteRouteHost {
-  route_source : @runtime.HostRouteSource
+  route_source : @services.RouteSource
   push_route : (String) -> Unit
   scroll_to_key : (String, @core.ScrollAlignment) -> Unit
   apply_locale : (String) -> Unit
   update_metadata : (String, String, String, String, String) -> Unit
 }
-pub fn WebsiteRouteHost::new(route_source~ : @runtime.HostRouteSource, push_route? : (String) -> Unit, scroll_to_key? : (String, @core.ScrollAlignment) -> Unit, apply_locale? : (String) -> Unit, update_metadata? : (String, String, String, String, String) -> Unit) -> Self
+pub fn WebsiteRouteHost::new(route_source~ : @services.RouteSource, push_route? : (String) -> Unit, scroll_to_key? : (String, @core.ScrollAlignment) -> Unit, apply_locale? : (String) -> Unit, update_metadata? : (String, String, String, String, String) -> Unit) -> Self
 
 // Type aliases
 

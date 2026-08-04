@@ -12,8 +12,8 @@ using @views {
 }
 
 ///|
-/// Host Effect / Subscription recipes, canvas paint, and mobile service probe.
-/// Not an ordinary app dependency example: this package may use `backend/host`.
+/// App-facing service/Subscription recipes, canvas paint, and mobile service
+/// probe. Platform objects stay in the Program closure, never in this Model.
 pub struct Model {
   route : String
   timer_running : Bool
@@ -22,12 +22,10 @@ pub struct Model {
   window_height : Double
   clipboard_text : String
   last_event : String
-  pending_service : @host.HostServiceRequestId?
+  pending_service : Int?
+  next_service : Int
   stroke_points : Array[@geometry.Point]
   anim_phase : Double
-  services : @host.HostAppServices
-  timer_source : @runtime.HostTimerSource?
-  window_events : @runtime.HostWindowEventSource?
   probe_text : String
   probe_action_count : Int
   probe_submit_count : Int
@@ -43,7 +41,9 @@ pub(all) enum Msg {
   WriteClipboard
   ReadClipboard
   OpenFile
-  HostCompleted(@host.HostCompletedServiceResponse)
+  ClipboardWriteCompleted(Int, @services.ServiceTaskResult[Unit])
+  ClipboardReadCompleted(Int, @services.ServiceTaskResult[String])
+  FileOpenCompleted(Int, @services.ServiceTaskResult[String])
   CanvasDrag(@geometry.Point)
   ClearCanvas
   AnimTick
@@ -71,9 +71,6 @@ pub fn normalize_platform_route(route : String) -> String {
 
 ///|
 pub fn Model::new(
-  services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-  timer_source? : @runtime.HostTimerSource? = None,
-  window_events? : @runtime.HostWindowEventSource? = None,
   timer_running? : Bool = false,
   route? : String = "host-services",
   host_label? : String = "Showcase platform host",
@@ -87,11 +84,9 @@ pub fn Model::new(
     clipboard_text: "",
     last_event: "Showcase Platform ready",
     pending_service: None,
+    next_service: 1,
     stroke_points: [],
     anim_phase: 0.0,
-    services,
-    timer_source,
-    window_events,
     probe_text: "mobile-service-probe",
     probe_action_count: 0,
     probe_submit_count: 0,
@@ -115,20 +110,11 @@ pub fn Model::with_host_label(self : Model, host_label : String) -> Model {
 }
 
 ///|
-/// Inject host adapters after the root shell is constructed. Canvas animation
-/// and host-service recipes require a real timer/service bridge from the
-/// platform entrypoint.
-pub fn Model::with_host_adapters(
-  self : Model,
-  services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-  timer_source? : @runtime.HostTimerSource? = None,
-  window_events? : @runtime.HostWindowEventSource? = None,
-) -> Model {
-  { ..self, services, timer_source, window_events }
-}
-
-///|
-pub fn update(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
+pub fn update(
+  model : Model,
+  msg : Msg,
+  services? : @services.AppServices = @services.AppServices::unavailable(),
+) -> (Model, @moui.Effect[Msg]) {
   match msg {
     Navigate(route) => (model.open(route), @moui.Effect::none())
     ToggleTimer =>
@@ -165,74 +151,78 @@ pub fn update(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
       )
     WriteClipboard => {
       let text = "showcase-platform ticks=\{model.ticks}"
+      let generation = model.next_service
       (
-        { ..model, last_event: "Writing clipboard…" },
-        @moui.Effect::host_service(
-          key="showcase-platform:clipboard-write",
-          label="Write clipboard",
-          run=dispatch => {
-            dispatch(
-              HostCompleted(
-                completion_for(
-                  model.services.write_clipboard_text(text),
-                  @host.HostServiceRequest::Clipboard(
-                    @host.HostClipboardRequest::WriteText(text),
-                  ),
-                ),
-              ),
-            )
-          },
-        ),
+        {
+          ..model,
+          pending_service: Some(generation),
+          next_service: generation + 1,
+          last_event: "Writing clipboard...",
+        },
+        services
+        .clipboard()
+        .write_text(text)
+        .effect(map=result => ClipboardWriteCompleted(generation, result)),
       )
     }
-    ReadClipboard =>
+    ReadClipboard => {
+      let generation = model.next_service
       (
-        { ..model, last_event: "Reading clipboard…" },
-        @moui.Effect::host_service(
-          key="showcase-platform:clipboard-read",
-          label="Read clipboard",
-          run=dispatch => {
-            dispatch(
-              HostCompleted(
-                completion_for(
-                  model.services.read_clipboard_text(),
-                  @host.HostServiceRequest::Clipboard(
-                    @host.HostClipboardRequest::ReadText,
-                  ),
-                ),
-              ),
-            )
+        {
+          ..model,
+          pending_service: Some(generation),
+          next_service: generation + 1,
+          last_event: "Reading clipboard...",
+        },
+        services
+        .clipboard()
+        .read_text()
+        .effect(map=result => ClipboardReadCompleted(generation, result)),
+      )
+    }
+    OpenFile => {
+      let generation = model.next_service
+      (
+        {
+          ..model,
+          pending_service: Some(generation),
+          next_service: generation + 1,
+          last_event: "Opening file dialog...",
+        },
+        services
+        .files()
+        .open_file(
+          options=@services.FileDialogOptions::new(
+            title="Showcase Platform open",
+            filters=["txt", "md", "json"],
+          ),
+        )
+        .effect(map=result => FileOpenCompleted(generation, result)),
+      )
+    }
+    ClipboardWriteCompleted(generation, result) =>
+      (
+        model.apply_service_result(generation, result, _ => "Clipboard written"),
+        @moui.Effect::none(),
+      )
+    ClipboardReadCompleted(generation, result) =>
+      (
+        model.apply_service_result(
+          generation,
+          result,
+          text => "Clipboard read: " + text,
+          clipboard_text=match result {
+            @services.ServiceTaskResult::Success(text) => Some(text)
+            _ => None
           },
         ),
+        @moui.Effect::none(),
       )
-    OpenFile =>
+    FileOpenCompleted(generation, result) =>
       (
-        { ..model, last_event: "Opening file dialog…" },
-        @moui.Effect::host_service(
-          key="showcase-platform:file-open",
-          label="Open file",
-          run=dispatch => {
-            dispatch(
-              HostCompleted(
-                completion_for(
-                  model.services.open_file(title="Showcase Platform open", filters=[
-                    "txt", "md", "json",
-                  ]),
-                  @host.HostServiceRequest::FileDialog(
-                    @host.HostFileDialogOptions::new(
-                      kind=@host.HostFileDialogKind::OpenFile,
-                      title="Showcase Platform open",
-                      filters=["txt", "md", "json"],
-                    ),
-                  ),
-                ),
-              ),
-            )
-          },
-        ),
+        model.apply_service_result(generation, result, path => "Opened " + path),
+        @moui.Effect::none(),
       )
-    HostCompleted(completion) =>
-      (apply_host_completion(model, completion), @moui.Effect::none())
     CanvasDrag(point) => {
       let points = model.stroke_points.copy()
       points.push(point)
@@ -507,23 +497,14 @@ pub fn view(model : Model) -> @moui.View[Msg] {
 }
 
 ///|
-/// Timer and pending-service subscriptions stay active regardless of the
-/// visible platform route so root workspace switches do not tear them down.
-pub fn subscriptions(model : Model) -> @moui.Subscription[Msg] {
+/// Timer subscriptions stay active regardless of the visible platform route
+/// so root workspace switches do not tear them down.
+pub fn subscriptions(
+  model : Model,
+  timer_source? : @services.TimerSource? = None,
+) -> @moui.Subscription[Msg] {
   let subs : Array[@moui.Subscription[Msg]] = []
-  match model.pending_service {
-    Some(id) =>
-      subs.push(
-        model.services.completion_subscription(
-          id,
-          map=completion => HostCompleted(completion),
-          key="showcase-platform:service:" + id.value.to_string(),
-          label="Showcase platform host completion",
-        ),
-      )
-    None => ()
-  }
-  match model.timer_source {
+  match timer_source {
     Some(source) => {
       if model.timer_running {
         subs.push(
@@ -548,51 +529,29 @@ pub fn subscriptions(model : Model) -> @moui.Subscription[Msg] {
     }
     None => ()
   }
-  match model.window_events {
-    Some(source) =>
-      subs.push(
-        source.subscription(
-          key="showcase-platform:window",
-          label="Showcase platform window events",
-          map=window_event => {
-            match window_event.event {
-              @host.HostEvent::Resized(metrics) =>
-                Some(
-                  WindowResized(
-                    metrics.logical_size.width,
-                    metrics.logical_size.height,
-                  ),
-                )
-              _ => None
-            }
-          },
-        ),
-      )
-    None => ()
-  }
   @moui.Subscription::batch(subs)
 }
 
 ///|
 pub fn program(
-  services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-  timer_source? : @runtime.HostTimerSource? = None,
-  window_events? : @runtime.HostWindowEventSource? = None,
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
   route? : String = "host-services",
 ) -> @moui.Program[Model, Msg] {
-  let init = Model::new(services~, timer_source~, window_events~, route~)
+  let init = Model::new(route~)
   @moui.Program::new(
     init=() => (init, @moui.Effect::none()),
-    update~,
+    update=(model, msg) => update(model, msg, services=environment.services()),
     view~,
-    subscriptions~,
-  )
+    subscriptions=model => {
+      subscriptions(model, timer_source=environment.timer())
+    },
+  ).with_commands(commands=_model => program_commands())
 }
 
 ///|
-/// Host keyboard shortcut metadata. Entrypoints call
-/// `runtime.set_action_commands(action_command_map())`.
-pub fn action_command_map() -> @views.ActionCommandMap {
+/// Keyboard shortcuts dispatch through the same typed Program queue as views,
+/// context menus, and application menus.
+pub fn program_commands() -> Array[@moui.ProgramCommand[Msg]] {
   let command = @views.ActionCommand::new(
     intent=@views.CommandIntent::Activate,
     label="Platform tick",
@@ -603,53 +562,38 @@ pub fn action_command_map() -> @views.ActionCommandMap {
       ),
     ),
     group="Showcase Platform",
-    description="Demo shortcut installed on the host action-command map",
+    description="Demo shortcut installed by the Program command declaration",
   )
-  @views.ActionCommandMap::new(bindings=[
-    @views.CommandBinding::new(command~, handle=() => ()),
-  ])
+  [@moui.ProgramCommand::new(command~, message=ShortcutTick)]
 }
 
 ///|
-fn completion_for(
-  response : @host.HostServiceResponse,
-  request : @host.HostServiceRequest,
-) -> @host.HostCompletedServiceResponse {
-  let id = match response {
-    @host.HostServiceResponse::Pending(id) => id
-    _ => @host.HostServiceRequestId::new(0)
-  }
-  { id, request, response }
-}
-
-///|
-fn apply_host_completion(
-  model : Model,
-  completion : @host.HostCompletedServiceResponse,
+fn[T] Model::apply_service_result(
+  self : Model,
+  generation : Int,
+  result : @services.ServiceTaskResult[T],
+  success : (T) -> String,
+  clipboard_text? : String? = None,
 ) -> Model {
-  match completion.response {
-    @host.HostServiceResponse::Pending(id) =>
-      {
-        ..model,
-        pending_service: Some(id),
-        last_event: "Host service pending \{id.value}",
-      }
-    @host.HostServiceResponse::ClipboardWritten =>
-      { ..model, pending_service: None, last_event: "Clipboard written" }
-    @host.HostServiceResponse::ClipboardText(text) =>
-      {
-        ..model,
-        pending_service: None,
-        clipboard_text: text,
-        last_event: "Clipboard read",
-      }
-    @host.HostServiceResponse::FileDialogSelection(paths) => {
-      let summary = if paths.length() == 0 { "(no files)" } else { paths[0] }
-      { ..model, pending_service: None, last_event: "Opened \{summary}" }
+  if self.pending_service != Some(generation) {
+    self
+  } else {
+    match result {
+      @services.ServiceTaskResult::Success(value) =>
+        {
+          ..self,
+          pending_service: None,
+          clipboard_text: clipboard_text.unwrap_or(self.clipboard_text),
+          last_event: success(value),
+        }
+      @services.ServiceTaskResult::Failure(error) =>
+        {
+          ..self,
+          pending_service: None,
+          last_event: "Unavailable: " + error.message,
+        }
+      @services.ServiceTaskResult::Cancelled =>
+        { ..self, pending_service: None, last_event: "Service cancelled" }
     }
-    @host.HostServiceResponse::Unavailable(reason) =>
-      { ..model, pending_service: None, last_event: "Unavailable: \{reason}" }
-    _ =>
-      { ..model, pending_service: None, last_event: "Host service completed" }
   }
 }

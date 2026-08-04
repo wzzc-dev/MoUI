@@ -36,11 +36,16 @@ Read only what the task needs:
 - `moui/views`: app-facing controls, control styles, default themes,
   form/navigation/data helpers, WebView facade, and concrete custom view
   behavior.
+- `moui/services`: app-facing files, clipboard, URL, settings, appearance,
+  application-menu, timer, and route contracts. It depends only on `core` and
+  owns `AppServices`, `ServiceTask[T]`, `TimerSource`, `RouteSource`, and
+  `AppEnvironment`.
 - `moui/runtime`: runtime lifecycle, element/layout/render trees, event
   dispatch, effects, subscriptions, diagnostics, inspector snapshots.
-- `moui/backend/host`: host service protocols, window/timer/route sources,
-  WebView protocol, async image service, accessibility/input/redraw contracts,
-  and the shared `EmbedderHostChannel`. Per ADR 0018, `HostRuntimeDriver`,
+- `moui/backend/host`: host wire protocol, `HostServiceBridge`, request and
+  completion queues, adapters to `moui/services`, window event sources, WebView
+  protocol, async image service, accessibility/input/redraw contracts, and the
+  shared `EmbedderHostChannel`. Per ADR 0018, `HostRuntimeDriver`,
   `RedrawScheduler`, and `HostWallClock` moved to `moui/runtime`; render
   completion and GPU recovery moved to `moui/render`. Host carries
   platform-neutral contracts only.
@@ -135,7 +140,8 @@ owning-package boundaries clear.
   subpackages.
 - root `moui`: app-loop public facade for `View`, `Program`, `Effect`,
   `Subscription`, `Theme`, `Environment`, and `ViewEnvironment`. It does not
-  import `moui_theme` or replace the domain facades.
+  import runtime, expose `run_app`, import `moui_theme`, or replace the domain
+  facades.
 - `geometry/`, `graphics/`, `animation/`, `text/`, `state/`: app-facing domain
   facades over `core`. Use them for high-frequency geometry, paint/drawing,
   transition/easing, text, and state/focus value types. They are not `core`
@@ -145,6 +151,9 @@ owning-package boundaries clear.
   compatibility facade, and concrete custom view behavior. It should not become
   a catch-all re-export surface for low-level drawing, animation, focus,
   semantics, runtime id, or component kernel types.
+- `services/`: app-facing typed service tasks and timer/route subscriptions.
+  Host request ids, bridge protocols, and completion queues do not cross this
+  package boundary.
 - `moui_theme/common/`: repo-local addon common package for shared
   source-mapped design-system
   manifests, golden token mappings, golden source-usage audits,
@@ -187,8 +196,7 @@ owning-package boundaries clear.
   native async image completion source and deferred native completion request source,
   host-event subscription source fanout, window-scoped subscription source,
   platform event-source bundles for feeding normalized Web/native host and window
-  events into app-owned subscriptions,
-  scheduler-backed timer subscription source, route/deep-link subscription source,
+  events into integration subscriptions,
   window request/completion queue, text-input session, window-event conversion,
   async host-service queue, and frame-aware redraw driver with
   idle/scheduled/in-frame/follow-up coalescing, and native WebView
@@ -288,17 +296,17 @@ owning-package boundaries clear.
   native WebView host-contract demo; Web wasm is an unavailable fallback and
   not an iframe implementation.
 - `examples/showcase/{macos_skia,windows_skia,linux_skia}` and
-  `examples/markdown_editor/{macos_skia,windows_skia,linux_skia}`: recommended
-  native Skia renderer example entrypoints.
-- `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}`:
+  `examples/markdown_editor/macos_skia`: recommended native Skia renderer
+  example entrypoints.
+- `examples/design_systems/{web_wasm,macos_skia}`:
   dedicated design-system addon diagnostic sampler entrypoints over the shared
   `examples/design_systems/app` logic.
 - `examples/pdf_workbench/app`, `examples/pdf_workbench/pdflite_adapter`, and
   `examples/pdf_workbench/macos_skia`: lightweight PDF UI shell, separate
   `pdflite` adapter checks, and native Skia mainline entrypoint.
-- `examples/showcase/{macos_wgpu_cosmic,windows_wgpu_cosmic,linux_wgpu_cosmic}`: explicit Moon
-  Cosmic text-provider comparison entrypoints on the native WGPU diagnostic
-  route.
+- Canonical `examples/showcase/{macos_wgpu,windows_wgpu,linux_wgpu}` routes use
+  the platform font provider with Cosmic as an internal fallback; do not add a
+  second provider-specific WGPU composition root.
 - `examples/showcase/{macos_sun,windows_sun,linux_sun}`: Sun CPU raster
   entrypoints. Do not add Markdown Editor Sun entrypoints until text and
   editor runtime evidence exists.

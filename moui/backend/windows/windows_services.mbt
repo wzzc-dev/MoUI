@@ -6,6 +6,7 @@ pub fn windows_service_bridge(
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_windows_file_dialog,
   text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_windows_text_file,
   binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_windows_binary_file,
+  settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_windows_settings,
   menu? : (Array[@core.ActionCommand]) -> Int = dispatch_windows_menu,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
@@ -16,6 +17,7 @@ pub fn windows_service_bridge(
       menus=true,
       open_url=true,
       system_theme=true,
+      settings=true,
     ),
     handle=request => {
       match request {
@@ -41,6 +43,8 @@ pub fn windows_service_bridge(
           )
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
+        @host.HostServiceRequest::Settings(settings_request) =>
+          settings(settings_request)
         @host.HostServiceRequest::ListDirectory(_) =>
           @host.HostServiceResponse::Unavailable(
             "directory listing service is unavailable",
@@ -49,5 +53,13 @@ pub fn windows_service_bridge(
           @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
     },
+  )
+}
+
+///|
+pub fn app_environment() -> @services.AppEnvironment {
+  @host.app_environment(
+    bridge=windows_service_bridge(),
+    timer=Some(windows_timer_source()),
   )
 }

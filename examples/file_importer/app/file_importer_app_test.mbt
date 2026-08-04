@@ -20,16 +20,13 @@ test "file importer handles empty selection" {
 test "file importer uses unavailable host service state" {
   let update = FileImporterModel::new().update_with_services(
     BrowseRequested,
-    @host.HostAppServices::unavailable(),
+    @services.AppServices::unavailable(),
   )
   assert_true(update.model.status is FileImporterStatus::Requesting)
   let model = run_file_importer_effect(update)
   assert_true(model.status is FileImporterStatus::Unavailable(_))
   inspect(model.last_event, content="File dialog unavailable")
-  inspect(
-    model.availability_reason,
-    content="file dialog service is unavailable",
-  )
+  inspect(model.availability_reason, content="file open is unavailable")
 }
 
 ///|
@@ -58,42 +55,31 @@ test "file importer handles mocked pending completion" {
   assert_true(update.model.status is FileImporterStatus::Requesting)
   let summary = @runtime.effect_plan_summary(update.effect)
   inspect(summary.descriptors().length(), content="1")
-  inspect(summary.descriptors()[0].key(), content="host:file-import")
-  inspect(summary.descriptors()[0].kind(), content="host-service")
-  inspect(summary.descriptors()[0].label(), content="Import files")
+  inspect(summary.descriptors()[0].key(), content="file:open")
+  inspect(summary.descriptors()[0].kind(), content="service")
+  inspect(summary.descriptors()[0].label(), content="Open file")
   let model = @state.State::new(update.model)
   match update.effect {
-    @moui.Effect::Run(_descriptor, run) =>
-      run(message => model.set(model.get().update(message)))
-    _ => fail("expected file importer browse effect")
+    @moui.Effect::Task(_descriptor, start) =>
+      ignore(start(message => model.set(model.get().update(message))))
+    _ => fail("expected typed file dialog task")
   }
-  guard model.get().status is FileImporterStatus::Pending(id) else {
-    fail("expected pending file dialog")
-  }
-  inspect(services.pending_count(), content="1")
-  let pending = services.drain_pending()
+  assert_true(model.get().status is FileImporterStatus::Requesting)
+  inspect(queue.pending_count(), content="1")
+  let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
   assert_true(
-    services.complete(
-      id,
+    queue.complete(
+      pending[0].id,
       @host.HostServiceResponse::FileDialogSelection(["/tmp/later.txt"]),
     ),
   )
-  let runtime = test_runtime(
-    model.get().program_with_services(services),
-    width=860.0,
-    height=620.0,
-  )
-  match services.take_completed(id) {
+  match queue.take_completed(pending[0].id) {
     Some(_) => fail("expected registered completion to be consumed")
     None => ()
   }
-  let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "/tmp/later.txt"))
-  assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
-  let snapshot = runtime.program_runtime_snapshot()
-  inspect(snapshot.started_subscription_count(), content="1")
-  inspect(snapshot.cancelled_subscription_count(), content="1")
+  inspect(model.get().files[0].path, content="/tmp/later.txt")
+  inspect(model.get().last_event, content="Imported 1 file(s) from Dialog")
 }
 
 ///|
@@ -101,16 +87,18 @@ test "file importer runtime receives async file dialog completion" {
   let queue = @host.HostServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
   let runtime = test_runtime(
-    FileImporterModel::new().program_with_services(services),
+    FileImporterModel::new().program(
+      environment=@services.AppEnvironment::new(services~),
+    ),
     width=860.0,
     height=620.0,
   )
   click_text(runtime, "Browse")
   assert_true(has_text(runtime.draw_commands(), "Waiting for file picker"))
-  let pending = services.drain_pending()
+  let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
   assert_true(
-    services.complete(
+    queue.complete(
       pending[0].id,
       @host.HostServiceResponse::FileDialogSelection(["/tmp/later.txt"]),
     ),
@@ -125,14 +113,16 @@ test "file importer runtime receives async file dialog rejection" {
   let queue = @host.HostServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
   let runtime = test_runtime(
-    FileImporterModel::new().program_with_services(services),
+    FileImporterModel::new().program(
+      environment=@services.AppEnvironment::new(services~),
+    ),
     width=860.0,
     height=620.0,
   )
   click_text(runtime, "Browse")
-  let pending = services.drain_pending()
+  let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
-  assert_true(services.reject(pending[0].id, "file picker canceled"))
+  assert_true(queue.reject(pending[0].id, "file picker canceled"))
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "File dialog unavailable"))
   assert_true(has_text(commands, "file picker canceled"))
@@ -142,7 +132,9 @@ test "file importer runtime receives async file dialog rejection" {
 test "file importer runtime runs host service effects" {
   let services = host_services_for_file_dialog(["/tmp/runtime.csv"])
   let runtime = test_runtime(
-    FileImporterModel::new().program_with_services(services),
+    FileImporterModel::new().program(
+      environment=@services.AppEnvironment::new(services~),
+    ),
     width=860.0,
     height=620.0,
   )
@@ -185,49 +177,21 @@ test "file importer child effect maps pending completion into parent" {
   )
   inspect(
     pending_snapshot.last_scheduled_effect_summary().descriptors()[0].key(),
-    content="host:file-import",
+    content="file:open",
   )
   inspect(
     pending_snapshot.last_scheduled_effect_summary().descriptors()[0].kind(),
-    content="host-service",
+    content="service",
   )
   inspect(
     pending_snapshot.last_scheduled_effect_summary().descriptors()[0].label(),
-    content="Import files",
+    content="Open file",
   )
-  inspect(
-    pending_snapshot.last_subscription_plan_summary().descriptors().length(),
-    content="1",
-  )
-  inspect(
-    pending_snapshot.last_subscription_plan_summary().descriptors()[0]
-    .key()
-    .contains("host-service:completion:"),
-    content="true",
-  )
-  inspect(
-    pending_snapshot.last_subscription_plan_summary().descriptors()[0].kind(),
-    content="host-service",
-  )
-  inspect(
-    pending_snapshot.last_subscription_plan_summary().descriptors()[0].label(),
-    content="Import files completion",
-  )
-  inspect(pending_snapshot.active_subscriptions().length(), content="1")
-  inspect(
-    pending_snapshot.active_subscriptions()[0]
-    .key()
-    .contains("host-service:completion:"),
-    content="true",
-  )
-  inspect(
-    pending_snapshot.active_subscriptions()[0].label(),
-    content="Import files completion",
-  )
-  let pending = services.drain_pending()
+  inspect(pending_snapshot.active_effect_task_count(), content="1")
+  let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
   assert_true(
-    services.complete(
+    queue.complete(
       pending[0].id,
       @host.HostServiceResponse::FileDialogSelection(["/tmp/child-later.csv"]),
     ),
@@ -237,16 +201,8 @@ test "file importer child effect maps pending completion into parent" {
   assert_true(has_text(commands, "/tmp/child-later.csv"))
   assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
   let completed_snapshot = runtime.program_runtime_snapshot()
-  inspect(completed_snapshot.cancelled_subscription_count(), content="1")
-  assert_true(
-    completed_snapshot
-    .subscription_lifecycle()
-    .any(entry => {
-      entry.key().contains("host-service:completion:") &&
-      entry.status() ==
-      @runtime.SubscriptionLifecycleStatus::SubscriptionCancelled
-    }),
-  )
+  inspect(completed_snapshot.active_effect_task_count(), content="0")
+  inspect(completed_snapshot.completed_effect_task_count(), content="1")
 }
 
 ///|
@@ -263,7 +219,7 @@ test "file importer runtime draws panel labels" {
 ///|
 fn host_services_for_file_dialog(
   paths : Array[String],
-) -> @host.HostAppServices {
+) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(file_dialogs=true),
     handle=request => {
@@ -274,13 +230,13 @@ fn host_services_for_file_dialog(
       }
     },
   )
-  @host.HostAppServices::new(bridge~)
+  @host.app_services(bridge~)
 }
 
 ///|
 fn async_file_dialog_services(
   queue : @host.HostServiceAsyncQueue,
-) -> @host.HostAppServices {
+) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(file_dialogs=true),
     handle=request => {
@@ -290,7 +246,7 @@ fn async_file_dialog_services(
       }
     },
   )
-  @host.HostAppServices::new(bridge~, async_queue=Some(queue))
+  @host.app_services(bridge~, async_queue=Some(queue))
 }
 
 ///|
@@ -312,7 +268,7 @@ fn ParentImporterModel::new() -> ParentImporterModel {
 fn ParentImporterModel::update_with_services(
   self : ParentImporterModel,
   message : ParentImporterMsg,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> (ParentImporterModel, @moui.Effect[ParentImporterMsg]) {
   match message {
     Child(child_message) => {
@@ -337,17 +293,9 @@ fn ParentImporterModel::view(
 }
 
 ///|
-fn ParentImporterModel::subscriptions(
-  self : ParentImporterModel,
-  services : @host.HostAppServices,
-) -> @moui.Subscription[ParentImporterMsg] {
-  self.child.subscriptions(services).map(message => Child(message))
-}
-
-///|
 fn ParentImporterModel::runtime_with_services(
   self : ParentImporterModel,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   width? : Double = 900.0,
   height? : Double = 680.0,
 ) -> @runtime.AppRuntime {
@@ -356,7 +304,6 @@ fn ParentImporterModel::runtime_with_services(
       init=() => (self, @moui.Effect::none()),
       update=(model, message) => model.update_with_services(message, services),
       view=model => model.view(),
-      subscriptions=model => model.subscriptions(services),
     ),
     size=@geometry.Size::new(width~, height~),
   )

@@ -235,17 +235,11 @@ test "host driver keyboard paste replaces selection with extended emoji" {
 ///|
 test "host driver falls back clipboard shortcuts to action commands" {
   let copied = Ref(0)
-  let runtime = host_test_runtime(
+  let runtime = host_test_runtime_with_commands(
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
-  )
-  runtime.set_action_commands(
-    @core.ActionCommandMap::new(bindings=[
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(intent=@core.CommandIntent::Copy),
-        handle=() => copied.val = copied.val + 1,
-      ),
-    ]),
+    commands=[@core.ActionCommand::new(intent=@core.CommandIntent::Copy)],
+    on_message=_ => copied.val = copied.val + 1,
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
@@ -270,17 +264,11 @@ test "host driver falls back clipboard shortcuts to action commands" {
 test "host driver defers paste action command while clipboard read is pending" {
   let pasted = Ref(0)
   let queue = HostServiceAsyncQueue::new()
-  let runtime = host_test_runtime(
+  let runtime = host_test_runtime_with_commands(
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
-  )
-  runtime.set_action_commands(
-    @core.ActionCommandMap::new(bindings=[
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(intent=@core.CommandIntent::Paste),
-        handle=() => pasted.val = pasted.val + 1,
-      ),
-    ]),
+    commands=[@core.ActionCommand::new(intent=@core.CommandIntent::Paste)],
+    on_message=_ => pasted.val = pasted.val + 1,
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()

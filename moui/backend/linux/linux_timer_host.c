@@ -1,6 +1,6 @@
 #ifdef __linux__
 
-// Linux timer host: drives HostTimerSource subscriptions via a GLib timeout
+// Linux timer host: drives TimerSource subscriptions via a GLib timeout
 // source on the default main context. The returned handle removes the source
 // via g_source_remove.
 

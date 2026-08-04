@@ -167,8 +167,9 @@ test "default macOS project file plan is exact" {
   let desktop_main = test_planned_text(files, "macos_skia/main.mbt")
   assert_true(desktop_pkg.contains("wzzc-dev/moui/backend/macos"))
   assert_true(desktop_pkg.contains("wzzc-dev/moui/render/skia"))
+  assert_true(desktop_pkg.contains("wzzc-dev/moui/runtime"))
   assert_false(desktop_pkg.contains("wzzc-dev/moui/backend/macos/"))
-  assert_true(desktop_main.contains("@moui.run_app"))
+  assert_true(desktop_main.contains("@runtime.run_app"))
   assert_true(desktop_main.contains(".render_all(@render_skia.from_env())"))
   assert_true(desktop_main.contains(".backend(@platform_host.entry())"))
 }
@@ -193,7 +194,7 @@ test "mobile config contains window-hosted platform defaults" {
       files,
       platform + "_window_hosted/main.mbt",
     )
-    inspect(package_text.contains("wzzc-dev/moui"), content="true")
+    inspect(package_text.contains("wzzc-dev/moui/runtime"), content="true")
     inspect(
       package_text.contains("wzzc-dev/moui/backend/" + platform),
       content="true",
@@ -203,7 +204,7 @@ test "mobile config contains window-hosted platform defaults" {
       package_text.contains("wzzc-dev/moui/backend/" + platform + "/"),
       content="false",
     )
-    inspect(main_text.contains("@moui.run_app"), content="true")
+    inspect(main_text.contains("@runtime.run_app"), content="true")
     inspect(
       main_text.contains(".render_all(@render_skia.from_env())"),
       content="true",

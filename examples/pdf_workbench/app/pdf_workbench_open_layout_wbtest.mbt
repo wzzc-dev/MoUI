@@ -20,7 +20,7 @@ test "pdf workbench opens via binary host service" {
       }
     },
   )
-  let services = @host.HostAppServices::new(bridge~)
+  let services = @host.app_services(bridge~)
   let update = PdfWorkbenchModel::new().update_with_services(
     OpenRequested,
     services,
@@ -83,7 +83,7 @@ test "pdf workbench runtime open click rebuilds loaded preview" {
       }
     },
   )
-  let services = @host.HostAppServices::new(bridge~)
+  let services = @host.app_services(bridge~)
   let runtime = PdfWorkbenchModel::new().runtime_with_services(
     services,
     width=1120.0,
@@ -332,7 +332,7 @@ test "pdf workbench side panels scroll while reader stays expanded" {
 }
 
 ///|
-test "pdf workbench full reader button fills window and restores chrome" {
+test "pdf workbench typed full reader command fills window and restores chrome" {
   let summaries : Array[PdfWorkbenchPageSummary] = []
   for page in 1..<=4 {
     summaries.push({
@@ -375,7 +375,20 @@ test "pdf workbench full reader button fills window and restores chrome" {
       diagnostic: "fake raster",
     }),
   }
-  let runtime = model.runtime(width=1280.0, height=620.0)
+  let runtime = pdf_workbench_test_runtime(
+    model
+    .program()
+    .with_commands(commands=_model => {
+      [
+        @moui.ProgramCommand::new(
+          command=@core.ActionCommand::new(intent=@core.CommandIntent::Activate),
+          message=ToggleReaderFullscreen,
+        ),
+      ]
+    }),
+    width=1280.0,
+    height=620.0,
+  )
   let initial_commands = runtime.draw_commands()
   assert_true(
     pdf_workbench_draw_has_text_containing(initial_commands, "PDF Workbench"),
@@ -389,7 +402,7 @@ test "pdf workbench full reader button fills window and restores chrome" {
     fail("expected reader image before fullscreen")
   }
 
-  pdf_workbench_click_text(runtime, "Full")
+  assert_true(runtime.dispatch_command(@core.CommandIntent::Activate))
   let full_commands = runtime.draw_commands()
   assert_false(
     pdf_workbench_draw_has_text_containing(full_commands, "PDF Workbench"),
@@ -408,7 +421,7 @@ test "pdf workbench full reader button fills window and restores chrome" {
   assert_true(full_image.size.width > before_image.size.width + 60.0)
   assert_true(full_image.size.height > before_image.size.height + 80.0)
 
-  pdf_workbench_click_text(runtime, "Exit")
+  assert_true(runtime.dispatch_command(@core.CommandIntent::Activate))
   let restored_commands = runtime.draw_commands()
   assert_true(
     pdf_workbench_draw_has_text_containing(restored_commands, "PDF Workbench"),

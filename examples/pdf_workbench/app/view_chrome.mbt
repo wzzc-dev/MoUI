@@ -136,7 +136,6 @@ fn pdf_workbench_status(
   let status = match model.status {
     Empty => "Empty"
     Requesting(label) => "Requesting: " + label
-    Pending(_, label) => "Pending: " + label
     Ready => "Ready"
     Failed(reason) => "Failed: " + reason
   }

@@ -3,7 +3,6 @@ using @moui {type Effect}
 
 ///|
 pub(all) struct ExcelApp {
-  services : @host.HostAppServices
   model : @state.State[ExcelModel]
 }
 
@@ -19,7 +18,6 @@ pub(all) struct ExcelModel {
   status : String
   file_status : ExcelFileStatus
   context_menu_visible : Bool
-  pending_file_path : String
   cell_ref_input : String
   heat_map : Bool
   autocomplete_suggestions : Array[String]
@@ -46,7 +44,7 @@ pub(all) enum ExcelMsg {
   LoadDemo
   FileOpenRequested
   FileSaveRequested
-  HostCompleted(@host.HostCompletedServiceResponse)
+  ServiceCompleted(ExcelServiceCompletion)
   CellNavigate(Int, Int)
   CellNavigateTo(Int, Int)
   CellNavigateDataEdge(Int, Int)
@@ -86,7 +84,17 @@ pub(all) enum ExcelMsg {
 ///|
 pub(all) enum ExcelFileStatus {
   Idle
-  Pending(@host.HostServiceRequestId)
+  Running(String)
+}
+
+///|
+pub enum ExcelServiceCompletion {
+  FileOpenPicked(@services.ServiceTaskResult[String])
+  FileRead(String, @services.ServiceTaskResult[Bytes])
+  FileSavePicked(@services.ServiceTaskResult[String])
+  FileWritten(String, @services.ServiceTaskResult[Unit])
+  ClipboardWritten(String, @services.ServiceTaskResult[Unit])
+  ClipboardRead(@services.ServiceTaskResult[String])
 }
 
 ///|
@@ -134,8 +142,8 @@ pub let shell_height : Double = 760.0
 pub let cell_gap : Double = 1.0
 
 ///|
-pub fn ExcelApp::new(services : @host.HostAppServices) -> ExcelApp {
-  { services, model: @state.State::new(ExcelModel::new()) }
+pub fn ExcelApp::new() -> ExcelApp {
+  { model: @state.State::new(ExcelModel::new()) }
 }
 
 ///|
@@ -173,7 +181,6 @@ pub fn ExcelModel::from_workbook(
     status,
     file_status: ExcelFileStatus::Idle,
     context_menu_visible: false,
-    pending_file_path: "",
     cell_ref_input: "",
     heat_map: false,
     autocomplete_suggestions: [],

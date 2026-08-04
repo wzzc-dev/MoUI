@@ -179,7 +179,7 @@ const RUNNER_SOURCE = `fn main {
     width=960.0,
     height=640.0,
   )
-  @moui.run_app(
+  @runtime.run_app(
     "MoUI Playground Preview",
     runtime,
   )

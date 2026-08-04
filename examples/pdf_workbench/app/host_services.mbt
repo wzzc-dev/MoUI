@@ -3,7 +3,7 @@ fn PdfWorkbenchModel::request_startup_pdf(
   self : PdfWorkbenchModel,
   startup_pdf_path : String,
   startup_page_number : Int,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> PdfWorkbenchUpdate {
   let path = startup_pdf_path.trim().to_owned()
   if path == "" {
@@ -26,63 +26,50 @@ fn PdfWorkbenchModel::request_startup_pdf(
 fn PdfWorkbenchModel::request_open_path(
   self : PdfWorkbenchModel,
   path : String,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> PdfWorkbenchUpdate {
-  let request = @host.HostServiceRequest::BinaryFile(
-    @host.HostBinaryFileRequest::ReadBytes(path),
-  )
   PdfWorkbenchUpdate::new(
     {
       ..self,
       status: Requesting("Opening PDF"),
+      pending_operation: Some(ReadPdf(path)),
       last_event: "Opening " + pdf_workbench_file_name(path),
     },
-    effect=@moui.Effect::host_service(
-      key="pdf-workbench:open-path:" +
-        pdf_workbench_string_hash(path).to_string(),
-      label="Open PDF path",
-      run=dispatch => {
-        let response = services.read_binary_file(path)
-        dispatch(HostCompleted(pdf_workbench_completion(request, response)))
-      },
-    ),
+    effect=services
+      .files()
+      .read_bytes(path)
+      .effect(map=result => PdfBytesRead(path, result)),
   )
 }
 
 ///|
 fn PdfWorkbenchModel::request_open(
   self : PdfWorkbenchModel,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> PdfWorkbenchUpdate {
-  let request = @host.HostServiceRequest::FileDialog(
-    @host.HostFileDialogOptions::new(
-      kind=@host.HostFileDialogKind::OpenFile,
-      title="Open PDF",
-      filters=["pdf"],
-    ),
-  )
   PdfWorkbenchUpdate::new(
     {
       ..self,
       status: Requesting("Opening PDF"),
+      pending_operation: Some(PickOpenFile),
       last_event: "Waiting for file picker",
       startup_page_after_load: None,
     },
-    effect=@moui.Effect::host_service(
-      key="pdf-workbench:open-file",
-      label="Open PDF file",
-      run=dispatch => {
-        let response = services.open_file(title="Open PDF", filters=["pdf"])
-        dispatch(HostCompleted(pdf_workbench_completion(request, response)))
-      },
-    ),
+    effect=services
+      .files()
+      .open_file(
+        options=@services.FileDialogOptions::new(title="Open PDF", filters=[
+          "pdf",
+        ]),
+      )
+      .effect(map=result => OpenFilePicked(result)),
   )
 }
 
 ///|
 fn PdfWorkbenchModel::request_save(
   self : PdfWorkbenchModel,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   document_services : PdfWorkbenchDocumentServices,
   save_as~ : Bool,
 ) -> PdfWorkbenchUpdate {
@@ -113,35 +100,26 @@ fn PdfWorkbenchModel::request_save(
 ///|
 fn PdfWorkbenchModel::request_save_path(
   self : PdfWorkbenchModel,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   default_name~ : String,
 ) -> PdfWorkbenchUpdate {
-  let request = @host.HostServiceRequest::FileDialog(
-    @host.HostFileDialogOptions::new(
-      kind=@host.HostFileDialogKind::SaveFile,
-      title="Save PDF",
-      default_name=Some(default_name),
-      filters=["pdf"],
-    ),
-  )
   PdfWorkbenchUpdate::new(
     {
       ..self,
       status: Requesting("Choosing save location"),
+      pending_operation: Some(PickSaveFile),
       last_event: "Waiting for save dialog",
     },
-    effect=@moui.Effect::host_service(
-      key="pdf-workbench:save-path",
-      label="Choose PDF save path",
-      run=dispatch => {
-        let response = services.save_file(
+    effect=services
+      .files()
+      .save_file(
+        options=@services.FileDialogOptions::new(
           title="Save PDF",
           default_name=Some(default_name),
           filters=["pdf"],
-        )
-        dispatch(HostCompleted(pdf_workbench_completion(request, response)))
-      },
-    ),
+        ),
+      )
+      .effect(map=result => SaveFilePicked(result)),
   )
 }
 
@@ -150,18 +128,20 @@ fn PdfWorkbenchModel::request_binary_write(
   self : PdfWorkbenchModel,
   path : String,
   document : PdfWorkbenchDocument,
-  services : @host.HostAppServices,
+  _services : @services.AppServices,
   document_services : PdfWorkbenchDocumentServices,
 ) -> PdfWorkbenchUpdate {
   PdfWorkbenchUpdate::new(
     {
       ..self,
-      status: Requesting("Writing PDF bytes"),
-      last_event: "Writing original bytes to " + path,
+      status: Requesting("Preparing PDF bytes"),
+      pending_operation: Some(PrepareSave(path)),
+      last_event: "Preparing PDF writeback for " + path,
     },
-    effect=@moui.Effect::host_service(
-      key="pdf-workbench:write-binary",
-      label="Write PDF bytes",
+    effect=@moui.Effect::run(
+      key="pdf-workbench:prepare-save",
+      kind="pdf-document-service",
+      label="Prepare PDF bytes",
       run=dispatch => {
         let (bytes, diagnostics) = if document.dirty ||
           document.edits.length() > 0 {
@@ -175,108 +155,143 @@ fn PdfWorkbenchModel::request_binary_write(
         } else {
           (document.original_bytes, [])
         }
-        let request = @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::WriteBytes(path, bytes),
-        )
-        let response = services.write_binary_file(path, bytes)
-        ignore(request)
-        dispatch(SaveCompleted(path, bytes, diagnostics, response))
+        dispatch(SaveBytesPrepared(path, bytes, diagnostics))
       },
     ),
   )
 }
 
 ///|
-fn PdfWorkbenchModel::apply_host_completion(
+fn PdfWorkbenchModel::apply_open_file_pick(
   self : PdfWorkbenchModel,
-  completion : @host.HostCompletedServiceResponse,
-  services : @host.HostAppServices,
-  raster_services : PdfWorkbenchRasterServices,
-  document_services : PdfWorkbenchDocumentServices,
+  result : @services.ServiceTaskResult[String],
+  services : @services.AppServices,
 ) -> PdfWorkbenchUpdate {
-  match completion.response {
-    @host.HostServiceResponse::Pending(id) =>
+  if self.pending_operation != Some(PickOpenFile) {
+    return PdfWorkbenchUpdate::new(self)
+  }
+  match result {
+    Success(path) =>
+      { ..self, pending_operation: None }.request_open_path(path, services)
+    Failure(error) =>
       PdfWorkbenchUpdate::new({
         ..self,
-        status: Pending(id, pdf_workbench_pending_label(completion.request)),
-        last_event: "Waiting for host service",
+        pending_operation: None,
+        status: Failed("File dialog failed: " + error.message),
+        last_event: "Open file dialog failed",
       })
-    @host.HostServiceResponse::FileDialogSelection(paths) =>
-      self.apply_file_dialog(
-        paths,
-        completion.request,
-        services,
-        raster_services,
-        document_services,
-      )
-    @host.HostServiceResponse::BinaryFileContent(path, bytes) =>
-      self
-      .apply_pdf_bytes(path, bytes, document_services)
-      .request_current_raster(raster_services)
-    @host.HostServiceResponse::BinaryFileWritten(path) =>
-      PdfWorkbenchUpdate::new(self.mark_saved(path, None, []))
-    @host.HostServiceResponse::Unavailable(reason) =>
+    Cancelled =>
       PdfWorkbenchUpdate::new({
         ..self,
-        status: Failed(
-          pdf_workbench_unavailable_message(completion.request, reason),
-        ),
-        last_event: "Host service unavailable while " +
-        pdf_workbench_request_action(completion.request),
+        pending_operation: None,
+        status: Ready,
+        last_event: "No file selected",
       })
-    _ => PdfWorkbenchUpdate::new(self)
   }
 }
 
 ///|
-fn PdfWorkbenchModel::apply_file_dialog(
+fn PdfWorkbenchModel::apply_pdf_bytes_read(
   self : PdfWorkbenchModel,
-  paths : Array[String],
-  request : @host.HostServiceRequest,
-  services : @host.HostAppServices,
+  path : String,
+  result : @services.ServiceTaskResult[Bytes],
   raster_services : PdfWorkbenchRasterServices,
   document_services : PdfWorkbenchDocumentServices,
 ) -> PdfWorkbenchUpdate {
-  if paths.is_empty() {
-    PdfWorkbenchUpdate::new({
-      ..self,
-      status: Ready,
-      last_event: "No file selected",
-    })
-  } else {
-    match request {
-      @host.HostServiceRequest::FileDialog(
-        { kind: @host.HostFileDialogKind::SaveFile, .. }
-      ) =>
-        match self.document {
-          Some(document) => {
-            let path = paths[0]
-            self.request_binary_write(
-              path, document, services, document_services,
-            )
-          }
-          None =>
-            PdfWorkbenchUpdate::new({
-              ..self,
-              status: Failed("open a PDF before saving"),
-              last_event: "Save unavailable",
-            })
-        }
-      _ => {
-        let path = paths[0]
-        let read_request = @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::ReadBytes(path),
-        )
-        let response = services.read_binary_file(path)
-        self.apply_host_completion(
-          pdf_workbench_completion(read_request, response),
-          services,
-          raster_services,
-          document_services,
-        )
-      }
-    }
+  if self.pending_operation != Some(ReadPdf(path)) {
+    return PdfWorkbenchUpdate::new(self)
   }
+  let model = { ..self, pending_operation: None }
+  match result {
+    Success(bytes) =>
+      model
+      .apply_pdf_bytes(path, bytes, document_services)
+      .request_current_raster(raster_services)
+    Failure(error) =>
+      PdfWorkbenchUpdate::new({
+        ..model,
+        status: Failed(
+          "Read failed for " +
+          pdf_workbench_file_name(path) +
+          ": " +
+          error.message,
+        ),
+        last_event: "PDF read failed",
+      })
+    Cancelled =>
+      PdfWorkbenchUpdate::new({
+        ..model,
+        status: Failed("Read cancelled for " + pdf_workbench_file_name(path)),
+        last_event: "PDF read cancelled",
+      })
+  }
+}
+
+///|
+fn PdfWorkbenchModel::apply_save_file_pick(
+  self : PdfWorkbenchModel,
+  result : @services.ServiceTaskResult[String],
+  services : @services.AppServices,
+  document_services : PdfWorkbenchDocumentServices,
+) -> PdfWorkbenchUpdate {
+  if self.pending_operation != Some(PickSaveFile) {
+    return PdfWorkbenchUpdate::new(self)
+  }
+  match result {
+    Success(path) =>
+      match self.document {
+        Some(document) =>
+          { ..self, pending_operation: None }.request_binary_write(
+            path, document, services, document_services,
+          )
+        None =>
+          PdfWorkbenchUpdate::new({
+            ..self,
+            pending_operation: None,
+            status: Failed("open a PDF before saving"),
+            last_event: "Save unavailable",
+          })
+      }
+    Failure(error) =>
+      PdfWorkbenchUpdate::new({
+        ..self,
+        pending_operation: None,
+        status: Failed("File dialog failed: " + error.message),
+        last_event: "Save dialog failed",
+      })
+    Cancelled =>
+      PdfWorkbenchUpdate::new({
+        ..self,
+        pending_operation: None,
+        status: Ready,
+        last_event: "No file selected",
+      })
+  }
+}
+
+///|
+fn PdfWorkbenchModel::request_binary_write_task(
+  self : PdfWorkbenchModel,
+  path : String,
+  bytes : Bytes,
+  diagnostics : Array[String],
+  services : @services.AppServices,
+) -> PdfWorkbenchUpdate {
+  if self.pending_operation != Some(PrepareSave(path)) {
+    return PdfWorkbenchUpdate::new(self)
+  }
+  PdfWorkbenchUpdate::new(
+    {
+      ..self,
+      pending_operation: Some(WritePdf(path)),
+      status: Requesting("Writing PDF bytes"),
+      last_event: "Writing PDF bytes to " + path,
+    },
+    effect=services
+      .files()
+      .write_bytes(path, bytes)
+      .effect(map=result => PdfBytesWritten(path, bytes, diagnostics, result)),
+  )
 }
 
 ///|
@@ -458,30 +473,34 @@ fn PdfWorkbenchModel::apply_save_completion(
   path : String,
   bytes : Bytes,
   diagnostics : Array[String],
-  response : @host.HostServiceResponse,
+  result : @services.ServiceTaskResult[Unit],
   document_services : PdfWorkbenchDocumentServices,
 ) -> PdfWorkbenchModel {
-  match response {
-    @host.HostServiceResponse::BinaryFileWritten(written_path) =>
-      self.mark_saved_from_written_bytes(
-        written_path, bytes, diagnostics, document_services,
+  if self.pending_operation != Some(WritePdf(path)) {
+    return self
+  }
+  let model = { ..self, pending_operation: None }
+  match result {
+    Success(_) =>
+      model.mark_saved_from_written_bytes(
+        path, bytes, diagnostics, document_services,
       )
-    @host.HostServiceResponse::Unavailable(reason) =>
+    Failure(error) =>
       {
-        ..self,
+        ..model,
         status: Failed(
           "Binary PDF write unavailable while saving " +
           pdf_workbench_file_name(path) +
           ": " +
-          reason,
+          error.message,
         ),
         last_event: "Save unavailable",
       }
-    _ =>
+    Cancelled =>
       {
-        ..self,
-        status: Failed("Unexpected host response while saving " + path),
-        last_event: "Save failed",
+        ..model,
+        status: Failed("PDF write cancelled while saving " + path),
+        last_event: "Save cancelled",
       }
   }
 }

@@ -55,241 +55,128 @@ fn MarkdownEditorApp::record_recent_document_path(
 }
 
 ///|
-fn MarkdownEditorApp::request_file_open(
+
+///|
+fn MarkdownEditorApp::begin_transfer(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> @moui.Effect[MarkdownEditorMsg] {
-  self.transfer_status.set(TransferRequesting(FileOpen))
-  let options = @host.HostFileDialogOptions::new(
-    kind=@host.HostFileDialogKind::OpenFile,
-    title="Open Markdown",
-    filters=["md", "markdown"],
-  )
-  @moui.Effect::host_service(
-    key="markdown-editor:file-open",
-    label="Choose Markdown file",
-    run=dispatch => {
-      let request = @host.HostServiceRequest::FileDialog(options)
-      let response = services.file_dialog(options)
-      dispatch(
-        HostTransferCompleted(
-          markdown_editor_host_completion_for_response(request, response),
-        ),
-      )
-    },
-  )
+  kind : MarkdownEditorTransferKind,
+) -> Int {
+  let generation = self.transfer_generation.get() + 1
+  self.transfer_generation.set(generation)
+  self.transfer_status.set(TransferRunning(kind))
+  generation
 }
 
 ///|
-fn MarkdownEditorApp::perform_file_open(
+fn MarkdownEditorApp::transfer_is_current(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
-  self.transfer_status.set(TransferRequesting(FileOpen))
-  let options = @host.HostFileDialogOptions::new(
-    kind=@host.HostFileDialogKind::OpenFile,
-    title="Open Markdown",
-    filters=["md", "markdown"],
+  generation : Int,
+) -> Bool {
+  self.transfer_generation.get() == generation
+}
+
+///|
+fn MarkdownEditorApp::request_file_open(
+  self : MarkdownEditorApp,
+  services : @services.AppServices,
+) -> @moui.Effect[MarkdownEditorMsg] {
+  let generation = self.begin_transfer(FileOpen)
+  services
+  .files()
+  .open_file(
+    options=@services.FileDialogOptions::new(title="Open Markdown", filters=[
+      "md", "markdown",
+    ]),
   )
-  let request = @host.HostServiceRequest::FileDialog(options)
-  let response = services.file_dialog(options)
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      ignore(
-        services.on_completed(id, completion => {
-          ignore(
-            self.apply_transfer_completion_with_services(completion, services),
-          )
-        }),
-      )
-    _ => ()
-  }
-  ignore(
-    self.apply_transfer_completion_with_services(
-      markdown_editor_host_completion_for_response(request, response),
-      services,
-    ),
-  )
+  .effect(map=result => ServiceCompleted(FileOpenPicked(generation, result)))
 }
 
 ///|
 fn MarkdownEditorApp::request_document_save(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
   let path = self.document_path.get()
   if path == "" {
     self.request_file_save_as(services)
   } else {
-    self.request_text_file_write(path, services, kind=FileSave)
-  }
-}
-
-///|
-fn MarkdownEditorApp::perform_document_save(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
-  let path = self.document_path.get()
-  if path == "" {
-    self.perform_file_save_as(services)
-  } else {
-    self.perform_text_file_write(path, services, kind=FileSave)
+    let generation = self.begin_transfer(FileSave)
+    self.request_text_file_write_at(generation, path, services, save_as=false)
   }
 }
 
 ///|
 fn MarkdownEditorApp::request_file_save_as(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
-  self.transfer_status.set(TransferRequesting(FileSaveAs))
-  let options = self.save_file_dialog_options()
-  @moui.Effect::host_service(
-    key="markdown-editor:file-save-as",
-    label="Choose Markdown save location",
-    run=dispatch => {
-      let request = @host.HostServiceRequest::FileDialog(options)
-      let response = services.file_dialog(options)
-      dispatch(
-        HostTransferCompleted(
-          markdown_editor_host_completion_for_response(request, response),
-        ),
-      )
-    },
-  )
-}
-
-///|
-fn MarkdownEditorApp::perform_file_save_as(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
-  self.transfer_status.set(TransferRequesting(FileSaveAs))
-  let options = self.save_file_dialog_options()
-  let request = @host.HostServiceRequest::FileDialog(options)
-  let response = services.file_dialog(options)
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      ignore(
-        services.on_completed(id, completion => {
-          ignore(
-            self.apply_transfer_completion_with_services(completion, services),
-          )
-        }),
-      )
-    _ => ()
-  }
-  ignore(
-    self.apply_transfer_completion_with_services(
-      markdown_editor_host_completion_for_response(request, response),
-      services,
-    ),
-  )
-}
-
-///|
-fn MarkdownEditorApp::perform_text_file_read(
-  self : MarkdownEditorApp,
-  path : String,
-  services : @host.HostAppServices,
-) -> Unit {
-  self.transfer_status.set(TransferRequesting(FileOpen))
-  let request = @host.HostServiceRequest::TextFile(
-    @host.HostTextFileRequest::ReadText(path),
-  )
-  let response = services.read_text_file(path)
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      ignore(
-        services.on_completed(id, completion => {
-          ignore(
-            self.apply_transfer_completion_with_services(completion, services),
-          )
-        }),
-      )
-    _ => ()
-  }
-  ignore(
-    self.apply_transfer_completion_with_services(
-      markdown_editor_host_completion_for_response(request, response),
-      services,
-    ),
-  )
+  let generation = self.begin_transfer(FileSaveAs)
+  services
+  .files()
+  .save_file(options=self.save_file_dialog_options())
+  .effect(map=result => ServiceCompleted(FileSavePicked(generation, result)))
 }
 
 ///|
 fn MarkdownEditorApp::request_text_file_read(
   self : MarkdownEditorApp,
   path : String,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
-  if path.trim().to_owned() == "" {
+  if path == "" {
     self.transfer_status.set(TransferUnavailable("recent file path is empty"))
     return @moui.Effect::none()
   }
-  self.transfer_status.set(TransferRequesting(FileOpen))
-  @moui.Effect::host_service(
-    key="markdown-editor:file-open-recent",
-    label="Open recent Markdown file",
-    run=dispatch => {
-      let request = @host.HostServiceRequest::TextFile(
-        @host.HostTextFileRequest::ReadText(path),
-      )
-      let response = services.read_text_file(path)
-      dispatch(
-        HostTransferCompleted(
-          markdown_editor_host_completion_for_response(request, response),
-        ),
-      )
-    },
-  )
+  let generation = self.begin_transfer(FileOpen)
+  self.request_text_file_read_at(generation, path, services)
+}
+
+///|
+fn MarkdownEditorApp::request_text_file_read_at(
+  _self : MarkdownEditorApp,
+  generation : Int,
+  path : String,
+  services : @services.AppServices,
+) -> @moui.Effect[MarkdownEditorMsg] {
+  services
+  .files()
+  .read_text(path)
+  .effect(map=result => ServiceCompleted(TextFileRead(generation, path, result)))
 }
 
 ///|
 fn MarkdownEditorApp::request_pick_working_directory(
   _self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
-  @moui.Effect::host_service(
-    key="markdown-editor:pick-working-directory",
-    label="Pick working directory",
-    run=dispatch => {
-      let request = @host.HostServiceRequest::FileDialog(
-        @host.HostFileDialogOptions::new(
-          kind=@host.HostFileDialogKind::PickDirectory,
-          title="Choose folder",
-        ),
-      )
-      let response = services.pick_directory(title="Choose folder")
-      dispatch(
-        HostTransferCompleted(
-          markdown_editor_host_completion_for_response(request, response),
-        ),
-      )
-    },
+  services
+  .files()
+  .pick_directory(
+    options=@services.FileDialogOptions::new(title="Choose Markdown workspace"),
   )
+  .effect(map=result => ServiceCompleted(DirectoryPicked(result)))
 }
 
 ///|
-fn MarkdownEditorApp::load_tree_from_directory(
-  self : MarkdownEditorApp,
+fn MarkdownEditorApp::request_directory_listing(
+  _self : MarkdownEditorApp,
   path : String,
-  services : @host.HostAppServices,
-) -> Unit {
-  self.working_directory.set(path)
-  let response = services.list_directory(path)
-  self.apply_directory_listing(path, response)
+  services : @services.AppServices,
+) -> @moui.Effect[MarkdownEditorMsg] {
+  services
+  .files()
+  .list_directory(path)
+  .effect(map=result => ServiceCompleted(DirectoryListed(path, result)))
 }
 
 ///|
 fn MarkdownEditorApp::apply_directory_listing(
   self : MarkdownEditorApp,
   path : String,
-  response : @host.HostServiceResponse,
+  result : @services.ServiceTaskResult[Array[@services.DirectoryEntry]],
 ) -> Unit {
-  match response {
-    @host.HostServiceResponse::DirectoryListing(_path, entries) => {
+  match result {
+    Success(entries) => {
       let next_children = markdown_editor_tree_children_from_listing(
         path, entries,
       )
@@ -313,16 +200,14 @@ fn MarkdownEditorApp::apply_directory_listing(
         next.push(path)
         self.expanded_tree_paths.set(next)
       }
-      self.transfer_status.set(TransferReady)
     }
-    @host.HostServiceResponse::Pending(_) => ()
-    @host.HostServiceResponse::Unavailable(reason) =>
+    Failure(error) =>
       self.transfer_status.set(
-        TransferUnavailable("directory listing unavailable: " + reason),
+        TransferUnavailable("directory listing unavailable: " + error.message),
       )
-    _ =>
+    Cancelled =>
       self.transfer_status.set(
-        TransferUnavailable("unsupported directory listing response"),
+        TransferUnavailable("directory listing cancelled"),
       )
   }
 }
@@ -340,19 +225,16 @@ fn markdown_editor_root_tree_item(
 ///|
 fn markdown_editor_tree_children_from_listing(
   path : String,
-  entries : Array[@host.HostDirectoryEntry],
+  entries : Array[@services.DirectoryEntry],
 ) -> Array[@views.TreeItem] {
   let child_items : Array[@views.TreeItem] = []
   for entry in markdown_editor_sorted_directory_entries(entries) {
-    if entry.is_directory() {
+    if entry.is_directory {
       child_items.push(
-        markdown_editor_directory_tree_item(
-          path=entry.path(),
-          label=entry.name(),
-        ),
+        markdown_editor_directory_tree_item(path=entry.path, label=entry.name),
       )
     } else {
-      child_items.push(@views.tree_item(id=entry.path(), label=entry.name()))
+      child_items.push(@views.tree_item(id=entry.path, label=entry.name))
     }
   }
   if child_items.length() == 0 {
@@ -368,9 +250,9 @@ fn markdown_editor_tree_children_from_listing(
 
 ///|
 fn markdown_editor_sorted_directory_entries(
-  entries : Array[@host.HostDirectoryEntry],
-) -> Array[@host.HostDirectoryEntry] {
-  let sorted : Array[@host.HostDirectoryEntry] = []
+  entries : Array[@services.DirectoryEntry],
+) -> Array[@services.DirectoryEntry] {
+  let sorted : Array[@services.DirectoryEntry] = []
   for entry in entries {
     let mut inserted = false
     for index in 0..<sorted.length() {
@@ -389,13 +271,13 @@ fn markdown_editor_sorted_directory_entries(
 
 ///|
 fn markdown_editor_directory_entry_before(
-  left : @host.HostDirectoryEntry,
-  right : @host.HostDirectoryEntry,
+  left : @services.DirectoryEntry,
+  right : @services.DirectoryEntry,
 ) -> Bool {
-  if left.is_directory() != right.is_directory() {
-    left.is_directory()
+  if left.is_directory != right.is_directory {
+    left.is_directory
   } else {
-    markdown_editor_case_insensitive_less(left.name(), right.name())
+    markdown_editor_case_insensitive_less(left.name, right.name)
   }
 }
 
@@ -556,69 +438,28 @@ fn markdown_editor_replace_tree_item_children(
 }
 
 ///|
-fn MarkdownEditorApp::request_text_file_write(
-  self : MarkdownEditorApp,
-  path : String,
-  services : @host.HostAppServices,
-  kind~ : MarkdownEditorTransferKind,
-) -> @moui.Effect[MarkdownEditorMsg] {
-  self.transfer_status.set(TransferRequesting(kind))
-  @moui.Effect::host_service(
-    key="markdown-editor:file-write:" + markdown_editor_transfer_kind_key(kind),
-    label="Write Markdown file",
-    run=dispatch => {
-      let source = self.document.get()
-      let request = @host.HostServiceRequest::TextFile(
-        @host.HostTextFileRequest::WriteText(path, source),
-      )
-      let response = services.write_text_file(path, source)
-      dispatch(
-        HostTransferCompleted(
-          markdown_editor_host_completion_for_response(request, response),
-        ),
-      )
-    },
-  )
-}
 
 ///|
-fn MarkdownEditorApp::perform_text_file_write(
+fn MarkdownEditorApp::request_text_file_write_at(
   self : MarkdownEditorApp,
+  generation : Int,
   path : String,
-  services : @host.HostAppServices,
-  kind~ : MarkdownEditorTransferKind,
-) -> Unit {
-  self.transfer_status.set(TransferRequesting(kind))
-  let source = self.document.get()
-  let request = @host.HostServiceRequest::TextFile(
-    @host.HostTextFileRequest::WriteText(path, source),
-  )
-  let response = services.write_text_file(path, source)
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      ignore(
-        services.on_completed(id, completion => {
-          ignore(
-            self.apply_transfer_completion_with_services(completion, services),
-          )
-        }),
-      )
-    _ => ()
-  }
-  ignore(
-    self.apply_transfer_completion_with_services(
-      markdown_editor_host_completion_for_response(request, response),
-      services,
-    ),
-  )
+  services : @services.AppServices,
+  save_as~ : Bool,
+) -> @moui.Effect[MarkdownEditorMsg] {
+  services
+  .files()
+  .write_text(path, self.document.get())
+  .effect(map=result => {
+    ServiceCompleted(TextFileWritten(generation, path, save_as, result))
+  })
 }
 
 ///|
 fn MarkdownEditorApp::save_file_dialog_options(
   self : MarkdownEditorApp,
-) -> @host.HostFileDialogOptions {
-  @host.HostFileDialogOptions::new(
-    kind=@host.HostFileDialogKind::SaveFile,
+) -> @services.FileDialogOptions {
+  @services.FileDialogOptions::new(
     title="Save Markdown",
     filters=["md", "markdown"],
     default_name=Some(
@@ -640,7 +481,7 @@ fn MarkdownEditorApp::is_dirty(self : MarkdownEditorApp) -> Bool {
 /// that would start another transfer can disable themselves.
 fn MarkdownEditorApp::transfer_in_progress(self : MarkdownEditorApp) -> Bool {
   match self.transfer_status.get() {
-    TransferRequesting(_) | TransferPending(_, _) => true
+    TransferRunning(_) => true
     _ => false
   }
 }
@@ -669,26 +510,17 @@ fn markdown_editor_document_base_dir(path : String) -> String? {
 }
 
 ///|
+
+///|
 fn MarkdownEditorApp::request_clipboard_import(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
-  self.transfer_status.set(TransferRequesting(ClipboardImport))
-  @moui.Effect::host_service(
-    key="markdown-editor:clipboard-import",
-    label="Import Markdown from clipboard",
-    run=dispatch => {
-      let request = @host.HostServiceRequest::Clipboard(
-        @host.HostClipboardRequest::ReadText,
-      )
-      let response = services.read_clipboard_text()
-      dispatch(
-        HostTransferCompleted(
-          markdown_editor_host_completion_for_response(request, response),
-        ),
-      )
-    },
-  )
+  let generation = self.begin_transfer(ClipboardImport)
+  services
+  .clipboard()
+  .read_text()
+  .effect(map=result => ServiceCompleted(ClipboardImported(generation, result)))
 }
 
 ///|
@@ -762,129 +594,39 @@ fn MarkdownEditorApp::insert_text_at_cursor(
 }
 
 ///|
-fn MarkdownEditorApp::perform_clipboard_import(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
-  self.transfer_status.set(TransferRequesting(ClipboardImport))
-  let request = @host.HostServiceRequest::Clipboard(
-    @host.HostClipboardRequest::ReadText,
-  )
-  let response = services.read_clipboard_text()
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      ignore(
-        services.on_completed(id, completion => {
-          self.apply_transfer_completion(completion)
-        }),
-      )
-    _ => ()
-  }
-  self.apply_transfer_completion(
-    markdown_editor_host_completion_for_response(request, response),
-  )
-}
 
 ///|
 fn MarkdownEditorApp::request_clipboard_export(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
-  self.transfer_status.set(TransferRequesting(ClipboardExport))
-  @moui.Effect::host_service(
-    key="markdown-editor:clipboard-export",
-    label="Export Markdown to clipboard",
-    run=dispatch => {
-      let request = @host.HostServiceRequest::Clipboard(
-        @host.HostClipboardRequest::WriteText(self.document.get()),
-      )
-      let response = services.write_clipboard_text(self.document.get())
-      dispatch(
-        HostTransferCompleted(
-          markdown_editor_host_completion_for_response(request, response),
-        ),
-      )
-    },
-  )
-}
-
-///|
-fn MarkdownEditorApp::perform_clipboard_export(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
-  self.transfer_status.set(TransferRequesting(ClipboardExport))
-  let request = @host.HostServiceRequest::Clipboard(
-    @host.HostClipboardRequest::WriteText(self.document.get()),
-  )
-  let response = services.write_clipboard_text(self.document.get())
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      ignore(
-        services.on_completed(id, completion => {
-          self.apply_transfer_completion(completion)
-        }),
-      )
-    _ => ()
-  }
-  self.apply_transfer_completion(
-    markdown_editor_host_completion_for_response(request, response),
-  )
+  let generation = self.begin_transfer(ClipboardExport)
+  services
+  .clipboard()
+  .write_text(self.document.get())
+  .effect(map=result => {
+    ServiceCompleted(ClipboardExported(generation, false, result))
+  })
 }
 
 ///|
 fn MarkdownEditorApp::request_html_export(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
-  let html = self.html_export_document()
-  self.transfer_status.set(TransferRequesting(ClipboardHtmlExport))
-  @moui.Effect::host_service(
-    key="markdown-editor:html-export",
-    label="Export HTML to clipboard",
-    run=dispatch => {
-      let request = @host.HostServiceRequest::Clipboard(
-        @host.HostClipboardRequest::WriteText(html),
-      )
-      let response = services.write_clipboard_text(html)
-      dispatch(
-        HostTransferCompleted(
-          markdown_editor_host_completion_for_response(request, response),
-        ),
-      )
-    },
-  )
-}
-
-///|
-fn MarkdownEditorApp::perform_html_export(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
-  let html = self.html_export_document()
-  self.transfer_status.set(TransferRequesting(ClipboardHtmlExport))
-  let request = @host.HostServiceRequest::Clipboard(
-    @host.HostClipboardRequest::WriteText(html),
-  )
-  let response = services.write_clipboard_text(html)
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      ignore(
-        services.on_completed(id, completion => {
-          self.apply_transfer_completion(completion)
-        }),
-      )
-    _ => ()
-  }
-  self.apply_transfer_completion(
-    markdown_editor_host_completion_for_response(request, response),
-  )
+  let generation = self.begin_transfer(ClipboardHtmlExport)
+  services
+  .clipboard()
+  .write_text(self.html_export_document())
+  .effect(map=result => {
+    ServiceCompleted(ClipboardExported(generation, true, result))
+  })
 }
 
 ///|
 fn MarkdownEditorApp::request_open_target(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
   let target = match self.open_target_value() {
     Some(target) => target
@@ -897,53 +639,11 @@ fn MarkdownEditorApp::request_open_target(
       return @moui.Effect::none()
     }
   }
-  self.transfer_status.set(TransferRequesting(OpenTarget))
-  @moui.Effect::host_service(
-    key="markdown-editor:open-target",
-    label="Open Markdown link or image target",
-    run=dispatch => {
-      let request = @host.HostServiceRequest::OpenUrl(target)
-      let response = services.open_url(target)
-      dispatch(
-        HostTransferCompleted(
-          markdown_editor_host_completion_for_response(request, response),
-        ),
-      )
-    },
-  )
-}
-
-///|
-fn MarkdownEditorApp::perform_open_target(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
-  let target = match self.open_target_value() {
-    Some(target) => target
-    None => {
-      self.transfer_status.set(
-        TransferUnavailable(
-          "open target requires an active link or image target",
-        ),
-      )
-      return
-    }
-  }
-  self.transfer_status.set(TransferRequesting(OpenTarget))
-  let request = @host.HostServiceRequest::OpenUrl(target)
-  let response = services.open_url(target)
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      ignore(
-        services.on_completed(id, completion => {
-          self.apply_transfer_completion(completion)
-        }),
-      )
-    _ => ()
-  }
-  self.apply_transfer_completion(
-    markdown_editor_host_completion_for_response(request, response),
-  )
+  let generation = self.begin_transfer(OpenTarget)
+  services
+  .urls()
+  .open(target)
+  .effect(map=result => ServiceCompleted(TargetOpened(generation, result)))
 }
 
 ///|
@@ -992,209 +692,176 @@ fn MarkdownEditorApp::open_target_value(self : MarkdownEditorApp) -> String? {
 }
 
 ///|
-fn MarkdownEditorApp::apply_transfer_completion(
+
+///|
+fn MarkdownEditorApp::apply_service_completion(
   self : MarkdownEditorApp,
-  completion : @host.HostCompletedServiceResponse,
-) -> Unit {
-  match completion.response {
-    @host.HostServiceResponse::Pending(id) =>
-      self.transfer_status.set(
-        TransferPending(
-          id,
-          markdown_editor_completion_transfer_kind(
-            self.transfer_status.get(),
-            completion.request,
-          ),
-        ),
-      )
-    @host.HostServiceResponse::ClipboardText(text) => {
-      self.load_document(text, path="")
-      self.transfer_status.set(TransferImported)
-      self.push_toast("Markdown imported", tone=@views.FeedbackTone::Success)
-    }
-    @host.HostServiceResponse::ClipboardImage(bytes) => {
-      let base64_data = @base64.encode(bytes[:])
-      let image_md = "![pasted image](data:image/png;base64," +
-        base64_data +
-        ")"
-      self.insert_text_at_cursor(image_md)
-      self.transfer_status.set(TransferImported)
-      self.push_toast("Image pasted", tone=@views.FeedbackTone::Success)
-    }
-    @host.HostServiceResponse::ClipboardWritten =>
-      match markdown_editor_active_transfer_kind(self.transfer_status.get()) {
-        Some(ClipboardHtmlExport) => {
-          self.transfer_status.set(TransferHtmlCopied)
-          self.push_toast("HTML copied", tone=@views.FeedbackTone::Success)
-        }
-        _ => {
-          self.transfer_status.set(TransferCopied)
-          self.push_toast("Markdown copied", tone=@views.FeedbackTone::Success)
-        }
+  completion : MarkdownEditorServiceCompletion,
+  services : @services.AppServices,
+) -> @moui.Effect[MarkdownEditorMsg] {
+  match completion {
+    FileOpenPicked(generation, result) => {
+      if !self.transfer_is_current(generation) {
+        return @moui.Effect::none()
       }
-    @host.HostServiceResponse::FileDialogSelection(paths) =>
-      self.apply_file_dialog_selection(completion.request, paths)
-    @host.HostServiceResponse::TextFileContent(path, text) => {
-      self.load_document(text, path~)
-      self.transfer_status.set(TransferOpened(path))
-      self.push_toast("Opened " + path, tone=@views.FeedbackTone::Success)
-    }
-    @host.HostServiceResponse::TextFileWritten(path) => {
-      self.save_document_as(path)
-      match markdown_editor_active_transfer_kind(self.transfer_status.get()) {
-        Some(FileSaveAs) => {
-          self.transfer_status.set(TransferSavedAs(path))
-          self.push_toast("Saved " + path, tone=@views.FeedbackTone::Success)
+      match result {
+        Success(path) =>
+          self.request_text_file_read_at(generation, path, services)
+        Failure(error) => {
+          self.transfer_status.set(TransferUnavailable(error.message))
+          @moui.Effect::none()
         }
-        _ => {
-          self.transfer_status.set(TransferSaved(path))
-          self.push_toast("Saved " + path, tone=@views.FeedbackTone::Success)
+        Cancelled => {
+          self.transfer_status.set(TransferCancelled(FileOpen))
+          @moui.Effect::none()
         }
       }
     }
-    @host.HostServiceResponse::UrlOpened =>
-      self.transfer_status.set(TransferTargetOpened)
-    @host.HostServiceResponse::DirectoryListing(path, entries) =>
-      self.apply_directory_listing(
-        path,
-        @host.HostServiceResponse::DirectoryListing(path, entries),
-      )
-    @host.HostServiceResponse::Unavailable(reason) => {
-      self.transfer_status.set(TransferUnavailable(reason))
-      self.push_toast(
-        "Action unavailable: " + reason,
-        tone=@views.FeedbackTone::Danger,
-      )
+    FileSavePicked(generation, result) => {
+      if !self.transfer_is_current(generation) {
+        return @moui.Effect::none()
+      }
+      match result {
+        Success(path) =>
+          self.request_text_file_write_at(
+            generation,
+            path,
+            services,
+            save_as=true,
+          )
+        Failure(error) => {
+          self.transfer_status.set(TransferUnavailable(error.message))
+          @moui.Effect::none()
+        }
+        Cancelled => {
+          self.transfer_status.set(TransferCancelled(FileSaveAs))
+          @moui.Effect::none()
+        }
+      }
     }
-    _ => {
-      self.transfer_status.set(
-        TransferUnavailable(
-          "clipboard service returned an unsupported response",
-        ),
-      )
-      self.push_toast("Unsupported response", tone=@views.FeedbackTone::Danger)
+    TextFileRead(generation, path, result) => {
+      if !self.transfer_is_current(generation) {
+        return @moui.Effect::none()
+      }
+      match result {
+        Success(text) => {
+          self.load_document(text, path~)
+          self.transfer_status.set(TransferOpened(path))
+        }
+        Failure(error) =>
+          self.transfer_status.set(TransferUnavailable(error.message))
+        Cancelled => self.transfer_status.set(TransferCancelled(FileOpen))
+      }
+      @moui.Effect::none()
     }
-  }
-}
-
-///|
-fn MarkdownEditorApp::apply_transfer_completion_with_services(
-  self : MarkdownEditorApp,
-  completion : @host.HostCompletedServiceResponse,
-  services : @host.HostAppServices,
-) -> Unit {
-  match completion.response {
-    @host.HostServiceResponse::Pending(id) =>
-      self.transfer_status.set(
-        TransferPending(
-          id,
-          markdown_editor_completion_transfer_kind(
-            self.transfer_status.get(),
-            completion.request,
-          ),
-        ),
-      )
-    @host.HostServiceResponse::FileDialogSelection(paths) =>
-      self.apply_file_dialog_selection_with_services(
-        completion.request,
-        paths,
-        services,
-      )
-    @host.HostServiceResponse::DirectoryListing(path, _entries) =>
-      self.apply_directory_listing(path, completion.response)
-    _ => self.apply_transfer_completion(completion)
-  }
-}
-
-///|
-fn markdown_editor_active_transfer_kind(
-  status : MarkdownEditorTransferStatus,
-) -> MarkdownEditorTransferKind? {
-  match status {
-    TransferRequesting(kind) => Some(kind)
-    TransferPending(_, kind) => Some(kind)
-    _ => None
-  }
-}
-
-///|
-fn markdown_editor_completion_transfer_kind(
-  status : MarkdownEditorTransferStatus,
-  request : @host.HostServiceRequest,
-) -> MarkdownEditorTransferKind {
-  match markdown_editor_active_transfer_kind(status) {
-    Some(kind) => kind
-    None => markdown_editor_transfer_kind(request)
-  }
-}
-
-///|
-fn MarkdownEditorApp::apply_file_dialog_selection(
-  self : MarkdownEditorApp,
-  request : @host.HostServiceRequest,
-  paths : Array[String],
-) -> Unit {
-  let kind = markdown_editor_transfer_kind(request)
-  if paths.length() == 0 {
-    self.transfer_status.set(TransferCancelled(kind))
-    return
-  }
-  let path = paths[0]
-  match request {
-    @host.HostServiceRequest::FileDialog(
-      { kind: @host.HostFileDialogKind::SaveFile, .. }
-    ) =>
-      self.transfer_status.set(
-        TransferUnavailable(
-          "save as selected " +
-          markdown_editor_file_name(path) +
-          ", but text file writing requires host services",
-        ),
-      )
-    @host.HostServiceRequest::FileDialog(
-      { kind: @host.HostFileDialogKind::OpenFile, .. }
-    ) =>
-      self.transfer_status.set(
-        TransferUnavailable(
-          "file open selected " +
-          markdown_editor_file_name(path) +
-          ", but text file reading requires host services",
-        ),
-      )
-    _ =>
-      self.transfer_status.set(
-        TransferUnavailable("unsupported file dialog response"),
-      )
-  }
-}
-
-///|
-fn MarkdownEditorApp::apply_file_dialog_selection_with_services(
-  self : MarkdownEditorApp,
-  request : @host.HostServiceRequest,
-  paths : Array[String],
-  services : @host.HostAppServices,
-) -> Unit {
-  let kind = markdown_editor_transfer_kind(request)
-  if paths.length() == 0 {
-    self.transfer_status.set(TransferCancelled(kind))
-    return
-  }
-  let path = paths[0]
-  match request {
-    @host.HostServiceRequest::FileDialog(
-      { kind: @host.HostFileDialogKind::SaveFile, .. }
-    ) => self.perform_text_file_write(path, services, kind=FileSaveAs)
-    @host.HostServiceRequest::FileDialog(
-      { kind: @host.HostFileDialogKind::OpenFile, .. }
-    ) => self.perform_text_file_read(path, services)
-    @host.HostServiceRequest::FileDialog(
-      { kind: @host.HostFileDialogKind::PickDirectory, .. }
-    ) => self.load_tree_from_directory(path, services)
-    _ =>
-      self.transfer_status.set(
-        TransferUnavailable("unsupported file dialog response"),
-      )
+    TextFileWritten(generation, path, save_as, result) => {
+      if !self.transfer_is_current(generation) {
+        return @moui.Effect::none()
+      }
+      match result {
+        Success(_) => {
+          self.document_path.set(path)
+          self.mark_document_saved()
+          self.record_recent_document_path(path)
+          self.transfer_status.set(
+            if save_as {
+              TransferSavedAs(path)
+            } else {
+              TransferSaved(path)
+            },
+          )
+        }
+        Failure(error) =>
+          self.transfer_status.set(TransferUnavailable(error.message))
+        Cancelled =>
+          self.transfer_status.set(
+            TransferCancelled(if save_as { FileSaveAs } else { FileSave }),
+          )
+      }
+      @moui.Effect::none()
+    }
+    ClipboardImported(generation, result) => {
+      if !self.transfer_is_current(generation) {
+        return @moui.Effect::none()
+      }
+      match result {
+        Success(text) => {
+          self.load_document(text, path="")
+          self.transfer_status.set(TransferImported)
+        }
+        Failure(error) =>
+          self.transfer_status.set(TransferUnavailable(error.message))
+        Cancelled =>
+          self.transfer_status.set(TransferCancelled(ClipboardImport))
+      }
+      @moui.Effect::none()
+    }
+    ClipboardExported(generation, html, result) => {
+      if !self.transfer_is_current(generation) {
+        return @moui.Effect::none()
+      }
+      match result {
+        Success(_) =>
+          self.transfer_status.set(
+            if html {
+              TransferHtmlCopied
+            } else {
+              TransferCopied
+            },
+          )
+        Failure(error) =>
+          self.transfer_status.set(TransferUnavailable(error.message))
+        Cancelled =>
+          self.transfer_status.set(
+            TransferCancelled(
+              if html {
+                ClipboardHtmlExport
+              } else {
+                ClipboardExport
+              },
+            ),
+          )
+      }
+      @moui.Effect::none()
+    }
+    TargetOpened(generation, result) => {
+      if !self.transfer_is_current(generation) {
+        return @moui.Effect::none()
+      }
+      match result {
+        Success(_) => self.transfer_status.set(TransferTargetOpened)
+        Failure(error) =>
+          self.transfer_status.set(TransferUnavailable(error.message))
+        Cancelled => self.transfer_status.set(TransferCancelled(OpenTarget))
+      }
+      @moui.Effect::none()
+    }
+    DirectoryPicked(result) =>
+      match result {
+        Success(path) => {
+          self.working_directory.set(path)
+          self.request_directory_listing(path, services)
+        }
+        Failure(error) => {
+          self.transfer_status.set(TransferUnavailable(error.message))
+          @moui.Effect::none()
+        }
+        Cancelled => @moui.Effect::none()
+      }
+    DirectoryListed(path, result) => {
+      self.apply_directory_listing(path, result)
+      @moui.Effect::none()
+    }
+    SettingsLoaded(result) => {
+      match result {
+        Success(Some(text)) =>
+          self.apply_settings(markdown_editor_decode_settings(text))
+        Success(None) | Cancelled => ()
+        Failure(_) => ()
+      }
+      @moui.Effect::none()
+    }
+    SettingsSaved(_) => @moui.Effect::none()
   }
 }
 
@@ -1204,20 +871,13 @@ fn markdown_editor_transfer_status_label(
 ) -> String {
   match status {
     TransferReady => ""
-    TransferRequesting(ClipboardImport) => "Importing clipboard"
-    TransferRequesting(ClipboardExport) => "Exporting Markdown"
-    TransferRequesting(ClipboardHtmlExport) => "Exporting HTML"
-    TransferRequesting(FileOpen) => "Opening file"
-    TransferRequesting(FileSaveAs) => "Choosing save location"
-    TransferRequesting(FileSave) => "Saving file"
-    TransferRequesting(OpenTarget) => "Opening target"
-    TransferPending(_, ClipboardImport) => "Waiting for clipboard"
-    TransferPending(_, ClipboardExport) => "Waiting for export"
-    TransferPending(_, ClipboardHtmlExport) => "Waiting for HTML export"
-    TransferPending(_, FileOpen) => "Waiting for file"
-    TransferPending(_, FileSaveAs) => "Waiting for save location"
-    TransferPending(_, FileSave) => "Waiting for save"
-    TransferPending(_, OpenTarget) => "Waiting for target"
+    TransferRunning(ClipboardImport) => "Waiting for clipboard"
+    TransferRunning(ClipboardExport) => "Exporting Markdown"
+    TransferRunning(ClipboardHtmlExport) => "Exporting HTML"
+    TransferRunning(FileOpen) => "Opening file"
+    TransferRunning(FileSaveAs) => "Waiting for save location"
+    TransferRunning(FileSave) => "Saving file"
+    TransferRunning(OpenTarget) => "Opening target"
     TransferUnavailable(reason) => "Transfer unavailable: " + reason
     TransferCancelled(ClipboardImport) => "Import cancelled"
     TransferCancelled(ClipboardExport) => "Export cancelled"
@@ -1234,59 +894,6 @@ fn markdown_editor_transfer_status_label(
     TransferSavedAs(path) => "Saved as " + markdown_editor_file_name(path)
     TransferTargetOpened => "Target opened"
   }
-}
-
-///|
-fn markdown_editor_transfer_kind(
-  request : @host.HostServiceRequest,
-) -> MarkdownEditorTransferKind {
-  match request {
-    @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText) =>
-      ClipboardImport
-    @host.HostServiceRequest::Clipboard(
-      @host.HostClipboardRequest::WriteText(_)
-    ) => ClipboardExport
-    @host.HostServiceRequest::FileDialog(
-      { kind: @host.HostFileDialogKind::OpenFile, .. }
-    ) => FileOpen
-    @host.HostServiceRequest::FileDialog(
-      { kind: @host.HostFileDialogKind::SaveFile, .. }
-    ) => FileSaveAs
-    @host.HostServiceRequest::TextFile(@host.HostTextFileRequest::ReadText(_)) =>
-      FileOpen
-    @host.HostServiceRequest::TextFile(
-      @host.HostTextFileRequest::WriteText(_, _)
-    ) => FileSave
-    @host.HostServiceRequest::OpenUrl(_) => OpenTarget
-    _ => ClipboardExport
-  }
-}
-
-///|
-fn markdown_editor_transfer_kind_key(
-  kind : MarkdownEditorTransferKind,
-) -> String {
-  match kind {
-    ClipboardImport => "clipboard-import"
-    ClipboardExport => "clipboard-export"
-    ClipboardHtmlExport => "html-export"
-    FileOpen => "file-open"
-    FileSaveAs => "file-save-as"
-    FileSave => "file-save"
-    OpenTarget => "open-target"
-  }
-}
-
-///|
-fn markdown_editor_host_completion_for_response(
-  request : @host.HostServiceRequest,
-  response : @host.HostServiceResponse,
-) -> @host.HostCompletedServiceResponse {
-  let id = match response {
-    @host.HostServiceResponse::Pending(id) => id
-    _ => @host.HostServiceRequestId::new(0)
-  }
-  { id, request, response }
 }
 
 ///|

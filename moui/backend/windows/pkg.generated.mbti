@@ -5,9 +5,12 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
 }
 
 // Values
+pub fn app_environment() -> @services.AppEnvironment
+
 pub fn entry(options? : WindowsHostAppOptions, smoke_options? : WindowsHostSmokeOptions) -> @runtime.PlatformEntry
 
 pub fn windows_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessibilityBridge
@@ -20,11 +23,11 @@ pub fn windows_host_info() -> @host.HostAppInfo
 
 pub fn windows_input_capabilities() -> @host.HostInputCapabilities
 
-pub fn windows_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
+pub fn windows_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
 
 pub fn windows_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
-pub fn windows_timer_source() -> @runtime.HostTimerSource
+pub fn windows_timer_source() -> @services.TimerSource
 
 // Errors
 

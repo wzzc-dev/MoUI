@@ -1,0 +1,225 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/services"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/ref",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct AppEnvironment {
+  services_value : AppServices
+  timer_value : TimerSource?
+  routes_value : RouteSource?
+}
+pub fn AppEnvironment::new(services? : AppServices, timer? : TimerSource?, routes? : RouteSource?) -> Self
+pub fn AppEnvironment::routes(Self) -> RouteSource?
+pub fn AppEnvironment::services(Self) -> AppServices
+pub fn AppEnvironment::timer(Self) -> TimerSource?
+
+pub struct AppServices {
+  files_value : FileServices
+  clipboard_value : ClipboardServices
+  urls_value : UrlServices
+  settings_value : SettingsServices
+  appearance_value : AppearanceServices
+  menus_value : MenuServices
+}
+pub fn AppServices::appearance(Self) -> AppearanceServices
+pub fn AppServices::clipboard(Self) -> ClipboardServices
+pub fn AppServices::files(Self) -> FileServices
+pub fn AppServices::menus(Self) -> MenuServices
+pub fn AppServices::new(files? : FileServices, clipboard? : ClipboardServices, urls? : UrlServices, settings? : SettingsServices, appearance? : AppearanceServices, menus? : MenuServices) -> Self
+pub fn AppServices::settings(Self) -> SettingsServices
+pub fn AppServices::unavailable() -> Self
+pub fn AppServices::urls(Self) -> UrlServices
+
+pub struct AppearanceServices {
+  system_color_scheme_fn : () -> ServiceTask[@core.ColorScheme]
+}
+pub fn AppearanceServices::new(system_color_scheme? : () -> ServiceTask[@core.ColorScheme]) -> Self
+pub fn AppearanceServices::system_color_scheme(Self) -> ServiceTask[@core.ColorScheme]
+
+pub(all) struct ApplicationMenu {
+  title : String
+  items : Array[ApplicationMenuItem]
+}
+pub fn ApplicationMenu::new(title~ : String, items~ : Array[ApplicationMenuItem]) -> Self
+
+pub(all) enum ApplicationMenuItem {
+  MenuCommand(@core.ActionCommand)
+  MenuSeparator
+}
+
+pub(all) struct ClipboardImage {
+  mime_type : String
+  bytes : Bytes
+} derive(Eq, @debug.Debug)
+
+pub struct ClipboardServices {
+  read_text_fn : () -> ServiceTask[String]
+  write_text_fn : (String) -> ServiceTask[Unit]
+  read_image_fn : () -> ServiceTask[ClipboardImage]
+  write_image_fn : (ClipboardImage) -> ServiceTask[Unit]
+}
+pub fn ClipboardServices::new(read_text? : () -> ServiceTask[String], write_text? : (String) -> ServiceTask[Unit], read_image? : () -> ServiceTask[ClipboardImage], write_image? : (ClipboardImage) -> ServiceTask[Unit]) -> Self
+pub fn ClipboardServices::read_image(Self) -> ServiceTask[ClipboardImage]
+pub fn ClipboardServices::read_text(Self) -> ServiceTask[String]
+pub fn ClipboardServices::write_image(Self, ClipboardImage) -> ServiceTask[Unit]
+pub fn ClipboardServices::write_text(Self, String) -> ServiceTask[Unit]
+
+pub(all) struct DirectoryEntry {
+  name : String
+  path : String
+  is_directory : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct FakeAppServices {
+  services_value : AppServices
+  text_files : Map[String, String]
+  settings_values : Map[String, String]
+  system_color_scheme_value : @ref.Ref[@core.ColorScheme]
+  clipboard_text_value : @ref.Ref[String]
+  open_file_value : @ref.Ref[String?]
+  save_file_value : @ref.Ref[String?]
+  directory_value : @ref.Ref[String?]
+  calls_value : Array[String]
+}
+pub fn FakeAppServices::calls(Self) -> Array[String]
+pub fn FakeAppServices::clipboard_text(Self) -> String
+pub fn FakeAppServices::new() -> Self
+pub fn FakeAppServices::services(Self) -> AppServices
+pub fn FakeAppServices::set_directory_selection(Self, String?) -> Unit
+pub fn FakeAppServices::set_open_file_selection(Self, String?) -> Unit
+pub fn FakeAppServices::set_save_file_selection(Self, String?) -> Unit
+pub fn FakeAppServices::set_system_color_scheme(Self, @core.ColorScheme) -> Unit
+pub fn FakeAppServices::set_text_file(Self, String, String) -> Unit
+
+pub(all) struct FileDialogOptions {
+  title : String
+  filters : Array[String]
+  default_name : String?
+}
+pub fn FileDialogOptions::new(title? : String, filters? : Array[String], default_name? : String?) -> Self
+
+pub struct FileServices {
+  open_file_fn : (FileDialogOptions) -> ServiceTask[String]
+  save_file_fn : (FileDialogOptions) -> ServiceTask[String]
+  pick_directory_fn : (FileDialogOptions) -> ServiceTask[String]
+  read_text_fn : (String) -> ServiceTask[String]
+  write_text_fn : (String, String) -> ServiceTask[Unit]
+  read_bytes_fn : (String) -> ServiceTask[Bytes]
+  write_bytes_fn : (String, Bytes) -> ServiceTask[Unit]
+  list_directory_fn : (String) -> ServiceTask[Array[DirectoryEntry]]
+}
+pub fn FileServices::list_directory(Self, String) -> ServiceTask[Array[DirectoryEntry]]
+pub fn FileServices::new(open_file? : (FileDialogOptions) -> ServiceTask[String], save_file? : (FileDialogOptions) -> ServiceTask[String], pick_directory? : (FileDialogOptions) -> ServiceTask[String], read_text? : (String) -> ServiceTask[String], write_text? : (String, String) -> ServiceTask[Unit], read_bytes? : (String) -> ServiceTask[Bytes], write_bytes? : (String, Bytes) -> ServiceTask[Unit], list_directory? : (String) -> ServiceTask[Array[DirectoryEntry]]) -> Self
+pub fn FileServices::open_file(Self, options? : FileDialogOptions) -> ServiceTask[String]
+pub fn FileServices::pick_directory(Self, options? : FileDialogOptions) -> ServiceTask[String]
+pub fn FileServices::read_bytes(Self, String) -> ServiceTask[Bytes]
+pub fn FileServices::read_text(Self, String) -> ServiceTask[String]
+pub fn FileServices::save_file(Self, options? : FileDialogOptions) -> ServiceTask[String]
+pub fn FileServices::unavailable() -> Self
+pub fn FileServices::write_bytes(Self, String, Bytes) -> ServiceTask[Unit]
+pub fn FileServices::write_text(Self, String, String) -> ServiceTask[Unit]
+
+pub struct MenuServices {
+  show_context_fn : (Array[@core.ActionCommand]) -> ServiceTask[@core.ActionCommand]
+  install_application_fn : (Array[ApplicationMenu]) -> ServiceTask[Unit]
+}
+pub fn MenuServices::install_application(Self, Array[ApplicationMenu]) -> ServiceTask[Unit]
+pub fn MenuServices::new(show_context? : (Array[@core.ActionCommand]) -> ServiceTask[@core.ActionCommand], install_application? : (Array[ApplicationMenu]) -> ServiceTask[Unit]) -> Self
+pub fn MenuServices::show_context(Self, Array[@core.ActionCommand]) -> ServiceTask[@core.ActionCommand]
+
+pub(all) struct RouteEvent {
+  location : RouteLocation
+  source : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteEvent::from_path(String, source? : String) -> Self
+pub fn RouteEvent::from_route(route~ : String, source? : String) -> Self
+pub fn RouteEvent::new(location~ : RouteLocation, source? : String) -> Self
+pub fn RouteEvent::route(Self) -> String
+
+pub(all) struct RouteLocation {
+  path : String
+  query : Array[RouteQueryParam]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteLocation::new(path~ : String, query? : Array[RouteQueryParam]) -> Self
+pub fn RouteLocation::parse(String) -> Self
+pub fn RouteLocation::query_value(Self, String) -> String?
+pub fn RouteLocation::to_route(Self) -> String
+
+pub(all) struct RouteQueryParam {
+  key : String
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteQueryParam::new(key~ : String, value~ : String) -> Self
+
+pub struct RouteSource {
+  // private fields
+}
+pub fn RouteSource::active_handler_count(Self) -> Int
+pub fn RouteSource::new() -> Self
+pub fn RouteSource::publish(Self, RouteEvent) -> Int
+pub fn[Msg] RouteSource::subscription(Self, map~ : (RouteEvent) -> Msg?, key? : String, label? : String) -> @core.Subscription[Msg]
+
+pub(all) struct ServiceError {
+  code : String
+  message : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ServiceError::new(code~ : String, message~ : String) -> Self
+pub fn ServiceError::unavailable(String) -> Self
+
+pub struct ServiceTask[T] {
+  key : String
+  label : String
+  start_fn : ((ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?
+}
+pub fn[T] ServiceTask::cancelled(key~ : String, label? : String) -> Self[T]
+pub fn[T, Msg] ServiceTask::effect(Self[T], map~ : (ServiceTaskResult[T]) -> Msg) -> @core.Effect[Msg]
+pub fn[T] ServiceTask::fail(key~ : String, error~ : ServiceError, label? : String) -> Self[T]
+pub fn[T] ServiceTask::key(Self[T]) -> String
+pub fn[T] ServiceTask::label(Self[T]) -> String
+pub fn[T, U] ServiceTask::map(Self[T], (T) -> U) -> Self[U]
+pub fn[T] ServiceTask::new(key~ : String, start~ : ((ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?, label? : String) -> Self[T]
+pub fn[T] ServiceTask::start(Self[T], (ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?
+pub fn[T] ServiceTask::succeed(key~ : String, value~ : T, label? : String) -> Self[T]
+
+pub(all) enum ServiceTaskResult[T] {
+  Success(T)
+  Failure(ServiceError)
+  Cancelled
+} derive(Eq, @debug.Debug)
+
+pub struct SettingsServices {
+  read_fn : (String) -> ServiceTask[String?]
+  write_fn : (String, String) -> ServiceTask[Unit]
+  remove_fn : (String) -> ServiceTask[Unit]
+}
+pub fn SettingsServices::new(read? : (String) -> ServiceTask[String?], write? : (String, String) -> ServiceTask[Unit], remove? : (String) -> ServiceTask[Unit]) -> Self
+pub fn SettingsServices::read(Self, String) -> ServiceTask[String?]
+pub fn SettingsServices::remove(Self, String) -> ServiceTask[Unit]
+pub fn SettingsServices::write(Self, String, String) -> ServiceTask[Unit]
+
+pub struct TimerSource {
+  start_fn : (Double, (@core.Frame) -> Unit) -> (() -> Unit)?
+}
+pub fn TimerSource::from_native_timer(start~ : (FuncRef[(() -> Unit) -> Unit], Double, () -> Unit) -> UInt64, cancel~ : (UInt64) -> Unit, clock? : (() -> Double)?) -> Self
+pub fn TimerSource::new(start~ : (Double, (@core.Frame) -> Unit) -> (() -> Unit)?) -> Self
+pub fn[Msg] TimerSource::subscription(Self, interval_ms~ : Double, map~ : (@core.Frame) -> Msg, key? : String, label? : String) -> @core.Subscription[Msg]
+
+pub struct UrlServices {
+  open_fn : (String) -> ServiceTask[Unit]
+}
+pub fn UrlServices::new(open? : (String) -> ServiceTask[Unit]) -> Self
+pub fn UrlServices::open(Self, String) -> ServiceTask[Unit]
+
+// Type aliases
+
+// Traits
+

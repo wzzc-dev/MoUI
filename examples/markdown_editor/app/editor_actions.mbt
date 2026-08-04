@@ -241,689 +241,601 @@ fn markdown_editor_control_alt_shortcut(
 }
 
 ///|
-fn markdown_editor_command_binding(
+fn markdown_editor_program_command(
   label : String,
   shortcut : @views.KeyboardShortcut,
-  action : () -> Unit,
-  context_menu? : Bool = true,
-) -> @views.CommandBinding {
-  @views.CommandBinding::new(
+  message : MarkdownEditorMsg,
+) -> @moui.ProgramCommand[MarkdownEditorMsg] {
+  @moui.ProgramCommand::new(
     command=@views.ActionCommand::new(
       intent=@views.CommandIntent::Activate,
       label~,
       shortcut=Some(shortcut),
-      context_menu~,
+      context_menu=true,
     ),
-    handle=action,
+    message~,
   )
 }
 
 ///|
-pub fn MarkdownEditorApp::action_commands(
-  self : MarkdownEditorApp,
-  services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-) -> @views.ActionCommandMap {
-  @views.ActionCommandMap::new(bindings=[
-    markdown_editor_command_binding(
-      "New Document",
-      markdown_editor_shortcut("n"),
-      () => ignore(self.update(NewDocument)),
-      context_menu=true,
-    ),
-    markdown_editor_command_binding(
-      "New Document",
-      markdown_editor_control_shortcut("n"),
-      () => ignore(self.update(NewDocument)),
-    ),
-    markdown_editor_command_binding(
-      "Open Document",
-      markdown_editor_shortcut("o"),
-      () => self.perform_file_open(services),
-      context_menu=true,
-    ),
-    markdown_editor_command_binding(
-      "Open Document",
-      markdown_editor_control_shortcut("o"),
-      () => self.perform_file_open(services),
-    ),
-    markdown_editor_command_binding(
-      "Save",
-      markdown_editor_shortcut("s"),
-      () => self.perform_document_save(services),
-      context_menu=true,
-    ),
-    markdown_editor_command_binding(
-      "Save",
-      markdown_editor_control_shortcut("s"),
-      () => self.perform_document_save(services),
-    ),
-    markdown_editor_command_binding(
-      "Save As",
-      markdown_editor_shift_shortcut("s"),
-      () => self.perform_file_save_as(services),
-      context_menu=true,
-    ),
-    markdown_editor_command_binding(
-      "Save As",
-      markdown_editor_control_shift_shortcut("s"),
-      () => self.perform_file_save_as(services),
-    ),
-    markdown_editor_command_binding(
-      "Import Markdown from Clipboard",
-      markdown_editor_meta_alt_shortcut("i"),
-      () => self.perform_clipboard_import(services),
-      context_menu=true,
-    ),
-    markdown_editor_command_binding(
-      "Import Markdown from Clipboard",
-      markdown_editor_control_alt_shortcut("i"),
-      () => self.perform_clipboard_import(services),
-    ),
-    markdown_editor_command_binding(
-      "Export Markdown",
-      markdown_editor_meta_alt_shortcut("s"),
-      () => self.perform_clipboard_export(services),
-      context_menu=true,
-    ),
-    markdown_editor_command_binding(
-      "Export Markdown",
-      markdown_editor_control_alt_shortcut("s"),
-      () => self.perform_clipboard_export(services),
-    ),
-    markdown_editor_command_binding(
-      "Export HTML",
-      markdown_editor_meta_alt_shortcut("e"),
-      () => self.perform_html_export(services),
-      context_menu=true,
-    ),
-    markdown_editor_command_binding(
-      "Export HTML",
-      markdown_editor_control_alt_shortcut("e"),
-      () => self.perform_html_export(services),
-    ),
-    markdown_editor_command_binding(
-      "Find",
-      markdown_editor_shortcut("f"),
-      () => ignore(self.update(OpenFind)),
-      context_menu=true,
-    ),
-    markdown_editor_command_binding(
-      "Find",
-      markdown_editor_control_shortcut("f"),
-      () => ignore(self.update(OpenFind)),
-    ),
-    markdown_editor_command_binding(
-      "Find/Replace",
-      markdown_editor_meta_alt_shortcut("f"),
-      () => ignore(self.update(OpenFindReplace)),
-      context_menu=true,
-    ),
-    markdown_editor_command_binding(
-      "Find/Replace",
-      markdown_editor_control_shortcut("h"),
-      () => ignore(self.update(OpenFindReplace)),
-    ),
-    markdown_editor_command_binding(
-      "Find Next",
-      markdown_editor_shortcut("g"),
-      () => ignore(self.update(FindNext)),
-    ),
-    markdown_editor_command_binding(
-      "Find Next",
-      markdown_editor_control_shortcut("g"),
-      () => ignore(self.update(FindNext)),
-    ),
-    markdown_editor_command_binding(
-      "Find Previous",
-      markdown_editor_shift_shortcut("g"),
-      () => ignore(self.update(FindPrevious)),
-    ),
-    markdown_editor_command_binding(
-      "Find Previous",
-      markdown_editor_control_shift_shortcut("g"),
-      () => ignore(self.update(FindPrevious)),
-    ),
-    markdown_editor_command_binding(
-      "Dismiss Panels",
-      markdown_editor_plain_shortcut("Escape"),
-      () => ignore(self.update(DismissAuxiliaryPanels)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Source Preview",
-      markdown_editor_shortcut("/"),
-      () => ignore(self.update(ToggleSourcePreview)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Source Preview",
-      markdown_editor_control_shortcut("/"),
-      () => ignore(self.update(ToggleSourcePreview)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Source Mode",
-      markdown_editor_shift_shortcut("/"),
-      () => ignore(self.update(ToggleSourceMode)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Source Mode",
-      markdown_editor_control_shift_shortcut("/"),
-      () => ignore(self.update(ToggleSourceMode)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Quick Format",
-      markdown_editor_shift_shortcut("p"),
-      () => ignore(self.update(ToggleFormatPalette)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Quick Format",
-      markdown_editor_control_shift_shortcut("p"),
-      () => ignore(self.update(ToggleFormatPalette)),
-    ),
-    markdown_editor_command_binding(
-      "Cycle Writing Look",
-      markdown_editor_meta_alt_shortcut("l"),
-      () => ignore(self.update(CycleWritingAppearance)),
-    ),
-    markdown_editor_command_binding(
-      "Cycle Writing Look",
-      markdown_editor_control_alt_shortcut("l"),
-      () => ignore(self.update(CycleWritingAppearance)),
-    ),
-    markdown_editor_command_binding(
-      "Insert Table of Contents",
-      markdown_editor_meta_alt_shortcut("t"),
-      () => ignore(self.update(ApplyCommand(InsertTableOfContents))),
-    ),
-    markdown_editor_command_binding(
-      "Insert Table of Contents",
-      markdown_editor_control_alt_shortcut("t"),
-      () => ignore(self.update(ApplyCommand(InsertTableOfContents))),
-    ),
-    markdown_editor_command_binding(
-      "Insert YAML Front Matter",
-      markdown_editor_meta_alt_shortcut("y"),
-      () => ignore(self.update(ApplyCommand(InsertFrontMatter))),
-    ),
-    markdown_editor_command_binding(
-      "Insert YAML Front Matter",
-      markdown_editor_control_alt_shortcut("y"),
-      () => ignore(self.update(ApplyCommand(InsertFrontMatter))),
-    ),
-    markdown_editor_command_binding(
-      "Indent Lines",
-      markdown_editor_shortcut("]"),
-      () => ignore(self.update(IndentLines)),
-    ),
-    markdown_editor_command_binding(
-      "Indent Lines",
-      markdown_editor_control_shortcut("]"),
-      () => ignore(self.update(IndentLines)),
-    ),
-    markdown_editor_command_binding(
-      "Outdent Lines",
-      markdown_editor_shortcut("["),
-      () => ignore(self.update(OutdentLines)),
-    ),
-    markdown_editor_command_binding(
-      "Outdent Lines",
-      markdown_editor_control_shortcut("["),
-      () => ignore(self.update(OutdentLines)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Outline",
-      markdown_editor_meta_alt_shortcut("o"),
-      () => ignore(self.update(ToggleOutline)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Outline",
-      markdown_editor_control_alt_shortcut("o"),
-      () => ignore(self.update(ToggleOutline)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Files",
-      markdown_editor_meta_alt_shortcut("p"),
-      () => ignore(self.update(ToggleFileSidebar)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Files",
-      markdown_editor_control_alt_shortcut("p"),
-      () => ignore(self.update(ToggleFileSidebar)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Document Info",
-      markdown_editor_meta_alt_shortcut("d"),
-      () => ignore(self.update(ToggleDocumentInfo)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Document Info",
-      markdown_editor_control_alt_shortcut("d"),
-      () => ignore(self.update(ToggleDocumentInfo)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Focus Mode",
-      markdown_editor_shift_shortcut("f"),
-      () => ignore(self.update(ToggleFocusMode)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Focus Mode",
-      markdown_editor_control_shift_shortcut("f"),
-      () => ignore(self.update(ToggleFocusMode)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Typewriter Mode",
-      markdown_editor_shift_shortcut("t"),
-      () => ignore(self.update(ToggleTypewriterMode)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Typewriter Mode",
-      markdown_editor_control_shift_shortcut("t"),
-      () => ignore(self.update(ToggleTypewriterMode)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Zen Mode",
-      markdown_editor_meta_alt_shortcut("z"),
-      () => ignore(self.update(ToggleZenMode)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Zen Mode",
-      markdown_editor_control_alt_shortcut("z"),
-      () => ignore(self.update(ToggleZenMode)),
-    ),
-    markdown_editor_command_binding(
-      "Next Heading",
-      markdown_editor_meta_alt_shortcut("ArrowDown"),
-      () => ignore(self.update(JumpToNextHeading)),
-    ),
-    markdown_editor_command_binding(
-      "Next Heading",
-      markdown_editor_control_alt_shortcut("ArrowDown"),
-      () => ignore(self.update(JumpToNextHeading)),
-    ),
-    markdown_editor_command_binding(
-      "Previous Heading",
-      markdown_editor_meta_alt_shortcut("ArrowUp"),
-      () => ignore(self.update(JumpToPreviousHeading)),
-    ),
-    markdown_editor_command_binding(
-      "Previous Heading",
-      markdown_editor_control_alt_shortcut("ArrowUp"),
-      () => ignore(self.update(JumpToPreviousHeading)),
-    ),
-    markdown_editor_command_binding(
-      "Open Target",
-      markdown_editor_shift_shortcut("o"),
-      () => self.perform_open_target(services),
-    ),
-    markdown_editor_command_binding(
-      "Open Target",
-      markdown_editor_control_shift_shortcut("o"),
-      () => self.perform_open_target(services),
-    ),
-    markdown_editor_command_binding("Bold", markdown_editor_shortcut("b"), () => {
-      ignore(self.update(ApplyCommand(Bold)))
-    }),
-    markdown_editor_command_binding(
-      "Bold",
-      markdown_editor_control_shortcut("b"),
-      () => ignore(self.update(ApplyCommand(Bold))),
-    ),
-    markdown_editor_command_binding("Italic", markdown_editor_shortcut("i"), () => {
-      ignore(self.update(ApplyCommand(Italic)))
-    }),
-    markdown_editor_command_binding(
-      "Italic",
-      markdown_editor_control_shortcut("i"),
-      () => ignore(self.update(ApplyCommand(Italic))),
-    ),
-    markdown_editor_command_binding(
-      "Inline Code",
-      markdown_editor_shortcut("e"),
-      () => ignore(self.update(ApplyCommand(Code))),
-    ),
-    markdown_editor_command_binding(
-      "Inline Code",
-      markdown_editor_control_shortcut("e"),
-      () => ignore(self.update(ApplyCommand(Code))),
-    ),
-    markdown_editor_command_binding(
-      "Strikethrough",
-      markdown_editor_shift_shortcut("x"),
-      () => ignore(self.update(ApplyCommand(Strikethrough))),
-    ),
-    markdown_editor_command_binding(
-      "Strikethrough",
-      markdown_editor_control_shift_shortcut("x"),
-      () => ignore(self.update(ApplyCommand(Strikethrough))),
-    ),
-    markdown_editor_command_binding("Link", markdown_editor_shortcut("l"), () => {
-      ignore(self.update(ApplyCommand(Link)))
-    }),
-    markdown_editor_command_binding(
-      "Link",
-      markdown_editor_control_shortcut("k"),
-      () => ignore(self.update(ApplyCommand(Link))),
-    ),
-    markdown_editor_command_binding(
-      "Image",
-      markdown_editor_shift_shortcut("i"),
-      () => ignore(self.update(ApplyCommand(Image))),
-    ),
-    markdown_editor_command_binding(
-      "Image",
-      markdown_editor_control_shift_shortcut("i"),
-      () => ignore(self.update(ApplyCommand(Image))),
-    ),
-    markdown_editor_command_binding(
-      "Paragraph",
-      markdown_editor_shortcut("0"),
-      () => ignore(self.update(ApplyCommand(Paragraph))),
-    ),
-    markdown_editor_command_binding(
-      "Paragraph",
-      markdown_editor_control_shortcut("0"),
-      () => ignore(self.update(ApplyCommand(Paragraph))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 1",
-      markdown_editor_shortcut("1"),
-      () => ignore(self.update(ApplyCommand(Heading(1)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 1",
-      markdown_editor_control_shortcut("1"),
-      () => ignore(self.update(ApplyCommand(Heading(1)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 2",
-      markdown_editor_shortcut("2"),
-      () => ignore(self.update(ApplyCommand(Heading(2)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 2",
-      markdown_editor_control_shortcut("2"),
-      () => ignore(self.update(ApplyCommand(Heading(2)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 3",
-      markdown_editor_shortcut("3"),
-      () => ignore(self.update(ApplyCommand(Heading(3)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 3",
-      markdown_editor_control_shortcut("3"),
-      () => ignore(self.update(ApplyCommand(Heading(3)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 4",
-      markdown_editor_shortcut("4"),
-      () => ignore(self.update(ApplyCommand(Heading(4)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 4",
-      markdown_editor_control_shortcut("4"),
-      () => ignore(self.update(ApplyCommand(Heading(4)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 5",
-      markdown_editor_shortcut("5"),
-      () => ignore(self.update(ApplyCommand(Heading(5)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 5",
-      markdown_editor_control_shortcut("5"),
-      () => ignore(self.update(ApplyCommand(Heading(5)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 6",
-      markdown_editor_shortcut("6"),
-      () => ignore(self.update(ApplyCommand(Heading(6)))),
-    ),
-    markdown_editor_command_binding(
-      "Heading 6",
-      markdown_editor_control_shortcut("6"),
-      () => ignore(self.update(ApplyCommand(Heading(6)))),
-    ),
-    markdown_editor_command_binding(
-      "Bullet List",
-      markdown_editor_shortcut("u"),
-      () => ignore(self.update(ApplyCommand(BulletList))),
-    ),
-    markdown_editor_command_binding(
-      "Bullet List",
-      markdown_editor_control_shift_shortcut("8"),
-      () => ignore(self.update(ApplyCommand(BulletList))),
-    ),
-    markdown_editor_command_binding(
-      "Bullet List",
-      markdown_editor_control_shift_shortcut("*"),
-      () => ignore(self.update(ApplyCommand(BulletList))),
-    ),
-    markdown_editor_command_binding(
-      "Task List",
-      markdown_editor_shortcut("t"),
-      () => ignore(self.update(ApplyCommand(TaskList))),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Task",
-      markdown_editor_shortcut("Enter"),
-      () => ignore(self.update(ToggleCurrentTask)),
-    ),
-    markdown_editor_command_binding(
-      "Toggle Task",
-      markdown_editor_control_shortcut("Enter"),
-      () => ignore(self.update(ToggleCurrentTask)),
-    ),
-    markdown_editor_command_binding(
-      "Hard Line Break",
-      markdown_editor_plain_shift_shortcut("Enter"),
-      () => ignore(self.update(InsertHardBreak)),
-    ),
-    markdown_editor_command_binding(
-      "Ordered List",
-      markdown_editor_shortcut("o"),
-      () => ignore(self.update(ApplyCommand(OrderedList))),
-    ),
-    markdown_editor_command_binding(
-      "Ordered List",
-      markdown_editor_control_shift_shortcut("7"),
-      () => ignore(self.update(ApplyCommand(OrderedList))),
-    ),
-    markdown_editor_command_binding(
-      "Ordered List",
-      markdown_editor_control_shift_shortcut("&"),
-      () => ignore(self.update(ApplyCommand(OrderedList))),
-    ),
-    markdown_editor_command_binding("Quote", markdown_editor_shortcut("q"), () => {
-      ignore(self.update(ApplyCommand(Quote)))
-    }),
-    markdown_editor_command_binding(
-      "Quote",
-      markdown_editor_control_shift_shortcut("9"),
-      () => ignore(self.update(ApplyCommand(Quote))),
-    ),
-    markdown_editor_command_binding(
-      "Quote",
-      markdown_editor_control_shift_shortcut("("),
-      () => ignore(self.update(ApplyCommand(Quote))),
-    ),
-    markdown_editor_command_binding(
-      "Code Block",
-      markdown_editor_shortcut("k"),
-      () => ignore(self.update(ApplyCommand(CodeBlock))),
-    ),
-    markdown_editor_command_binding(
-      "Code Block",
-      markdown_editor_control_shift_shortcut("k"),
-      () => ignore(self.update(ApplyCommand(CodeBlock))),
-    ),
-    markdown_editor_command_binding(
-      "Duplicate Block",
-      markdown_editor_shift_shortcut("d"),
-      () => ignore(self.update(ApplyCommand(DuplicateBlock))),
-    ),
-    markdown_editor_command_binding(
-      "Duplicate Block",
-      markdown_editor_control_shift_shortcut("d"),
-      () => ignore(self.update(ApplyCommand(DuplicateBlock))),
-    ),
-    markdown_editor_command_binding(
-      "Move Block Up",
-      markdown_editor_alt_shortcut("ArrowUp"),
-      () => ignore(self.update(ApplyCommand(MoveBlockUp))),
-    ),
-    markdown_editor_command_binding(
-      "Move Block Down",
-      markdown_editor_alt_shortcut("ArrowDown"),
-      () => ignore(self.update(ApplyCommand(MoveBlockDown))),
-    ),
-    markdown_editor_command_binding(
-      "Insert Table Column",
-      markdown_editor_shift_shortcut("="),
-      () => ignore(self.update(ApplyCommand(InsertTableColumn))),
-    ),
-    markdown_editor_command_binding(
-      "Insert Table Column",
-      markdown_editor_shift_shortcut("+"),
-      () => ignore(self.update(ApplyCommand(InsertTableColumn))),
-    ),
-    markdown_editor_command_binding(
-      "Insert Table Column",
-      markdown_editor_control_shift_shortcut("="),
-      () => ignore(self.update(ApplyCommand(InsertTableColumn))),
-    ),
-    markdown_editor_command_binding(
-      "Insert Table Column",
-      markdown_editor_control_shift_shortcut("+"),
-      () => ignore(self.update(ApplyCommand(InsertTableColumn))),
-    ),
-    markdown_editor_command_binding(
-      "Insert Table Row",
-      markdown_editor_shift_shortcut("Enter"),
-      () => ignore(self.update(ApplyCommand(InsertTableRow))),
-    ),
-    markdown_editor_command_binding(
-      "Insert Table Row",
-      markdown_editor_control_shift_shortcut("Enter"),
-      () => ignore(self.update(ApplyCommand(InsertTableRow))),
-    ),
-    markdown_editor_command_binding(
-      "Delete Table Row",
-      markdown_editor_shift_shortcut("-"),
-      () => ignore(self.update(ApplyCommand(DeleteTableRow))),
-    ),
-    markdown_editor_command_binding(
-      "Delete Table Row",
-      markdown_editor_control_shift_shortcut("-"),
-      () => ignore(self.update(ApplyCommand(DeleteTableRow))),
-    ),
-    markdown_editor_command_binding(
-      "Delete Table Column",
-      markdown_editor_shift_shortcut("_"),
-      () => ignore(self.update(ApplyCommand(DeleteTableColumn))),
-    ),
-    markdown_editor_command_binding(
-      "Delete Table Column",
-      markdown_editor_control_shift_shortcut("_"),
-      () => ignore(self.update(ApplyCommand(DeleteTableColumn))),
-    ),
-    markdown_editor_command_binding(
-      "Table Align Left",
-      markdown_editor_shift_shortcut("l"),
-      () => {
-        ignore(
-          self.update(
-            ApplyCommand(
-              SetTableColumnAlignment(Some(@text.TextAlign::TextStart)),
-            ),
-          ),
-        )
-      },
-    ),
-    markdown_editor_command_binding(
-      "Table Align Left",
-      markdown_editor_control_shift_shortcut("l"),
-      () => {
-        ignore(
-          self.update(
-            ApplyCommand(
-              SetTableColumnAlignment(Some(@text.TextAlign::TextStart)),
-            ),
-          ),
-        )
-      },
-    ),
-    markdown_editor_command_binding(
-      "Table Align Center",
-      markdown_editor_shift_shortcut("e"),
-      () => {
-        ignore(
-          self.update(
-            ApplyCommand(
-              SetTableColumnAlignment(Some(@text.TextAlign::TextCenter)),
-            ),
-          ),
-        )
-      },
-    ),
-    markdown_editor_command_binding(
-      "Table Align Center",
-      markdown_editor_control_shift_shortcut("e"),
-      () => {
-        ignore(
-          self.update(
-            ApplyCommand(
-              SetTableColumnAlignment(Some(@text.TextAlign::TextCenter)),
-            ),
-          ),
-        )
-      },
-    ),
-    markdown_editor_command_binding(
-      "Table Align Right",
-      markdown_editor_shift_shortcut("r"),
-      () => {
-        ignore(
-          self.update(
-            ApplyCommand(
-              SetTableColumnAlignment(Some(@text.TextAlign::TextEnd)),
-            ),
-          ),
-        )
-      },
-    ),
-    markdown_editor_command_binding(
-      "Table Align Right",
-      markdown_editor_control_shift_shortcut("r"),
-      () => {
-        ignore(
-          self.update(
-            ApplyCommand(
-              SetTableColumnAlignment(Some(@text.TextAlign::TextEnd)),
-            ),
-          ),
-        )
-      },
-    ),
-    markdown_editor_command_binding(
-      "Table Align Auto",
-      markdown_editor_shift_shortcut("0"),
-      () => ignore(self.update(ApplyCommand(SetTableColumnAlignment(None)))),
-    ),
-    markdown_editor_command_binding(
-      "Table Align Auto",
-      markdown_editor_control_shift_shortcut("0"),
-      () => ignore(self.update(ApplyCommand(SetTableColumnAlignment(None)))),
-    ),
-    markdown_editor_command_binding(
-      "Undo Formatting Command",
-      markdown_editor_alt_shortcut("z"),
-      () => ignore(self.update(Undo)),
-    ),
-    markdown_editor_command_binding(
-      "Redo Formatting Command",
-      markdown_editor_alt_shift_shortcut("z"),
-      () => ignore(self.update(Redo)),
-    ),
-  ])
+pub fn markdown_editor_program_commands() -> Array[
+  @moui.ProgramCommand[MarkdownEditorMsg],
+] {
+  let commands : Array[@moui.ProgramCommand[MarkdownEditorMsg]] = []
+  let add = (
+    label : String,
+    shortcut : @views.KeyboardShortcut,
+    message : MarkdownEditorMsg,
+  ) => commands.push(markdown_editor_program_command(label, shortcut, message))
+  let both = (
+    label : String,
+    meta : @views.KeyboardShortcut,
+    control : @views.KeyboardShortcut,
+    message : MarkdownEditorMsg,
+  ) => {
+    add(label, meta, message)
+    add(label, control, message)
+  }
+
+  both(
+    "New Document",
+    markdown_editor_shortcut("n"),
+    markdown_editor_control_shortcut("n"),
+    NewDocument,
+  )
+  both(
+    "Open Document",
+    markdown_editor_shortcut("o"),
+    markdown_editor_control_shortcut("o"),
+    OpenDocument,
+  )
+  both(
+    "Save",
+    markdown_editor_shortcut("s"),
+    markdown_editor_control_shortcut("s"),
+    SaveDocument,
+  )
+  both(
+    "Save As",
+    markdown_editor_shift_shortcut("s"),
+    markdown_editor_control_shift_shortcut("s"),
+    SaveDocumentAs,
+  )
+  both(
+    "Import Markdown from Clipboard",
+    markdown_editor_meta_alt_shortcut("i"),
+    markdown_editor_control_alt_shortcut("i"),
+    ImportFromClipboard,
+  )
+  both(
+    "Export Markdown",
+    markdown_editor_meta_alt_shortcut("s"),
+    markdown_editor_control_alt_shortcut("s"),
+    ExportToClipboard,
+  )
+  both(
+    "Export HTML",
+    markdown_editor_meta_alt_shortcut("e"),
+    markdown_editor_control_alt_shortcut("e"),
+    ExportHtmlToClipboard,
+  )
+  both(
+    "Find",
+    markdown_editor_shortcut("f"),
+    markdown_editor_control_shortcut("f"),
+    OpenFind,
+  )
+  both(
+    "Find/Replace",
+    markdown_editor_meta_alt_shortcut("f"),
+    markdown_editor_control_shortcut("h"),
+    OpenFindReplace,
+  )
+  both(
+    "Find Next",
+    markdown_editor_shortcut("g"),
+    markdown_editor_control_shortcut("g"),
+    FindNext,
+  )
+  both(
+    "Find Previous",
+    markdown_editor_shift_shortcut("g"),
+    markdown_editor_control_shift_shortcut("g"),
+    FindPrevious,
+  )
+  add(
+    "Dismiss Panels",
+    markdown_editor_plain_shortcut("Escape"),
+    DismissAuxiliaryPanels,
+  )
+  both(
+    "Toggle Source Preview",
+    markdown_editor_shortcut("/"),
+    markdown_editor_control_shortcut("/"),
+    ToggleSourcePreview,
+  )
+  both(
+    "Toggle Source Mode",
+    markdown_editor_shift_shortcut("/"),
+    markdown_editor_control_shift_shortcut("/"),
+    ToggleSourceMode,
+  )
+  both(
+    "Toggle Quick Format",
+    markdown_editor_shift_shortcut("p"),
+    markdown_editor_control_shift_shortcut("p"),
+    ToggleFormatPalette,
+  )
+  both(
+    "Cycle Writing Look",
+    markdown_editor_meta_alt_shortcut("l"),
+    markdown_editor_control_alt_shortcut("l"),
+    CycleWritingAppearance,
+  )
+  both(
+    "Insert Table of Contents",
+    markdown_editor_meta_alt_shortcut("t"),
+    markdown_editor_control_alt_shortcut("t"),
+    ApplyCommand(InsertTableOfContents),
+  )
+  both(
+    "Insert YAML Front Matter",
+    markdown_editor_meta_alt_shortcut("y"),
+    markdown_editor_control_alt_shortcut("y"),
+    ApplyCommand(InsertFrontMatter),
+  )
+  both(
+    "Indent Lines",
+    markdown_editor_shortcut("]"),
+    markdown_editor_control_shortcut("]"),
+    IndentLines,
+  )
+  both(
+    "Outdent Lines",
+    markdown_editor_shortcut("["),
+    markdown_editor_control_shortcut("["),
+    OutdentLines,
+  )
+  both(
+    "Toggle Outline",
+    markdown_editor_meta_alt_shortcut("o"),
+    markdown_editor_control_alt_shortcut("o"),
+    ToggleOutline,
+  )
+  both(
+    "Toggle Files",
+    markdown_editor_meta_alt_shortcut("p"),
+    markdown_editor_control_alt_shortcut("p"),
+    ToggleFileSidebar,
+  )
+  both(
+    "Toggle Document Info",
+    markdown_editor_meta_alt_shortcut("d"),
+    markdown_editor_control_alt_shortcut("d"),
+    ToggleDocumentInfo,
+  )
+  both(
+    "Toggle Focus Mode",
+    markdown_editor_shift_shortcut("f"),
+    markdown_editor_control_shift_shortcut("f"),
+    ToggleFocusMode,
+  )
+  both(
+    "Toggle Typewriter Mode",
+    markdown_editor_shift_shortcut("t"),
+    markdown_editor_control_shift_shortcut("t"),
+    ToggleTypewriterMode,
+  )
+  both(
+    "Toggle Zen Mode",
+    markdown_editor_meta_alt_shortcut("z"),
+    markdown_editor_control_alt_shortcut("z"),
+    ToggleZenMode,
+  )
+  both(
+    "Next Heading",
+    markdown_editor_meta_alt_shortcut("ArrowDown"),
+    markdown_editor_control_alt_shortcut("ArrowDown"),
+    JumpToNextHeading,
+  )
+  both(
+    "Previous Heading",
+    markdown_editor_meta_alt_shortcut("ArrowUp"),
+    markdown_editor_control_alt_shortcut("ArrowUp"),
+    JumpToPreviousHeading,
+  )
+  both(
+    "Open Target",
+    markdown_editor_shift_shortcut("o"),
+    markdown_editor_control_shift_shortcut("o"),
+    OpenTarget,
+  )
+  both(
+    "Bold",
+    markdown_editor_shortcut("b"),
+    markdown_editor_control_shortcut("b"),
+    ApplyCommand(Bold),
+  )
+  both(
+    "Italic",
+    markdown_editor_shortcut("i"),
+    markdown_editor_control_shortcut("i"),
+    ApplyCommand(Italic),
+  )
+  both(
+    "Inline Code",
+    markdown_editor_shortcut("e"),
+    markdown_editor_control_shortcut("e"),
+    ApplyCommand(Code),
+  )
+  both(
+    "Strikethrough",
+    markdown_editor_shift_shortcut("x"),
+    markdown_editor_control_shift_shortcut("x"),
+    ApplyCommand(Strikethrough),
+  )
+  both(
+    "Link",
+    markdown_editor_shortcut("l"),
+    markdown_editor_control_shortcut("k"),
+    ApplyCommand(Link),
+  )
+  both(
+    "Image",
+    markdown_editor_shift_shortcut("i"),
+    markdown_editor_control_shift_shortcut("i"),
+    ApplyCommand(Image),
+  )
+  both(
+    "Paragraph",
+    markdown_editor_shortcut("0"),
+    markdown_editor_control_shortcut("0"),
+    ApplyCommand(Paragraph),
+  )
+  both(
+    "Heading 1",
+    markdown_editor_shortcut("1"),
+    markdown_editor_control_shortcut("1"),
+    ApplyCommand(Heading(1)),
+  )
+  both(
+    "Heading 2",
+    markdown_editor_shortcut("2"),
+    markdown_editor_control_shortcut("2"),
+    ApplyCommand(Heading(2)),
+  )
+  both(
+    "Heading 3",
+    markdown_editor_shortcut("3"),
+    markdown_editor_control_shortcut("3"),
+    ApplyCommand(Heading(3)),
+  )
+  both(
+    "Heading 4",
+    markdown_editor_shortcut("4"),
+    markdown_editor_control_shortcut("4"),
+    ApplyCommand(Heading(4)),
+  )
+  both(
+    "Heading 5",
+    markdown_editor_shortcut("5"),
+    markdown_editor_control_shortcut("5"),
+    ApplyCommand(Heading(5)),
+  )
+  both(
+    "Heading 6",
+    markdown_editor_shortcut("6"),
+    markdown_editor_control_shortcut("6"),
+    ApplyCommand(Heading(6)),
+  )
+  add("Bullet List", markdown_editor_shortcut("u"), ApplyCommand(BulletList))
+  add(
+    "Bullet List",
+    markdown_editor_control_shift_shortcut("8"),
+    ApplyCommand(BulletList),
+  )
+  add(
+    "Bullet List",
+    markdown_editor_control_shift_shortcut("*"),
+    ApplyCommand(BulletList),
+  )
+  add("Task List", markdown_editor_shortcut("t"), ApplyCommand(TaskList))
+  both(
+    "Toggle Task",
+    markdown_editor_shortcut("Enter"),
+    markdown_editor_control_shortcut("Enter"),
+    ToggleCurrentTask,
+  )
+  add(
+    "Hard Line Break",
+    markdown_editor_plain_shift_shortcut("Enter"),
+    InsertHardBreak,
+  )
+  add("Ordered List", markdown_editor_shortcut("o"), ApplyCommand(OrderedList))
+  add(
+    "Ordered List",
+    markdown_editor_control_shift_shortcut("7"),
+    ApplyCommand(OrderedList),
+  )
+  add(
+    "Ordered List",
+    markdown_editor_control_shift_shortcut("&"),
+    ApplyCommand(OrderedList),
+  )
+  add("Quote", markdown_editor_shortcut("q"), ApplyCommand(Quote))
+  add("Quote", markdown_editor_control_shift_shortcut("9"), ApplyCommand(Quote))
+  add("Quote", markdown_editor_control_shift_shortcut("("), ApplyCommand(Quote))
+  both(
+    "Code Block",
+    markdown_editor_shortcut("k"),
+    markdown_editor_control_shift_shortcut("k"),
+    ApplyCommand(CodeBlock),
+  )
+  both(
+    "Duplicate Block",
+    markdown_editor_shift_shortcut("d"),
+    markdown_editor_control_shift_shortcut("d"),
+    ApplyCommand(DuplicateBlock),
+  )
+  add(
+    "Move Block Up",
+    markdown_editor_alt_shortcut("ArrowUp"),
+    ApplyCommand(MoveBlockUp),
+  )
+  add(
+    "Move Block Down",
+    markdown_editor_alt_shortcut("ArrowDown"),
+    ApplyCommand(MoveBlockDown),
+  )
+  add(
+    "Insert Table Column",
+    markdown_editor_shift_shortcut("="),
+    ApplyCommand(InsertTableColumn),
+  )
+  add(
+    "Insert Table Column",
+    markdown_editor_shift_shortcut("+"),
+    ApplyCommand(InsertTableColumn),
+  )
+  add(
+    "Insert Table Column",
+    markdown_editor_control_shift_shortcut("="),
+    ApplyCommand(InsertTableColumn),
+  )
+  add(
+    "Insert Table Column",
+    markdown_editor_control_shift_shortcut("+"),
+    ApplyCommand(InsertTableColumn),
+  )
+  both(
+    "Insert Table Row",
+    markdown_editor_shift_shortcut("Enter"),
+    markdown_editor_control_shift_shortcut("Enter"),
+    ApplyCommand(InsertTableRow),
+  )
+  both(
+    "Delete Table Row",
+    markdown_editor_shift_shortcut("-"),
+    markdown_editor_control_shift_shortcut("-"),
+    ApplyCommand(DeleteTableRow),
+  )
+  both(
+    "Delete Table Column",
+    markdown_editor_shift_shortcut("_"),
+    markdown_editor_control_shift_shortcut("_"),
+    ApplyCommand(DeleteTableColumn),
+  )
+  both(
+    "Table Align Left",
+    markdown_editor_shift_shortcut("l"),
+    markdown_editor_control_shift_shortcut("l"),
+    ApplyCommand(SetTableColumnAlignment(Some(@text.TextAlign::TextStart))),
+  )
+  both(
+    "Table Align Center",
+    markdown_editor_shift_shortcut("e"),
+    markdown_editor_control_shift_shortcut("e"),
+    ApplyCommand(SetTableColumnAlignment(Some(@text.TextAlign::TextCenter))),
+  )
+  both(
+    "Table Align Right",
+    markdown_editor_shift_shortcut("r"),
+    markdown_editor_control_shift_shortcut("r"),
+    ApplyCommand(SetTableColumnAlignment(Some(@text.TextAlign::TextEnd))),
+  )
+  both(
+    "Table Align Auto",
+    markdown_editor_shift_shortcut("0"),
+    markdown_editor_control_shift_shortcut("0"),
+    ApplyCommand(SetTableColumnAlignment(None)),
+  )
+  add("Undo Formatting Command", markdown_editor_alt_shortcut("z"), Undo)
+  add("Redo Formatting Command", markdown_editor_alt_shift_shortcut("z"), Redo)
+  commands
 }
 
 ///|
+fn markdown_editor_menu_item(
+  label : String,
+  shortcut : @views.KeyboardShortcut,
+  message : MarkdownEditorMsg,
+) -> @services.ApplicationMenuItem {
+  @services.ApplicationMenuItem::MenuCommand(
+    markdown_editor_program_command(label, shortcut, message).command(),
+  )
+}
+
+///|
+pub fn markdown_editor_application_menus() -> Array[@services.ApplicationMenu] {
+  let separator = @services.ApplicationMenuItem::MenuSeparator
+  [
+    @services.ApplicationMenu::new(title="File", items=[
+      markdown_editor_menu_item(
+        "New Document",
+        markdown_editor_shortcut("n"),
+        NewDocument,
+      ),
+      markdown_editor_menu_item(
+        "Open Document",
+        markdown_editor_shortcut("o"),
+        OpenDocument,
+      ),
+      markdown_editor_menu_item(
+        "Save",
+        markdown_editor_shortcut("s"),
+        SaveDocument,
+      ),
+      markdown_editor_menu_item(
+        "Save As",
+        markdown_editor_shift_shortcut("s"),
+        SaveDocumentAs,
+      ),
+    ]),
+    @services.ApplicationMenu::new(title="Edit", items=[
+      markdown_editor_menu_item(
+        "Undo Formatting Command",
+        markdown_editor_alt_shortcut("z"),
+        Undo,
+      ),
+      markdown_editor_menu_item(
+        "Redo Formatting Command",
+        markdown_editor_alt_shift_shortcut("z"),
+        Redo,
+      ),
+      separator,
+      markdown_editor_menu_item("Find", markdown_editor_shortcut("f"), OpenFind),
+    ]),
+    @services.ApplicationMenu::new(title="Format", items=[
+      markdown_editor_menu_item(
+        "Bold",
+        markdown_editor_shortcut("b"),
+        ApplyCommand(Bold),
+      ),
+      markdown_editor_menu_item(
+        "Italic",
+        markdown_editor_shortcut("i"),
+        ApplyCommand(Italic),
+      ),
+      markdown_editor_menu_item(
+        "Inline Code",
+        markdown_editor_shortcut("e"),
+        ApplyCommand(Code),
+      ),
+      markdown_editor_menu_item(
+        "Strikethrough",
+        markdown_editor_shift_shortcut("x"),
+        ApplyCommand(Strikethrough),
+      ),
+      markdown_editor_menu_item(
+        "Link",
+        markdown_editor_shortcut("l"),
+        ApplyCommand(Link),
+      ),
+      separator,
+      markdown_editor_menu_item(
+        "Heading 1",
+        markdown_editor_shortcut("1"),
+        ApplyCommand(Heading(1)),
+      ),
+      markdown_editor_menu_item(
+        "Heading 2",
+        markdown_editor_shortcut("2"),
+        ApplyCommand(Heading(2)),
+      ),
+      markdown_editor_menu_item(
+        "Heading 3",
+        markdown_editor_shortcut("3"),
+        ApplyCommand(Heading(3)),
+      ),
+      markdown_editor_menu_item(
+        "Heading 4",
+        markdown_editor_shortcut("4"),
+        ApplyCommand(Heading(4)),
+      ),
+      markdown_editor_menu_item(
+        "Heading 5",
+        markdown_editor_shortcut("5"),
+        ApplyCommand(Heading(5)),
+      ),
+      markdown_editor_menu_item(
+        "Heading 6",
+        markdown_editor_shortcut("6"),
+        ApplyCommand(Heading(6)),
+      ),
+      markdown_editor_menu_item(
+        "Paragraph",
+        markdown_editor_shortcut("0"),
+        ApplyCommand(Paragraph),
+      ),
+      separator,
+      markdown_editor_menu_item(
+        "Bullet List",
+        markdown_editor_shortcut("u"),
+        ApplyCommand(BulletList),
+      ),
+      markdown_editor_menu_item(
+        "Ordered List",
+        markdown_editor_shortcut("o"),
+        ApplyCommand(OrderedList),
+      ),
+      markdown_editor_menu_item(
+        "Task List",
+        markdown_editor_shortcut("t"),
+        ApplyCommand(TaskList),
+      ),
+      markdown_editor_menu_item(
+        "Quote",
+        markdown_editor_shortcut("q"),
+        ApplyCommand(Quote),
+      ),
+      markdown_editor_menu_item(
+        "Code Block",
+        markdown_editor_shortcut("k"),
+        ApplyCommand(CodeBlock),
+      ),
+    ]),
+    @services.ApplicationMenu::new(title="View", items=[
+      markdown_editor_menu_item(
+        "Toggle Source Mode",
+        markdown_editor_shift_shortcut("/"),
+        ToggleSourceMode,
+      ),
+      markdown_editor_menu_item(
+        "Toggle Focus Mode",
+        markdown_editor_shift_shortcut("f"),
+        ToggleFocusMode,
+      ),
+      markdown_editor_menu_item(
+        "Toggle Typewriter Mode",
+        markdown_editor_shift_shortcut("t"),
+        ToggleTypewriterMode,
+      ),
+      markdown_editor_menu_item(
+        "Toggle Zen Mode",
+        markdown_editor_meta_alt_shortcut("z"),
+        ToggleZenMode,
+      ),
+      separator,
+      markdown_editor_menu_item(
+        "Toggle Outline",
+        markdown_editor_meta_alt_shortcut("o"),
+        ToggleOutline,
+      ),
+      markdown_editor_menu_item(
+        "Toggle Files",
+        markdown_editor_meta_alt_shortcut("p"),
+        ToggleFileSidebar,
+      ),
+      markdown_editor_menu_item(
+        "Toggle Document Info",
+        markdown_editor_meta_alt_shortcut("d"),
+        ToggleDocumentInfo,
+      ),
+      markdown_editor_menu_item(
+        "Toggle Source Preview",
+        markdown_editor_shortcut("/"),
+        ToggleSourcePreview,
+      ),
+    ]),
+  ]
+}

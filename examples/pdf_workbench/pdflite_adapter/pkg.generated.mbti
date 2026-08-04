@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/pdf_workbench/pdflite_adapter"
+
+import {
+  "examples/pdf_workbench/app",
+  "examples/pdf_workbench/pdflite_service_protocol",
+}
+
+// Values
+pub fn document_services() -> @app.PdfWorkbenchDocumentServices
+
+pub fn load_document_from_bytes(path~ : String, bytes~ : Bytes) -> @app.PdfWorkbenchLoadResult
+
+pub fn pdflite_minimum_pdf_bytes() -> Bytes
+
+pub fn pdflite_rotate_crop_roundtrip(Bytes) -> Bool
+
+pub fn pdflite_three_page_pdf_bytes() -> Bytes
+
+pub fn service_handler() -> @pdflite_service_protocol.PdfWorkbenchPdfliteServiceHandler
+
+pub fn writeback_document(@app.PdfWorkbenchDocument) -> @app.PdfWorkbenchDocumentWritebackResult
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

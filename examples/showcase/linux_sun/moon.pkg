@@ -1,11 +1,8 @@
 import {
-  "moonbitlang/core/env",
-  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/linux" @linux_backend,
   "wzzc-dev/moui/render/sun" @render_sun,
-  "examples/showcase/app" @showcase_app,
+  "examples/showcase/composition",
 }
 
 supported_targets = "native"

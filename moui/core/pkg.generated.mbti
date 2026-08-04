@@ -613,7 +613,6 @@ pub(all) enum Effect[Msg] {
 }
 pub fn[Msg] Effect::batch(Array[Self[Msg]]) -> Self[Msg]
 pub fn[Msg] Effect::dispatch(((Msg) -> Unit) -> Unit) -> Self[Msg]
-pub fn[Msg] Effect::host_service(key~ : String, run~ : ((Msg) -> Unit) -> Unit, label? : String) -> Self[Msg]
 pub fn[Msg, NextMsg] Effect::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] Effect::none() -> Self[Msg]
 pub fn[Msg] Effect::run(key~ : String, run~ : ((Msg) -> Unit) -> Unit, kind? : String, label? : String) -> Self[Msg]
@@ -1056,12 +1055,23 @@ pub fn PressableState::to_interaction(Self) -> InteractionState
 type Program[Model, Msg]
 pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Program::runtime_commands(Self[Model, Msg], Model) -> Array[ProgramCommand[Msg]]
 pub fn[Model, Msg] Program::runtime_init(Self[Model, Msg]) -> (Model, Effect[Msg])
 pub fn[Model, Msg] Program::runtime_subscriptions(Self[Model, Msg], Model) -> Subscription[Msg]
 pub fn[Model, Msg] Program::runtime_update(Self[Model, Msg], Model, Msg) -> (Model, Effect[Msg])
 pub fn[Model, Msg] Program::runtime_view(Self[Model, Msg], Model, ViewEnvironment) -> View[Msg]
 pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Program::with_commands(Self[Model, Msg], commands~ : (Model) -> Array[ProgramCommand[Msg]]) -> Self[Model, Msg]
+
+pub struct ProgramCommand[Msg] {
+  command : ActionCommand
+  message : Msg
+}
+pub fn[Msg] ProgramCommand::command(Self[Msg]) -> ActionCommand
+pub fn[Msg, NextMsg] ProgramCommand::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
+pub fn[Msg] ProgramCommand::message(Self[Msg]) -> Msg
+pub fn[Msg] ProgramCommand::new(command~ : ActionCommand, message~ : Msg) -> Self[Msg]
 
 pub(all) struct RadialGradientSpec {
   center : Point
@@ -1449,7 +1459,6 @@ pub fn[Msg] Subscription::route_event(key~ : String, start~ : ((Msg) -> Unit) ->
 pub fn[Msg] Subscription::run(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::runtime_sources(Self[Msg]) -> Array[SubscriptionRuntimeSource[Msg]]
 pub fn[Msg] Subscription::runtime_visit(Self[Msg], (Int) -> Unit, (Int, Int) -> Unit, (Int, SubscriptionDescriptor) -> Unit) -> Unit
-pub fn[Msg] Subscription::service_completion(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::timer(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::window_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 

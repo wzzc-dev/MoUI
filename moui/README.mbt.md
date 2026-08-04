@@ -284,13 +284,12 @@ Build and run the visual showcase on the Skia mainline:
 moon run examples/showcase/macos_skia --target native
 ```
 
-The `examples/showcase/macos_wgpu`, `examples/showcase/macos_wgpu_cosmic`,
-and `examples/showcase/macos_sun` entrypoints remain available as native
-diagnostics:
+The `examples/showcase/macos_wgpu` and `examples/showcase/macos_sun`
+entrypoints remain available as native diagnostics. The WGPU route uses
+CoreText with Cosmic as an internal fallback:
 
 ```sh
 moon build examples/showcase/macos_wgpu --target native
-moon build examples/showcase/macos_wgpu_cosmic --target native
 moon build examples/showcase/macos_sun --target native
 ```
 
@@ -314,13 +313,6 @@ MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdflite_a
 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon build examples/pdf_workbench/macos_skia --target native
 ./_build/native/debug/build/examples/pdf_workbench/macos_skia/macos_skia.exe
-```
-
-The WGPU Markdown editor entrypoint is still available for diagnostics:
-
-```sh
-moon build examples/markdown_editor/macos_wgpu --target native
-./_build/native/debug/build/examples/markdown_editor/macos_wgpu/macos_wgpu.exe
 ```
 
 Mo Workbench currently ships the macOS Skia entrypoint only. The
@@ -366,30 +358,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_m
   -Version 0.1.0
 ```
 
-The Showcase also has Windows WGPU/Cosmic and Sun diagnostic entrypoints:
+The Showcase also has one Windows WGPU route and a Sun diagnostic route. WGPU
+uses DirectWrite with Cosmic as an internal fallback:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/showcase/windows_wgpu `
   -BuildOnly
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/showcase/windows_wgpu_cosmic `
-  -BuildOnly
-```
-
-Build the WYSIWYG Markdown editor with the same MSVC helper:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows_skia `
-  -BuildOnly
-```
-
-The WGPU Markdown editor entrypoint remains available for diagnostics:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows_wgpu `
+  -Package examples/showcase/windows_sun `
   -BuildOnly
 ```
 
@@ -408,15 +385,6 @@ MoUI repository checkout (wrapper forwards to the copy under `moui/`):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
-```
-
-Consumer project with only the published `wzzc-dev/moui` dependency (run from
-your app root; adjust the path to the resolved package directory on disk):
-
-```powershell
-. (Join-Path (Resolve-Path ".\.mooncakes\wzzc-dev\moui").Path "scripts\windows\msvc_env.ps1")
-moon run your_app/windows_skia --target native
 ```
 
 Consumer project with only the published `wzzc-dev/moui` dependency (run from
@@ -436,8 +404,8 @@ run the setup helper from the repository root; it creates an ignored
 manifest workspace under `.tools\vcpkg-msvc` and installs
 `zlib:x64-windows` there.
 
-Excel Viewer does not currently ship a Windows entrypoint; it runs on
-macOS Skia and Linux Skia only.
+Excel Viewer does not currently ship a Windows entrypoint; its retained native
+entrypoint is macOS Skia.
 
 ## Linux Native
 
@@ -448,17 +416,13 @@ Wayland compositor and configured real Skia link flags:
 
 ```sh
 moon run examples/showcase/linux_skia --target native
-moon run examples/markdown_editor/linux_skia --target native
-moon run examples/excel/linux_skia --target native
 ```
 
-The `examples/showcase/linux_wgpu`, `examples/showcase/linux_wgpu_cosmic`,
-and `examples/showcase/linux_sun` entrypoints remain available as native
-WGPU / Sun diagnostics when a Vulkan/WGPU stack is configured.
+The `examples/showcase/linux_wgpu` and `examples/showcase/linux_sun`
+entrypoints remain available as native WGPU / Sun diagnostics when a
+Vulkan/WGPU stack is configured.
 
 For headless validation, use a compositor such as Weston headless and set
 `WAYLAND_DISPLAY` to its socket before running the examples. The WGPU Linux
-text path composes the fontconfig/FreeType provider with Moon Cosmic
-fallback; that provider currently has a narrow native color-emoji path for
-explicit emoji family runs, while general text still falls back to Cosmic.
-`linux_wgpu_cosmic` selects Moon Cosmic directly.
+text path composes the fontconfig/FreeType provider with Moon Cosmic as its
+internal fallback.

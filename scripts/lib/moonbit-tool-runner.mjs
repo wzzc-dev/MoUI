@@ -1,8 +1,30 @@
 import { spawnSync } from "node:child_process";
-import { dirname, resolve } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const staticToolsRoot = resolve(repoRoot, "tools");
+
+export const resolveToolPathArgs = (args, pathFlags, defaults = {}) => {
+  const resolvedArgs = [...args];
+  const seen = new Set();
+  for (let index = 0; index < resolvedArgs.length; index += 1) {
+    const flag = resolvedArgs[index];
+    if (!pathFlags.includes(flag)) continue;
+    seen.add(flag);
+    const value = resolvedArgs[index + 1];
+    if (value && !isAbsolute(value)) {
+      resolvedArgs[index + 1] = resolve(repoRoot, value);
+    }
+    index += 1;
+  }
+  for (const [flag, value] of Object.entries(defaults)) {
+    if (!seen.has(flag)) {
+      resolvedArgs.push(flag, resolve(repoRoot, value));
+    }
+  }
+  return resolvedArgs;
+};
 
 export const runCommand = (command, args, options = {}) => {
   const captureOutput =
@@ -41,10 +63,13 @@ export const runCommand = (command, args, options = {}) => {
   return result;
 };
 
-export const runMoonbitTool = (toolPackage, toolArgs = [], options = {}) =>
-  runCommand(
+export const runMoonbitTool = (toolPackage, toolArgs = [], options = {}) => {
+  const isStaticTool = toolPackage.startsWith("tools/");
+  const packagePath = isStaticTool ? toolPackage.slice("tools/".length) : toolPackage;
+  const workspaceArgs = isStaticTool ? [ "-C", staticToolsRoot ] : [];
+  return runCommand(
     "moon",
-    [ "run", toolPackage, "--target", "native", "--", ...toolArgs ],
+    [ ...workspaceArgs, "run", packagePath, "--target", "native", "--", ...toolArgs ],
     {
       ...options,
       env: {
@@ -55,3 +80,4 @@ export const runMoonbitTool = (toolPackage, toolArgs = [], options = {}) =>
       },
     },
   );
+};

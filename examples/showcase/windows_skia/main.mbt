@@ -1,28 +1,17 @@
 ///|
 fn main {
-  let services = @host.HostAppServices::new(
-    bridge=@windows_backend.windows_service_bridge(),
+  let runtime = @composition.runtime(
+    host_summary=@windows_backend.windows_capability_summary(),
+    environment=@windows_backend.app_environment(),
   )
-  let timer_source = @windows_backend.windows_timer_source()
-  let app = @showcase_app.ShowcaseApp::new()
-  let runtime = @runtime.new_program_with_dimensions(
-    program=app.program_with_host(
-      @windows_backend.windows_capability_summary(),
-      services~,
-      timer_source=Some(timer_source),
-    ),
-    width=1100.0,
-    height=680.0,
-  )
-  runtime.set_action_commands(@showcase_app.action_command_map())
-  let exit_after_first_present = @env.get_env_var("MOUI_FIRST_FRAME_EXIT") ==
-    Some("1")
-  @moui.run_app("MoUI Showcase", runtime)
+  @runtime.run_app("MoUI Showcase", runtime)
   .render_all(@render_skia.from_env())
   .backend(
     @windows_backend.entry(
       smoke_options=@windows_backend.WindowsHostSmokeOptions::new(
-        first_frame_smoke_auto_exit=exit_after_first_present,
+        first_frame_smoke_auto_exit=@composition.env_flag(
+          "MOUI_FIRST_FRAME_EXIT",
+        ),
       ),
     ),
   )

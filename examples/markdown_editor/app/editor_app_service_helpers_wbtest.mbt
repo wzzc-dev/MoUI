@@ -2,7 +2,7 @@
 fn markdown_editor_clipboard_services(
   read_text~ : String,
   written~ : Ref[String],
-) -> @host.HostAppServices {
+) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(clipboard=true),
     handle=request => {
@@ -20,7 +20,7 @@ fn markdown_editor_clipboard_services(
       }
     },
   )
-  @host.HostAppServices::new(bridge~)
+  @host.app_services(bridge~)
 }
 
 ///|
@@ -29,7 +29,7 @@ fn markdown_editor_file_dialog_services(
   seen_kind~ : Ref[@host.HostFileDialogKind],
   seen_title~ : Ref[String],
   seen_default_name~ : Ref[String],
-) -> @host.HostAppServices {
+) -> @services.AppServices {
   let selected = selected_path
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -76,7 +76,7 @@ fn markdown_editor_file_dialog_services(
       }
     },
   )
-  @host.HostAppServices::new(bridge~)
+  @host.app_services(bridge~)
 }
 
 ///|
@@ -86,7 +86,7 @@ fn markdown_editor_document_services(
   seen_kind~ : Ref[@host.HostFileDialogKind],
   seen_title~ : Ref[String],
   seen_default_name~ : Ref[String],
-) -> @host.HostAppServices {
+) -> @services.AppServices {
   let selected = selected_path
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -126,13 +126,13 @@ fn markdown_editor_document_services(
       }
     },
   )
-  @host.HostAppServices::new(bridge~)
+  @host.app_services(bridge~)
 }
 
 ///|
 fn markdown_editor_link_services(
   opened~ : Ref[String],
-) -> @host.HostAppServices {
+) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(open_url=true),
     handle=request => {
@@ -145,13 +145,13 @@ fn markdown_editor_link_services(
       }
     },
   )
-  @host.HostAppServices::new(bridge~)
+  @host.app_services(bridge~)
 }
 
 ///|
 fn markdown_editor_async_clipboard_read_services(
   queue : @host.HostServiceAsyncQueue,
-) -> @host.HostAppServices {
+) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(clipboard=true),
     handle=request => {
@@ -163,13 +163,13 @@ fn markdown_editor_async_clipboard_read_services(
       }
     },
   )
-  @host.HostAppServices::new(bridge~, async_queue=Some(queue))
+  @host.app_services(bridge~, async_queue=Some(queue))
 }
 
 ///|
 fn markdown_editor_async_file_dialog_services(
   queue : @host.HostServiceAsyncQueue,
-) -> @host.HostAppServices {
+) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
       file_dialogs=true,
@@ -183,5 +183,5 @@ fn markdown_editor_async_file_dialog_services(
       }
     },
   )
-  @host.HostAppServices::new(bridge~, async_queue=Some(queue))
+  @host.app_services(bridge~, async_queue=Some(queue))
 }

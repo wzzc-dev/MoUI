@@ -1,5 +1,5 @@
 ///|
-let web_active_route_source : Ref[@runtime.HostRouteSource?] = Ref(None)
+let web_active_route_source : Ref[@services.RouteSource?] = Ref(None)
 
 ///|
 pub fn web_history_push_route(route : String) -> Unit {
@@ -27,7 +27,7 @@ pub fn web_dispatch_route(source_code : Int, text_id : Int) -> Unit {
 }
 
 ///|
-fn set_web_route_source(source : @runtime.HostRouteSource?) -> Unit {
+fn set_web_route_source(source : @services.RouteSource?) -> Unit {
   web_active_route_source.val = source
 }
 
@@ -36,7 +36,7 @@ fn web_dispatch_route_text(source_code : Int, route : String) -> Int {
   match web_active_route_source.val {
     Some(source) =>
       source.publish(
-        @runtime.HostRouteEvent::from_route(
+        @services.RouteEvent::from_route(
           route~,
           source=web_route_source_label(source_code),
         ),

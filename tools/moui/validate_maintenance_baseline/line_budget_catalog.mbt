@@ -97,17 +97,10 @@ fn file_budgets() -> Array[FileBudget] {
       path: "moui/backend/host/host_route_timer_subscription_sources_test.mbt",
       max_lines: 220,
     },
-    {
-      path: "moui/backend/host/host_app_services_facade_test.mbt",
-      max_lines: 240,
-    },
+    { path: "moui/backend/host/app_services_adapter_test.mbt", max_lines: 120 },
     {
       path: "moui/backend/host/host_async_service_queue_test.mbt",
       max_lines: 212,
-    },
-    {
-      path: "moui/backend/host/host_service_completion_subscription_test.mbt",
-      max_lines: 180,
     },
     { path: "moui/backend/host/host_image_test.mbt", max_lines: 110 },
     {
@@ -138,7 +131,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/host/host_platform_contract_test.mbt",
-      max_lines: 255,
+      max_lines: 291,
     },
     { path: "moui/backend/host/host_window_lifecycle_test.mbt", max_lines: 310 },
     {
@@ -146,12 +139,12 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 188,
     },
     { path: "moui/backend/host/host_window_commands_test.mbt", max_lines: 140 },
-    { path: "moui/backend/host/host_window_requests_test.mbt", max_lines: 335 },
+    { path: "moui/backend/host/host_window_requests_test.mbt", max_lines: 350 },
     { path: "moui/backend/host/window_lifecycle.mbt", max_lines: 115 },
     { path: "moui/backend/host/window_registry.mbt", max_lines: 320 },
     { path: "moui/runtime/window_scene_resolution.mbt", max_lines: 115 },
     { path: "moui/runtime/window_runtime_slots.mbt", max_lines: 247 },
-    { path: "moui/backend/host/window_request_queue.mbt", max_lines: 150 },
+    { path: "moui/backend/host/window_request_queue.mbt", max_lines: 198 },
     { path: "moui/backend/host/window_platform_map.mbt", max_lines: 110 },
     { path: "moui/backend/web/host_runtime.mbt", max_lines: 480 },
     { path: "moui/backend/web/web_async_services.mbt", max_lines: 620 },
@@ -178,7 +171,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_guidance_consistency/main.mbt",
-      max_lines: 107,
+      max_lines: 108,
     },
     {
       path: "tools/moui/validate_guidance_consistency/quality_gate_guidance.mbt",
@@ -211,7 +204,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/moonbit_tool_wrapper_budget.mbt",
-      max_lines: 142,
+      max_lines: 143,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/repo_scan_helpers.mbt",
@@ -383,7 +376,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     { path: "moui/render/skia/renderer_text.mbt", max_lines: 50 },
     { path: "moui/tests/skia_renderer_smoke/native/main.mbt", max_lines: 1887 },
-    { path: "moui/runtime/runtime.mbt", max_lines: 459 },
+    { path: "moui/runtime/runtime.mbt", max_lines: 461 },
     { path: "moui/runtime/diagnostics.mbt", max_lines: 500 },
     { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 180 },
     { path: "moui/runtime/diagnostics_inspector_accessors.mbt", max_lines: 930 },

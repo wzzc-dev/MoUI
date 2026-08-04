@@ -48,7 +48,7 @@ resolver-backed `OpenWindow` requests through `WebAppOptions` captured by
 `@web.entry`. Native host cores create platform windows through the same path
 but do not choose concrete renderer families. Application entrypoints supply
 ordered `RendererBindingFactory` values and one platform `PlatformEntry` to
-`@moui.run_app`. A resolved native window creates a neutral `HostSurfaceKit`,
+`@runtime.run_app`. A resolved native window creates a neutral `HostSurfaceKit`,
 resolves a `HostWindowRenderer`, then registers a `HostRuntimeDriver`,
 platform binding, and platform slot, and routes redraw, events, context menus,
 host service completions, IME sync, and disposal by `HostWindowId`. Without a
@@ -104,10 +104,10 @@ constructors and platform event conversion.
   capability flags for clipboard, menus, file dialogs, text-file access, URL
   opening, and system theme. Unsupported services should return `Unavailable` responses instead of
   leaking platform checks into `core` or `views`.
-- App-owned route history lives in `core` as `RouteHistoryState`, where it can
+- App-owned route history lives in `views` as `RouteHistoryState`, where it can
   model deep-link strings, back/forward cursors, and `RouterSnapshot`
-  restoration without depending on a platform host. `backend/host` provides
-  `HostRouteSource` for typed route/deep-link fanout through
+  restoration without depending on a platform host. `moui/services` provides
+  `RouteSource` for typed route/deep-link fanout through
   `Subscription::route_event`. `backend/web` wires browser
   `pushState`/`replaceState`/`popstate` into that route source and exposes Web
   history commands for app-owned route effects. Native URL bars, OS deep-link
@@ -125,12 +125,9 @@ constructors and platform event conversion.
   and return `HostServiceResponse::Pending` instead of blocking the runtime.
   Hosts drain pending requests into in-flight platform work, complete them with
   the original request, and record completions. Runtime-owned responses such as
-  clipboard paste are dispatched through `HostRuntimeDriver`; app-owned service
-  workflows should declare `HostAppServices::completion_subscription` while the
-  model stores a pending request id so pending completions re-enter the app's
-  typed message loop. When that subscription is canceled, the queue removes the
-  handler so a later platform response remains available through the completed
-  response queue instead of dispatching into stale app state.
+  clipboard paste are dispatched through `HostRuntimeDriver`; app-owned flows
+  receive typed `ServiceTaskResult` messages. Request ids and completion queues
+  remain private to the host adapter.
 - Host service bridges can apply a reported light/dark system theme to a runtime
   `Environment`. Web, macOS, and Windows do this once at startup before the
   first layout/redraw pass. Runtime `ThemeChanged` window events are normalized

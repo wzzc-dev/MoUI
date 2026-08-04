@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/webview_demo/composition"
+
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui_webview/host",
+}
+
+// Values
+pub fn runtime(commands~ : @host.HostWebViewCommandQueue, capabilities~ : @host.HostWebViewCapabilities) -> @runtime.AppRuntime
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

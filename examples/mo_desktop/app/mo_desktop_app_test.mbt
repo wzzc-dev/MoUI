@@ -69,38 +69,56 @@ test "finder history restores locations and drops the forward branch" {
 }
 
 ///|
-test "host completions retain imported files and respect system appearance" {
-  let import_request = @host.HostServiceRequest::FileDialog(
-    @host.HostFileDialogOptions::new(kind=@host.HostFileDialogKind::OpenFile),
-  )
-  let pending = @host.HostServiceRequestId::new(42)
-  let waiting = DesktopModel::new().update(
-    HostCompleted({
-      id: pending,
-      request: import_request,
-      response: @host.HostServiceResponse::Pending(pending),
-    }),
-  )
-  debug_inspect(waiting.pending_service, content="Some({ value: 42 })")
+test "typed service completions retain imported files and system appearance" {
+  let waiting = DesktopModel::new().update(RequestFileImport)
+  debug_inspect(waiting.pending_service, content="Some(FileImportService)")
   let imported = waiting.update(
-    HostCompleted({
-      id: pending,
-      request: import_request,
-      response: @host.HostServiceResponse::FileDialogSelection([
+    FileImportCompleted(
+      @services.ServiceTaskResult::Success([
         "/tmp/notes.md", "/tmp/notes.md", "/tmp/tahoe.jpg",
       ]),
-    }),
+    ),
   )
   inspect(imported.imported_files.length(), content="2")
   inspect(imported.last_diagnostic, content="Imported 3 file(s)")
-  let dark = imported.update(
-    HostCompleted({
-      id: @host.HostServiceRequestId::new(43),
-      request: @host.HostServiceRequest::QuerySystemTheme,
-      response: @host.HostServiceResponse::SystemTheme(@state.ColorScheme::Dark),
-    }),
-  )
+  let dark = imported
+    .update(UseSystemAppearance)
+    .update(
+      SystemAppearanceCompleted(
+        @services.ServiceTaskResult::Success(@state.ColorScheme::Dark),
+      ),
+    )
   assert_true(dark.dark_mode)
+}
+
+///|
+test "service failure cancellation and stale completion stay typed" {
+  let failed = DesktopModel::new()
+    .update(RequestFileImport)
+    .update(
+      FileImportCompleted(
+        @services.ServiceTaskResult::Failure(
+          @services.ServiceError::new(
+            code="unavailable",
+            message="file picker unavailable",
+          ),
+        ),
+      ),
+    )
+  inspect(failed.last_diagnostic, content="file picker unavailable")
+  assert_true(failed.pending_service is None)
+  let cancelled = DesktopModel::new()
+    .update(OpenFavorite("moonbitlang.com"))
+    .update(UrlOpenCompleted(@services.ServiceTaskResult::Cancelled))
+  inspect(cancelled.last_diagnostic, content="URL open cancelled")
+  let waiting = DesktopModel::new().update(RequestFileImport)
+  let stale = waiting.update(
+    SystemAppearanceCompleted(
+      @services.ServiceTaskResult::Success(@state.ColorScheme::Dark),
+    ),
+  )
+  assert_false(stale.dark_mode)
+  debug_inspect(stale.pending_service, content="Some(FileImportService)")
 }
 
 ///|

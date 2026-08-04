@@ -22,11 +22,11 @@
 的应用选项可以携带该包；原始平台事件被归一化并通过匹配的 `HostRuntimeDriver` 分派后，后端会连同其
 `HostWindowId` 发布同一个 `HostEvent`，使应用拥有的 `Subscription::host_event` 和
 `Subscription::window_event` 适配器可以观察真实运行时事件，而无需把平台事件转换移入 `core`。
-`HostTimerSource` 是用于应用拥有的计时器节拍的匹配宿主层订阅适配器：宿主/平台代码提供调度器
+`@services.TimerSource` 是用于应用拥有的计时器节拍的匹配宿主层订阅适配器：宿主/平台代码提供调度器
 回调，而应用通过 `Subscription::timer` 把 `@core.Frame` 节拍映射回类型化的 `Program` 消息；
 取消订阅会运行调度器清理，因此迟到的计时器回调会被陈旧分派保护忽略。
-`HostRouteSource` 是用于应用拥有的路由/deep-link 流的匹配宿主层订阅适配器：宿主/平台代码可以发布
-携带 `@core.RouteLocation` 和来源标签的 `HostRouteEvent` 值，而应用通过
+`@services.RouteSource` 是用于应用拥有的路由/deep-link 流的匹配宿主层订阅适配器：宿主/平台代码可以发布
+携带 `@core.RouteLocation` 和来源标签的 `@services.RouteEvent` 值，而应用通过
 `Subscription::route_event` 映射这些事件；取消订阅会移除发布者处理器，因此迟到的路由事件不会
 重新进入陈旧的应用状态。该适配器本身不会修改 `RouteHistoryState`，也不会同步浏览器/原生历史。
 `HostWindowRegistry::resolve_open_request` 把成功的场景解析与创建出的注册表记录配对，使宿主可以把
@@ -53,7 +53,7 @@ Web、macOS、Windows 和 Linux 应将其原生窗口事件转换为 `HostEvent`
 平台本地循环。
 `HostWindowCommands` 是建立在同一队列之上的更高层命令门面，提供面向应用的打开/聚焦/调整大小/最小化/
 显示/关闭辅助方法，并共享排空到注册表或窗口运行时槽位的逻辑。
-每个应用入口调用 `@moui.run_app`，提供有序 `RendererBindingFactory` 与一个平台 `entry`，再调用
+每个应用入口调用 `@runtime.run_app`，提供有序 `RendererBindingFactory` 与一个平台 `entry`，再调用
 `run`。渲染器选项由 factory 捕获，平台选项由 platform entry 捕获。有解析器时，`OpenWindow` 请求把场景解析为新的
 `AppRuntime`，创建另一个平台窗口和中立 `HostSurfaceKit`，解析 `HostWindowRenderer`，注册逐窗口
 `HostRuntimeDriver`，绑定平台 id，然后通过按窗口索引的槽位路由重绘、事件、上下文菜单、服务完成记录、
@@ -113,16 +113,16 @@ Web 的纯语义提交独立于 redraw 同步。
 折叠在一起。它是面向应用、诊断和 Showcase 的高层报告 API。它的 `preflight_fields()` 辅助方法会发出
 渲染器中立的就绪/缺口字段字符串，用于提供方/包审计，例如原生 Skia 预检日志；
 `HostServiceBridge`、`HostInputContract` 和平台后端设置仍是实际行为的事实来源。
-`HostAppServices` 是建立在同一桥之上的面向应用门面，带有用于剪贴板、文件对话框、URL 打开、系统主题、
-上下文菜单、可选异步队列完成处理，以及应用层 `completion_subscription` 适配器的辅助方法；
-该桥仍是能力路由和平台分派的事实来源。
+应用不直接消费这条 bridge。`@host.app_services(...)` 把它适配为
+`@services.AppServices`，`@host.app_environment(...)` 再组合可选的
+`@services.TimerSource` 和 `@services.RouteSource`。平台后端向 composition root 暴露
+`app_environment()`；Program 闭包捕获 environment，不把它放入业务 `Model`。
 无法同步完成的服务，尤其是需要权限或选择器回调的浏览器剪贴板读取和文件对话框，可以通过
 `HostServiceAsyncQueue` 返回 `HostServiceResponse::Pending`。宿主在平台边缘把待处理请求排空到
 进行中集合，用附带的原始请求完成它们，并记录完成结果。运行时拥有的效果（例如异步粘贴）会交给
-`HostRuntimeDriver`，而应用拥有的服务流程应在模型状态中存储待处理请求 id，并从 `Program` 订阅声明
-`HostAppServices::completion_subscription`，使完成结果重新进入类型化消息循环，而不向 `core` 暴露平台 API。
-当模型离开待处理状态或运行时被销毁导致该订阅被取消时，宿主队列会释放其完成处理器；后续平台响应会被保留为
-普通已完成记录，而不是通过已死亡的应用回调分派。较低层的 `HostAppServices::on_completed` 回调仍可用于自定义适配器。
+`HostRuntimeDriver`。host adapter 把应用拥有的操作转换为 `ServiceTask[T]`；应用通过类型化消息循环接收
+`ServiceTaskResult::Success`、`Failure` 或 `Cancelled`。request id 与 queue handler 只留在
+`backend/host`，runtime 的 task lifecycle 会拒绝 stale dispatch。
 Web 后端把该队列接线到浏览器宿主导入项，以及用于剪贴板读取和文件选择器的导出 wasm 完成回调。
 Web、macOS 和 Windows 入口点会在启动时查询该桥，并在第一轮宿主驱动器布局/重绘轮次之前把报告的
 浅色/深色方案安装到 `AppRuntime` 中，因此初始视图构建可以通过 `ComponentContext` 环境读取看到平台配色方案。
@@ -140,7 +140,7 @@ Web、macOS 和 Windows 入口点会在启动时查询该桥，并在第一轮�
 次要按钮上下文菜单请求由宿主事件层识别：平台后端会跳过这些事件的普通指针分派，然后有原生菜单能力的宿主会请求
 `HostServiceBridge::ShowMenu` 展示当前运行时操作命令，并通过 `HostRuntimeDriver` 分派选中的意图。
 应用菜单栏 (L2) 使用 `HostServiceRequest::SetApplicationMenu` /
-`HostAppServices::set_application_menu` 和 `HostApplicationMenu` 描述符。macOS 通过 window 包安装原生主菜单
+`@services.MenuServices::install_application` 和 `ApplicationMenu` 描述符。macOS 通过 window 包安装原生主菜单
 标题/项目；Windows、Linux 和 Web 当前返回 `Unavailable`。选择交付仍使用入口点安装的平台动作处理器（例如
 `@window_macos.set_system_menu_action_handler`）。见
 [非渲染组件手册](non-render-component-cookbook.md) 和
@@ -150,9 +150,9 @@ Showcase 的 Platform 工作区（`examples/showcase/app/platform`）。
 每个已解析场景仍是独立的 `AppRuntime`；共享状态由应用拥有。见 `examples/multi_window`。
 文件放置目标使用 `View::on_file_drop` 修饰器；宿主会在运行时向命中的视图分派类型化消息之前，归一化原生文件拖放
 位置和路径。`views.drop_zone` 和 `views.file_import_panel` 是基于该修饰器的视图层工作流外壳；它们的浏览动作
-仍是应用消息，因此具备效果能力的应用代码可以返回一个调用 `HostAppServices::open_file` 的
-`Effect::host_service` 运行器，为不可用或同步文件对话框响应分派类型化完成消息，并为待处理对话框声明
-`HostAppServices::completion_subscription`。Web 文件导入可能暴露浏览器选中的文件名或句柄，而不是原生文件系统路径，
+仍是应用消息，因此具备效果能力的应用代码可以返回一个调用 `AppServices::files().open_file` 的
+`ServiceTask::effect` 运行器，为不可用或同步文件对话框响应分派类型化完成消息，并为待处理对话框声明
+`ServiceTask::effect`。Web 文件导入可能暴露浏览器选中的文件名或句柄，而不是原生文件系统路径，
 而原生宿主可以通过同一选择数组返回平台路径。
 
 关于设置、后端特定约束和验证命令，见 [平台说明](platform-notes.md)。

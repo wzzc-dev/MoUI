@@ -1,13 +1,9 @@
 import {
-  "wzzc-dev/moui",
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/window/dpi",
-  "wzzc-dev/window/macos" @window_macos,
-  "examples/markdown_editor/app",
+  "examples/markdown_editor/composition",
 }
 
 supported_targets = "native"

@@ -399,12 +399,12 @@ fn project_entrypoint_checks(
       let package_text = @fs.read_file_to_string(package_path) catch { _ => "" }
       let main_text = @fs.read_file_to_string(main_path) catch { _ => "" }
       let package_markers = [
-        "wzzc-dev/moui",
+        "wzzc-dev/moui/runtime",
         "wzzc-dev/moui/backend/" + platform,
         "wzzc-dev/moui/render/skia",
       ]
       let main_markers = [
-        "@moui.run_app", ".render_all(", ".backend(@platform_host.entry())",
+        "@runtime.run_app", ".render_all(", ".backend(@platform_host.entry())",
       ]
       let missing : Array[String] = []
       for marker in package_markers {

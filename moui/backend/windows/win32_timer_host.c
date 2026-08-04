@@ -1,6 +1,6 @@
 #ifdef _WIN32
 
-// Windows timer host: drives HostTimerSource subscriptions via a timer-queue
+// Windows timer host: drives TimerSource subscriptions via a timer-queue
 // timer that calls back into MoonBit on each tick. The returned handle cancels
 // the timer via DeleteTimerQueueTimer.
 

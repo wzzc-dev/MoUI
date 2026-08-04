@@ -433,62 +433,51 @@ pub fn EditorModel::view(self : EditorModel) -> @moui.View[EditorMsg] {
 }
 ```
 
-Host service effect pattern:
+App service effect pattern:
 
 ```moonbit
 ///|
 pub fn EditorModel::update_with_services(
   self : EditorModel,
   msg : EditorMsg,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> (EditorModel, @moui.Effect[EditorMsg]) {
   match msg {
     BrowseForDocument =>
       (
         self,
-        @moui.Effect::host_service(
-          key="host:open-document",
-          label="Open document",
-          run=dispatch => {
-            let response = services.open_file(title="Open document", filters=["md", "txt"])
-            dispatch(HostCompleted(file_dialog_completion(response)))
-          },
-        ),
+        services
+        .files()
+        .open_file(
+          options=@services.FileDialogOptions::new(
+            title="Open document",
+            filters=["md", "txt"],
+          ),
+        )
+        .effect(map=result => OpenDocumentCompleted(result)),
       )
-    DispatchCommand(intent) => (self.dispatch_command(intent, services), @moui.Effect::none())
+    OpenDocumentCompleted(Success(path)) => (self.open(path), @moui.Effect::none())
+    OpenDocumentCompleted(Failure(error)) =>
+      ({ ..self, error: Some(error.message) }, @moui.Effect::none())
+    OpenDocumentCompleted(Cancelled) =>
+      ({ ..self, status: "Open cancelled" }, @moui.Effect::none())
     SourceChanged(source) => ({ ..self, source, dirty: true }, @moui.Effect::none())
-    HostCompleted(completion) => (self.apply_host_completion(completion), @moui.Effect::none())
     _ => (self, @moui.Effect::none())
   }
 }
 
 ///|
-pub fn EditorModel::program_with_services(
+pub fn EditorModel::program(
   self : EditorModel,
-  services : @host.HostAppServices,
+  environment : @services.AppEnvironment,
 ) -> @moui.Program[EditorModel, EditorMsg] {
+  let services = environment.services()
   @moui.Program::new(
     init=() => (self, @moui.Effect::none()),
     update=(model, message) => model.update_with_services(message, services),
     view=model => model.view(),
-    subscriptions=model => model.subscriptions(services),
   )
-}
-
-///|
-pub fn EditorModel::subscriptions(
-  self : EditorModel,
-  services : @host.HostAppServices,
-) -> @moui.Subscription[EditorMsg] {
-  match self.pending_host_request {
-    Some(id) =>
-      services.completion_subscription(
-        id,
-        map=completion => HostCompleted(completion),
-        label="Open document completion",
-      )
-    None => @moui.Subscription::none()
-  }
+  .with_commands(commands=model => model.program_commands())
 }
 ```
 
@@ -510,6 +499,6 @@ moon test examples/command_palette/app --target native
 - Keep platform entrypoints thin and free of business logic.
 - Keep ordinary restoration app-owned; add `wzzc-dev/moui/core` explicitly
   only for low-level restore stores or other advanced framework contracts.
-  Use `@host.HostAppServices` for platform services.
+  Use `@services.AppEnvironment` / `AppServices` for platform capabilities.
 - Run `moon info` after adding a package and commit the generated
   `pkg.generated.mbti` with the template-derived app.

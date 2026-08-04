@@ -133,7 +133,7 @@ app-facing facade/extension over `core`，第一阶段主要通过
   `RouterSnapshot`、`RouteHistoryState`、`RouteFocusStore`、`RouterState` 和
   `resolve_route` 已归 `moui/views` navigation 支持层拥有。`core` 只保留
   `NavigationState` 这类基础 state holder。Host route 事件使用
-  `@host.HostRouteLocation`，普通 app 在接入 navigation history 时转换为
+  `@services.RouteLocation`，普通 app 在接入 navigation history 时转换为
   `@views.RouteLocation`。
 
 新增 API 默认放在更具体的 owning package；只有确认它是跨 runtime 的抽象协议或
@@ -411,6 +411,13 @@ MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 const
 平台入口包指
 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_window_hosted,ios_window_hosted,harmonyos_window_hosted}`
 这类 executable package。它们负责创建 runtime、连接平台 backend、选择 renderer。
+
+Moon `0.1.20260724` 不会把 `pub using` alias 物化为 wasm export；linker 只导出
+executable package 自己定义的 public function。因此 Web 或 WeChat 入口可以把
+`abi.mbt` 作为第二个生产文件。该文件只能包含固定 callback，并直接委托给
+`backend/web` 或 `backend/wechat`；不得包含 app state、routing、service、renderer
+或 lifecycle logic。`validate-harness-invariants.mjs` 校验封闭的 shim 集合，Web
+handoff 校验则检查实际编译出的 wasm exports。
 
 三个嵌入运行时路径使用匹配的 `wzzc-dev/window` template 和 `*_window_hosted` 入口。
 它们的 `main.mbt` 创建 program，并通过 AppBuilder 显式组合 renderer factory 与

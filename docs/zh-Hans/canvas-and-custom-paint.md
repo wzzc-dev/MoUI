@@ -63,10 +63,10 @@ MoUI 面向应用的动画大多是**应用采样**：
   偏移 / 缩放 / 前景色 modifier。
 - `@moui/animation` 重新导出缓动和过渡类型。
 - `@views.animated_canvas` 用于循环 canvas 运动：draw 回调从运行时绘制时钟接收
-  `now_ms`，绘制计划会被标记为 animating，因此宿主会在没有 `HostTimerSource`
+  `now_ms`，绘制计划会被标记为 animating，因此宿主会在没有 `@services.TimerSource`
   的情况下持续请求帧。
 - `Subscription::animation_tick` 只是描述符种类；目前还没有通用宿主适配器。
-  在模型层需要 tick 时，用 `HostTimerSource`（如 Showcase Platform）
+  在模型层需要 tick 时，用 `@services.TimerSource`（如 Showcase Platform）
   或你拥有的宿主动画回调来驱动。
 
 采样过渡时应尊重减少动态效果（见 core 过渡辅助函数和 Showcase 运动卡片）。

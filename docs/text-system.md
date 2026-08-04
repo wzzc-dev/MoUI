@@ -148,12 +148,11 @@ Provider packages are intentionally separate:
 Native WGPU text-engine selection belongs to the WGPU renderer factory, not to
 the platform host core. Entrypoints call
 `@wgpu_renderer.native(text_engine=@wgpu_<platform>.<engine>())` and combine it
-with the platform `entry()`. Platform-default engines compose the native text
-provider with Cosmic fallback; explicit Cosmic entrypoints select Cosmic
-directly. Showcase also has explicit `macos_wgpu_cosmic`, `windows_wgpu_cosmic`, and
-`linux_wgpu_cosmic` entrypoints for comparing those paths. The separate Showcase and
-Markdown Editor `*_skia` entrypoints select `render/skia` factories, not WGPU
-text-provider variants. By default, Skia basic text
+with the platform `entry()`. Each canonical WGPU route composes its platform
+text provider with Cosmic as an internal fallback; provider-specific duplicate
+composition roots are not part of the platform matrix. Showcase Skia routes
+select `render/skia` factories, not WGPU text-provider variants. By default,
+Skia basic text
 measurement and drawing
 resolve the MoUI `FontSpec` family stack, weight, and style through `moui_skia`
 `FontMgr` and `Font`. The system `FontMgr` path now builds a `FontFallbackRequest`

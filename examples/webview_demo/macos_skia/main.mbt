@@ -5,13 +5,9 @@ fn main {
   let capabilities = @webview_host.HostWebViewCapabilities::native_available(
     description="macOS WKWebView native embedding is available.",
   )
-  @moui.run_app(
+  @runtime.run_app(
     "MoUI WebView Demo",
-    @runtime.new_program_with_dimensions(
-      program=@webview_demo.program(commands~, capabilities~),
-      width=1120.0,
-      height=760.0,
-    ),
+    @composition.runtime(commands~, capabilities~),
   )
   .render_all(@render_skia.from_env())
   .backend(

@@ -7,10 +7,18 @@ pub struct PdfWorkbenchApp {
 pub enum PdfWorkbenchStatus {
   Empty
   Requesting(String)
-  Pending(@host.HostServiceRequestId, String)
   Ready
   Failed(String)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub enum PdfWorkbenchOperation {
+  PickOpenFile
+  ReadPdf(String)
+  PickSaveFile
+  PrepareSave(String)
+  WritePdf(String)
+} derive(Eq)
 
 ///|
 pub(all) struct PdfWorkbenchPageSummary {
@@ -82,6 +90,7 @@ pub struct PdfWorkbenchModel {
   annotation_text_draft : String
   page_number_draft : String
   startup_page_after_load : Int?
+  pending_operation : PdfWorkbenchOperation?
   zoom : Double
   last_event : String
 }
@@ -97,8 +106,16 @@ pub enum PdfWorkbenchMsg {
   OpenRequested
   SaveRequested
   SaveAsRequested
-  HostCompleted(@host.HostCompletedServiceResponse)
-  SaveCompleted(String, Bytes, Array[String], @host.HostServiceResponse)
+  OpenFilePicked(@services.ServiceTaskResult[String])
+  PdfBytesRead(String, @services.ServiceTaskResult[Bytes])
+  SaveFilePicked(@services.ServiceTaskResult[String])
+  SaveBytesPrepared(String, Bytes, Array[String])
+  PdfBytesWritten(
+    String,
+    Bytes,
+    Array[String],
+    @services.ServiceTaskResult[Unit]
+  )
   SaveFailed(String)
   RasterCompleted(PdfWorkbenchRasterRequest, PdfWorkbenchRasterResponse)
   PreviousPage
@@ -151,6 +168,7 @@ pub fn PdfWorkbenchModel::new() -> PdfWorkbenchModel {
     annotation_text_draft: "",
     page_number_draft: "",
     startup_page_after_load: None,
+    pending_operation: None,
     zoom: 1.0,
     last_event: "Open a PDF to inspect its document model",
   }
@@ -175,7 +193,7 @@ fn PdfWorkbenchUpdate::as_tuple(
 fn PdfWorkbenchModel::update_with_services(
   self : PdfWorkbenchModel,
   message : PdfWorkbenchMsg,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
 ) -> PdfWorkbenchUpdate {
@@ -185,14 +203,19 @@ fn PdfWorkbenchModel::update_with_services(
       self.request_save(services, document_services, save_as=false)
     SaveAsRequested =>
       self.request_save(services, document_services, save_as=true)
-    HostCompleted(completion) =>
-      self.apply_host_completion(
-        completion, services, raster_services, document_services,
+    OpenFilePicked(result) => self.apply_open_file_pick(result, services)
+    PdfBytesRead(path, result) =>
+      self.apply_pdf_bytes_read(
+        path, result, raster_services, document_services,
       )
-    SaveCompleted(path, bytes, diagnostics, response) => {
+    SaveFilePicked(result) =>
+      self.apply_save_file_pick(result, services, document_services)
+    SaveBytesPrepared(path, bytes, diagnostics) =>
+      self.request_binary_write_task(path, bytes, diagnostics, services)
+    PdfBytesWritten(path, bytes, diagnostics, result) => {
       let reraster_after_save = self.should_reraster_after_save()
       let saved = self.apply_save_completion(
-        path, bytes, diagnostics, response, document_services,
+        path, bytes, diagnostics, result, document_services,
       )
       match saved.status {
         Ready if reraster_after_save =>
@@ -201,11 +224,16 @@ fn PdfWorkbenchModel::update_with_services(
       }
     }
     SaveFailed(reason) =>
-      PdfWorkbenchUpdate::new({
-        ..self,
-        status: Failed(reason),
-        last_event: "Writeback adapter failed",
-      })
+      if self.pending_operation is Some(PrepareSave(_)) {
+        PdfWorkbenchUpdate::new({
+          ..self,
+          pending_operation: None,
+          status: Failed(reason),
+          last_event: "Writeback adapter failed",
+        })
+      } else {
+        PdfWorkbenchUpdate::new(self)
+      }
     RasterCompleted(request, response) =>
       PdfWorkbenchUpdate::new(self.apply_raster_completion(request, response))
     PreviousPage =>
@@ -264,41 +292,17 @@ fn PdfWorkbenchModel::update_with_services(
 }
 
 ///|
-fn PdfWorkbenchModel::subscriptions(
-  self : PdfWorkbenchModel,
-  services : @host.HostAppServices,
-) -> @moui.Subscription[PdfWorkbenchMsg] {
-  match self.status {
-    Pending(id, label) =>
-      services.completion_subscription(
-        id,
-        map=completion => HostCompleted(completion),
-        label~,
-      )
-    _ => @moui.Subscription::none()
-  }
-}
-
-///|
 pub fn PdfWorkbenchApp::program(
   self : PdfWorkbenchApp,
-) -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
-  ignore(self)
-  PdfWorkbenchModel::new().program()
-}
-
-///|
-pub fn PdfWorkbenchApp::program_with_services(
-  self : PdfWorkbenchApp,
-  services : @host.HostAppServices,
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
   raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
   startup_pdf_path? : String = "",
   startup_page_number? : Int = 1,
 ) -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
   ignore(self)
-  PdfWorkbenchModel::new().program_with_services(
-    services,
+  PdfWorkbenchModel::new().program(
+    environment~,
     raster_services~,
     document_services~,
     startup_pdf_path~,
@@ -309,19 +313,13 @@ pub fn PdfWorkbenchApp::program_with_services(
 ///|
 pub fn PdfWorkbenchModel::program(
   self : PdfWorkbenchModel,
-) -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
-  self.program_with_services(@host.HostAppServices::unavailable())
-}
-
-///|
-pub fn PdfWorkbenchModel::program_with_services(
-  self : PdfWorkbenchModel,
-  services : @host.HostAppServices,
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
   raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
   startup_pdf_path? : String = "",
   startup_page_number? : Int = 1,
 ) -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
+  let services = environment.services()
   @moui.Program::new_with_environment(
     init=() => {
       self
@@ -339,7 +337,6 @@ pub fn PdfWorkbenchModel::program_with_services(
       .as_tuple()
     },
     view=(model, env) => model.view_with_environment(env),
-    subscriptions=model => model.subscriptions(services),
   )
 }
 

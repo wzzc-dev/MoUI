@@ -1,12 +1,25 @@
 ///|
+priv struct HostWindowCompletionHandler {
+  token : Int
+  handle : (HostWindowRequestCompletion) -> Unit
+}
+
+///|
 pub struct HostWindowRequestQueue {
   mut requests : Array[HostWindowRequest]
   mut completed : Array[HostWindowRequestCompletion]
+  priv mut next_completion_handler : Int
+  priv mut completion_handlers : Array[HostWindowCompletionHandler]
 }
 
 ///|
 pub fn HostWindowRequestQueue::new() -> HostWindowRequestQueue {
-  { requests: [], completed: [] }
+  {
+    requests: [],
+    completed: [],
+    next_completion_handler: 1,
+    completion_handlers: [],
+  }
 }
 
 ///|
@@ -115,7 +128,20 @@ pub fn HostWindowRequestQueue::record_result(
   request : HostWindowRequest,
   result : HostWindowRequestResult,
 ) -> Unit {
-  self.completed.push({ request, result })
+  self.record_completion({ request, result })
+}
+
+///|
+/// Observe request completions without consuming the diagnostic completion
+/// queue. The returned callback removes the observer.
+pub fn HostWindowRequestQueue::subscribe_completed(
+  self : HostWindowRequestQueue,
+  handle : (HostWindowRequestCompletion) -> Unit,
+) -> () -> Unit {
+  let token = self.next_completion_handler
+  self.next_completion_handler = token + 1
+  self.completion_handlers.push({ token, handle })
+  () => ignore(self.remove_completion_handler(token))
 }
 
 ///|
@@ -127,7 +153,7 @@ pub fn HostWindowRequestQueue::drain_with_handler(
   for request in self.drain() {
     let result = handle(request)
     let completion = HostWindowRequestCompletion::{ request, result }
-    self.completed.push(completion)
+    self.record_completion(completion)
     completions.push(completion)
   }
   completions
@@ -140,4 +166,33 @@ pub fn HostWindowRequestQueue::drain_completed(
   let completed = self.completed
   self.completed = []
   completed
+}
+
+///|
+fn HostWindowRequestQueue::record_completion(
+  self : HostWindowRequestQueue,
+  completion : HostWindowRequestCompletion,
+) -> Unit {
+  self.completed.push(completion)
+  for handler in self.completion_handlers.copy() {
+    (handler.handle)(completion)
+  }
+}
+
+///|
+fn HostWindowRequestQueue::remove_completion_handler(
+  self : HostWindowRequestQueue,
+  token : Int,
+) -> Bool {
+  let remaining = []
+  let mut removed = false
+  for handler in self.completion_handlers {
+    if handler.token == token {
+      removed = true
+    } else {
+      remaining.push(handler)
+    }
+  }
+  self.completion_handlers = remaining
+  removed
 }

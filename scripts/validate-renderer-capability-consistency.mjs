@@ -2,7 +2,7 @@
 
 import { runMoonbitTool } from "./lib/moonbit-tool-runner.mjs";
 
-runMoonbitTool("tools/moui/validate_renderer_capability_consistency", [
+runMoonbitTool("tools_product/moui/validate_renderer_capability_consistency", [
   "--repo-root",
   process.cwd(),
   ...process.argv.slice(2),
