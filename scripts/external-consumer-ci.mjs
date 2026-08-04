@@ -23,7 +23,6 @@ const packagedModules = [
   { directory: "moui", packageName: "moui", version: mouiVersion },
   { directory: "moui_skia", packageName: "moui_skia", version: mouiVersion },
   { directory: "moui_sun", packageName: "moui_sun", version: mouiVersion },
-  { directory: "third_party/mizchi_image", packageName: "image", version: "0.4.2" },
 ];
 
 const usage = [
@@ -133,10 +132,7 @@ try {
       run("moon", ["-C", packagedModule.directory, "package"], { cwd: repoRoot });
       const packageZip = join(
         repoRoot,
-        "_build/publish/" +
-          (packagedModule.directory === "third_party/mizchi_image"
-            ? "mizchi-"
-            : "wzzc-dev-") +
+        "_build/publish/wzzc-dev-" +
           packagedModule.packageName + "-" + packagedModule.version + ".zip",
       );
       if (!existsSync(packageZip)) {

@@ -18,7 +18,6 @@
 | ./examples/agent_counter |
 | ./tools |
 | ./moui_cli |
-| ./third_party/mizchi_image |
 | ./moui_skia |
 | ./moui_theme |
 | ./moui_sun |
