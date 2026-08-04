@@ -102,8 +102,20 @@ if (process.platform === "linux") {
   if (!flagsFor("wzzc-dev/moui/render/wgpu/fontconfig").includes("fontconfig")) {
     throw new Error("fontconfig link_configs should include fontconfig libs");
   }
-} else if (flagsFor("wzzc-dev/moui/render/wgpu/fontconfig").includes("fontconfig")) {
-  throw new Error("fontconfig link_configs should be omitted off Linux");
+  const fontconfigCflags =
+    String(realSkia.vars.MOUI_LINUX_FONTCONFIG_STUB_CC_FLAGS || "");
+  if (!fontconfigCflags.includes("freetype2")) {
+    throw new Error(
+      "linux prebuild should expose fontconfig stub cc flags with freetype include",
+    );
+  }
+} else {
+  if (String(realSkia.vars.MOUI_LINUX_FONTCONFIG_STUB_CC_FLAGS || "")) {
+    throw new Error("fontconfig stub cc flags should be empty off Linux");
+  }
+  if (flagsFor("wzzc-dev/moui/render/wgpu/fontconfig").includes("fontconfig")) {
+    throw new Error("fontconfig link_configs should be omitted off Linux");
+  }
 }
 
 // DirectWrite is a renderer text implementation and remains renderer-owned.

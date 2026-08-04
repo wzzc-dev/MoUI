@@ -146,6 +146,17 @@ const macosBackendHostFlags =
 const linuxBackendHostFlags = "-lz";
 const androidBackendHostFlags = "-landroid -llog";
 const linuxFontconfigLinkFlags = "-lfontconfig -lharfbuzz -lfreetype -lz";
+
+function linuxFontconfigCflags() {
+  // FreeType/fontconfig/HarfBuzz headers live outside the default include
+  // search path (e.g. /usr/include/freetype2), so expose pkg-config cflags the
+  // same way glib does. Only emitted on Linux hosts; the C stub no-ops off
+  // Linux, and pkg-config may not resolve these packages elsewhere.
+  if (process.platform !== "linux") {
+    return "";
+  }
+  return runPkgConfig(["fontconfig", "freetype2", "harfbuzz"], "--cflags");
+}
 const windowsDirectWriteLinkFlags = "-lz";
 
 function appendLinkFlags(base, extra) {
@@ -208,6 +219,7 @@ function windowsLinkConfigs(skiaCcLink) {
 function main() {
   const config = readJsonFromStdin();
   const linuxGlib = linuxGlibFlags(config);
+  const linuxFontconfigCflagsValue = linuxFontconfigCflags();
   const skiaVars = shouldConfigureSkia(config) ? mouiSkiaPrebuildVars(config) : {};
   const skiaStub = skiaStubCcFlags(config, skiaVars);
   const skiaCcLink = skiaCcLinkFlags(config, skiaVars);
@@ -221,6 +233,7 @@ function main() {
       vars: {
         MOUI_LINUX_GLIB_STUB_CC_FLAGS: linuxGlib.stubCcFlags,
         MOUI_LINUX_GLIB_CC_LINK_FLAGS: linuxGlib.linkFlags,
+        MOUI_LINUX_FONTCONFIG_STUB_CC_FLAGS: linuxFontconfigCflagsValue,
         MOUI_SKIA_STUB_CC_FLAGS: skiaStub,
         MOUI_SKIA_CC_LINK_FLAGS: skiaCcLink,
         MOUI_ANDROID_HOST_LINK_FLAGS: androidHostLinkFlags(config),
