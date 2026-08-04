@@ -33,6 +33,22 @@ surrounding-text payloads fit the window package's IME contract.
 
 Linux runtime requirements are intentionally native:
 
+- On a Debian-family host, `scripts/set_linux_deps.sh` installs the package
+  sets below in one step. The default set covers the Wayland window core,
+  GLib/zlib link libraries, Weston for headless compositor checks, zenity,
+  and the Skia renderer stack. `--minimal` restricts the install to the core
+  Wayland build/runtime set, `--with-webview` adds WebKitGTK development
+  packages for native WebView support, and `--print-packages` shows the exact
+  apt list for the selected set before installing:
+  ```sh
+  sh scripts/set_linux_deps.sh                 # full default set (Skia included)
+  sh scripts/set_linux_deps.sh --minimal       # core Wayland build/runtime only
+  sh scripts/set_linux_deps.sh --with-webview  # + WebKitGTK native WebView
+  sh scripts/set_linux_deps.sh --check         # verify the installed set
+  ```
+  The individual requirements below describe what each package set provides
+  and how the MoUI prebuilds consume them.
+
 - A Wayland compositor. For repeatable headless checks, run Weston with the
   headless backend and point `WAYLAND_DISPLAY` at its socket.
 - A usable Vulkan stack only when running WGPU diagnostics. Headless software
