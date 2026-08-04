@@ -552,11 +552,6 @@ MoonBit 0.10.4 treats bare `{}` as ambiguous for empty maps / JSON objects /
 blocks. Prefer `Map([])`, `Json::empty_object()`, or `{ () }` at the use site.
 `assert_eq` and related debug helpers now require `Debug` rather than `Show`.
 
-Workspace member `./third_party/mizchi_image` temporarily overrides registry
-`mizchi/image@0.4.2` with a local `derive(Debug)` patch so dependency checks
-pass under 0.10.4. Remove that member once mooncakes ships a compatible image
-release (see `third_party/mizchi_image/MOUI_PATCH.md`).
-
 `ci.yml` expresses routine gates through the checked wrappers: the PR profile
 gate runs `sh scripts/check.sh --profile pr`, and Linux platform contracts run
 `sh scripts/check.sh --profile platform`. The Windows MSVC job intentionally
