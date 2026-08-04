@@ -14,7 +14,7 @@ contextual commands, and editing workflows.
 - `examples/markdown_editor/web_wasm/`: Web wasm-gc entrypoint.
 - `examples/markdown_editor/macos_skia/`: macOS native entrypoint using the
   Skia renderer provider.
-- `examples/markdown_editor/composition/`: light environment/runtime wiring
+- `examples/markdown_editor/runtime.mbt`: module-root environment/runtime wiring
   shared by the two retained entrypoints.
 - `moui_richtext/facade.mbt`: public rich text editor wrappers (`markdown_editor`,
   `controlled_markdown_session_editor`) used by the example.

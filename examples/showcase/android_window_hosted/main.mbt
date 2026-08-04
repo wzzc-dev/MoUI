@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted Android Showcase entrypoint.
 fn main {
-  let runtime = @composition.runtime(
+  let runtime = @showcase.runtime(
     host_summary=@android_host.android_capability_summary(),
     environment=@android_host.app_environment(),
     route="platform/mobile-service-probe",

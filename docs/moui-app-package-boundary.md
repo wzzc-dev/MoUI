@@ -191,8 +191,8 @@ compatibility aliases or deprecated transition entrypoints.
 - `core` retains only protocols and value types that remain stable across
   runtimes, backends, renderers, and views.
 
-Showcase runtime/renderer diagnostics live in a sibling integration package and
-enter the pure app as neutral DTOs. Extra imports under test targets
+Showcase runtime/renderer diagnostics live in the Showcase module-root
+integration package and enter the pure app as neutral DTOs. Extra imports under test targets
 (`for "test"` / `for "wbtest"`) do not count toward the production boundary.
 
 ## Ordinary Shared App Packages

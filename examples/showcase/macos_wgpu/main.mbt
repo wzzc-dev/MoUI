@@ -1,6 +1,6 @@
 ///|
 fn main {
-  let runtime = @composition.runtime(
+  let runtime = @showcase.runtime(
     host_summary=@macos_backend.macos_capability_summary(),
     environment=@macos_backend.app_environment(),
   )

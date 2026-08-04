@@ -1,6 +1,8 @@
 ///|
 fn main {
-  let runtime = @composition.runtime(environment=@macos_host.app_environment())
+  let runtime = @markdown_editor.runtime(
+    environment=@macos_host.app_environment(),
+  )
   @runtime.run_app("MoUI Markdown Editor", runtime)
   .render_all(@render_skia.from_env())
   .backend(
@@ -9,7 +11,7 @@ fn main {
         transparent_titlebar=true,
         on_ready=Some(
           @macos_host.application_menu_on_ready(
-            @composition.application_menus(),
+            @markdown_editor.application_menus(),
             runtime,
           ),
         ),

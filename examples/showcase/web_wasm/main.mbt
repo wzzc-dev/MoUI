@@ -7,12 +7,12 @@ fn main {
   let bindings = @webgpu_adapter.provider_bindings(
     canvas_id="moonbit-window-web-showcase",
   )
-  let runtime = @composition.runtime(
+  let runtime = @showcase.runtime(
     host_summary=@web.web_capability_summary(),
     environment=@web.app_environment(routes~),
     renderer_providers=@render.renderer_provider_binding_providers(bindings),
     route_host=Some(
-      @composition.route_host(
+      @showcase.route_host(
         source=routes,
         push=@web.web_history_push_route,
         replace=@web.web_history_replace_route,

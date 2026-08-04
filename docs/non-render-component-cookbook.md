@@ -476,7 +476,7 @@ fn application_menus(
 }
 ```
 
-The composition package installs menus through
+The module-root integration package installs menus through
 `environment.services().menus().install_application(...)`. On macOS, install
 after the primary window is ready so AppKit does not replace the menu. Selection
 resolves the command metadata and enqueues the matching typed Program message.

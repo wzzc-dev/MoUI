@@ -3,7 +3,7 @@ import {
   "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/window/dpi",
-  "examples/markdown_editor/composition",
+  "examples/markdown_editor",
 }
 
 supported_targets = "native"

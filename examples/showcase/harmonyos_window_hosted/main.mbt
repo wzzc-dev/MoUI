@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted HarmonyOS Showcase entrypoint.
 fn main {
-  let runtime = @composition.runtime(
+  let runtime = @showcase.runtime(
     host_summary=@harmonyos_host.harmonyos_capability_summary(),
     environment=@harmonyos_host.app_environment(),
     route="platform/mobile-service-probe",

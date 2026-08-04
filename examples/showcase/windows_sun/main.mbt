@@ -1,6 +1,6 @@
 ///|
 fn main {
-  let runtime = @composition.runtime(
+  let runtime = @showcase.runtime(
     host_summary=@windows_backend.windows_capability_summary(),
     environment=@windows_backend.app_environment(),
   )
@@ -9,7 +9,7 @@ fn main {
   .backend(
     @windows_backend.entry(
       smoke_options=@windows_backend.WindowsHostSmokeOptions::new(
-        first_frame_smoke_auto_exit=@composition.env_flag(
+        first_frame_smoke_auto_exit=@showcase.env_flag(
           "MOUI_WINDOWS_SUN_EXIT_AFTER_FIRST_PRESENT",
         ),
       ),
