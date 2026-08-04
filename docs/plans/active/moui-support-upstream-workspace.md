@@ -105,7 +105,7 @@ the legacy MoonBit behavior.
 
 ## Publication Handoff
 
-`wzzc-dev/window@0.5.4-0.1.3` is not yet available from mooncakes.io. Until it
+`wzzc-dev/window@0.5.4-0.1.4` is not yet available from mooncakes.io. Until it
 is published, MoUI must retain local development mode with both nested workspace
 members enabled. After publishing the compatibility module and its
 `Milky2018/windowing@0.1.0` dependency, run
