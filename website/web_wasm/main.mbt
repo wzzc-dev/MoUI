@@ -1,6 +1,6 @@
 ///|
 fn main {
-  let route_source = @runtime.HostRouteSource::new()
+  let route_source = @services.RouteSource::new()
   let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let route_host = @website_app.WebsiteRouteHost::new(
     route_source~,
@@ -39,7 +39,7 @@ fn main {
     height=760.0,
   )
   runtime_ref.val = Some(runtime)
-  @moui.run_app("MoUI - MoonBit GUI Framework", runtime)
+  @runtime.run_app("MoUI - MoonBit GUI Framework", runtime)
   .render_all(@webgpu_adapter.from_env())
   .backend(
     @web.entry(options=@web.WebAppOptions::new(route_source=Some(route_source))),

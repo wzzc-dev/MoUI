@@ -57,7 +57,7 @@ Linux runtime requirements are intentionally native:
   should not repeat `-lz` or fontconfig stacks; they only need an empty
   `cc-link-flags` override so Moon disables `tcc -run` when required.
 - glib-2.0 development headers and runtime library. `backend/linux`
-  unconditionally drives `HostTimerSource` subscriptions through the GLib main
+  drives `@services.TimerSource` subscriptions through the GLib main
   loop (`g_timeout_add` / `g_source_remove`), so the `moui` prebuild resolves
   `glib-2.0` through `pkg-config` and feeds the resulting `-I` include flags
   into `stub-cc-flags` and merges the libs into the `backend/linux`
@@ -81,9 +81,7 @@ Useful focused commands on a configured Linux host:
 ```sh
 moon test moui/backend/linux --target native
 moon build examples/showcase/linux_skia --target native
-moon build examples/markdown_editor/linux_skia --target native
 moon run examples/showcase/linux_skia --target native
-moon run examples/markdown_editor/linux_skia --target native
 ```
 
 The ordinary Linux Skia entrypoints are interactive app entrypoints. Keep
@@ -105,9 +103,8 @@ rasterization (loaded via dlopen), HarfBuzz shaping, embedded-font registration,
 and a narrow color-emoji path; MoonBit tests verify protocol versioning and
 native payload parsing on all platforms, while the full shaping/measurement/raster
 path runs on Linux with the required C libraries. Choose the engine through
-`@wgpu_renderer.native(text_engine=...)`;
-`examples/showcase/linux_wgpu_cosmic` selects the Moon Cosmic provider explicitly for
-comparison.
+`@wgpu_renderer.native(text_engine=...)`; the canonical `linux_wgpu` route uses
+the fontconfig provider with Moon Cosmic as its internal fallback.
 
 ## Skia Renderer
 
@@ -143,7 +140,7 @@ loading first-frame image record through completion, repaint request, and
 second presented-frame status recording. The required
 async second-frame runtime artifact remains matching-host pending until a
 Wayland run records it from a Skia composition root. Package tests do not prove
-a real Wayland compositor presented Showcase or Markdown Editor frames;
+a real Wayland compositor presented Showcase frames;
 those claims still require matching-host runtime runs and smoke logs
 manifest entries.
 
@@ -155,12 +152,10 @@ For Linux Skia runtime evidence, record these as separate ignored
 ```sh
 MOUI_FIRST_FRAME_EXIT=1 \\
   moon run examples/showcase/linux_skia --target native
-MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \\
-  moon run examples/markdown_editor/linux_skia --target native
 scripts/run-window-package-smoke.sh linux --run
 ```
 
-The Showcase and Markdown Editor logs must include
+The Showcase log must include
 `Linux renderer presented first frame; exiting by request; title=...` from the
 host loop before they can be cited as app-level runtime evidence. The window
 package smoke remains dependency-level evidence for Wayland handles,
@@ -179,27 +174,15 @@ matching-host runtime evidence boundaries: cite only logs that exercised the
 actual desktop/compositor service, not the package preflight summary alone.
 Record dependency-level facts from the `wzzc-dev/window@0.5.4-0.1.3`
 package smoke artifacts; keep the MoUI Showcase
-`linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
-application-level observation. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic
-observation when a Vulkan/WGPU stack is configured.
+`linux_skia` run as the mainline application observation. Keep `linux_wgpu` as
+a WGPU diagnostic observation when a Vulkan/WGPU stack is configured.
 
-For Linux WebView runtime evidence on a configured host with WebKitGTK
-installed, build or run the demo and cite the smoke log separately from Skia
-first-frame evidence:
+Linux WebView runtime evidence belongs to a matching-host tester/backend probe.
+Package tests cover pure event/command mapping and fallback capability paths,
+but cannot prove that a real WebKitGTK view was presented.
 
-```sh
-moon check examples/webview_demo/linux_skia --target native
-moon run examples/webview_demo/linux_skia --target native
-```
-
-That smoke should exercise placement, controlled navigation policy failures,
-title/history notifications, JavaScript result callbacks, and command queue
-draining. Package tests cover the pure event/command mapping and fallback
-capability path, but they do not prove a real WebKitGTK view presented.
-
-`examples/showcase/linux_skia` and `examples/markdown_editor/linux_skia` select
-this provider for the mainline Showcase and editing workflow. Configure real
-Skia link flags before relying on native Skia-rendered pixels.
+`examples/showcase/linux_skia` selects the canonical Linux Skia provider route.
+Configure real Skia link flags before relying on native Skia-rendered pixels.
 The default JetBrains Linux provider links fontconfig, FreeType, and HarfBuzz;
 with those libraries available, `moui_skia` builds a system `FontMgr` through
 fontconfig and falls back to common font directories such as `/usr/share/fonts`

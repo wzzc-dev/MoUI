@@ -1,6 +1,7 @@
 ///|
 struct CliOptions {
   root : String
+  display_root : String
   base_url : String
   manifest_path : String
   http_checks : Array[HandoffCheck]
@@ -44,6 +45,7 @@ fn usage() -> String {
     #|
     #|Options:
     #|  --root PATH        Repository/build root. Defaults to cwd.
+    #|  --display-root PATH Stable root label recorded in the manifest.
     #|  --base-url URL     Base URL recorded in the manifest. HTTP fetch checks
     #|                     are supplied by the compatibility wrapper.
     #|  --manifest PATH    Optional manifest output path.
@@ -77,6 +79,7 @@ fn parse_positive_int(text : String) -> Int? {
 ///|
 fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
   let root = Ref(@env.current_dir().unwrap_or(""))
+  let display_root = Ref("")
   let base_url = Ref("")
   let manifest_path = Ref("")
   let http_checks : Array[HandoffCheck] = []
@@ -89,6 +92,13 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
           return Err("missing value for " + args[index])
         }
         root.val = args[index + 1]
+        index += 2
+      }
+      "--display-root" => {
+        if index + 1 >= args.length() {
+          return Err("missing value for --display-root")
+        }
+        display_root.val = args[index + 1]
         index += 2
       }
       "--base-url" => {
@@ -131,6 +141,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
   }
   Ok({
     root: root.val,
+    display_root: display_root.val,
     base_url: base_url.val,
     manifest_path: manifest_path.val,
     http_checks,
@@ -655,7 +666,16 @@ fn validate_web_runtime_handoff(
     match
       @tools.write_text_file(
         options.manifest_path,
-        manifest_text(options.root, options.base_url, target_manifests, checks),
+        manifest_text(
+          if options.display_root == "" {
+            options.root
+          } else {
+            options.display_root
+          },
+          options.base_url,
+          target_manifests,
+          checks,
+        ),
         "web runtime handoff manifest",
       ) {
       Ok(_) => ()

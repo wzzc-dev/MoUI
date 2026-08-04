@@ -238,6 +238,102 @@ int32_t moui_windows_system_theme_is_light(void) {
   return value != 0 ? 1 : 0;
 }
 
+static const wchar_t *moui_windows_settings_subkey = L"Software\\MoUI";
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_settings_has_value(moonbit_bytes_t key) {
+  wchar_t *name = moui_windows_utf8_to_wide(key);
+  if (name == NULL) {
+    return 0;
+  }
+  LSTATUS status = RegGetValueW(
+      HKEY_CURRENT_USER, moui_windows_settings_subkey, name,
+      RRF_RT_REG_SZ, NULL, NULL, NULL);
+  free(name);
+  return status == ERROR_SUCCESS ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_windows_settings_read(moonbit_bytes_t key) {
+  wchar_t *name = moui_windows_utf8_to_wide(key);
+  if (name == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  DWORD byte_count = 0;
+  LSTATUS status = RegGetValueW(
+      HKEY_CURRENT_USER, moui_windows_settings_subkey, name,
+      RRF_RT_REG_SZ, NULL, NULL, &byte_count);
+  if (status != ERROR_SUCCESS || byte_count < sizeof(wchar_t)) {
+    free(name);
+    return moonbit_make_bytes(0, 0);
+  }
+  wchar_t *value = (wchar_t *)calloc(1, byte_count);
+  if (value == NULL) {
+    free(name);
+    return moonbit_make_bytes(0, 0);
+  }
+  status = RegGetValueW(
+      HKEY_CURRENT_USER, moui_windows_settings_subkey, name,
+      RRF_RT_REG_SZ, NULL, value, &byte_count);
+  moonbit_bytes_t result = status == ERROR_SUCCESS
+      ? moui_windows_wide_to_bytes(value)
+      : moonbit_make_bytes(0, 0);
+  free(value);
+  free(name);
+  return result;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_settings_write(moonbit_bytes_t key, moonbit_bytes_t value) {
+  wchar_t *name = moui_windows_utf8_to_wide(key);
+  if (name == NULL) {
+    return 0;
+  }
+  wchar_t *text = moui_windows_utf8_to_wide(value);
+  if (text == NULL) {
+    text = (wchar_t *)calloc(1, sizeof(wchar_t));
+  }
+  if (text == NULL) {
+    free(name);
+    return 0;
+  }
+  HKEY settings_key = NULL;
+  LSTATUS status = RegCreateKeyExW(
+      HKEY_CURRENT_USER, moui_windows_settings_subkey, 0, NULL, 0,
+      KEY_SET_VALUE, NULL, &settings_key, NULL);
+  if (status == ERROR_SUCCESS) {
+    DWORD byte_count = (DWORD)((wcslen(text) + 1) * sizeof(wchar_t));
+    status = RegSetValueExW(
+        settings_key, name, 0, REG_SZ, (const BYTE *)text, byte_count);
+    RegCloseKey(settings_key);
+  }
+  free(text);
+  free(name);
+  return status == ERROR_SUCCESS ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_settings_remove(moonbit_bytes_t key) {
+  wchar_t *name = moui_windows_utf8_to_wide(key);
+  if (name == NULL) {
+    return 0;
+  }
+  HKEY settings_key = NULL;
+  LSTATUS status = RegOpenKeyExW(
+      HKEY_CURRENT_USER, moui_windows_settings_subkey, 0,
+      KEY_SET_VALUE, &settings_key);
+  if (status == ERROR_FILE_NOT_FOUND) {
+    free(name);
+    return 1;
+  }
+  if (status == ERROR_SUCCESS) {
+    status = RegDeleteValueW(settings_key, name);
+    RegCloseKey(settings_key);
+  }
+  free(name);
+  return status == ERROR_SUCCESS || status == ERROR_FILE_NOT_FOUND ? 1 : 0;
+}
+
 MOONBIT_FFI_EXPORT
 moonbit_bytes_t moui_windows_file_dialog(int32_t kind, moonbit_bytes_t title, moonbit_bytes_t filters,
                                          moonbit_bytes_t default_name) {
@@ -381,6 +477,31 @@ int32_t moui_windows_open_url(moonbit_bytes_t url) {
 MOONBIT_FFI_EXPORT
 int32_t moui_windows_system_theme_is_light(void) {
   return 1;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_settings_has_value(moonbit_bytes_t key) {
+  (void)key;
+  return 0;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_windows_settings_read(moonbit_bytes_t key) {
+  (void)key;
+  return moonbit_make_bytes(0, 0);
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_settings_write(moonbit_bytes_t key, moonbit_bytes_t value) {
+  (void)key;
+  (void)value;
+  return 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_settings_remove(moonbit_bytes_t key) {
+  (void)key;
+  return 0;
 }
 
 MOONBIT_FFI_EXPORT

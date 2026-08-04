@@ -547,7 +547,7 @@ test "pdf workbench find previous wraps and reports active match position" {
     keys,
     page_count=3,
   )
-  let services = @host.HostAppServices::unavailable()
+  let services = @services.AppServices::unavailable()
   let model = {
     ..PdfWorkbenchModel::new(),
     document: Some(document),

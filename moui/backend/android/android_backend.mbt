@@ -280,3 +280,10 @@ pub fn android_capability_summary(
     description="Android embedded runtime backend with window HostCmd lifecycle and an ApplicationHandler session. The window embedder owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
   )
 }
+
+///|
+/// The embedded host channel does not yet expose an app-facing service bridge.
+/// Keep services unavailable until callbacks can complete typed tasks.
+pub fn app_environment() -> @services.AppEnvironment {
+  @services.AppEnvironment::new()
+}

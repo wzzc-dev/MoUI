@@ -11,6 +11,15 @@ struct Entrypoint {
   example : String
   path : String
   mobile : Bool
+  line_budget : Int
+}
+
+///|
+struct MatrixEntrypointRoute {
+  suffix : String
+  tier : Int
+  mobile : Bool
+  line_budget : Int
 }
 
 ///|
@@ -24,32 +33,8 @@ fn usage() -> String {
 }
 
 ///|
-fn entry_suffixes() -> Array[String] {
-  [
-    "web_wasm", "macos_skia", "windows_skia", "linux_skia", "android_window_hosted",
-    "ios_window_hosted", "harmonyos_window_hosted",
-  ]
-}
-
-///|
-fn is_mobile_suffix(suffix : String) -> Bool {
-  suffix == "android_window_hosted" ||
-  suffix == "ios_window_hosted" ||
-  suffix == "harmonyos_window_hosted"
-}
-
-///|
-fn max_lines_for(mobile : Bool) -> Int {
-  if mobile {
-    500
-  } else {
-    320
-  }
-}
-
-///|
 fn max_non_test_mbt() -> Int {
-  3
+  2
 }
 
 ///|
@@ -111,6 +96,19 @@ fn line_count(text : String) -> Int {
 }
 
 ///|
+fn token_count(text : String, token : String) -> Int {
+  let mut parts = 0
+  for _ in text.split(token) {
+    parts += 1
+  }
+  if parts == 0 {
+    0
+  } else {
+    parts - 1
+  }
+}
+
+///|
 fn skipped_directory(name : String) -> Bool {
   name == ".git" ||
   name == "node_modules" ||
@@ -156,7 +154,178 @@ fn collect_files_with_suffix(
 }
 
 ///|
-fn list_example_entrypoints(repo_root : String) -> Array[Entrypoint] {
+fn path_basename(path : String) -> String {
+  let mut result = ""
+  for part in path.split("/") {
+    if part != "" {
+      result = part.to_owned()
+    }
+  }
+  result
+}
+
+///|
+fn parse_matrix_entrypoint_routes(
+  repo_root : String,
+) -> Result[Array[MatrixEntrypointRoute], String] {
+  let path = "checks/platform-matrix.json"
+  let text = match read_optional_text(repo_root, path) {
+    Some(text) => text
+    None => return Err("missing " + path)
+  }
+  let parsed = @json.parse(text) catch {
+    _ => return Err(path + ": invalid JSON")
+  }
+  let fields = match parsed {
+    Object(fields) => fields
+    _ => return Err(path + " must be an object")
+  }
+  let routes = match fields.get("routes") {
+    Some(Array(routes)) => routes
+    _ => return Err(path + ".routes must be an array")
+  }
+  let result : Array[MatrixEntrypointRoute] = []
+  for route in routes {
+    let route_fields = match route {
+      Object(route_fields) => route_fields
+      _ => return Err(path + ".routes entries must be objects")
+    }
+    let showcase_package = match route_fields.get("showcasePackage") {
+      Some(String(value)) => value
+      _ => return Err(path + ": route showcasePackage must be a string")
+    }
+    let tier = match route_fields.get("tier") {
+      Some(Number(value, repr=_)) => value.to_int()
+      _ => return Err(path + ": route tier must be an integer")
+    }
+    let kind = match route_fields.get("entrypointKind") {
+      Some(String(value)) => value
+      _ => return Err(path + ": route entrypointKind must be a string")
+    }
+    let line_budget = match route_fields.get("lineBudget") {
+      Some(Number(value, repr=_)) => value.to_int()
+      _ => return Err(path + ": route lineBudget must be an integer")
+    }
+    let suffix = path_basename(showcase_package)
+    if result.any(item => item.suffix == suffix) {
+      return Err(path + ": duplicate entrypoint suffix " + suffix)
+    }
+    result.push({ suffix, tier, mobile: kind == "mobile", line_budget })
+  }
+  if result.is_empty() {
+    Err(path + ": routes must not be empty")
+  } else {
+    Ok(result)
+  }
+}
+
+///|
+fn platform_prefix(suffix : String) -> String {
+  match suffix.find("_") {
+    Some(offset) => suffix[:offset].to_owned()
+    None => suffix
+  }
+}
+
+///|
+fn looks_like_platform_root(
+  name : String,
+  routes : Array[MatrixEntrypointRoute],
+) -> Bool {
+  routes.any(route => {
+    let prefix = platform_prefix(route.suffix)
+    name == route.suffix || name.has_prefix(prefix + "_")
+  })
+}
+
+///|
+fn find_matrix_route(
+  routes : Array[MatrixEntrypointRoute],
+  suffix : String,
+) -> MatrixEntrypointRoute? {
+  routes.iter().find_first(route => route.suffix == suffix)
+}
+
+///|
+fn validate_entrypoint_catalog(
+  repo_root : String,
+  routes : Array[MatrixEntrypointRoute],
+) -> Array[HarnessFinding] {
+  let results : Array[HarnessFinding] = []
+  let ui_roots : Array[String] = []
+  let examples_root = @tools.resolve_path(repo_root, "examples")
+  let examples : Array[String] = @fs.read_dir(examples_root) catch {
+    _ => return results
+  }
+  examples.sort_by((left, right) => left.lexical_compare(right))
+  for example in examples {
+    let example_path = @tools.resolve_path(repo_root, "examples/" + example)
+    if !@tools.directory_exists(example_path) {
+      continue
+    }
+    let children : Array[String] = @fs.read_dir(example_path) catch {
+      _ => continue
+    }
+    children.sort_by((left, right) => left.lexical_compare(right))
+    for child in children {
+      let relative = "examples/" + example + "/" + child
+      let absolute = @tools.resolve_path(repo_root, relative)
+      if !@tools.directory_exists(absolute) ||
+        !@tools.file_exists(
+          @tools.resolve_path(repo_root, relative + "/main.mbt"),
+        ) ||
+        !looks_like_platform_root(child, routes) {
+        continue
+      }
+      ui_roots.push(relative)
+      match find_matrix_route(routes, child) {
+        None =>
+          push_fail(
+            results, "P1", relative, "matrix-external platform/renderer composition root. Fix: remove it or add the RFC, platform matrix route, evidence contract, and matching Showcase route required by docs/invariants.md#P1",
+          )
+        Some(route) =>
+          if example != "showcase" && route.tier > 1 {
+            push_fail(
+              results, "P1", relative, "non-Showcase examples may expose only applicable Tier 1 roots. Fix: keep this platform route in Showcase and move probes to tester/smoke. See docs/invariants.md#P1",
+            )
+          }
+      }
+    }
+  }
+  if ui_roots.length() > 32 {
+    push_fail(
+      results,
+      "P1",
+      "examples",
+      "UI composition root count " +
+      ui_roots.length().to_string() +
+      " exceeds 32. Fix: converge non-Showcase examples to applicable Tier 1 roots. See docs/invariants.md#P1",
+    )
+  }
+  for route in routes {
+    let expected = "examples/showcase/" + route.suffix
+    if !ui_roots.contains(expected) {
+      push_fail(
+        results, "P1", expected, "Showcase must contain every canonical platform-matrix route. See docs/invariants.md#P1",
+      )
+    }
+  }
+  if !results.any(item => !item.ok) {
+    results.push({
+      rule: "P1",
+      ok: true,
+      path: "examples",
+      hint: "scanned " + ui_roots.length().to_string() + " UI composition roots",
+    })
+  }
+  results
+}
+
+///|
+fn list_example_entrypoints(
+  repo_root : String,
+  routes : Array[MatrixEntrypointRoute],
+) -> Array[Entrypoint] {
   let found : Array[Entrypoint] = []
   let examples_root = @tools.resolve_path(repo_root, "examples")
   if !@tools.directory_exists(examples_root) {
@@ -171,10 +340,15 @@ fn list_example_entrypoints(repo_root : String) -> Array[Entrypoint] {
     if !@tools.directory_exists(ex_dir) {
       continue
     }
-    for suffix in entry_suffixes() {
-      let path = "examples/" + name + "/" + suffix
-      if @tools.directory_exists(@tools.resolve_path(repo_root, path)) {
-        found.push({ example: name, path, mobile: is_mobile_suffix(suffix) })
+    for route in routes {
+      let path = "examples/" + name + "/" + route.suffix
+      if @tools.file_exists(@tools.resolve_path(repo_root, path + "/main.mbt")) {
+        found.push({
+          example: name,
+          path,
+          mobile: route.mobile,
+          line_budget: route.line_budget,
+        })
       }
     }
   }
@@ -245,13 +419,11 @@ fn check_p1_entry_texts(
       "/app. See docs/invariants.md#P1",
     )
   }
-  let mut total_lines = 0
   for file in mbt_files {
     let text = match file_texts.get(file) {
       Some(value) => value
       None => ""
     }
-    total_lines += line_count(text)
     for line in text.split("\n") {
       match product_logic_label(line.to_owned()) {
         Some(label) => {
@@ -271,24 +443,87 @@ fn check_p1_entry_texts(
       }
     }
   }
-  let max_lines = max_lines_for(entry.mobile)
-  if total_lines > max_lines {
+  let main_path = entry.path + "/main.mbt"
+  let main_lines = match file_texts.get(main_path) {
+    Some(text) => line_count(text)
+    None => 0
+  }
+  if main_lines == 0 {
     failed = true
-    let kind = if entry.mobile { "mobile" } else { "desktop/web" }
+    push_fail(results, "P1", main_path, "entrypoint is missing main.mbt")
+  } else if main_lines > entry.line_budget {
+    failed = true
     push_fail(
       results,
       "P1",
-      entry.path,
-      "entrypoint non-test lines " +
-      total_lines.to_string() +
+      main_path,
+      "entrypoint main.mbt lines " +
+      main_lines.to_string() +
       " exceed " +
-      max_lines.to_string() +
-      " (" +
-      kind +
-      " budget). Fix: move logic to examples/" +
+      entry.line_budget.to_string() +
+      ". Fix: move integration logic to a sibling composition package and business logic to examples/" +
       entry.example +
       "/app. See docs/invariants.md#P1",
     )
+  }
+  let abi_functions = if entry.path.has_suffix("/web_wasm") {
+    [
+      "web_dispatch_event", "web_dispatch_pointer_input", "web_dispatch_route", "web_dispatch_semantics_action",
+      "web_complete_async_clipboard_read", "web_complete_async_file_dialog",
+    ]
+  } else if entry.path.has_suffix("/wechat_canvas") {
+    [
+      "wechat_dispatch_event", "wechat_dispatch_pointer_input", "wechat_render_frame",
+      "wechat_surface_created", "wechat_surface_destroyed", "wechat_app_show", "wechat_app_hide",
+    ]
+  } else {
+    []
+  }
+  if !abi_functions.is_empty() {
+    let abi_path = entry.path + "/abi.mbt"
+    let abi_text = match file_texts.get(abi_path) {
+      Some(text) => text
+      None => ""
+    }
+    let backend_alias = if entry.path.has_suffix("/web_wasm") {
+      "web"
+    } else {
+      "wechat"
+    }
+    if abi_text == "" {
+      failed = true
+      push_fail(
+        results, "P1", abi_path, "wasm entrypoint is missing its mechanical ABI shim. See docs/invariants.md#P1",
+      )
+    } else if abi_text.contains("pub using") {
+      failed = true
+      push_fail(
+        results, "P1", abi_path, "pub using does not create executable-package wasm exports; define only the fixed mechanical ABI shims. See docs/invariants.md#P1",
+      )
+    } else {
+      for name in abi_functions {
+        if !abi_text.contains("pub fn " + name + "(") ||
+          !abi_text.contains("@" + backend_alias + "." + name + "(") {
+          failed = true
+          push_fail(
+            results,
+            "P1",
+            abi_path,
+            "missing fixed " +
+            name +
+            " backend ABI delegation. See docs/invariants.md#P1",
+          )
+        }
+      }
+      if token_count(abi_text, "pub fn ") != abi_functions.length() ||
+        token_count(abi_text, "@" + backend_alias + ".") !=
+        abi_functions.length() {
+        failed = true
+        push_fail(
+          results, "P1", abi_path, "ABI shim contains declarations or backend calls outside the fixed route contract. See docs/invariants.md#P1",
+        )
+      }
+    }
   }
   if !failed {
     push_ok(results, "P1", entry.path)
@@ -470,10 +705,10 @@ fn check_r3_mobile_main(path : String, text : String?) -> HarnessFinding {
       // The composition root delegates lifecycle ownership to the platform
       // backend entry. The concrete ApplicationHandler/EventLoop remains in
       // the backend package and must not be duplicated in every app.
-      let has_composition = body.contains("@moui.run_app(") &&
+      let has_composition = body.contains("@runtime.run_app(") &&
         (body.contains(".render(") || body.contains(".render_all("))
       let has_backend_entry = body.contains(".backend(") &&
-        body.contains(".entry()") &&
+        body.contains(".entry(") &&
         body.contains(".run()")
       if !has_composition || !has_backend_entry {
         {
@@ -601,7 +836,17 @@ fn read_optional_text(repo_root : String, path : String) -> String? {
 ///|
 fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
   let results : Array[HarnessFinding] = []
-  let entries = list_example_entrypoints(repo_root)
+  let routes = match parse_matrix_entrypoint_routes(repo_root) {
+    Ok(routes) => routes
+    Err(message) => {
+      push_fail(results, "P1", "checks/platform-matrix.json", message)
+      []
+    }
+  }
+  let entries = list_example_entrypoints(repo_root, routes)
+  for item in validate_entrypoint_catalog(repo_root, routes) {
+    results.push(item)
+  }
   if entries.is_empty() {
     push_fail(
       results, "P1", "examples", "no platform entry packages found. Fix: restore examples/*/app + thin entrypoints. See docs/invariants.md#P1",

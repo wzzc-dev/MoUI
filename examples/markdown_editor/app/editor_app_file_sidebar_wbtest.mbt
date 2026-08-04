@@ -52,10 +52,11 @@ test "markdown editor tree path opens recent markdown file" {
     seen_default_name=Ref(""),
   )
   app.pick_working_directory_for_test(services)
-  ignore(
-    app.update_with_services(SelectTreePath("/tmp/project/README.md"), services),
+  app.dispatch_message_for_test(
+    services,
+    SelectTreePath("/tmp/project/README.md"),
   )
-  inspect(app.transfer_status_label_for_test(), content="Opening file")
+  inspect(app.transfer_status_label_for_test(), content="Opened README.md")
 }
 
 ///|
@@ -100,7 +101,7 @@ test "markdown editor file sidebar renders optional directory tree" {
       }
     },
   )
-  app.pick_working_directory_for_test(@host.HostAppServices::new(bridge~))
+  app.pick_working_directory_for_test(@host.app_services(bridge~))
   let expanded = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
     expanded.any(command => {
@@ -189,14 +190,12 @@ test "markdown editor file tree lazily expands subdirectories" {
       }
     },
   )
-  let services = @host.HostAppServices::new(bridge~)
+  let services = @host.app_services(bridge~)
   app.pick_working_directory_for_test(services)
   inspect(listed_paths.length(), content="1")
   inspect(listed_paths[0], content="/tmp/project")
 
-  ignore(
-    app.update_with_services(SelectTreePath("/tmp/project/notes"), services),
-  )
+  app.dispatch_message_for_test(services, SelectTreePath("/tmp/project/notes"))
   inspect(listed_paths.length(), content="2")
   inspect(listed_paths[1], content="/tmp/project/notes")
   inspect(read_path.val, content="")
@@ -208,37 +207,43 @@ test "markdown editor file tree lazily expands subdirectories" {
     }),
   )
 
-  ignore(
-    app.update_with_services(
-      SelectTreePath("/tmp/project/notes/daily.md"),
-      services,
-    ),
+  app.dispatch_message_for_test(
+    services,
+    SelectTreePath("/tmp/project/notes/daily.md"),
   )
-  inspect(read_path.val, content="")
-  inspect(app.transfer_status_label_for_test(), content="Opening file")
+  inspect(read_path.val, content="/tmp/project/notes/daily.md")
+  inspect(app.transfer_status_label_for_test(), content="Opened daily.md")
 }
 
 ///|
 test "markdown editor file tree sorts folders before files by name" {
   let sorted = markdown_editor_sorted_directory_entries([
-    @host.HostDirectoryEntry::new(name="zeta.md", path="/tmp/project/zeta.md"),
-    @host.HostDirectoryEntry::new(
-      name="drafts",
-      path="/tmp/project/drafts",
-      is_directory=true,
-    ),
-    @host.HostDirectoryEntry::new(name="Alpha.md", path="/tmp/project/Alpha.md"),
-    @host.HostDirectoryEntry::new(
-      name="Archive",
-      path="/tmp/project/Archive",
-      is_directory=true,
-    ),
+    @services.DirectoryEntry::{
+      name: "zeta.md",
+      path: "/tmp/project/zeta.md",
+      is_directory: false,
+    },
+    @services.DirectoryEntry::{
+      name: "drafts",
+      path: "/tmp/project/drafts",
+      is_directory: true,
+    },
+    @services.DirectoryEntry::{
+      name: "Alpha.md",
+      path: "/tmp/project/Alpha.md",
+      is_directory: false,
+    },
+    @services.DirectoryEntry::{
+      name: "Archive",
+      path: "/tmp/project/Archive",
+      is_directory: true,
+    },
   ])
   inspect(sorted.length(), content="4")
-  inspect(sorted[0].name(), content="Archive")
-  inspect(sorted[1].name(), content="drafts")
-  inspect(sorted[2].name(), content="Alpha.md")
-  inspect(sorted[3].name(), content="zeta.md")
+  inspect(sorted[0].name, content="Archive")
+  inspect(sorted[1].name, content="drafts")
+  inspect(sorted[2].name, content="Alpha.md")
+  inspect(sorted[3].name, content="zeta.md")
 }
 
 ///|
@@ -278,7 +283,7 @@ test "markdown editor file tree refresh reloads picked folder" {
       }
     },
   )
-  let services = @host.HostAppServices::new(bridge~)
+  let services = @host.app_services(bridge~)
   app.pick_working_directory_for_test(services)
   let initial = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
@@ -293,7 +298,7 @@ test "markdown editor file tree refresh reloads picked folder" {
   )
 
   version.val = 1
-  ignore(app.update_with_services(RefreshFileTree, services))
+  app.dispatch_message_for_test(services, RefreshFileTree)
   inspect(listed_paths.length(), content="2")
   inspect(listed_paths[1], content="/tmp/project")
   let refreshed = app.runtime(width=1120.0, height=640.0).draw_commands()
@@ -349,11 +354,9 @@ test "markdown editor file sidebar filters tree and recent files" {
       }
     },
   )
-  let services = @host.HostAppServices::new(bridge~)
+  let services = @host.app_services(bridge~)
   app.pick_working_directory_for_test(services)
-  ignore(
-    app.update_with_services(SelectTreePath("/tmp/project/notes"), services),
-  )
+  app.dispatch_message_for_test(services, SelectTreePath("/tmp/project/notes"))
 
   ignore(app.update(UpdateFileFilterQuery("daily")))
   let filtered = app.runtime(width=1120.0, height=640.0).draw_commands()

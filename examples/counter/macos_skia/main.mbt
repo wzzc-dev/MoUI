@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @moui.run_app(
+  @runtime.run_app(
     "MoUI Counter",
     @runtime.new_program_with_dimensions(
       program=@counter_app.program(),

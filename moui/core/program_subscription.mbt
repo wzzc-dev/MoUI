@@ -123,15 +123,6 @@ pub fn[Msg] Subscription::route_event(
 }
 
 ///|
-pub fn[Msg] Subscription::service_completion(
-  key~ : String,
-  start~ : ((Msg) -> Unit) -> (() -> Unit)?,
-  label? : String = "",
-) -> Subscription[Msg] {
-  Subscription::listen(key~, start~, kind="host-service", label~)
-}
-
-///|
 pub fn[Msg, NextMsg] Subscription::map(
   self : Subscription[Msg],
   map : (Msg) -> NextMsg,

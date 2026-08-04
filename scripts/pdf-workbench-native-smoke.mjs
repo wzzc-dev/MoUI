@@ -13,14 +13,6 @@ const platforms = {
     label: "macOS",
     pkg: "examples/pdf_workbench/macos_skia",
   },
-  win32: {
-    label: "Windows",
-    pkg: "examples/pdf_workbench/windows_skia",
-  },
-  linux: {
-    label: "Linux",
-    pkg: "examples/pdf_workbench/linux_skia",
-  },
 };
 
 function usage() {
@@ -37,7 +29,7 @@ Options:
   --log PATH       Write combined smoke output to PATH.
                    Default: OS temp dir/moui-pdf-workbench-native-smoke.log
   --link-mode MODE PDFium link mode: auto, dynamic, or static. Default: auto.
-  --platform NAME  Override platform: macos, windows, linux.
+  --platform NAME  Override platform: macos.
                    Default: current host.
   -h, --help       Show this help.`);
 }
@@ -63,8 +55,7 @@ function parseArgs(argv) {
         break;
       case "--platform": {
         const value = (argv[++index] || "").toLowerCase();
-        options.platform =
-          value === "macos" ? "darwin" : value === "windows" ? "win32" : value;
+        options.platform = value === "macos" ? "darwin" : value;
         break;
       }
       case "-h":

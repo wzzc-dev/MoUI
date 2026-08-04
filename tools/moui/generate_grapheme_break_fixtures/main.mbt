@@ -1,6 +1,7 @@
 ///|
 struct CliOptions {
   input : String
+  display_input : String
   output : String
   helper_name : String
   test_name : String
@@ -12,7 +13,7 @@ struct CliOptions {
 ///|
 fn usage() -> String {
   (
-    #|Usage: tools/moui/generate_grapheme_break_fixtures [--input <GraphemeBreakTest-style.txt>] [--output <test.mbt>] [--helper-name <identifier>] [--test-name <name>] [--actual-kind <core-boundaries|core-editing|core-layout|skia-clusters>] [--check]
+    #|Usage: tools/moui/generate_grapheme_break_fixtures [--input <GraphemeBreakTest-style.txt>] [--display-input <path>] [--output <test.mbt>] [--helper-name <identifier>] [--test-name <name>] [--actual-kind <core-boundaries|core-editing|core-layout|skia-clusters>] [--check]
     #|
   )
 }
@@ -20,6 +21,7 @@ fn usage() -> String {
 ///|
 fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
   let mut input = "moui/core/unicode/testdata/grapheme_break_samples.txt"
+  let mut display_input = ""
   let mut output = "moui/core/unicode/grapheme_break_fixtures_wbtest.mbt"
   let mut helper_name = "assert_generated_grapheme_break_fixture"
   let mut test_name = "generated grapheme break fixture samples"
@@ -38,6 +40,13 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
           return Err("missing value for --input")
         }
         input = args[index + 1]
+        index += 2
+      }
+      "--display-input" => {
+        if index + 1 >= args.length() {
+          return Err("missing value for --display-input")
+        }
+        display_input = args[index + 1]
         index += 2
       }
       "--output" => {
@@ -75,7 +84,16 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok({ input, output, helper_name, test_name, actual_kind, check, help })
+  Ok({
+    input,
+    display_input,
+    output,
+    helper_name,
+    test_name,
+    actual_kind,
+    check,
+    help,
+  })
 }
 
 ///|
@@ -119,7 +137,11 @@ fn run(args : Array[String]) -> Int {
       let generated = match
         generate_fixture(
           options.actual_kind,
-          options.input,
+          if options.display_input == "" {
+            options.input
+          } else {
+            options.display_input
+          },
           options.helper_name,
           options.test_name,
           samples,

@@ -1,18 +1,27 @@
 # Examples
 
+<!-- BEGIN GENERATED PLATFORM TIER MATRIX -->
+| Tier | Canonical routes | Gate |
+|---|---|---|
+| Tier 1 | `macOS Skia`, `Web wasm-gc WebGPU (Canvas2D fallback)` | Blocking: PR build/test, daily presentation, and release evidence |
+| Tier 2 | `Windows Skia`, `Linux Skia` | Blocking: L0-L2 and first frame; complete L3 may remain partial |
+| Tier 3 | `macOS WGPU (CoreText, Cosmic fallback)`, `Windows WGPU (DirectWrite, Cosmic fallback)`, `Linux WGPU (Fontconfig, Cosmic fallback)`, `Android window-hosted Skia`, `iOS window-hosted Skia`, `HarmonyOS window-hosted Skia`, `macOS Sun`, `Windows Sun`, `Linux Sun`, `WeChat Skyline Canvas2D` | Non-blocking: scheduled/manual build, run, and evidence |
+
+Tier, L0-L3 evidence, and `product_class`/`ready` are independent. Source: `checks/platform-matrix.json`; actual observations remain in `checks/platforms/*.json`.
+<!-- END GENERATED PLATFORM TIER MATRIX -->
+
 MoUI examples are runnable documentation. Showcase is the visual catalog and
 now follows the same TEA shape as ordinary apps: `Model / Msg / update / view`
 driven by `Program::simple_with_environment`. It still contains the Counter and
 Todo interaction patterns. The WYSIWYG Markdown editor stays separate because
 it demonstrates a larger editing workflow with its own model and parser tests.
-Apps that need host-service work should use `Program::new` with `Effect[Msg]`;
-prefer `Effect::host_service` when a host-service bridge should carry a stable
-diagnostic key, use `Effect::run` for custom structured async bridges, and use
-`Effect::service_task` when a service-like one-shot async task needs runtime
-managed cancellation, completion, and stale-dispatch diagnostics. Use
-`Effect::task` for custom task kinds. Apps that need ongoing typed callbacks can
-add `subscriptions=model => ...` and stable `Subscription` keys while keeping
-concrete timer or host adapters out of `core`.
+Apps that need platform services should capture `AppEnvironment` in the Program
+closure and map `ServiceTaskResult` values to `Msg` with `ServiceTask::effect`.
+Use `Effect::run` for custom structured runners, `Effect::service_task` when a
+service-like one-shot task needs runtime-managed cancellation and stale-dispatch
+diagnostics, and `Effect::task` for custom task kinds. Apps that need ongoing
+typed callbacks should use `TimerSource` / `RouteSource` or stable custom
+`Subscription` keys while keeping concrete host adapters out of `core`.
 Showcase surfaces renderer capability follow-ups first so visible docs do not
 hide partial or gap status behind ready features. The dedicated
 `examples/design_systems/app` package owns Material, Carbon, Primer, and Fluent
@@ -49,19 +58,19 @@ entrypoint supplies the program and renderer provider. Run
 | Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, runtime Docs portal that fetches packaged same-origin `docs/*.md` Markdown plus MoUI and `moui_skia` README copies, Web-only `website/web_wasm` entrypoint |
 | Playground | MoonBit-native browser tutorial and editor | `website/playground/app/`, `website/playground/web_wasm/` | Code editor built with `moui_richtext`, controlled `main.mbt`/`moon.pkg` files, app-safe import validation, pinned MoonBit compiler Worker bridge, sandbox preview host, local persistence, share URL protocol, and six bilingual lesson assets |
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
-| Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, and Android/iOS/HarmonyOS window-hosted entrypoints |
-| Multi Window | Host-managed scene example | `examples/multi_window/app/` | Independent main and inspector runtimes through `HostWindowActions` (`open` / `focus` / `close`) plus `HostWindowRequestQueue` and `HostWindowSceneResolver`, with native macOS/Windows/Linux windows and a multi-canvas Web route |
-| HarmonyOS Demo | Standalone experimental HarmonyOS window-hosted demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_window_hosted/` | Platform-neutral viewport/tap feedback demo, HarmonyOS window-hosted entrypoint, and HAP packaging through the `wzzc-dev/window` template; runtime support remains pending matching-device evidence |
-| Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
-| Showcase | Unified component, pattern, platform, and diagnostic catalog | `examples/showcase/app/` | A root TEA shell over four isolated packages: Components owns focused `moui/views` demos; Patterns owns Counter/Todo, forms, data, navigation, feedback, and text/media workflows; Platform owns timer/window/clipboard/file/canvas recipes, route/session facts, and Mobile Service Probe; Diagnostics alone imports runtime/render internals for inspector and advanced rendering. Web, desktop Skia/WGPU/Sun, and Android/iOS/HarmonyOS entrypoints all call the same root app. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
-| Design Systems | Addon diagnostic source-mapped design-system preview and first-party theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | Material, Carbon, Primer, and Fluent switching through the `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and `moui_theme/fluent` entrypoints over shared `moui_theme/common` models, Sickle switching through `moui_theme/sickle` as a first-party theme addon, light/dark/high-contrast/system variants for official source-mapped presets, compact/standard/comfortable density, semantic palette roles, typography specimen, spacing/density grid, component-token matrix sampling, component style bundle usage, custom inheritance/override API, Web and native Skia host entrypoints, coverage/parity status labels, and explicit source-mapped preview wording rather than official-complete claims |
+| Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow with retained macOS Skia and Web entrypoints |
+| Multi Window | Host-managed scene example | `examples/multi_window/app/` | Independent runtimes through a sibling composition package, with retained macOS and Web routes |
+| HarmonyOS Demo | Standalone experimental HarmonyOS app model | `examples/harmonyos_demo/app/` | Platform-neutral viewport/tap feedback; platform probing belongs to Showcase/tester |
+| Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal button/filter repro with a retained macOS Skia entrypoint |
+| Showcase | Unified component, pattern, platform, and diagnostic catalog | `examples/showcase/app/` | Strict TEA root over Components, Patterns, Platform, and pure diagnostic DTOs; sibling integration adapts runtime/render facts. Showcase alone covers all 14 canonical routes. |
+| Design Systems | Addon diagnostic theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia}/` | Source-mapped design-system diagnostics with retained Web and macOS Skia entrypoints |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, app-owned column width/order state, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
-| Excel | Spreadsheet workbook prototype | `examples/excel/{cell,formula,sheet,xlsx,app}/`, `examples/excel/{macos_skia,linux_skia}/` | Native `.xlsx` workbook load/save flow through an app-private `xlsx` adapter, desktop spreadsheet shell, formula/name bars, sheet tabs, cell edit/copy/cut/paste/delete, row/column insertion, undo/redo, formula evaluation, number formats, color swatches, heat-map display, host file services, and macOS/Linux Skia entrypoints |
-| File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
-| WebView Demo | Native platform WebView pattern | `examples/webview_demo/app/` | Controlled `web_view` primitive, native host capability fallback, address bar, navigation commands, JavaScript evaluation command, macOS/Windows/Linux Skia native entrypoints, Web wasm unavailable fallback without iframe |
-| PDF Workbench | PDF reading and light editing prototype | `examples/pdf_workbench/app/` | Clean native PDF reader/editor shell, host binary file service open/save flow, PDFium page bitmap preview, fit-width responsive reading canvas, scrollable page/inspector panels, reader fullscreen toggle, page navigation/direct page jump/search/metadata summaries, undoable/discardable preview rotate/crop/stamp/title/bookmark/note edit state, separate `pdflite_adapter` package for real parsing/writeback checks, JSONL pdflite helper protocol plus native process transport, native-only `pdfium_adapter` package for page rasterization, macOS/Windows/Linux Skia native entrypoints |
-| Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `program_with_services`, and `HostAppServices::show_context_menu` native menu preview |
+| Excel | Spreadsheet workbook prototype | `examples/excel/app/`, `examples/excel/{cell,formula,sheet,xlsx}/`, `examples/excel/macos_skia/` | Native `.xlsx` workflow, spreadsheet shell, formulas, editing, and typed file services |
+| File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone plus typed `ServiceTaskResult` success/failure/cancellation flow |
+| WebView Demo | Native platform WebView pattern | `examples/webview_demo/app/` | Controlled WebView with retained macOS Skia and Web fallback entrypoints |
+| PDF Workbench | PDF reading and light editing prototype | `examples/pdf_workbench/app/` | Typed binary file services, PDF adapters, and retained macOS Skia entrypoint |
+| Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette, typed `ProgramCommand`, and context-menu service flow through the same TEA queue |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Code Editor | Native code editor shell and language-provider prototype | `examples/code_editor/app/` | Native `moui_richtext` editor shell with activity rail, file tab, line-number gutter, status bar, tokenizer-backed highlighting, bracket matching, auto indentation, multi-cursor edits, hidden find/replace overlay, runtime action-command shortcuts, completion overlay, diagnostics, hover, go-to-definition, main-editor Diff mode, and custom language/provider registration through app-owned callbacks |
 | Mo Desktop | macOS-inspired responsive desktop simulation | `examples/mo_desktop/app/` | Lock/unlock session, image wallpaper, menu bar, live dock, calendar/weather/task widgets, responsive Finder with navigation/search/icon-list modes/selection, Safari start page and search results, searchable Apps/Actions launcher, notifications, Control Center toggles/sliders, global light/dark appearance, Web wasm-gc and macOS Skia entrypoints |
@@ -89,10 +98,8 @@ site fetches the same Markdown paths from `docs/`.
 
 Counter is the smallest recommended app shape. It keeps user code in
 `Model / Msg / update / view`, then lets `Program::simple` connect that pure
-model loop to the runtime. It has Web, macOS, Windows, Linux, experimental
-Android and iOS Skia embedded-session entrypoints plus managed Kotlin/SwiftUI
-packaging and a `windows_wgpu_cosmic` entrypoint, so it is also the quickest way
-to verify a thin platform package without the full Showcase surface:
+model loop to the runtime. It retains Web and macOS Skia entrypoints; use
+Showcase for the full platform matrix:
 
 ```moonbit
 using @views {button, card, center, column, row, text}
@@ -141,9 +148,7 @@ Focused Counter checks:
 ```sh
 moon test examples/counter/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_window_hosted --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_window_hosted --target native
-sh scripts/window-hosted-hostsim-smoke.sh
+moon build examples/counter/macos_skia --target native
 ```
 
 Fallback APK and `.app` builds validate packaging paths only. Use a matching
@@ -151,28 +156,27 @@ device or simulator smoke before claiming first-frame runtime support.
 
 ## HarmonyOS Demo
 
-HarmonyOS Demo is the standalone experimental HarmonyOS app. It deliberately
-does not extend Counter: `examples/harmonyos_demo/app` owns the shared TEA UI
-with visible tap and viewport feedback, and
-`examples/harmonyos_demo/harmonyos_window_hosted` creates the window-hosted
-application. The `wzzc-dev/window/harmonyos` template owns the Stage Ability
-and XComponent bridge; app source does not keep a native project fixture.
+HarmonyOS Demo is retained as a platform-neutral app model with visible tap and
+viewport feedback. Its standalone platform composition root was retired;
+Showcase is the sole canonical HarmonyOS route and owns the matching
+window-hosted application. The `wzzc-dev/window/harmonyos` template owns the
+Stage Ability and XComponent bridge.
 
 Focused HarmonyOS Demo checks:
 
 ```sh
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_window_hosted --target native
 sh scripts/window-hosted-hostsim-smoke.sh
-moui build harmonyos harmonyos_demo \
-  --mobile-config "$PWD/examples/harmonyos_demo/moui.mobile.json" --fallback-skia
+moui build harmonyos showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json" --fallback-skia
 ```
 
 For real HarmonyOS Skia checks, use the locked HarmonyOS release artifact:
 
 ```sh
 MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=static \
-  moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
+  moon check examples/showcase/harmonyos_window_hosted --target native
 ```
 
 HarmonyOS `auto` / `skia-gpu` builds require the complete static provider. The
@@ -215,16 +219,15 @@ Language support is registered through `CodeLanguageRegistry` and
 `CodeLanguageProvider` callbacks. Providers supply tokenizer, completion,
 diagnostics, hover, and definition callbacks, so the example demonstrates
 custom language registration without moving app-specific language-service APIs
-into the MoUI framework. Native entrypoints register the editor's
-`ActionCommandMap` with the runtime for shortcut metadata.
+into the MoUI framework. The app declares shortcut metadata as typed
+`ProgramCommand` values; the composition root does not install an app-owned
+mutation callback.
 
 Focused Code Editor checks:
 
 ```sh
 moon test examples/code_editor/app --target native
 moon check examples/code_editor/macos_skia --target native
-moon check examples/code_editor/windows_skia --target native
-moon check examples/code_editor/linux_skia --target native
 ```
 
 ## WebView Demo
@@ -236,37 +239,18 @@ real native WebView to the next `DrawFrame.platform_views` rectangle. Buttons
 exercise the host command queue for load, reload, stop, back, forward, and
 JavaScript evaluation.
 
-Native entrypoints pass the same `HostWebViewCommandQueue` through platform
-host options captured by `.backend(@platform.entry(...))`, so macOS `WKWebView`, Windows WebView2 builds, and Linux WebKitGTK
-builds can drain commands after rendering. Web wasm passes an unavailable
+The retained macOS entrypoint passes `HostWebViewCommandQueue` through platform
+host options, so `WKWebView` can drain commands after rendering. Windows
+WebView2 and Linux WebKitGTK remain backend capabilities covered by backend and
+matching-host probes rather than separate demo composition roots. Web wasm passes an unavailable
 capability and renders fallback UI; it does not create an iframe overlay.
-	Windows real WebView builds are auto-detected by the prebuild from
-	`.tools/webview2/` (set up by `scripts/windows/setup_msvc_deps.ps1 -InstallWebView2`),
-	matching how Linux auto-detects WebKitGTK via `pkg-config`. Override with
-	`MOUI_WINDOWS_WEBVIEW2_*` environment variables for custom SDK paths.
-	Linux WebKitGTK builds are auto-detected via `pkg-config` when
-`libwebkit2gtk-4.1-dev` is installed. Override with `MOUI_LINUX_WEBKITGTK_*`
-environment variables for custom setups.
-Linux WebKitGTK builds also require a matching-host smoke before claiming
-runtime evidence: the backend pumps the GTK main context, syncs
-`DrawFrame.platform_views` placements, forwards navigation/title/history/script
-events, and drains queued commands after each rendered frame, but package checks
-only prove the contract mapping and fallback path.
 
 Focused WebView Demo checks:
 
 ```sh
 moon test examples/webview_demo/app --target native
 moon check examples/webview_demo/macos_skia --target native
-moon check examples/webview_demo/windows_skia --target native
-moon check examples/webview_demo/linux_skia --target native
 moon check examples/webview_demo/web_wasm --target wasm-gc
-```
-
-Configured Linux WebKitGTK check (auto-detected when packages are installed):
-
-```sh
-moon check examples/webview_demo/linux_skia --target native
 ```
 
 Showcase is organized around the main catalog order:
@@ -301,7 +285,7 @@ development workflows:
   sheets, command metadata, app-owned route/deep-link history, a controlled
   fade/slide route transition preview, a controlled drag-resizable split pane,
   and `RouteFocusStore` state showing which `runtime.focus_key(...)` call
-  should restore route focus after a route switch. `HostRouteSource` provides
+  should restore route focus after a route switch. `@services.RouteSource` provides
   the host-layer route/deep-link subscription fanout that apps can feed into
   this shared state, but the visible route history is still a serializable
   shadow stack and the transition is sampled by app state; browser history,
@@ -368,25 +352,15 @@ moon check examples/excel/macos_skia --target native
 
 ## File Importer
 
-The File Importer example demonstrates the non-render file workflow surface. The
-view uses `drop_zone` and `file_import_panel`; the pure model accepts dropped
-paths, while the effect-capable runtime uses `Program::new` and
-`Effect::host_service` to request an app-level host file dialog through
-`HostAppServices` and feed unavailable, immediate, or pending responses back as
-typed `HostCompleted` messages. Pending file-dialog responses are stored as
-model state and declared through `HostAppServices::completion_subscription`, so
-the later host completion dispatches through the same typed TEA update path as
-synchronous responses and cancels when the model leaves `Pending`. Its app
-tests also compose the importer as a child feature with `View::map`,
-`Effect::map`, and `Subscription::map`, which is the recommended pattern when a
-parent TEA model owns a child workflow that can still return follow-up effects
-or ongoing event sources; the parent runtime assertions also keep the mapped
-child effect descriptors, active completion subscription descriptor, and
-subscription lifecycle cancellation visible through program diagnostics.
-Browser hosts commonly expose file
-names while native hosts can expose filesystem paths, so production apps should
-treat these strings as host-provided display or import handles rather than
-assuming one platform shape.
+The File Importer example demonstrates strict TEA service flow. The view emits
+`BrowseRequested`; the Program closure captures `AppServices` and returns
+`files().open_file(...).effect(...)`. Success, failure, and cancellation are
+typed messages handled by `update`. Host request ids and completion queues do
+not enter the model. Child composition lifts the view and effect with
+`View::map` and `Effect::map`.
+
+Browser hosts commonly expose file names while native hosts can expose
+filesystem paths, so treat returned strings as service-defined handles.
 
 ## PDF Workbench
 
@@ -394,8 +368,8 @@ PDF Workbench is a MoUI example-level PDF reader and light editor. Its shared
 app package is intentionally a lightweight UI shell so the native Skia
 entrypoint does not pull the full PDF parser into one huge generated C
 translation unit. The app keeps host interaction in TEA effects: open uses a
-file dialog followed by `HostAppServices::read_binary_file`, while save and
-save-as write through `HostAppServices::write_binary_file`; save-as defaults
+file dialog followed by `AppServices::files().read_bytes`, while save and
+save-as write through `AppServices::files().write_bytes`; save-as defaults
 the dialog name to the current PDF file name and appends `.pdf` when the source
 path has no `.pdf` suffix. Clean documents write unchanged original bytes, while
 dirty documents ask the injected
@@ -497,8 +471,6 @@ moon build examples/pdf_workbench/macos_skia --target native
 node scripts/pdf-workbench-native-smoke.mjs
 scripts/pdf-workbench-macos-smoke.sh
 MOUI_PDF_WORKBENCH_STARTUP_PDF=examples/pdf_workbench/fixtures/minimum.pdf moon run examples/pdf_workbench/macos_skia --target native
-moon build examples/pdf_workbench/windows_skia --target native
-moon build examples/pdf_workbench/linux_skia --target native
 ```
 
 The PDFium provider is a module-level prebuild hook, but it does not download
@@ -516,14 +488,12 @@ same runner.
 
 ## Command Palette
 
-The Command Palette example keeps command definitions in `@views.ActionCommand`
-metadata, renders them through the public palette and command menu views, and
-uses `@views.ActionCommandMap` for shortcut dispatch. Disabled commands stay
-visible for discoverability but do not dispatch through model actions or runtime
-command bindings. Its effect-capable `program_with_services` path demonstrates
-`HostAppServices::show_context_menu`, dispatching the selected native menu
-command back through the same typed message loop while preserving the view-level
-fallback context menu for hosts without native menu support.
+The Command Palette example keeps command definitions in
+`@views.ActionCommand` metadata and declares typed messages with
+`Program::with_commands`. Disabled commands remain visible but do not enqueue
+messages. Native context-menu selection uses `MenuServices::show_context` and
+returns through the same typed update queue as keyboard shortcuts and view
+commands.
 
 ## Mo Desktop
 
@@ -629,14 +599,12 @@ fetches.
 
 macOS examples use the shared app package plus `backend/macos` and an explicit
 renderer package. The recommended `_skia` entrypoints import `render/skia` and
-compose it with `@macos.entry()` through `@moui.run_app`:
+compose it with `@macos.entry()` through `@runtime.run_app`:
 
 ```sh
 moon build examples/showcase/macos_skia --target native
 moon build examples/markdown_editor/macos_skia --target native
 moon build examples/pdf_workbench/macos_skia --target native
-moon build examples/pdf_workbench/windows_skia --target native
-moon build examples/pdf_workbench/linux_skia --target native
 moon build examples/mo_desktop/macos_skia --target native
 moon build examples/mo_workbench/macos_skia --target native
 ```
@@ -646,8 +614,7 @@ They require the local Skia native link setup that makes `moui_skia/native`
 available at runtime. Normal macOS Skia runs use the renderer's system
 `FontMgr` path; tester-owned first-frame smoke runs explicitly select the
 `EmptyTypeface` fallback path. The
-`macos_wgpu` and `macos_wgpu_cosmic` packages remain available as native WGPU
-and text-provider diagnostics.
+Showcase `macos_wgpu` remains the canonical native WGPU diagnostic with Cosmic as an internal fallback.
 
 After configuring real Skia link flags, run the opt-in real Skia check to verify
 both the binding smoke and MoUI renderer presenter pixels:
@@ -718,9 +685,8 @@ inspected without parsing `Info.plist`.
 
 Windows native examples use the MSVC toolchain and vcpkg `zlib:x64-windows`.
 The recommended `_skia` entrypoints import `backend/windows` plus
-`render/skia` and compose them explicitly through `@moui.run_app`.
-`windows_wgpu` and `windows_wgpu_cosmic` packages remain available as native WGPU
-diagnostics; the build/package helpers download and bundle `wgpu_native.dll`
+`render/skia` and compose them explicitly through `@runtime.run_app`.
+Showcase `windows_wgpu` remains the canonical native WGPU diagnostic; the build/package helpers download and bundle `wgpu_native.dll`
 only for those WGPU packages.
 
 ```powershell
@@ -729,9 +695,6 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/showcase/windows_skia `
   -BuildOnly
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows_skia `
-  -BuildOnly
 ```
 
 To run an entrypoint directly, import the MSVC environment in the same
@@ -739,7 +702,6 @@ PowerShell process:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
 `windows_skia` follows the same Skia availability rules as the backend provider:
@@ -748,10 +710,6 @@ diagnostic instead of opening an empty HWND.
 Windows Skia example entrypoints are interactive app entrypoints. Keep
 matching-host first-frame smoke in tester/backend smoke runners and cite the
 smoke log that actually ran.
-Markdown Editor also keeps `examples/markdown_editor/windows_wgpu_cosmic` for
-explicit Moon Cosmic text-provider comparison on the native WGPU diagnostic
-route.
-
 For a reusable distributable folder with the built executable and runtime DLLs:
 
 ```powershell
@@ -776,7 +734,6 @@ host with a Wayland compositor and real Skia link flags:
 
 ```sh
 moon run examples/showcase/linux_skia --target native
-moon run examples/markdown_editor/linux_skia --target native
 ```
 
 Linux Skia example entrypoints are interactive app entrypoints. Keep
@@ -787,16 +744,9 @@ For build-only validation, use:
 
 ```sh
 moon build examples/showcase/linux_skia --target native
-moon build examples/markdown_editor/linux_skia --target native
 ```
 
-The `linux_wgpu` and `linux_wgpu_cosmic` Showcase entrypoints remain available for
-explicit native WGPU diagnostics. `linux_wgpu_cosmic` selects the shared Moon Cosmic
-text provider explicitly, while the platform-default Linux WGPU entrypoint
-composes the fontconfig provider scaffold with the same Cosmic fallback. The
-Showcase and Markdown Editor `linux_skia` entrypoints select the native Skia
-raster renderer explicitly; configure real Skia link flags before relying on
-Skia-rendered pixels.
+Showcase `linux_wgpu` remains the canonical native WGPU diagnostic and composes fontconfig with Cosmic as an internal fallback. `showcase/linux_skia` is the canonical Linux Skia evidence route.
 
 ## Example Validation
 

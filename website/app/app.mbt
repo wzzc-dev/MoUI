@@ -19,6 +19,7 @@ pub struct Model {
   route_history : @views.RouteHistoryState
   pending_anchor : String?
   copied_text : String?
+  next_service_token : Int
 }
 
 ///|
@@ -48,9 +49,10 @@ pub enum Msg {
   ToggleDocsDrawer
   CloseDocsDrawer
   SelectCompactHeroTab(String)
-  HostRouteChanged(@runtime.HostRouteEvent)
-  HostCatalogCompleted(@host.HostCompletedServiceResponse)
-  HostDocsCompleted(@host.HostCompletedServiceResponse)
+  HostRouteChanged(@services.RouteEvent)
+  HostCatalogCompleted(Int, @services.ServiceTaskResult[String])
+  HostDocsCompleted(Int, String, @services.ServiceTaskResult[String])
+  HostActionCompleted(@services.ServiceTaskResult[Unit])
 }
 
 ///|
@@ -99,6 +101,7 @@ fn Model::new() -> Model {
     ),
     pending_anchor: None,
     copied_text: None,
+    next_service_token: 1,
   }
 }
 
@@ -144,9 +147,11 @@ fn Model::update(self : Model, message : Msg) -> Model {
     CloseDocsDrawer => { ..self, docs_drawer_open: false }
     SelectCompactHeroTab(tab) => { ..self, compact_hero_tab: tab }
     HostRouteChanged(event) => self.with_host_route(event)
-    HostCatalogCompleted(completion) =>
-      self.apply_catalog_completion(completion)
-    HostDocsCompleted(completion) => self.apply_docs_completion(completion)
+    HostCatalogCompleted(token, result) =>
+      self.apply_catalog_completion(token, result)
+    HostDocsCompleted(token, path, result) =>
+      self.apply_docs_completion(token, path, result)
+    HostActionCompleted(_) => self
   }
 }
 
@@ -206,10 +211,7 @@ fn Model::with_route(self : Model, route : String) -> Model {
 }
 
 ///|
-fn Model::with_host_route(
-  self : Model,
-  event : @runtime.HostRouteEvent,
-) -> Model {
+fn Model::with_host_route(self : Model, event : @services.RouteEvent) -> Model {
   let normalized = website_normalize_route(event.location.to_route())
   let locale = website_locale_from_route(normalized)
   let next = { ..self, locale, }.with_route(normalized)
@@ -317,7 +319,7 @@ fn Model::website_route_title(
 fn Model::update_with_services(
   self : Model,
   message : Msg,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   route_host : WebsiteRouteHost?,
 ) -> (Model, @moui.Effect[Msg]) {
   match message {
@@ -330,8 +332,9 @@ fn Model::update_with_services(
       )
       let locale_effect = match route_host {
         Some(host) =>
-          @moui.Effect::host_service(
+          @moui.Effect::run(
             key="website:apply-locale",
+            kind="host-service",
             label=website_message(next.locale, "a11y.apply_locale"),
             run=_dispatch => (host.apply_locale)(next.locale),
           )
@@ -348,50 +351,23 @@ fn Model::update_with_services(
       )
     }
     OpenRepository =>
-      (
-        self,
-        website_open_url_effect(
-          services,
-          moui_repository_url(),
-          website_message(self.locale, "a11y.open_repository"),
-        ),
-      )
+      (self, website_open_url_effect(services, moui_repository_url()))
     OpenPlayground =>
-      (
-        self,
-        website_open_url_effect(
-          services,
-          website_playground_url(),
-          website_message(self.locale, "a11y.open_playground"),
-        ),
-      )
+      (self, website_open_url_effect(services, website_playground_url()))
     OpenPlaygroundLesson(id) =>
       (
         self,
-        website_open_url_effect(
-          services,
-          website_playground_url(example=id),
-          website_message(self.locale, "a11y.open_lesson"),
-        ),
+        website_open_url_effect(services, website_playground_url(example=id)),
       )
-    OpenShowcaseSource(url) =>
-      (
-        self,
-        website_open_url_effect(
-          services,
-          url,
-          website_message(self.locale, "a11y.open_showcase_source"),
-        ),
-      )
+    OpenShowcaseSource(url) => (self, website_open_url_effect(services, url))
     OpenDocLink(target) => self.open_doc_link(target, services, route_host)
     CopyText(value) =>
       (
         self.update(message),
-        @moui.Effect::host_service(
-          key="website:copy",
-          label=website_message(self.locale, "a11y.copy_text"),
-          run=_dispatch => ignore(services.write_clipboard_text(value)),
-        ),
+        services
+        .clipboard()
+        .write_text(value)
+        .effect(map=result => HostActionCompleted(result)),
       )
     RetryCatalog => self.request_catalog(services)
     RetryDoc => self.request_selected_doc(services)
@@ -407,8 +383,8 @@ fn Model::update_with_services(
       }
       (next, effect)
     }
-    HostCatalogCompleted(completion) => {
-      let next = self.apply_catalog_completion(completion)
+    HostCatalogCompleted(token, result) => {
+      let next = self.apply_catalog_completion(token, result)
       let (prepared, effect) = if next.page is WebsiteDocs &&
         next.catalog_state is CatalogLoaded(_) &&
         next.doc_state is DocNotLoaded {
@@ -418,8 +394,8 @@ fn Model::update_with_services(
       }
       (prepared.with_metadata_updated(route_host), effect)
     }
-    HostDocsCompleted(completion) =>
-      (self.apply_docs_completion(completion), @moui.Effect::none())
+    HostDocsCompleted(token, path, result) =>
+      (self.apply_docs_completion(token, path, result), @moui.Effect::none())
     OpenHome
     | OpenHomeAt(_)
     | OpenHomeAnchor(_)
@@ -470,8 +446,9 @@ fn Model::update_with_services(
       }
       let locale_effect = match route_host {
         Some(host) =>
-          @moui.Effect::host_service(
+          @moui.Effect::run(
             key="website:apply-locale",
+            kind="host-service",
             label=website_message(next.locale, "a11y.apply_locale"),
             run=_dispatch => (host.apply_locale)(next.locale),
           )
@@ -494,8 +471,9 @@ fn WebsiteRouteCommand::effect(
 ) -> @moui.Effect[Msg] {
   match route_host {
     Some(host) =>
-      @moui.Effect::host_service(
+      @moui.Effect::run(
         key="website:route-command",
+        kind="host-service",
         label=website_message(locale, "a11y.route_command"),
         run=_dispatch => {
           match self {
@@ -588,31 +566,21 @@ fn website_anchor_key(anchor : String) -> String {
 
 ///|
 fn website_open_url_effect(
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   url : String,
-  label : String,
 ) -> @moui.Effect[Msg] {
-  @moui.Effect::host_service(key="website:open-url:" + url, label~, run=_dispatch => {
-    ignore(services.open_url(url))
-  })
+  services.urls().open(url).effect(map=result => HostActionCompleted(result))
 }
 
 ///|
 fn Model::open_doc_link(
   self : Model,
   target : String,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   route_host : WebsiteRouteHost?,
 ) -> (Model, @moui.Effect[Msg]) {
   if target.has_prefix("https://") || target.has_prefix("http://") {
-    return (
-      self,
-      website_open_url_effect(
-        services,
-        target,
-        website_message(self.locale, "a11y.open_doc_link"),
-      ),
-    )
+    return (self, website_open_url_effect(services, target))
   }
   if target.has_prefix("#") {
     let anchor = website_heading_anchor(target[1:].to_owned())
@@ -732,13 +700,13 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
 
 ///|
 fn Model::program(self : Model) -> @moui.Program[Model, Msg] {
-  self.program_with_services(@host.HostAppServices::unavailable())
+  self.program_with_services(@services.AppServices::unavailable())
 }
 
 ///|
 fn Model::program_with_services(
   self : Model,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   route_host? : WebsiteRouteHost? = None,
 ) -> @moui.Program[Model, Msg] {
   @moui.Program::new_with_environment(
@@ -752,7 +720,7 @@ fn Model::program_with_services(
       model.update_with_services(message, services, route_host)
     },
     view=(model, env) => model.view(env),
-    subscriptions=model => model.subscriptions(services, route_host),
+    subscriptions=model => model.subscriptions(route_host),
   )
 }
 
@@ -778,38 +746,9 @@ fn Model::home_content(
 ///|
 fn Model::subscriptions(
   self : Model,
-  services : @host.HostAppServices,
   route_host : WebsiteRouteHost?,
 ) -> @moui.Subscription[Msg] {
   let subscriptions : Array[@moui.Subscription[Msg]] = []
-  match self.catalog_state.pending_id() {
-    Some(id) =>
-      if id.value > 0 {
-        subscriptions.push(
-          services.completion_subscription(
-            id,
-            map=completion => HostCatalogCompleted(completion),
-            key="website:catalog:" + id.value.to_string(),
-            label=website_message(self.locale, "a11y.catalog_completion"),
-          ),
-        )
-      }
-    None => ()
-  }
-  match self.doc_state.pending_id() {
-    Some(id) =>
-      if id.value > 0 {
-        subscriptions.push(
-          services.completion_subscription(
-            id,
-            map=completion => HostDocsCompleted(completion),
-            key="website:docs:" + id.value.to_string(),
-            label=website_message(self.locale, "a11y.docs_completion"),
-          ),
-        )
-      }
-    None => ()
-  }
   match route_host {
     Some(host) =>
       subscriptions.push(
@@ -836,49 +775,44 @@ fn Model::website_catalog_path(self : Model) -> String {
 ///|
 fn Model::request_catalog(
   self : Model,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> (Model, @moui.Effect[Msg]) {
   let path = self.website_catalog_path()
+  let token = self.next_service_token
   (
     {
       ..self,
-      catalog_state: CatalogLoading(@host.HostServiceRequestId::new(0)),
+      catalog_state: CatalogLoading(token),
+      next_service_token: token + 1,
     },
-    @moui.Effect::host_service(
-      key="website:load-docs-catalog:" + self.locale,
-      label=website_message(self.locale, "a11y.load_catalog"),
-      run=dispatch => {
-        let response = services.read_text_file(path)
-        dispatch(HostCatalogCompleted(website_file_completion(path, response)))
-      },
-    ),
+    services
+    .files()
+    .read_text(path)
+    .effect(map=result => HostCatalogCompleted(token, result)),
   )
 }
 
 ///|
 fn Model::request_selected_doc(
   self : Model,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> (Model, @moui.Effect[Msg]) {
   match self.website_doc_selected_entry() {
-    Some(entry) =>
+    Some(entry) => {
+      let token = self.next_service_token
       (
         {
           ..self,
           page: WebsiteDocs,
-          doc_state: DocLoading(@host.HostServiceRequestId::new(0), entry.path),
+          doc_state: DocLoading(token, entry.path),
+          next_service_token: token + 1,
         },
-        @moui.Effect::host_service(
-          key="website:load-doc:" + entry.slug,
-          label=website_message(self.locale, "a11y.load_doc"),
-          run=dispatch => {
-            let response = services.read_text_file(entry.path)
-            dispatch(
-              HostDocsCompleted(website_file_completion(entry.path, response)),
-            )
-          },
-        ),
+        services
+        .files()
+        .read_text(entry.path)
+        .effect(map=result => HostDocsCompleted(token, entry.path, result)),
       )
+    }
     None =>
       match self.catalog_state {
         CatalogLoaded(_) =>
@@ -894,15 +828,14 @@ fn Model::request_selected_doc(
 ///|
 fn Model::apply_catalog_completion(
   self : Model,
-  completion : @host.HostCompletedServiceResponse,
+  token : Int,
+  result : @services.ServiceTaskResult[String],
 ) -> Model {
-  if !self.catalog_completion_matches(completion) {
+  if !self.catalog_completion_matches(token) {
     return self
   }
-  match completion.response {
-    @host.HostServiceResponse::Pending(id) =>
-      { ..self, catalog_state: CatalogLoading(id) }
-    @host.HostServiceResponse::TextFileContent(_, text) =>
+  match result {
+    @services.ServiceTaskResult::Success(text) =>
       match website_parse_catalog(text) {
         Some(catalog) => { ..self, catalog_state: CatalogLoaded(catalog) }
         None =>
@@ -913,9 +846,9 @@ fn Model::apply_catalog_completion(
             ),
           }
       }
-    @host.HostServiceResponse::Unavailable(reason) =>
-      { ..self, catalog_state: CatalogFailed(reason) }
-    _ =>
+    @services.ServiceTaskResult::Failure(error) =>
+      { ..self, catalog_state: CatalogFailed(error.message) }
+    @services.ServiceTaskResult::Cancelled =>
       {
         ..self,
         catalog_state: CatalogFailed(
@@ -926,18 +859,9 @@ fn Model::apply_catalog_completion(
 }
 
 ///|
-fn Model::catalog_completion_matches(
-  self : Model,
-  completion : @host.HostCompletedServiceResponse,
-) -> Bool {
+fn Model::catalog_completion_matches(self : Model, token : Int) -> Bool {
   match self.catalog_state {
-    CatalogLoading(id) =>
-      if id.value == 0 {
-        completion.id.value == 0 ||
-        completion.response is @host.HostServiceResponse::Pending(_)
-      } else {
-        completion.id == id
-      }
+    CatalogLoading(active_token) => active_token == token
     _ => false
   }
 }
@@ -945,28 +869,22 @@ fn Model::catalog_completion_matches(
 ///|
 fn Model::apply_docs_completion(
   self : Model,
-  completion : @host.HostCompletedServiceResponse,
+  token : Int,
+  path : String,
+  result : @services.ServiceTaskResult[String],
 ) -> Model {
-  let path = match completion.request {
-    @host.HostServiceRequest::TextFile(
-      @host.HostTextFileRequest::ReadText(path)
-    ) => path
-    _ => self.website_doc_loading_path()
-  }
-  if !self.docs_completion_matches_current(completion, path) {
+  if !self.docs_completion_matches_current(token, path) {
     return self
   }
-  match completion.response {
-    @host.HostServiceResponse::Pending(id) =>
-      { ..self, doc_state: DocLoading(id, path) }
-    @host.HostServiceResponse::TextFileContent(_, text) =>
+  match result {
+    @services.ServiceTaskResult::Success(text) =>
       {
         ..self,
         doc_state: DocLoaded(path, website_parse_markdown_document(path, text)),
       }
-    @host.HostServiceResponse::Unavailable(reason) =>
-      { ..self, doc_state: DocFailed(path, reason) }
-    _ =>
+    @services.ServiceTaskResult::Failure(error) =>
+      { ..self, doc_state: DocFailed(path, error.message) }
+    @services.ServiceTaskResult::Cancelled =>
       {
         ..self,
         doc_state: DocFailed(
@@ -980,38 +898,13 @@ fn Model::apply_docs_completion(
 ///|
 fn Model::docs_completion_matches_current(
   self : Model,
-  completion : @host.HostCompletedServiceResponse,
+  token : Int,
   path : String,
 ) -> Bool {
   match self.doc_state {
-    DocLoading(id, loading_path) =>
-      if path != loading_path {
-        false
-      } else if id.value == 0 {
-        completion.id.value == 0 ||
-        completion.response is @host.HostServiceResponse::Pending(_)
-      } else {
-        completion.id == id
-      }
+    DocLoading(active_token, loading_path) =>
+      path == loading_path && token == active_token
     _ => false
-  }
-}
-
-///|
-fn website_file_completion(
-  path : String,
-  response : @host.HostServiceResponse,
-) -> @host.HostCompletedServiceResponse {
-  let id = match response {
-    @host.HostServiceResponse::Pending(id) => id
-    _ => @host.HostServiceRequestId::new(0)
-  }
-  {
-    id,
-    request: @host.HostServiceRequest::TextFile(
-      @host.HostTextFileRequest::ReadText(path),
-    ),
-    response,
   }
 }
 
@@ -1022,7 +915,7 @@ pub fn program() -> @moui.Program[Model, Msg] {
 
 ///|
 pub fn program_with_services(
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   route_host? : WebsiteRouteHost? = None,
 ) -> @moui.Program[Model, Msg] {
   Model::new().program_with_services(services, route_host~)

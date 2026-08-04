@@ -29,10 +29,10 @@ fn usage() -> String {
     #|Usage: tools/moui/validate_window_dependency [options]
     #|
     #|Checks that wzzc-dev/window resolves from mooncakes.io and that every
-    #|known consumer pins the same published version.
+    #|repository-owned moon.mod consumer pins the same published version.
     #|
     #|Enforces docs/invariants.md R4 (no local window modules in moon.work) and A6
-    #|(shared pin across moui, moui_skia, moui_webview, markdown_editor).
+    #|(shared pin across every dynamically discovered consumer).
     #|
     #|Options:
     #|  --repo-root PATH   Repository root used to resolve paths. Defaults to cwd.
@@ -66,10 +66,71 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 }
 
 ///|
-fn expected_window_consumers() -> Array[String] {
-  [
-    "moui/moon.mod", "moui_skia/moon.mod", "moui_webview/moon.mod", "examples/markdown_editor/moon.mod",
-  ]
+fn skipped_scan_directory(name : String) -> Bool {
+  name == ".git" ||
+  name == ".mooncakes" ||
+  name == "_build" ||
+  name == "artifacts" ||
+  name == "node_modules" ||
+  name == "output" ||
+  name == "window"
+}
+
+///|
+fn collect_moon_mod_paths(
+  repo_root : String,
+  relative_dir : String,
+  paths : Array[String],
+  errors : Array[String],
+) -> Unit {
+  let absolute_dir = if relative_dir == "" {
+    repo_root
+  } else {
+    @tools.resolve_path(repo_root, relative_dir)
+  }
+  let entries : Array[String] = @fs.read_dir(absolute_dir) catch {
+    _ => {
+      errors.push(
+        "directory could not be read while scanning moon.mod: " + absolute_dir,
+      )
+      return
+    }
+  }
+  entries.sort()
+  for entry in entries {
+    let relative = if relative_dir == "" {
+      entry
+    } else {
+      relative_dir + "/" + entry
+    }
+    let absolute = @tools.resolve_path(repo_root, relative)
+    if @tools.directory_exists(absolute) {
+      if !skipped_scan_directory(entry) {
+        collect_moon_mod_paths(repo_root, relative, paths, errors)
+      }
+    } else if entry == "moon.mod" && @tools.file_exists(absolute) {
+      paths.push(relative)
+    }
+  }
+}
+
+///|
+fn discover_window_consumers(
+  repo_root : String,
+) -> (Array[ConsumerText], Array[String]) {
+  let paths : Array[String] = []
+  let errors : Array[String] = []
+  collect_moon_mod_paths(repo_root, "", paths, errors)
+  let consumers : Array[ConsumerText] = []
+  for path in paths {
+    match read_optional_text(repo_root, path) {
+      Some(text) if text.contains("\"wzzc-dev/window@") =>
+        consumers.push({ path, text: Some(text) })
+      Some(_) => ()
+      None => errors.push("missing file after discovery: " + path)
+    }
+  }
+  (consumers, errors)
 }
 
 ///|
@@ -230,7 +291,7 @@ fn validate_window_dependency_inputs(
           errors.push(
             consumer.path +
             ": expected a \"wzzc-dev/window@<version>\" declaration but found none.\n" +
-            "  Fix: restore the import, or remove this path from expected_window_consumers() if it no longer depends on window.\n" +
+            "  Fix: restore a versioned import or remove the incomplete window dependency declaration.\n" +
             "  See: docs/invariants.md#A6",
           )
         } else {
@@ -257,8 +318,7 @@ fn validate_window_dependency_inputs(
     errors.push(
       "wzzc-dev/window version mismatch across consumers:\n" +
       mismatch_detail(versions_by_consumer) +
-      "\n  Fix: align all four consumers to one published version, then run `moon update`.\n" +
-      "  Consumers: moui/, moui_skia/, moui_webview/, examples/markdown_editor/.\n" +
+      "\n  Fix: align every listed consumer to one published version, then run `moon update`.\n" +
       "  See: docs/invariants.md#A6",
     )
   }
@@ -284,15 +344,21 @@ fn read_optional_text(repo_root : String, path : String) -> String? {
 
 ///|
 fn validate_window_dependency(repo_root : String) -> ValidationResult {
-  let consumers : Array[ConsumerText] = []
-  for path in expected_window_consumers() {
-    consumers.push({ path, text: read_optional_text(repo_root, path) })
-  }
-  validate_window_dependency_inputs(
+  let (consumers, discovery_errors) = discover_window_consumers(repo_root)
+  let result = validate_window_dependency_inputs(
     read_optional_text(repo_root, "moon.work"),
     consumers,
     read_optional_text(repo_root, "checks/window-dependency-exception.txt"),
   )
+  for error in discovery_errors {
+    result.errors.push(error)
+  }
+  if consumers.is_empty() {
+    result.errors.push(
+      "no repository-owned moon.mod declares wzzc-dev/window; dependency scan is unexpectedly empty",
+    )
+  }
+  result
 }
 
 ///|

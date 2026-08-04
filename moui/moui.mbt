@@ -5,18 +5,13 @@
 /// shared example package alias. See `docs/moui-app-package-boundary.md`.
 
 ///|
-pub fn run_app(
-  title : String,
-  runtime : @runtime.AppRuntime,
-) -> @runtime.AppBuilder {
-  @runtime.run_app(title, runtime)
-}
-
-///|
 pub using @core {type View}
 
 ///|
 pub using @core {type Program}
+
+///|
+pub using @core {type ProgramCommand}
 
 ///|
 pub using @core {type Effect}

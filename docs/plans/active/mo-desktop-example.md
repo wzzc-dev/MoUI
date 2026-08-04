@@ -12,14 +12,14 @@ state. The shared app will use `Program::new_with_environment`, typed
 entrypoints will inject the same host-service/timer/clock capability shape;
 platform packages retain concrete browser/AppKit implementation details.
 
-- Add a reusable Web `HostTimerSource`, driven by the existing browser
+- Add a reusable Web `@services.TimerSource`, driven by the existing browser
   event-loop clock, so Web can run the same long-lived subscription path as
   macOS.
 - Give timer frames meaningful monotonic `time_ms`, and inject a wall-clock
   snapshot at the platform edge for the visible menu/lock/widget time.
-- Use an initial Effect to query the real system appearance; use service
-  Effects for file import and external URL opening. Pending service completions
-  must remain in the app model and re-enter through a keyed subscription.
+- Use typed `ServiceTask` effects for appearance, file import, and external URL
+  opening. `AppEnvironment` stays in the Program closure; the business model
+  stores only typed loading/result state, never host request ids or queues.
 - Replace string/index state with typed launcher/task messages, clamp control
   values, and prevent impossible no-window zoom/drag states.
 - Make live clock/system status and real host-service outcomes visible in the

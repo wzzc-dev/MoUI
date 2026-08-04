@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { repoRoot, runCommand, runMoonbitTool } from "./lib/moonbit-tool-runner.mjs";
 
 const invocationRoot = process.cwd();
@@ -115,12 +115,17 @@ const collectHttpChecks = async () => {
 
 const { httpChecks, httpFailures } = await collectHttpChecks();
 
-const toolArgs = ["--root", rootDir];
+const toolArgs = [
+  "--root",
+  resolve(invocationRoot, rootDir),
+  "--display-root",
+  rootDir,
+];
 if (baseUrl) {
   toolArgs.push("--base-url", baseUrl);
 }
 if (manifestPath && httpFailures.length === 0) {
-  toolArgs.push("--manifest", manifestPath);
+  toolArgs.push("--manifest", resolve(invocationRoot, manifestPath));
 }
 for (const check of httpChecks) {
   toolArgs.push(

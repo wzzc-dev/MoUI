@@ -4,14 +4,16 @@ package "examples/markdown_editor/app"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui/views/feedback",
   "wzzc-dev/moui_richtext",
 }
 
 // Values
+pub fn markdown_editor_application_menus() -> Array[@services.ApplicationMenu]
+
+pub fn markdown_editor_program_commands() -> Array[@core.ProgramCommand[MarkdownEditorMsg]]
 
 // Errors
 
@@ -56,12 +58,8 @@ pub struct MarkdownEditorApp {
   file_tree_scroll : @core.ScrollState
   // private fields
 }
-pub fn MarkdownEditorApp::action_commands(Self, services? : @host.HostAppServices) -> @core.ActionCommandMap
 pub fn MarkdownEditorApp::new() -> Self
-pub fn MarkdownEditorApp::new_with_services(@host.HostAppServices) -> Self
-pub fn MarkdownEditorApp::persist_settings(Self, @host.HostAppServices) -> Unit
-pub fn MarkdownEditorApp::program(Self) -> @core.Program[Self, MarkdownEditorMsg]
-pub fn MarkdownEditorApp::program_with_services(Self, @host.HostAppServices, timer_source? : @runtime.HostTimerSource?) -> @core.Program[Self, MarkdownEditorMsg]
+pub fn MarkdownEditorApp::program(Self, environment? : @services.AppEnvironment) -> @core.Program[Self, MarkdownEditorMsg]
 pub fn MarkdownEditorApp::save_document_as(Self, String) -> Unit
 
 pub struct MarkdownEditorConfirmRequest {
@@ -97,7 +95,7 @@ pub enum MarkdownEditorMsg {
   ImportFromClipboard
   ExportToClipboard
   ExportHtmlToClipboard
-  HostTransferCompleted(@host.HostCompletedServiceResponse)
+  ServiceCompleted(MarkdownEditorServiceCompletion)
   Undo
   Redo
   ToggleOutline
@@ -161,6 +159,20 @@ pub enum MarkdownEditorMsg {
   ToggleFileTree
   InsertMediaFromFileDrop(String)
   ToggleImageCenter
+}
+
+pub enum MarkdownEditorServiceCompletion {
+  FileOpenPicked(Int, @services.ServiceTaskResult[String])
+  FileSavePicked(Int, @services.ServiceTaskResult[String])
+  TextFileRead(Int, String, @services.ServiceTaskResult[String])
+  TextFileWritten(Int, String, Bool, @services.ServiceTaskResult[Unit])
+  ClipboardImported(Int, @services.ServiceTaskResult[String])
+  ClipboardExported(Int, Bool, @services.ServiceTaskResult[Unit])
+  TargetOpened(Int, @services.ServiceTaskResult[Unit])
+  DirectoryPicked(@services.ServiceTaskResult[String])
+  DirectoryListed(String, @services.ServiceTaskResult[Array[@services.DirectoryEntry]])
+  SettingsLoaded(@services.ServiceTaskResult[String?])
+  SettingsSaved(@services.ServiceTaskResult[Unit])
 }
 
 pub struct MarkdownEditorSettings {

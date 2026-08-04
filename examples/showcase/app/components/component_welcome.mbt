@@ -133,7 +133,7 @@ fn welcome_demo(
 ///|
 /// Bouncing-ball canvas used on the Welcome page. The ball reflects off the
 /// canvas edges; motion is driven by the `animated_canvas` paint clock
-/// (`now_ms`), so it loops without a `HostTimerSource` subscription.
+/// (`now_ms`), so it loops without a `TimerSource` subscription.
 fn welcome_bouncing_ball_canvas(
   theme : @moui.Theme,
   width : Double,

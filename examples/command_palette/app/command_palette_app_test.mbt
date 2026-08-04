@@ -30,25 +30,21 @@ test "command palette dispatches enabled and ignores disabled" {
 }
 
 ///|
-test "command palette command map dispatches shortcut but not disabled" {
-  let map = action_command_map()
-  let save_event = @core.KeyboardEvent::new(
-    key="s",
-    modifiers=@core.KeyModifiers::new(meta=true),
+test "command palette Program declares enabled and disabled shortcuts" {
+  let commands = program().runtime_commands(CommandPaletteModel::new())
+  inspect(commands.length(), content="5")
+  assert_true(
+    commands.any(command => {
+      command.command().intent == @core.CommandIntent::Submit &&
+      command.command().enabled
+    }),
   )
-  match map.dispatch_shortcut(save_event) {
-    Some(@core.CommandIntent::Submit) => ()
-    _ => fail("expected submit shortcut")
-  }
-  let archive_event = @core.KeyboardEvent::new(
-    key="Backspace",
-    modifiers=@core.KeyModifiers::new(meta=true),
+  assert_true(
+    commands.any(command => {
+      command.command().intent == @core.CommandIntent::Cancel &&
+      !command.command().enabled
+    }),
   )
-  match map.dispatch_shortcut(archive_event) {
-    None => ()
-    Some(_) => fail("disabled command should not dispatch")
-  }
-  assert_false(map.dispatch_intent(@core.CommandIntent::Cancel))
 }
 
 ///|
@@ -66,7 +62,7 @@ test "command palette runtime exposes command rows" {
 ///|
 test "command palette host menu service dispatches selected command" {
   let saw_menu = Ref(false)
-  let services = @host.HostAppServices::new(
+  let services = @host.app_services(
     bridge=@host.HostServiceBridge::new(
       capabilities=@host.HostServiceCapabilities::new(menus=true),
       handle=request => {
@@ -90,19 +86,21 @@ test "command palette host menu service dispatches selected command" {
   inspect(opening.last_result, content="Opening native menu")
   let summary = @runtime.effect_plan_summary(effect)
   inspect(summary.descriptors().length(), content="1")
-  inspect(summary.descriptors()[0].key(), content="host:command-menu")
-  inspect(summary.descriptors()[0].kind(), content="host-service")
-  inspect(summary.descriptors()[0].label(), content="Show command menu")
+  inspect(summary.descriptors()[0].key(), content="menu:context")
+  inspect(summary.descriptors()[0].kind(), content="service")
+  inspect(summary.descriptors()[0].label(), content="Show context menu")
   let model = @state.State::new(opening)
   match effect {
-    @moui.Effect::Run(_descriptor, run) =>
-      run(message => {
-        let (next, _effect) = model
-          .get()
-          .update_with_services(message, services)
-        model.set(next)
-      })
-    _ => fail("expected native menu effect")
+    @moui.Effect::Task(_descriptor, start) =>
+      ignore(
+        start(message => {
+          let (next, _effect) = model
+            .get()
+            .update_with_services(message, services)
+          model.set(next)
+        }),
+      )
+    _ => fail("expected typed menu service task")
   }
   assert_true(saw_menu.val)
   inspect(model.get().last_result, content="Dispatched: Save Document")
@@ -132,9 +130,7 @@ fn test_runtime(
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {
-  let runtime = @runtime.new_program_with_dimensions(program~, width~, height~)
-  runtime.set_action_commands(action_command_map())
-  runtime
+  @runtime.new_program_with_dimensions(program~, width~, height~)
 }
 
 ///|

@@ -7,10 +7,13 @@ import {
   "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
   "wzzc-dev/window/core",
 }
 
 // Values
+pub fn app_environment() -> @services.AppEnvironment
+
 pub fn backend_info() -> HarmonyOSBackendInfo
 
 pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : HarmonyOSSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, binding~ : HarmonyOSSurfaceBinding) -> @embedded_runtime_backend.HostedRuntimeSession?

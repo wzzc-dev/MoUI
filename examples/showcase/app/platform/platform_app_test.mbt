@@ -44,46 +44,50 @@ test "subscriptions stay empty without host adapters" {
 
 ///|
 test "timer source is declared while running on another route" {
-  let source = @runtime.HostTimerSource::new(start_timer=(_interval, _dispatch) => {
-    None
-  })
-  let model = Model::new(
-    timer_source=Some(source),
-    timer_running=true,
-    route="mobile-service-probe",
+  let source = @services.TimerSource::new(start=(_interval, _dispatch) => None)
+  let model = Model::new(timer_running=true, route="mobile-service-probe")
+  let plan = @runtime.subscription_plan_summary(
+    subscriptions(model, timer_source=Some(source)),
   )
-  let plan = @runtime.subscription_plan_summary(subscriptions(model))
   assert_true(plan.source_count() >= 1)
 }
 
 ///|
-test "clipboard write effect is host_service shaped" {
-  let services = @host.HostAppServices::new(
-    bridge=@host.HostServiceBridge::new(
-      capabilities=@host.HostServiceCapabilities::new(clipboard=true),
-      handle=request => {
-        match request {
-          @host.HostServiceRequest::Clipboard(
-            @host.HostClipboardRequest::WriteText(_)
-          ) => @host.HostServiceResponse::ClipboardWritten
-          _ => @host.HostServiceResponse::Unavailable("unexpected")
-        }
-      },
-    ),
+test "clipboard write uses a typed service task" {
+  let fake = @services.FakeAppServices::new()
+  let (_, effect) = update(
+    Model::new(),
+    WriteClipboard,
+    services=fake.services(),
   )
-  let model = Model::new(services~)
-  let (_, effect) = update(model, WriteClipboard)
   let summary = @runtime.effect_plan_summary(effect)
-  inspect(summary.run_count(), content="1")
+  inspect(summary.task_count(), content="1")
 }
 
 ///|
 test "action command map exposes a keyboard shortcut" {
-  let map = action_command_map()
-  let commands = map.commands()
+  let commands = program_commands()
   inspect(commands.length(), content="1")
-  inspect(commands[0].label, content="Platform tick")
-  assert_true(commands[0].shortcut is Some(_))
+  inspect(commands[0].command().label, content="Platform tick")
+  assert_true(commands[0].command().shortcut is Some(_))
+  assert_true(commands[0].message() is ShortcutTick)
+}
+
+///|
+test "stale service completion cannot overwrite the active operation" {
+  let fake = @services.FakeAppServices::new()
+  let (writing, _) = update(
+    Model::new(),
+    WriteClipboard,
+    services=fake.services(),
+  )
+  let (reading, _) = update(writing, ReadClipboard, services=fake.services())
+  let (stale, _) = update(
+    reading,
+    ClipboardWriteCompleted(1, @services.ServiceTaskResult::Success(())),
+  )
+  assert_eq(stale.pending_service, Some(2))
+  inspect(stale.last_event, content="Reading clipboard...")
 }
 
 ///|

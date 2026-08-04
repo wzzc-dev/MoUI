@@ -3,7 +3,7 @@ fn PdfWorkbenchModel::update(
   self : PdfWorkbenchModel,
   message : PdfWorkbenchMsg,
 ) -> PdfWorkbenchModel {
-  self.update_with_services(message, @host.HostAppServices::unavailable()).model
+  self.update_with_services(message, @services.AppServices::unavailable()).model
 }
 
 ///|
@@ -18,7 +18,7 @@ fn PdfWorkbenchModel::runtime(
 ///|
 fn PdfWorkbenchModel::runtime_with_services(
   self : PdfWorkbenchModel,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
   startup_pdf_path? : String = "",
@@ -27,8 +27,8 @@ fn PdfWorkbenchModel::runtime_with_services(
   height? : Double = 720.0,
 ) -> @runtime.AppRuntime {
   pdf_workbench_test_runtime(
-    self.program_with_services(
-      services,
+    self.program(
+      environment=@services.AppEnvironment::new(services~),
       raster_services~,
       document_services~,
       startup_pdf_path~,
@@ -51,26 +51,15 @@ fn pdf_workbench_test_runtime(
 ///|
 fn run_pdf_workbench_effect(
   update : PdfWorkbenchUpdate,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> PdfWorkbenchUpdate {
-  let model = @state.State::new(update.model)
-  let effect = @state.State::new(@moui.Effect::none())
-  match update.effect {
-    @moui.Effect::Run(_descriptor, run) =>
-      run(message => {
-        let next = model.get().update_with_services(message, services)
-        model.set(next.model)
-        effect.set(next.effect)
-      })
-    _ => ()
-  }
-  PdfWorkbenchUpdate::new(model.get(), effect=effect.get())
+  run_pdf_workbench_effect_chain(update, services)
 }
 
 ///|
 fn run_pdf_workbench_effect_chain(
   update : PdfWorkbenchUpdate,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
 ) -> PdfWorkbenchUpdate {
@@ -93,7 +82,7 @@ fn run_pdf_workbench_effect_value(
   current : @moui.Effect[PdfWorkbenchMsg],
   model : @state.State[PdfWorkbenchModel],
   effect : @state.State[@moui.Effect[PdfWorkbenchMsg]],
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   raster_services : PdfWorkbenchRasterServices,
   document_services : PdfWorkbenchDocumentServices,
 ) -> Unit {
@@ -111,6 +100,21 @@ fn run_pdf_workbench_effect_value(
         model.set(next.model)
         effect.set(next.effect)
       })
+    @moui.Effect::Task(_descriptor, start) =>
+      ignore(
+        start(message => {
+          let next = model
+            .get()
+            .update_with_services(
+              message,
+              services,
+              raster_services~,
+              document_services~,
+            )
+          model.set(next.model)
+          effect.set(next.effect)
+        }),
+      )
     @moui.Effect::Dispatch(run) =>
       run(message => {
         let next = model
@@ -147,7 +151,7 @@ fn run_pdf_workbench_effect_value(
 }
 
 ///|
-fn pdf_workbench_test_binary_services(bytes : Bytes) -> @host.HostAppServices {
+fn pdf_workbench_test_binary_services(bytes : Bytes) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
       file_dialogs=true,
@@ -167,7 +171,7 @@ fn pdf_workbench_test_binary_services(bytes : Bytes) -> @host.HostAppServices {
       }
     },
   )
-  @host.HostAppServices::new(bridge~)
+  @host.app_services(bridge~)
 }
 
 ///|

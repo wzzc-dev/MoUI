@@ -82,9 +82,10 @@ dispatcher for app-owned host-service bridges or other callbacks without making
 `core` platform-specific. `Effect::run` is the structured form for ordinary
 one-shot runners that should appear in diagnostics; it adds a stable key, kind,
 and label while leaving concrete async execution outside `core`.
-`Effect::host_service` is the standard structured-run helper for host-service
-bridges; it fixes the descriptor kind to `host-service` while the app/backend
-still owns the actual service call. `Effect::task` starts a one-shot
+`moui/services.ServiceTask::effect` is the app-facing helper for files,
+clipboard, URLs, settings, appearance, and menus. It turns typed success,
+failure, and cancellation into `Msg` without exposing host request ids, bridge
+objects, or completion queues. `Effect::task` starts a one-shot
 cancellable task from an effect update, and `Effect::service_task` is the
 standard helper for service-like one-shot tasks that need the same runtime-owned
 cancellation lifecycle plus a stable `service` descriptor kind: the runtime
@@ -114,11 +115,10 @@ program runtime.
 `subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
 uses a stable key, receives the typed dispatcher, and may return a cleanup
 callback. `Subscription::timer`, `Subscription::animation_tick`,
-`Subscription::window_event`, `Subscription::host_event`,
-`Subscription::route_event`, and
-`Subscription::service_completion` standardize descriptor kinds for common
-ongoing source categories without starting any concrete platform work in
-`core`. `@runtime.subscription_plan_summary` exposes the declared none, batch,
+`Subscription::window_event`, `Subscription::host_event`, and
+`Subscription::route_event` standardize descriptor kinds for common ongoing
+source categories without starting any concrete platform work in `core`.
+`@runtime.subscription_plan_summary` exposes the declared none, batch,
 source, duplicate-key counts/names, max-depth, and declared source descriptor
 structure without starting sources. Existing keys are reused across model changes only
 when their descriptor kind still matches, missing keys are canceled, and a
@@ -137,12 +137,18 @@ kind-count summaries, and lifecycle entries for tooling. Concrete timer,
 window, host-event, route, or host-service adapters remain outside `core`; the
 core subscription runtime only owns the platform-neutral lifecycle,
 subscription plan diagnostics, and typed dispatch contract. `backend/host`
-provides the concrete `HostEventSource` fanout adapter for
+provides the integration-only `HostEventSource` fanout adapter for
 `Subscription::host_event`, `HostWindowEventSource` for
-`Subscription::window_event`, `HostTimerSource` for `Subscription::timer`
-ticks, and `HostRouteSource` for `Subscription::route_event` fanout. Browser
+`Subscription::window_event`; `@services.TimerSource` and
+`@services.RouteSource` are the app-facing adapters for timer ticks and route
+events. Browser
 history, native URL bars, and OS deep-link dispatch remain platform/app-layer
 follow-up work.
+`Program::with_commands` declares typed `ProgramCommand[Msg]` values alongside
+the Program. Runtime keeps the current command map synchronized with the model;
+keyboard shortcuts, native application menus, and context-menu selections all
+enqueue the declared `Msg` in FIFO order and pass through the same `update`.
+Apps must not install command closures that mutate model state outside TEA.
 Environment-aware TEA apps should use
 the `*_with_environment` constructors instead of taking `ComponentContext` in their
 view layer. In both cases event dispatch flows through typed messages instead of

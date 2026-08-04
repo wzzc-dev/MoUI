@@ -375,10 +375,10 @@ test "markdown editor runtime receives async clipboard import completion" {
     ),
   )
   inspect(app.transfer_status_label_for_test(), content="Waiting for clipboard")
-  let pending = services.drain_pending()
+  let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
   assert_true(
-    services.complete(
+    queue.complete(
       pending[0].id,
       @host.HostServiceResponse::ClipboardText("# Async Import"),
     ),
@@ -415,7 +415,7 @@ test "markdown editor runtime receives async save as completion" {
     app.transfer_status_label_for_test(),
     content="Waiting for save location",
   )
-  let pending = services.drain_pending()
+  let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
   match pending[0].request {
     @host.HostServiceRequest::FileDialog(
@@ -430,25 +430,12 @@ test "markdown editor runtime receives async save as completion" {
     _ => fail("expected save file dialog request")
   }
   assert_true(
-    services.complete(
+    queue.complete(
       pending[0].id,
       @host.HostServiceResponse::FileDialogSelection(["/tmp/async-save.md"]),
     ),
   )
-  let mut write_pending = services.drain_pending()
-  if write_pending.length() == 0 {
-    app.apply_transfer_completion_with_services(
-      {
-        id: pending[0].id,
-        request: pending[0].request,
-        response: @host.HostServiceResponse::FileDialogSelection([
-          "/tmp/async-save.md",
-        ]),
-      },
-      services,
-    )
-    write_pending = services.drain_pending()
-  }
+  let write_pending = queue.drain_pending()
   inspect(
     app.transfer_status_label_for_test(),
     content="Waiting for save location",
@@ -464,23 +451,18 @@ test "markdown editor runtime receives async save as completion" {
     _ => fail("expected text file write request")
   }
   assert_true(
-    services.complete(
+    queue.complete(
       write_pending[0].id,
       @host.HostServiceResponse::TextFileWritten("/tmp/async-save.md"),
     ),
   )
-  app.apply_transfer_completion_with_services(
-    {
-      id: write_pending[0].id,
-      request: write_pending[0].request,
-      response: @host.HostServiceResponse::TextFileWritten("/tmp/async-save.md"),
-    },
-    services,
-  )
   let commands = runtime.draw_commands()
   inspect(app.document_path(), content="/tmp/async-save.md")
   assert_false(app.dirty())
-  inspect(app.transfer_status_label_for_test(), content="Saved async-save.md")
+  inspect(
+    app.transfer_status_label_for_test(),
+    content="Saved as async-save.md",
+  )
   // Chrome renders the document title (filename) and save state as separate
   // text elements after the status bar redesign (e337e41d).
   assert_true(

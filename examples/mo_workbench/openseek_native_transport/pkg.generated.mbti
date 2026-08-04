@@ -1,0 +1,58 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/mo_workbench/openseek_native_transport"
+
+import {
+  "examples/mo_workbench/app",
+  "moonbitlang/async/aqueue",
+  "moonbitlang/core/json",
+  "moonbitlang/core/ref",
+}
+
+// Values
+pub fn mo_workbench_apply_settings_file_to_process_env(@app.MoWorkbenchSettingsFile) -> Unit
+
+pub fn mo_workbench_ensure_settings_file() -> Unit
+
+pub fn mo_workbench_load_settings_file() -> @app.MoWorkbenchSettingsFile?
+
+pub fn mo_workbench_persist_settings_file(@app.MoWorkbenchSettingsFile) -> Unit
+
+pub fn openseek_backend_bundle(OpenSeekBackendConfig) -> OpenSeekBackendBundle
+
+pub fn openseek_backend_bundle_from_env() -> OpenSeekBackendBundle?
+
+pub fn openseek_backend_bundle_from_settings(@app.MoWorkbenchSettingsFile) -> OpenSeekBackendBundle?
+
+pub fn openseek_enqueue_detect(OpenSeekBackendOwner, String, String, (Array[String]?) -> Unit) -> Unit raise
+
+pub async fn openseek_worker_loop(OpenSeekBackendOwner) -> Unit
+
+// Errors
+
+// Types and methods
+type ModelEntry derive(@json.FromJson)
+
+type ModelsResponse derive(@json.FromJson)
+
+pub struct OpenSeekBackendBundle {
+  runtime : @app.AgentBackendRuntime
+  owner : OpenSeekBackendOwner
+}
+
+type OpenSeekBackendConfig
+
+pub struct OpenSeekBackendOwner {
+  mut config : OpenSeekBackendConfig
+  engine : @ref.Ref[OpenSeekEngineState?]
+  queue : @aqueue.Queue[OpenSeekWork]
+}
+pub fn OpenSeekBackendOwner::new(OpenSeekBackendConfig) -> Self
+
+type OpenSeekEngineState
+
+type OpenSeekWork
+
+// Type aliases
+
+// Traits
+

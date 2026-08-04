@@ -56,15 +56,15 @@ node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 Android, iOS, and HarmonyOS use the embedded runtime backend route. The matching
 `wzzc-dev/window` template owns native lifecycle, surface creation, and input;
 the MoUI `*_window_hosted` entrypoint composes the program, `render/skia`
-factories, and the platform `entry()` through `@moui.run_app`.
+factories, and the platform `entry()` through `@runtime.run_app`.
 There is no app-specific native export table or second lifecycle bridge.
 
 Use host-sim checks before invoking platform toolchains:
 
 ```sh
-moon check examples/counter/android_window_hosted --target native
-moon check examples/counter/ios_window_hosted --target native
-moon check examples/counter/harmonyos_window_hosted --target native
+moon check examples/showcase/android_window_hosted --target native
+moon check examples/showcase/ios_window_hosted --target native
+moon check examples/showcase/harmonyos_window_hosted --target native
 sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
@@ -718,17 +718,11 @@ sh scripts/check.sh --profile full
 moon build examples/showcase/macos_skia --target native
 moon build examples/design_systems/macos_skia --target native
 moon build examples/showcase/windows_skia --target native
-moon build examples/design_systems/windows_skia --target native
-moon build examples/design_systems/linux_skia --target native
 moon build examples/pdf_workbench/macos_skia --target native
-moon build examples/pdf_workbench/windows_skia --target native
-moon build examples/pdf_workbench/linux_skia --target native
 moon build examples/showcase/macos_sun --target native
 moon build examples/showcase/windows_sun --target native
-moon build examples/markdown_editor/windows_skia --target native
 moon build examples/showcase/linux_skia --target native
 moon build examples/showcase/linux_sun --target native
-moon build examples/markdown_editor/linux_skia --target native
 ```
 
 PDF Workbench app-only and `pdflite_adapter` checks no longer download PDFium by

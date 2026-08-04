@@ -9,7 +9,10 @@
 import { spawnSync } from "node:child_process";
 import { resolve, dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { runMoonbitTool } from "./lib/moonbit-tool-runner.mjs";
+import {
+  resolveToolPathArgs,
+  runMoonbitTool,
+} from "./lib/moonbit-tool-runner.mjs";
 import { validateGpuPromotionManifest } from "./lib/gpu-promotion-manifest.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -84,7 +87,10 @@ const main = () => {
   if (options.artifact) {
     toolArgs.push("--artifact", options.artifact);
   }
-  runMoonbitTool("tools/moui/claim_macos_gpu_promotion", toolArgs);
+  runMoonbitTool(
+    "tools/moui/claim_macos_gpu_promotion",
+    resolveToolPathArgs(toolArgs, ["--metrics", "--out-dir"]),
+  );
 
   if (options.requirePassed) {
     const outDir = normalize(options.outDir);

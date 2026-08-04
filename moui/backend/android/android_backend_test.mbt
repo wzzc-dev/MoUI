@@ -30,7 +30,9 @@ test "android host options select status bar layout mode" {
   assert_false(normal.status_bar_immersive())
   let immersive = AndroidHostAppOptions::new(status_bar_immersive=true)
   assert_true(immersive.status_bar_immersive())
-  assert_false(immersive.with_status_bar_immersive(false).status_bar_immersive())
+  assert_false(
+    immersive.with_status_bar_immersive(false).status_bar_immersive(),
+  )
 }
 
 ///|

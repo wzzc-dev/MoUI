@@ -7,8 +7,7 @@ macOS 服务桥通过 `NSPasteboard` 路由文本剪贴板请求，通过 `NSWor
 原生应用入口点在创建宿主 driver 之前把报告的外观应用到运行时环境，因此组件在首次构建时就能看到系统配色方案。本地 window 后端发出 AppKit theme-change 事件时，它们使用共享 `HostEvent::ThemeChanged` 运行时路径。
 右键上下文菜单请求使用同一 `NSMenu` 路径，并通过 `HostRuntimeDriver` 分派选中的 `ActionCommand`。
 本地 `window/macos` 后端发出的文件拖放事件会通过 `HostEvent::DragDrop` 归一化，并分派给 `View::on_file_drop` 目标。
-原生 WGPU 诊断可以使用共享 Moon Cosmic provider 或 CoreText/CoreGraphics provider；Objective-C CoreText stub 位于 `render/wgpu/coretext`，可选择/组合的 Cosmic provider 位于 `render/wgpu/cosmic_text`。入口通过 `@wgpu_renderer.native(text_engine=...)` 选择文本引擎，再与 `@macos_host.entry(options=...)` 组合。`core` 仍只拥有中立 `FontSpec`、`TextSystem` 契约和确定性 fallback 文本系统。
-`examples/showcase/macos_wgpu` 和 `examples/showcase/macos_wgpu_cosmic` 入口点仍是 WGPU 诊断；`macos_wgpu_cosmic` 显式选择 `MoonCosmic`，用于与 WGPU CoreText 路径比较。
+原生 WGPU 诊断的 canonical `examples/showcase/macos_wgpu` 路线使用 CoreText/CoreGraphics provider，并把 Moon Cosmic 作为内部 fallback；Objective-C CoreText stub 位于 `render/wgpu/coretext`，fallback provider 位于 `render/wgpu/cosmic_text`。`core` 仍只拥有中立 `FontSpec`、`TextSystem` 契约和确定性 fallback 文本系统。
 `AppBuilder::run_async_pump` 使用 `backend/macos` 提供的可选异步 launch closure，让 `examples/mo_workbench/macos_skia` 将窗口 pump 与其传输 worker 交错运行。
 
 通过导入 `wzzc-dev/moui/render/skia`、向 AppBuilder 添加 `@render_skia.from_env()`，并在 `@macos.entry` 中捕获 `MacosHostAppOptions` 来选择原生主线 Skia renderer。factory 创建 `render/skia.SkiaRasterRenderer`，在物理像素 CPU 光栅表面中绘制，按宿主缩放因子缩放 canvas，在每帧后读回 premultiplied 像素，并发送给 macOS presenter。Objective-C presenter 从像素字节构建 `CGImage`，并把它安装到附加在 content view 上的专用 `NSImageView`。Skia factory 默认使用与 Windows 和 Linux 相同的系统 `FontMgr` 文本路径。该路径与实验性的 `render/wgpu` factory 分离；Skia 是 renderer 包，不是 host-core 变体。

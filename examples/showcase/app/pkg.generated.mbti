@@ -7,17 +7,13 @@ import {
   "examples/showcase/app/patterns",
   "examples/showcase/app/platform",
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/render",
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui/views/navigation",
   "wzzc-dev/moui/views/style",
 }
 
 // Values
-pub fn action_command_map() -> @core.ActionCommandMap
-
 pub fn global_catalog_groups() -> Array[CatalogGroup]
 
 pub fn global_catalog_items() -> Array[CatalogItem]
@@ -48,8 +44,7 @@ pub struct ShowcaseApp {
 }
 pub fn ShowcaseApp::new() -> Self
 pub fn ShowcaseApp::program(Self) -> @core.Program[ShowcaseModel, ShowcaseMsg]
-pub fn ShowcaseApp::program_with_host(Self, @host.HostCapabilitySummary, services? : @host.HostAppServices, timer_source? : @runtime.HostTimerSource?, window_events? : @runtime.HostWindowEventSource?, route? : String) -> @core.Program[ShowcaseModel, ShowcaseMsg]
-pub fn ShowcaseApp::program_with_host_summary(Self, @host.HostCapabilitySummary) -> @core.Program[ShowcaseModel, ShowcaseMsg]
+pub fn ShowcaseApp::program_with_environment(Self, diagnostics_input? : @diagnostics.ShowcaseDiagnosticsInput, environment? : @services.AppEnvironment, route? : String) -> @core.Program[ShowcaseModel, ShowcaseMsg]
 pub fn ShowcaseApp::program_with_initial_route(Self, String) -> @core.Program[ShowcaseModel, ShowcaseMsg]
 
 pub(all) struct ShowcaseModel {
@@ -60,7 +55,7 @@ pub(all) struct ShowcaseModel {
   mobile_showing_detail : Bool
   sidebar_scroll : @core.ScrollState
   detail_scroll : @core.ScrollState
-  host_summary : @host.HostCapabilitySummary
+  diagnostics_input : @diagnostics.ShowcaseDiagnosticsInput
   components : @components.ComponentGalleryModel
   patterns : @patterns.Model
   platform : @platform.Model
@@ -72,23 +67,22 @@ pub fn ShowcaseModel::current_catalog_item(Self) -> CatalogItem?
 pub fn ShowcaseModel::current_route(Self) -> ShowcaseRoute
 pub fn ShowcaseModel::current_route_string(Self) -> String
 pub fn ShowcaseModel::filtered_catalog_items(Self) -> Array[CatalogItem]
-pub fn ShowcaseModel::new(host_summary? : @host.HostCapabilitySummary, route? : String) -> Self
+pub fn ShowcaseModel::new(diagnostics_input? : @diagnostics.ShowcaseDiagnosticsInput, route? : String) -> Self
 pub fn ShowcaseModel::program(Self) -> @core.Program[Self, ShowcaseMsg]
-pub fn ShowcaseModel::program_with_route_host(Self, ShowcaseRouteHost) -> @core.Program[Self, ShowcaseMsg]
-pub fn ShowcaseModel::subscriptions(Self, route_host? : ShowcaseRouteHost?) -> @core.Subscription[ShowcaseMsg]
+pub fn ShowcaseModel::program_with_environment(Self, @services.AppEnvironment) -> @core.Program[Self, ShowcaseMsg]
+pub fn ShowcaseModel::program_with_route_host(Self, ShowcaseRouteHost, environment? : @services.AppEnvironment) -> @core.Program[Self, ShowcaseMsg]
+pub fn ShowcaseModel::subscriptions(Self, route_host? : ShowcaseRouteHost?, timer_source? : @services.TimerSource?) -> @core.Subscription[ShowcaseMsg]
 pub fn ShowcaseModel::update(Self, ShowcaseMsg) -> Self
 pub fn ShowcaseModel::update_with_effect(Self, ShowcaseMsg, route_host? : ShowcaseRouteHost?) -> (Self, @core.Effect[ShowcaseMsg])
 pub fn ShowcaseModel::view(Self, @core.ViewEnvironment) -> @core.View[ShowcaseMsg]
-pub fn ShowcaseModel::with_host_summary(Self, @host.HostCapabilitySummary) -> Self
-pub fn ShowcaseModel::with_platform_host(Self, services? : @host.HostAppServices, timer_source? : @runtime.HostTimerSource?, window_events? : @runtime.HostWindowEventSource?) -> Self
-pub fn ShowcaseModel::with_renderer_providers(Self, Array[@render.RendererProvider]) -> Self
+pub fn ShowcaseModel::with_diagnostics_input(Self, @diagnostics.ShowcaseDiagnosticsInput) -> Self
 
 pub(all) enum ShowcaseMsg {
   Navigate(String)
   RouteBack
   RouteForward
   OpenRouteLink(String)
-  HostRouteChanged(@runtime.HostRouteEvent)
+  HostRouteChanged(@services.RouteEvent)
   SelectWorkspace(Workspace)
   NavQueryChanged(String)
   ShowMobileCatalog
@@ -117,10 +111,10 @@ pub(all) enum ShowcaseRouteHistoryCommand {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct ShowcaseRouteHost {
-  route_source : @runtime.HostRouteSource
+  route_source : @services.RouteSource
   dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit
 }
-pub fn ShowcaseRouteHost::new(route_source~ : @runtime.HostRouteSource, dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit) -> Self
+pub fn ShowcaseRouteHost::new(route_source~ : @services.RouteSource, dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit) -> Self
 
 pub(all) enum Workspace {
   Components

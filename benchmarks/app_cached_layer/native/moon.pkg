@@ -2,7 +2,6 @@ import {
   "moonbitlang/core/env",
   "examples/markdown_editor/app" @markdown,
   "examples/showcase/app" @showcase,
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/render",

@@ -177,6 +177,29 @@ test "host window open requests default to main scene" {
 }
 
 ///|
+test "host window completion observers receive results and can unsubscribe" {
+  let queue = HostWindowRequestQueue::new()
+  let observed : Array[HostWindowRequestCompletion] = []
+  let unsubscribe = queue.subscribe_completed(completion => {
+    observed.push(completion)
+  })
+  let request = HostWindowRequest::FocusWindow(HostWindowId::new(7))
+  queue.record_result(
+    request,
+    HostWindowRequestResult::WindowUpdated(HostWindowId::new(7)),
+  )
+  inspect(observed.length(), content="1")
+  inspect(queue.completed_count(), content="1")
+  unsubscribe()
+  queue.record_result(
+    request,
+    HostWindowRequestResult::WindowRejected("closed"),
+  )
+  inspect(observed.length(), content="1")
+  inspect(queue.completed_count(), content="2")
+}
+
+///|
 test "host window request queue drains platform-neutral window requests" {
   let queue = HostWindowRequestQueue::new()
   inspect(queue.is_empty(), content="true")

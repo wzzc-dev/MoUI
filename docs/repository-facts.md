@@ -18,6 +18,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_agent_mcp |
 | ./examples/agent_counter |
 | ./tools |
+| ./tools_product |
 | ./moui_cli |
 | ./moui_skia |
 | ./moui_theme |
@@ -28,6 +29,7 @@ This file is generated from repository manifests and validator reports.
 | ./examples/button_freeze_probe |
 | ./examples/showcase |
 | ./examples/design_systems |
+| ./examples/excel |
 | ./examples/markdown_editor |
 | ./examples/pdf_workbench |
 | ./examples/settings |
@@ -52,10 +54,10 @@ This file is generated from repository manifests and validator reports.
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 35 | 10 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 863 | 468 | 35 |
-| core (moui/core/pkg.generated.mbti) | 2094 | 615 | 177 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 823 | 450 | 32 |
+| core (moui/core/pkg.generated.mbti) | 2103 | 620 | 177 |
 | views facade (moui/views/pkg.generated.mbti) | 610 | 293 | 0 |
-| host contracts (moui/backend/host/pkg.generated.mbti) | 671 | 240 | 44 |
+| host contracts (moui/backend/host/pkg.generated.mbti) | 651 | 208 | 45 |
 | renderer facade (moui/render/pkg.generated.mbti) | 979 | 345 | 50 |
 | skia renderer (moui/render/skia/pkg.generated.mbti) | 232 | 122 | 6 |
 | sun renderer (moui/render/sun/pkg.generated.mbti) | 241 | 144 | 1 |
@@ -74,6 +76,7 @@ This file is generated from repository manifests and validator reports.
 | Button Freeze Probe | examples/button_freeze_probe | no |
 | Showcase | examples/showcase | yes |
 | Design Systems | examples/design_systems | no |
+| Excel Viewer | examples/excel | yes |
 | Markdown Editor | examples/markdown_editor | yes |
 | PDF Workbench | examples/pdf_workbench | no |
 | Settings | examples/settings | no |

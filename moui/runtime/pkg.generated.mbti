@@ -48,8 +48,6 @@ pub fn[Msg] subscription_plan_summary(@core.Subscription[Msg]) -> SubscriptionPl
 
 pub fn sync_platform_view_plugins(Array[@host.PlatformViewPlugin], UInt64, @core.DrawFrame, content_offset? : Double) -> Unit
 
-pub fn timer_host_source(start~ : (FuncRef[(() -> Unit) -> Unit], Double, () -> Unit) -> UInt64, cancel~ : (UInt64) -> Unit, clock? : (() -> Double)?) -> HostTimerSource
-
 pub fn to_host_id(@render.RenderWindowId) -> @host.HostWindowId
 
 pub fn to_render_id(@host.HostWindowId) -> @render.RenderWindowId
@@ -118,7 +116,6 @@ pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
 pub fn AppRuntime::read_semantics(Self, since? : @core.SemanticsGeneration) -> Result[SemanticsRead, SemanticsReadError]
 pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
 pub fn AppRuntime::scroll_to_key(Self, String, alignment? : @core.ScrollAlignment) -> Bool
-pub fn AppRuntime::set_action_commands(Self, @core.ActionCommandMap) -> Unit
 pub fn AppRuntime::set_environment(Self, @core.Environment) -> Unit
 pub fn AppRuntime::set_event_observer(Self, (@core.AppEvent) -> Unit) -> Unit
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
@@ -200,37 +197,6 @@ pub fn HostPlatformEventSources::new(host_events? : HostEventSource, window_even
 pub fn HostPlatformEventSources::publish(Self, window_id~ : @host.HostWindowId, event~ : @host.HostEvent) -> HostPlatformEventPublishResult
 pub fn HostPlatformEventSources::window_events(Self) -> HostWindowEventSource
 
-pub(all) struct HostRouteEvent {
-  location : HostRouteLocation
-  source : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostRouteEvent::from_route(route~ : String, source? : String) -> Self
-pub fn HostRouteEvent::new(location~ : HostRouteLocation, source? : String) -> Self
-pub fn HostRouteEvent::route(Self) -> String
-
-pub(all) struct HostRouteLocation {
-  path : String
-  query : Array[HostRouteQueryParam]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostRouteLocation::new(path~ : String, query? : Array[HostRouteQueryParam]) -> Self
-pub fn HostRouteLocation::parse(String) -> Self
-pub fn HostRouteLocation::query_value(Self, String) -> String?
-pub fn HostRouteLocation::to_route(Self) -> String
-
-pub(all) struct HostRouteQueryParam {
-  key : String
-  value : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostRouteQueryParam::new(key~ : String, value~ : String) -> Self
-
-pub struct HostRouteSource {
-  // private fields
-}
-pub fn HostRouteSource::active_handler_count(Self) -> Int
-pub fn HostRouteSource::new() -> Self
-pub fn HostRouteSource::publish(Self, HostRouteEvent) -> Int
-pub fn[Msg] HostRouteSource::subscription(Self, key? : String, label? : String, map~ : (HostRouteEvent) -> Msg?) -> @core.Subscription[Msg]
-
 pub(all) struct HostRuntimeDriver {
   runtime : AppRuntime
   scheduler : RedrawScheduler
@@ -260,12 +226,6 @@ pub fn HostRuntimeDriver::set_redraw_scheduler(Self, () -> Unit) -> Unit
 pub fn HostRuntimeDriver::set_text_system(Self, @core.TextSystem) -> Unit
 pub fn HostRuntimeDriver::show_context_menu(Self, @host.HostServiceBridge) -> @host.HostEventResult
 pub fn HostRuntimeDriver::size(Self) -> @core.Size
-
-pub struct HostTimerSource {
-  // private fields
-}
-pub fn HostTimerSource::new(start_timer~ : (Double, (@core.Frame) -> Unit) -> (() -> Unit)?) -> Self
-pub fn[Msg] HostTimerSource::subscription(Self, interval_ms~ : Double, key? : String, label? : String, map~ : (@core.Frame) -> Msg) -> @core.Subscription[Msg]
 
 pub(all) struct HostWallClock {
   year : Int

@@ -169,7 +169,9 @@ fn ShowcaseModel::capability_card(
   let list_height = max_showcase_double(56.0, height - 72.0)
   let rows : Array[@moui.View[ShowcaseMsg]] = []
   let visible_limit = max_showcase_int(1, (list_height / 42.0).to_int())
-  let entries = capability_card_entries(self.renderer_providers)
+  let entries = capability_card_entries(
+    self.diagnostics_input.renderer_features,
+  )
   let mut visible_count = 0
   for entry in entries {
     if visible_count < visible_limit {
@@ -214,19 +216,19 @@ fn ShowcaseModel::host_capability_card(
     120.0,
     width - theme.spacing_scale.lg * 2.0,
   )
-  let summary = self.host_summary
+  let summary = self.diagnostics_input.host
   let rows = [
     host_capability_row(
       "Services",
-      "\{summary.service_count()}/5",
-      host_service_summary(summary.services),
+      "\{summary.service_count}/\{summary.service_capacity}",
+      host_label_summary(summary.service_labels, empty="no services"),
       theme,
       inner_width,
     ),
     host_capability_row(
       "Input",
-      "\{summary.input_count()}/7",
-      host_input_summary(summary),
+      "\{summary.input_count}/\{summary.input_capacity}",
+      host_label_summary(summary.input_labels, empty="no input"),
       theme,
       inner_width,
     ),
@@ -254,7 +256,7 @@ fn ShowcaseModel::host_capability_card(
         .font(theme.typography.control)
         .foreground(theme.palette.foreground),
         text(
-          summary.label + " / " + summary.backend.label(),
+          summary.label + " / " + summary.backend_label,
           width=inner_width,
           height=22.0,
         )
@@ -309,17 +311,6 @@ fn host_capability_row(
 }
 
 ///|
-fn host_service_summary(capabilities : @host.HostServiceCapabilities) -> String {
-  host_label_summary(capabilities.enabled_labels(), empty="no services")
-}
-
-///|
-fn host_input_summary(summary : @host.HostCapabilitySummary) -> String {
-  let labels = summary.input.enabled_labels()
-  host_label_summary(labels, empty="no input")
-}
-
-///|
 fn host_label_summary(labels : Array[String], empty~ : String) -> String {
   if labels.is_empty() {
     empty
@@ -343,34 +334,19 @@ fn host_label_summary(labels : Array[String], empty~ : String) -> String {
 
 ///|
 fn capability_card_entries(
-  providers : Array[@render.RendererProvider],
-) -> Array[@render.RendererFeatureCapability] {
-  let primary : Array[@render.RendererFeatureCapability] = []
-  let secondary : Array[@render.RendererFeatureCapability] = []
-  let complete : Array[@render.RendererFeatureCapability] = []
-  for entry in @render.renderer_feature_capability_report(providers) {
-    if capability_has_partial_or_gap(entry) {
-      primary.push(entry)
-    } else if entry.needs_follow_up() {
-      secondary.push(entry)
-    } else {
-      complete.push(entry)
+  entries : Array[ShowcaseRendererFeatureDiagnostic],
+) -> Array[ShowcaseRendererFeatureDiagnostic] {
+  let primary : Array[ShowcaseRendererFeatureDiagnostic] = []
+  let secondary : Array[ShowcaseRendererFeatureDiagnostic] = []
+  let complete : Array[ShowcaseRendererFeatureDiagnostic] = []
+  for entry in entries {
+    match entry.priority {
+      GapOrPartial => primary.push(entry)
+      FollowUp => secondary.push(entry)
+      Complete => complete.push(entry)
     }
   }
   primary + secondary + complete
-}
-
-///|
-fn capability_has_partial_or_gap(
-  entry : @render.RendererFeatureCapability,
-) -> Bool {
-  entry.providers.any(capability => {
-    match capability.status {
-      @render.RendererFeatureStatus::Partial
-      | @render.RendererFeatureStatus::Gap => true
-      _ => false
-    }
-  })
 }
 
 ///|
@@ -554,7 +530,7 @@ fn ShowcaseModel::vector_path_card(
 
 ///|
 fn capability_row(
-  entry : @render.RendererFeatureCapability,
+  entry : ShowcaseRendererFeatureDiagnostic,
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
@@ -565,7 +541,7 @@ fn capability_row(
   )
   row(
     [
-      text(entry.feature.label(), width=feature_width, height=38.0)
+      text(entry.feature_label, width=feature_width, height=38.0)
       .font(theme.typography.caption)
       .foreground(theme.palette.foreground),
       capability_status_view(entry, theme, status_width),
@@ -577,7 +553,7 @@ fn capability_row(
 
 ///|
 fn capability_status_view(
-  entry : @render.RendererFeatureCapability,
+  entry : ShowcaseRendererFeatureDiagnostic,
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
@@ -585,15 +561,14 @@ fn capability_status_view(
   let row_height = if providers.length() <= 2 { 18.0 } else { 13.0 }
   let rows : Array[@moui.View[ShowcaseMsg]] = []
   for provider in providers {
-    let status = provider.status
     rows.push(
       text(
-        provider.provider_id + " " + status.label(),
+        provider.provider_id + " " + provider.status_label,
         width~,
         height=row_height,
       )
       .font(theme.typography.caption)
-      .foreground(capability_status_color(status, theme)),
+      .foreground(capability_status_color(provider.needs_follow_up, theme)),
     )
   }
   column(rows, spacing=1.0, align=@views.CrossAlign::Start)
@@ -601,10 +576,10 @@ fn capability_status_view(
 
 ///|
 fn capability_status_color(
-  status : @render.RendererFeatureStatus,
+  needs_follow_up : Bool,
   theme : @moui.Theme,
 ) -> @graphics.Color {
-  if status.needs_follow_up() {
+  if needs_follow_up {
     theme.palette.primary
   } else {
     theme.palette.muted

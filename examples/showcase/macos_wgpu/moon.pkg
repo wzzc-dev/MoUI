@@ -1,12 +1,10 @@
 import {
-  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui/render/wgpu" @render_wgpu,
   "wzzc-dev/moui/render/wgpu/coretext" @wgpu_coretext,
   "wzzc-dev/moui/render/wgpu/cosmic_text" @wgpu_cosmic,
-  "examples/showcase/app",
+  "examples/showcase/composition",
 }
 
 supported_targets = "native"

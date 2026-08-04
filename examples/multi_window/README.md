@@ -13,7 +13,7 @@ This example demonstrates MoUI's host-managed scene model and the app-facing
   request shape is still visible in tests and queue drains.
 - **Increment shared** updates app-owned shared state. Scenes do not share a
   runtime; reopen the inspector to snapshot a new payload string.
-- On **macOS / Windows / Linux**, Open creates a second native window.
+- On the retained **macOS** entrypoint, Open creates a second native window.
 - On **Web**, Open creates a second independent canvas in the current page (not
   a browser popup or tab).
 - **Mobile** embedded-session hosts do not support this multi-window model.
@@ -22,8 +22,6 @@ This example demonstrates MoUI's host-managed scene model and the app-facing
 
 ```sh
 moon run examples/multi_window/macos_skia --target native
-moon run examples/multi_window/windows_skia --target native
-moon run examples/multi_window/linux_skia --target native
 moon build examples/multi_window/web_wasm --target wasm-gc
 moon test examples/multi_window/app --target native
 ```

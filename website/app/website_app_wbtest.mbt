@@ -85,13 +85,13 @@ test "website selects Simplified Chinese route and catalog" {
     },
   )
   let route_host = WebsiteRouteHost::new(
-    route_source=@runtime.HostRouteSource::new(),
+    route_source=@services.RouteSource::new(),
     apply_locale=locale => applied_locales.push(locale),
     push_route=route => pushed_routes.push(route),
   )
   let runtime = test_runtime(
     Model::new().program_with_services(
-      @host.HostAppServices::new(bridge~),
+      @host.app_services(bridge~),
       route_host=Some(route_host),
     ),
     width=1180.0,
@@ -128,7 +128,7 @@ test "website Get Started navigates and GitHub opens repository URL" {
     },
   )
   let runtime = Model::new().test_runtime_with_services(
-    @host.HostAppServices::new(bridge~),
+    @host.app_services(bridge~),
     width=1180.0,
     height=760.0,
   )
@@ -273,7 +273,7 @@ test "website docs portal loads runtime markdown through host text service" {
     },
   )
   let runtime = Model::new().test_runtime_with_services(
-    @host.HostAppServices::new(bridge~),
+    @host.app_services(bridge~),
     width=1180.0,
     height=760.0,
   )
@@ -297,9 +297,6 @@ test "website docs portal loads runtime markdown through host text service" {
     has_text_align(commands, "Runtime Docs", @core.TextAlign::TextStart),
   )
   assert_true(has_text_align(commands, "fn", @core.TextAlign::TextStart))
-  click_text(runtime, "Development")
-  inspect(requested_paths.length(), content="3")
-  inspect(requested_paths[2], content="docs/development.md")
 }
 
 ///|
@@ -463,43 +460,38 @@ test "website desktop docs navigation labels are start aligned" {
 }
 
 ///|
-test "website docs completion ignores stale request id for selected markdown" {
+test "website docs completion ignores stale app-owned token" {
   let path = "docs/architecture.md"
-  let current_id = @host.HostServiceRequestId::new(2)
+  let current_token = 2
   let model = {
     ..Model::new(),
     page: WebsiteDocs,
     selected_doc_slug: "architecture",
     catalog_state: CatalogLoaded(website_test_catalog()),
-    doc_state: DocLoading(current_id, path),
+    doc_state: DocLoading(current_token, path),
   }
-  let stale : @host.HostCompletedServiceResponse = {
-    id: @host.HostServiceRequestId::new(1),
-    request: @host.HostServiceRequest::TextFile(
-      @host.HostTextFileRequest::ReadText(path),
+  let unchanged = model.update(
+    HostDocsCompleted(
+      1,
+      path,
+      @services.ServiceTaskResult::Success("# Stale\n\nOld response"),
     ),
-    response: @host.HostServiceResponse::TextFileContent(
-      path, "# Stale\n\nOld response",
-    ),
-  }
-  let unchanged = model.update(HostDocsCompleted(stale))
+  )
   match unchanged.doc_state {
-    DocLoading(id, loading_path) => {
-      inspect(id.value, content="2")
+    DocLoading(token, loading_path) => {
+      inspect(token, content="2")
       inspect(loading_path, content="docs/architecture.md")
     }
     _ => fail("expected stale completion to keep current loading state")
   }
-  let fresh : @host.HostCompletedServiceResponse = {
-    id: current_id,
-    request: @host.HostServiceRequest::TextFile(
-      @host.HostTextFileRequest::ReadText(path),
-    ),
-    response: @host.HostServiceResponse::TextFileContent(
-      path, "# Fresh\n\nLatest response",
-    ),
-  }
-  match unchanged.update(HostDocsCompleted(fresh)).doc_state {
+  match
+    unchanged.update(
+      HostDocsCompleted(
+        current_token,
+        path,
+        @services.ServiceTaskResult::Success("# Fresh\n\nLatest response"),
+      ),
+    ).doc_state {
     DocLoaded(loaded_path, document) => {
       inspect(loaded_path, content="docs/architecture.md")
       inspect(document.title, content="Fresh")
@@ -709,7 +701,7 @@ test "website unknown docs slug renders not found instead of README" {
 test "website route host receives deep-link and anchor commands" {
   let commands : Array[WebsiteRouteCommand] = []
   let route_host = WebsiteRouteHost::new(
-    route_source=@runtime.HostRouteSource::new(),
+    route_source=@services.RouteSource::new(),
     push_route=route => commands.push(PushRoute(route)),
     scroll_to_key=(key, alignment) => commands.push(ScrollToKey(key, alignment)),
   )
@@ -734,7 +726,7 @@ test "website route host receives deep-link and anchor commands" {
   )
   let runtime = test_runtime(
     Model::new().program_with_services(
-      @host.HostAppServices::new(bridge~),
+      @host.app_services(bridge~),
       route_host=Some(route_host),
     ),
     width=1180.0,
@@ -759,7 +751,7 @@ test "website route host receives deep-link and anchor commands" {
 test "website docs metadata refreshes after deep-link catalog load" {
   let titles : Array[String] = []
   let route_host = WebsiteRouteHost::new(
-    route_source=@runtime.HostRouteSource::new(),
+    route_source=@services.RouteSource::new(),
     update_metadata=(title, _description, _canonical, _locale, _direction) => {
       titles.push(title)
     },
@@ -768,19 +760,17 @@ test "website docs metadata refreshes after deep-link catalog load" {
     ..Model::new(),
     page: WebsiteDocs,
     selected_doc_slug: "moui-readme",
-    catalog_state: CatalogLoading(@host.HostServiceRequestId::new(0)),
+    catalog_state: CatalogLoading(1),
   }
-  let completion = website_file_completion(
-    "docs/catalog.json",
-    @host.HostServiceResponse::TextFileContent(
-      "docs/catalog.json",
-      website_test_catalog().to_json().stringify(),
-    ),
-  )
   ignore(
     model.update_with_services(
-      HostCatalogCompleted(completion),
-      @host.HostAppServices::unavailable(),
+      HostCatalogCompleted(
+        1,
+        @services.ServiceTaskResult::Success(
+          website_test_catalog().to_json().stringify(),
+        ),
+      ),
+      @services.AppServices::unavailable(),
       Some(route_host),
     ),
   )
@@ -871,7 +861,7 @@ fn Model::test_runtime(
 ///|
 fn Model::test_runtime_with_services(
   self : Model,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {

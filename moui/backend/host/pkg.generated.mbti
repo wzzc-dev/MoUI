@@ -3,10 +3,15 @@ package "wzzc-dev/moui/backend/host"
 
 import {
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/services",
   "wzzc-dev/window/dpi",
 }
 
 // Values
+pub fn app_environment(bridge~ : HostServiceBridge, async_queue? : HostServiceAsyncQueue?, timer? : @services.TimerSource?, routes? : @services.RouteSource?) -> @services.AppEnvironment
+
+pub fn app_services(bridge~ : HostServiceBridge, async_queue? : HostServiceAsyncQueue?) -> @services.AppServices
+
 pub fn core_size_to_window_surface_size(@wzzc-dev/moui/core.Size) -> @dpi.Size
 
 pub fn element_state_pressed(@wzzc-dev/window/core.ElementState) -> Bool
@@ -66,45 +71,6 @@ pub(all) struct HostAppInfo {
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostAppInfo::new(backend~ : HostBackendKind, description? : String, uses_shared_event_model? : Bool, uses_shared_surface_model? : Bool, uses_shared_input_model? : Bool) -> Self
-
-pub struct HostAppServices {
-  bridge : HostServiceBridge
-  async_queue : HostServiceAsyncQueue?
-}
-pub fn HostAppServices::capabilities(Self) -> HostServiceCapabilities
-pub fn HostAppServices::complete(Self, HostServiceRequestId, HostServiceResponse) -> Bool
-pub fn HostAppServices::completed_count(Self) -> Int
-pub fn[Msg] HostAppServices::completion_subscription(Self, HostServiceRequestId, map~ : (HostCompletedServiceResponse) -> Msg, key? : String, kind? : String, label? : String) -> @wzzc-dev/moui/core.Subscription[Msg]
-pub fn HostAppServices::dispatch(Self, HostServiceRequest) -> HostServiceResponse
-pub fn HostAppServices::drain_completed(Self) -> Array[HostCompletedServiceResponse]
-pub fn HostAppServices::drain_pending(Self) -> Array[HostPendingServiceRequest]
-pub fn HostAppServices::file_dialog(Self, HostFileDialogOptions) -> HostServiceResponse
-pub fn HostAppServices::has_async_queue(Self) -> Bool
-pub fn HostAppServices::in_flight_count(Self) -> Int
-pub fn HostAppServices::list_directory(Self, String) -> HostServiceResponse
-pub fn HostAppServices::new(bridge~ : HostServiceBridge, async_queue? : HostServiceAsyncQueue?) -> Self
-pub fn HostAppServices::on_completed(Self, HostServiceRequestId, (HostCompletedServiceResponse) -> Unit) -> Bool
-pub fn HostAppServices::open_file(Self, title? : String, filters? : Array[String]) -> HostServiceResponse
-pub fn HostAppServices::open_url(Self, String) -> HostServiceResponse
-pub fn HostAppServices::outstanding_count(Self) -> Int
-pub fn HostAppServices::pending_count(Self) -> Int
-pub fn HostAppServices::pick_directory(Self, title? : String) -> HostServiceResponse
-pub fn HostAppServices::read_binary_file(Self, String) -> HostServiceResponse
-pub fn HostAppServices::read_clipboard_image(Self) -> HostServiceResponse
-pub fn HostAppServices::read_clipboard_text(Self) -> HostServiceResponse
-pub fn HostAppServices::read_text_file(Self, String) -> HostServiceResponse
-pub fn HostAppServices::reject(Self, HostServiceRequestId, String) -> Bool
-pub fn HostAppServices::request_system_theme(Self) -> HostServiceResponse
-pub fn HostAppServices::save_file(Self, title? : String, default_name? : String?, filters? : Array[String]) -> HostServiceResponse
-pub fn HostAppServices::set_application_menu(Self, Array[HostApplicationMenu]) -> HostServiceResponse
-pub fn HostAppServices::show_context_menu(Self, Array[@wzzc-dev/moui/core.ActionCommand]) -> HostServiceResponse
-pub fn HostAppServices::system_theme(Self) -> @wzzc-dev/moui/core.ColorScheme?
-pub fn HostAppServices::take_completed(Self, HostServiceRequestId) -> HostCompletedServiceResponse?
-pub fn HostAppServices::unavailable() -> Self
-pub fn HostAppServices::write_binary_file(Self, String, Bytes) -> HostServiceResponse
-pub fn HostAppServices::write_clipboard_image(Self, String, Bytes) -> HostServiceResponse
-pub fn HostAppServices::write_clipboard_text(Self, String) -> HostServiceResponse
-pub fn HostAppServices::write_text_file(Self, String, String) -> HostServiceResponse
 
 pub(all) struct HostApplicationMenu {
   title : String
@@ -354,9 +320,10 @@ pub(all) struct HostServiceCapabilities {
   file_access : Bool
   open_url : Bool
   system_theme : Bool
+  settings : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostServiceCapabilities::enabled_labels(Self) -> Array[String]
-pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, file_access? : Bool, open_url? : Bool, system_theme? : Bool) -> Self
+pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, file_access? : Bool, open_url? : Bool, system_theme? : Bool, settings? : Bool) -> Self
 pub fn HostServiceCapabilities::none() -> Self
 
 pub struct HostServiceHandler {
@@ -372,6 +339,7 @@ pub(all) enum HostServiceKind {
   BinaryFileService
   OpenUrlService
   SystemThemeService
+  SettingsService
   DirectoryListingService
   PlatformChannelService
 } derive(Eq, ToJson, @debug.Debug)
@@ -385,6 +353,7 @@ pub(all) enum HostServiceRequest {
   BinaryFile(HostBinaryFileRequest)
   OpenUrl(String)
   QuerySystemTheme
+  Settings(HostSettingsRequest)
   ListDirectory(String)
   PlatformChannel(PlatformChannelRequest)
 } derive(Eq, ToJson, @debug.Debug)
@@ -412,11 +381,20 @@ pub(all) enum HostServiceResponse {
   BinaryFileWritten(String)
   UrlOpened
   SystemTheme(@wzzc-dev/moui/core.ColorScheme)
+  SettingValue(String?)
+  SettingWritten
+  SettingRemoved
   DirectoryListing(String, Array[HostDirectoryEntry])
   PlatformChannel(PlatformChannelResponse)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostServiceResponse::binary_file_diagnostic(Self) -> HostBinaryFileDiagnostic?
 pub fn HostServiceResponse::is_pending(Self) -> Bool
+
+pub(all) enum HostSettingsRequest {
+  Read(String)
+  Write(String, String)
+  Remove(String)
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct HostSurfaceMetrics {
   logical_size : @wzzc-dev/moui/core.Size
@@ -539,6 +517,7 @@ pub(all) struct HostWindowRequestCompletion {
 pub struct HostWindowRequestQueue {
   mut requests : Array[HostWindowRequest]
   mut completed : Array[HostWindowRequestCompletion]
+  // private fields
 }
 pub fn HostWindowRequestQueue::close_window(Self, HostWindowId) -> Unit
 pub fn HostWindowRequestQueue::completed_count(Self) -> Int
@@ -556,6 +535,7 @@ pub fn HostWindowRequestQueue::record_result(Self, HostWindowRequest, HostWindow
 pub fn HostWindowRequestQueue::resize_window(Self, HostWindowId, HostSurfaceMetrics) -> Unit
 pub fn HostWindowRequestQueue::set_primary_window(Self, HostWindowId) -> Unit
 pub fn HostWindowRequestQueue::show_window(Self, HostWindowId) -> Unit
+pub fn HostWindowRequestQueue::subscribe_completed(Self, (HostWindowRequestCompletion) -> Unit) -> () -> Unit
 
 pub(all) enum HostWindowRequestResult {
   WindowOpened(HostWindowId)

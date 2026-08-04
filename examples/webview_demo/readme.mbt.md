@@ -1,14 +1,14 @@
 # WebView Demo
 
-A cross-platform native WebView embedding demo built with MoUI.
+A focused WebView embedding demo built with MoUI. The retained composition
+roots are macOS and Web; Windows/Linux WebView capability remains covered by
+backend tests and matching-host probes.
 
 ## Supported Platforms
 
 | Platform | Entry Point | WebView Backend | Status |
 |----------|-------------|-----------------|--------|
 | macOS    | `macos_skia` | WKWebView (via WebKit framework) | Native |
-| Windows  | `windows_skia` | Microsoft Edge WebView2 | Native (requires SDK + Evergreen Runtime) |
-| Linux    | `linux_skia` | WebKitGTK | Native (requires WebKitGTK) |
 | Web      | `web_wasm` | Unavailable | Fallback (shows "unavailable" message) |
 
 ## Features
@@ -40,46 +40,6 @@ moon run examples/webview_demo/macos_skia --target native
 
 The macOS entrypoint links against the system WebKit framework; no additional
 setup is needed.
-
-### Windows
-
-WebView2 requires the Microsoft Edge Evergreen Runtime on the target machine
-(typically pre-installed with Edge on Windows 10/11).
-
-**One-liner (from Git Bash or CMD):**
-
-```powershell
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; . .\scripts\windows\webview2_sdk.ps1; Enable-WebView2BuildEnvironment; moon run examples/webview_demo/windows_skia --target native }"
-```
-
-**Step by step (in an existing PowerShell session):**
-
-```powershell
-. .\scripts\windows\msvc_env.ps1
-. .\scripts\windows\webview2_sdk.ps1
-Enable-WebView2BuildEnvironment
-moon run examples/webview_demo/windows_skia --target native
-```
-
-The WebView2 SDK (headers + static loader library) is downloaded from NuGet
-on first use and cached under `.tools\webview2\`.  The SDK version is locked
-in `scripts\windows\webview2-sdk-lock.json` with a SHA-256 integrity check.
-
-Without WebView2 setup, the demo still compiles but reports
-"unavailable" at runtime.
-
-### Linux
-
-```sh
-moon run examples/webview_demo/linux_skia --target native
-```
-
-The Linux entrypoint requires WebKitGTK (`webkit2gtk-4.1` or `4.0`) with
-`gtk+-3.0`.  The build system auto-detects WebKitGTK via `pkg-config`;
-install `libwebkit2gtk-4.1-dev` to enable the native bridge.  Override with
-`MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` / `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS`
-environment variables for custom setups.  Without WebKitGTK, the
-demo compiles and reports "unavailable".
 
 ### Web (wasm-gc)
 

@@ -154,8 +154,11 @@ test "native code editor exposes shortcut metadata for native hosts" {
   assert_true(
     has_shortcut(commands, "Trigger Completion", "Space", control=true),
   )
-  let map_commands = code_editor_action_command_map().commands()
-  inspect(map_commands.length(), content="3")
+  let program_commands = program().runtime_commands(CodeEditorModel::new())
+  inspect(program_commands.length(), content="3")
+  inspect(program_commands[0].message() is OpenCommandPalette, content="true")
+  inspect(program_commands[1].message() is RunDiagnostics, content="true")
+  inspect(program_commands[2].message() is TriggerCompletion, content="true")
 }
 
 ///|

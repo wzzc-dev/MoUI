@@ -53,12 +53,11 @@ To run an entrypoint directly after setup:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
-powershell -ExecutionPolicy Bypass -Command "& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
-The ordinary Windows Skia entrypoints are interactive app entrypoints. Keep
+The Showcase Windows Skia route is an interactive app entrypoint. Keep
 matching-host first-frame smoke in tester/backend smoke runners rather than
-adding auto-exit flags to Showcase or Markdown Editor packages.
+adding auto-exit flags to the composition root.
 
 ## Link Flags
 
@@ -118,15 +117,10 @@ the shared single-channel raster parser. Its native stub advertises the
 DirectWrite integration point while returning no platform layout/raster data,
 so the composed Cosmic fallback handles native text until the real DirectWrite
 engine lands. Choose `MoonCosmic` through the factory's `text_engine` argument.
-The `examples/showcase/windows_wgpu` and `examples/showcase/windows_wgpu_cosmic`
-entrypoints remain WGPU diagnostics; `windows_wgpu_cosmic` selects `MoonCosmic`
-explicitly for comparison with the WGPU DirectWrite scaffold plus Cosmic
-fallback path. The `examples/showcase/windows_skia` entrypoint selects the
-Windows Skia provider for the mainline Showcase, and
-`examples/markdown_editor/windows_skia` selects it for the mainline editing
-workflow.
-The Markdown Editor also has `examples/markdown_editor/windows_wgpu_cosmic` for the
-same explicit text-provider comparison on the editing workflow.
+The canonical `examples/showcase/windows_wgpu` entrypoint remains a WGPU
+diagnostic; it selects the DirectWrite scaffold with Moon Cosmic as its
+internal fallback. `examples/showcase/windows_skia` is the Windows Skia
+mainline and evidence application.
 
 ## Skia Renderer
 

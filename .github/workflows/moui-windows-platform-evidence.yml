@@ -5,16 +5,6 @@ on:
     - cron: "37 6 * * 2"
   workflow_dispatch:
     inputs:
-      run_showcase_smoke:
-        description: Run the Windows Skia Showcase first-frame smoke.
-        required: false
-        default: true
-        type: boolean
-      run_markdown_smoke:
-        description: Run the Windows Skia Markdown Editor first-frame smoke.
-        required: false
-        default: true
-        type: boolean
       skia_provider:
         description: Skia provider to use for MSVC smoke; release downloads the locked wzzc-dev/skia release
         type: choice
@@ -53,56 +43,19 @@ jobs:
         shell: bash
         run: ../scripts/ci-moon-update.sh
 
-      - name: Resolve release Skia environment
-        id: skia
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path logs | Out-Null
-          $envLines = .\scripts\fetch-release-skia.ps1 `
-            -Platform windows `
-            -Arch auto `
-            -Config Release `
-            -LinkMode "${{ inputs.link_mode }}" `
-            -PrintEnv
-          $envMap = @{}
-          foreach ($line in $envLines) {
-            if ($line -match '^([^=]+)=(.*)$') {
-              $envMap[$Matches[1]] = $Matches[2]
-            }
-          }
-          $envMap | Out-String | Write-Host
-          "skia_root=$($envMap['MOUI_SKIA_SKIA_ROOT'])" >> $env:GITHUB_OUTPUT
-          "skia_include=$($envMap['MOUI_SKIA_SKIA_INCLUDE'])" >> $env:GITHUB_OUTPUT
-          "skia_lib_dir=$($envMap['MOUI_SKIA_SKIA_LIB_DIR'])" >> $env:GITHUB_OUTPUT
-          "skia_lib=$($envMap['MOUI_SKIA_SKIA_LIB'])" >> $env:GITHUB_OUTPUT
-          "skia_commit=$($envMap['MOUI_SKIA_SKIA_COMMIT'])" >> $env:GITHUB_OUTPUT
-
-      - name: Run Windows platform evidence (showcase + optional markdown)
+      - name: Run Windows Showcase platform evidence
         shell: pwsh
         env:
-          MOUI_SKIA_SKIA_PROVIDER: ${{ inputs.skia_provider }}
-          MOUI_SKIA_LINK_MODE: ${{ inputs.link_mode }}
-          MOUI_SKIA_SKIA_ROOT: ${{ steps.skia.outputs.skia_root }}
-          MOUI_SKIA_SKIA_INCLUDE: ${{ steps.skia.outputs.skia_include }}
-          MOUI_SKIA_SKIA_LIB_DIR: ${{ steps.skia.outputs.skia_lib_dir }}
+          MOUI_SKIA_SKIA_PROVIDER: ${{ inputs.skia_provider || 'release' }}
+          MOUI_SKIA_LINK_MODE: ${{ inputs.link_mode || 'static' }}
         run: |
           $scriptPath = "$env:GITHUB_WORKSPACE/scripts/windows-platform-evidence.sh"
           $logDir = "$env:GITHUB_WORKSPACE/artifacts/platform-evidence/windows"
           $args = @(
             "--log-dir", $logDir,
-            "--skia-provider", "${{ inputs.skia_provider }}",
-            "--link-mode", "${{ inputs.link_mode }}"
+            "--skia-provider", $env:MOUI_SKIA_SKIA_PROVIDER,
+            "--link-mode", $env:MOUI_SKIA_LINK_MODE
           )
-          if ("${{ inputs.run_showcase_smoke }}" -eq "true") {
-            $args += "--run-showcase-smoke"
-          } else {
-            $args += "--no-showcase-smoke"
-          }
-          if ("${{ inputs.run_markdown_smoke }}" -eq "true") {
-            $args += "--run-markdown-smoke"
-          } else {
-            $args += "--no-markdown-smoke"
-          }
 
           # Initialize the MSVC environment so `moon build` can find cl/link,
           # then run the evidence script in the same command context so the
@@ -160,12 +113,11 @@ jobs:
             ""
             "Artifact: moui-windows-platform-evidence"
             "Showcase first-frame: $showcasePassed"
-            "Skia provider: ${{ inputs.skia_provider }}"
-            "Skia link mode: ${{ inputs.link_mode }}"
+            "Skia provider: ${{ inputs.skia_provider || 'release' }}"
+            "Skia link mode: ${{ inputs.link_mode || 'static' }}"
             ""
             "### Logs"
             "Preflight: artifacts/platform-evidence/windows/windows-platform-evidence-preflight.log"
             "Showcase: artifacts/platform-evidence/windows/showcase-windows-skia-first-frame.log"
-            "Markdown Editor: artifacts/platform-evidence/windows/markdown-editor-windows-skia-first-frame.log"
             "Summary: artifacts/platform-evidence/windows/windows-platform-evidence-summary.log"
           } >> $env:GITHUB_STEP_SUMMARY

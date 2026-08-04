@@ -1,8 +1,6 @@
 import {
   "moonbitlang/async",
-  "wzzc-dev/moui",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/render/skia" @render_skia,
   "examples/mo_workbench/app",

@@ -122,10 +122,7 @@ test "markdown editor settings round-trip through JSON" {
   // Serialize to JSON and decode back; the decoded settings should reflect the
   // toggles. The host file I/O is bypassed by calling the decode helper on the
   // serialized text directly.
-  let services = @host.HostAppServices::unavailable()
-  app.save_settings(services)
-  // save_settings writes through the host (unavailable here → no-op), so
-  // instead verify the in-memory settings struct round-trips via JSON.
+  // Verify the persisted value shape independently of a platform adapter.
   let original : MarkdownEditorSettings = {
     dark_mode: true,
     font_family: "Serif",

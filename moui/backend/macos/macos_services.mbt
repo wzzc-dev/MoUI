@@ -32,6 +32,22 @@ extern "C" fn macos_open_url_bytes(url : Bytes) -> Int = "moui_macos_open_url"
 extern "C" fn macos_system_theme_is_dark() -> Int = "moui_macos_system_theme_is_dark"
 
 ///|
+#borrow(key)
+extern "C" fn macos_settings_has_value(key : Bytes) -> Int = "moui_macos_settings_has_value"
+
+///|
+#borrow(key)
+extern "C" fn macos_settings_read_bytes(key : Bytes) -> Bytes = "moui_macos_settings_read"
+
+///|
+#borrow(key, value)
+extern "C" fn macos_settings_write_bytes(key : Bytes, value : Bytes) -> Int = "moui_macos_settings_write"
+
+///|
+#borrow(key)
+extern "C" fn macos_settings_remove_bytes(key : Bytes) -> Int = "moui_macos_settings_remove"
+
+///|
 #borrow(title, filters, default_name)
 extern "C" fn macos_file_dialog_bytes(
   kind : Int,
@@ -133,6 +149,7 @@ pub fn macos_service_bridge(
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_macos_file_dialog,
   text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_macos_text_file,
   binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_macos_binary_file,
+  settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_macos_settings,
   menu? : (Array[@core.ActionCommand]) -> Int = dispatch_macos_menu,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
@@ -143,6 +160,7 @@ pub fn macos_service_bridge(
       menus=true,
       open_url=true,
       system_theme=true,
+      settings=true,
     ),
     handle=request => {
       match request {
@@ -166,6 +184,8 @@ pub fn macos_service_bridge(
           dispatch_macos_application_menu(menus)
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
+        @host.HostServiceRequest::Settings(settings_request) =>
+          settings(settings_request)
         @host.HostServiceRequest::ListDirectory(path) =>
           dispatch_macos_list_directory(path)
         @host.HostServiceRequest::PlatformChannel(_) =>
@@ -173,6 +193,155 @@ pub fn macos_service_bridge(
       }
     },
   )
+}
+
+///|
+fn dispatch_macos_settings(
+  request : @host.HostSettingsRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    Read(key) => {
+      let key_bytes = @utf8.encode(key[:], bom=false)
+      if macos_settings_has_value(key_bytes) == 0 {
+        @host.HostServiceResponse::SettingValue(None)
+      } else {
+        @host.HostServiceResponse::SettingValue(
+          Some(
+            @utf8.decode_lossy(
+              macos_settings_read_bytes(key_bytes)[:],
+              ignore_bom=false,
+            ),
+          ),
+        )
+      }
+    }
+    Write(key, value) => {
+      let key_bytes = @utf8.encode(key[:], bom=false)
+      let value_bytes = @utf8.encode(value[:], bom=false)
+      if macos_settings_write_bytes(key_bytes, value_bytes) != 0 {
+        @host.HostServiceResponse::SettingWritten
+      } else {
+        @host.HostServiceResponse::Unavailable("settings write failed")
+      }
+    }
+    Remove(key) => {
+      let key_bytes = @utf8.encode(key[:], bom=false)
+      if macos_settings_remove_bytes(key_bytes) != 0 {
+        @host.HostServiceResponse::SettingRemoved
+      } else {
+        @host.HostServiceResponse::Unavailable("settings remove failed")
+      }
+    }
+  }
+}
+
+///|
+pub fn app_environment() -> @services.AppEnvironment {
+  @host.app_environment(
+    bridge=macos_service_bridge(),
+    timer=Some(macos_timer_source()),
+  )
+}
+
+///|
+/// Build the callback installed through `MacosHostAppOptions::on_ready`.
+/// AppKit replaces menus installed before launch completion, so the backend
+/// owns both that timing rule and the native shortcut conversion.
+pub fn application_menu_on_ready(
+  menus : Array[@services.ApplicationMenu],
+  runtime : @runtime.AppRuntime,
+) -> () -> Unit {
+  () => {
+    let commands = macos_application_menu_commands(menus)
+    @window_macos.set_system_menu_action_handler(fn(action_id : Int) {
+      match commands.get(action_id - 1) {
+        Some(command) => ignore(runtime.dispatch_action_command(command))
+        None => ()
+      }
+    })
+    @window_macos.set_system_menus(macos_application_menu_descriptors(menus))
+  }
+}
+
+///|
+fn macos_application_menu_commands(
+  menus : Array[@services.ApplicationMenu],
+) -> Array[@core.ActionCommand] {
+  let commands : Array[@core.ActionCommand] = []
+  for menu in menus {
+    for item in menu.items {
+      match item {
+        @services.ApplicationMenuItem::MenuCommand(command) =>
+          commands.push(command)
+        @services.ApplicationMenuItem::MenuSeparator => ()
+      }
+    }
+  }
+  commands
+}
+
+///|
+fn macos_application_menu_descriptors(
+  menus : Array[@services.ApplicationMenu],
+) -> Array[@window_macos.SystemMenuDescriptor] {
+  let next_action_id = Ref(1)
+  menus.map(menu => {
+    let items : Array[@window_macos.SystemMenuItemDescriptor] = []
+    for item in menu.items {
+      match item {
+        @services.ApplicationMenuItem::MenuSeparator =>
+          items.push(
+            @window_macos.SystemMenuItemDescriptor::new(
+              title="",
+              action_id=0,
+              key_equivalent="",
+              key_modifier_mask=-1,
+              separator=true,
+            ),
+          )
+        @services.ApplicationMenuItem::MenuCommand(command) => {
+          let action_id = next_action_id.val
+          next_action_id.val = action_id + 1
+          let (key, modifiers) = macos_application_menu_shortcut(command)
+          items.push(
+            @window_macos.SystemMenuItemDescriptor::new(
+              title=command.display_label(),
+              action_id~,
+              key_equivalent=key,
+              key_modifier_mask=modifiers,
+              separator=false,
+            ),
+          )
+        }
+      }
+    }
+    @window_macos.SystemMenuDescriptor::new(title=menu.title, items~)
+  })
+}
+
+///|
+fn macos_application_menu_shortcut(
+  command : @core.ActionCommand,
+) -> (String, Int) {
+  match command.shortcut {
+    Some(shortcut) => {
+      let mut mask = 0
+      if shortcut.modifiers.shift {
+        mask = mask + 131_072
+      }
+      if shortcut.modifiers.control {
+        mask = mask + 262_144
+      }
+      if shortcut.modifiers.alt {
+        mask = mask + 524_288
+      }
+      if shortcut.modifiers.meta {
+        mask = mask + 1_048_576
+      }
+      (shortcut.key, mask)
+    }
+    None => ("", -1)
+  }
 }
 
 ///|

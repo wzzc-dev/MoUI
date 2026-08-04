@@ -458,9 +458,6 @@ pub struct WorkbenchModel {
   /// Injected model auto-detection (calls `v1/models`). None in the portable
   /// web build; the native macOS entrypoint supplies the HTTP implementation.
   model_detect : ModelDetectFn?
-  /// Host services used for app-level platform actions such as choosing a
-  /// local workspace folder. Defaults to unavailable in portable tests/builds.
-  host_services : @host.HostAppServices
   /// Animation progress (0.0–1.0) for tab switch transitions.
   animation_progress : Double
 }
@@ -471,7 +468,6 @@ fn WorkbenchModel::new(
   settings_load? : SettingsLoadFn? = None,
   settings_persist? : SettingsPersistFn? = None,
   model_detect? : ModelDetectFn? = None,
-  host_services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
 ) -> WorkbenchModel {
   let mut settings = SettingsWorkspace::new()
   let mut appearance = AppearanceMode::System
@@ -512,7 +508,6 @@ fn WorkbenchModel::new(
     settings_load,
     settings_persist,
     model_detect,
-    host_services,
     animation_progress: 1.0,
   }
 }
@@ -632,7 +627,7 @@ pub struct MoWorkbenchApp {
   priv settings_load : SettingsLoadFn?
   priv settings_persist : SettingsPersistFn?
   priv model_detect : ModelDetectFn?
-  priv host_services : @host.HostAppServices
+  priv environment : @services.AppEnvironment
 }
 
 ///|
@@ -641,7 +636,7 @@ fn MoWorkbenchApp::new(
   settings_load? : SettingsLoadFn? = None,
   settings_persist? : SettingsPersistFn? = None,
   model_detect? : ModelDetectFn? = None,
-  host_services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> MoWorkbenchApp {
-  { backend, settings_load, settings_persist, model_detect, host_services }
+  { backend, settings_load, settings_persist, model_detect, environment }
 }

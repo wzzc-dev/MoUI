@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/views",
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/services",
   "moonbitlang/core/string",
   "examples/excel/cell",
   "examples/excel/formula",
@@ -13,6 +13,7 @@ import {
 }
 
 import {
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/core",
 } for "test"

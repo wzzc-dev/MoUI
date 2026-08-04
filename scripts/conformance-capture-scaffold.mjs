@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
-import { repoRoot, runMoonbitTool } from "./lib/moonbit-tool-runner.mjs";
+import {
+  repoRoot,
+  resolveToolPathArgs,
+  runMoonbitTool,
+} from "./lib/moonbit-tool-runner.mjs";
 
 const usage = () => {
   console.error("Usage: node scripts/conformance-capture-scaffold.mjs --mode golden|benchmark");
@@ -56,12 +60,13 @@ if (mode === "benchmark") {
   ]);
 }
 
-runMoonbitTool("tools/moui/conformance_capture_scaffold", [
-  "--mode",
-  mode,
-  "--output",
-  manifestPath,
-]);
+runMoonbitTool(
+  "tools/moui/conformance_capture_scaffold",
+  resolveToolPathArgs(
+    ["--mode", mode, "--output", manifestPath],
+    ["--output"],
+  ),
+);
 run([
   "node",
   "scripts/validate-conformance-capture-manifest.mjs",
