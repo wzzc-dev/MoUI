@@ -307,8 +307,6 @@ GitHub Actions 通过 `.github/actions/setup-moonbit` 安装 MoonBit。pinned co
 
 MoonBit 0.10.4 会将裸 `{}` 视为 empty maps / JSON objects / blocks 的歧义写法。在使用位置优先写 `Map([])`、`Json::empty_object()` 或 `{ () }`。`assert_eq` 和相关 debug helpers 现在要求 `Debug` 而不是 `Show`。
 
-Workspace member `./third_party/mizchi_image` 临时用本地 `derive(Debug)` patch 覆盖 registry `mizchi/image@0.4.2`，使 dependency checks 在 0.10.4 下通过。mooncakes 发布兼容 image release 后移除该成员（见 `third_party/mizchi_image/MOUI_PATCH.md`）。
-
 `ci.yml` 通过 checked wrappers 表达 routine gates：PR profile gate 运行 `sh scripts/check.sh --profile pr`，Linux platform contracts 运行 `sh scripts/check.sh --profile platform`。Windows MSVC job 有意把 setup、backend/provider tests 和 packaging 保持为显式 PowerShell steps；它只添加一个 wrapper contract check：
 
 ```powershell
