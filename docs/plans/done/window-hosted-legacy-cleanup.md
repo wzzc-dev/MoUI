@@ -33,7 +33,7 @@
 
 ## Follow-up
 
-`wzzc-dev/window@0.5.4-0.1.3` is not yet published in the MoonBit registry.
+`wzzc-dev/window@0.5.4-0.1.4` is not yet published in the MoonBit registry.
 The latest published `0.5.1-0.1.7-3` package lacks the mobile hosted modules,
 so the checked-in nested window workspace remains necessary until the new
 version is published. After publication, switch the workspace back to the
