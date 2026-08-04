@@ -5,17 +5,17 @@ test "window versions are extracted from every discovered consumer text" {
     [
       {
         path: "a/moon.mod",
-        text: Some("import { \"wzzc-dev/window@0.5.4-0.1.3\" }"),
+        text: Some("import { \"wzzc-dev/window@0.5.4-0.1.4\" }"),
       },
       {
         path: "nested/b/moon.mod",
-        text: Some("import { \"wzzc-dev/window@0.5.4-0.1.3\" }"),
+        text: Some("import { \"wzzc-dev/window@0.5.4-0.1.4\" }"),
       },
     ],
     None,
   )
   assert_true(result.errors.is_empty())
-  assert_eq(result.pinned, "0.5.4-0.1.3")
+  assert_eq(result.pinned, "0.5.4-0.1.4")
 }
 
 ///|
