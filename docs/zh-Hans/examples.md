@@ -6,7 +6,7 @@ TEA 形态：由 `Program::simple_with_environment` 驱动的
 Markdown 编辑器保持独立，因为它展示的是更大的编辑工作流，并带有自己的模型和
 解析器测试。需要 host-service 工作的应用应使用带 `Effect[Msg]` 的
 `Program::new`；当 host-service 桥接需要携带稳定诊断键时优先使用
-`Effect::host_service`，自定义结构化异步桥接使用 `Effect::run`，而类似服务的
+`ServiceTask::effect`，自定义结构化异步桥接使用 `Effect::run`，而类似服务的
 一次性异步任务需要 runtime 管理取消、完成和过期 dispatch 诊断时使用
 `Effect::service_task`。自定义任务类型使用 `Effect::task`。需要持续类型化回调的
 应用可以添加 `subscriptions=model => ...` 和稳定的 `Subscription` 键，同时把具体
@@ -40,19 +40,19 @@ lifecycle、surface creation 和 input，MoUI 入口负责 program 和 renderer 
 | Website | MoUI 构建的主页工作区 | `website/app/` | 双语产品主页、首屏 MoUI 品牌 hero、紧凑 Counter 代码片段、交互式运行时预览、框架基础、平台矩阵、release-readiness 卡片、Web 快速开始命令、运行时文档门户；该门户会获取打包后的同源 `docs/*.md` Markdown 以及 MoUI 和 `moui_skia` README 副本；还包含仅 Web 的 `website/web_wasm` 入口 |
 | Playground | MoonBit 原生浏览器教程和编辑器 | `website/playground/app/`, `website/playground/web_wasm/` | 使用 `moui_richtext` 构建的代码编辑器、受控 `main.mbt`/`moon.pkg` 文件、应用安全 import 验证、固定版本 MoonBit 编译器 Worker 桥接、沙盒预览宿主、本地持久化、分享 URL 协议，以及六份双语课程资产 |
 | Agent Counter | 最小 agent 可控制运行时示例 | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | 带有语义和命令意图流的 Counter 应用，用于 agent 观察和控制，另有原生 macOS Skia 入口 |
-| Counter | 最小 model/update/view 应用 | `examples/counter/app/` | 简单 `Program::simple` 流程、`center`/`card`、类型化按钮消息，以及 Android/iOS/HarmonyOS window-hosted 入口 |
-| Multi Window | 宿主管理的 scene 示例 | `examples/multi_window/app/` | 通过 `HostWindowActions`（`open` / `focus` / `close`）实现独立 main 和 inspector runtime，并配合 `HostWindowRequestQueue` 与 `HostWindowSceneResolver`，提供原生 macOS/Windows/Linux 窗口和 multi-canvas Web route |
-| HarmonyOS Demo | 独立实验性 HarmonyOS window-hosted demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_window_hosted/` | 平台中立的 viewport/tap feedback demo、HarmonyOS window-hosted 入口，以及通过 `wzzc-dev/window` template 的 HAP 打包；运行时支持仍等待匹配设备证据 |
-| Button Freeze Probe | 原生 Skia button freeze 复现 | `examples/button_freeze_probe/app/` | 最小 `data_filter_bar` 过滤 chip、红色主强调色、重复点击计数器、直接的 primary/tonal 按钮对比，以及原生 Skia macOS/Windows/Linux 入口 |
-| Showcase | 统一的组件、模式、平台和诊断目录 | `examples/showcase/app/` | 位于四个隔离包之上的根 TEA shell：Components 拥有聚焦的 `moui/views` demo；Patterns 拥有 Counter/Todo、表单、数据、导航、反馈和文本/媒体工作流；Platform 拥有 timer/window/clipboard/file/canvas 配方、route/session facts 和 Mobile Service Probe；只有 Diagnostics 会 import runtime/render internals，用于 inspector 和 advanced rendering。Web、desktop Skia/WGPU/Sun 以及 Android/iOS/HarmonyOS 入口都调用同一个 root app。Showcase 有意不依赖 `moui_theme`，也不是官方 design-system compatibility claim。 |
-| Design Systems | 附加包诊断用 source-mapped design-system 预览和第一方主题采样器 | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | 通过 `moui_theme/material`、`moui_theme/carbon`、`moui_theme/primer` 和 `moui_theme/fluent` 入口，在共享 `moui_theme/common` model 之上切换 Material、Carbon、Primer 和 Fluent；通过 `moui_theme/sickle` 切换 Sickle 作为第一方主题附加包；还覆盖官方 source-mapped 预设的 light/dark/high-contrast/system 变体、compact/standard/comfortable density、语义调色板角色、字体样本、间距/密度网格、组件 token 矩阵采样、组件样式 bundle 用法、自定义继承/覆盖 API、Web 和 native Skia 宿主入口、coverage/parity 状态标签，并使用明确的 source-mapped preview 表述，而不是 official-complete claim |
+| Counter | 最小 model/update/view 应用 | `examples/counter/app/` | 简单 `Program::simple` 流程、`center`/`card`、类型化按钮消息，以及保留的 macOS/Web 入口 |
+| Multi Window | 宿主管理的 scene 示例 | `examples/multi_window/app/` | 通过 `HostWindowActions`（`open` / `focus` / `close`）实现独立 main 和 inspector runtime，并配合 `HostWindowRequestQueue` 与 `HostWindowSceneResolver`；保留 macOS 和 multi-canvas Web route |
+| HarmonyOS Demo | 平台中立 HarmonyOS 交互模型 | `examples/harmonyos_demo/app/` | viewport/tap feedback app model；canonical HarmonyOS composition 与设备证据统一由 Showcase 承担 |
+| Button Freeze Probe | 原生 Skia button freeze 复现 | `examples/button_freeze_probe/app/` | 最小 `data_filter_bar` 过滤 chip、重复点击计数器、primary/tonal 按钮对比，以及保留的 macOS Skia 入口 |
+| Showcase | 统一的组件、模式、平台和诊断目录 | `examples/showcase/app/` | 根 TEA shell；Components/Patterns/Platform 保持 app-safe，Diagnostics 接收中立 DTO，runtime/render 适配位于 sibling `diagnostics_integration` 包。Showcase 是唯一覆盖完整 14 路矩阵的示例。 |
+| Design Systems | 附加包诊断用 source-mapped design-system 预览和第一方主题采样器 | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia}/` | 覆盖 Material、Carbon、Primer、Fluent、Sickle 主题预览、density/token diagnostics，以及保留的 Web/macOS 入口 |
 | Settings | Settings shell 模式 | `examples/settings/app/` | 表单 section、侧边栏导航、分段主题模式、toggle 偏好，以及可保存状态的 snapshot/restore |
 | Data Table | 面向操作型数据浏览器的模式 | `examples/data_table/app/` | 搜索/过滤 toolbar 模式、状态 chip、`ColumnVisibilityState`、带 `DataSortState` 的可排序表头、应用拥有的列宽/列顺序状态、带 `SelectionState` 的行选择、选择 toolbar 操作、树过滤器、loading/error/empty 状态、`PaginationState`、公开 `pagination` 和 `detail_panel`、model-level filtering 与 data slicing |
-| Excel | Spreadsheet workbook 原型 | `examples/excel/{cell,formula,sheet,xlsx,app}/`, `examples/excel/{macos_skia,linux_skia}/` | 通过应用私有 `xlsx` adapter 的原生 `.xlsx` workbook load/save 流程、桌面 spreadsheet shell、formula/name bars、sheet tabs、cell edit/copy/cut/paste/delete、row/column insertion、undo/redo、formula evaluation、number formats、color swatches、heat-map display、宿主文件服务，以及 macOS/Linux Skia 入口 |
-| File Importer | 文件导入工作流模式 | `examples/file_importer/app/` | Drop zone、file dialog facade、unavailable service state、pending completion handling、selected file list |
+| Excel | Spreadsheet workbook 原型 | `examples/excel/{cell,formula,sheet,xlsx,app}/`, `examples/excel/macos_skia/` | 原生 `.xlsx` load/save、spreadsheet shell、formula/name bars、sheet tabs、编辑与 undo/redo，以及保留的 macOS Skia 入口 |
+| File Importer | 文件导入工作流模式 | `examples/file_importer/app/` | Drop zone、typed `ServiceTask`、成功/失败/取消消息和 selected file list，不暴露 host request id |
 | WebView Demo | 原生 platform WebView 模式 | `examples/webview_demo/app/` | 受控 `web_view` primitive、native host capability fallback、address bar、navigation commands、JavaScript evaluation command、macOS/Windows/Linux Skia native entrypoints、Web wasm unavailable fallback 且不使用 iframe |
 | PDF Workbench | PDF 阅读和轻量编辑原型 | `examples/pdf_workbench/app/` | 简洁的原生 PDF reader/editor shell、host binary file service open/save flow、PDFium page bitmap preview、fit-width responsive reading canvas、scrollable page/inspector panels、reader fullscreen toggle、page navigation/direct page jump/search/metadata summaries、可 undo/可 discard 的 preview rotate/crop/stamp/title/bookmark/note edit state、用于真实 parsing/writeback checks 的独立 `pdflite_adapter` 包、JSONL pdflite helper protocol 加 native process transport、用于 page rasterization 的 native-only `pdfium_adapter` 包、macOS/Windows/Linux Skia native entrypoints |
-| Command Palette | 命令元数据和菜单模式 | `examples/command_palette/app/` | Command palette rows、shortcut labels、enabled/disabled dispatch、command menu、context menu fallback、`program_with_services`，以及 `HostAppServices::show_context_menu` native menu preview |
+| Command Palette | 命令元数据和菜单模式 | `examples/command_palette/app/` | Command palette rows、shortcut labels、enabled/disabled dispatch、command menu、context menu fallback、`program(environment)`，以及 `@services.MenuServices::show_context` native menu preview |
 | Markdown Editor | Typora 风格编辑原型 | `examples/markdown_editor/app/` | Editor snapshot core、`mizchi/markdown` parsing、source-range mapping、primary rich text editor、可选 source preview |
 | Code Editor | 原生代码编辑器 shell 和 language-provider 原型 | `examples/code_editor/app/` | 带 activity rail、file tab、line-number gutter、status bar、tokenizer-backed highlighting、bracket matching、auto indentation、multi-cursor edits、hidden find/replace overlay、runtime action-command shortcuts、completion overlay、diagnostics、hover、go-to-definition、main-editor Diff mode 的原生 `moui_richtext` editor shell，以及通过应用拥有 callbacks 注册的 custom language/provider |
 | Mo Desktop | macOS 风格响应式桌面模拟 | `examples/mo_desktop/app/` | Lock/unlock session、image wallpaper、menu bar、live dock、calendar/weather/task widgets、带 navigation/search/icon-list modes/selection 的 responsive Finder、Safari start page 和 search results、可搜索 Apps/Actions launcher、notifications、Control Center toggles/sliders、全局 light/dark appearance、Web wasm-gc 和 macOS Skia 入口 |
@@ -80,7 +80,7 @@ Markdown 文件。进行本地预览时，运行 `node scripts/sync-website-docs
 Counter 是最小的推荐应用形态。它把用户代码保留在
 `Model / Msg / update / view` 中，然后让 `Program::simple` 将这个纯模型循环连接到
 runtime。它拥有 Web、macOS、Windows、Linux、实验性 Android 和 iOS Skia
-embedded-session 入口、托管 Kotlin/SwiftUI 打包以及 `windows_wgpu_cosmic`
+embedded-session 入口、托管 Kotlin/SwiftUI 打包以及 `windows_wgpu`
 入口，因此它也是无需完整 Showcase 界面即可验证薄平台包的
 最快方式：
 
@@ -131,9 +131,7 @@ pub fn program() -> @moui.Program[Model, Msg] {
 ```sh
 moon test examples/counter/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_window_hosted --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_window_hosted --target native
-sh scripts/window-hosted-hostsim-smoke.sh
+moon build examples/counter/macos_skia --target native
 ```
 
 fallback APK 和 `.app` 命令只验证打包路径。声明 Android 或 iOS 首帧运行时支持前，
@@ -141,26 +139,26 @@ fallback APK 和 `.app` 命令只验证打包路径。声明 Android 或 iOS 首
 
 ## HarmonyOS Demo
 
-HarmonyOS Demo 是独立的实验性 HarmonyOS 应用。它有意不扩展 Counter：
-`examples/harmonyos_demo/app` 拥有共享 TEA UI，提供可见的 tap 和 viewport 反馈，
-`examples/harmonyos_demo/harmonyos_window_hosted` 创建 window-hosted application。
-`wzzc-dev/window/harmonyos` template 拥有 Stage Ability 和 XComponent bridge；应用源代码不保留 native project fixture。
+HarmonyOS Demo 只保留为平台中立的应用模型，提供可见的 tap 和 viewport 反馈。
+独立平台 composition root 已退役；Showcase 是唯一 canonical HarmonyOS 路线，并拥有
+window-hosted application。`wzzc-dev/window/harmonyos` template 拥有 Stage Ability 和
+XComponent bridge。
 
 聚焦 HarmonyOS Demo 检查：
 
 ```sh
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_window_hosted --target native
 sh scripts/window-hosted-hostsim-smoke.sh
-moui build harmonyos harmonyos_demo \
-  --mobile-config "$PWD/examples/harmonyos_demo/moui.mobile.json" --fallback-skia
+moui build harmonyos showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json" --fallback-skia
 ```
 
 真实 HarmonyOS Skia 检查请使用锁定的 HarmonyOS release artifact：
 
 ```sh
 MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=static \
-  moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
+  moon check examples/showcase/harmonyos_window_hosted --target native
 ```
 
 HarmonyOS `auto` / `skia-gpu` 构建必须使用完整的 static provider。锁定的共享
@@ -197,16 +195,14 @@ patch inspection 的 main-editor Diff mode。
 Language support 通过 `CodeLanguageRegistry` 和 `CodeLanguageProvider` callbacks
 注册。Provider 提供 tokenizer、completion、diagnostics、hover 和 definition
 callbacks，因此该示例演示了自定义语言注册，而无需把 app-specific language-service
-API 移入 MoUI framework。原生入口会把 editor 的
-`ActionCommandMap` 注册到 runtime，用于 shortcut metadata。
+API 移入 MoUI framework。应用把 shortcut metadata 声明为 typed
+`ProgramCommand`；composition root 不安装直接修改应用状态的 callback。
 
 聚焦 Code Editor 检查：
 
 ```sh
 moon test examples/code_editor/app --target native
 moon check examples/code_editor/macos_skia --target native
-moon check examples/code_editor/windows_skia --target native
-moon check examples/code_editor/linux_skia --target native
 ```
 
 ## WebView Demo
@@ -216,35 +212,17 @@ WebView Demo 展示原生 platform-view 路径，而不涉及渲染器绘制命�
 WebView commit 到下一个 `DrawFrame.platform_views` rectangle。按钮覆盖 host command
 queue，用于 load、reload、stop、back、forward 和 JavaScript evaluation。
 
-原生入口会把同一个 `HostWebViewCommandQueue` 传给平台 backend 的 `entry(options)`，因此 macOS
-`WKWebView`、Windows WebView2 构建和 Linux WebKitGTK 构建可以在 rendering 后
-drain commands。Web wasm 传入 unavailable capability 并渲染 fallback UI；它不会创建
-iframe overlay。
-	Windows 真实 WebView 构建由 prebuild 从 `.tools/webview2/` 自动检测（通过
-	`scripts/windows/setup_msvc_deps.ps1 -InstallWebView2` 设置），与 Linux 通过
-	`pkg-config` 自动检测 WebKitGTK 的方式一致。自定义 SDK 路径可使用
-	`MOUI_WINDOWS_WEBVIEW2_*` 环境变量覆盖。
-	Linux WebKitGTK 构建会在安装 `libwebkit2gtk-4.1-dev` 后通过 `pkg-config` 自动检测。
-	自定义设置可使用 `MOUI_LINUX_WEBKITGTK_*` 环境变量覆盖。
-Linux WebKitGTK 构建还需要匹配 host 的 smoke，才能声明运行时证据：backend 会 pump GTK
-main context、sync `DrawFrame.platform_views` placements、forward
-navigation/title/history/script events，并在每个 rendered frame 后 drain queued
-commands，但 package checks 只证明 contract mapping 和 fallback path。
+保留的 macOS 入口把 `HostWebViewCommandQueue` 传给平台 backend，使 `WKWebView` 可以在
+rendering 后 drain commands。Windows WebView2 与 Linux WebKitGTK 继续作为 backend 能力，
+由 backend tests 和 matching-host probes 覆盖，不再建立单独 demo composition root。Web
+wasm 传入 unavailable capability 并渲染 fallback UI；它不会创建 iframe overlay。
 
 聚焦 WebView Demo 检查：
 
 ```sh
 moon test examples/webview_demo/app --target native
 moon check examples/webview_demo/macos_skia --target native
-moon check examples/webview_demo/windows_skia --target native
-moon check examples/webview_demo/linux_skia --target native
 moon check examples/webview_demo/web_wasm --target wasm-gc
-```
-
-配置后的 Linux WebKitGTK 检查（安装 packages 后会自动检测）：
-
-```sh
-moon check examples/webview_demo/linux_skia --target native
 ```
 
 Showcase 按主目录顺序组织：
@@ -274,7 +252,7 @@ wiring、text diagnostics 和 advanced rendering，
 - `Navigation Shell`：route headers、section navigation、breadcrumbs、dialogs、sheets、
   command metadata、应用拥有的 route/deep-link history、受控 fade/slide route transition
   preview、受控 drag-resizable split pane，以及 `RouteFocusStore` state；它显示 route
-  switch 后哪个 `runtime.focus_key(...)` 调用应恢复 route focus。`HostRouteSource` 提供
+  switch 后哪个 `runtime.focus_key(...)` 调用应恢复 route focus。`@services.RouteSource` 提供
   host-layer route/deep-link subscription fanout，应用可以把它送入这个共享状态，但可见
   route history 仍然是可序列化的 shadow stack，transition 仍由 app state 采样；browser
   history、automatic route-transition scheduling 和 native deep-link dispatch 仍是 host/app
@@ -333,16 +311,12 @@ moon check examples/excel/macos_skia --target native
 
 File Importer 示例展示 non-render 文件工作流界面。view 使用 `drop_zone` 和
 `file_import_panel`；pure model 接受 dropped paths，而具备 effect 能力的 runtime 使用
-`Program::new` 和 `Effect::host_service`，通过 `HostAppServices` 请求 app-level host file
-dialog，并把 unavailable、immediate 或 pending responses 作为类型化 `HostCompleted`
-messages 送回。Pending file-dialog responses 会保存为 model state，并通过
-`HostAppServices::completion_subscription` 声明，因此稍后的 host completion 会通过与
-synchronous responses 相同的类型化 TEA update path dispatch，并在 model 离开 `Pending`
-时取消。它的 app tests 还会把 importer 组合为 child feature，使用 `View::map`、
-`Effect::map` 和 `Subscription::map`；当 parent TEA model 拥有一个仍可返回 follow-up
-effects 或 ongoing event sources 的 child workflow 时，这是推荐模式；parent runtime
-assertions 也会让 mapped child effect descriptors、active completion subscription
-descriptor 和 subscription lifecycle cancellation 通过 program diagnostics 保持可见。
+`Program::new` 和 `ServiceTask::effect`，通过 `AppServices` 请求 app-level file dialog，
+并把 `Success`、`Failure` 或 `Cancelled` 作为 typed message 送回。同一个 task lifecycle
+负责 pending callback 的取消和 stale completion 拒绝，业务 model 不保存 host request id。
+它的 app tests 还会把 importer 组合为 child feature，使用 `View::map` 和 `Effect::map`；
+parent runtime assertions 让 mapped child effect descriptor 与 task lifecycle diagnostics
+保持可见。
 Browser hosts 通常暴露文件名，而 native hosts 可以暴露文件系统路径，因此生产应用应把
 这些字符串视为 host-provided display 或 import handles，而不是假定某一种 platform shape。
 
@@ -351,8 +325,8 @@ Browser hosts 通常暴露文件名，而 native hosts 可以暴露文件系统�
 PDF Workbench 是 MoUI example-level PDF reader 和 light editor。它的共享应用包有意作为
 轻量 UI shell，使 native Skia 入口不会把完整 PDF parser 拉进一个巨大的 generated C
 translation unit。应用通过 TEA effects 保持 host 交互：open 使用 file dialog 后接
-`HostAppServices::read_binary_file`，save 和 save-as 通过
-`HostAppServices::write_binary_file` 写入；save-as 默认把 dialog name 设为当前 PDF
+`AppServices::files().read_bytes`，save 和 save-as 通过
+`AppServices::files().write_bytes` 写入；save-as 默认把 dialog name 设为当前 PDF
 file name，并在 source path 没有 `.pdf` suffix 时追加 `.pdf`。Clean documents 会写出
 未改变的 original bytes，而 dirty documents 会在写入前向注入的
 `PdfWorkbenchDocumentServices` writeback hook 请求新的 PDF bytes。Dirty save 成功后，
@@ -434,8 +408,6 @@ moon build examples/pdf_workbench/macos_skia --target native
 node scripts/pdf-workbench-native-smoke.mjs
 scripts/pdf-workbench-macos-smoke.sh
 MOUI_PDF_WORKBENCH_STARTUP_PDF=examples/pdf_workbench/fixtures/minimum.pdf moon run examples/pdf_workbench/macos_skia --target native
-moon build examples/pdf_workbench/windows_skia --target native
-moon build examples/pdf_workbench/linux_skia --target native
 ```
 
 PDFium provider 是 module-level prebuild hook，但默认不会下载 PDFium。仅在真实 raster
@@ -454,8 +426,8 @@ path。
 Command Palette 示例把 command definitions 保存在 `@views.ActionCommand` metadata 中，
 通过公开 palette 和 command menu views 渲染它们，并使用 `@views.ActionCommandMap` 进行
 shortcut dispatch。Disabled commands 保持可见以便 discoverability，但不会通过 model actions
-或 runtime command bindings dispatch。它具备 effect 能力的 `program_with_services` 路径展示了
-`HostAppServices::show_context_menu`，把选中的 native menu command 通过同一个类型化 message
+或 runtime command bindings dispatch。它具备 effect 能力的 `program(environment)` 路径展示了
+`@services.MenuServices::show_context`，把选中的 native menu command 通过同一个类型化 message
 loop dispatch 回来，同时为没有 native menu support 的 hosts 保留 view-level fallback context
 menu。
 
@@ -555,14 +527,12 @@ cross-origin text-file fetches。
 ## macOS 原生
 
 macOS 示例使用共享应用包、`backend/macos` 和显式 renderer 包。推荐的 `_skia` 入口导入
-`render/skia`，并通过 `@moui.run_app` 与 `@macos.entry()` 组合：
+`render/skia`，并通过 `@runtime.run_app` 与 `@macos.entry()` 组合：
 
 ```sh
 moon build examples/showcase/macos_skia --target native
 moon build examples/markdown_editor/macos_skia --target native
 moon build examples/pdf_workbench/macos_skia --target native
-moon build examples/pdf_workbench/windows_skia --target native
-moon build examples/pdf_workbench/linux_skia --target native
 moon build examples/mo_desktop/macos_skia --target native
 moon build examples/mo_workbench/macos_skia --target native
 ```
@@ -570,8 +540,7 @@ moon build examples/mo_workbench/macos_skia --target native
 `macos_skia` 入口会显式选择 native Skia raster renderer。它们需要本地 Skia native link setup，
 让 `moui_skia/native` 在 runtime 可用。常规 macOS Skia 运行使用 renderer 的 system
 `FontMgr` 路径；tester-owned first-frame smoke runs 会显式选择 `EmptyTypeface` fallback
-path。`macos_wgpu` 和 `macos_wgpu_cosmic` 包仍作为 native WGPU 与 text-provider diagnostics
-可用。
+path。唯一 `macos_wgpu` 路线使用 CoreText，并把 Cosmic 作为内部 fallback。
 
 配置真实 Skia link flags 后，运行 opt-in real Skia check，验证 binding smoke 和 MoUI renderer
 presenter pixels：
@@ -634,9 +603,9 @@ bundle 包含并验证 schema version 1 `Contents/Resources/moui-package.json` m
 ## Windows 原生
 
 Windows 原生示例使用 MSVC toolchain 和 vcpkg `zlib:x64-windows`。推荐的 `_skia` 入口导入
-`backend/windows` 与 `render/skia`，并通过 AppBuilder 显式组合它们。`windows_wgpu` 和
-`windows_wgpu_cosmic` 包仍作为 native WGPU diagnostics 可用；build/package helpers 只会为这些
-WGPU 包下载并打包 `wgpu_native.dll`。
+`backend/windows` 与 `render/skia`，并通过 `@runtime.run_app` 显式组合它们。Showcase
+`windows_wgpu` 是唯一 canonical native WGPU diagnostic；build/package helper 只为该
+WGPU 路线下载并打包 `wgpu_native.dll`。
 
 ```powershell
 winget install --id Microsoft.VisualStudio.2022.BuildTools -e
@@ -644,16 +613,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/showcase/windows_skia `
   -BuildOnly
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows_skia `
-  -BuildOnly
 ```
 
 要直接运行入口，请在同一个 PowerShell process 中 import MSVC environment：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
 `windows_skia` 遵循 renderer factory 的 Skia availability rules：如果
@@ -661,8 +626,6 @@ powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps
 HWND。
 Windows Skia 示例入口是 interactive app entrypoints。请把 matching-host first-frame smoke 放在
 tester/backend smoke runners 中，并引用实际运行过的 smoke log。
-Markdown Editor 还保留 `examples/markdown_editor/windows_wgpu_cosmic`，用于在 native WGPU
-diagnostic route 上进行显式 Moon Cosmic text-provider comparison。
 
 要生成包含已构建 executable 和 runtime DLLs 的可复用 distributable folder：
 
@@ -687,7 +650,6 @@ Wayland compositor 和真实 Skia link flags 的 Linux host 上运行：
 
 ```sh
 moon run examples/showcase/linux_skia --target native
-moon run examples/markdown_editor/linux_skia --target native
 ```
 
 Linux Skia 示例入口是 interactive app entrypoints。请把 matching-host first-frame smoke 放在
@@ -697,14 +659,11 @@ tester/backend smoke runners 中，并让这些 logs 与 window package dependen
 
 ```sh
 moon build examples/showcase/linux_skia --target native
-moon build examples/markdown_editor/linux_skia --target native
 ```
 
-`linux_wgpu` 和 `linux_wgpu_cosmic` Showcase 入口仍可用于显式 native WGPU diagnostics。
-`linux_wgpu_cosmic` 显式选择共享 Moon Cosmic text provider，而 platform-default Linux WGPU
-入口会把 fontconfig provider scaffold 与同一个 Cosmic fallback 组合起来。Showcase 和 Markdown
-Editor 的 `linux_skia` 入口会显式选择 native Skia raster renderer；在依赖 Skia-rendered pixels
-之前，请先配置真实 Skia link flags。
+Showcase `linux_wgpu` 是唯一 canonical native WGPU diagnostic，使用 fontconfig provider，
+并把 Cosmic 作为内部 fallback。Showcase `linux_skia` 是唯一 Linux Skia composition root；
+在依赖 Skia-rendered pixels 前，请先配置真实 Skia link flags。
 
 ## 示例验证
 

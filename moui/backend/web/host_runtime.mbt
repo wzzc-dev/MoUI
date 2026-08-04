@@ -30,7 +30,7 @@ let web_active_app : Ref[WebApp?] = Ref(None)
 pub(all) struct WebAppOptions {
   scene_resolver : @runtime.HostWindowSceneResolver
   event_sources : @runtime.HostPlatformEventSources?
-  route_source : @runtime.HostRouteSource?
+  route_source : @services.RouteSource?
 }
 
 ///|
@@ -69,6 +69,8 @@ fn run_app_internal(
     clipboard_write=dispatch_web_clipboard_write_text,
     file_dialog=true,
     file_access=true,
+    settings_available=true,
+    settings=dispatch_web_settings,
     async_queue=Some(async_services),
   )
   runtime.set_environment(
@@ -116,7 +118,7 @@ pub fn entry(
 pub fn WebAppOptions::new(
   scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
   event_sources? : @runtime.HostPlatformEventSources? = None,
-  route_source? : @runtime.HostRouteSource? = None,
+  route_source? : @services.RouteSource? = None,
 ) -> WebAppOptions {
   { scene_resolver, event_sources, route_source }
 }

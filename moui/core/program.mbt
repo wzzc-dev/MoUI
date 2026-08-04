@@ -31,11 +31,49 @@ pub(all) enum Effect[Msg] {
 }
 
 ///|
+/// A host-visible command declaration whose action re-enters the Program as a
+/// typed message. The runtime owns dispatch; applications only describe the
+/// command and its message.
+pub struct ProgramCommand[Msg] {
+  command : ActionCommand
+  message : Msg
+}
+
+///|
 struct Program[Model, Msg] {
   init : () -> (Model, Effect[Msg])
   update : (Model, Msg) -> (Model, Effect[Msg])
   view : (Model, ViewEnvironment) -> View[Msg]
   subscriptions : (Model) -> Subscription[Msg]
+  commands : (Model) -> Array[ProgramCommand[Msg]]
+}
+
+///|
+pub fn[Msg] ProgramCommand::new(
+  command~ : ActionCommand,
+  message~ : Msg,
+) -> ProgramCommand[Msg] {
+  { command, message }
+}
+
+///|
+pub fn[Msg] ProgramCommand::command(
+  self : ProgramCommand[Msg],
+) -> ActionCommand {
+  self.command
+}
+
+///|
+pub fn[Msg] ProgramCommand::message(self : ProgramCommand[Msg]) -> Msg {
+  self.message
+}
+
+///|
+pub fn[Msg, NextMsg] ProgramCommand::map(
+  self : ProgramCommand[Msg],
+  map : (Msg) -> NextMsg,
+) -> ProgramCommand[NextMsg] {
+  ProgramCommand::new(command=self.command, message=map(self.message))
 }
 
 ///|
@@ -66,15 +104,6 @@ pub fn[Msg] Effect::run(
   label? : String = "",
 ) -> Effect[Msg] {
   Run({ key, kind, label }, run)
-}
-
-///|
-pub fn[Msg] Effect::host_service(
-  key~ : String,
-  run~ : ((Msg) -> Unit) -> Unit,
-  label? : String = "",
-) -> Effect[Msg] {
-  Effect::run(key~, run~, kind="host-service", label~)
 }
 
 ///|
@@ -142,7 +171,13 @@ pub fn[Model, Msg] Program::new(
   view~ : (Model) -> View[Msg],
   subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Program[Model, Msg] {
-  { init, update, view: (model, _env) => view(model), subscriptions }
+  {
+    init,
+    update,
+    view: (model, _env) => view(model),
+    subscriptions,
+    commands: _model => [],
+  }
 }
 
 ///|
@@ -152,7 +187,15 @@ pub fn[Model, Msg] Program::new_with_environment(
   view~ : (Model, ViewEnvironment) -> View[Msg],
   subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Program[Model, Msg] {
-  { init, update, view, subscriptions }
+  { init, update, view, subscriptions, commands: _model => [] }
+}
+
+///|
+pub fn[Model, Msg] Program::with_commands(
+  self : Program[Model, Msg],
+  commands~ : (Model) -> Array[ProgramCommand[Msg]],
+) -> Program[Model, Msg] {
+  { ..self, commands, }
 }
 
 ///|
@@ -216,4 +259,12 @@ pub fn[Model, Msg] Program::runtime_subscriptions(
   model : Model,
 ) -> Subscription[Msg] {
   (self.subscriptions)(model)
+}
+
+///|
+pub fn[Model, Msg] Program::runtime_commands(
+  self : Program[Model, Msg],
+  model : Model,
+) -> Array[ProgramCommand[Msg]] {
+  (self.commands)(model)
 }

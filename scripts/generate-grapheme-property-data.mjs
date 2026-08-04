@@ -1,8 +1,20 @@
 #!/usr/bin/env node
 
-import { runMoonbitTool } from "./lib/moonbit-tool-runner.mjs";
+import {
+  resolveToolPathArgs,
+  runMoonbitTool,
+} from "./lib/moonbit-tool-runner.mjs";
 
 runMoonbitTool(
   "tools/moui/generate_grapheme_property_data",
-  process.argv.slice(2),
+  resolveToolPathArgs(
+    process.argv.slice(2),
+    [
+      "--grapheme-property",
+      "--emoji-data",
+      "--derived-core-properties",
+      "--output",
+    ],
+    { "--output": "moui/core/unicode/grapheme_data.mbt" },
+  ),
 );

@@ -30,8 +30,9 @@ ViewDeclaration -> ElementTree
 | `moui/{geometry,graphics,animation,text,state}/` | Domain facades over `moui/core` for app-facing geometry, paint/drawing, motion, text, and state/focus value types. They depend on `core`; `core` does not depend on them. |
 | `moui/core/` | Platform-neutral foundation contracts: opaque `View`, typed events, `Program`, `Effect`, `Subscription`, geometry, draw commands, semantics, text editing, theme token surface, and the public message-independent `ViewNode` extension protocol. |
 | `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete `ViewNode` behavior constructed with `@core.View::from_node`. |
+| `moui/services/` | App-facing `AppServices`, typed `ServiceTask[T]`, `TimerSource`, `RouteSource`, and `AppEnvironment`; depends only on `moui/core`. |
 | `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render/semantics/platform tree generation, committed semantics generations and indices, event/action dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
-| `moui/backend/host/` | Shared host contracts for windows, routes, timers, host services, WebView, async image loading, accessibility, input, redraw scheduling, and renderer handoff. |
+| `moui/backend/host/` | Shared host wire contracts for windows and services, `HostServiceBridge`, completion queues, WebView, async image loading, accessibility, input, redraw scheduling, renderer handoff, and adapters to `moui/services`. |
 | `moui/backend/platform_bridge/` | Neutral lifecycle and logical-coordinate bridge from platform facts to host contracts; it does not decode raw native input. |
 | `moui/backend/internal/embedded_runtime_backend/` | Shared runtime/session assembly for Android, iOS, and HarmonyOS embedded runtime backends; it attaches a resolved neutral `HostWindowRenderer` after `ApplicationHandler` surface callbacks. |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform backend implementations. macOS, Windows, and Linux are native host backends; Android, iOS, and HarmonyOS are embedded runtime backends driven by `wzzc-dev/window`; web is the canonical browser host. They decode native input locally and route neutral lifecycle facts through `platform_bridge`. |
@@ -73,26 +74,24 @@ Shared app packages should default to:
   `wzzc-dev/moui/graphics`, `wzzc-dev/moui/animation`,
   `wzzc-dev/moui/text`, and `wzzc-dev/moui/state` as needed
 - `wzzc-dev/moui/views`
+- `wzzc-dev/moui/services` when the app needs platform capabilities
 
-Use `wzzc-dev/moui/core` only when the app needs advanced kernel/diagnostic
-types that are not exposed by a domain facade or `moui/views`. Use
-`wzzc-dev/moui/backend/host` only for host service protocols such as file
-import, WebView commands, route events, or async image service integration.
+Use `wzzc-dev/moui/core` only when the app needs advanced kernel types that are
+not exposed by a domain facade or `moui/views`. App-facing file, clipboard,
+URL, settings, menu, timer, and route capabilities come from `moui/services`.
 
 Avoid direct dependencies from ordinary app packages to:
 
 - `wzzc-dev/moui/runtime`
+- `wzzc-dev/moui/backend/*`
 - `wzzc-dev/moui/render/*`
 - concrete platform backend packages
 - renderer provider packages
 - `moui_theme/*`, unless the app is a design-system preview or addon diagnostic
 
-Only `examples/showcase/app/diagnostics` is allowed to be broader because it
-demonstrates runtime and renderer capabilities. Components and Patterns follow
-ordinary app dependencies; Platform may additionally import `backend/host`.
-Treat Diagnostics as a framework inspection package, not as the default app
-dependency model. See `docs/moui-app-package-boundary.md` for the detailed
-policy.
+Showcase runtime/renderer inspection lives in sibling integration packages and
+enters the pure app as neutral DTOs. Production `examples/*/app` packages have
+no runtime/backend/render exception. See `docs/moui-app-package-boundary.md`.
 
 ## Framework Boundary
 
@@ -107,7 +106,8 @@ Add new APIs to the narrowest owning package:
   `moui/views`.
 - Runtime lifecycle, inspector snapshots, effect/subscription diagnostics, and
   runtime construction belong in `moui/runtime`.
-- Host service and platform service protocols belong in `moui/backend/host`.
+- App-facing service protocols belong in `moui/services`; host wire protocol,
+  bridge, and completion queues belong in `moui/backend/host`.
 - Platform windows, neutral presenters, native handles, and host I/O belong in
   `moui/backend/<platform>`; those packages must not import a concrete renderer.
 - Renderer implementation and capability reporting belong in `moui/render/*`.
@@ -124,25 +124,25 @@ workspace.
 - Web app route: shared app package -> `examples/<app>/web_wasm` composition ->
   `moui/backend/web` + `moui/render/webgpu_adapter`.
 - Native Skia route: shared app package -> platform `*_skia` entrypoint ->
-  `@moui.run_app(...).render_all(@render_skia.from_env()).backend(@platform.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@platform.entry())`
   -> neutral platform surface + `moui/render/skia` -> `moui_skia`.
 - Android embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/android_window_hosted` composition via
-  `@moui.run_app(...).render_all(@render_skia.from_env()).backend(@android.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@android.entry())`
   -> `wzzc-dev/window/android` `HostCmd` / `EventLoop` -> neutral Android
   surface binding -> `moui/render/skia` -> `moui_skia`.
   The window template owns Android lifecycle, surface acquisition, and input;
   the embedded runtime backend owns runtime/session assembly and rendering.
 - iOS embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/ios_window_hosted` composition via
-  `@moui.run_app(...).render_all(@render_skia.from_env()).backend(@ios.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@ios.entry())`
   -> `wzzc-dev/window/ios` `HostCmd` / `EventLoop` -> neutral iOS surface
   binding -> `moui/render/skia` -> `moui_skia`.
   UIKit lifecycle, surface, and touch callbacks enter through the window event
   loop only.
 - HarmonyOS embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/harmonyos_window_hosted` composition via
-  `@moui.run_app(...).render_all(@render_skia.from_env()).backend(@harmonyos.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@harmonyos.entry())`
   -> `wzzc-dev/window/harmonyos` `HostCmd` / `EventLoop` -> neutral HarmonyOS
   surface binding -> `moui/render/skia` -> `moui_skia`.
   Native XComponent callbacks are the sole source for surface, pointer, resize,
@@ -270,11 +270,12 @@ moui/                         root public facade workspace member
 moui/core/                    platform-neutral contracts, opaque View, and custom view callback contracts
 moui/runtime/                 opaque app/host AppRuntime entrypoint, runtime state, tree/layout/paint, and program execution
 moui/views/                   public view constructors and concrete custom view control behavior
+moui/services/                app-facing ServiceTask/AppServices/AppEnvironment and timer/route sources
 moui_theme/common/            addon construction surface: DesignPreset, DesignSystemTokens, per-system token structs + core_* projections, and the construction-surface DesignPreset methods
 moui_theme/audit/             addon diagnostics: manifests, golden mappings, official-token/source-lock coverage, source-import records, runtime alignment, taxonomy/role/resolver/matrix reports (top-level pub fn, not DesignPreset methods)
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints: light/dark/high-contrast/system Theme helpers, tokens, and theme_for_variant over common
 moui_theme/sickle/            first-party hybrid skeuomorphic/flat Theme addon with light/dark and style-mode helpers
-moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
+moui/backend/host/            shared HostEvent, HostWindowEventSource, HostServiceBridge/queues, AppServices adapters, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
 moui/backend/windows/         Windows native host backend
 moui/backend/macos/           macOS native host backend
 moui/backend/linux/           Linux Wayland native host backend
@@ -301,45 +302,36 @@ moui/tests/skia_cached_layer_benchmark/ opt-in real Skia cached-layer benchmark 
 moui/tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
 moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
-examples/counter/{macos_skia,web_wasm,android_window_hosted,ios_window_hosted,harmonyos_window_hosted,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
-examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
+examples/counter/{macos_skia,web_wasm}/ retained Counter platform entrypoints
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
-examples/harmonyos_demo/harmonyos_window_hosted/ HarmonyOS demo window-hosted entrypoint
 examples/showcase/harmonyos_window_hosted/ Showcase HarmonyOS window-hosted entrypoint
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app
-examples/button_freeze_probe/{macos_skia,windows_skia,linux_skia}/ platform Button Freeze Probe entrypoints
+examples/button_freeze_probe/macos_skia/ retained Button Freeze Probe entrypoint
 examples/showcase/app/        root Showcase router/composition package
 examples/showcase/app/components/ focused reusable component catalog with app-safe dependencies
 examples/showcase/app/patterns/ Counter/Todo, forms, data, navigation, and workflow patterns
 examples/showcase/app/platform/ host Effect/Subscription, canvas, routes, and mobile service probe
-examples/showcase/app/diagnostics/ explicit runtime/renderer diagnostic exception
+examples/showcase/app/diagnostics/ pure diagnostic DTO/view package
+examples/showcase/diagnostics_integration/ runtime/renderer DTO adapter
 examples/design_systems/app/  dedicated addon diagnostic source-mapped design-system preview/parity example using moui_theme
-examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/ Design Systems addon diagnostic host entrypoints
+examples/design_systems/{web_wasm,macos_skia}/ retained Design Systems addon diagnostic host entrypoints
 examples/showcase/macos_skia/ macOS showcase selecting native Skia raster
 examples/showcase/macos_wgpu/      macOS native WGPU diagnostic showcase
-examples/showcase/macos_wgpu_cosmic/ macOS showcase selecting Moon Cosmic text
 examples/showcase/web_wasm/   Web showcase on wasm-gc
 examples/showcase/windows_skia/ Windows showcase selecting native Skia raster
 examples/showcase/windows_wgpu/    Windows native WGPU diagnostic showcase
-examples/showcase/windows_wgpu_cosmic/ Windows showcase selecting Moon Cosmic text
 examples/showcase/linux_skia/ Linux showcase selecting native Skia raster
 examples/showcase/linux_wgpu/      Linux Wayland native WGPU diagnostic showcase
-examples/showcase/linux_wgpu_cosmic/ Linux showcase selecting Moon Cosmic text
 examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
 examples/markdown_editor/macos_skia/ macOS Markdown editor selecting native Skia raster
-examples/markdown_editor/macos_wgpu/ macOS native WGPU diagnostic Markdown editor
 examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
-examples/markdown_editor/windows_skia/ Windows Markdown editor selecting native Skia raster
-examples/markdown_editor/windows_wgpu/ Windows native WGPU diagnostic Markdown editor
-examples/markdown_editor/windows_wgpu_cosmic/ Windows Markdown Editor selecting Moon Cosmic text
-examples/markdown_editor/linux_skia/ Linux Markdown editor selecting native Skia raster
 examples/code_editor/app/ shared native code editor and language-provider demo app
-examples/code_editor/{macos_skia,windows_skia,linux_skia}/ platform Code Editor Skia entrypoints
+examples/code_editor/macos_skia/ retained Code Editor Skia entrypoint
 examples/webview_demo/app/ shared native WebView demo app
-examples/webview_demo/{macos_skia,windows_skia,linux_skia,web_wasm}/ platform WebView demo entrypoints
+examples/webview_demo/{macos_skia,web_wasm}/ retained WebView demo entrypoints
 examples/pdf_workbench/app/  shared PDF reader/light editor app
-examples/pdf_workbench/{macos_skia,windows_skia,linux_skia}/ platform PDF Workbench Skia entrypoints
+examples/pdf_workbench/macos_skia/ retained PDF Workbench Skia entrypoint
 examples/pdf_workbench/{pdflite_adapter,pdflite_service_protocol,pdflite_service_native_transport,pdflite_service_cli,pdfium_adapter}/ app-private PDF parse/writeback/raster adapter and service subpackages
 examples/mo_workbench/app/   shared multi-backend agent desktop dogfood app
 examples/mo_workbench/openseek_native_transport/ app-private OpenSeek in-process agent backend (native)
@@ -355,7 +347,7 @@ loop: `view : Model -> View[Msg]`, typed messages, `update` handlers, and
 explicit `Effect[Msg]` for follow-up work. `Subscription[Msg]` declares ongoing
 event sources. Full details: [TEA Program Model](tea-program-model.md).
 
-Key surface: `Program::simple` / `Program::new` / `*_with_environment`,
+Key surface: `Program::simple` / `Program::new` / `Program::with_commands` / `*_with_environment`,
 `Effect::send` / `Effect::run` / `Effect::task` / `Effect::service_task`,
 `Subscription::timer` / `Subscription::host_event` / `Subscription::route_event`,
 `View::map`, `Effect::map`, `Subscription::map`. Message drains are bounded
@@ -415,12 +407,11 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   including dirty element ids, alongside legacy reason strings. Inspector
   snapshots read cached layout/render/semantics state without draining pending
   dirty work, so devtools can consume stable fields instead of parsing captions.
-  Structured
-  effect descriptors from `Effect::run`, `Effect::host_service`,
-  `Effect::task`, and `Effect::service_task` travel through effect summaries so
-  tooling can identify planned host-service or service/task runners without
-  inspecting `Msg` values; duplicate descriptor-key counts/names make planned
-  key conflicts visible before execution. Runtime
+  Structured effect descriptors from `Effect::run`, `Effect::task`, and
+  `Effect::service_task` travel through effect summaries so tooling can identify
+  planned structured or service/task runners without inspecting `Msg` values;
+  duplicate descriptor-key counts/names make planned key conflicts visible
+  before execution. Runtime
   inspector snapshots also expose platform-neutral pipeline pass counters for
   rebuild, layout, paint, and draw-command building. Dirty summaries also carry
   the latest damage kind, dirty-rect count, full-surface reason, cache epoch,

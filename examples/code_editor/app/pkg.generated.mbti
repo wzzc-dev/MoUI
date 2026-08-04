@@ -13,8 +13,6 @@ pub fn code_bracket_match(String, Int) -> BracketMatch?
 
 pub fn code_diff(String, String) -> CodeDiff
 
-pub fn code_editor_action_command_map() -> @core.ActionCommandMap
-
 pub fn code_editor_action_commands() -> Array[@core.ActionCommand]
 
 pub fn code_editor_caret_position(String, Int) -> CodeEditorCaretPosition
@@ -157,6 +155,7 @@ pub(all) enum CodeEditorMsg {
   ReplaceAll
   RunDiagnostics
   TriggerCompletion
+  OpenCommandPalette
   ShowHover
   GoToDefinition
   ShowSource
@@ -231,3 +230,4 @@ pub fn CodeLanguageRegistry::tokenize(Self, String, String) -> Array[CodeEditorT
 // Type aliases
 
 // Traits
+

@@ -164,7 +164,7 @@ using @views {master_detail, sidebar, sidebar_item}
 enum Msg { SelectSection(String) }
 
 fn settings_shell(current : String, detail : @moui.View[Msg]) -> @moui.View[Msg] {
-  let focus_store = @core.RouteFocusStore::new()
+  let focus_store = @views.RouteFocusStore::new()
   focus_store.remember(route="account", focus_key="sidebar-item-account")
   focus_store.remember(route="appearance", focus_key="sidebar-item-appearance")
   master_detail(
@@ -181,7 +181,7 @@ fn settings_shell(current : String, detail : @moui.View[Msg]) -> @moui.View[Msg]
 }
 
 fn restore_settings_focus(
-  store : @core.RouteFocusStore,
+  store : @views.RouteFocusStore,
   runtime : @runtime.AppRuntime,
   route : String,
 ) -> Bool {
@@ -217,22 +217,18 @@ fn palette(commands : Array[@core.ActionCommand]) -> @moui.View[Msg] {
 }
 ```
 
-视图级菜单是叠层组合。原生上下文菜单和聚焦文本剪贴板命令应通过
-`HostServiceBridge` 和 `HostAppServices`，而不是通过 `views`。
+视图级菜单是叠层组合。原生上下文菜单和聚焦文本剪贴板命令使用
+`@services.AppServices`；宿主 bridge 和 completion queue 留在平台适配器之后。
 
 ```moonbit nocheck
 fn request_native_menu(
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   commands : Array[@core.ActionCommand],
 ) -> @moui.Effect[Msg] {
-  @moui.Effect::host_service(
-    key="host:context-menu",
-    label="Show context menu",
-    run=dispatch => {
-      let response = services.show_context_menu(commands)
-      dispatch(HostMenuCompleted(response))
-    },
-  )
+  services
+  .menus()
+  .show_context(commands)
+  .effect(map=result => HostMenuCompleted(result))
 }
 ```
 
@@ -246,48 +242,36 @@ moon test examples/command_palette/app --target native
 
 ## 宿主服务
 
-使用 `@host.HostAppServices` 处理剪贴板、文件对话框、URL 打开、系统主题和原生上下文菜单。
-支持 effect 的应用应在宿主服务 runner 需要携带稳定诊断 key 时，从 `Program::new`
-的 update 返回 `Effect::host_service`；从 effect runner 调用服务，并为 `Unavailable`、
-同步响应和待完成异步响应分发带类型的完成消息。自定义结构化 effect 种类使用
-`Effect::run`；当类似服务的一次性异步任务需要运行时拥有取消、完成和过期分发诊断时，
-使用 `Effect::service_task`；自定义任务描述符种类使用 `Effect::task`。对于应用拥有的
-pending 服务，把 pending request id 保存在模型中，并从 `subscriptions=model => ...`
-声明 `HostAppServices::completion_subscription`，使后续宿主回调重新进入同一个带类型消息循环，
-并在模型不再声明它时取消。`views` 只应发出 `BrowseRequested` 或
-`RecordFileDrop(paths)` 之类的消息。当宿主服务工作流实现为子功能时，在父级中用
-`View::map` 提升子视图，用 `Effect::map` 提升子 effect，并用 `Subscription::map`
-提升子完成订阅，使父级仍然拥有顶层消息循环。
+在 Program 闭包中捕获 `@services.AppEnvironment`，不要把它放进业务 `Model`。
+文件、剪贴板、URL、设置、外观和菜单操作返回 `ServiceTask[T]`；使用
+`ServiceTask::effect` 把类型化的 `Success`、`Failure` 和 `Cancelled` 结果转换为
+`Msg`。任务生命周期由 runtime 负责取消和拒绝 stale completion，因此应用代码既不保存
+宿主 request id，也不订阅 completion queue。`views` 只应发出 `BrowseRequested` 或
+`RecordFileDrop(paths)` 之类的消息。当宿主服务工作流是子功能时，在父级中用
+`View::map` 提升子视图，并用 `Effect::map` 提升子 effect，使父级继续拥有顶层消息循环。
 
 ```moonbit nocheck
 fn request_browse(
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> @moui.Effect[ImportMsg] {
-  @moui.Effect::host_service(
-    key="host:file-import",
-    label="Import files",
-    run=dispatch => {
-      let response = services.open_file(title="Import files", filters=["csv", "json"])
-      dispatch(HostCompleted(file_dialog_completion(response)))
-    },
+  services
+  .files()
+  .open_file(
+    options=@services.FileDialogOptions::new(
+      title="Import files",
+      filters=["csv", "json"],
+    ),
   )
+  .effect(map=result => FileDialogCompleted(result))
 }
 ```
 
 ```moonbit nocheck
-fn subscriptions(
-  model : ImportModel,
-  services : @host.HostAppServices,
-) -> @moui.Subscription[ImportMsg] {
-  match model.pending_request {
-    Some(id) =>
-      services.completion_subscription(
-        id,
-        map=completion => HostCompleted(completion),
-        label="Import files completion",
-      )
-    None => @moui.Subscription::none()
-  }
+match msg {
+  FileDialogCompleted(Success(path)) => add_file(model, path)
+  FileDialogCompleted(Failure(error)) => { ..model, error: Some(error.message) }
+  FileDialogCompleted(Cancelled) => { ..model, status: "Cancelled" }
+  _ => model
 }
 ```
 
@@ -305,16 +289,15 @@ moon test examples/showcase/app/platform --target native
 
 ## 定时器
 
-从平台入口使用 `@host.HostTimerSource`，并将其作为可选依赖传给共享应用。仅在模型需要
-tick 时声明 `source.subscription(interval_ms, key, map)`（例如 toast 队列非空或秒表运行时）。
-当 `subscriptions` 不再返回某个 key 时，缺失 key 会自动取消。
+平台 composition 在 `AppEnvironment` 中提供可选的 `@services.TimerSource`。Program 闭包
+捕获 environment，仅在模型需要 tick 时声明 subscription；缺失的 key 会自动取消。
 
 ```moonbit nocheck
 fn subscriptions(
   model : LabModel,
-  timer_source : @host.HostTimerSource?,
+  environment : @services.AppEnvironment,
 ) -> @moui.Subscription[LabMsg] {
-  match timer_source {
+  match environment.timer() {
     Some(source) =>
       if model.timer_running {
         source.subscription(
@@ -331,9 +314,7 @@ fn subscriptions(
 }
 ```
 
-平台入口拥有具体 source，例如
-`@macos_host.macos_timer_source()` / `windows_timer_source` /
-`linux_timer_source`。Web 目前还没有暴露宿主定时器适配器。
+平台后端通过 `app_environment()` 暴露适配后的 source；scheduler 细节留在应用包之外。
 
 推荐检查：
 
@@ -345,21 +326,17 @@ moon test examples/markdown_editor/app --target native
 
 ## 剪贴板
 
-剪贴板是宿主服务，不是视图。通过 `HostAppServices` 写入或读取文本，返回
-`Effect::host_service`，并像文件打开一样用 `completion_subscription` 订阅 pending 完成。
+剪贴板是服务，不是视图。返回类型化 task effect，并在 `update` 中处理结果。
 
 ```moonbit nocheck
 fn write_clipboard(
-  services : @host.HostAppServices,
+  services : @services.AppServices,
   text : String,
 ) -> @moui.Effect[LabMsg] {
-  @moui.Effect::host_service(
-    key="host:clipboard-write",
-    label="Write clipboard",
-    run=dispatch => {
-      dispatch(HostCompleted(services.write_clipboard_text(text)))
-    },
-  )
+  services
+  .clipboard()
+  .write_text(text)
+  .effect(map=result => ClipboardWritten(result))
 }
 ```
 
@@ -373,7 +350,7 @@ moon test examples/markdown_editor/app --target native
 
 ## 键盘命令
 
-优先使用安装在运行时（`AppRuntime::set_action_commands`）上的
+优先使用安装在运行时（`Program::with_commands`）上的
 `@core.ActionCommand` / `@views.ActionCommandMap` 来提供可发现的快捷键。保持禁用命令可见。
 只有需要命令映射之外的组合键时，才过滤 `HostEvent::Keyboard`。
 
@@ -442,7 +419,7 @@ moon test examples/showcase/app/platform --target native
 | --- | --- |
 | `Effect::none` | 纯模型更新 |
 | `Effect::send` | 立即重新进入消息循环 |
-| `Effect::host_service` | 带诊断的一次性宿主桥 |
+| `ServiceTask::effect` | 带诊断的一次性宿主桥 |
 | `Effect::run` | 自定义结构化一次性 runner |
 | `Effect::task` / `service_task` | 带运行时生命周期的可取消一次性异步 |
 
@@ -455,24 +432,28 @@ moon test examples/showcase/app/platform --target native
 | 层级 | API | 状态 |
 | --- | --- | --- |
 | L0 内容菜单 | `menu_bar` / `command_menu` / `context_menu_region` | 就绪（视图叠层） |
-| L1 上下文菜单 | `HostAppServices::show_context_menu` | 支持菜单的宿主上就绪 |
-| L2 应用菜单栏 | `HostAppServices::set_application_menu` | macOS 安装原生菜单；Windows/Linux/Web 返回 `Unavailable` |
+| L1 上下文菜单 | `@services.MenuServices::show_context` | 支持菜单的宿主上就绪 |
+| L2 应用菜单栏 | `@services.MenuServices::install_application` | macOS 安装原生菜单；Windows/Linux/Web 返回 `Unavailable` |
+
+菜单项应复用传给 `Program::with_commands` 的同一组 `ActionCommand`：
 
 ```moonbit nocheck
-fn install_app_menu(services : @host.HostAppServices) -> Unit {
-  let menu = @host.HostApplicationMenu::new(
-    title="File",
-    items=[
-      @host.HostApplicationMenuItem::new(title="Open…", action_id=1),
-      @host.HostApplicationMenuItem::separator(),
-    ],
-  )
-  ignore(services.set_application_menu([menu]))
+fn application_menus(
+  open : @views.ActionCommand,
+) -> Array[@services.ApplicationMenu] {
+  [
+    @services.ApplicationMenu::new(title="File", items=[
+      @services.ApplicationMenuItem::MenuCommand(open),
+      @services.ApplicationMenuItem::MenuSeparator,
+    ]),
+  ]
 }
 ```
 
-在 macOS 上，应在主窗口就绪后（`on_ready`）安装，使默认 AppKit 菜单不会覆盖自定义菜单栏。
-见 Showcase 的 Platform workspace 和 `examples/markdown_editor/macos_skia`。
+composition 包通过
+`environment.services().menus().install_application(...)` 安装菜单。在 macOS
+上应等待主窗口就绪，避免 AppKit 默认菜单覆盖应用菜单。选择菜单项时，runtime
+解析命令元数据，并将对应的 typed Program message 入队。
 
 ## Toast 队列
 

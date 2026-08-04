@@ -20,7 +20,7 @@ Linux 运行时要求有意保持原生：
   ```
   当 portal 和 zenity 都不可用时，文件和文件夹选择会静默返回 cancelled，应用会向 stdout 打印诊断消息。
 - 最终原生链接需要 zlib / pthread / fontconfig 系统库。`moui/build.js` 通过 prebuild `link_configs` 为 `backend/linux`、`render/skia` 和 `render/wgpu/fontconfig` 注入这些库。Linux 示例入口点不应重复 `-lz` 或 fontconfig 栈；它们只需要一个空的 `cc-link-flags` 覆盖，让 Moon 在需要时禁用 `tcc -run`。
-- glib-2.0 开发头文件和运行时库。`backend/linux` 无条件通过 GLib main loop（`g_timeout_add` / `g_source_remove`）驱动 `HostTimerSource` subscription，因此 `moui` prebuild 通过 `pkg-config` 解析 `glib-2.0`，把得到的 `-I` include 标志送入 `stub-cc-flags`，并把 libs 合并进 `backend/linux` `link_configs` 条目。在 `pkg-config` 找不到 `glib-2.0` 的宿主上，两者都会解析为空（C stub 主体由 `#ifdef __linux__` 保护，并且只在 Linux 上有意义）。发行版特定设置可以用 `MOUI_LINUX_GLIB_STUB_CC_FLAGS` 和 `MOUI_LINUX_GLIB_CC_LINK_FLAGS` 覆盖解析出的标志。
+- glib-2.0 开发头文件和运行时库。`backend/linux` 无条件通过 GLib main loop（`g_timeout_add` / `g_source_remove`）驱动 `@services.TimerSource` subscription，因此 `moui` prebuild 通过 `pkg-config` 解析 `glib-2.0`，把得到的 `-I` include 标志送入 `stub-cc-flags`，并把 libs 合并进 `backend/linux` `link_configs` 条目。在 `pkg-config` 找不到 `glib-2.0` 的宿主上，两者都会解析为空（C stub 主体由 `#ifdef __linux__` 保护，并且只在 Linux 上有意义）。发行版特定设置可以用 `MOUI_LINUX_GLIB_STUB_CC_FLAGS` 和 `MOUI_LINUX_GLIB_CC_LINK_FLAGS` 覆盖解析出的标志。
 - 原生 WebView 支持需要 WebKitGTK 开发包（`libwebkit2gtk-4.1-dev` 或 `4.0`）。`moui_webview` prebuild 通过 `pkg-config` 自动检测带 `webkit2gtk-4.1` 或 `webkit2gtk-4.0` 的 `gtk+-3.0`；如果找到，则启用原生桥。fallback 构建不链接 WebKitGTK，并报告 WebView 不可用。发行版特定设置可以用 `MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` 和 `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS` 覆盖检测。
 
 ## 运行
@@ -30,9 +30,7 @@ Linux 运行时要求有意保持原生：
 ```sh
 moon test moui/backend/linux --target native
 moon build examples/showcase/linux_skia --target native
-moon build examples/markdown_editor/linux_skia --target native
 moon run examples/showcase/linux_skia --target native
-moon run examples/markdown_editor/linux_skia --target native
 ```
 
 普通 Linux Skia 入口点是交互式应用入口点。匹配宿主的首帧 smoke 应保留在测试者/后端 smoke runner 中，并在 release note 需要时把这些日志存储到被忽略的 `artifacts/` 路径下。
@@ -41,7 +39,7 @@ moon run examples/markdown_editor/linux_skia --target native
 
 ## WGPU 诊断
 
-WGPU 诊断 factory 会把 Linux `render/wgpu/fontconfig` provider 与共享 Moon Cosmic fallback 组合。fontconfig provider 包括真实 fontconfig family 解析、FreeType 光栅化、HarfBuzz shaping、嵌入字体注册和 color-emoji 路径；通过 `@wgpu_renderer.native(text_engine=...)` 选择引擎，`examples/showcase/linux_wgpu_cosmic` 显式选择 Moon Cosmic provider 用于比较。
+WGPU 诊断 factory 会把 Linux `render/wgpu/fontconfig` provider 与共享 Moon Cosmic fallback 组合。fontconfig provider 包括真实 fontconfig family 解析、FreeType 光栅化、HarfBuzz shaping、嵌入字体注册和 color-emoji 路径；canonical `examples/showcase/linux_wgpu` 使用 fontconfig，并把 Cosmic 作为内部 fallback。
 
 ## Skia Renderer
 
@@ -56,25 +54,16 @@ Linux 宿主循环在每次 present 后记录 renderer image-resource revision�
 ```sh
 MOUI_FIRST_FRAME_EXIT=1 \\
   moon run examples/showcase/linux_skia --target native
-MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \\
-  moon run examples/markdown_editor/linux_skia --target native
 scripts/run-window-package-smoke.sh linux --run
 ```
 
-Showcase 和 Markdown Editor 日志必须包含宿主循环输出的 `Linux renderer presented first frame; exiting by request; title=...`，才能被引用为应用层运行时证据。window 包 smoke 仍是 Wayland 句柄、`present_rgba_pixels`、resize/redraw、IME request 状态和干净关闭的依赖层证据。
+Showcase 日志必须包含宿主循环输出的 `Linux renderer presented first frame; exiting by request; title=...`，才能被引用为应用层运行时证据。window 包 smoke 仍是 Wayland 句柄、`present_rgba_pixels`、resize/redraw、IME request 状态和干净关闭的依赖层证据。
 
-window 包为该依赖表面携带 consumer 风格 Linux smoke。在匹配 Wayland 宿主上，运行 `scripts/run-window-package-smoke.sh linux --run` 来覆盖 surface 创建、公共 Wayland 句柄、`Window::present_rgba_pixels`、resize、redraw、IME request 状态和干净关闭。只有在观察到代表性指针/键盘输入时才添加 `--require-input` 或 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1`。Linux 剪贴板 selection、文件对话框、文本文件读写、desktop URL 打开、IME composition/cursor 几何和文件拖放都是已实现的宿主服务/输入路径，但它们仍是匹配宿主运行时证据边界：只引用实际覆盖了 desktop/compositor 服务的日志，而不是单独引用包预检 summary。从 `wzzc-dev/window@0.5.4-0.1.3` 包 smoke artifact 记录依赖层事实；把 MoUI Showcase `linux_skia` 和 Markdown Editor `linux_skia` 运行保持为独立主线应用层观察。当配置了 Vulkan/WGPU stack 时，把 `linux_wgpu` 和 `linux_wgpu_cosmic` 保持为 WGPU 诊断观察。
+window 包为该依赖表面携带 consumer 风格 Linux smoke。在匹配 Wayland 宿主上，运行 `scripts/run-window-package-smoke.sh linux --run` 来覆盖 surface 创建、公共 Wayland 句柄、`Window::present_rgba_pixels`、resize、redraw、IME request 状态和干净关闭。只有在观察到代表性指针/键盘输入时才添加 `--require-input` 或 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1`。Linux 剪贴板 selection、文件对话框、文本文件读写、desktop URL 打开、IME composition/cursor 几何和文件拖放都是已实现的宿主服务/输入路径，但它们仍是匹配宿主运行时证据边界：只引用实际覆盖了 desktop/compositor 服务的日志，而不是单独引用包预检 summary。从 `wzzc-dev/window@0.5.4-0.1.3` 包 smoke artifact 记录依赖层事实；把 MoUI Showcase `linux_skia` 运行作为 canonical 主线应用层观察。配置 Vulkan/WGPU stack 时，把唯一 `linux_wgpu` 路线保持为非阻塞 WGPU 诊断观察。
 
-对于已安装 WebKitGTK 的配置宿主上的 Linux WebView 运行时证据，构建或运行 demo，并把 smoke 日志与 Skia 首帧证据分开引用：
+Linux WebView 运行时证据属于 matching-host tester/backend probe。包测试覆盖纯事件/命令映射和 fallback capability 路径，但不能证明真实 WebKitGTK view 已呈现。
 
-```sh
-moon check examples/webview_demo/linux_skia --target native
-moon run examples/webview_demo/linux_skia --target native
-```
-
-该 smoke 应覆盖位置、受控 navigation policy 失败、title/history 通知、JavaScript result 回调和命令队列 draining。包测试覆盖纯事件/命令映射和 fallback capability 路径，但不能证明真实 WebKitGTK view 已呈现。
-
-`examples/showcase/linux_skia` 和 `examples/markdown_editor/linux_skia` 为主线 Showcase 和编辑工作流选择该 provider。依赖原生 Skia 渲染像素前，请配置真实 Skia 链接标志。
+`examples/showcase/linux_skia` 选择 canonical Linux Skia provider 路线。依赖原生 Skia 渲染像素前，请配置真实 Skia 链接标志。
 默认 JetBrains Linux provider 链接 fontconfig、FreeType 和 HarfBuzz；当这些库可用时，`moui_skia` 会通过 fontconfig 构建系统 `FontMgr`，并在 fontconfig 未报告 family 时回退到 `/usr/share/fonts` 等常见字体目录。缺失 CJK 或 emoji 字形覆盖仍取决于已安装系统字体，完整混合文字 fallback 运行仍是文本系统后续工作，而不是 Linux 后端责任。
 
 Linux 原生上下文菜单使用共享 `HostServiceBridge::ShowMenu` 契约。后端为 desktop menu picker 编码启用的命令行，通过 `HostRuntimeDriver` 分派选中的 `ActionCommand`，并在配置的 desktop menu tool 缺失时报告 unavailable 响应。

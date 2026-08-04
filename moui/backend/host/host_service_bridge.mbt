@@ -34,6 +34,13 @@ pub(all) enum HostBinaryFileRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum HostSettingsRequest {
+  Read(String)
+  Write(String, String)
+  Remove(String)
+} derive(Eq, Debug, ToJson)
+
+///|
 pub struct HostDirectoryEntry {
   priv name : String
   priv path : String
@@ -83,6 +90,7 @@ pub(all) enum HostServiceRequest {
   BinaryFile(HostBinaryFileRequest)
   OpenUrl(String)
   QuerySystemTheme
+  Settings(HostSettingsRequest)
   ListDirectory(String)
   PlatformChannel(PlatformChannelRequest)
 } derive(Eq, Debug, ToJson)
@@ -159,6 +167,9 @@ pub(all) enum HostServiceResponse {
   BinaryFileWritten(String)
   UrlOpened
   SystemTheme(@core.ColorScheme)
+  SettingValue(String?)
+  SettingWritten
+  SettingRemoved
   DirectoryListing(String, Array[HostDirectoryEntry])
   PlatformChannel(PlatformChannelResponse)
 } derive(Eq, Debug, ToJson)
@@ -172,6 +183,7 @@ pub(all) enum HostServiceKind {
   BinaryFileService
   OpenUrlService
   SystemThemeService
+  SettingsService
   DirectoryListingService
   PlatformChannelService
 } derive(Eq, Debug, ToJson)
@@ -331,6 +343,7 @@ pub fn HostServiceBridge::can_handle(
     BinaryFile(_) => self.capabilities.file_access
     OpenUrl(_) => self.capabilities.open_url
     QuerySystemTheme => self.capabilities.system_theme
+    Settings(_) => self.capabilities.settings
     ListDirectory(_) => self.capabilities.file_access
     PlatformChannel(_) => true
   }
@@ -349,6 +362,7 @@ pub fn HostServiceRequest::unavailable_message(
     BinaryFile(_) => "binary file service is unavailable"
     OpenUrl(_) => "open URL service is unavailable"
     QuerySystemTheme => "system theme service is unavailable"
+    Settings(_) => "settings service is unavailable"
     ListDirectory(_) => "directory listing service is unavailable"
     PlatformChannel(request) =>
       "platform channel is unavailable: " + request.channel
@@ -366,6 +380,7 @@ pub fn HostServiceRequest::kind(self : HostServiceRequest) -> HostServiceKind {
     BinaryFile(_) => BinaryFileService
     OpenUrl(_) => OpenUrlService
     QuerySystemTheme => SystemThemeService
+    Settings(_) => SettingsService
     ListDirectory(_) => DirectoryListingService
     PlatformChannel(_) => PlatformChannelService
   }

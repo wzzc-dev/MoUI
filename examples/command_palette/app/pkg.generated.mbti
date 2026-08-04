@@ -2,21 +2,17 @@
 package "examples/command_palette/app"
 
 import {
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui/views/controls",
 }
 
 // Values
-pub fn action_command_map() -> @core.ActionCommandMap
-
 pub fn command_palette_commands() -> Array[@core.ActionCommand]
 
 pub fn command_sections() -> Array[@controls.CommandMenuSection]
 
-pub fn program() -> @core.Program[CommandPaletteModel, CommandPaletteMsg]
-
-pub fn program_with_services(@host.HostAppServices) -> @core.Program[CommandPaletteModel, CommandPaletteMsg]
+pub fn program(environment? : @services.AppEnvironment) -> @core.Program[CommandPaletteModel, CommandPaletteMsg]
 
 pub fn update(CommandPaletteModel, CommandPaletteMsg) -> CommandPaletteModel
 
@@ -29,8 +25,7 @@ pub struct CommandPaletteApp {
   unit : Unit
 }
 pub fn CommandPaletteApp::new() -> Self
-pub fn CommandPaletteApp::program(Self) -> @core.Program[CommandPaletteModel, CommandPaletteMsg]
-pub fn CommandPaletteApp::program_with_services(Self, @host.HostAppServices) -> @core.Program[CommandPaletteModel, CommandPaletteMsg]
+pub fn CommandPaletteApp::program(Self, environment? : @services.AppEnvironment) -> @core.Program[CommandPaletteModel, CommandPaletteMsg]
 
 pub(all) struct CommandPaletteModel {
   query : String
@@ -42,17 +37,16 @@ pub fn CommandPaletteModel::commands(Self) -> Array[@core.ActionCommand]
 pub fn CommandPaletteModel::dispatch_intent(Self, @core.CommandIntent) -> Self
 pub fn CommandPaletteModel::filtered_commands(Self) -> Array[@core.ActionCommand]
 pub fn CommandPaletteModel::new() -> Self
-pub fn CommandPaletteModel::program(Self) -> @core.Program[Self, CommandPaletteMsg]
-pub fn CommandPaletteModel::program_with_services(Self, @host.HostAppServices) -> @core.Program[Self, CommandPaletteMsg]
+pub fn CommandPaletteModel::program(Self, environment? : @services.AppEnvironment) -> @core.Program[Self, CommandPaletteMsg]
 pub fn CommandPaletteModel::update(Self, CommandPaletteMsg) -> Self
-pub fn CommandPaletteModel::update_with_services(Self, CommandPaletteMsg, @host.HostAppServices) -> (Self, @core.Effect[CommandPaletteMsg])
+pub fn CommandPaletteModel::update_with_services(Self, CommandPaletteMsg, @services.AppServices) -> (Self, @core.Effect[CommandPaletteMsg])
 pub fn CommandPaletteModel::view(Self) -> @core.View[CommandPaletteMsg]
 
 pub(all) enum CommandPaletteMsg {
   QueryChanged(String)
   CommandSelected(@core.CommandIntent)
   ShowNativeMenu
-  HostMenuCompleted(@host.HostServiceResponse)
+  MenuCompleted(@services.ServiceTaskResult[@core.ActionCommand])
   ToggleContextMenu
   HideContextMenu
   ClearLog

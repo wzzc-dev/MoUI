@@ -144,7 +144,7 @@ MoUI 将平台后端视为围绕共享 host contract 的 adapter。
 - 保持 Linux 支持 Ubuntu 24.04+ Wayland，并具备匹配主机 runtime evidence 和 font-provider coverage（fonts-noto-core、fonts-dejavu-core）。
 - 使用 `HostServiceBridge` 作为 clipboard、menus、file dialogs、URL opening 和 system-theme queries 的 typed host-service boundary。
 - 对需要 permission prompt、picker callback 或其他 async completion 后 runtime 才能安全应用结果的浏览器或平台服务，使用 `HostServiceAsyncQueue`。
-- 保持 Web clipboard 行为诚实：copy/cut 通过浏览器 host import 写入选中文本，聚焦的浏览器文本输入仍可通过 input event 粘贴，app-level clipboard read/file dialog 通过 `HostServiceAsyncQueue` 流入浏览器 permission 或 picker callback。App-owned pending service 应声明 `HostAppServices::completion_subscription`，让 callback 作为 subscription event 回到 typed TEA message loop。
+- 保持 Web clipboard 行为诚实：copy/cut 通过浏览器 host import 写入选中文本，聚焦的浏览器文本输入仍可通过 input event 粘贴；backend/host 内部的 `HostServiceAsyncQueue` 负责 permission/picker callback，应用只通过 `ServiceTask::effect` 接收 typed result，不保存 request id 或订阅 completion queue。
 - 保持 URL opening 在活跃 host 上诚实：macOS 使用 `NSWorkspace`，Windows 使用 `ShellExecuteW`，Web 使用调用 `window.open` 且可报告 popup-blocked failure 的 browser host import。
 - 保持 file drag/drop 走共享 host 路径：macOS 和 Windows 转发 native file path，Web 则转发 canvas drop event 中浏览器暴露的 file name。
 - 保持 system theme propagation 走 host-service 路径：native macOS 和 Windows startup 现在会在第一次 layout/redraw pass 前，把查询到的 light/dark scheme 安装进 runtime environment。Web startup 使用浏览器 `prefers-color-scheme` 查询，Web/macOS/Windows theme-change window event 通过 `HostEvent::ThemeChanged` 流动。

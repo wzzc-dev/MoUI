@@ -96,8 +96,39 @@ pub(all) enum BrowserPage {
 } derive(Eq, Debug)
 
 ///|
-fn default_desktop_clock() -> @runtime.HostWallClock {
-  @runtime.HostWallClock::new(2026, 7, 19, 0, 9, 41)
+pub(all) enum DesktopService {
+  SystemAppearanceService
+  FileImportService
+  UrlOpenService
+} derive(Eq, Debug)
+
+///|
+pub(all) struct DesktopClock {
+  year : Int
+  month : Int
+  day : Int
+  weekday : Int
+  hour : Int
+  minute : Int
+  second : Int
+} derive(Eq, Debug)
+
+///|
+pub fn DesktopClock::new(
+  year : Int,
+  month : Int,
+  day : Int,
+  weekday : Int,
+  hour : Int,
+  minute : Int,
+  second? : Int = 0,
+) -> DesktopClock {
+  { year, month, day, weekday, hour, minute, second }
+}
+
+///|
+fn default_desktop_clock() -> DesktopClock {
+  DesktopClock::new(2026, 7, 19, 0, 9, 41)
 }
 
 ///|
@@ -108,7 +139,7 @@ pub(all) struct DesktopModel {
   overlay : DesktopOverlay
   appearance : AppearanceMode
   dark_mode : Bool
-  clock : @runtime.HostWallClock
+  clock : DesktopClock
   window_maximized : Bool
   window_offset_x : Double
   window_offset_y : Double
@@ -135,7 +166,7 @@ pub(all) struct DesktopModel {
   second_task_done : Bool
   third_task_done : Bool
   imported_files : Array[String]
-  pending_service : @host.HostServiceRequestId?
+  pending_service : DesktopService?
   last_diagnostic : String
 }
 
@@ -175,8 +206,10 @@ pub(all) enum Msg {
   ToggleDarkMode
   UseSystemAppearance
   RequestFileImport
-  HostCompleted(@host.HostCompletedServiceResponse)
-  ClockUpdated(@runtime.HostWallClock)
+  SystemAppearanceCompleted(@services.ServiceTaskResult[@state.ColorScheme])
+  FileImportCompleted(@services.ServiceTaskResult[Array[String]])
+  UrlOpenCompleted(@services.ServiceTaskResult[Unit])
+  ClockUpdated(DesktopClock)
   WifiChanged(Bool)
   BluetoothChanged(Bool)
   LowPowerModeChanged(Bool)
@@ -189,7 +222,7 @@ pub(all) enum Msg {
 ///|
 pub fn DesktopModel::new(
   wallpaper_source? : String = "examples/mo_desktop/web_wasm/assets/tahoe-day.jpg",
-  clock? : @runtime.HostWallClock = default_desktop_clock(),
+  clock? : DesktopClock = default_desktop_clock(),
 ) -> DesktopModel {
   {
     wallpaper_source,
@@ -239,7 +272,10 @@ pub fn update(model : DesktopModel, message : Msg) -> DesktopModel {
 pub fn DesktopModel::update(self : DesktopModel, message : Msg) -> DesktopModel {
   let updated = self.apply(message)
   match message {
-    HostCompleted(_) | ClockUpdated(_) => updated
+    SystemAppearanceCompleted(_)
+    | FileImportCompleted(_)
+    | UrlOpenCompleted(_)
+    | ClockUpdated(_) => updated
     _ => { ..updated, last_diagnostic: message.diagnostic() }
   }
 }
@@ -502,6 +538,7 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
         overlay: OverlayNone,
         browser_query: value,
         browser_page: SearchResults(value),
+        pending_service: Some(UrlOpenService),
       }
     ToggleDarkMode =>
       {
@@ -513,9 +550,22 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
         },
         dark_mode: !self.dark_mode,
       }
-    UseSystemAppearance => { ..self, appearance: SystemAppearance }
-    RequestFileImport => { ..self, last_diagnostic: "Opening file dialog…" }
-    HostCompleted(completion) => self.apply_host_completion(completion)
+    UseSystemAppearance =>
+      {
+        ..self,
+        appearance: SystemAppearance,
+        pending_service: Some(SystemAppearanceService),
+      }
+    RequestFileImport =>
+      {
+        ..self,
+        pending_service: Some(FileImportService),
+        last_diagnostic: "Opening file dialog…",
+      }
+    SystemAppearanceCompleted(result) =>
+      self.apply_system_appearance_completion(result)
+    FileImportCompleted(result) => self.apply_file_import_completion(result)
+    UrlOpenCompleted(result) => self.apply_url_open_completion(result)
     ClockUpdated(clock) => { ..self, clock, }
     WifiChanged(value) => { ..self, wifi_enabled: value }
     BluetoothChanged(value) => { ..self, bluetooth_enabled: value }
@@ -550,18 +600,15 @@ pub fn DesktopModel::task_done(self : DesktopModel, task : DesktopTask) -> Bool 
 }
 
 ///|
-fn DesktopModel::apply_host_completion(
+fn DesktopModel::apply_system_appearance_completion(
   self : DesktopModel,
-  completion : @host.HostCompletedServiceResponse,
+  result : @services.ServiceTaskResult[@state.ColorScheme],
 ) -> DesktopModel {
-  match completion.response {
-    @host.HostServiceResponse::Pending(id) =>
-      {
-        ..self,
-        pending_service: Some(id),
-        last_diagnostic: "Waiting for host service…",
-      }
-    @host.HostServiceResponse::SystemTheme(scheme) =>
+  if self.pending_service != Some(SystemAppearanceService) {
+    return self
+  }
+  match result {
+    Success(scheme) =>
       {
         ..self,
         pending_service: None,
@@ -572,7 +619,27 @@ fn DesktopModel::apply_host_completion(
         },
         last_diagnostic: "Updated system appearance",
       }
-    @host.HostServiceResponse::FileDialogSelection(paths) => {
+    Failure(error) =>
+      { ..self, pending_service: None, last_diagnostic: error.message }
+    Cancelled =>
+      {
+        ..self,
+        pending_service: None,
+        last_diagnostic: "System appearance request cancelled",
+      }
+  }
+}
+
+///|
+fn DesktopModel::apply_file_import_completion(
+  self : DesktopModel,
+  result : @services.ServiceTaskResult[Array[String]],
+) -> DesktopModel {
+  if self.pending_service != Some(FileImportService) {
+    return self
+  }
+  match result {
+    Success(paths) => {
       let imported_files = self.imported_files.copy()
       for path in paths {
         if !imported_files.contains(path) {
@@ -591,16 +658,32 @@ fn DesktopModel::apply_host_completion(
         },
       }
     }
-    @host.HostServiceResponse::UrlOpened =>
-      { ..self, pending_service: None, last_diagnostic: "Opened URL with host" }
-    @host.HostServiceResponse::Unavailable(message) =>
-      { ..self, pending_service: None, last_diagnostic: message }
-    _ =>
+    Failure(error) =>
+      { ..self, pending_service: None, last_diagnostic: error.message }
+    Cancelled =>
       {
         ..self,
         pending_service: None,
-        last_diagnostic: "Host service completed",
+        last_diagnostic: "File import cancelled",
       }
+  }
+}
+
+///|
+fn DesktopModel::apply_url_open_completion(
+  self : DesktopModel,
+  result : @services.ServiceTaskResult[Unit],
+) -> DesktopModel {
+  if self.pending_service != Some(UrlOpenService) {
+    return self
+  }
+  match result {
+    Success(_) =>
+      { ..self, pending_service: None, last_diagnostic: "Opened URL with host" }
+    Failure(error) =>
+      { ..self, pending_service: None, last_diagnostic: error.message }
+    Cancelled =>
+      { ..self, pending_service: None, last_diagnostic: "URL open cancelled" }
   }
 }
 
@@ -723,7 +806,9 @@ fn Msg::diagnostic(self : Msg) -> String {
     ToggleDarkMode => "Toggled dark mode"
     UseSystemAppearance => "Requested system appearance"
     RequestFileImport => "Requested file import"
-    HostCompleted(_) => "Received host service completion"
+    SystemAppearanceCompleted(_) => "Received system appearance completion"
+    FileImportCompleted(_) => "Received file import completion"
+    UrlOpenCompleted(_) => "Received URL open completion"
     ClockUpdated(_) => "Updated live clock"
     WifiChanged(_) => "Changed Wi-Fi setting"
     BluetoothChanged(_) => "Changed Bluetooth setting"

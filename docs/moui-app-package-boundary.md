@@ -35,8 +35,9 @@ to interoperate over a shared abstraction.
 - A runtime implementation: the element tree, dirty state, runtime lifecycle,
   component storage, and actual task/subscription scheduling belong in
   `moui/runtime`.
-- A platform-service layer: WebView, file dialogs, clipboard, window services,
-  and platform channels belong in `moui/backend/host` or a concrete backend.
+- An app-service implementation: app-facing file, clipboard, URL, settings,
+  appearance, menu, timer, and route contracts belong in `moui/services`;
+  host wire protocol and platform channels belong in `moui/backend/host`.
 - A renderer implementation: Skia, WGPU, and browser WebGPU details belong in
   `moui/render/*`.
 - A design-system addon: Material, Fluent, Carbon, Primer, and their component
@@ -79,8 +80,9 @@ The current target placement is:
 - Runtime and diagnostics belong in `moui/runtime`: runtime inspector,
   program-lifecycle snapshots, view/render-diagnostic snapshots, and
   `ComponentContext` runtime-construction details.
-- Platform services belong in `moui/backend/host`: WebView commands, events,
-  policies, and specs; host capabilities; and host-service contracts.
+- App-facing platform capabilities belong in `moui/services`. WebView wire
+  commands/events, host capabilities, and host-service protocol stay in
+  `moui/backend/host`.
 - Renderer and backend implementations remain in `moui/render/*` and
   `moui/backend/*`.
 
@@ -165,7 +167,7 @@ must not be reversed by moving them back into `core`.
   `RouteDescriptor`, `RouterSnapshot`, `RouteHistoryState`, `RouteFocusStore`,
   `RouterState`, and `resolve_route` are owned by navigation support in
   `moui/views`. `core` retains only foundational state holders such as
-  `NavigationState`. Host route events use `@host.HostRouteLocation`; ordinary
+  `NavigationState`. Route events use `@services.RouteLocation`; ordinary
   apps convert them to `@views.RouteLocation` when integrating navigation
   history.
 
@@ -184,16 +186,14 @@ compatibility aliases or deprecated transition entrypoints.
   `moui/views`.
 - Runtime lifecycle, component-runtime input, effect/subscription diagnostic
   summaries, and inspector snapshots belong in `moui/runtime`.
-- Host/platform-service protocols belong in `moui/backend/host` or a concrete
-  backend.
+- App-facing service protocols belong in `moui/services`; host wire protocols
+  belong in `moui/backend/host` or a concrete backend.
 - `core` retains only protocols and value types that remain stable across
   runtimes, backends, renderers, and views.
 
-`showcase/app` may depend directly on `@runtime` for diagnostics examples and on
-`@render` to demonstrate renderer capabilities; ordinary apps must not treat
-these example uses as the default dependency pattern. Extra imports under test
-targets (`for "test"` / `for "wbtest"`) do not count toward the runtime
-boundary.
+Showcase runtime/renderer diagnostics live in a sibling integration package and
+enter the pure app as neutral DTOs. Extra imports under test targets
+(`for "test"` / `for "wbtest"`) do not count toward the production boundary.
 
 ## Ordinary Shared App Packages
 
@@ -240,6 +240,11 @@ should depend by default on:
   public API is already exposed; drawing, animation, focus-scope, and low-level
   runtime/semantics IDs are no longer catch-all exports from `@views`.
 
+- `wzzc-dev/moui/services` — app-facing file, clipboard, URL, settings,
+  appearance, menu, timer, and route capabilities. One-shot operations return
+  typed `ServiceTask[T]`; sources emit core `Subscription` values. Neither API
+  exposes a host bridge, request id, or completion queue.
+
 - `wzzc-dev/moui_i18n` — an **optional localization addon**. It provides locale
   normalization, static catalog lookup, fallback, named interpolation, and
   limited count-message rules; the app still owns its product catalog and locale
@@ -261,28 +266,18 @@ geometry, graphics, animation, text, and state remain available through their
 corresponding domain facades. Other infrequently used kernel types are used
 directly through `@core`.
 
-Ordinary apps may directly depend on:
-
-- `wzzc-dev/moui/backend/host`: only when the app needs host-service / platform-
-  service contracts, such as file dialogs, async images, clipboard, a WebView
-  command queue, or host-service interaction. An ordinary app handling WebView
-  events should preferentially use `@views.WebViewEvent`.
-
 Ordinary apps must not directly depend on:
 
 - `wzzc-dev/moui/runtime`
+- `wzzc-dev/moui/backend/host`
 - `wzzc-dev/moui/render/*`
 - `wzzc-dev/moui/backend/{web,macos,windows,linux}`
 - concrete renderer packages; renderer factories belong in platform composition
   roots and are not dependencies of shared app packages.
 - `moui_theme/*`, unless the app itself is a design-system addon or preview app.
 
-The known exceptions appear in “Target Boundary Declaration” above:
-`showcase/app` currently depends on `@render` for capability reporting and on
-`@runtime` for diagnostic-snapshot examples. The former should be removed after
-capability reporting converges on an app-facing API; the latter is restricted to
-diagnostics examples and does not mean ordinary apps may depend on runtime by
-default.
+There are no production exceptions for `examples/*/app`; integration-only
+packages may depend on runtime, host, or render and pass neutral DTOs into apps.
 
 ## App-Private Subpackages
 
@@ -519,13 +514,22 @@ root `moui` facade.
 Platform entrypoint packages are executable packages such as
 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_window_hosted,ios_window_hosted,harmonyos_window_hosted}`.
 They create the runtime, connect a platform backend, and select a renderer.
-Desktop/Web/Wechat roots import `wzzc-dev/moui`, one concrete renderer package,
+Desktop/Web/Wechat roots import `wzzc-dev/moui/runtime`, one concrete renderer package,
 and one platform backend, then use
-`@moui.run_app(...)`, `.render(...)` or `.render_all(...)`, and
+`@runtime.run_app(...)`, `.render(...)` or `.render_all(...)`, and
 `.backend(...).run()`. Platform options are
 captured by `backend/<platform>.entry(...)`; renderer options are captured by
 the renderer factory. A composition root never imports a renderer-specific
 backend subpackage.
+
+Moon `0.1.20260724` does not turn `pub using` aliases into wasm exports: the
+linker exports public definitions owned by the executable package only. A Web
+or WeChat entrypoint may therefore use `abi.mbt` as its second production file.
+That file contains only the fixed callbacks which delegate directly to
+`backend/web` or `backend/wechat`; it must not contain app state, routing,
+service, renderer, or lifecycle logic. `validate-harness-invariants.mjs`
+enforces the closed shim surface, while Web handoff validation inspects the
+compiled wasm exports.
 
 The three embedded runtime routes use the matching `wzzc-dev/window` template and a
 `*_window_hosted` entrypoint. Their `main.mbt` files construct the program and
@@ -543,7 +547,6 @@ source for surface, pointer, resize, and detach events.
 Platform entrypoint packages may depend on:
 
 - `wzzc-dev/moui/runtime`
-- `wzzc-dev/moui`
 - `wzzc-dev/moui/backend/web`
 - `wzzc-dev/moui/backend/host`
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}`
@@ -571,7 +574,8 @@ may use lower-level packages.
   implementations.
 - `moui/runtime`: runtime state, element tree, layout/paint/event dispatch, and
   program execution.
-- `moui/backend/host`: host services and window/event/service protocols.
+- `moui/services`: app-facing services and timer/route sources.
+- `moui/backend/host`: host wire, window, event, bridge, and queue protocols.
 - `moui/backend/*`: platform backends.
 - `moui/render/*`: renderer facades and concrete renderer implementations.
 - `moui_richtext`: an addon for rich-text/Markdown documents, editing, commands,
@@ -586,15 +590,12 @@ may use lower-level packages.
 - `moui_theme/*`: design-system addons; they are not default dependencies of
   `core`, `views`, or domain facades.
 
-Ordinary apps depend by default on `moui/<domain>` (as needed) and
-`moui/views`. Direct dependencies on addons such as `moui_richtext`,
+Ordinary apps depend by default on `moui/<domain>` (as needed), `moui/views`,
+and `moui/services` when they need platform capabilities. Direct dependencies on addons such as `moui_richtext`,
 `moui_agent*`, and `moui_theme/*` are allowed only when an app explicitly needs
-that capability. Ordinary apps that directly depend on `moui/core` or
-`moui/backend/host` are constrained by the API-surface guard’s advanced-app
-allowlist (currently covering core imports in `examples/markdown_editor/app`,
-`examples/mo_workbench/app`, `examples/pdf_workbench/app`,
-`examples/showcase/app`, and `website/app`, plus the `runtime` import in
-`examples/showcase/app`).
+that capability. `moui/core` is reserved for advanced kernel types; production
+imports of runtime, backend, or render packages are rejected without an app
+allowlist.
 
 ## Review Checklist
 
@@ -606,8 +607,8 @@ Before adding a dependency or public API, answer these questions:
   `wzzc-dev/moui/<domain>` (as needed), and `wzzc-dev/moui/views`?
 - If an ordinary app imports `wzzc-dev/moui/core`, does it truly need a kernel
   type that a domain facade does not cover (a first-class use case)?
-- If an ordinary app imports `wzzc-dev/moui/backend/host`, does it truly need a
-  host-service protocol?
+- Does an ordinary app use `wzzc-dev/moui/services` instead of importing a host
+  bridge or queue?
 - Does an ordinary app incorrectly depend on `runtime`, `render/*`, or a
   platform backend?
 - Is a new domain-facade alias a platform-neutral, app-safe, frequently used

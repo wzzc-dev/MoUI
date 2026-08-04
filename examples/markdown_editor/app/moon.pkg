@@ -1,6 +1,5 @@
 import {
-  "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui_richtext",
   "wzzc-dev/moui/views",
@@ -14,6 +13,7 @@ import {
 }
 
 import {
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/runtime",
   "moonbitlang/core/debug",
 } for "wbtest"

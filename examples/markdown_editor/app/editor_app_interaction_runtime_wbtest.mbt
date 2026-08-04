@@ -3,10 +3,8 @@ test "markdown editor registers context-menu commands for native right-click" {
   // The host backends route right-click to the native context menu using
   // ActionCommands flagged context_menu=true. Assert the editor registers a
   // useful set so right-click offers file/edit actions out of the box.
-  let app = MarkdownEditorApp::new()
-  let map = app.action_commands()
-  let context_menu_labels = map
-    .commands()
+  let context_menu_labels = markdown_editor_program_commands()
+    .map(command => command.command())
     .filter(command => command.context_menu)
     .map(command => command.label)
   // File/edit essentials should be present in the context menu.

@@ -20,7 +20,7 @@ mode; cell selection, editing, and formula entry flow through a single
 - `cell/`, `sheet/`, `formula/`, `xlsx/` — domain subpackages: cell model,
   workbook model, formula evaluation, and xlsx load surface used by the
   `mbtexcel` adapter.
-- `macos_skia/`, `linux_skia/` — wired thin platform entrypoints.
+- `macos_skia/` — retained thin platform entrypoint.
 
 ## Dependencies
 
@@ -36,9 +36,6 @@ import {
 ```sh
 # macOS Skia
 moon run examples/excel/macos_skia --target native
-
-# Linux Skia
-moon run examples/excel/linux_skia --target native
 ```
 
 A `windows_skia` entrypoint is not wired today; Web wasm-gc is reserved.
@@ -57,6 +54,6 @@ sheet model, formula, and view layers.
 | Target               | Entrypoint   | Status      |
 | -------------------- | ------------ | ----------- |
 | macOS Skia           | `macos_skia` | Wired       |
-| Linux Skia           | `linux_skia` | Wired       |
+| Linux Skia           | Showcase route | App root retired |
 | Windows Skia         | reserved     | Not wired   |
 | Web wasm-gc          | reserved     | Not wired   |

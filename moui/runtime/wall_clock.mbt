@@ -3,7 +3,8 @@
 ///
 /// `weekday` follows the browser/AppKit convention: Sunday is `0` and Saturday
 /// is `6`. It is an instantaneous value rather than a timer; applications that
-/// need updates should pair it with a `HostTimerSource` subscription.
+/// need updates should pair it with an app-facing `@services.TimerSource`
+/// subscription supplied by the composition root.
 pub(all) struct HostWallClock {
   year : Int
   month : Int

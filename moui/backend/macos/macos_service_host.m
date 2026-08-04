@@ -278,6 +278,46 @@ int32_t moui_macos_system_theme_is_dark(void) {
 }
 
 MOONBIT_FFI_EXPORT
+int32_t moui_macos_settings_has_value(moonbit_bytes_t key) {
+  NSString *name = moui_macos_string_from_bytes(key);
+  if ([name length] == 0) {
+    return 0;
+  }
+  return [[NSUserDefaults standardUserDefaults] objectForKey:name] != nil ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_macos_settings_read(moonbit_bytes_t key) {
+  NSString *name = moui_macos_string_from_bytes(key);
+  if ([name length] == 0) {
+    return moonbit_make_bytes(0, 0);
+  }
+  NSString *value = [[NSUserDefaults standardUserDefaults] stringForKey:name];
+  return moui_macos_bytes_from_string(value);
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_settings_write(moonbit_bytes_t key, moonbit_bytes_t value) {
+  NSString *name = moui_macos_string_from_bytes(key);
+  NSString *text = moui_macos_string_from_bytes(value);
+  if ([name length] == 0 || (Moonbit_array_length(value) > 0 && [text length] == 0)) {
+    return 0;
+  }
+  [[NSUserDefaults standardUserDefaults] setObject:text forKey:name];
+  return 1;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_settings_remove(moonbit_bytes_t key) {
+  NSString *name = moui_macos_string_from_bytes(key);
+  if ([name length] == 0) {
+    return 0;
+  }
+  [[NSUserDefaults standardUserDefaults] removeObjectForKey:name];
+  return 1;
+}
+
+MOONBIT_FFI_EXPORT
 int32_t moui_macos_native_ime_smoke_set_marked_text(uint64_t raw_content_view_handle,
                                                        moonbit_bytes_t text,
                                                        int32_t selected_location,

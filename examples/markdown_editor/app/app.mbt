@@ -63,6 +63,7 @@ pub struct MarkdownEditorApp {
   recent_document_paths : @state.State[Array[String]]
   saved_document : @state.State[String]
   priv transfer_status : @state.State[MarkdownEditorTransferStatus]
+  priv transfer_generation : @state.State[Int]
   undo_stack : @state.State[Array[MarkdownEditorHistoryEntry]]
   redo_stack : @state.State[Array[MarkdownEditorHistoryEntry]]
   editor_scroll : @state.ScrollState
@@ -190,8 +191,7 @@ priv enum MarkdownEditorTransferKind {
 ///|
 priv enum MarkdownEditorTransferStatus {
   TransferReady
-  TransferRequesting(MarkdownEditorTransferKind)
-  TransferPending(@host.HostServiceRequestId, MarkdownEditorTransferKind)
+  TransferRunning(MarkdownEditorTransferKind)
   TransferUnavailable(String)
   TransferCancelled(MarkdownEditorTransferKind)
   TransferCopied
@@ -204,6 +204,24 @@ priv enum MarkdownEditorTransferStatus {
 }
 
 ///|
+pub enum MarkdownEditorServiceCompletion {
+  FileOpenPicked(Int, @services.ServiceTaskResult[String])
+  FileSavePicked(Int, @services.ServiceTaskResult[String])
+  TextFileRead(Int, String, @services.ServiceTaskResult[String])
+  TextFileWritten(Int, String, Bool, @services.ServiceTaskResult[Unit])
+  ClipboardImported(Int, @services.ServiceTaskResult[String])
+  ClipboardExported(Int, Bool, @services.ServiceTaskResult[Unit])
+  TargetOpened(Int, @services.ServiceTaskResult[Unit])
+  DirectoryPicked(@services.ServiceTaskResult[String])
+  DirectoryListed(
+    String,
+    @services.ServiceTaskResult[Array[@services.DirectoryEntry]]
+  )
+  SettingsLoaded(@services.ServiceTaskResult[String?])
+  SettingsSaved(@services.ServiceTaskResult[Unit])
+}
+
+///|
 pub enum MarkdownEditorMsg {
   NewDocument
   SaveDocument
@@ -212,7 +230,7 @@ pub enum MarkdownEditorMsg {
   ImportFromClipboard
   ExportToClipboard
   ExportHtmlToClipboard
-  HostTransferCompleted(@host.HostCompletedServiceResponse)
+  ServiceCompleted(MarkdownEditorServiceCompletion)
   Undo
   Redo
   ToggleOutline
@@ -322,6 +340,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     recent_document_paths: @state.State::new([]),
     saved_document: @state.State::new(document),
     transfer_status: @state.State::new(TransferReady),
+    transfer_generation: @state.State::new(0),
     undo_stack: @state.State::new([]),
     redo_stack: @state.State::new([]),
     editor_scroll: @state.ScrollState::new(),
@@ -331,29 +350,6 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     selected_image_offset: @state.State::new(None),
     image_centered: @state.State::new(false),
   }
-}
-
-///|
-/// Construct the editor and apply persisted settings when host services are
-/// available. Backends that want settings to survive restarts should call this
-/// instead of `new()`.
-pub fn MarkdownEditorApp::new_with_services(
-  services : @host.HostAppServices,
-) -> MarkdownEditorApp {
-  let app = MarkdownEditorApp::new()
-  let settings = markdown_editor_load_settings(services)
-  app.apply_settings(settings)
-  app
-}
-
-///|
-/// Persist the current preferences. Backends can call this on shutdown or on a
-/// timer so settings survive the next launch.
-pub fn MarkdownEditorApp::persist_settings(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
-  self.save_settings(services)
 }
 
 ///|
@@ -408,8 +404,7 @@ fn MarkdownEditorApp::update(
       self.transfer_status.set(
         TransferUnavailable("html export requires host services"),
       )
-    HostTransferCompleted(completion) =>
-      self.apply_transfer_completion(completion)
+    ServiceCompleted(_) => ()
     Undo => ignore(self.undo())
     Redo => ignore(self.redo())
     ToggleOutline => self.toggle_outline()
@@ -503,10 +498,12 @@ fn MarkdownEditorApp::update(
 }
 
 ///|
+
+///|
 fn MarkdownEditorApp::update_with_services(
   self : MarkdownEditorApp,
   message : MarkdownEditorMsg,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> (MarkdownEditorApp, @moui.Effect[MarkdownEditorMsg]) {
   match message {
     SaveDocument => (self, self.request_document_save(services))
@@ -525,14 +522,17 @@ fn MarkdownEditorApp::update_with_services(
     ExportHtmlToClipboard => (self, self.request_html_export(services))
     OpenTarget => (self, self.request_open_target(services))
     OpenRecentDocument(path) => {
-      // Auto-set working directory from file's parent when none is set
+      let effects : Array[@moui.Effect[MarkdownEditorMsg]] = [
+        self.request_text_file_read(path, services),
+      ]
       if self.working_directory.get() == "" {
         let parent = markdown_editor_parent_directory(path)
         if parent != "" {
-          ignore(self.load_tree_from_directory(parent, services))
+          self.working_directory.set(parent)
+          effects.push(self.request_directory_listing(parent, services))
         }
       }
-      (self, self.request_text_file_read(path, services))
+      (self, @moui.Effect::batch(effects))
     }
     PickWorkingDirectory =>
       (self, self.request_pick_working_directory(services))
@@ -542,17 +542,19 @@ fn MarkdownEditorApp::update_with_services(
         self.transfer_status.set(
           TransferUnavailable("refresh requires a picked working folder"),
         )
+        (self, @moui.Effect::none())
       } else {
-        self.apply_directory_listing(path, services.list_directory(path))
+        (self, self.request_directory_listing(path, services))
       }
-      (self, @moui.Effect::none())
     }
     ToggleTreePath(id) => {
       let expanded = self.toggle_tree_path(id)
-      if expanded && self.tree_path_needs_load(id) {
-        self.apply_directory_listing(id, services.list_directory(id))
+      let effect = if expanded && self.tree_path_needs_load(id) {
+        self.request_directory_listing(id, services)
+      } else {
+        @moui.Effect::none()
       }
-      (self, @moui.Effect::none())
+      (self, effect)
     }
     SelectTreePath(path) => {
       if markdown_editor_tree_path_is_placeholder(path) {
@@ -560,22 +562,37 @@ fn MarkdownEditorApp::update_with_services(
       }
       if self.tree_path_is_directory(path) {
         let expanded = self.toggle_tree_path(path)
-        if expanded && self.tree_path_needs_load(path) {
-          self.apply_directory_listing(path, services.list_directory(path))
+        let effect = if expanded && self.tree_path_needs_load(path) {
+          self.request_directory_listing(path, services)
+        } else {
+          @moui.Effect::none()
         }
-        return (self, @moui.Effect::none())
+        return (self, effect)
       }
+      let effects : Array[@moui.Effect[MarkdownEditorMsg]] = [
+        self.request_text_file_read(path, services),
+      ]
       if self.working_directory.get() == "" {
         let parent = markdown_editor_parent_directory(path)
         if parent != "" {
-          ignore(self.load_tree_from_directory(parent, services))
+          self.working_directory.set(parent)
+          effects.push(self.request_directory_listing(parent, services))
         }
       }
-      (self, self.request_text_file_read(path, services))
+      (self, @moui.Effect::batch(effects))
     }
-    HostTransferCompleted(completion) => {
-      self.apply_transfer_completion_with_services(completion, services)
-      (self, @moui.Effect::none())
+    ServiceCompleted(completion) =>
+      (self, self.apply_service_completion(completion, services))
+    ToggleOutline
+    | ToggleFileSidebar
+    | ToggleDocumentInfo
+    | ToggleFocusMode
+    | ToggleTypewriterMode
+    | ToggleZenMode
+    | CycleWritingAppearance
+    | ToggleSourcePreview => {
+      ignore(self.update(message))
+      (self, self.request_settings_save(services))
     }
     _ => (self.update(message), @moui.Effect::none())
   }
@@ -584,31 +601,13 @@ fn MarkdownEditorApp::update_with_services(
 ///|
 fn MarkdownEditorApp::subscriptions(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-  timer_source? : @runtime.HostTimerSource? = None,
+  timer_source : @services.TimerSource?,
 ) -> @moui.Subscription[MarkdownEditorMsg] {
-  // The transfer completion subscription always wins while a host transfer is
-  // pending, since it owns the lifecycle of that async work.
-  let transfer_sub = match self.transfer_status.get() {
-    TransferPending(id, kind) =>
-      services.completion_subscription(
-        id,
-        map=completion => HostTransferCompleted(completion),
-        key="markdown-editor:transfer:" +
-          markdown_editor_transfer_kind_key(kind) +
-          ":" +
-          id.value.to_string(),
-        label="Markdown editor transfer completion",
-      )
-    _ => @moui.Subscription::none()
-  }
-  let subs : Array[@moui.Subscription[MarkdownEditorMsg]] = [transfer_sub]
-  // A repeating timer dismisses toasts once their TTL elapses. Only active
-  // while toasts are on screen, and only when a host timer source exists.
+  let subscriptions : Array[@moui.Subscription[MarkdownEditorMsg]] = []
   match timer_source {
     Some(source) => {
       if self.toasts.get().items.length() > 0 {
-        subs.push(
+        subscriptions.push(
           source.subscription(
             interval_ms=1000.0,
             key="markdown-editor:toast-dismiss",
@@ -617,11 +616,10 @@ fn MarkdownEditorApp::subscriptions(
           ),
         )
       }
-      // Autosave every 5s when the document is dirty and has a path.
       if self.is_dirty() &&
         self.document_path.get() != "" &&
         !self.transfer_in_progress() {
-        subs.push(
+        subscriptions.push(
           source.subscription(
             interval_ms=5000.0,
             key="markdown-editor:autosave",
@@ -633,30 +631,22 @@ fn MarkdownEditorApp::subscriptions(
     }
     None => ()
   }
-  @moui.Subscription::batch(subs)
+  @moui.Subscription::batch(subscriptions)
 }
-
-///|
 
 ///|
 pub fn MarkdownEditorApp::program(
   self : MarkdownEditorApp,
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[MarkdownEditorApp, MarkdownEditorMsg] {
-  self.program_with_services(@host.HostAppServices::unavailable())
-}
-
-///|
-pub fn MarkdownEditorApp::program_with_services(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-  timer_source? : @runtime.HostTimerSource? = None,
-) -> @moui.Program[MarkdownEditorApp, MarkdownEditorMsg] {
+  let services = environment.services()
+  let timer_source = environment.timer()
   @moui.Program::new(
-    init=() => (self, @moui.Effect::none()),
+    init=() => (self, markdown_editor_request_settings_load(services)),
     update=(app, message) => app.update_with_services(message, services),
     view=app => @views.component(ctx => app.reactive_root(ctx)),
-    subscriptions=app => app.subscriptions(services, timer_source~),
-  )
+    subscriptions=app => app.subscriptions(timer_source),
+  ).with_commands(commands=_app => markdown_editor_program_commands())
 }
 
 ///|

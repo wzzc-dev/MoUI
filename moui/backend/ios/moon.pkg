@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/internal/host_image_source",
   "wzzc-dev/moui/backend/internal/embedded_runtime_backend",

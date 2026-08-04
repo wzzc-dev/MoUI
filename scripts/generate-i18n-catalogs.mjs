@@ -4,7 +4,11 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { repoRoot, runMoonbitTool } from "./lib/moonbit-tool-runner.mjs";
+import {
+  repoRoot,
+  resolveToolPathArgs,
+  runMoonbitTool,
+} from "./lib/moonbit-tool-runner.mjs";
 
 const formatGeneratedCatalog = (path) => {
   const result = spawnSync("moonfmt", ["-w", path], {
@@ -18,17 +22,35 @@ const formatGeneratedCatalog = (path) => {
 
 const args = process.argv.slice(2);
 const checkIndex = args.indexOf("--check");
+const resolveCatalogArgs = (toolArgs) => {
+  const resolvedArgs = resolveToolPathArgs(toolArgs, ["--input", "--out"]);
+  const inputIndex = toolArgs.indexOf("--input");
+  if (
+    inputIndex !== -1 &&
+    inputIndex + 1 < toolArgs.length &&
+    !toolArgs.includes("--display-input")
+  ) {
+    resolvedArgs.push("--display-input", toolArgs[inputIndex + 1]);
+  }
+  return resolvedArgs;
+};
 
 if (checkIndex === -1) {
   const outputIndex = args.indexOf("--out");
-  runMoonbitTool("tools/moui/generate_i18n_catalogs", args);
+  runMoonbitTool(
+    "tools/moui/generate_i18n_catalogs",
+    resolveCatalogArgs(args),
+  );
   if (outputIndex !== -1 && outputIndex + 1 < args.length) {
     formatGeneratedCatalog(resolve(repoRoot, args[outputIndex + 1]));
   }
 } else {
   const outputIndex = args.indexOf("--out");
   if (outputIndex === -1 || outputIndex + 1 >= args.length) {
-    runMoonbitTool("tools/moui/generate_i18n_catalogs", args);
+    runMoonbitTool(
+      "tools/moui/generate_i18n_catalogs",
+      resolveCatalogArgs(args),
+    );
   } else {
     const output = args[outputIndex + 1];
     const temporary = mkdtempSync(resolve(tmpdir(), "moui-i18n-catalog-"));
@@ -37,9 +59,11 @@ if (checkIndex === -1) {
     writeArgs[outputIndex] = "--out";
     writeArgs[outputIndex + 1] = generated;
     try {
-      runMoonbitTool("tools/moui/generate_i18n_catalogs", writeArgs, {
-        suppressSuccessStdout: true,
-      });
+      runMoonbitTool(
+        "tools/moui/generate_i18n_catalogs",
+        resolveCatalogArgs(writeArgs),
+        { suppressSuccessStdout: true },
+      );
       formatGeneratedCatalog(generated);
       const expected = readFileSync(generated, "utf8");
       const actual = readFileSync(resolve(repoRoot, output), "utf8");

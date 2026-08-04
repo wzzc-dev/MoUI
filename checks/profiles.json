@@ -22,6 +22,13 @@
           ]
         },
         {
+          "name": "platform matrix",
+          "argv": [
+            "node",
+            "scripts/validate-platform-matrix.mjs"
+          ]
+        },
+        {
           "name": "guidance consistency",
           "argv": [
             "node",
@@ -96,10 +103,15 @@
           "name": "source file policy",
           "argv": [
             "moon",
+            "-C",
+            "tools",
             "run",
-            "tools/moui/validate_source_file_policy",
+            "moui/validate_source_file_policy",
             "--target",
-            "native"
+            "native",
+            "--",
+            "--repo-root",
+            ".."
           ]
         },
         {
@@ -511,7 +523,7 @@
           "argv": [
             "moon",
             "test",
-            "tools/moui/validate_renderer_capability_consistency",
+            "tools_product/moui/validate_renderer_capability_consistency",
             "--target",
             "native"
           ]
@@ -520,8 +532,10 @@
           "name": "doc references validator tests",
           "argv": [
             "moon",
+            "-C",
+            "tools",
             "test",
-            "tools/moui/validate_doc_references",
+            "moui/validate_doc_references",
             "--target",
             "native"
           ]
@@ -531,6 +545,13 @@
     "platform": {
       "description": "Current-host platform contracts and platform-service checks.",
       "steps": [
+        {
+          "name": "platform matrix",
+          "argv": [
+            "node",
+            "scripts/validate-platform-matrix.mjs"
+          ]
+        },
         {
           "name": "shared platform service checks",
           "argv": [
@@ -712,8 +733,10 @@
           "name": "maintenance baseline full workspace hotspots",
           "argv": [
             "moon",
+            "-C",
+            "tools",
             "run",
-            "tools/moui/validate_maintenance_baseline",
+            "moui/validate_maintenance_baseline",
             "--target",
             "native",
             "--",
@@ -793,34 +816,12 @@
           ]
         },
         {
-          "name": "Linux Markdown Editor native build",
-          "host": "linux",
-          "argv": [
-            "moon",
-            "build",
-            "examples/markdown_editor/linux_skia",
-            "--target",
-            "native"
-          ]
-        },
-        {
           "name": "Windows Showcase native build",
           "host": "windows",
           "argv": [
             "moon",
             "build",
             "examples/showcase/windows_skia",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "Windows Markdown Editor native build",
-          "host": "windows",
-          "argv": [
-            "moon",
-            "build",
-            "examples/markdown_editor/windows_skia",
             "--target",
             "native"
           ]

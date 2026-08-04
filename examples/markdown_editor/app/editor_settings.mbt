@@ -31,23 +31,18 @@ fn MarkdownEditorSettings::default() -> MarkdownEditorSettings {
 }
 
 ///|
-/// The host-side path used to persist settings. Each platform backend can
-/// resolve this against its own config directory; the app treats it as opaque.
-let markdown_editor_settings_path : String = "moui-markdown-editor-settings.json"
+/// App-facing settings key. Platform adapters own its persistent location.
+let markdown_editor_settings_key : String = "markdown-editor/preferences"
 
 ///|
-/// Load settings from the host. Returns the default settings when the host is
-/// unavailable or the file is missing/corrupt, so the editor always starts in a
-/// known state.
-fn markdown_editor_load_settings(
-  services : @host.HostAppServices,
-) -> MarkdownEditorSettings {
-  let response = services.read_text_file(markdown_editor_settings_path)
-  match response {
-    @host.HostServiceResponse::TextFileContent(_path, text) =>
-      markdown_editor_decode_settings(text)
-    _ => MarkdownEditorSettings::default()
-  }
+/// Load settings through the typed app-facing service boundary.
+fn markdown_editor_request_settings_load(
+  services : @services.AppServices,
+) -> @moui.Effect[MarkdownEditorMsg] {
+  services
+  .settings()
+  .read(markdown_editor_settings_key)
+  .effect(map=result => ServiceCompleted(SettingsLoaded(result)))
 }
 
 ///|
@@ -64,13 +59,11 @@ fn markdown_editor_decode_settings(text : String) -> MarkdownEditorSettings {
 }
 
 ///|
-/// Serialize the app's current preferences and write them to the settings path.
-/// Failures are swallowed — persistence is best-effort and must never block the
-/// editor.
-fn MarkdownEditorApp::save_settings(
+/// Serialize the current preferences as a typed, cancellable service effect.
+fn MarkdownEditorApp::request_settings_save(
   self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
+  services : @services.AppServices,
+) -> @moui.Effect[MarkdownEditorMsg] {
   let settings : MarkdownEditorSettings = {
     dark_mode: self.dark_mode_enabled.get(),
     font_family: markdown_editor_font_family_label(self.font_family.get()),
@@ -84,7 +77,10 @@ fn MarkdownEditorApp::save_settings(
     document_info: self.document_info_visible.get(),
   }
   let text = settings.to_json().stringify(indent=2)
-  let _ = services.write_text_file(markdown_editor_settings_path, text)
+  services
+  .settings()
+  .write(markdown_editor_settings_key, text)
+  .effect(map=result => ServiceCompleted(SettingsSaved(result)))
 }
 
 ///|

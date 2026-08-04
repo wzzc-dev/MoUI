@@ -15,19 +15,15 @@ fn test_model(script~ : (AgentCommand) -> Array[AgentEvent]) -> WorkbenchModel {
 ///|
 fn workbench_folder_dialog_services(
   paths : Array[String],
-) -> @host.HostAppServices {
-  let bridge = @host.HostServiceBridge::new(
-    capabilities=@host.HostServiceCapabilities::new(file_dialogs=true),
-    handle=request => {
-      match request {
-        @host.HostServiceRequest::FileDialog(
-          { kind: @host.HostFileDialogKind::PickDirectory, .. }
-        ) => @host.HostServiceResponse::FileDialogSelection(paths)
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
-      }
+) -> @services.AppServices {
+  let fake = @services.FakeAppServices::new()
+  fake.set_directory_selection(
+    match paths {
+      [path, ..] => Some(path)
+      [] => None
     },
   )
-  @host.HostAppServices::new(bridge~)
+  fake.services()
 }
 
 ///|
@@ -39,7 +35,7 @@ fn drain_workbench_effect(
     msg => messages.push(msg),
     run => run(msg => messages.push(msg)),
     (_descriptor, run) => run(msg => messages.push(msg)),
-    (_descriptor, _start) => (),
+    (_descriptor, start) => ignore(start(msg => messages.push(msg))),
   )
   messages
 }
@@ -1357,10 +1353,10 @@ test "welcome folder picker stores selected workspace" {
   let model = WorkbenchModel::new(
     backend=fixture.runtime(),
     settings_persist=Some(file => persisted.val = Some(file)),
-    host_services=services,
   )
   let (model, effect) = model.update(
     WorkbenchMsg::CodeMsg(CodeMsg::PickWorkspaceFolder),
+    services~,
   )
   inspect(model.settings.working_dir, content=".")
   let messages = drain_workbench_effect(effect)

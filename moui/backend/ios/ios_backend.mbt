@@ -279,3 +279,9 @@ pub fn ios_capability_summary(
     description="iOS embedded runtime backend with window HostCmd lifecycle and an ApplicationHandler session. The window embedder owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
   )
 }
+
+///|
+/// The embedded host channel does not yet expose an app-facing service bridge.
+pub fn app_environment() -> @services.AppEnvironment {
+  @services.AppEnvironment::new()
+}

@@ -2,16 +2,16 @@
 package "examples/multi_window/app"
 
 import {
-  "wzzc-dev/moui/backend/host",
+  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
 }
 
 // Values
-pub fn program(Scene, @host.HostWindowActions, shared_count? : Int) -> @core.Program[Model, Msg]
+pub fn program(Scene, WindowActions, shared_count? : Int) -> @core.Program[Model, Msg]
 
-pub fn scene_from_host(@host.HostWindowScene) -> Scene?
+pub fn scene_from_window(WindowScene) -> Scene?
 
-pub fn update(Model, Msg) -> Model
+pub fn update(Model, Msg, windows? : WindowActions) -> (Model, @core.Effect[Msg])
 
 pub fn view(Model) -> @core.View[Msg]
 
@@ -22,16 +22,16 @@ pub struct Model {
   scene : Scene
   count : Int
   shared_count : Int
-  windows : @host.HostWindowActions
-  inspector_window_id : @host.HostWindowId?
+  inspector_window_id : WindowId?
   status : String
 }
-pub fn Model::new(Scene, @host.HostWindowActions, shared_count? : Int) -> Self
+pub fn Model::new(Scene, shared_count? : Int) -> Self
 
 pub(all) enum Msg {
   OpenInspector
   CloseInspector
   FocusInspector
+  WindowCompleted(WindowEvent)
   Increment
   IncrementShared
 }
@@ -40,6 +40,47 @@ pub(all) enum Scene {
   Main
   Inspector(String)
 } derive(Eq)
+
+pub struct WindowActions {
+  dispatch : (WindowRequest) -> Unit
+  subscribe : ((WindowEvent) -> Unit) -> () -> Unit
+}
+pub fn[Msg] WindowActions::effect(Self, WindowRequest, key~ : String, label~ : String) -> @core.Effect[Msg]
+pub fn WindowActions::listen(Self, (WindowEvent) -> Unit) -> () -> Unit
+pub fn WindowActions::new(dispatch~ : (WindowRequest) -> Unit, subscribe? : ((WindowEvent) -> Unit) -> () -> Unit) -> Self
+pub fn[Msg] WindowActions::subscription(Self, map~ : (WindowEvent) -> Msg) -> @core.Subscription[Msg]
+pub fn WindowActions::unavailable() -> Self
+
+pub(all) enum WindowEvent {
+  Opened(WindowId)
+  Updated(WindowId)
+  Rejected(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WindowId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WindowId::new(Int) -> Self
+
+pub(all) struct WindowOpenRequest {
+  title : String
+  scene : WindowScene
+  width : Double
+  height : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WindowOpenRequest::new(title~ : String, scene~ : WindowScene, width~ : Double, height~ : Double) -> Self
+
+pub(all) enum WindowRequest {
+  Open(WindowOpenRequest)
+  Focus(WindowId)
+  Close(WindowId)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WindowScene {
+  scene_id : String
+  payload : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WindowScene::new(scene_id~ : String, payload? : String) -> Self
 
 // Type aliases
 

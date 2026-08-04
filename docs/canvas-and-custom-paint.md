@@ -64,10 +64,9 @@ MoUI animation for apps is mostly **app-sampled**:
 - `@moui/animation` re-exports easing and transition types.
 - `@views.animated_canvas` is for looping canvas motion: the draw callback
   receives `now_ms` from the runtime paint clock and the paint plan is marked
-  animating so the host keeps requesting frames without a `HostTimerSource`.
-- `Subscription::animation_tick` is a descriptor kind only; there is no universal
-  host adapter yet. Drive model-level ticks with `HostTimerSource` (as Showcase
-  Platform does) or host animation callbacks when you own them.
+  animating so the host keeps requesting frames without a `TimerSource`.
+- Drive model-level ticks with `@services.TimerSource`; keep paint-only looping
+  motion on `animated_canvas` so it does not enter the business model.
 
 Reduced-motion should be respected when sampling transitions (see core
 transition helpers and Showcase motion cards).

@@ -2,20 +2,16 @@
 test "host driver skips context menu without focused text input" {
   let submitted = Ref(0)
   let saw_menu = Ref(false)
-  let runtime = host_test_runtime(
+  let runtime = host_test_runtime_with_commands(
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
-  )
-  runtime.set_action_commands(
-    @core.ActionCommandMap::new(bindings=[
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Submit,
-          label="Submit",
-        ),
-        handle=() => submitted.val = submitted.val + 1,
+    commands=[
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Submit,
+        label="Submit",
       ),
-    ]),
+    ],
+    on_message=_ => submitted.val = submitted.val + 1,
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
@@ -41,69 +37,62 @@ test "host driver skips context menu without focused text input" {
 test "host driver shows marked document context menu commands without text focus" {
   let new_document = Ref(0)
   let open_document = Ref(0)
-  let runtime = host_test_runtime(
+  let runtime = host_test_runtime_with_commands(
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
-  )
-  runtime.set_action_commands(
-    @core.ActionCommandMap::new(bindings=[
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Activate,
-          label="New Document",
-          context_menu=true,
-          shortcut=Some(
-            @core.KeyboardShortcut::new(
-              key="n",
-              modifiers=@core.KeyModifiers::new(meta=true),
-            ),
+    commands=[
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Activate,
+        label="New Document",
+        context_menu=true,
+        shortcut=Some(
+          @core.KeyboardShortcut::new(
+            key="n",
+            modifiers=@core.KeyModifiers::new(meta=true),
           ),
         ),
-        handle=() => new_document.val = new_document.val + 1,
       ),
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Activate,
-          label="New Document",
-          context_menu=true,
-          shortcut=Some(
-            @core.KeyboardShortcut::new(
-              key="n",
-              modifiers=@core.KeyModifiers::new(control=true),
-            ),
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Activate,
+        label="New Document",
+        context_menu=true,
+        shortcut=Some(
+          @core.KeyboardShortcut::new(
+            key="n",
+            modifiers=@core.KeyModifiers::new(control=true),
           ),
         ),
-        handle=() => new_document.val = new_document.val + 1,
       ),
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Activate,
-          label="Open Document",
-          context_menu=true,
-          shortcut=Some(
-            @core.KeyboardShortcut::new(
-              key="o",
-              modifiers=@core.KeyModifiers::new(meta=true),
-            ),
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Activate,
+        label="Open Document",
+        context_menu=true,
+        shortcut=Some(
+          @core.KeyboardShortcut::new(
+            key="o",
+            modifiers=@core.KeyModifiers::new(meta=true),
           ),
         ),
-        handle=() => open_document.val = open_document.val + 1,
       ),
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Activate,
-          label="Open Document",
-          context_menu=true,
-          shortcut=Some(
-            @core.KeyboardShortcut::new(
-              key="o",
-              modifiers=@core.KeyModifiers::new(control=true),
-            ),
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Activate,
+        label="Open Document",
+        context_menu=true,
+        shortcut=Some(
+          @core.KeyboardShortcut::new(
+            key="o",
+            modifiers=@core.KeyModifiers::new(control=true),
           ),
         ),
-        handle=() => open_document.val = open_document.val + 1,
       ),
-    ]),
+    ],
+    on_message=index => {
+      if index < 2 {
+        new_document.val = new_document.val + 1
+      } else {
+        open_document.val = open_document.val + 1
+      }
+    },
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
@@ -134,69 +123,55 @@ test "host driver shows marked document context menu commands without text focus
 ///|
 test "host driver shows document actions in focused text context menu without selection" {
   let text = @core.State::new("")
-  let runtime = host_test_runtime(
+  let runtime = host_test_runtime_with_commands(
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
-  )
-  runtime.set_action_commands(
-    @core.ActionCommandMap::new(bindings=[
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Activate,
-          label="New Document",
-          context_menu=true,
-          shortcut=Some(
-            @core.KeyboardShortcut::new(
-              key="n",
-              modifiers=@core.KeyModifiers::new(meta=true),
-            ),
+    commands=[
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Activate,
+        label="New Document",
+        context_menu=true,
+        shortcut=Some(
+          @core.KeyboardShortcut::new(
+            key="n",
+            modifiers=@core.KeyModifiers::new(meta=true),
           ),
         ),
-        handle=() => (),
       ),
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Activate,
-          label="New Document",
-          context_menu=true,
-          shortcut=Some(
-            @core.KeyboardShortcut::new(
-              key="n",
-              modifiers=@core.KeyModifiers::new(control=true),
-            ),
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Activate,
+        label="New Document",
+        context_menu=true,
+        shortcut=Some(
+          @core.KeyboardShortcut::new(
+            key="n",
+            modifiers=@core.KeyModifiers::new(control=true),
           ),
         ),
-        handle=() => (),
       ),
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Activate,
-          label="Open Document",
-          context_menu=true,
-          shortcut=Some(
-            @core.KeyboardShortcut::new(
-              key="o",
-              modifiers=@core.KeyModifiers::new(meta=true),
-            ),
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Activate,
+        label="Open Document",
+        context_menu=true,
+        shortcut=Some(
+          @core.KeyboardShortcut::new(
+            key="o",
+            modifiers=@core.KeyModifiers::new(meta=true),
           ),
         ),
-        handle=() => (),
       ),
-      @core.CommandBinding::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Activate,
-          label="Open Document",
-          context_menu=true,
-          shortcut=Some(
-            @core.KeyboardShortcut::new(
-              key="o",
-              modifiers=@core.KeyModifiers::new(control=true),
-            ),
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Activate,
+        label="Open Document",
+        context_menu=true,
+        shortcut=Some(
+          @core.KeyboardShortcut::new(
+            key="o",
+            modifiers=@core.KeyModifiers::new(control=true),
           ),
         ),
-        handle=() => (),
       ),
-    ]),
+    ],
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()

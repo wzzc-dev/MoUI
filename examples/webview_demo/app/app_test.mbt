@@ -2,8 +2,8 @@
 test "webview demo omits platform view when host reports unavailable" {
   let runtime = test_runtime(
     program(
-      commands=@webview_host.HostWebViewCommandQueue::new(),
-      capabilities=@webview_host.HostWebViewCapabilities::unavailable(),
+      command_sink=_command => (),
+      capability=WebViewCapability::unavailable(),
     ),
     width=960.0,
     height=640.0,
@@ -16,8 +16,8 @@ test "webview demo omits platform view when host reports unavailable" {
 test "webview demo emits native placement with default url when available" {
   let runtime = test_runtime(
     program(
-      commands=@webview_host.HostWebViewCommandQueue::new(),
-      capabilities=@webview_host.HostWebViewCapabilities::native_available(),
+      command_sink=_command => (),
+      capability=WebViewCapability::available(),
     ),
     width=960.0,
     height=640.0,
@@ -37,8 +37,8 @@ test "webview demo emits native placement with default url when available" {
 test "webview demo keeps web view and status panel side by side" {
   let runtime = test_runtime(
     program(
-      commands=@webview_host.HostWebViewCommandQueue::new(),
-      capabilities=@webview_host.HostWebViewCapabilities::native_available(),
+      command_sink=_command => (),
+      capability=WebViewCapability::available(),
     ),
     width=960.0,
     height=640.0,
@@ -50,6 +50,19 @@ test "webview demo keeps web view and status panel side by side" {
   // panel) rather than spanning the whole window width.
   inspect(web.size.width, content="908")
   inspect(web.size.height, content="588")
+}
+
+///|
+test "webview commands become structured TEA effects" {
+  let program = program(
+    command_sink=_command => (),
+    capability=WebViewCapability::available(),
+  )
+  let (model, _effect) = program.runtime_init()
+  let (_next, effect) = program.runtime_update(model, Reload)
+  let summary = @runtime.effect_plan_summary(effect)
+  inspect(summary.run_count(), content="1")
+  inspect(summary.descriptors()[0].kind(), content="webview-command")
 }
 
 ///|

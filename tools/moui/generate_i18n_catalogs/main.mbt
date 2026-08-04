@@ -21,6 +21,7 @@ struct CatalogManifest {
 ///|
 struct CliOptions {
   input : String
+  display_input : String
   out : String
   check : Bool
   help : Bool
@@ -29,7 +30,7 @@ struct CliOptions {
 ///|
 fn usage() -> String {
   (
-    #|Usage: tools/moui/generate_i18n_catalogs --input <manifest.json> --out <generated.mbt> [--check]
+    #|Usage: tools/moui/generate_i18n_catalogs --input <manifest.json> [--display-input <path>] --out <generated.mbt> [--check]
     #|
     #|Manifest schema (schemaVersion 1):
     #|{
@@ -54,6 +55,7 @@ fn usage() -> String {
 ///|
 fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
   let mut input = ""
+  let mut display_input = ""
   let mut out = ""
   let mut check = false
   let mut help = false
@@ -71,6 +73,13 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
         input = args[index + 1]
         index += 2
       }
+      "--display-input" => {
+        if index + 1 >= args.length() {
+          return Err("missing value for --display-input")
+        }
+        display_input = args[index + 1]
+        index += 2
+      }
       "--out" => {
         if index + 1 >= args.length() {
           return Err("missing value for --out")
@@ -85,7 +94,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("unknown argument: " + value)
     }
   }
-  Ok({ input, out, check, help })
+  Ok({ input, display_input, out, check, help })
 }
 
 ///|
@@ -915,36 +924,10 @@ fn generate_catalog_source(
 }
 
 ///|
-fn generate_from_texts(
-  manifest_path : String,
-  manifest_text : String,
-  catalog_texts : Map[String, String],
+fn generate_from_files(
+  input : String,
+  display_input : String,
 ) -> Result[String, String] {
-  let manifest = match parse_manifest(manifest_path, manifest_text) {
-    Ok(value) => value
-    Err(message) => return Err(message)
-  }
-  let catalogs : Array[SourceCatalog] = []
-  for path in manifest.catalogs {
-    let text = match catalog_texts.get(path) {
-      Some(value) => value
-      None => return Err(path + " is missing from supplied catalog texts")
-    }
-    let catalog = match parse_catalog(path, text) {
-      Ok(value) => value
-      Err(message) => return Err(message)
-    }
-    catalogs.push(catalog)
-  }
-  catalogs.sort_by((left, right) => left.locale.lexical_compare(right.locale))
-  match validate_catalogs(catalogs) {
-    Ok(_) => Ok(generate_catalog_source(manifest, catalogs))
-    Err(message) => Err(message)
-  }
-}
-
-///|
-fn generate_from_files(input : String) -> Result[String, String] {
   let manifest_text = match @tools.read_required_text(input, input) {
     Ok(value) => value
     Err(message) => return Err(message)
@@ -953,15 +936,27 @@ fn generate_from_files(input : String) -> Result[String, String] {
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  let texts : Map[String, String] = Map([])
-  for path in manifest.catalogs {
+  let display_manifest = match parse_manifest(display_input, manifest_text) {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  let catalogs : Array[SourceCatalog] = []
+  for index, path in manifest.catalogs {
     let text = match @tools.read_required_text(path, path) {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    texts[path] = text
+    let catalog = match parse_catalog(display_manifest.catalogs[index], text) {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    catalogs.push(catalog)
   }
-  generate_from_texts(input, manifest_text, texts)
+  catalogs.sort_by((left, right) => left.locale.lexical_compare(right.locale))
+  match validate_catalogs(catalogs) {
+    Ok(_) => Ok(generate_catalog_source(display_manifest, catalogs))
+    Err(message) => Err(message)
+  }
 }
 
 ///|
@@ -982,7 +977,12 @@ fn run(args : Array[String]) -> Int {
     println(usage())
     return 2
   }
-  let generated = match generate_from_files(options.input) {
+  let display_input = if options.display_input == "" {
+    options.input
+  } else {
+    options.display_input
+  }
+  let generated = match generate_from_files(options.input, display_input) {
     Ok(value) => value
     Err(message) => {
       println(message)

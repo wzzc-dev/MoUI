@@ -1,672 +1,293 @@
 ///|
-pub fn program_with_services(
-  app : ExcelApp,
-  services : @host.HostAppServices,
+pub fn program(
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[ExcelApp, ExcelMsg] {
-  ignore(services)
+  ExcelApp::new().program(environment~)
+}
+
+///|
+pub fn ExcelApp::program(
+  self : ExcelApp,
+  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+) -> @moui.Program[ExcelApp, ExcelMsg] {
+  let services = environment.services()
   @moui.Program::new(
-    init=() => (app, @moui.Effect::none()),
-    update=(model, msg) => ExcelApp::update(model, msg),
+    init=() => (self, @moui.Effect::none()),
+    update=(app, msg) => app.update_with_services(msg, services),
     view=app => {
       @views.component(ctx => {
-        let _ = ctx.watch(app.model)
+        ignore(ctx.watch(app.model))
         app.view()
       })
     },
-    subscriptions=app => ExcelApp::subscriptions(app),
+  ).with_commands(commands=app => excel_program_commands(app))
+}
+
+///|
+pub fn excel_program_commands(
+  app : ExcelApp,
+) -> Array[@moui.ProgramCommand[ExcelMsg]] {
+  let model = app.model.get()
+  let commands : Array[@moui.ProgramCommand[ExcelMsg]] = []
+  let add = command => commands.push(command)
+  let add_dual = (label : String, key : String, message : ExcelMsg) => {
+    commands.append(excel_dual_commands(label, key, message))
+  }
+
+  add(excel_command("Left", "ArrowLeft", CellNavigate(0, -1)))
+  add(excel_command("Right", "ArrowRight", CellNavigate(0, 1)))
+  add(
+    excel_command(
+      "Up",
+      "ArrowUp",
+      if model.autocomplete_suggestions.is_empty() {
+        CellNavigate(-1, 0)
+      } else {
+        AutocompletePrev
+      },
+    ),
+  )
+  add(
+    excel_command(
+      "Down",
+      "ArrowDown",
+      if model.autocomplete_suggestions.is_empty() {
+        CellNavigate(1, 0)
+      } else {
+        AutocompleteNext
+      },
+    ),
+  )
+  add(excel_command("Page Up", "PageUp", CellNavigate(-page_row_step(), 0)))
+  add(excel_command("Page Down", "PageDown", CellNavigate(page_row_step(), 0)))
+  for
+    item in [
+      ("Data Left", "ArrowLeft", 0, -1),
+      ("Data Right", "ArrowRight", 0, 1),
+      ("Data Up", "ArrowUp", -1, 0),
+      ("Data Down", "ArrowDown", 1, 0),
+    ] {
+    let (label, key, drow, dcol) = item
+    add(excel_command(label, key, CellNavigateDataEdge(drow, dcol), meta=true))
+    add(
+      excel_command(label, key, CellNavigateDataEdge(drow, dcol), control=true),
+    )
+    add(
+      excel_command(
+        "Extend " + label,
+        key,
+        SelectionNavigateDataEdge(drow, dcol),
+        meta=true,
+        shift=true,
+      ),
+    )
+    add(
+      excel_command(
+        "Extend " + label,
+        key,
+        SelectionNavigateDataEdge(drow, dcol),
+        control=true,
+        shift=true,
+      ),
+    )
+  }
+  add(excel_command("Next Cell", "Tab", CellNavigate(0, 1)))
+  add(excel_command("Previous Cell", "Tab", CellNavigate(0, -1), shift=true))
+  let (row, col) = excel_selection_origin(model)
+  let sheet = model.active_sheet()
+  add(excel_command("Row Start", "Home", CellNavigateTo(row, 0)))
+  add(excel_command("Row End", "End", CellNavigateTo(row, sheet.col_count - 1)))
+  add(excel_command("Top Left", "Home", CellNavigateTo(0, 0), meta=true))
+  add(excel_command("Top Left", "Home", CellNavigateTo(0, 0), control=true))
+  add(
+    excel_command(
+      "Bottom Right",
+      "End",
+      CellNavigateTo(sheet.row_count - 1, sheet.col_count - 1),
+      meta=true,
+    ),
+  )
+  add(
+    excel_command(
+      "Bottom Right",
+      "End",
+      CellNavigateTo(sheet.row_count - 1, sheet.col_count - 1),
+      control=true,
+    ),
+  )
+  add(
+    excel_command(
+      "Extend Row Start",
+      "Home",
+      SelectionNavigateTo(row, 0),
+      shift=true,
+    ),
+  )
+  add(
+    excel_command(
+      "Extend Row End",
+      "End",
+      SelectionNavigateTo(row, sheet.col_count - 1),
+      shift=true,
+    ),
+  )
+  for use_meta in [true, false] {
+    add(
+      excel_command(
+        "Extend Top Left",
+        "Home",
+        SelectionNavigateTo(0, 0),
+        meta=use_meta,
+        control=!use_meta,
+        shift=true,
+      ),
+    )
+    add(
+      excel_command(
+        "Extend Bottom Right",
+        "End",
+        SelectionNavigateTo(sheet.row_count - 1, sheet.col_count - 1),
+        meta=use_meta,
+        control=!use_meta,
+        shift=true,
+      ),
+    )
+  }
+  for
+    item in [
+      ("Extend Left", "ArrowLeft", 0, -1),
+      ("Extend Right", "ArrowRight", 0, 1),
+      ("Extend Up", "ArrowUp", -1, 0),
+      ("Extend Down", "ArrowDown", 1, 0),
+      ("Extend Page Up", "PageUp", -page_row_step(), 0),
+      ("Extend Page Down", "PageDown", page_row_step(), 0),
+    ] {
+    let (label, key, drow, dcol) = item
+    add(excel_command(label, key, SelectionNavigate(drow, dcol), shift=true))
+  }
+  add(excel_command("Commit Down", "Enter", excel_commit_message(model, 1, 0)))
+  add(
+    excel_command(
+      "Commit Up",
+      "Enter",
+      excel_commit_message(model, -1, 0),
+      shift=true,
+    ),
+  )
+  add(excel_command("Edit Cell", "F2", CellEditStarted))
+  add(excel_command("Cancel Edit", "Escape", CellEditCancelled))
+  add_dual("New Workbook", "n", NewWorkbook)
+  add_dual("Open File", "o", FileOpenRequested)
+  add_dual("Save File", "s", FileSaveRequested)
+  add(excel_command("Load Demo", "d", LoadDemo, meta=true))
+  add_dual("Cut", "x", CutCells)
+  add_dual("Copy", "c", CopyCells)
+  add_dual("Paste", "v", PasteCells)
+  add_dual("Select All", "a", SelectAllCells)
+  add(excel_command("Select Row", " ", RowSelected(row), shift=true))
+  add(excel_command("Select Column", " ", ColumnSelected(col), control=true))
+  add_dual("Fill Down", "d", FillDown)
+  add_dual("Fill Right", "r", FillRight)
+  add(
+    excel_command(
+      "Undo",
+      "z",
+      Undo,
+      meta=true,
+      intent=@views.CommandIntent::Undo,
+    ),
+  )
+  add(
+    excel_command(
+      "Undo",
+      "z",
+      Undo,
+      control=true,
+      intent=@views.CommandIntent::Undo,
+    ),
+  )
+  add(
+    excel_command(
+      "Redo",
+      "z",
+      Redo,
+      meta=true,
+      shift=true,
+      intent=@views.CommandIntent::Redo,
+    ),
+  )
+  add(
+    excel_command(
+      "Redo",
+      "y",
+      Redo,
+      control=true,
+      intent=@views.CommandIntent::Redo,
+    ),
+  )
+  add_dual("Bold", "b", ToggleBold)
+  add_dual("Italic", "i", ToggleItalic)
+  add_dual("Underline", "u", ToggleUnderline)
+  add(excel_command("Delete", "Backspace", DeleteSelectedCells))
+  add(excel_command("Delete", "Delete", DeleteSelectedCells))
+  commands
+}
+
+///|
+fn excel_command(
+  label : String,
+  key : String,
+  message : ExcelMsg,
+  meta? : Bool = false,
+  control? : Bool = false,
+  shift? : Bool = false,
+  intent? : @views.CommandIntent = @views.CommandIntent::Activate,
+) -> @moui.ProgramCommand[ExcelMsg] {
+  @moui.ProgramCommand::new(
+    command=@views.ActionCommand::new(
+      intent~,
+      label~,
+      shortcut=Some(
+        @views.KeyboardShortcut::new(
+          key~,
+          modifiers=@views.KeyModifiers::new(meta~, control~, shift~),
+        ),
+      ),
+    ),
+    message~,
   )
 }
 
 ///|
-pub fn program() -> @moui.Program[ExcelApp, ExcelMsg] {
-  let app = ExcelApp::new(@host.HostAppServices::unavailable())
-  program_with_services(app, @host.HostAppServices::unavailable())
+fn excel_dual_commands(
+  label : String,
+  key : String,
+  message : ExcelMsg,
+) -> Array[@moui.ProgramCommand[ExcelMsg]] {
+  [
+    excel_command(label, key, message, meta=true),
+    excel_command(label, key, message, control=true),
+  ]
 }
 
 ///|
-pub fn action_commands(
-  app : ExcelApp,
-  services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-) -> @views.ActionCommandMap {
-  ignore(services)
-  @views.ActionCommandMap::new(bindings=[
-    nav_binding("Left", "ArrowLeft", fn() {
-      ignore(ExcelApp::update(app, ExcelMsg::CellNavigate(0, -1)))
-    }),
-    nav_binding("Right", "ArrowRight", fn() {
-      ignore(ExcelApp::update(app, ExcelMsg::CellNavigate(0, 1)))
-    }),
-    nav_binding("Up", "ArrowUp", fn() {
-      autocomplete_or_navigate(app, -1, 0, ExcelMsg::AutocompletePrev)
-    }),
-    nav_binding("Down", "ArrowDown", fn() {
-      autocomplete_or_navigate(app, 1, 0, ExcelMsg::AutocompleteNext)
-    }),
-    action_binding("Page Up", "PageUp", fn() {
-      ignore(ExcelApp::update(app, ExcelMsg::CellNavigate(-page_row_step(), 0)))
-    }),
-    action_binding("Page Down", "PageDown", fn() {
-      ignore(ExcelApp::update(app, ExcelMsg::CellNavigate(page_row_step(), 0)))
-    }),
-    data_edge_binding(app, "Data Left", "ArrowLeft", 0, -1, meta=true),
-    data_edge_binding(app, "Data Left", "ArrowLeft", 0, -1, control=true),
-    data_edge_binding(app, "Data Right", "ArrowRight", 0, 1, meta=true),
-    data_edge_binding(app, "Data Right", "ArrowRight", 0, 1, control=true),
-    data_edge_binding(app, "Data Up", "ArrowUp", -1, 0, meta=true),
-    data_edge_binding(app, "Data Up", "ArrowUp", -1, 0, control=true),
-    data_edge_binding(app, "Data Down", "ArrowDown", 1, 0, meta=true),
-    data_edge_binding(app, "Data Down", "ArrowDown", 1, 0, control=true),
-    data_edge_binding(
-      app,
-      "Extend Data Left",
-      "ArrowLeft",
-      0,
-      -1,
-      meta=true,
-      shift=true,
-    ),
-    data_edge_binding(
-      app,
-      "Extend Data Left",
-      "ArrowLeft",
-      0,
-      -1,
-      control=true,
-      shift=true,
-    ),
-    data_edge_binding(
-      app,
-      "Extend Data Right",
-      "ArrowRight",
-      0,
-      1,
-      meta=true,
-      shift=true,
-    ),
-    data_edge_binding(
-      app,
-      "Extend Data Right",
-      "ArrowRight",
-      0,
-      1,
-      control=true,
-      shift=true,
-    ),
-    data_edge_binding(
-      app,
-      "Extend Data Up",
-      "ArrowUp",
-      -1,
-      0,
-      meta=true,
-      shift=true,
-    ),
-    data_edge_binding(
-      app,
-      "Extend Data Up",
-      "ArrowUp",
-      -1,
-      0,
-      control=true,
-      shift=true,
-    ),
-    data_edge_binding(
-      app,
-      "Extend Data Down",
-      "ArrowDown",
-      1,
-      0,
-      meta=true,
-      shift=true,
-    ),
-    data_edge_binding(
-      app,
-      "Extend Data Down",
-      "ArrowDown",
-      1,
-      0,
-      control=true,
-      shift=true,
-    ),
-    action_binding("Next Cell", "Tab", fn() {
-      ignore(ExcelApp::update(app, ExcelMsg::CellNavigate(0, 1)))
-    }),
-    action_binding(
-      "Previous Cell",
-      "Tab",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::CellNavigate(0, -1))) },
-      shift=true,
-    ),
-    action_binding("Row Start", "Home", fn() { select_current_row_start(app) }),
-    action_binding("Row End", "End", fn() { select_current_row_end(app) }),
-    action_binding("Top Left", "Home", fn() { select_top_left(app) }, meta=true),
-    action_binding(
-      "Top Left",
-      "Home",
-      fn() { select_top_left(app) },
-      control=true,
-    ),
-    action_binding(
-      "Bottom Right",
-      "End",
-      fn() { select_bottom_right(app) },
-      meta=true,
-    ),
-    action_binding(
-      "Bottom Right",
-      "End",
-      fn() { select_bottom_right(app) },
-      control=true,
-    ),
-    action_binding(
-      "Extend Row Start",
-      "Home",
-      fn() { extend_current_row_start(app) },
-      shift=true,
-    ),
-    action_binding(
-      "Extend Row End",
-      "End",
-      fn() { extend_current_row_end(app) },
-      shift=true,
-    ),
-    action_binding(
-      "Extend Top Left",
-      "Home",
-      fn() { extend_top_left(app) },
-      meta=true,
-      shift=true,
-    ),
-    action_binding(
-      "Extend Top Left",
-      "Home",
-      fn() { extend_top_left(app) },
-      control=true,
-      shift=true,
-    ),
-    action_binding(
-      "Extend Bottom Right",
-      "End",
-      fn() { extend_bottom_right(app) },
-      meta=true,
-      shift=true,
-    ),
-    action_binding(
-      "Extend Bottom Right",
-      "End",
-      fn() { extend_bottom_right(app) },
-      control=true,
-      shift=true,
-    ),
-    action_binding(
-      "Extend Left",
-      "ArrowLeft",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::SelectionNavigate(0, -1))) },
-      shift=true,
-    ),
-    action_binding(
-      "Extend Right",
-      "ArrowRight",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::SelectionNavigate(0, 1))) },
-      shift=true,
-    ),
-    action_binding(
-      "Extend Up",
-      "ArrowUp",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::SelectionNavigate(-1, 0))) },
-      shift=true,
-    ),
-    action_binding(
-      "Extend Down",
-      "ArrowDown",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::SelectionNavigate(1, 0))) },
-      shift=true,
-    ),
-    action_binding(
-      "Extend Page Up",
-      "PageUp",
-      fn() {
-        ignore(
-          ExcelApp::update(
-            app,
-            ExcelMsg::SelectionNavigate(-page_row_step(), 0),
-          ),
-        )
-      },
-      shift=true,
-    ),
-    action_binding(
-      "Extend Page Down",
-      "PageDown",
-      fn() {
-        ignore(
-          ExcelApp::update(app, ExcelMsg::SelectionNavigate(page_row_step(), 0)),
-        )
-      },
-      shift=true,
-    ),
-    action_binding("Commit Down", "Enter", fn() {
-      commit_or_select_autocomplete(app, 1, 0)
-    }),
-    action_binding(
-      "Commit Up",
-      "Enter",
-      fn() { commit_or_select_autocomplete(app, -1, 0) },
-      shift=true,
-    ),
-    action_binding("Edit Cell", "F2", fn() {
-      ignore(ExcelApp::update(app, ExcelMsg::CellEditStarted))
-    }),
-    action_binding("Cancel Edit", "Escape", fn() {
-      ignore(ExcelApp::update(app, ExcelMsg::CellEditCancelled))
-    }),
-    action_binding(
-      "New Workbook",
-      "n",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::NewWorkbook)) },
-      meta=true,
-    ),
-    action_binding(
-      "New Workbook",
-      "n",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::NewWorkbook)) },
-      control=true,
-    ),
-    action_binding(
-      "Open File",
-      "o",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::FileOpenRequested)) },
-      meta=true,
-    ),
-    action_binding(
-      "Open File",
-      "o",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::FileOpenRequested)) },
-      control=true,
-    ),
-    action_binding(
-      "Save File",
-      "s",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::FileSaveRequested)) },
-      meta=true,
-    ),
-    action_binding(
-      "Save File",
-      "s",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::FileSaveRequested)) },
-      control=true,
-    ),
-    action_binding(
-      "Load Demo",
-      "d",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::LoadDemo)) },
-      meta=true,
-    ),
-    action_binding(
-      "Cut",
-      "x",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::CutCells)) },
-      meta=true,
-    ),
-    action_binding(
-      "Cut",
-      "x",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::CutCells)) },
-      control=true,
-    ),
-    action_binding(
-      "Copy",
-      "c",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::CopyCells)) },
-      meta=true,
-    ),
-    action_binding(
-      "Copy",
-      "c",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::CopyCells)) },
-      control=true,
-    ),
-    action_binding(
-      "Paste",
-      "v",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::PasteCells)) },
-      meta=true,
-    ),
-    action_binding(
-      "Paste",
-      "v",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::PasteCells)) },
-      control=true,
-    ),
-    action_binding(
-      "Select All",
-      "a",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::SelectAllCells)) },
-      meta=true,
-    ),
-    action_binding(
-      "Select All",
-      "a",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::SelectAllCells)) },
-      control=true,
-    ),
-    action_binding(
-      "Select Row",
-      " ",
-      fn() { select_current_row(app) },
-      shift=true,
-    ),
-    action_binding(
-      "Select Column",
-      " ",
-      fn() { select_current_column(app) },
-      control=true,
-    ),
-    action_binding(
-      "Fill Down",
-      "d",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::FillDown)) },
-      meta=true,
-    ),
-    action_binding(
-      "Fill Down",
-      "d",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::FillDown)) },
-      control=true,
-    ),
-    action_binding(
-      "Fill Right",
-      "r",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::FillRight)) },
-      meta=true,
-    ),
-    action_binding(
-      "Fill Right",
-      "r",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::FillRight)) },
-      control=true,
-    ),
-    action_binding(
-      "Undo",
-      "z",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::Undo)) },
-      meta=true,
-      intent=@views.CommandIntent::Undo,
-    ),
-    action_binding(
-      "Undo",
-      "z",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::Undo)) },
-      control=true,
-      intent=@views.CommandIntent::Undo,
-    ),
-    action_binding(
-      "Redo",
-      "z",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::Redo)) },
-      meta=true,
-      shift=true,
-      intent=@views.CommandIntent::Redo,
-    ),
-    action_binding(
-      "Redo",
-      "y",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::Redo)) },
-      control=true,
-      intent=@views.CommandIntent::Redo,
-    ),
-    action_binding(
-      "Bold",
-      "b",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::ToggleBold)) },
-      meta=true,
-    ),
-    action_binding(
-      "Bold",
-      "b",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::ToggleBold)) },
-      control=true,
-    ),
-    action_binding(
-      "Italic",
-      "i",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::ToggleItalic)) },
-      meta=true,
-    ),
-    action_binding(
-      "Italic",
-      "i",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::ToggleItalic)) },
-      control=true,
-    ),
-    action_binding(
-      "Underline",
-      "u",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::ToggleUnderline)) },
-      meta=true,
-    ),
-    action_binding(
-      "Underline",
-      "u",
-      fn() { ignore(ExcelApp::update(app, ExcelMsg::ToggleUnderline)) },
-      control=true,
-    ),
-    action_binding("Delete", "Backspace", fn() {
-      ignore(ExcelApp::update(app, ExcelMsg::DeleteSelectedCells))
-    }),
-    action_binding("Delete", "Delete", fn() {
-      ignore(ExcelApp::update(app, ExcelMsg::DeleteSelectedCells))
-    }),
-  ])
+fn excel_selection_origin(model : ExcelModel) -> (Int, Int) {
+  match model.workbook.selection {
+    Some(selection) => (selection.row, selection.col)
+    None => (0, 0)
+  }
+}
+
+///|
+fn excel_commit_message(model : ExcelModel, drow : Int, dcol : Int) -> ExcelMsg {
+  if model.autocomplete_suggestions.is_empty() {
+    CellEditCommittedAndNavigate(drow, dcol)
+  } else {
+    AutocompleteSelect(model.autocomplete_index)
+  }
 }
 
 ///|
 fn page_row_step() -> Int {
   15
-}
-
-///|
-fn autocomplete_or_navigate(
-  app : ExcelApp,
-  drow : Int,
-  dcol : Int,
-  autocomplete_msg : ExcelMsg,
-) -> Unit {
-  if app.model.get().autocomplete_suggestions.is_empty() {
-    ignore(ExcelApp::update(app, ExcelMsg::CellNavigate(drow, dcol)))
-  } else {
-    ignore(ExcelApp::update(app, autocomplete_msg))
-  }
-}
-
-///|
-fn commit_or_select_autocomplete(
-  app : ExcelApp,
-  drow : Int,
-  dcol : Int,
-) -> Unit {
-  let model = app.model.get()
-  if model.autocomplete_suggestions.is_empty() {
-    ignore(
-      ExcelApp::update(app, ExcelMsg::CellEditCommittedAndNavigate(drow, dcol)),
-    )
-  } else {
-    ignore(
-      ExcelApp::update(
-        app,
-        ExcelMsg::AutocompleteSelect(model.autocomplete_index),
-      ),
-    )
-  }
-}
-
-///|
-fn select_current_row_start(app : ExcelApp) -> Unit {
-  let model = app.model.get()
-  let row = match model.workbook.selection {
-    Some(sel) => sel.row
-    None => 0
-  }
-  ignore(ExcelApp::update(app, ExcelMsg::CellNavigateTo(row, 0)))
-}
-
-///|
-fn select_current_row(app : ExcelApp) -> Unit {
-  let model = app.model.get()
-  let row = match model.workbook.selection {
-    Some(sel) => sel.row
-    None => 0
-  }
-  ignore(ExcelApp::update(app, ExcelMsg::RowSelected(row)))
-}
-
-///|
-fn select_current_column(app : ExcelApp) -> Unit {
-  let model = app.model.get()
-  let col = match model.workbook.selection {
-    Some(sel) => sel.col
-    None => 0
-  }
-  ignore(ExcelApp::update(app, ExcelMsg::ColumnSelected(col)))
-}
-
-///|
-fn select_current_row_end(app : ExcelApp) -> Unit {
-  let model = app.model.get()
-  let sheet = model.active_sheet()
-  let row = match model.workbook.selection {
-    Some(sel) => sel.row
-    None => 0
-  }
-  ignore(
-    ExcelApp::update(app, ExcelMsg::CellNavigateTo(row, sheet.col_count - 1)),
-  )
-}
-
-///|
-fn select_top_left(app : ExcelApp) -> Unit {
-  ignore(ExcelApp::update(app, ExcelMsg::CellNavigateTo(0, 0)))
-}
-
-///|
-fn select_bottom_right(app : ExcelApp) -> Unit {
-  let sheet = app.model.get().active_sheet()
-  ignore(
-    ExcelApp::update(
-      app,
-      ExcelMsg::CellNavigateTo(sheet.row_count - 1, sheet.col_count - 1),
-    ),
-  )
-}
-
-///|
-fn extend_current_row_start(app : ExcelApp) -> Unit {
-  let model = app.model.get()
-  let row = match model.workbook.selection {
-    Some(sel) => sel.row
-    None => 0
-  }
-  ignore(ExcelApp::update(app, ExcelMsg::SelectionNavigateTo(row, 0)))
-}
-
-///|
-fn extend_current_row_end(app : ExcelApp) -> Unit {
-  let model = app.model.get()
-  let sheet = model.active_sheet()
-  let row = match model.workbook.selection {
-    Some(sel) => sel.row
-    None => 0
-  }
-  ignore(
-    ExcelApp::update(
-      app,
-      ExcelMsg::SelectionNavigateTo(row, sheet.col_count - 1),
-    ),
-  )
-}
-
-///|
-fn extend_top_left(app : ExcelApp) -> Unit {
-  ignore(ExcelApp::update(app, ExcelMsg::SelectionNavigateTo(0, 0)))
-}
-
-///|
-fn extend_bottom_right(app : ExcelApp) -> Unit {
-  let sheet = app.model.get().active_sheet()
-  ignore(
-    ExcelApp::update(
-      app,
-      ExcelMsg::SelectionNavigateTo(sheet.row_count - 1, sheet.col_count - 1),
-    ),
-  )
-}
-
-///|
-fn nav_binding(
-  label : String,
-  key : String,
-  handle : () -> Unit,
-) -> @views.CommandBinding {
-  @views.CommandBinding::new(
-    command=@views.ActionCommand::new(
-      intent=@views.CommandIntent::Activate,
-      label~,
-      shortcut=Some(@views.KeyboardShortcut::new(key~)),
-      context_menu=false,
-    ),
-    handle~,
-  )
-}
-
-///|
-fn action_binding(
-  label : String,
-  key : String,
-  handle : () -> Unit,
-  meta? : Bool = false,
-  control? : Bool = false,
-  shift? : Bool = false,
-  intent? : @views.CommandIntent = @views.CommandIntent::Activate,
-) -> @views.CommandBinding {
-  let modifiers = @views.KeyModifiers::new(meta~, control~, shift~)
-  @views.CommandBinding::new(
-    command=@views.ActionCommand::new(
-      intent~,
-      label~,
-      shortcut=Some(@views.KeyboardShortcut::new(key~, modifiers~)),
-      context_menu=false,
-    ),
-    handle~,
-  )
-}
-
-///|
-fn data_edge_binding(
-  app : ExcelApp,
-  label : String,
-  key : String,
-  drow : Int,
-  dcol : Int,
-  meta? : Bool = false,
-  control? : Bool = false,
-  shift? : Bool = false,
-) -> @views.CommandBinding {
-  action_binding(
-    label,
-    key,
-    fn() {
-      if shift {
-        ignore(
-          ExcelApp::update(app, ExcelMsg::SelectionNavigateDataEdge(drow, dcol)),
-        )
-      } else {
-        ignore(
-          ExcelApp::update(app, ExcelMsg::CellNavigateDataEdge(drow, dcol)),
-        )
-      }
-    },
-    meta~,
-    control~,
-    shift~,
-  )
 }

@@ -86,8 +86,8 @@ test "web app options carry optional scene resolver" {
 
 ///|
 test "web route dispatch publishes active route source events" {
-  let source = @runtime.HostRouteSource::new()
-  let observed : Array[@runtime.HostRouteEvent] = []
+  let source = @services.RouteSource::new()
+  let observed : Array[@services.RouteEvent] = []
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init=(),

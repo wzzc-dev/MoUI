@@ -1495,6 +1495,44 @@ export function createWindowWebImports(options = {}) {
       }
       return false;
     },
+    settings_read(key) {
+      try {
+        const value = globalThis.localStorage?.getItem(
+          `wzzc-dev.moui.${stringValue(key)}`,
+        );
+        return createStringHandle(value ?? "");
+      } catch {
+        return createStringHandle("");
+      }
+    },
+    settings_has_value(key) {
+      try {
+        return globalThis.localStorage?.getItem(
+          `wzzc-dev.moui.${stringValue(key)}`,
+        ) != null;
+      } catch {
+        return false;
+      }
+    },
+    settings_write(key, value) {
+      try {
+        globalThis.localStorage?.setItem(
+          `wzzc-dev.moui.${stringValue(key)}`,
+          stringValue(value),
+        );
+        return globalThis.localStorage != null;
+      } catch {
+        return false;
+      }
+    },
+    settings_remove(key) {
+      try {
+        globalThis.localStorage?.removeItem(`wzzc-dev.moui.${stringValue(key)}`);
+        return globalThis.localStorage != null;
+      } catch {
+        return false;
+      }
+    },
     device_pixel_ratio() {
       return globalThis.window?.devicePixelRatio || 1.0;
     },

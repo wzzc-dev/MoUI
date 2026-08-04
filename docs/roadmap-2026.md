@@ -211,9 +211,9 @@ Focus areas:
 - Keep Web clipboard behavior honest: copy/cut write selected text through a
   browser host import, focused browser text input can still paste through input
   events, and app-level clipboard reads/file dialogs flow through
-  `HostServiceAsyncQueue` into browser permission or picker callbacks. App-owned
-  pending services should declare `HostAppServices::completion_subscription` so
-  callbacks return through the typed TEA message loop as subscription events.
+  `HostServiceAsyncQueue` into browser permission or picker callbacks. The app
+  sees only `ServiceTaskResult` messages; request ids and completion queues stay
+  behind the host adapter.
 - Keep URL opening honest across active hosts: macOS uses `NSWorkspace`, Windows
   uses `ShellExecuteW`, and Web uses a browser host import that calls
   `window.open` and can report popup-blocked failures.

@@ -43,9 +43,9 @@ table 或第二套 lifecycle bridge。
 在调用平台 toolchain 之前使用 host-sim 检查：
 
 ```sh
-moon check examples/counter/android_window_hosted --target native
-moon check examples/counter/ios_window_hosted --target native
-moon check examples/counter/harmonyos_window_hosted --target native
+moon check examples/showcase/android_window_hosted --target native
+moon check examples/showcase/ios_window_hosted --target native
+moon check examples/showcase/harmonyos_window_hosted --target native
 sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
@@ -71,12 +71,12 @@ moui build harmonyos showcase \
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.1-0.1.7-2",
+  "wzzc-dev/window@0.5.4-0.1.3",
   "wzzc-dev/moui_skia@0.1.7",
 }
 ```
 
-MoonBit 包生态仍不如更老的语言生态成熟。失败的 build 可能来自 registry cache state、package publication mistakes 或 dependency regressions，也可能来自 MoUI 代码。当 dependency-related failures 出现时，先运行 `moon update`，检查 resolved package versions，并确认 `wzzc-dev/window@0.5.1-0.1.7-2` 或其他包是否改变了行为。
+MoonBit 包生态仍不如更老的语言生态成熟。失败的 build 可能来自 registry cache state、package publication mistakes 或 dependency regressions，也可能来自 MoUI 代码。当 dependency-related failures 出现时，先运行 `moon update`，检查 resolved package versions，并确认 `wzzc-dev/window@0.5.4-0.1.3` 或其他包是否改变了行为。
 
 `window` package 仍携带 MoUI smoke helpers 和 evidence docs。使用
 `scripts/run-window-package-smoke.sh <platform>` 将已解析的 registry package 解包到临时目录，并在不创建本地 checkout 的情况下运行这些 helpers。例如在 macOS 上：
@@ -434,17 +434,11 @@ sh scripts/check.sh --profile full
 moon build examples/showcase/macos_skia --target native
 moon build examples/design_systems/macos_skia --target native
 moon build examples/showcase/windows_skia --target native
-moon build examples/design_systems/windows_skia --target native
-moon build examples/design_systems/linux_skia --target native
 moon build examples/pdf_workbench/macos_skia --target native
-moon build examples/pdf_workbench/windows_skia --target native
-moon build examples/pdf_workbench/linux_skia --target native
 moon build examples/showcase/macos_sun --target native
 moon build examples/showcase/windows_sun --target native
-moon build examples/markdown_editor/windows_skia --target native
 moon build examples/showcase/linux_skia --target native
 moon build examples/showcase/linux_sun --target native
-moon build examples/markdown_editor/linux_skia --target native
 ```
 
 PDF Workbench app-only 和 `pdflite_adapter` checks 默认不再下载 PDFium。仅在验证 native PDFium raster adapter 时设置 `MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM=1`，或提供 `MOUI_PDFIUM_INCLUDE` 加 `MOUI_PDFIUM_LIB_DIR` 来使用本地 PDFium install，而不下载锁定 prebuild。

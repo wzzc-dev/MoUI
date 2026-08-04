@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/linux",
   "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/moui_tester/fixtures/text_input_app" @fixture,

@@ -425,62 +425,51 @@ pub fn EditorModel::view(self : EditorModel) -> @moui.View[EditorMsg] {
 }
 ```
 
-宿主服务 effect 模式：
+应用服务 effect 模式：
 
 ```moonbit
 ///|
 pub fn EditorModel::update_with_services(
   self : EditorModel,
   msg : EditorMsg,
-  services : @host.HostAppServices,
+  services : @services.AppServices,
 ) -> (EditorModel, @moui.Effect[EditorMsg]) {
   match msg {
     BrowseForDocument =>
       (
         self,
-        @moui.Effect::host_service(
-          key="host:open-document",
-          label="Open document",
-          run=dispatch => {
-            let response = services.open_file(title="Open document", filters=["md", "txt"])
-            dispatch(HostCompleted(file_dialog_completion(response)))
-          },
-        ),
+        services
+        .files()
+        .open_file(
+          options=@services.FileDialogOptions::new(
+            title="Open document",
+            filters=["md", "txt"],
+          ),
+        )
+        .effect(map=result => OpenDocumentCompleted(result)),
       )
-    DispatchCommand(intent) => (self.dispatch_command(intent, services), @moui.Effect::none())
+    OpenDocumentCompleted(Success(path)) => (self.open(path), @moui.Effect::none())
+    OpenDocumentCompleted(Failure(error)) =>
+      ({ ..self, error: Some(error.message) }, @moui.Effect::none())
+    OpenDocumentCompleted(Cancelled) =>
+      ({ ..self, status: "Open cancelled" }, @moui.Effect::none())
     SourceChanged(source) => ({ ..self, source, dirty: true }, @moui.Effect::none())
-    HostCompleted(completion) => (self.apply_host_completion(completion), @moui.Effect::none())
     _ => (self, @moui.Effect::none())
   }
 }
 
 ///|
-pub fn EditorModel::program_with_services(
+pub fn EditorModel::program(
   self : EditorModel,
-  services : @host.HostAppServices,
+  environment : @services.AppEnvironment,
 ) -> @moui.Program[EditorModel, EditorMsg] {
+  let services = environment.services()
   @moui.Program::new(
     init=() => (self, @moui.Effect::none()),
     update=(model, message) => model.update_with_services(message, services),
     view=model => model.view(),
-    subscriptions=model => model.subscriptions(services),
   )
-}
-
-///|
-pub fn EditorModel::subscriptions(
-  self : EditorModel,
-  services : @host.HostAppServices,
-) -> @moui.Subscription[EditorMsg] {
-  match self.pending_host_request {
-    Some(id) =>
-      services.completion_subscription(
-        id,
-        map=completion => HostCompleted(completion),
-        label="Open document completion",
-      )
-    None => @moui.Subscription::none()
-  }
+  .with_commands(commands=model => model.program_commands())
 }
 ```
 
@@ -499,5 +488,5 @@ moon test examples/command_palette/app --target native
 - 为纯 update 行为添加包内测试；只有在验证运行时接线或诊断时，才添加运行时 smoke。
 - 保持平台入口轻薄且不包含业务逻辑。
 - 保持普通恢复由应用拥有；只有低层恢复 store 或其他高级框架契约才显式添加
-  `wzzc-dev/moui/core`。平台服务使用 `@host.HostAppServices`。
+  `wzzc-dev/moui/core`。平台服务使用 `@services.AppServices`。
 - 添加包后运行 `moon info`，并将生成的 `pkg.generated.mbti` 与模板派生应用一起提交。

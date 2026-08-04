@@ -6,18 +6,15 @@ Markdown 编辑器是 MoUI 的实用编辑演示。它把 Markdown 源码作为�
 
 - `examples/markdown_editor/app/`：共享应用状态，以及包内编辑器模型、源码/视觉映射、命令行为、输入转换、Markdown 解析适配器、富文本文档映射和聚焦白盒测试。
 - `examples/markdown_editor/web_wasm/`：Web wasm-gc 入口点。
-- `examples/markdown_editor/macos_wgpu/`：macOS 原生入口点。
 - `examples/markdown_editor/macos_skia/`：使用 Skia 渲染器提供者的 macOS 原生入口点。
-- `examples/markdown_editor/windows_wgpu/`：Windows 原生入口点。
-- `examples/markdown_editor/windows_skia/`：使用 Skia 渲染器提供者的 Windows 原生入口点。
-- `examples/markdown_editor/linux_skia/`：使用 Skia 渲染器提供者的 Linux 原生入口点。
+- `examples/markdown_editor/composition/`：两个保留入口共享的轻量 environment/runtime 接线。
 - `moui_richtext/facade.mbt`：该示例使用的公共富文本编辑器包装器（`markdown_editor`、`controlled_markdown_session_editor`）。
 - `moui_richtext/rich_text_document.mbt` 加 `moui_richtext/rich_text_editor.mbt`：富文本文档模型、绘制、几何、选择和编辑逻辑。
 - `moui/core/text_editing.mbt` 加 `moui/core/text_layout.mbt`：平台中立的文本编辑原语、`TextSystem`，以及纯文本控件和富文本插件共享的段落布局契约。
 
 平台包应保持轻薄。共享编辑器行为应放在应用包中，或放在拥有可复用能力的框架包中。
 
-共享应用公开 `MarkdownEditorApp::program` 和 `MarkdownEditorApp::program_with_services`；平台入口点和 wbtest 辅助代码通过 `moui/runtime` 构造实际运行时。编辑器输入、工具栏动作、快捷键、目标字段编辑、选择变化、任务切换和滚动更新都通过类型化的 `MarkdownEditorMsg` 值进入。该包仍在应用边界保留一个小型内部 `@views.component` 适配器，使演示/测试用的 `MarkdownEditorApp` 句柄可以公开可变文档和目标状态辅助方法，同时已挂载运行时从同一批状态单元重建。普通应用代码应把这视为富编辑器集成细节，而不是默认应用形态。
+共享应用公开 `MarkdownEditorApp::program` 和 `MarkdownEditorApp::program(environment)`；平台入口点和 wbtest 辅助代码通过 `moui/runtime` 构造实际运行时。编辑器输入、工具栏动作、快捷键、目标字段编辑、选择变化、任务切换和滚动更新都通过类型化的 `MarkdownEditorMsg` 值进入。该包仍在应用边界保留一个小型内部 `@views.component` 适配器，使演示/测试用的 `MarkdownEditorApp` 句柄可以公开可变文档和目标状态辅助方法，同时已挂载运行时从同一批状态单元重建。普通应用代码应把这视为富编辑器集成细节，而不是默认应用形态。
 
 ## 编辑模型
 
@@ -72,7 +69,7 @@ Markdown 编辑器是 MoUI 的实用编辑演示。它把 Markdown 源码作为�
 - 可选 `Info` 文档面板可从界面框架、`Quick Format` 或用 `Cmd+Alt+D` / `Ctrl+Alt+D` 打开。它从编辑器使用的同一已解析 Markdown 快照中显示词数、字符数、行数、阅读时间、标题、非空段落、列表/任务进度、引用、代码块、表格、链接、图片和脚注引用/定义，让 Typora 风格文档洞察靠近写作表面。
 - 文档级查找/替换栏可从界面框架切换，也可由 `Cmd+F`/`Ctrl+F` 打开，`Cmd+Alt+F`/`Ctrl+H` 会打开可立即替换的栏。键盘打开会保持栏可见，而不是把它切换关闭。该栏搜索规范 Markdown 源码位置，同时让格式化编辑器保持为活动表面。匹配忽略 ASCII 字母大小写，同时保留原始源码范围用于选择和替换。从非空单行选择打开 Find 会用该选中的源码文本填充查询；没有可用选择时，如果从 ASCII 单词内或刚过单词的位置打开，会填充并选择该单词。在查询字段输入会在格式化编辑器中选择实时匹配，并在细化查询时保持该匹配活动。清空查询或输入没有匹配的查询会折叠活动查找选择，同时把光标保持在匹配端点。状态读数区分空查询就绪状态、无匹配和活动匹配数量。`Cmd+G`/`Ctrl+G` 和 `Cmd+Shift+G`/`Ctrl+Shift+G` 以回绕方式在匹配间移动；`Escape` 关闭栏，然后关闭源码/大纲辅助面板，然后在没有辅助 UI 时折叠活动选择；当前替换在仍有剩余匹配时以回绕方式前进到下一个；替换保留已保存 Markdown 源码模型；当前/全部替换参与结构化撤销/重做历史。
 - 文档会话状态跟踪当前路径、已保存 Markdown 基线、dirty 状态、干净新文档重置，以及当前文档有路径时的 `Save`/`Cmd+S` 或 `Ctrl+S` 文本文件写入。对未命名文档，同一 `Save` 命令会先打开保存位置流程再写入，匹配普通编辑器首次保存行为。`Open`/`Cmd+O` 或 `Ctrl+O` 请求宿主文件对话框服务提供 Markdown 文件路径，并通过共享宿主文本文件服务读取其文本。`Save As`/`Cmd+Shift+S` 或 `Ctrl+Shift+S` 请求宿主文件对话框服务提供 Markdown 保存位置，通过宿主文本文件服务写入规范 Markdown 源码，记录所选路径，并更新已保存基线，使文档身份遵循普通编辑器工作流，同时平台入口点保持轻薄。New、Open 和 Import 会关闭 Find 栏、清空查询/替换文本并丢弃先前传输状态，以清理陈旧文档会话 UI，然后再报告新的传输结果。
-- 基于剪贴板的 Markdown Import/Export 可通过共享应用的宿主服务运行时路径使用。`Import`/`Cmd+Alt+I` 或 `Ctrl+Alt+I` 从宿主剪贴板读取 Markdown 文本作为干净文档，而 `Export`/`Cmd+Alt+S` 或 `Ctrl+Alt+S` 把规范 Markdown 源码写入剪贴板。`HTML`/`Cmd+Alt+E` 或 `Ctrl+Alt+E` 会复制从同一已解析 Markdown 快照生成的完整 HTML 文档，包含标题、段落、列表和任务项、表格、代码块、链接、图片、原始 HTML 块/行内内容、脚注，以及已转义文本/属性。应用公开 `MarkdownEditorApp::program_with_services` 供注入 `HostAppServices` 的宿主/测试使用。macOS 和 Windows 原生入口点传入其平台服务桥，因此文件对话框、文本文件、剪贴板和目标打开传输能在这些宿主中工作；Web wasm-gc 入口点注入 `web_app_services`，让浏览器异步剪贴板/文件对话框传输使用后端拥有的 Web 宿主服务队列。打开目标命令在目标字段活动时使用已编辑的链接或图片目标，否则先解析当前选择或光标下的链接或图片，再请求宿主打开。Web `Open` 通过共享文本文件读取契约导入所选 Markdown 文件由浏览器提供的 `File.text()` 内容。浏览器暴露 File System Access 句柄时，Web `Save As` 和后续 `Save` 会通过同一文本文件服务写入；Linux 文本文件内容访问目前报告为不可用。
+- 基于剪贴板的 Markdown Import/Export 可通过共享应用的宿主服务运行时路径使用。`Import`/`Cmd+Alt+I` 或 `Ctrl+Alt+I` 从宿主剪贴板读取 Markdown 文本作为干净文档，而 `Export`/`Cmd+Alt+S` 或 `Ctrl+Alt+S` 把规范 Markdown 源码写入剪贴板。`HTML`/`Cmd+Alt+E` 或 `Ctrl+Alt+E` 会复制从同一已解析 Markdown 快照生成的完整 HTML 文档，包含标题、段落、列表和任务项、表格、代码块、链接、图片、原始 HTML 块/行内内容、脚注，以及已转义文本/属性。应用公开 `MarkdownEditorApp::program(environment)` 供注入 `AppServices` 的宿主/测试使用。macOS 和 Windows 原生入口点传入其平台服务桥，因此文件对话框、文本文件、剪贴板和目标打开传输能在这些宿主中工作；Web wasm-gc 入口点注入 `web_app_services`，让浏览器异步剪贴板/文件对话框传输使用后端拥有的 Web 宿主服务队列。打开目标命令在目标字段活动时使用已编辑的链接或图片目标，否则先解析当前选择或光标下的链接或图片，再请求宿主打开。Web `Open` 通过共享文本文件读取契约导入所选 Markdown 文件由浏览器提供的 `File.text()` 内容。浏览器暴露 File System Access 句柄时，Web `Save As` 和后续 `Save` 会通过同一文本文件服务写入；Linux 文本文件内容访问目前报告为不可用。
 - 格式化表面在非活动 span 中保持 Markdown 标记隐藏，然后当光标或选择位于粗体、斜体、代码、删除线、链接、图片或自动链接文本内时，临时显示活动行内 span 的标记。
 - 活动块也会临时显示自己的 Markdown 前缀，包括标题标记、列表和任务标记、有序列表数字，以及块引用标记，而非活动块保持更干净的视觉呈现。围栏代码块会显示完整源码，包括开始和结束围栏，因此语言信息和围栏文本可直接在代码区域编辑。
 - 支持 Setext 标题处理，包括段落文本下方 `===` 或 `---` 下划线的 Space/Enter 补全、Enter 时继续列表和引用列表、Enter 时退出空标题标记，包括块引用前缀内的情形、有序列表重新编号、Tab/Shift-Tab 加 `Cmd`/`Ctrl` 方括号缩进当前行或选择、行内标记配对/跳过，以及从块、行内、自动链接、脚注和引用风格标记边缘执行的标记感知 Backspace/Delete。
@@ -115,44 +112,9 @@ moon build examples/markdown_editor/macos_skia --target native
 ./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
 ```
 
-`macos_wgpu` 入口点仍可用于显式 WGPU 诊断：
-
-```sh
-moon build examples/markdown_editor/macos_wgpu --target native
-./_build/native/debug/build/examples/markdown_editor/macos_wgpu/macos_wgpu.exe
-```
-
 Skia 入口点需要与 `examples/showcase/macos_skia` 使用的真实原生 Skia 链接配置相同；`scripts/macos-skia-renderer-smoke.sh` 可以在运行 Skia smoke 检查时临时配置这些标志。当你需要 macOS 上的渲染器像素 smoke 加测试者拥有的首帧 Skia smoke 日志时，使用 `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke`。
 
-Windows 原生使用共享的渲染器感知 MSVC 辅助脚本。主线 Markdown 编辑器路径使用 `windows_skia` 包：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows_skia `
-  -BuildOnly
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
-```
-
-`windows_wgpu` 包仍可用于显式原生 WGPU 诊断：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows_wgpu `
-  -BuildOnly
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_wgpu --target native }"
-```
-
-普通 `windows_skia` 入口点是交互式应用入口点。匹配宿主的首帧 smoke 应保留在测试者/后端 smoke runner 中，而不是向应用包添加自动退出标志。
-
-Linux 原生 Skia 使用 Linux Skia 提供者包，应在匹配的 Wayland 宿主上配置真实 Skia 链接标志后运行，再声明运行时像素：
-
-```sh
-moon build examples/markdown_editor/linux_skia --target native
-moon run examples/markdown_editor/linux_skia --target native
-```
-
-普通 Linux Skia 入口点同样是交互式。匹配宿主首帧日志应使用专门的测试者/后端 smoke runner。
+Windows/Linux Skia 与所有 native WGPU 证据统一使用 canonical Showcase 路线；编辑器不再复制这些平台/渲染器 composition root。
 
 ## 验证
 
@@ -162,8 +124,6 @@ moon run examples/markdown_editor/linux_skia --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon build examples/markdown_editor/macos_skia --target native
-moon check examples/markdown_editor/windows_skia --target native
-moon check examples/markdown_editor/linux_skia --target native
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 ```
 

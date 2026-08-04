@@ -135,11 +135,11 @@ pub fn AppBuilder::window_requests(
 ///|
 pub fn AppBuilder::run(self : AppBuilder) -> Unit {
   if self.renderer_factories.is_empty() {
-    abort("moui.run_app: at least one renderer factory is required")
+    abort("runtime.run_app: at least one renderer factory is required")
   }
   let backend = match self.backend {
     Some(backend) => backend
-    None => abort("moui.run_app: a platform backend is required")
+    None => abort("runtime.run_app: a platform backend is required")
   }
   backend.launch({
     title: self.title,
@@ -157,11 +157,11 @@ pub async fn AppBuilder::run_async_pump(
   frame_interval_ms? : Int = 8,
 ) -> Unit {
   if self.renderer_factories.is_empty() {
-    abort("moui.run_app: at least one renderer factory is required")
+    abort("runtime.run_app: at least one renderer factory is required")
   }
   let backend = match self.backend {
     Some(backend) => backend
-    None => abort("moui.run_app: a platform backend is required")
+    None => abort("runtime.run_app: a platform backend is required")
   }
   backend.launch_async_pump(
     {

@@ -100,16 +100,14 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 /// App-loop types forwarded by root `wzzc-dev/moui` (not a subpackage).
 fn root_app_shape_tokens() -> Array[String] {
   [
-    "View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment",
-    "SemanticId",
+    "View", "Program", "ProgramCommand", "Effect", "Subscription", "Theme", "Environment",
+    "ViewEnvironment", "SemanticId",
   ]
 }
 
 ///|
 fn root_facade_required_tokens() -> Array[String] {
-  let tokens = sugar_required_tokens(root_app_shape_tokens())
-  tokens.push("pub fn run_app(")
-  tokens
+  sugar_required_tokens(root_app_shape_tokens())
 }
 
 ///|
@@ -337,8 +335,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 2094,
-      max_pub_lines: 615,
+      max_lines: 2103,
+      max_pub_lines: 620,
       max_pub_all_lines: 177,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -429,10 +427,10 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/backend/host\"",
       max_lines: 671,
       max_pub_lines: 240,
-      max_pub_all_lines: 44,
+      max_pub_all_lines: 45,
       required_tokens: [
-        "HostAppServices", "pub(all) enum HostEvent", "pub(all) struct HostSurfaceMetrics",
-        "pub(all) struct HostWindowId", "pub(all) struct TextInputSession",
+        "pub fn app_services", "pub fn app_environment", "pub(all) enum HostEvent",
+        "pub(all) struct HostSurfaceMetrics", "pub(all) struct HostWindowId", "pub(all) struct TextInputSession",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/render/skia\"", "\"wzzc-dev/moui/render/wgpu\"", "SkiaRasterRenderer",
@@ -988,7 +986,7 @@ fn backend_runtime_interface_paths() -> Array[String] {
 
 ///|
 fn max_shared_app_runtime_imports() -> Int {
-  4
+  0
 }
 
 ///|
@@ -1007,37 +1005,10 @@ fn allowed_shared_app_core_imports() -> Array[String] {
 }
 
 ///|
-/// Shared-app packages that default-import `moui/runtime` to consume the
-/// app-facing runtime API (`AppRuntime`, `new_program_with_dimensions`,
-/// `HostTimerSource`, `HostWallClock`, `HostRouteSource`, …). ADR 0018
-/// restricts `backend/host` from importing runtime — it does NOT forbid app
-/// packages from consuming the runtime facade; these apps wire the
-/// composition root (program construction + host service sources) which is
-/// the runtime facade's intended consumer surface.
-///
-/// Each entry includes the reason why the app requires direct runtime access
-/// rather than going through the `wzzc-dev/moui` root facade.
-///
-/// Allowed apps and their justifications:
-/// - `examples/showcase/app` — diagnostics inspector and host-contract
-///   section need direct access to `@runtime.AppRuntime` and
-///   `@runtime.InspectorSnapshot` for runtime inspection.
-/// - `examples/mo_desktop/app` — multi-window shell needs direct access
-///   to `@runtime.AppRuntime`, `@runtime.HostRuntimeDriver`, and
-///   `@host.HostAppServices` for program construction and host wiring.
-/// - `examples/markdown_editor/app` — editor runtime tests need
-///   `@runtime.new_program_with_dimensions` and `@runtime.AppRuntime`.
-///   Main code uses `@runtime.HostTimerSource` for debounced saves.
-/// - `website/app` — tutorial and documentation app needs
-///   `@runtime.HostRouteSource` for client-side routing,
-///   `@runtime.AppRuntime` for interactive lesson snapshots, and
-///   `@host.*` services (`HostAppServices`, `HostServiceBridge`) for
-///   file reading and in-browser compilation.
+/// Shared apps are pure TEA packages. Runtime, host wire protocol, renderer,
+/// and concrete backend imports belong in composition or integration packages.
 fn allowed_shared_app_runtime_imports() -> Array[String] {
-  [
-    "examples/showcase/app/moon.pkg", "examples/mo_desktop/app/moon.pkg", "examples/markdown_editor/app/moon.pkg",
-    "website/app/moon.pkg",
-  ]
+  []
 }
 
 ///|

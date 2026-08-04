@@ -21,9 +21,9 @@ moon test moui/backend/android --target native
 moon test moui/backend/ios --target native
 moon test moui/backend/harmonyos --target native
 
-echo "== counter window-hosted package check =="
-moon check examples/counter/android_window_hosted --target native
-moon check examples/counter/ios_window_hosted --target native
-moon check examples/counter/harmonyos_window_hosted --target native
+echo "== showcase window-hosted package check =="
+moon check examples/showcase/android_window_hosted --target native
+moon check examples/showcase/ios_window_hosted --target native
+moon check examples/showcase/harmonyos_window_hosted --target native
 
 echo "window-hosted host-sim smoke: ok"

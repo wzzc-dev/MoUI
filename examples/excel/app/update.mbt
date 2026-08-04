@@ -108,7 +108,7 @@ pub fn update(model : ExcelModel, msg : ExcelMsg) -> ExcelModel {
     AutocompletePrev => model.prev_autocomplete()
     HideAutocomplete =>
       { ..model, autocomplete_suggestions: [], autocomplete_index: 0 }
-    FileOpenRequested | FileSaveRequested | HostCompleted(_) => model
+    FileOpenRequested | FileSaveRequested | ServiceCompleted(_) => model
   }
 }
 
@@ -117,17 +117,29 @@ pub fn ExcelApp::update(
   self : ExcelApp,
   msg : ExcelMsg,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
+  self.update_with_services(msg, @services.AppServices::unavailable())
+}
+
+///|
+pub fn ExcelApp::update_with_services(
+  self : ExcelApp,
+  msg : ExcelMsg,
+  services : @services.AppServices,
+) -> (ExcelApp, Effect[ExcelMsg]) {
   match msg {
-    FileOpenRequested => self.handle_file_open()
-    FileSaveRequested => self.handle_file_save()
-    HostCompleted(completion) => self.handle_host_completion(completion)
-    CopyCells => self.copy_cells_to_clipboard()
-    CutCells => self.cut_cells_to_clipboard()
-    PasteCells => self.paste_cells_from_clipboard()
-    ContextMenuAction(ContextMenuAction::Copy) => self.copy_cells_to_clipboard()
-    ContextMenuAction(ContextMenuAction::Cut) => self.cut_cells_to_clipboard()
+    FileOpenRequested => self.handle_file_open(services)
+    FileSaveRequested => self.handle_file_save(services)
+    ServiceCompleted(completion) =>
+      self.apply_service_completion(completion, services)
+    CopyCells => self.copy_cells_to_clipboard(services)
+    CutCells => self.cut_cells_to_clipboard(services)
+    PasteCells => self.paste_cells_from_clipboard(services)
+    ContextMenuAction(ContextMenuAction::Copy) =>
+      self.copy_cells_to_clipboard(services)
+    ContextMenuAction(ContextMenuAction::Cut) =>
+      self.cut_cells_to_clipboard(services)
     ContextMenuAction(ContextMenuAction::Paste) =>
-      self.paste_cells_from_clipboard()
+      self.paste_cells_from_clipboard(services)
     _ => {
       let new_model = update(self.model.get(), msg)
       self.model.set(new_model)
@@ -139,43 +151,36 @@ pub fn ExcelApp::update(
 ///|
 pub fn ExcelApp::handle_file_open(
   self : ExcelApp,
+  services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let options = @host.HostFileDialogOptions::new(
-    kind=@host.HostFileDialogKind::OpenFile,
-    title="Open Excel File",
-    filters=["xlsx"],
+  self.set_running("Waiting for file picker...")
+  (
+    self,
+    services
+    .files()
+    .open_file(
+      options=@services.FileDialogOptions::new(title="Open Excel File", filters=[
+        "xlsx",
+      ]),
+    )
+    .effect(map=result => ServiceCompleted(FileOpenPicked(result))),
   )
-  let response = self.services.file_dialog(options)
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      self.set_pending(id, "Waiting for file picker...", path="")
-    @host.HostServiceResponse::FileDialogSelection(paths) =>
-      if paths.length() > 0 {
-        self.read_file(paths[0])
-      } else {
-        self.set_status("Cancelled")
-      }
-    @host.HostServiceResponse::Unavailable(reason) =>
-      self.set_status("File dialog unavailable: " + reason)
-    _ => (self, Effect::none())
-  }
 }
 
 ///|
 pub fn ExcelApp::read_file(
   self : ExcelApp,
   path : String,
+  services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let response = self.services.read_binary_file(path)
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      self.set_pending(id, "Reading " + path + "...", path~)
-    @host.HostServiceResponse::BinaryFileContent(_, bytes) =>
-      self.load_workbook_bytes(path, bytes)
-    @host.HostServiceResponse::Unavailable(reason) =>
-      self.set_status("Cannot read file: " + reason)
-    _ => (self, Effect::none())
-  }
+  self.set_running("Reading " + path + "...")
+  (
+    self,
+    services
+    .files()
+    .read_bytes(path)
+    .effect(map=result => ServiceCompleted(FileRead(path, result))),
+  )
 }
 
 ///|
@@ -201,6 +206,7 @@ pub fn ExcelApp::load_workbook_bytes(
 ///|
 pub fn ExcelApp::handle_file_save(
   self : ExcelApp,
+  services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
   let current = self.model.get()
   let default_name = if current.file_name == "Untitled.xlsx" {
@@ -208,44 +214,39 @@ pub fn ExcelApp::handle_file_save(
   } else {
     current.file_name
   }
-  let response = self.services.save_file(
-    title="Save Excel File",
-    default_name=Some(default_name),
-    filters=["xlsx"],
+  self.set_running("Saving...")
+  (
+    self,
+    services
+    .files()
+    .save_file(
+      options=@services.FileDialogOptions::new(
+        title="Save Excel File",
+        default_name=Some(default_name),
+        filters=["xlsx"],
+      ),
+    )
+    .effect(map=result => ServiceCompleted(FileSavePicked(result))),
   )
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      self.set_pending(id, "Saving...", path="")
-    @host.HostServiceResponse::FileDialogSelection(paths) =>
-      if paths.length() > 0 {
-        self.write_file(paths[0])
-      } else {
-        self.set_status("Cancelled")
-      }
-    @host.HostServiceResponse::Unavailable(reason) =>
-      self.set_status("Save dialog unavailable: " + reason)
-    _ => (self, Effect::none())
-  }
 }
 
 ///|
 pub fn ExcelApp::write_file(
   self : ExcelApp,
   path : String,
+  services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
   let current = self.model.get()
   match @excel_xlsx.write_workbook(current.workbook, path) {
     Ok(bytes) => {
-      let response = self.services.write_binary_file(path, bytes)
-      match response {
-        @host.HostServiceResponse::Pending(id) =>
-          self.set_pending(id, "Writing " + path + "...", path~)
-        @host.HostServiceResponse::BinaryFileWritten(_) =>
-          self.set_status("Saved " + path)
-        @host.HostServiceResponse::Unavailable(reason) =>
-          self.set_status("Cannot write file: " + reason)
-        _ => (self, Effect::none())
-      }
+      self.set_running("Writing " + path + "...")
+      (
+        self,
+        services
+        .files()
+        .write_bytes(path, bytes)
+        .effect(map=result => ServiceCompleted(FileWritten(path, result))),
+      )
     }
     Err(message) => self.set_status(message)
   }
@@ -254,25 +255,28 @@ pub fn ExcelApp::write_file(
 ///|
 fn ExcelApp::copy_cells_to_clipboard(
   self : ExcelApp,
+  services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
   let current = self.model.get()
   let workbook = current.workbook.copy_selected()
-  self.write_cells_to_clipboard(workbook, status="Copied")
+  self.write_cells_to_clipboard(workbook, services, status="Copied")
 }
 
 ///|
 fn ExcelApp::cut_cells_to_clipboard(
   self : ExcelApp,
+  services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
   let current = self.model.get()
   let workbook = current.workbook.cut_selected()
-  self.write_cells_to_clipboard(workbook, status="Cut")
+  self.write_cells_to_clipboard(workbook, services, status="Cut")
 }
 
 ///|
 fn ExcelApp::write_cells_to_clipboard(
   self : ExcelApp,
   workbook : @sheet.Workbook,
+  services : @services.AppServices,
   status~ : String,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
   let current = self.model.get()
@@ -295,29 +299,28 @@ fn ExcelApp::write_cells_to_clipboard(
     last_clipboard_from_app: true,
     status,
   })
-  match self.services.write_clipboard_text(text) {
-    @host.HostServiceResponse::ClipboardWritten => (self, Effect::none())
-    @host.HostServiceResponse::Pending(id) =>
-      self.set_pending(id, status + "; syncing clipboard...", path="")
-    @host.HostServiceResponse::Unavailable(reason) =>
-      self.set_status(status + " locally; " + reason)
-    _ => (self, Effect::none())
-  }
+  (
+    self,
+    services
+    .clipboard()
+    .write_text(text)
+    .effect(map=result => ServiceCompleted(ClipboardWritten(status, result))),
+  )
 }
 
 ///|
 fn ExcelApp::paste_cells_from_clipboard(
   self : ExcelApp,
+  services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  match self.services.read_clipboard_text() {
-    @host.HostServiceResponse::ClipboardText(text) =>
-      self.apply_clipboard_text(text)
-    @host.HostServiceResponse::Pending(id) =>
-      self.set_pending(id, "Reading clipboard...", path="")
-    @host.HostServiceResponse::Unavailable(reason) =>
-      self.paste_cells_locally(reason)
-    _ => self.paste_cells_locally("clipboard text unavailable")
-  }
+  self.set_running("Reading clipboard...")
+  (
+    self,
+    services
+    .clipboard()
+    .read_text()
+    .effect(map=result => ServiceCompleted(ClipboardRead(result))),
+  )
 }
 
 ///|
@@ -340,7 +343,6 @@ fn ExcelApp::apply_clipboard_text(
     cell_ref_input: workbook.selected_ref(),
     context_menu_visible: false,
     file_status: ExcelFileStatus::Idle,
-    pending_file_path: "",
     last_clipboard_text: text,
     last_clipboard_from_app: use_internal_clipboard,
     status: "Pasted",
@@ -366,64 +368,56 @@ fn ExcelApp::paste_cells_locally(
     cell_ref_input: workbook.selected_ref(),
     context_menu_visible: false,
     file_status: ExcelFileStatus::Idle,
-    pending_file_path: "",
     status,
   })
   (self, Effect::none())
 }
 
 ///|
-pub fn ExcelApp::handle_host_completion(
+pub fn ExcelApp::apply_service_completion(
   self : ExcelApp,
-  completion : @host.HostCompletedServiceResponse,
+  completion : ExcelServiceCompletion,
+  services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let current = self.model.get()
-  match current.file_status {
-    ExcelFileStatus::Pending(id) =>
-      if completion.id != id {
-        (self, Effect::none())
-      } else {
-        match (completion.request, completion.response) {
-          (
-            @host.HostServiceRequest::Clipboard(
-              @host.HostClipboardRequest::ReadText
-            ),
-            @host.HostServiceResponse::ClipboardText(text),
-          ) => self.apply_clipboard_text(text)
-          (
-            @host.HostServiceRequest::Clipboard(
-              @host.HostClipboardRequest::ReadText
-            ),
-            @host.HostServiceResponse::Unavailable(reason),
-          ) => self.paste_cells_locally(reason)
-          (
-            @host.HostServiceRequest::Clipboard(
-              @host.HostClipboardRequest::WriteText(_)
-            ),
-            @host.HostServiceResponse::ClipboardWritten,
-          ) => self.set_status("Clipboard updated")
-          (
-            @host.HostServiceRequest::Clipboard(
-              @host.HostClipboardRequest::WriteText(_)
-            ),
-            @host.HostServiceResponse::Unavailable(reason),
-          ) => self.set_status("Clipboard sync failed: " + reason)
-          (_, @host.HostServiceResponse::FileDialogSelection(paths)) =>
-            if paths.length() > 0 {
-              self.read_file(paths[0])
-            } else {
-              self.set_status("Cancelled")
-            }
-          (_, @host.HostServiceResponse::BinaryFileContent(_, bytes)) =>
-            self.load_workbook_bytes(current.pending_file_path, bytes)
-          (_, @host.HostServiceResponse::BinaryFileWritten(_)) =>
-            self.set_status("File saved")
-          (_, @host.HostServiceResponse::Unavailable(reason)) =>
-            self.set_status("Error: " + reason)
-          _ => (self, Effect::none())
-        }
+  match completion {
+    FileOpenPicked(result) =>
+      match result {
+        Success(path) => self.read_file(path, services)
+        Failure(error) =>
+          self.set_status("File dialog unavailable: " + error.message)
+        Cancelled => self.set_status("Cancelled")
       }
-    _ => (self, Effect::none())
+    FileRead(path, result) =>
+      match result {
+        Success(bytes) => self.load_workbook_bytes(path, bytes)
+        Failure(error) => self.set_status("Cannot read file: " + error.message)
+        Cancelled => self.set_status("Read cancelled")
+      }
+    FileSavePicked(result) =>
+      match result {
+        Success(path) => self.write_file(path, services)
+        Failure(error) =>
+          self.set_status("Save dialog unavailable: " + error.message)
+        Cancelled => self.set_status("Cancelled")
+      }
+    FileWritten(path, result) =>
+      match result {
+        Success(_) => self.set_status("Saved " + path)
+        Failure(error) => self.set_status("Cannot write file: " + error.message)
+        Cancelled => self.set_status("Write cancelled")
+      }
+    ClipboardWritten(status, result) =>
+      match result {
+        Success(_) => self.set_status("Clipboard updated")
+        Failure(error) => self.set_status(status + " locally; " + error.message)
+        Cancelled => self.set_status(status + " locally; clipboard cancelled")
+      }
+    ClipboardRead(result) =>
+      match result {
+        Success(text) => self.apply_clipboard_text(text)
+        Failure(error) => self.paste_cells_locally(error.message)
+        Cancelled => self.paste_cells_locally("clipboard read cancelled")
+      }
   }
 }
 
@@ -438,34 +432,13 @@ pub fn ExcelApp::set_status(
 }
 
 ///|
-pub fn ExcelApp::set_pending(
-  self : ExcelApp,
-  id : @host.HostServiceRequestId,
-  status : String,
-  path~ : String,
-) -> (ExcelApp, Effect[ExcelMsg]) {
+pub fn ExcelApp::set_running(self : ExcelApp, status : String) -> Unit {
   let model = self.model.get()
   self.model.set({
     ..model,
     status,
-    pending_file_path: path,
-    file_status: ExcelFileStatus::Pending(id),
+    file_status: ExcelFileStatus::Running(status),
   })
-  (self, Effect::none())
-}
-
-///|
-pub fn ExcelApp::subscriptions(self : ExcelApp) -> @moui.Subscription[ExcelMsg] {
-  let current = self.model.get()
-  match current.file_status {
-    ExcelFileStatus::Pending(id) =>
-      self.services.completion_subscription(
-        id,
-        map=completion => ExcelMsg::HostCompleted(completion),
-        label="Excel host operation completion",
-      )
-    ExcelFileStatus::Idle => @moui.Subscription::none()
-  }
 }
 
 ///|

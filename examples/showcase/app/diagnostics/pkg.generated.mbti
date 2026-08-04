@@ -3,10 +3,8 @@ package "examples/showcase/app/diagnostics"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/render",
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui/views/navigation",
 }
 
@@ -42,7 +40,42 @@ pub struct ShowcaseApp {
 }
 pub fn ShowcaseApp::new() -> Self
 pub fn ShowcaseApp::program(Self) -> @core.Program[ShowcaseModel, ShowcaseMsg]
-pub fn ShowcaseApp::program_with_host_summary(Self, @host.HostCapabilitySummary) -> @core.Program[ShowcaseModel, ShowcaseMsg]
+pub fn ShowcaseApp::program_with_diagnostics(Self, ShowcaseDiagnosticsInput) -> @core.Program[ShowcaseModel, ShowcaseMsg]
+
+pub(all) enum ShowcaseCapabilityPriority {
+  GapOrPartial
+  FollowUp
+  Complete
+} derive(Eq, @debug.Debug)
+
+pub struct ShowcaseDiagnosticsInput {
+  host : ShowcaseHostDiagnostics
+  renderer_features : Array[ShowcaseRendererFeatureDiagnostic]
+  inspector : ShowcaseInspectorDiagnostics
+}
+pub fn ShowcaseDiagnosticsInput::fallback() -> Self
+pub fn ShowcaseDiagnosticsInput::new(host~ : ShowcaseHostDiagnostics, renderer_features~ : Array[ShowcaseRendererFeatureDiagnostic], inspector~ : ShowcaseInspectorDiagnostics) -> Self
+
+pub(all) struct ShowcaseHostDiagnostics {
+  label : String
+  backend_label : String
+  service_count : Int
+  service_capacity : Int
+  service_labels : Array[String]
+  input_count : Int
+  input_capacity : Int
+  input_labels : Array[String]
+  multi_window : Bool
+  window_lifecycle : Bool
+}
+
+pub(all) struct ShowcaseInspectorDiagnostics {
+  scheduled_effect_label : String
+  duplicate_effect_keys : Array[String]
+  subscription_source_count : Int
+  active_subscription_label : String
+  duplicate_subscription_keys : Array[String]
+}
 
 pub(all) struct ShowcaseModel {
   scheme : @core.ColorScheme
@@ -79,8 +112,7 @@ pub(all) struct ShowcaseModel {
   todo_draft : String
   last_drop_label : String
   gesture_label : String
-  host_summary : @host.HostCapabilitySummary
-  renderer_providers : Array[@render.RendererProvider]
+  diagnostics_input : ShowcaseDiagnosticsInput
 }
 pub fn ShowcaseModel::new() -> Self
 pub fn ShowcaseModel::open(Self, String) -> Self
@@ -90,8 +122,7 @@ pub fn ShowcaseModel::route(Self) -> String
 pub fn ShowcaseModel::todo_count(Self) -> Int
 pub fn ShowcaseModel::update(Self, ShowcaseMsg) -> Self
 pub fn ShowcaseModel::view_body(Self, @core.ViewEnvironment, width? : Double) -> @core.View[ShowcaseMsg]
-pub fn ShowcaseModel::with_host_summary(Self, @host.HostCapabilitySummary) -> Self
-pub fn ShowcaseModel::with_renderer_providers(Self, Array[@render.RendererProvider]) -> Self
+pub fn ShowcaseModel::with_diagnostics_input(Self, ShowcaseDiagnosticsInput) -> Self
 
 pub(all) enum ShowcaseMsg {
   ToggleScheme
@@ -104,7 +135,7 @@ pub(all) enum ShowcaseMsg {
   RouteBack
   RouteForward
   OpenRouteLink(String)
-  HostRouteChanged(@runtime.HostRouteEvent)
+  HostRouteChanged(@services.RouteEvent)
   TabSelected(String)
   ClearFilter
   FilterChanged(String)
@@ -135,6 +166,18 @@ pub(all) enum ShowcaseMsg {
   SidebarScrollTo(Double)
 }
 
+pub(all) struct ShowcaseRendererFeatureDiagnostic {
+  feature_label : String
+  providers : Array[ShowcaseRendererProviderDiagnostic]
+  priority : ShowcaseCapabilityPriority
+}
+
+pub(all) struct ShowcaseRendererProviderDiagnostic {
+  provider_id : String
+  status_label : String
+  needs_follow_up : Bool
+}
+
 pub(all) enum ShowcaseRouteHistoryCommand {
   PushRoute(String)
   ReplaceRoute(String)
@@ -143,10 +186,10 @@ pub(all) enum ShowcaseRouteHistoryCommand {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct ShowcaseRouteHost {
-  route_source : @runtime.HostRouteSource
+  route_source : @services.RouteSource
   dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit
 }
-pub fn ShowcaseRouteHost::new(route_source~ : @runtime.HostRouteSource, dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit) -> Self
+pub fn ShowcaseRouteHost::new(route_source~ : @services.RouteSource, dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit) -> Self
 
 pub(all) struct ShowcaseTodoItem {
   id : Int

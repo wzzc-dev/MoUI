@@ -16,6 +16,22 @@ extern "C" fn windows_open_url_bytes(url : Bytes) -> Int = "moui_windows_open_ur
 extern "C" fn windows_system_theme_is_light() -> Int = "moui_windows_system_theme_is_light"
 
 ///|
+#borrow(key)
+extern "C" fn windows_settings_has_value(key : Bytes) -> Int = "moui_windows_settings_has_value"
+
+///|
+#borrow(key)
+extern "C" fn windows_settings_read_bytes(key : Bytes) -> Bytes = "moui_windows_settings_read"
+
+///|
+#borrow(key, value)
+extern "C" fn windows_settings_write_bytes(key : Bytes, value : Bytes) -> Int = "moui_windows_settings_write"
+
+///|
+#borrow(key)
+extern "C" fn windows_settings_remove_bytes(key : Bytes) -> Int = "moui_windows_settings_remove"
+
+///|
 #borrow(title, filters, default_name)
 extern "C" fn windows_file_dialog_bytes(
   kind : Int,
@@ -355,6 +371,46 @@ fn dispatch_windows_file_dialog(
 fn dispatch_windows_open_url(url : String) -> Bool {
   let bytes = @utf8.encode(url[:], bom=false)
   windows_open_url_bytes(bytes) != 0
+}
+
+///|
+fn dispatch_windows_settings(
+  request : @host.HostSettingsRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    Read(key) => {
+      let key_bytes = @utf8.encode(key[:], bom=false)
+      if windows_settings_has_value(key_bytes) == 0 {
+        @host.HostServiceResponse::SettingValue(None)
+      } else {
+        @host.HostServiceResponse::SettingValue(
+          Some(
+            @utf8.decode_lossy(
+              windows_settings_read_bytes(key_bytes)[:],
+              ignore_bom=false,
+            ),
+          ),
+        )
+      }
+    }
+    Write(key, value) => {
+      let key_bytes = @utf8.encode(key[:], bom=false)
+      let value_bytes = @utf8.encode(value[:], bom=false)
+      if windows_settings_write_bytes(key_bytes, value_bytes) != 0 {
+        @host.HostServiceResponse::SettingWritten
+      } else {
+        @host.HostServiceResponse::Unavailable("settings write failed")
+      }
+    }
+    Remove(key) => {
+      let key_bytes = @utf8.encode(key[:], bom=false)
+      if windows_settings_remove_bytes(key_bytes) != 0 {
+        @host.HostServiceResponse::SettingRemoved
+      } else {
+        @host.HostServiceResponse::Unavailable("settings remove failed")
+      }
+    }
+  }
 }
 
 ///|

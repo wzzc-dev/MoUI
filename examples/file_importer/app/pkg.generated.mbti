@@ -3,13 +3,13 @@ package "examples/file_importer/app"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui/views/form",
 }
 
 // Values
-pub fn program() -> @core.Program[FileImporterModel, FileImporterMsg]
+pub fn program(environment? : @services.AppEnvironment) -> @core.Program[FileImporterModel, FileImporterMsg]
 
 pub fn update(FileImporterModel, FileImporterMsg) -> FileImporterModel
 
@@ -22,7 +22,7 @@ pub struct FileImporterApp {
   unit : Unit
 }
 pub fn FileImporterApp::new() -> Self
-pub fn FileImporterApp::program(Self) -> @core.Program[FileImporterModel, FileImporterMsg]
+pub fn FileImporterApp::program(Self, environment? : @services.AppEnvironment) -> @core.Program[FileImporterModel, FileImporterMsg]
 
 pub(all) struct FileImporterModel {
   files : Array[ImportedFile]
@@ -32,25 +32,22 @@ pub(all) struct FileImporterModel {
 }
 pub fn FileImporterModel::availability(Self) -> @form.FileImportAvailability
 pub fn FileImporterModel::new() -> Self
-pub fn FileImporterModel::program(Self) -> @core.Program[Self, FileImporterMsg]
-pub fn FileImporterModel::program_with_services(Self, @host.HostAppServices) -> @core.Program[Self, FileImporterMsg]
+pub fn FileImporterModel::program(Self, environment? : @services.AppEnvironment) -> @core.Program[Self, FileImporterMsg]
 pub fn FileImporterModel::selection(Self) -> @form.FileSelection
-pub fn FileImporterModel::subscriptions(Self, @host.HostAppServices) -> @core.Subscription[FileImporterMsg]
 pub fn FileImporterModel::update(Self, FileImporterMsg) -> Self
-pub fn FileImporterModel::update_with_services(Self, FileImporterMsg, @host.HostAppServices) -> FileImporterUpdate
+pub fn FileImporterModel::update_with_services(Self, FileImporterMsg, @services.AppServices) -> FileImporterUpdate
 pub fn FileImporterModel::view(Self) -> @core.View[FileImporterMsg]
 
 pub(all) enum FileImporterMsg {
   FilesDropped(Array[String])
   BrowseRequested
-  HostCompleted(@host.HostCompletedServiceResponse)
+  FileDialogCompleted(@services.ServiceTaskResult[String])
   ClearSelection
 }
 
 pub(all) enum FileImporterStatus {
   Ready
   Requesting
-  Pending(@host.HostServiceRequestId)
   Unavailable(String)
 } derive(Eq, ToJson, @debug.Debug)
 

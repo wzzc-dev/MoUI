@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/showcase/composition"
+
+import {
+  "examples/showcase/app",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
+}
+
+// Values
+pub fn env_flag(String) -> Bool
+
+pub fn route_host(source~ : @services.RouteSource, push~ : (String) -> Unit, replace~ : (String) -> Unit, back~ : () -> Unit, forward~ : () -> Unit) -> @app.ShowcaseRouteHost
+
+pub fn runtime(host_summary~ : @host.HostCapabilitySummary, environment? : @services.AppEnvironment, renderer_providers? : Array[@render.RendererProvider], route? : String, route_host? : @app.ShowcaseRouteHost?, initial_section_code? : Int, width? : Double, height? : Double) -> @runtime.AppRuntime
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

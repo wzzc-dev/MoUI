@@ -38,8 +38,8 @@ browser-exposed file name so app-owned handlers can follow the file-dialog
 selection with the shared text-file read service. The hidden file input remains
 the fallback open/directory path; fallback open can import text but does not
 produce a writable handle, while directory selection still returns
-browser-exposed relative names. Typed completions are delivered through
-`HostAppServices::completion_subscription`. Save dialogs use the File System
+browser-exposed relative names. The backend adapts completions to typed
+`ServiceTaskResult` messages. Save dialogs use the File System
 Access API when `showSaveFilePicker` is available, keep the selected handle,
 and route later Web text-file writes through `createWritable()`; without a
 writable handle, the write completes as unavailable. Canceled file pickers
@@ -56,7 +56,7 @@ overlay. Browser wasm-gc hosts report native WebView unavailable, and examples
 that share WebView app logic should render a fallback surface on Web.
 The Web browser runtime normalizes the initial route from `?route=`,
 `?section=`, or the hash, listens for `popstate`, and dispatches those route
-events through the optional `HostRouteSource` passed in `WebAppOptions`.
+events through the optional `@services.RouteSource` passed in `WebAppOptions`.
 Entrypoints can keep shared app logic platform-neutral by translating abstract
 route commands into `web_history_push_route`, `web_history_replace_route`,
 `web_history_back`, and `web_history_forward` at the Web edge.

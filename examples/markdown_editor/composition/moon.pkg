@@ -1,0 +1,11 @@
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
+  "examples/markdown_editor/app",
+}
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

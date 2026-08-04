@@ -39,8 +39,7 @@ pub(all) struct ShowcaseModel {
   todo_draft : String
   last_drop_label : String
   gesture_label : String
-  host_summary : @host.HostCapabilitySummary
-  renderer_providers : Array[@render.RendererProvider]
+  diagnostics_input : ShowcaseDiagnosticsInput
 }
 
 ///|
@@ -62,7 +61,7 @@ pub(all) enum ShowcaseMsg {
   RouteBack
   RouteForward
   OpenRouteLink(String)
-  HostRouteChanged(@runtime.HostRouteEvent)
+  HostRouteChanged(@services.RouteEvent)
   TabSelected(String)
   ClearFilter
   FilterChanged(String)
@@ -103,7 +102,7 @@ pub(all) enum ShowcaseRouteHistoryCommand {
 
 ///|
 pub struct ShowcaseRouteHost {
-  route_source : @runtime.HostRouteSource
+  route_source : @services.RouteSource
   dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit
 }
 
@@ -165,30 +164,16 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     todo_draft: "",
     last_drop_label: "No files dropped",
     gesture_label: "No gesture yet",
-    host_summary: @host.HostCapabilitySummary::test_host(
-      label="Showcase test host",
-    ),
-    renderer_providers: [],
+    diagnostics_input: ShowcaseDiagnosticsInput::fallback(),
   }
 }
 
 ///|
-pub fn ShowcaseModel::with_host_summary(
+pub fn ShowcaseModel::with_diagnostics_input(
   self : ShowcaseModel,
-  host_summary : @host.HostCapabilitySummary,
+  diagnostics_input : ShowcaseDiagnosticsInput,
 ) -> ShowcaseModel {
-  { ..self, host_summary, }
-}
-
-///|
-/// Composition roots supply the providers compiled into their platform build.
-/// Diagnostics then reports those exact provider ids instead of consulting a
-/// central renderer/backend catalogue.
-pub fn ShowcaseModel::with_renderer_providers(
-  self : ShowcaseModel,
-  renderer_providers : Array[@render.RendererProvider],
-) -> ShowcaseModel {
-  { ..self, renderer_providers: renderer_providers.copy() }
+  { ..self, diagnostics_input, }
 }
 
 ///|
@@ -242,7 +227,7 @@ pub fn ShowcaseTodoItem::new(id~ : Int, text~ : String) -> ShowcaseTodoItem {
 
 ///|
 pub fn ShowcaseRouteHost::new(
-  route_source~ : @runtime.HostRouteSource,
+  route_source~ : @services.RouteSource,
   dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit,
 ) -> ShowcaseRouteHost {
   { route_source, dispatch_command }
@@ -437,8 +422,9 @@ fn ShowcaseRouteHistoryCommand::effect(
 ) -> @moui.Effect[ShowcaseMsg] {
   match route_host {
     Some(host) =>
-      @moui.Effect::host_service(
+      @moui.Effect::run(
         key="showcase:route-history",
+        kind="host-service",
         label=self.label(),
         run=_dispatch => (host.dispatch_command)(self),
       )
@@ -483,7 +469,7 @@ fn ShowcaseModel::with_route_pushed(
 ///|
 fn ShowcaseModel::with_host_route_event(
   self : ShowcaseModel,
-  event : @runtime.HostRouteEvent,
+  event : @services.RouteEvent,
 ) -> ShowcaseModel {
   let route = event.location.to_route()
   let location = @views.RouteLocation::parse(route)
@@ -635,12 +621,12 @@ pub fn ShowcaseApp::program(
 }
 
 ///|
-pub fn ShowcaseApp::program_with_host_summary(
+pub fn ShowcaseApp::program_with_diagnostics(
   self : ShowcaseApp,
-  host_summary : @host.HostCapabilitySummary,
+  diagnostics_input : ShowcaseDiagnosticsInput,
 ) -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
   ignore(self)
-  ShowcaseModel::new().with_host_summary(host_summary).program()
+  ShowcaseModel::new().with_diagnostics_input(diagnostics_input).program()
 }
 
 ///|

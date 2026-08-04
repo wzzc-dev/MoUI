@@ -95,8 +95,9 @@ fn PdfWorkbenchModel::request_current_raster(
               ),
               last_event: "Rendering page " + document.selected_page.to_string(),
             },
-            effect=@moui.Effect::host_service(
+            effect=@moui.Effect::run(
               key="pdf-workbench:raster:" + request.cache_key,
+              kind="host-service",
               label="Render PDF page",
               run=dispatch => {
                 let response = raster_services.render_page(request)

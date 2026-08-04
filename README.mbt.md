@@ -208,7 +208,7 @@ moon run examples/showcase/linux_skia --target native
 ### Markdown Editor
 
 Typora-style WYSIWYG Markdown editor. Source lives in
-`examples/markdown_editor/app`; platform entrypoints are thin.
+`examples/markdown_editor/app`; the retained macOS/Web entrypoints are thin.
 
 ```sh
 # Web (wasm-gc)
@@ -216,13 +216,6 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 
 # macOS Skia
 moon run examples/markdown_editor/macos_skia --target native
-
-# Windows Skia (run msvc_env.ps1 first in PowerShell)
-.\scripts\windows\msvc_env.ps1
-moon run examples/markdown_editor/windows_skia --target native
-
-# Linux Skia
-moon run examples/markdown_editor/linux_skia --target native
 ```
 
 ### Mo Workbench
@@ -236,38 +229,15 @@ submodule or workspace member override is required.
 moon run examples/mo_workbench/macos_skia --target native
 ```
 
-### Showcase
-
-Full MoUI view catalog and reusable example index. Shared app logic is in
-`examples/showcase/app`.
-
-```sh
-# Web (wasm-gc)
-moon build examples/showcase/web_wasm --target wasm-gc
-
-# macOS Skia
-moon run examples/showcase/macos_skia --target native
-
-# Windows Skia (run msvc_env.ps1 first in PowerShell)
-.\scripts\windows\msvc_env.ps1
-moon run examples/showcase/windows_skia --target native
-
-# Linux Skia
-moon run examples/showcase/linux_skia --target native
-```
-
 ### Excel Viewer
 
 MoonBit Excel (`bobzhang/mbtexcel`) file renderer using MoUI data table
-components. Shared app logic is in `examples/excel/app`; `macos_skia` and
-`linux_skia` entrypoints are wired today.
+components. Shared app logic is in `examples/excel/app`; `macos_skia` is the
+retained entrypoint.
 
 ```sh
 # macOS Skia
 moon run examples/excel/macos_skia --target native
-
-# Linux Skia
-moon run examples/excel/linux_skia --target native
 ```
 
 Focused app-package tests for the featured examples:

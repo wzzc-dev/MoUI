@@ -154,6 +154,32 @@ globalThis.Node = FakeElement;
 globalThis.document = fakeDocument;
 globalThis.window = fakeWindow;
 
+const localSettings = new Map();
+globalThis.localStorage = {
+  getItem(key) { return localSettings.has(key) ? localSettings.get(key) : null; },
+  setItem(key, value) { localSettings.set(key, `${value}`); },
+  removeItem(key) { localSettings.delete(key); },
+};
+
+const webString = (imports, value) => {
+  const handle = imports.begin_create_string();
+  for (const char of value) {
+    imports.string_append_char(handle, char.codePointAt(0));
+  }
+  return imports.finish_create_string(handle);
+};
+
+const readWebString = (imports, handle) => {
+  let value = "";
+  for (;;) {
+    const codePoint = imports.string_read_char(handle);
+    if (codePoint < 0) break;
+    value += String.fromCodePoint(codePoint);
+  }
+  imports.finish_read_string(handle);
+  return value;
+};
+
 const createRuntime = ({ pointerFlags = 1 } = {}) => {
   const imports = createWindowWebImports();
   const events = [];
@@ -167,6 +193,39 @@ const createRuntime = ({ pointerFlags = 1 } = {}) => {
   imports.install_canvas_events(7, canvas);
   return { imports, canvas, events };
 };
+
+{
+  const imports = createWindowWebImports();
+  assert(!imports.settings_has_value(webString(imports, "editor/theme")));
+  assert(
+    imports.settings_write(
+      webString(imports, "editor/theme"),
+      webString(imports, "dark"),
+    ),
+  );
+  assert(imports.settings_has_value(webString(imports, "editor/theme")));
+  assert(
+    readWebString(
+      imports,
+      imports.settings_read(webString(imports, "editor/theme")),
+    ) === "dark",
+  );
+  assert(
+    imports.settings_write(
+      webString(imports, "editor/empty"),
+      webString(imports, ""),
+    ),
+  );
+  assert(imports.settings_has_value(webString(imports, "editor/empty")));
+  assert(
+    readWebString(
+      imports,
+      imports.settings_read(webString(imports, "editor/empty")),
+    ) === "",
+  );
+  assert(imports.settings_remove(webString(imports, "editor/theme")));
+  assert(!imports.settings_has_value(webString(imports, "editor/theme")));
+}
 
 {
   const imports = createWindowWebImports();

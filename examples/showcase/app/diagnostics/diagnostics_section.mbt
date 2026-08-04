@@ -17,12 +17,14 @@ priv struct ShowcaseRuntimeInspectorSnapshot {
   active_effect_task_count : Int
   completed_effect_task_count : Int
   cancelled_effect_task_count : Int
-  last_scheduled_effect_summary : @runtime.EffectPlanSummary
+  scheduled_effect_label : String
+  duplicate_effect_keys : Array[String]
   program_subscription_plan_count : Int
-  last_subscription_plan_summary : @runtime.SubscriptionPlanSummary
+  subscription_source_count : Int
+  duplicate_subscription_keys : Array[String]
   active_subscription_count : Int
   started_subscription_count : Int
-  active_subscriptions : Array[@core.SubscriptionDescriptor]
+  active_subscriptions : Array[String]
   active_subscription_kind_counts : Array[ShowcaseSubscriptionKindCount]
 }
 
@@ -157,7 +159,6 @@ fn ShowcaseModel::inspector_snapshot_card(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
-  ignore(self)
   let inner_width = max_showcase_double(180.0, width - 32.0)
   let stat_columns = if inner_width < 520.0 { 1 } else { 4 }
   let stat_width = if stat_columns == 1 {
@@ -169,7 +170,7 @@ fn ShowcaseModel::inspector_snapshot_card(
     )
   }
   let card_height = if stat_columns == 1 { 930.0 } else { 478.0 }
-  let snapshot = showcase_inspector_snapshot(theme)
+  let snapshot = showcase_inspector_snapshot(self.diagnostics_input.inspector)
   let runtime = snapshot.runtime
   let scope_caption = "Open scopes " +
     snapshot.render.open_clip_depth.to_string() +
@@ -177,35 +178,23 @@ fn ShowcaseModel::inspector_snapshot_card(
     snapshot.render.open_layer_depth.to_string() +
     "/" +
     snapshot.render.open_filter_depth.to_string()
-  let scheduled_effect_label = if runtime.last_scheduled_effect_summary
-    .descriptors()
-    .length() >
-    0 {
-    runtime.last_scheduled_effect_summary.descriptors()[0].label()
-  } else {
-    "none"
-  }
+  let scheduled_effect_label = runtime.scheduled_effect_label
   let active_subscription_label = if runtime.active_subscriptions.length() > 0 {
-    runtime.active_subscriptions[0].label()
+    runtime.active_subscriptions[0]
   } else {
     "none"
   }
   let active_subscription_kinds = subscription_kind_count_summary(
     runtime.active_subscription_kind_counts,
   )
-  let duplicate_effect_keys = if runtime.last_scheduled_effect_summary
-    .duplicate_descriptor_keys()
-    .length() >
-    0 {
-    runtime.last_scheduled_effect_summary.duplicate_descriptor_keys().join(", ")
+  let duplicate_effect_keys = if runtime.duplicate_effect_keys.length() > 0 {
+    runtime.duplicate_effect_keys.join(", ")
   } else {
     "none"
   }
-  let duplicate_subscription_keys = if runtime.last_subscription_plan_summary
-    .duplicate_keys()
-    .length() >
+  let duplicate_subscription_keys = if runtime.duplicate_subscription_keys.length() >
     0 {
-    runtime.last_subscription_plan_summary.duplicate_keys().join(", ")
+    runtime.duplicate_subscription_keys.join(", ")
   } else {
     "none"
   }
@@ -284,10 +273,7 @@ fn ShowcaseModel::inspector_snapshot_card(
             stat_card(
               "Subscription plans",
               runtime.program_subscription_plan_count.to_string(),
-              caption="Sources " +
-                runtime.last_subscription_plan_summary
-                .source_count()
-                .to_string(),
+              caption="Sources " + runtime.subscription_source_count.to_string(),
               theme~,
               width=stat_width,
               height=96.0,
@@ -407,11 +393,8 @@ fn subscription_kind_count_summary(
 
 ///|
 fn showcase_inspector_snapshot(
-  theme : @moui.Theme,
+  input : ShowcaseInspectorDiagnostics,
 ) -> ShowcaseInspectorSnapshot {
-  ignore(theme)
-  let effect_summary = showcase_inspector_effect_summary()
-  let subscription_summary = showcase_inspector_subscription_summary()
   {
     runtime: {
       dirty_state: { dirty_count: 0, reason: "redraw requested" },
@@ -422,15 +405,14 @@ fn showcase_inspector_snapshot(
       active_effect_task_count: 1,
       completed_effect_task_count: 0,
       cancelled_effect_task_count: 0,
-      last_scheduled_effect_summary: effect_summary,
+      scheduled_effect_label: input.scheduled_effect_label,
+      duplicate_effect_keys: input.duplicate_effect_keys,
       program_subscription_plan_count: 2,
-      last_subscription_plan_summary: subscription_summary,
+      subscription_source_count: input.subscription_source_count,
+      duplicate_subscription_keys: input.duplicate_subscription_keys,
       active_subscription_count: 2,
       started_subscription_count: 2,
-      active_subscriptions: [
-        subscription_summary.descriptors()[0],
-        subscription_summary.descriptors()[2],
-      ],
+      active_subscriptions: [input.active_subscription_label],
       active_subscription_kind_counts: [
         { kind: "animation", count: 1 },
         { kind: "host-event", count: 1 },
@@ -451,48 +433,6 @@ fn showcase_inspector_snapshot(
     },
     semantics: { node_count: 4, invalid_count: 1 },
   }
-}
-
-///|
-fn showcase_inspector_effect_summary() -> @runtime.EffectPlanSummary {
-  let effect : @moui.Effect[ShowcaseMsg] = @moui.Effect::batch([
-    @moui.Effect::run(
-      key="diagnostics:boot",
-      kind="inspector",
-      label="Inspector boot",
-      run=dispatch => dispatch(ToggleActive),
-    ),
-    @moui.Effect::task(
-      key="diagnostics:task",
-      kind="inspector",
-      label="Inspector task",
-      start=_dispatch => Some(() => ()),
-    ),
-  ])
-  @runtime.effect_plan_summary(effect)
-}
-
-///|
-fn showcase_inspector_subscription_summary() -> @runtime.SubscriptionPlanSummary {
-  let subscriptions : @moui.Subscription[ShowcaseMsg] = @moui.Subscription::batch([
-      @moui.Subscription::animation_tick(
-        key="diagnostics:tick",
-        label="Inspector tick",
-        start=_dispatch => Some(() => ()),
-      ),
-      @moui.Subscription::animation_tick(
-        key="diagnostics:tick",
-        label="Duplicate tick ignored",
-        start=_dispatch => Some(() => ()),
-      ),
-      @moui.Subscription::host_event(
-        key="diagnostics:host",
-        label="Inspector host event",
-        start=_dispatch => Some(() => ()),
-      ),
-    ],
-  )
-  @runtime.subscription_plan_summary(subscriptions)
 }
 
 ///|

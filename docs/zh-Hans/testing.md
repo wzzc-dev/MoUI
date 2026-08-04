@@ -117,10 +117,9 @@ moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdflite_service_protocol --target native
 moon test examples/pdf_workbench/pdflite_service_native_transport --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
-moon check examples/counter/android_window_hosted --target native
-moon check examples/counter/ios_window_hosted --target native
+moon check examples/showcase/android_window_hosted --target native
+moon check examples/showcase/ios_window_hosted --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_window_hosted --target native
 sh scripts/window-hosted-hostsim-smoke.sh
 ```
@@ -250,13 +249,11 @@ Web script 构建 Showcase、服务仓库、在 `artifacts/smoke/web-runtime-pre
 
 Native Skia smoke log 可以显示 renderer pixels、async image second-frame behavior、可选 SkParagraph text behavior，以及 tester-owned first-frame 或 IME observation。它们是直接 pass/fail runtime log，不是 repository manifest gate。
 
-Linux Skia first-frame evidence 请使用匹配的 Wayland host，并保持 Showcase、Markdown Editor 和 window-package smoke log 分离：
+Linux Skia first-frame evidence 请使用匹配的 Wayland host，并保持 Showcase 和 window-package smoke log 分离：
 
 ```sh
 MOUI_FIRST_FRAME_EXIT=1 \
   moon run examples/showcase/linux_skia --target native
-MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
-  moon run examples/markdown_editor/linux_skia --target native
 scripts/run-window-package-smoke.sh linux --run
 ```
 

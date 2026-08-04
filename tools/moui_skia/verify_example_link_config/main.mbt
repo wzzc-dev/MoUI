@@ -19,11 +19,7 @@ let required_moui_entry_tokens : Map[String, Array[String]] = {
   "examples/mo_workbench/macos_skia/moon.pkg": [],
   "examples/button_freeze_probe/macos_skia/moon.pkg": [],
   "examples/showcase/linux_skia/moon.pkg": [],
-  "examples/markdown_editor/linux_skia/moon.pkg": [],
-  "examples/button_freeze_probe/linux_skia/moon.pkg": [],
   "examples/showcase/windows_skia/moon.pkg": [],
-  "examples/markdown_editor/windows_skia/moon.pkg": [],
-  "examples/button_freeze_probe/windows_skia/moon.pkg": [],
 }
 
 ///|

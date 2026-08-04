@@ -109,8 +109,8 @@ Provider 包刻意保持分离：
 
 原生 WGPU 文本引擎选择属于 WGPU renderer factory，而不属于平台 host cores。入口调用
 `@wgpu_renderer.native(text_engine=...)` 并与平台 `entry()` 组合。平台默认引擎将原生 provider 与 Cosmic fallback
-组合；`MoonCosmic` 直接选择 Cosmic provider。Showcase 也有显式的 `macos_wgpu_cosmic`、
-`windows_wgpu_cosmic` 和 `linux_wgpu_cosmic` 入口，用于比较这些路径。单独的 Showcase 和
+组合；`MoonCosmic` 直接选择 Cosmic provider。Showcase 也有显式的 `macos_wgpu`、
+`windows_wgpu` 和 `linux_wgpu` 入口，用于比较这些路径。单独的 Showcase 和
 Markdown Editor `*_skia` 入口选择 `render/skia` factory，而不是 WGPU 文本 provider 变体。
 默认情况下，Skia 基本文本测量和绘制会通过 `moui_skia` 的 `FontMgr` 和 `Font`
 解析 MoUI `FontSpec` family stack、weight 和 style。系统 `FontMgr` 路径现在构造

@@ -1,4 +1,24 @@
 ///|
+fn MarkdownEditorApp::push_toast_for_test(
+  self : MarkdownEditorApp,
+  message : String,
+  tone? : @views.FeedbackTone = @views.FeedbackTone::Neutral,
+) -> Unit {
+  let queue = self.toasts.get()
+  let serial = queue.items.length()
+  self.toasts.set(
+    queue.push(
+      @views.ToastQueueItem::new(
+        id="toast-" + serial.to_string(),
+        message~,
+        tone~,
+        dismiss=Some(DismissToastTick),
+      ),
+    ),
+  )
+}
+
+///|
 test "markdown editor push_toast renders a toast layer message" {
   let app = MarkdownEditorApp::new()
   // No toasts initially: the toast layer renders nothing relevant.
@@ -12,7 +32,7 @@ test "markdown editor push_toast renders a toast layer message" {
   })
   assert_true(!before_has)
   // Push a toast and confirm the layer now renders its message.
-  app.push_toast("Saved draft.md", tone=@views.FeedbackTone::Success)
+  app.push_toast_for_test("Saved draft.md", tone=@views.FeedbackTone::Success)
   let after = app.runtime(width=980.0, height=640.0).draw_commands()
   let after_has = after.any(command => {
     match command {
