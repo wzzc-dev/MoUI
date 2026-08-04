@@ -2,7 +2,7 @@ import {
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/moui/runtime",
-  "examples/multi_window/composition",
+  "examples/multi_window",
 }
 
 supported_targets = "native"

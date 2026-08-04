@@ -1,6 +1,6 @@
 ///|
 fn main {
-  let runtime = @composition.runtime(
+  let runtime = @showcase.runtime(
     host_summary=@windows_backend.windows_capability_summary(),
     environment=@windows_backend.app_environment(),
   )

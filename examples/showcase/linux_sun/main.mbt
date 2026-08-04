@@ -1,6 +1,6 @@
 ///|
 fn main {
-  let runtime = @composition.runtime(
+  let runtime = @showcase.runtime(
     host_summary=@linux_backend.linux_capability_summary(),
     environment=@linux_backend.app_environment(),
   )
@@ -9,7 +9,7 @@ fn main {
   .backend(
     @linux_backend.entry(
       smoke_options=@linux_backend.LinuxHostSmokeOptions::new(
-        first_frame_smoke_auto_exit=@composition.env_flag(
+        first_frame_smoke_auto_exit=@showcase.env_flag(
           "MOUI_LINUX_SUN_EXIT_AFTER_FIRST_PRESENT",
         ),
       ),

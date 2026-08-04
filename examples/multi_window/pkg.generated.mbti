@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/multi_window"
+
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/runtime",
+}
+
+// Values
+pub fn runtime_and_host() -> (@runtime.AppRuntime, @runtime.HostWindowSceneResolver, @host.HostWindowRequestQueue)
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

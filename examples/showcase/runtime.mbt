@@ -11,9 +11,7 @@ pub fn runtime(
   width? : Double = 1100.0,
   height? : Double = 680.0,
 ) -> @runtime.AppRuntime {
-  let diagnostics_input = @diagnostics_integration.diagnostics_input(
-    host_summary, renderer_providers,
-  )
+  let diagnostics_input = diagnostics_input(host_summary, renderer_providers)
   let model = @app.ShowcaseModel::new(diagnostics_input~, route~)
   let model = if initial_section_code == 1 {
     model.update(@app.ShowcaseMsg::Navigate("diagnostics/advanced-rendering"))
