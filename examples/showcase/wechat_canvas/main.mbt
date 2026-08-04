@@ -11,7 +11,7 @@ extern "wasm" fn wechat_pixel_ratio() -> Double = "canvas2d" "pixel_ratio"
 fn main {
   let width = wechat_screen_width()
   let height = wechat_screen_height()
-  let runtime = @composition.runtime(
+  let runtime = @showcase.runtime(
     host_summary=@wechat.wechat_capability_summary(),
     environment=@wechat.app_environment(),
     width~,

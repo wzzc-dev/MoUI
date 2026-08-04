@@ -2,7 +2,7 @@ import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/windows" @windows_backend,
   "wzzc-dev/moui/render/sun" @render_sun,
-  "examples/showcase/composition",
+  "examples/showcase",
 }
 
 supported_targets = "native"

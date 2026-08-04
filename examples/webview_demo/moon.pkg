@@ -1,7 +1,7 @@
 import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui_webview/host" @webview_host,
-  "examples/webview_demo/app" @webview_demo,
+  "examples/webview_demo/app",
 }
 
 supported_targets = "+native+wasm-gc"

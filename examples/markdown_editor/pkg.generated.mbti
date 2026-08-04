@@ -1,0 +1,21 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/markdown_editor"
+
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
+}
+
+// Values
+pub fn application_menus() -> Array[@services.ApplicationMenu]
+
+pub fn runtime(environment? : @services.AppEnvironment, width? : Double, height? : Double) -> @runtime.AppRuntime
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

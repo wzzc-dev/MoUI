@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted iOS Showcase entrypoint.
 fn main {
-  let runtime = @composition.runtime(
+  let runtime = @showcase.runtime(
     host_summary=@ios_host.ios_capability_summary(),
     environment=@ios_host.app_environment(),
     route="platform/mobile-service-probe",

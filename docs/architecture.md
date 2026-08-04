@@ -89,9 +89,10 @@ Avoid direct dependencies from ordinary app packages to:
 - renderer provider packages
 - `moui_theme/*`, unless the app is a design-system preview or addon diagnostic
 
-Showcase runtime/renderer inspection lives in sibling integration packages and
-enters the pure app as neutral DTOs. Production `examples/*/app` packages have
-no runtime/backend/render exception. See `docs/moui-app-package-boundary.md`.
+Example runtime/renderer inspection and platform assembly live in module-root
+integration packages and enter pure apps as neutral DTOs. Production
+`examples/*/app` packages have no runtime/backend/render exception. See
+`docs/moui-app-package-boundary.md`.
 
 ## Framework Boundary
 
@@ -308,12 +309,12 @@ examples/showcase/harmonyos_window_hosted/ Showcase HarmonyOS window-hosted entr
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app
 examples/button_freeze_probe/macos_skia/ retained Button Freeze Probe entrypoint
-examples/showcase/app/        root Showcase router/composition package
+examples/showcase/            module-root Showcase integration facade
 examples/showcase/app/components/ focused reusable component catalog with app-safe dependencies
 examples/showcase/app/patterns/ Counter/Todo, forms, data, navigation, and workflow patterns
 examples/showcase/app/platform/ host Effect/Subscription, canvas, routes, and mobile service probe
 examples/showcase/app/diagnostics/ pure diagnostic DTO/view package
-examples/showcase/diagnostics_integration/ runtime/renderer DTO adapter
+examples/showcase/diagnostics.mbt runtime/renderer DTO adapter
 examples/design_systems/app/  dedicated addon diagnostic source-mapped design-system preview/parity example using moui_theme
 examples/design_systems/{web_wasm,macos_skia}/ retained Design Systems addon diagnostic host entrypoints
 examples/showcase/macos_skia/ macOS showcase selecting native Skia raster

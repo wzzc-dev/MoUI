@@ -7,7 +7,7 @@ Markdown 编辑器是 MoUI 的实用编辑演示。它把 Markdown 源码作为�
 - `examples/markdown_editor/app/`：共享应用状态，以及包内编辑器模型、源码/视觉映射、命令行为、输入转换、Markdown 解析适配器、富文本文档映射和聚焦白盒测试。
 - `examples/markdown_editor/web_wasm/`：Web wasm-gc 入口点。
 - `examples/markdown_editor/macos_skia/`：使用 Skia 渲染器提供者的 macOS 原生入口点。
-- `examples/markdown_editor/composition/`：两个保留入口共享的轻量 environment/runtime 接线。
+- `examples/markdown_editor/runtime.mbt`：模块根集成包中两个保留入口共享的轻量 environment/runtime 接线。
 - `moui_richtext/facade.mbt`：该示例使用的公共富文本编辑器包装器（`markdown_editor`、`controlled_markdown_session_editor`）。
 - `moui_richtext/rich_text_document.mbt` 加 `moui_richtext/rich_text_editor.mbt`：富文本文档模型、绘制、几何、选择和编辑逻辑。
 - `moui/core/text_editing.mbt` 加 `moui/core/text_layout.mbt`：平台中立的文本编辑原语、`TextSystem`，以及纯文本控件和富文本插件共享的段落布局契约。

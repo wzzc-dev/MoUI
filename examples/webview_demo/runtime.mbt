@@ -4,14 +4,12 @@ pub fn runtime(
   capabilities~ : @webview_host.HostWebViewCapabilities,
 ) -> @runtime.AppRuntime {
   @runtime.new_program_with_dimensions(
-    program=@webview_demo.program(
+    program=@app.program(
       command_sink=command => dispatch_command(commands, command),
       capability=if capabilities.available {
-        @webview_demo.WebViewCapability::available(
-          description=capabilities.description,
-        )
+        @app.WebViewCapability::available(description=capabilities.description)
       } else {
-        @webview_demo.WebViewCapability::unavailable(
+        @app.WebViewCapability::unavailable(
           description=capabilities.description,
         )
       },
@@ -24,7 +22,7 @@ pub fn runtime(
 ///|
 fn dispatch_command(
   commands : @webview_host.HostWebViewCommandQueue,
-  command : @webview_demo.WebViewCommand,
+  command : @app.WebViewCommand,
 ) -> Unit {
   match command {
     LoadUrl(url) => commands.load_url(id="webview-demo-main", url~)

@@ -7,7 +7,7 @@ fn main {
   )
   @runtime.run_app(
     "MoUI WebView Demo",
-    @composition.runtime(commands~, capabilities~),
+    @webview_demo.runtime(commands~, capabilities~),
   )
   .render_all(@render_skia.from_env())
   .backend(

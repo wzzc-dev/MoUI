@@ -1,6 +1,6 @@
 ///|
 fn main {
-  let runtime = @composition.runtime(
+  let runtime = @markdown_editor.runtime(
     environment=@web.app_environment(),
     width=1200.0,
   )

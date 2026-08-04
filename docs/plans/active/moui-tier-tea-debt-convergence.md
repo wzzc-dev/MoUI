@@ -50,7 +50,7 @@
 | 2026-08-04 | Replaced the four-path window dependency allowlist with recursive discovery of every repository-owned `moon.mod`; seven consumers resolve `wzzc-dev/window@0.5.4-0.1.3`. |
 | 2026-08-04 | Added the 14-route matrix, generated Tier tables, matrix-driven entrypoint discovery, 32-root/two-file/24-or-40-line budgets, and fixed Web/WeChat ABI-shim validation. |
 | 2026-08-04 | Added `moui/services`, typed Program commands, backend adapters/fakes, and strict TEA migrations; removed root `run_app`, app-facing host bridge APIs, and direct action mutation paths. |
-| 2026-08-04 | Converged Showcase and Markdown Editor through sibling composition packages, removed duplicate WGPU Cosmic roots, and reduced retained entrypoint `main.mbt` files to their platform budgets. |
+| 2026-08-04 | Converged Showcase, Markdown Editor, Multi Window, and WebView Demo through module-root integration facades, removed duplicate WGPU Cosmic roots, and reduced retained entrypoint `main.mbt` files to their platform budgets. |
 | 2026-08-04 | Current-host focused suites plus `pr`, `daily`, and `platform` pass; all 14 Showcase packages pass their declared-target static check/build. |
 
 ## Remaining Evidence And Release Work

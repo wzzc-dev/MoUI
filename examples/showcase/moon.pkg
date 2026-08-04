@@ -1,7 +1,8 @@
 import {
   "moonbitlang/core/env",
   "examples/showcase/app",
-  "examples/showcase/diagnostics_integration",
+  "examples/showcase/app/diagnostics",
+  "wzzc-dev/moui",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",

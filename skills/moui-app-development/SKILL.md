@@ -97,8 +97,8 @@ behind `@state`. Use `wzzc-dev/moui/services` for files, clipboard, URLs,
 settings, menus, timers, and routes. Production app imports must not include
 `runtime`, `backend/host`, concrete platform backends, or renderer packages.
 Design-system preview apps may depend on `moui_theme`; Showcase runtime/render
-inspection belongs in a sibling integration package that passes neutral DTOs
-into the app.
+inspection belongs in its module-root integration package and passes neutral
+DTOs into the app.
 
 ## App Pattern
 

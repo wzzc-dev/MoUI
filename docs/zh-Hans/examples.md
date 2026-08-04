@@ -44,7 +44,7 @@ lifecycle、surface creation 和 input，MoUI 入口负责 program 和 renderer 
 | Multi Window | 宿主管理的 scene 示例 | `examples/multi_window/app/` | 通过 `HostWindowActions`（`open` / `focus` / `close`）实现独立 main 和 inspector runtime，并配合 `HostWindowRequestQueue` 与 `HostWindowSceneResolver`；保留 macOS 和 multi-canvas Web route |
 | HarmonyOS Demo | 平台中立 HarmonyOS 交互模型 | `examples/harmonyos_demo/app/` | viewport/tap feedback app model；canonical HarmonyOS composition 与设备证据统一由 Showcase 承担 |
 | Button Freeze Probe | 原生 Skia button freeze 复现 | `examples/button_freeze_probe/app/` | 最小 `data_filter_bar` 过滤 chip、重复点击计数器、primary/tonal 按钮对比，以及保留的 macOS Skia 入口 |
-| Showcase | 统一的组件、模式、平台和诊断目录 | `examples/showcase/app/` | 根 TEA shell；Components/Patterns/Platform 保持 app-safe，Diagnostics 接收中立 DTO，runtime/render 适配位于 sibling `diagnostics_integration` 包。Showcase 是唯一覆盖完整 14 路矩阵的示例。 |
+| Showcase | 统一的组件、模式、平台和诊断目录 | `examples/showcase/app/` | 根 TEA shell；Components/Patterns/Platform 保持 app-safe，Diagnostics 接收中立 DTO，runtime/render 适配位于模块根集成包。Showcase 是唯一覆盖完整 14 路矩阵的示例。 |
 | Design Systems | 附加包诊断用 source-mapped design-system 预览和第一方主题采样器 | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia}/` | 覆盖 Material、Carbon、Primer、Fluent、Sickle 主题预览、density/token diagnostics，以及保留的 Web/macOS 入口 |
 | Settings | Settings shell 模式 | `examples/settings/app/` | 表单 section、侧边栏导航、分段主题模式、toggle 偏好，以及可保存状态的 snapshot/restore |
 | Data Table | 面向操作型数据浏览器的模式 | `examples/data_table/app/` | 搜索/过滤 toolbar 模式、状态 chip、`ColumnVisibilityState`、带 `DataSortState` 的可排序表头、应用拥有的列宽/列顺序状态、带 `SelectionState` 的行选择、选择 toolbar 操作、树过滤器、loading/error/empty 状态、`PaginationState`、公开 `pagination` 和 `detail_panel`、model-level filtering 与 data slicing |

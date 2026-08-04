@@ -450,7 +450,7 @@ fn application_menus(
 }
 ```
 
-composition 包通过
+模块根集成包通过
 `environment.services().menus().install_application(...)` 安装菜单。在 macOS
 上应等待主窗口就绪，避免 AppKit 默认菜单覆盖应用菜单。选择菜单项时，runtime
 解析命令元数据，并将对应的 typed Program message 入队。

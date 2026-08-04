@@ -4,7 +4,7 @@ import {
   "wzzc-dev/moui/render/skia" @render_skia,
   "wzzc-dev/moui_webview/host" @webview_host,
   "wzzc-dev/moui_webview/backend/macos" @macos_webview,
-  "examples/webview_demo/composition",
+  "examples/webview_demo",
 }
 
 supported_targets = "native"

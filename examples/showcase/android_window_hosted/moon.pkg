@@ -2,7 +2,7 @@ import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/android" @android_host,
   "wzzc-dev/moui/render/skia" @render_skia,
-  "examples/showcase/composition",
+  "examples/showcase",
 }
 
 supported_targets = "native"
