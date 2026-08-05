@@ -68,7 +68,7 @@ pub fn native_renderer_smoke(
     _ => ()
   }
   let renderer = create_headless_proof_renderer(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=160.0, height=112.0),
       scale_factor=1.0,
     ),
@@ -99,7 +99,7 @@ pub fn native_renderer_smoke(
 
 ///|
 fn create_headless_proof_renderer(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   text_engine : NativeTextEngine,
 ) -> RendererHandle raise @wgpu_mbt.WgpuError {
   let instance = @wgpu_mbt.Instance::create()
@@ -259,7 +259,7 @@ fn create_headless_proof_renderer(
     image_cache: Map([]),
     decoded_image_cache: Map([]),
     failed_images: Map([]),
-    image_lifecycle: @render.ImageResourceLifecycle::new(),
+    image_lifecycle: @render_common.ImageResourceLifecycle::new(),
     font_cache: NativeFontCache::new_with_engine(text_engine),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],
@@ -278,7 +278,7 @@ fn RendererHandle::render_offscreen_proof_frame(
 ) -> NativeRendererSmokeFrame {
   self.last_batches = @render.collect_rect_batches(commands)
   self.record_native_image_commands(commands)
-  let lowered = @render.lower_draw_commands(commands)
+  let lowered = @render_common.lower_draw_commands(commands)
   let plan = build_native_draw_plan(
     self.font_cache,
     self.glyph_atlas,

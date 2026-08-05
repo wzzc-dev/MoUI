@@ -14,11 +14,12 @@ their platform embedder owns the lifecycle, surface, input, and event loop.
 ```text
 window/<platform>/template / native Activity|UIApp|Ability
         → window HostCmd queue
+        → window/internal/embedded_dispatch physical callback dispatch
         → EventLoop.pump / run_app
         → *EmbeddedRuntimeBackend (moui/backend/{android,ios,harmonyos})
-        → platform_bridge (neutral lifecycle/surface conversion)
-        → AndroidRuntimeSession / IosRuntimeSession / HarmonyOSRuntimeSession
-        → Skia HostWindowRenderer
+        → backend/common (neutral lifecycle/surface conversion)
+        → HostedWindowBackend / HostedRuntimeSession
+        → Skia WindowRenderer
 ```
 
 The window-hosted route is the only supported embedded runtime backend path.
@@ -27,8 +28,16 @@ Do not add a second lifecycle, surface, or input bridge beside `HostCmd` and
 
 The backend decodes platform-specific input locally. Once it has a neutral
 Close, Focus, resize/scale, redraw, or surface-lifecycle fact, it routes that
-fact through `moui/backend/platform_bridge`; this does not create a second
+fact through `moui/backend/common`; this does not create a second
 platform callback path.
+
+`window/internal/embedded_dispatch` is stateless and depends only on
+`window/core` and `window/dpi`; it converts queued physical commands into
+ordered callbacks. `EmbeddedWindowCoordinator` in MoUI owns lifecycle
+phase, surface generation, current surface, primary-window routing, detach,
+and exit intent. After a callback enters MoUI, `backend/common/embedded` owns session
+capabilities while `FrameCoordinator` owns redraw, completion, image
+repaint, and IME hook ordering.
 
 ## Packages
 
@@ -37,8 +46,11 @@ platform callback path.
 | Android embedded runtime backend | `moui/backend/android/window_hosted.mbt` (`AndroidEmbeddedRuntimeBackend`) |
 | iOS embedded runtime backend | `moui/backend/ios/window_hosted.mbt` (`IosEmbeddedRuntimeBackend`) |
 | HarmonyOS embedded runtime backend | `moui/backend/harmonyos/window_hosted.mbt` (`HarmonyOSEmbeddedRuntimeBackend`) |
+| Physical callback dispatch | `window/modules/window/internal/embedded_dispatch` |
+| Logical lifecycle / surface owner | `EmbeddedWindowCoordinator` in `moui/backend/common` |
+| Shared embedded callback services | `moui/backend/common/embedded/services` |
+| Shared MoUI hosted runtime/session | `moui/backend/common/embedded` |
 | Counter entries | `examples/counter/{android,ios,harmonyos}_window_hosted` |
-| window contract | `window/docs/mobile-hosted-backend.md` |
 | mobile status | `checks/platforms/{android,ios,harmonyos}.json` |
 
 ## Validation
@@ -48,6 +60,11 @@ Host-sim (no emulator required):
 ```sh
 sh scripts/window-hosted-hostsim-smoke.sh
 ```
+
+In the default workspace this extracts the pinned `wzzc-dev/window` registry
+archive and tests its Android/iOS/HarmonyOS packages before testing the MoUI
+backends. With `window-dev-mode.sh on`, it tests the local window workspace
+instead.
 
 VM facade (host-sim + optional device probes):
 
@@ -61,7 +78,7 @@ WINDOW_HOSTED_IOS_SIM=1 sh scripts/window-hosted-vm-smoke.sh
 WINDOW_HOSTED_HARMONYOS_HVD=1 sh scripts/window-hosted-vm-smoke.sh
 ```
 
-Window package only:
+Window package only (local window dev mode):
 
 ```sh
 moon test window/modules/window/android --target native

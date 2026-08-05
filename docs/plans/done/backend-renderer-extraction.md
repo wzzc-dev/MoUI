@@ -11,7 +11,7 @@
 本计划已按一次性迁移口径落地：`moui/backend/**` 不再包含具体 renderer
 实现、native binding 或 provider 装配；各 application composition root 通过
 `@moui.run_app(...).render/render_all(...).backend(...).run()` 完成组装。
-`AppBuilder`、`PlatformEntry`、`HostSurfaceKit` 与 resolver 已进入生产代码，
+`AppBuilder`、`PlatformEntry`、`SurfaceContext` 与 resolver 已进入生产代码，
 并新增 backend boundary、renderer manifest、入口和根门面依赖校验。
 
 本机已完成静态边界、API、文档、能力一致性、focused native/wasm-gc 编译与
@@ -66,8 +66,8 @@ window-hosted smoke 需要对应本地 window workspace 和目标设备，不能
 | `moui/backend/android` | 无 | `moui/backend/android/moon.pkg:1-8` |
 | `moui/backend/ios` | 无 | `moui/backend/ios/moon.pkg:1-10` |
 | `moui/backend/harmonyos` | 无 | `moui/backend/harmonyos/moon.pkg:1-8` |
-| `moui/backend/host` | 无 | `moui/backend/host/moon.pkg:1-6` |
-| `moui/backend/platform_bridge` | 无 | `moui/backend/platform_bridge/moon.pkg:1-8` |
+| `moui/backend` | 无 | `moui/backend/moon.pkg:1-6` |
+| `moui/backend/common` | 无 | `moui/backend/common/moon.pkg:1-8` |
 | `moui/backend/web` | **有：`"wzzc-dev/moui/render/webgpu_adapter" @webgpu`** | `moui/backend/web/moon.pkg:7` |
 | `moui/backend/wechat` | **有：`"wzzc-dev/moui/render/canvas2d"`** | `moui/backend/wechat/moon.pkg:6` |
 
@@ -113,7 +113,7 @@ moui/backend/linux/sun/moon.pkg:8    "wzzc-dev/moui/render/sun" @sun_renderer
 ```
 
 ```
-moui/render/canvas2d/moon.pkg:3  "wzzc-dev/moui/backend/host"
+moui/render/canvas2d/moon.pkg:3  "wzzc-dev/moui/backend"
 moui/render/canvas2d/moon.pkg:5  "wzzc-dev/moui/render/canvas2d"
 ```
 
@@ -183,14 +183,14 @@ moui/backend/web/webgpu_renderer.mbt:57   fn web_renderer_provider_bindings(...)
 
 ### 1.5 `platform_bridge` 里的 Skia 字面量
 
-`moui/backend/platform_bridge/skia_preflight_fragments.mbt` 共 15 行，两个函数返回的字符串里硬编码了 `SkiaRasterRenderer.*` 与 `skia_async_image_loader`：
+`moui/backend/common/skia_preflight_fragments.mbt` 共 15 行，两个函数返回的字符串里硬编码了 `SkiaRasterRenderer.*` 与 `skia_async_image_loader`：
 
 ```
-moui/backend/platform_bridge/skia_preflight_fragments.mbt:6   "...renderer_frame=SkiaRasterRenderer.render_frame; ..."
-moui/backend/platform_bridge/skia_preflight_fragments.mbt:14  "...renderer_image_loader=skia_async_image_loader; ..."
+moui/backend/common/skia_preflight_fragments.mbt:6   "...renderer_frame=SkiaRasterRenderer.render_frame; ..."
+moui/backend/common/skia_preflight_fragments.mbt:14  "...renderer_image_loader=skia_async_image_loader; ..."
 ```
 
-`platform_bridge` 的 `moon.pkg` 不 import 任何渲染器（`moui/backend/platform_bridge/moon.pkg:1-8`），所以这是**字符串层面的违例**，不是依赖违例，但同样违背「backend 不包含渲染器命名」的目标。
+`platform_bridge` 的 `moon.pkg` 不 import 任何渲染器（`moui/backend/common/moon.pkg:1-8`），所以这是**字符串层面的违例**，不是依赖违例，但同样违背「backend 不包含渲染器命名」的目标。
 
 ### 1.6 反向依赖已达标，但中立层残留渲染器命名
 
@@ -234,7 +234,7 @@ moui/render/wgpu/macos_wgpu_provider.mbt:52  @macos_host.run_app_with_renderer_p
 moui/render/wgpu/windows_wgpu_provider.mbt:40 @windows_host.run_app_with_renderer_provider(
 ```
 
-**原因不是这六个包偷懒**：`RendererProviderBinding::create_host_renderer` 的签名是 `(RendererSurfaceMetrics, BoundSurface) -> HostWindowRenderer`（`moui/render/provider_contract.mbt:104-107`），构造它需要先拿到平台 `PresentTarget`。而 `SkiaPresentTarget`（`moui/render/skia/renderer_surface.mbt:11-14`）与 `SunPresentTarget`（`moui/render/sun/renderer_surface_model.mbt:12-15`）是两个不同类型，**中立层没有共同的 present 抽象**，所以 sun/wgpu 侧没有零成本路径去构造 binding。这是抽象被绕过的机制性原因，也是本方案 §3.1 必须先补 `HostPresentTarget` 的理由。
+**原因不是这六个包偷懒**：`RendererProviderBinding::create_host_renderer` 的签名是 `(RendererSurfaceMetrics, BoundSurface) -> WindowRenderer`（`moui/render/provider_contract.mbt:104-107`），构造它需要先拿到平台 `PresentTarget`。而 `SkiaPresentTarget`（`moui/render/skia/renderer_surface.mbt:11-14`）与 `SunPresentTarget`（`moui/render/sun/renderer_surface_model.mbt:12-15`）是两个不同类型，**中立层没有共同的 present 抽象**，所以 sun/wgpu 侧没有零成本路径去构造 binding。这是抽象被绕过的机制性原因，也是本方案 §3.1 必须先补 `HostPresentTarget` 的理由。
 
 ### 1.8 应用入口现状：装配已经在入口，只是通过绑定包间接完成
 
@@ -304,18 +304,18 @@ examples/showcase/android_window_hosted/main.mbt:14
 │        .backend(@backend_linux.entry())                                    │
 │        .run()                                                              │
 └────────────┬─────────────────────────────────────────┬───────────────────┘
-             │ 提供 PlatformEntry                       │ 提供 RendererBindingFactory
+             │ 提供 PlatformEntry                       │ 提供 RendererFactory
              │ （不认识渲染器）                          │ （不认识平台）
              ▼                                          ▼
 ┌───────────────────────────────┐        ┌────────────────────────────────────┐
 │ moui/backend/<platform>/      │        │ moui/render/<renderer>/            │
 │ ───────────────────────────── │        │ ────────────────────────────────── │
 │ 窗口 / 生命周期 / 输入 / 服务  │        │ 渲染器实现                          │
-│ HostSurfaceKit 生产：          │        │ RendererProvider 工厂               │
-│   · SurfaceDescriptor          │        │ RendererBindingFactory 工厂         │
-│   · HostPresentTarget（CPU）   │        │ 消费 HostSurfaceKit                 │
+│ SurfaceContext 生产：          │        │ RendererProvider 工厂               │
+│   · SurfaceDescriptor          │        │ RendererFactory 工厂         │
+│   · HostPresentTarget（CPU）   │        │ 消费 SurfaceContext                 │
 │   · GpuHostSurfaceDescriptor   │        │                                     │
-│   · HostAsyncImageLoader       │        │ import moui/render ✓                │
+│   · AsyncImageLoader       │        │ import moui/render ✓                │
 │ <Platform>RendererProvider     │        │ import moui/backend ✗（现已为 0）    │
 │ run_app_with_renderer_provider │        │                                     │
 │ entry() -> PlatformEntry       │        │                                     │
@@ -335,17 +335,17 @@ examples/showcase/android_window_hosted/main.mbt:14
         │ RendererProvider             provider_contract:80 │
         │ RendererProviderBinding      provider_contract:104│
         │ select_renderer_provider_binding  :128            │
-        │ HostWindowRenderer           host_window_renderer:34 │
-        │ HostAsyncImageLoader         image_repaint:425     │
+        │ WindowRenderer           host_window_renderer:34 │
+        │ AsyncImageLoader         image_repaint:425     │
         │ ── P0 新增 ──                                      │
         │ HostPixelFrame / HostPresentTarget                │
-        │ HostSurfaceKit / RendererBindingFactory           │
+        │ SurfaceContext / RendererFactory           │
         └──────────────────────────────────────────────────┘
                                ▲
                                │
         ┌──────────────────────┴───────────────────────────┐
         │ moui/runtime （AppBuilder / PlatformEntry 宿主）  │
-        │ 已 import core + render + backend/host           │
+        │ 已 import core + render + backend           │
         │ moui/runtime/moon.pkg:1-6                         │
         └──────────────────────────────────────────────────┘
 ```
@@ -524,49 +524,49 @@ pub fn HostPresentTarget::description(self : HostPresentTarget) -> String {
 ///|
 /// 平台在不知道渲染器是谁的前提下能提供的全部能力。
 /// 由 `moui/backend/<platform>` 在每次创建渲染器时构造。
-pub struct HostSurfaceKit {
+pub struct SurfaceContext {
   priv surface : SurfaceDescriptor
   priv metrics : RendererSurfaceMetrics
   priv present : HostPresentTarget
-  priv image_loader : HostAsyncImageLoader?
+  priv image_loader : AsyncImageLoader?
 }
 
 ///|
-pub fn HostSurfaceKit::new(
+pub fn SurfaceContext::new(
   surface~ : SurfaceDescriptor,
   metrics~ : RendererSurfaceMetrics,
   present~ : HostPresentTarget,
-  image_loader? : HostAsyncImageLoader? = None,
-) -> HostSurfaceKit {
+  image_loader? : AsyncImageLoader? = None,
+) -> SurfaceContext {
   { surface, metrics, present, image_loader }
 }
 
 ///|
-pub fn HostSurfaceKit::surface(self : HostSurfaceKit) -> SurfaceDescriptor {
+pub fn SurfaceContext::surface(self : SurfaceContext) -> SurfaceDescriptor {
   self.surface
 }
 
 ///|
-pub fn HostSurfaceKit::metrics(
-  self : HostSurfaceKit,
+pub fn SurfaceContext::metrics(
+  self : SurfaceContext,
 ) -> RendererSurfaceMetrics {
   self.metrics
 }
 
 ///|
-pub fn HostSurfaceKit::present(self : HostSurfaceKit) -> HostPresentTarget {
+pub fn SurfaceContext::present(self : SurfaceContext) -> HostPresentTarget {
   self.present
 }
 
 ///|
-pub fn HostSurfaceKit::image_loader(
-  self : HostSurfaceKit,
-) -> HostAsyncImageLoader? {
+pub fn SurfaceContext::image_loader(
+  self : SurfaceContext,
+) -> AsyncImageLoader? {
   self.image_loader
 }
 ```
 
-`HostAsyncImageLoader` 已存在（`moui/render/image_repaint.mbt:425`），平台侧通过 `HostNativeAsyncImageSource::loader_with_drain`（`:519`）构造，这条路径**本来就不需要渲染器**。
+`AsyncImageLoader` 已存在（`moui/render/image_repaint.mbt:425`），平台侧通过 `NativeAsyncImageSource::loader_with_drain`（`:519`）构造，这条路径**本来就不需要渲染器**。
 
 ### 3.2 机制②：`<Platform>RendererProvider` —— 已存在的中立注入点
 
@@ -574,9 +574,9 @@ pub fn HostSurfaceKit::image_loader(
 
 ```moonbit
 pub struct LinuxRendererProvider {
-  priv create_renderer : (@window_linux.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-  priv sync_surface : (@window_linux.Window, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @render.HostAsyncImageLoader?
+  priv create_renderer : (@window_linux.Window, @host.SurfaceMetrics) -> @render.WindowRenderer?
+  priv sync_surface : (@window_linux.Window, @host.SurfaceMetrics) -> Unit
+  priv image_loader : @render.AsyncImageLoader?
 }
 ```
 
@@ -588,21 +588,21 @@ pub fn run_app_with_renderer_provider(
   runtime : @runtime.AppRuntime,
   provider~ : LinuxRendererProvider,
   options? : LinuxHostAppOptions = LinuxHostAppOptions::new(),
-  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+  window_requests? : @host.WindowRequestQueue = @host.WindowRequestQueue::new(),
 ) -> Unit
 ```
 
-macOS / Windows 同构（`macos_backend.mbt:53`、`windows_backend.mbt:53`），嵌入式三平台用 `RendererProviderAdapter`（`moui/backend/internal/embedded_runtime_backend/hosted_window_backend.mbt:33-37`）把 `Window` 换成 `UInt64`：
+macOS / Windows 同构（`macos_backend.mbt:53`、`windows_backend.mbt:53`），嵌入式三平台用 `RendererProviderAdapter`（`moui/backend/common/embedded/hosted_window_backend.mbt:33-37`）把 `Window` 换成 `UInt64`：
 
 ```moonbit
 pub struct RendererProviderAdapter {
-  create_renderer : (UInt64, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-  sync : (UInt64, @host.HostSurfaceMetrics) -> Unit
-  image_loader : @render.HostAsyncImageLoader?
+  create_renderer : (UInt64, @host.SurfaceMetrics) -> @render.WindowRenderer?
+  sync : (UInt64, @host.SurfaceMetrics) -> Unit
+  image_loader : @render.AsyncImageLoader?
 }
 ```
 
-**这一层不需要改造，只需要补齐它的上游**：平台基座要新增一个「把自己的 `Window` 翻译成 `HostSurfaceKit`」的中立函数。仍以 Linux 为例：
+**这一层不需要改造，只需要补齐它的上游**：平台基座要新增一个「把自己的 `Window` 翻译成 `SurfaceContext`」的中立函数。仍以 Linux 为例：
 
 ```moonbit
 // moui/backend/linux/linux_surface_kit.mbt（新增）
@@ -643,7 +643,7 @@ pub fn linux_present_target(
 /// 平台产出的中立 surface 描述。GPU 句柄来自平台自己的 layer/surface 安装。
 pub fn linux_surface_descriptor(
   window : @window_linux.Window,
-  metrics : @host.HostSurfaceMetrics,
+  metrics : @host.SurfaceMetrics,
   prefer_gpu~ : Bool,
 ) -> @render.SurfaceDescriptor {
   let w = metrics.logical_size().width
@@ -663,10 +663,10 @@ pub fn linux_surface_descriptor(
 /// 把平台窗口打包成渲染器需要的全部中立材料。
 pub fn linux_surface_kit(
   window : @window_linux.Window,
-  metrics : @host.HostSurfaceMetrics,
+  metrics : @host.SurfaceMetrics,
   prefer_gpu~ : Bool,
-) -> @render.HostSurfaceKit {
-  @render.HostSurfaceKit::new(
+) -> @render.SurfaceContext {
+  @render.SurfaceContext::new(
     surface=linux_surface_descriptor(window, metrics, prefer_gpu~),
     metrics=renderer_metrics_from_host(metrics),
     present=linux_present_target(window),
@@ -684,8 +684,8 @@ pub fn linux_surface_kit(
 `run_app().render(skia).backend(linux)` 里的 `skia` / `linux` 不可能是包名（MoonBit 的 `@pkg` 前缀不是值）。落地方式是让两侧各自导出一个**工厂函数返回中立值**：
 
 ```moonbit
-@render_skia.raster()      -> @render.RendererBindingFactory
-@render_skia.gpu()         -> @render.RendererBindingFactory
+@render_skia.raster()      -> @render.RendererFactory
+@render_skia.gpu()         -> @render.RendererFactory
 @backend_linux.entry()     -> @runtime.PlatformEntry
 ```
 
@@ -697,7 +697,7 @@ let linux = @backend_linux.entry()
 @runtime.run_app("MoUI Showcase").program(runtime).render(skia).backend(linux).run()
 ```
 
-#### 3.3.2 `RendererBindingFactory`：延迟绑定是必需的
+#### 3.3.2 `RendererFactory`：延迟绑定是必需的
 
 不能让 `.render()` 直接收 `RendererProviderBinding`，因为构造 binding 需要平台的 `PresentTarget`（§1.7 已论证）。所以 `.render()` 收的是一个**待应用的函数**：
 
@@ -706,30 +706,30 @@ let linux = @backend_linux.entry()
 
 ///|
 /// 延迟绑定：合成根注册它，平台入口在拿到窗口后用自己的
-/// `HostSurfaceKit` 把它兑现成 `RendererProviderBinding`。
+/// `SurfaceContext` 把它兑现成 `RendererProviderBinding`。
 /// 这是「合成根决定顺序、平台负责兑现」的载体。
-pub struct RendererBindingFactory {
+pub struct RendererFactory {
   priv id : String
-  priv bind : (HostSurfaceKit) -> RendererProviderBinding
+  priv bind : (SurfaceContext) -> RendererProviderBinding
 }
 
 ///|
-pub fn RendererBindingFactory::new(
+pub fn RendererFactory::new(
   id~ : String,
-  bind~ : (HostSurfaceKit) -> RendererProviderBinding,
-) -> RendererBindingFactory {
+  bind~ : (SurfaceContext) -> RendererProviderBinding,
+) -> RendererFactory {
   { id, bind }
 }
 
 ///|
-pub fn RendererBindingFactory::id(self : RendererBindingFactory) -> String {
+pub fn RendererFactory::id(self : RendererFactory) -> String {
   self.id
 }
 
 ///|
-pub fn RendererBindingFactory::bind(
-  self : RendererBindingFactory,
-  kit : HostSurfaceKit,
+pub fn RendererFactory::bind(
+  self : RendererFactory,
+  kit : SurfaceContext,
 ) -> RendererProviderBinding {
   (self.bind)(kit)
 }
@@ -738,9 +738,9 @@ pub fn RendererBindingFactory::bind(
 /// 把合成根注册的工厂列表在给定 kit 上兑现并协商，返回宿主渲染器。
 /// 所有平台入口共用这一条路径 —— 协商从此没有旁路。
 pub fn resolve_host_renderer(
-  factories : Array[RendererBindingFactory],
-  kit : HostSurfaceKit,
-) -> HostWindowRenderer? {
+  factories : Array[RendererFactory],
+  kit : SurfaceContext,
+) -> WindowRenderer? {
   let bindings = factories.map(factory => factory.bind(kit))
   match select_renderer_provider_binding(bindings, kit.surface()) {
     Some((binding, bound)) =>
@@ -759,8 +759,8 @@ pub fn resolve_host_renderer(
 /// Skia CPU raster 绑定工厂。合成根用 `.render(@render_skia.raster())` 注册。
 pub fn raster(
   font_resolution? : SkiaFontResolution = SkiaFontResolution::system(),
-) -> @render.RendererBindingFactory {
-  @render.RendererBindingFactory::new(
+) -> @render.RendererFactory {
+  @render.RendererFactory::new(
     id="skia-raster",
     bind=kit => create_skia_raster_host_binding(
       create_renderer=metrics => SkiaRasterRenderer::create_with_present_target(
@@ -778,8 +778,8 @@ pub fn raster(
 /// 否则 `select_renderer_provider_binding` 会自动跳到下一个注册项。
 pub fn gpu(
   font_resolution? : SkiaFontResolution = SkiaFontResolution::system(),
-) -> @render.RendererBindingFactory {
-  @render.RendererBindingFactory::new(
+) -> @render.RendererFactory {
+  @render.RendererFactory::new(
     id="skia-gpu",
     bind=kit => create_skia_hybrid_host_binding(
       create_renderer=(metrics, bound) => SkiaRasterRenderer::create_with_present_target_and_route(
@@ -849,9 +849,9 @@ pub fn PlatformEntry::id(self : PlatformEntry) -> String {
 pub struct AppLaunchRequest {
   priv title : String
   priv runtime : AppRuntime
-  priv factories : Array[@render.RendererBindingFactory]
-  priv window_requests : @backend_host.HostWindowRequestQueue
-  priv scene_resolver : HostWindowSceneResolver
+  priv factories : Array[@render.RendererFactory]
+  priv window_requests : @backend_host.WindowRequestQueue
+  priv scene_resolver : WindowSceneResolver
   priv event_sources : HostPlatformEventSources?
   priv platform_view_plugins : Array[@backend_host.PlatformViewPlugin]
   priv exit_after_first_present : Bool
@@ -870,7 +870,7 @@ pub fn AppLaunchRequest::runtime(self : AppLaunchRequest) -> AppRuntime {
 ///|
 pub fn AppLaunchRequest::factories(
   self : AppLaunchRequest,
-) -> Array[@render.RendererBindingFactory] {
+) -> Array[@render.RendererFactory] {
   self.factories
 }
 ```
@@ -884,7 +884,7 @@ Linux 侧的 `entry()`：
 
 ///|
 /// Linux 平台入口。渲染器无关：它只知道如何把自己的窗口打包成
-/// `HostSurfaceKit`，然后让合成根注册的工厂列表去协商。
+/// `SurfaceContext`，然后让合成根注册的工厂列表去协商。
 pub fn entry(
   prefer_gpu? : Bool = true,
   transparent_titlebar? : Bool = false,
@@ -935,10 +935,10 @@ pub fn entry(
 pub struct AppBuilder {
   priv title : String
   priv runtime : AppRuntime?
-  priv factories : Array[@render.RendererBindingFactory]
+  priv factories : Array[@render.RendererFactory]
   priv entry : PlatformEntry?
-  priv window_requests : @backend_host.HostWindowRequestQueue
-  priv scene_resolver : HostWindowSceneResolver
+  priv window_requests : @backend_host.WindowRequestQueue
+  priv scene_resolver : WindowSceneResolver
   priv event_sources : HostPlatformEventSources?
   priv platform_view_plugins : Array[@backend_host.PlatformViewPlugin]
   priv exit_after_first_present : Bool
@@ -952,8 +952,8 @@ pub fn run_app(title : String) -> AppBuilder {
     runtime: None,
     factories: [],
     entry: None,
-    window_requests: @backend_host.HostWindowRequestQueue::new(),
-    scene_resolver: HostWindowSceneResolver::unavailable(),
+    window_requests: @backend_host.WindowRequestQueue::new(),
+    scene_resolver: WindowSceneResolver::unavailable(),
     event_sources: None,
     platform_view_plugins: [],
     exit_after_first_present: false,
@@ -972,7 +972,7 @@ pub fn AppBuilder::program(
 /// 注册一个渲染器。多次调用建立回落链：先注册的先协商。
 pub fn AppBuilder::render(
   self : AppBuilder,
-  factory : @render.RendererBindingFactory,
+  factory : @render.RendererFactory,
 ) -> AppBuilder {
   { ..self, factories: self.factories + [factory] }
 }
@@ -982,7 +982,7 @@ pub fn AppBuilder::render(
 /// 供 `@render_skia.from_env()` 这类「由环境变量决定顺序」的场景使用（见 §5.1.1 U1）。
 pub fn AppBuilder::render_all(
   self : AppBuilder,
-  factories : Array[@render.RendererBindingFactory],
+  factories : Array[@render.RendererFactory],
 ) -> AppBuilder {
   { ..self, factories: self.factories + factories }
 }
@@ -1042,12 +1042,12 @@ pub fn AppBuilder::run(self : AppBuilder) -> Unit {
 /// `EventLoop::run_app` 使用（android/ios/harmonyos 用）。
 pub fn AppBuilder::renderer_factories(
   self : AppBuilder,
-) -> Array[@render.RendererBindingFactory] {
+) -> Array[@render.RendererFactory] {
   self.factories
 }
 ```
 
-`AppBuilder` 落在 `moui/runtime`：它已经 import `core` + `render` + `backend/host`（`moui/runtime/moon.pkg:1-6`），零新增依赖，符合方案 D §3.6（`:724`）「不新建包」的判断。根门面 `moui` 的 re-export 按 §5.1.1 U3 裁决另走 RFC，且以根门面依赖校验器落地为前置。
+`AppBuilder` 落在 `moui/runtime`：它已经 import `core` + `render` + `backend`（`moui/runtime/moon.pkg:1-6`），零新增依赖，符合方案 D §3.6（`:724`）「不新建包」的判断。根门面 `moui` 的 re-export 按 §5.1.1 U3 裁决另走 RFC，且以根门面依赖校验器落地为前置。
 
 #### 3.3.5 合成根迁移前后对照
 
@@ -1071,7 +1071,7 @@ main.mbt:18-22
 // examples/showcase/linux_skia/moon.pkg
 import {
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/host" @host,
+  "wzzc-dev/moui/backend" @host,
   "wzzc-dev/moui/backend/linux" @backend_linux,
   "wzzc-dev/moui/render/skia" @render_skia,
   "examples/showcase/app" @showcase_app,
@@ -1123,7 +1123,7 @@ fn main {
 
 | 现状 | 迁移后 |
 |---|---|
-| `linux/sun/linux_sun_provider.mbt:44` 直接构造 `LinuxRendererProvider` 调 `run_app_with_renderer_provider` | 包删除。`@render_sun.raster()` 返回 `RendererBindingFactory`；`@backend_linux.entry()` 内部走 `@render.resolve_host_renderer`，**必然**经过 `select_renderer_provider_binding` |
+| `linux/sun/linux_sun_provider.mbt:44` 直接构造 `LinuxRendererProvider` 调 `run_app_with_renderer_provider` | 包删除。`@render_sun.raster()` 返回 `RendererFactory`；`@backend_linux.entry()` 内部走 `@render.resolve_host_renderer`，**必然**经过 `select_renderer_provider_binding` |
 | `macos/sun:59`、`windows/sun:44` | 同上 |
 | `linux/wgpu:37`、`macos/wgpu:52`、`windows/wgpu:40` | 同上 |
 
@@ -1135,8 +1135,8 @@ fn main {
 // moui/render/sun/binding_factory.mbt（新增，约 28 行）
 
 ///|
-pub fn raster() -> @render.RendererBindingFactory {
-  @render.RendererBindingFactory::new(
+pub fn raster() -> @render.RendererFactory {
+  @render.RendererFactory::new(
     id="sun-raster",
     bind=kit => @render.RendererProviderBinding::new(
       provider=create_sun_provider(),
@@ -1168,7 +1168,7 @@ pub fn raster() -> @render.RendererBindingFactory {
 
 **动作**
 
-1. 新建 `moui/render/host_surface_kit.mbt`：`HostPixelFrame` / `HostPresentTarget` / `HostSurfaceKit` / `RendererBindingFactory` / `resolve_host_renderer`（§3.1、§3.3.2）。
+1. 新建 `moui/render/host_surface_kit.mbt`：`HostPixelFrame` / `HostPresentTarget` / `SurfaceContext` / `RendererFactory` / `resolve_host_renderer`（§3.1、§3.3.2）。
 2. 按方案 D §3.5.1（`:691-712`）拆分 `moui/render/native_gpu_selection.mbt`：
    - `GpuHostSurfaceDescriptor`（`:34-40`）留在 `moui/render`，文件更名为 `gpu_surface_descriptor.mbt`。
    - `NativeGpuPlatform`（`:10-17`）、`NativeRendererMode`（`:24-28`）、`NativeRendererMode::parse`（`:140-147`）、`NativePlatformSurface for NativeGpuPlatform` impl（`:108-137`）下沉 `moui/render/skia/skia_native_policy.mbt`。
@@ -1180,9 +1180,9 @@ pub fn raster() -> @render.RendererBindingFactory {
 
 - `moon check --target native` 与 `--target wasm-gc` 全绿；13 个绑定包**零改动**编译通过。
 - `moui/render/pkg.generated.mbti` 中旧 `SkiaSurfaceRoute` 消失，新增中立
-  `SurfaceRoute` / `HostPixelFrame` / `HostPresentTarget` / `HostSurfaceKit` /
-  `RendererBindingFactory`。
-- `scripts/validate-renderer-provider-open-extension.mjs` 的 `SELECTION_ALLOWLIST_EXACT`（`:85-88`）中 `"moui/backend/host/host_rendering_test.mbt"` 一行可删且脚本仍通过（方案 D §3.5.2 `:713-716` 预言的豁免收缩）。
+  `SurfaceRoute` / `HostPixelFrame` / `HostPresentTarget` / `SurfaceContext` /
+  `RendererFactory`。
+- `scripts/validate-renderer-provider-open-extension.mjs` 的 `SELECTION_ALLOWLIST_EXACT`（`:85-88`）中 `"moui/backend/host_rendering_test.mbt"` 一行可删且脚本仍通过（方案 D §3.5.2 `:713-716` 预言的豁免收缩）。
 - `grep -c "Skia" moui/render/pkg.generated.mbti` 从 12 降到 0。
 
 ### P1：平台基座中立化（native stub 归位 + `entry()` 落地，绑定包仍在）
@@ -1258,17 +1258,17 @@ B4 之前必须完成 R3 校验器口径重设计（口径见 §5.1.1 U1），�
 **动作**
 
 1. `moui/backend/wechat/host_runtime.mbt`：
-   - `:12` `mut renderer : @canvas2d.Canvas2DRenderer?` → `mut renderer : @render.HostWindowRenderer?`
+   - `:12` `mut renderer : @canvas2d.Canvas2DRenderer?` → `mut renderer : @render.WindowRenderer?`
    - `:37-39` 的 `Canvas2DRenderer::new` → `@render.resolve_host_renderer(factories, kit)`
    - `run_app` 增加 `factories~` 参数，由入口传入；旧签名删除（无兼容要求）
-   - `:110-127` `wechat_render_frame` 改为通过 `HostWindowRenderer` 接口调用
+   - `:110-127` `wechat_render_frame` 改为通过 `WindowRenderer` 接口调用
    - `moui/backend/wechat/moon.pkg:6` 删除 `"wzzc-dev/moui/render/canvas2d"`
 2. `moui/backend/web/webgpu_renderer.mbt`：
    - `:2` `type WebRendererError = @webgpu.WebGpuHostError` 改为中立错误类型
    - `:57` `web_renderer_provider_bindings` 删除（其内容迁到 `examples/showcase/web_wasm/main.mbt`，那里已经有雏形，见 `main.mbt:11-13`）
    - `:38` 的协商调用改为 `@render.resolve_host_renderer`
    - `moui/backend/web/moon.pkg:7` 删除 `"wzzc-dev/moui/render/webgpu_adapter" @webgpu`
-3. `moui/backend/platform_bridge/skia_preflight_fragments.mbt` 删除，两个函数的字符串改为由渲染器侧提供：`moui/render/skia` 导出 `skia_host_renderer_bridge_preflight_{mobile,desktop}()`，preflight 汇总在合成根拼装。
+3. `moui/backend/common/skia_preflight_fragments.mbt` 删除，两个函数的字符串改为由渲染器侧提供：`moui/render/skia` 导出 `skia_host_renderer_bridge_preflight_{mobile,desktop}()`，preflight 汇总在合成根拼装。
 4. `moui/runtime` 落地 `AppBuilder` 与 `run_app`（§3.3.4），`@runtime.run_app()` 成为**规范装配入口**；全部合成根迁移到该入口。根门面 `moui` 的 `run_app` re-export 不在本阶段做，按 §5.1.1 U3 裁决另走 RFC，且以 P5 的根门面依赖校验器落地为前置条件。
 5. `moui/render/skia` 落地 `from_env()`（§5.1.1 U1），三个桌面合成根改写为 `.render_all(@render_skia.from_env())`；`MOUI_SKIA_RENDERER` 字面量在全仓收敛到该文件一处。
 
@@ -1278,7 +1278,7 @@ B4 之前必须完成 R3 校验器口径重设计（口径见 §5.1.1 U1），�
 - `grep -rn "MOUI_SKIA_RENDERER" --include=*.mbt moui/ examples/` 只在 `moui/render/skia/binding_factory.mbt` 命中一次。
 - `grep -rn "run_app_with_options\|SkiaAppOptions" examples/` 无输出（合成根全部走 `@runtime.run_app()`）。
 - `moui/backend` 全目录 `grep -riE "skia|sun|wgpu|canvas2d"` 命中数 = 0（含注释与字符串，E3 加强版）。
-- `moui/backend/platform_bridge/` 下文件数 -1。
+- `moui/backend/common/` 下文件数 -1。
 - 微信小程序 wasm 产物体积对比：`wechat/canvas` 包删除后 `.wasm` 不增大。
 
 ### P5：校验器口径重设计 + 文档批量更新 + 预算重置
@@ -1305,16 +1305,16 @@ B4 之前必须完成 R3 校验器口径重设计（口径见 §5.1.1 U1），�
    - `docs/invariants.md:20`（P6 表述改为「渲染器实现与 binding 工厂在 `moui/render/*`；`moui/backend/**` 对渲染器零依赖；合成根在应用入口」）
    - `docs/invariants.md:35`（R3）：按 §5.1.1 U1 裁决，措辞从「desktop skia provider 文件必须存在且含 `MOUI_SKIA_RENDERER` 字面量」改为「desktop 合成根须尊重 `--renderer`（经由 `moui/render/skia` 的 `from_env` 驱动选择）」
 6. 架构决策沿用 ADR 0019-A 补充条款；根门面 re-export 约束另记录于 `docs/rfcs/0001-root-facade-run-app.md`。旧方案 D 已在顶部标记为被本计划取代，保留在 active 目录以供迁移审计追溯。
-7. 重复度预算重置：`checks/platform-adapter-duplication-baseline.json` 中「Texture native surface creation」等条目的豁免范围收窄（CAMetalLayer 安装从两份变一份后，该条目的实际重复面积下降）。
-8. 根门面最小依赖校验器（§5.1.1 U3 裁决的前置条件）：新增 `scripts/validate-root-facade-deps.mjs`，解析 `moui/moon.pkg` 的传递依赖闭包，允许中立 `moui/backend/host` 合同但拒绝平台 backend；`moui/render` 是否准入由 RFC 决定，校验器以显式 allowlist 表达。同时在 `docs/rfcs/` 建立「根门面 re-export `run_app`」RFC 条目，其合入门槛写明「本校验器已在 `scripts/check.sh` 中生效」。
+7. 平台行为继续收敛：CAMetalLayer 安装从两份变为一份；后续发现的共享行为直接移入 owning package，不再登记重复度预算。
+8. 根门面最小依赖校验器（§5.1.1 U3 裁决的前置条件）：新增 `scripts/validate-root-facade-deps.mjs`，解析 `moui/moon.pkg` 的传递依赖闭包，允许中立 `moui/backend` 合同但拒绝平台 backend；`moui/render` 是否准入由 RFC 决定，校验器以显式 allowlist 表达。同时在 `docs/rfcs/` 建立「根门面 re-export `run_app`」RFC 条目，其合入门槛写明「本校验器已在 `scripts/check.sh` 中生效」。
 
 **机器验证信号**
 
 - `sh scripts/check.sh` 全绿。
 - `scripts/validate-renderer-provider-open-extension.mjs` 的 allowlist 从 17+2 条降到 5+1 条。
 - `grep -rn "backend/[a-z]*/\(skia\|sun\|wgpu\|canvas\)" docs/ --include=*.md | grep -v plans/done` 无输出。
-- `checks/platform-adapter-duplication-baseline.json` 的总重复行数单调下降（P12 shrink-or-stay）。
-- `scripts/validate-root-facade-deps.mjs` 在 `moui/moon.pkg` 未改动时通过；中立 `wzzc-dev/moui/backend/host` 允许，向闭包加入 `wzzc-dev/moui/backend/linux` 后必须失败（负例自测）。
+- `node scripts/validate-backend-common-boundary.mjs` 通过，且平台包没有重新定义共享 bridge helper。
+- `scripts/validate-root-facade-deps.mjs` 在 `moui/moon.pkg` 未改动时通过；中立 `wzzc-dev/moui/backend` 允许，向闭包加入 `wzzc-dev/moui/backend/linux` 后必须失败（负例自测）。
 - `grep -n "renderer-backend-decoupling" docs/plans/active/*.md` 与 `docs/plans/active/renderer-backend-decoupling.md` 首行的作废声明互相对应。
 
 ---
@@ -1335,7 +1335,7 @@ B4 之前必须完成 R3 校验器口径重设计（口径见 §5.1.1 U1），�
 - 合成根含 `MOUI_SKIA_RENDERER` 字面量（应用自行读环境变量并据此决定注册顺序）；**或**
 - 合成根同时含 `@render_skia.gpu()` 与 `@render_skia.raster()`（存在 GPU→CPU 回落链，等价于 `auto` 语义）
 
-同时在 `moui/render/skia` 提供 `pub fn from_env() -> Array[@render.RendererBindingFactory]`，读 `MOUI_SKIA_RENDERER` 并返回相应顺序的工厂列表，让合成根写成 `.render_all(@render_skia.from_env())` —— 这样 `MOUI_SKIA_RENDERER` 字面量落在 `moui/render/skia`，合成根用 `from_env()` 表达意图，R3 判定 `from_env()` 出现即可。
+同时在 `moui/render/skia` 提供 `pub fn from_env() -> Array[@render.RendererFactory]`，读 `MOUI_SKIA_RENDERER` 并返回相应顺序的工厂列表，让合成根写成 `.render_all(@render_skia.from_env())` —— 这样 `MOUI_SKIA_RENDERER` 字面量落在 `moui/render/skia`，合成根用 `from_env()` 表达意图，R3 判定 `from_env()` 出现即可。
 
 备选项 B：保留 `MOUI_SKIA_RENDERER` 读取在合成根 `main.mbt` 里显式写。语义更透明但每个入口重复约 8 行。
 
@@ -1352,7 +1352,7 @@ B4 之前必须完成 R3 校验器口径重设计（口径见 §5.1.1 U1），�
 
 **U3：`AppBuilder` 是否在根门面 `moui` re-export**
 
-`moui/moon.pkg:1-3` 目前只 import `moui/core`，`moui/moui.mbt` 只有 `pub using @core`。要让用户写 `@moui.run_app(...)`，需给根门面加 `wzzc-dev/moui/runtime` import，根门面的依赖足迹会扩大到 `render` + `backend/host`。
+`moui/moon.pkg:1-3` 目前只 import `moui/core`，`moui/moui.mbt` 只有 `pub using @core`。要让用户写 `@moui.run_app(...)`，需给根门面加 `wzzc-dev/moui/runtime` import，根门面的依赖足迹会扩大到 `render` + `backend`。
 
 **推荐**：P4 阶段先只在 `moui/runtime` 提供（`@runtime.run_app(...)`），根门面 re-export 单独提 RFC。理由：根门面的最小依赖属性目前没有校验器保护，一旦扩大很难缩回，不应该顺带做掉。
 
@@ -1370,11 +1370,11 @@ B4 之前必须完成 R3 校验器口径重设计（口径见 §5.1.1 U1），�
 4. `MOUI_SKIA_RENDERER` 字面量在全仓收敛到 `moui/render/skia` 一处。
 5. `docs/invariants.md:35`（R3）措辞同步改写：从「desktop skia provider 文件必须存在且含 `MOUI_SKIA_RENDERER` 字面量」改为「desktop 合成根须尊重 `--renderer`（经由 `moui/render/skia` 的 `from_env` 驱动选择）」。该改写列入 P5 清单。
 
-签名口径校正（执行时按此为准）：裁决文中写作 `from_env() -> Array[RendererProvider]`，但按 §3.1 与 §3.3.2 的类型分层，`RendererProvider` 必须由 `HostSurfaceKit` 兑付后才能构造，合成根阶段拿不到平台 kit。因此实际签名为：
+签名口径校正（执行时按此为准）：裁决文中写作 `from_env() -> Array[RendererProvider]`，但按 §3.1 与 §3.3.2 的类型分层，`RendererProvider` 必须由 `SurfaceContext` 兑付后才能构造，合成根阶段拿不到平台 kit。因此实际签名为：
 
 > **总监补证（2026-08-03，机械核验）**：该校正成立，但原表述的论据不够精确，按以下证据为准。
 >
-> `moui/render/provider_contract.mbt:80-96` 的 `RendererProvider` 结构体字段**不直接出现** `HostSurfaceKit`（本方案中该类型尚不存在，全仓 grep `HostSurfaceKit` 在 `moui/render` 下零命中），因此不能从字段类型推出「需 kit 兑付」。真正的约束在 `create` 字段的**闭包捕获**上：
+> `moui/render/provider_contract.mbt:80-96` 的 `RendererProvider` 结构体字段**不直接出现** `SurfaceContext`（本方案中该类型尚不存在，全仓 grep `SurfaceContext` 在 `moui/render` 下零命中），因此不能从字段类型推出「需 kit 兑付」。真正的约束在 `create` 字段的**闭包捕获**上：
 >
 > - `moui/render/skia/provider.mbt:9-23` `create_skia_raster_provider(create_raster~ : (RendererSurfaceMetrics) -> SkiaRasterRenderer) -> RendererProvider` —— 构造 provider 的前提是先有 `create_raster` 闭包。
 > - 该闭包必须返回 `SkiaRasterRenderer`，而它持有 `SkiaPresentTarget`（`moui/render/skia/renderer_surface.mbt:11-14`，`{description, present : (SkiaPixelFrame) -> Bool}`）。
@@ -1382,7 +1382,7 @@ B4 之前必须完成 R3 校验器口径重设计（口径见 §5.1.1 U1），�
 >
 > 结论：合成根运行在窗口创建之前，拿不到 `present` 回调 ⇒ 造不出 `create_raster` ⇒ **造不出 `RendererProvider`**。故 `from_env()` 只能返回延迟工厂，原签名 `Array[RendererProvider]` 类型上不可实现。
 >
-> 附带的低风险信号：`provider.mbt:53-72` `create_skia_raster_host_binding(create_host_renderer~) -> RendererProviderBinding` 与 `:77-96` 的 hybrid 版本，**已经**是「收宿主闭包 → 还 binding」的形状。`RendererBindingFactory` 不是发明新机制，而是把这两个已有函数升格为一等值并延后调用，实现风险相应下调（见 §5.2 风险表可据此复核 X-5 的迁移比例假设）。
+> 附带的低风险信号：`provider.mbt:53-72` `create_skia_raster_host_binding(create_host_renderer~) -> RendererProviderBinding` 与 `:77-96` 的 hybrid 版本，**已经**是「收宿主闭包 → 还 binding」的形状。`RendererFactory` 不是发明新机制，而是把这两个已有函数升格为一等值并延后调用，实现风险相应下调（见 §5.2 风险表可据此复核 X-5 的迁移比例假设）。
 
 ```moonbit
 // moui/render/skia/binding_factory.mbt
@@ -1391,7 +1391,7 @@ B4 之前必须完成 R3 校验器口径重设计（口径见 §5.1.1 U1），�
 /// - "skia-gpu"    -> [gpu()]
 /// - "skia-raster" -> [raster()]
 /// - "auto" / 未设置 -> [gpu(), raster()]（GPU 优先，失败回落 CPU）
-pub fn from_env() -> Array[@render.RendererBindingFactory]
+pub fn from_env() -> Array[@render.RendererFactory]
 ```
 
 这是**类型层的表述校正，不是语义变更**：返回的仍是「按环境变量排序的工厂列表」，与裁决括注中的「工厂列表」一致。
@@ -1408,7 +1408,7 @@ pub fn from_env() -> Array[@render.RendererBindingFactory]
 
 裁决内容：
 
-1. `AppBuilder` 的定义与实现落在 `moui/runtime`，P4 阶段实现并暴露 `@runtime.run_app()` 作为**规范入口**（`moui/runtime/moon.pkg:1-6` 已具备 `core` + `render` + `backend/host`，零新增依赖）。
+1. `AppBuilder` 的定义与实现落在 `moui/runtime`，P4 阶段实现并暴露 `@runtime.run_app()` 作为**规范入口**（`moui/runtime/moon.pkg:1-6` 已具备 `core` + `render` + `backend`，零新增依赖）。
 2. 同时在根门面 `moui` re-export `run_app`，对齐用户原始诉求的 `@moui.run_app()` 拼写；但该 re-export **作为独立 RFC 跟踪**，不与 P0-P5 主线捆绑合入。
 3. 新增（或扩展现有）校验器保护「根门面最小依赖」不变量，防止 `render` / `backend` / `host` 被无约束地拖进根门面的依赖闭包。该校验器是 re-export RFC 的**前置条件**：校验器先落地，re-export 才允许合入。
 
@@ -1507,10 +1507,10 @@ provider_contract.mbt:153       RendererProviderRegistry
 native_gpu_selection.mbt:10-17  NativeGpuPlatform（P0 下沉）
 native_gpu_selection.mbt:24-28  NativeRendererMode（P0 下沉）
 native_gpu_selection.mbt:34-40  GpuHostSurfaceDescriptor（P0 保留）
-host_window_renderer.mbt:34     HostWindowRenderer
-image_repaint.mbt:425           HostAsyncImageLoader
-image_repaint.mbt:440           HostNativeAsyncImageSource
-image_repaint.mbt:519           HostNativeAsyncImageSource::loader_with_drain
+host_window_renderer.mbt:34     WindowRenderer
+image_repaint.mbt:425           AsyncImageLoader
+image_repaint.mbt:440           NativeAsyncImageSource
+image_repaint.mbt:519           NativeAsyncImageSource::loader_with_drain
 moon.pkg:1-6                    render 层依赖（无 backend）
 pkg.generated.mbti:56,96,121,126,127,861,907   SurfaceRoute 残迹
 ```
@@ -1530,7 +1530,7 @@ moui/backend/android/android_backend.mbt:71      AndroidRendererProvider::new
 moui/backend/android/android_backend.mbt:123     renderer_provider_adapter_from_android
 moui/backend/ios/ios_backend.mbt:73,125          同构
 moui/backend/harmonyos/harmonyos_backend.mbt:73,125  同构
-moui/backend/internal/embedded_runtime_backend/hosted_window_backend.mbt:33-46
+moui/backend/common/embedded/hosted_window_backend.mbt:33-46
                                                  RendererProviderAdapter
 ```
 
@@ -1541,7 +1541,7 @@ moui/backend/web/moon.pkg:7                      import @webgpu
 moui/backend/web/webgpu_renderer.mbt:2,38,57     直连 webgpu
 moui/backend/wechat/moon.pkg:6                   import render/canvas2d
 moui/backend/wechat/host_runtime.mbt:12,37,38,39,43   基座持有 Canvas2DRenderer
-moui/backend/platform_bridge/skia_preflight_fragments.mbt:6,14   Skia 字符串
+moui/backend/common/skia_preflight_fragments.mbt:6,14   Skia 字符串
 ```
 
 ### A.4 绕过协商的 6 个包
@@ -1613,5 +1613,5 @@ examples/showcase/linux_wgpu/moon.pkg:4-5, main.mbt:18
 examples/showcase/web_wasm/moon.pkg:3-4, main.mbt:11-13,32-36
 examples/showcase/wechat_canvas/moon.pkg:2, main.mbt:16-26
 examples/showcase/android_window_hosted/moon.pkg:3-4, main.mbt:4-19
-examples/showcase/app/moon.pkg                （已同时 import backend/host 与 render）
+examples/showcase/app/moon.pkg                （已同时 import backend 与 render）
 ```

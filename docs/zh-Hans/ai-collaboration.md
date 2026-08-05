@@ -22,8 +22,8 @@
 
 - `core/` 拥有平台无关 contract、不透明 view、event、geometry、draw/semantics/text/theme contract，以及由类型化 `View[Msg]` adapter 包裹的公开、与消息无关的 `ViewNode` 扩展协议；`moui/runtime` 拥有 `AppRuntime`、runtime state、tree/layout/paint、event dispatch、program message drain、effect task、subscription 和 runtime diagnostics。
 - `views/` 拥有公开构造 helper 和具体 custom view 行为，复用 binding、style 和 modifier，但不暴露 runtime internals。
-- `backend/host/` 拥有 `HostEvent`、surface metrics、input contract、file drag/drop normalization、text-input session state 和 redraw driver behavior。
-- 平台包把 native event 转换为 `HostEvent`；它们不直接修改 element tree。
+- `backend/` 拥有 `Event`、surface metrics、input contract、file drag/drop normalization、text-input session state 和 redraw driver behavior。
+- 平台包把 native event 转换为 `Event`；它们不直接修改 element tree。
 - 渲染器消费 `DrawCommand` 值，并且不依赖 view 构造器。
 - `examples/*/app/` 包包含共享应用逻辑；平台子包保持轻薄。
 - Linux 具有 Wayland host core 和 WGPU provider 路径；请保持剩余匹配主机 runtime evidence 与 native font-provider gap 显式可见。
@@ -66,8 +66,8 @@ and Showcase if visible. Validate with renderer package tests and a Showcase Web
 
 ```text
 Change backend handling for <event>. Keep platform-specific code in backend/<platform>,
-normalize through backend/host HostEvent, add focused backend tests, and validate with
-moon test moui/backend/host --target native plus the affected backend package test.
+normalize through backend Event, add focused backend tests, and validate with
+moon test moui/backend --target native plus the affected backend package test.
 ```
 
 ### 更新示例
@@ -99,7 +99,7 @@ docs/testing.md. Also check AGENTS.md and skills/ when the guidance surface chan
 - 是否为用户可见行为、命令或平台约束更新了文档？
 - 当文档位置、验证、包布局、示例、平台行为、渲染器状态或文本架构发生变化时，是否检查了 `AGENTS.md` 和 repo-local skills？
 - 如果渲染器行为改变，能力代码、测试、报告和 Showcase 是否同步？
-- 如果后端行为改变，event 是否仍然流经 `HostEvent`？
+- 如果后端行为改变，event 是否仍然流经 `Event`？
 - 如果示例改变，共享应用逻辑是否仍在 `examples/*/app/` 下？
 
 ## 决策与会话记录

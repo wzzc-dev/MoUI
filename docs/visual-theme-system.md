@@ -106,7 +106,7 @@ capability layers.
 
 The native Skia renderer is the recommended native baseline for renderer smoke
 and platform entrypoint validation. It presents CPU pixel frames through platform
-presenters supplied through `HostSurfaceKit` and uses the local `moui_skia` binding for raster, path, image,
+presenters supplied through `SurfaceContext` and uses the local `moui_skia` binding for raster, path, image,
 and text diagnostics. The WebGPU host-import renderer forwards the full command
 set to the browser runtime. Experimental native WGPU continues to exercise the
 GPU surface path and provider text integrations when explicitly requested. See

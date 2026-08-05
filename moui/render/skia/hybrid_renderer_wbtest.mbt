@@ -3,7 +3,7 @@ test "skia hybrid renderer presents next frame through raster after terminal rec
   guard skia_available() else { return () }
   let presents = Ref(0)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     SkiaPresentTarget::new(description="hybrid-raster-fallback", present=_ => {
@@ -15,7 +15,7 @@ test "skia hybrid renderer presents next frame through raster after terminal rec
   }
   let hybrid = SkiaHybridRenderer::{
     renderer,
-    worker: @render.GpuRenderWorker::new(),
+    worker: @render_common.GpuRenderWorker::new(),
     surface_route: resolve_surface_route(
       NativeGpuPlatform::MacOS,
       NativeRendererMode::SkiaGpu,

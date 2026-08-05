@@ -190,7 +190,7 @@ test "web service bridge exposes browser-selected text-file reads when enabled" 
 
 ///|
 test "web service bridge can defer async clipboard read, file dialogs, and writes" {
-  let queue = @host.HostServiceAsyncQueue::new()
+  let queue = @window_host.ServiceAsyncQueue::new()
   let bridge = web_service_bridge(
     clipboard_read=true,
     file_dialog=true,
@@ -303,7 +303,7 @@ test "canvas host constraints document pointer and resize assumptions" {
 ///|
 test "animation frame maps to redraw requested host event" {
   match request_animation_frame_event() {
-    @host.HostEvent::RedrawRequested => ()
+    @host.Event::RedrawRequested => ()
     _ => fail("expected redraw requested")
   }
 }

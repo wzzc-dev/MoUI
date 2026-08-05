@@ -15,7 +15,7 @@ Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 
 - App logic → `examples/<name>/app`; platform entrypoints stay thin wiring.
 - New built-in controls → concrete `@core.ViewNode` implementations in `moui/views`, constructed with `@core.View::from_node` (no new core view enum variants).
-- Protocols → `moui/core`. Lifecycle trees → `moui/runtime`. Host contracts → `moui/backend/host`. Renderers → `moui/render/*`.
+- Cross-runtime protocols → `moui/core`; lifecycle trees → `moui/runtime`; backend protocols/state → `moui/backend` / `moui/backend/common`; render protocols/algorithms → `moui/render` / `moui/render/common`; concrete implementations stay in platform/renderer subpackages.
 - App deps: `wzzc-dev/moui` + domain facades + `views` only (no `runtime` / `render/*` / platform backends).
 - Mainline: Native Skia. Diagnostic: Native WGPU. Reclassify only with RFC.
 - Embedded-runtime product class: `experimental` (`ready=false`; code compiles, no usability/product commitment without matching-device evidence); `wzzc-dev/window` hosted entrypoints are canonical. Details: `docs/platform-readiness-declaration.md`, ADR 0021.
@@ -31,8 +31,8 @@ Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 | `moui/views`, controls, styles | `docs/view-catalog.md`, `docs/button-styling-guide.md` if buttons | framework | `moon test moui/views --target native` |
 | `moui/core` contracts | `docs/architecture-map.md`, `docs/invariants.md` | framework | `moon test moui/core --target native` + `moon info` if public API |
 | `moui/runtime` | `docs/architecture-map.md`, `docs/tea-program-model.md` | framework | `moon test moui/runtime --target native` |
-| `moui/backend/host` or platform host | `docs/platform-host-contract.md`, platform notes | framework | `moon test moui/backend/host --target native` + affected backend tests |
-| `moui/render/*`, `moui_skia` | `docs/renderer-capability-report.md`, `moui_skia/AGENTS.md` | framework | package tests + capability report if status changes |
+| `moui/backend`, `moui/backend/common`, platform backend | `docs/platform-host-contract.md`, platform notes | framework | root/common + affected backend tests |
+| `moui/render`, `moui/render/common`, concrete renderer, `moui_skia` | `docs/renderer-capability-report.md`, `moui_skia/AGENTS.md` | framework | root/common + affected renderer tests |
 | Android / iOS / HarmonyOS embedded runtime backends | `docs/window-hosted-moui.md`, platform support doc | framework | path-triggered window-hosted evidence (not default daily) |
 | Theme / `moui_theme` / design systems | `docs/visual-theme-system.md` | framework | `sh scripts/check.sh --profile theme` |
 | Docs / guidance only | `docs/INDEX.md`, topic page | — | `node scripts/validate-guidance-consistency.mjs` |

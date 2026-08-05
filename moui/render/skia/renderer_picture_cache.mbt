@@ -27,8 +27,8 @@ fn SkiaRasterRenderer::draw_frame_to_picture_canvas(
   )
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
-  let scopes : Array[@render.PlanScopeKind] = []
-  let plan = @render.lower_draw_commands(frame.commands)
+  let scopes : Array[@render_common.PlanScopeKind] = []
+  let plan = @render_common.lower_draw_commands(frame.commands)
   let stats = SkiaCachedLayerFrameStats::new()
   let complete = self.render_picture_command_range(
     canvas,
@@ -41,8 +41,8 @@ fn SkiaRasterRenderer::draw_frame_to_picture_canvas(
   if !scopes.is_empty() {
     for scope in scopes {
       self.record_unsupported_command(
-        @render.plan_scope_push_command(scope),
-        "picture command stream ended with an open \{@render.plan_scope_name(scope)} scope",
+        @render_common.plan_scope_push_command(scope),
+        "picture command stream ended with an open \{@render_common.plan_scope_name(scope)} scope",
       )
     }
   }
@@ -54,16 +54,16 @@ fn SkiaRasterRenderer::draw_frame_to_picture_canvas(
 fn SkiaRasterRenderer::render_picture_command_range(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
-  commands : Array[@render.PlanOp],
+  commands : Array[@render_common.PlanOp],
   start_index~ : Int,
   end_index~ : Int,
-  scopes : Array[@render.PlanScopeKind],
+  scopes : Array[@render_common.PlanScopeKind],
   stats : SkiaCachedLayerFrameStats,
 ) -> Bool {
   let mut index = start_index
   while index < end_index {
     match commands[index] {
-      @render.PlanOp::BeginCachedLayer(spec) =>
+      @render_common.PlanOp::BeginCachedLayer(spec) =>
         match find_cached_layer_end(commands, index + 1, spec.key) {
           Some(layer_end) => {
             if !self.update_picture_cached_layer(
@@ -86,8 +86,8 @@ fn SkiaRasterRenderer::render_picture_command_range(
             return false
           }
         }
-      @render.PlanOp::EndCachedLayer(_) => return true
-      @render.PlanOp::DrawCachedLayer(spec) => {
+      @render_common.PlanOp::EndCachedLayer(_) => return true
+      @render_common.PlanOp::DrawCachedLayer(spec) => {
         if !self.draw_picture_cached_layer(canvas, spec, stats) {
           return false
         }
@@ -107,7 +107,7 @@ fn SkiaRasterRenderer::update_picture_cached_layer(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   spec : @core.CachedLayerSpec,
-  commands : Array[@render.PlanOp],
+  commands : Array[@render_common.PlanOp],
   start_index~ : Int,
   end_index~ : Int,
   stats : SkiaCachedLayerFrameStats,
@@ -162,7 +162,7 @@ fn SkiaRasterRenderer::update_picture_cached_layer(
               Float::from_double(0.0 - spec.frame.origin.y),
             ),
           )
-          let layer_scopes : Array[@render.PlanScopeKind] = []
+          let layer_scopes : Array[@render_common.PlanScopeKind] = []
           let complete = self.render_picture_command_range(
             layer_canvas,
             commands,
@@ -225,7 +225,7 @@ fn SkiaRasterRenderer::render_uncached_picture_layer(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   spec : @core.CachedLayerSpec,
-  commands : Array[@render.PlanOp],
+  commands : Array[@render_common.PlanOp],
   start_index~ : Int,
   end_index~ : Int,
   stats : SkiaCachedLayerFrameStats,
@@ -238,7 +238,7 @@ fn SkiaRasterRenderer::render_uncached_picture_layer(
       offscreen=true,
     ),
   )
-  let scopes : Array[@render.PlanScopeKind] = []
+  let scopes : Array[@render_common.PlanScopeKind] = []
   let complete = self.render_picture_command_range(
     canvas,
     commands,

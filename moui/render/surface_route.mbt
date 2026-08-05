@@ -1,7 +1,7 @@
 ///|
 /// Renderer-neutral discriminator for a negotiated host surface route.
 /// Concrete policy and native surface construction stay in the owning
-/// renderer package; platform backends expose only `HostSurfaceKit`.
+/// renderer package; platform backends expose only `SurfaceContext`.
 pub(all) enum SurfaceRoute {
   RasterSurfaceRoute
   MetalGpuSurfaceRoute

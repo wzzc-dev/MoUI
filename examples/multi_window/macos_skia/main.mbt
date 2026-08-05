@@ -8,6 +8,6 @@ fn main {
       options=@macos_backend.MacosHostAppOptions::new(scene_resolver=resolver),
     ),
   )
-  .window_requests(queue)
+  .window_requests(queue.requests())
   .run()
 }

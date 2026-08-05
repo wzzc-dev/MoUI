@@ -45,7 +45,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 
 | Doc | Status | Use when |
 |---|---|---|
-| [platform-host-contract.md](platform-host-contract.md) | `canonical` | HostEvent and host services |
+| [platform-host-contract.md](platform-host-contract.md) | `canonical` | Event and host services |
 | [platform-readiness-declaration.md](platform-readiness-declaration.md) | `canonical` | Product class / readiness claims |
 | [platform-notes.md](platform-notes.md) | `canonical` | Cross-platform caveats hub |
 | [platform-notes-macos.md](platform-notes-macos.md) | `deep` | macOS |

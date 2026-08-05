@@ -21,8 +21,8 @@ fn SunRasterRenderer::render_frame_inner(
   self.canvas.scale(sx=self.metrics.scale_factor, sy=self.metrics.scale_factor)
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
-  let plan = @render.lower_draw_commands(frame.commands)
-  let canvas_scopes : Array[@render.PlanScopeKind] = []
+  let plan = @render_common.lower_draw_commands(frame.commands)
+  let canvas_scopes : Array[@render_common.PlanScopeKind] = []
   let opacity_stack : Array[Double] = []
   let blend_mode_stack : Array[@sun_graphics.BlendMode] = []
   let layer_spec_stack : Array[SunLayerScope] = []
@@ -42,8 +42,8 @@ fn SunRasterRenderer::render_frame_inner(
   if !canvas_scopes.is_empty() {
     for scope in canvas_scopes {
       self.record_unsupported_command(
-        @render.plan_scope_push_command(scope),
-        "command stream ended with an open \{@render.plan_scope_name(scope)} scope",
+        @render_common.plan_scope_push_command(scope),
+        "command stream ended with an open \{@render_common.plan_scope_name(scope)} scope",
       )
     }
     while !self.canvas_stack.is_empty() {

@@ -44,8 +44,8 @@ fn bench_env_int(name : String, fallback : Int) -> Int {
 }
 
 ///|
-fn bench_metrics() -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::from_logical(
+fn bench_metrics() -> @core.SurfaceMetrics {
+  @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=900.0, height=640.0),
   )
 }

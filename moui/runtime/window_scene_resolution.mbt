@@ -1,100 +1,72 @@
 ///|
-pub(all) struct HostWindowSceneInstance {
-  request : @backend_host.HostWindowOpenRequest
+pub(all) struct WindowSceneInstance {
+  request : @backend_host.WindowOpenRequest
   runtime : AppRuntime
 }
 
 ///|
-pub(all) enum HostWindowSceneResolution {
-  SceneResolved(HostWindowSceneInstance)
+pub(all) enum WindowSceneResolution {
+  SceneResolved(WindowSceneInstance)
   SceneRejected(String)
 }
 
 ///|
-pub(all) struct HostWindowResolvedOpen {
-  id : @backend_host.HostWindowId
-  record : @backend_host.HostWindowRecord
-  instance : HostWindowSceneInstance
+pub(all) struct WindowResolvedOpen {
+  id : @backend_host.WindowId
+  record : @backend_host.WindowRecord
+  instance : WindowSceneInstance
 }
 
 ///|
-pub(all) enum HostWindowOpenResolution {
-  OpenResolved(HostWindowResolvedOpen)
+pub(all) enum WindowOpenResolution {
+  OpenResolved(WindowResolvedOpen)
   OpenRejected(String)
 }
 
 ///|
-pub struct HostWindowSceneResolver {
-  resolve : (@backend_host.HostWindowOpenRequest) -> HostWindowSceneResolution
+pub struct WindowSceneResolver {
+  resolve : (@backend_host.WindowOpenRequest) -> WindowSceneResolution
 }
 
 ///|
-pub fn HostWindowSceneInstance::new(
-  request~ : @backend_host.HostWindowOpenRequest,
+pub fn WindowSceneInstance::new(
+  request~ : @backend_host.WindowOpenRequest,
   runtime~ : AppRuntime,
-) -> HostWindowSceneInstance {
+) -> WindowSceneInstance {
   { request, runtime }
 }
 
 ///|
-pub fn HostWindowSceneResolver::new(
-  resolve~ : (@backend_host.HostWindowOpenRequest) -> HostWindowSceneResolution,
-) -> HostWindowSceneResolver {
+pub fn WindowSceneResolver::new(
+  resolve~ : (@backend_host.WindowOpenRequest) -> WindowSceneResolution,
+) -> WindowSceneResolver {
   { resolve, }
 }
 
 ///|
-pub fn HostWindowSceneResolver::unavailable(
+pub fn WindowSceneResolver::unavailable(
   reason? : String = "window scene resolver is unavailable",
-) -> HostWindowSceneResolver {
-  HostWindowSceneResolver::new(resolve=_request => {
-    HostWindowSceneResolution::SceneRejected(reason)
+) -> WindowSceneResolver {
+  WindowSceneResolver::new(resolve=_request => {
+    WindowSceneResolution::SceneRejected(reason)
   })
 }
 
 ///|
-pub fn HostWindowSceneResolver::resolve(
-  self : HostWindowSceneResolver,
-  request : @backend_host.HostWindowOpenRequest,
-) -> HostWindowSceneResolution {
+pub fn WindowSceneResolver::resolve(
+  self : WindowSceneResolver,
+  request : @backend_host.WindowOpenRequest,
+) -> WindowSceneResolution {
   (self.resolve)(request)
 }
 
 ///|
-pub fn HostWindowResolvedOpen::new(
-  id~ : @backend_host.HostWindowId,
-  record~ : @backend_host.HostWindowRecord,
-  instance~ : HostWindowSceneInstance,
-) -> HostWindowResolvedOpen {
+pub fn WindowResolvedOpen::new(
+  id~ : @backend_host.WindowId,
+  record~ : @backend_host.WindowRecord,
+  instance~ : WindowSceneInstance,
+) -> WindowResolvedOpen {
   { id, record, instance }
 }
 
 ///|
-pub fn resolve_open_request(
-  registry : @backend_host.HostWindowRegistry,
-  request : @backend_host.HostWindowOpenRequest,
-  resolver : HostWindowSceneResolver,
-) -> HostWindowOpenResolution {
-  match resolver.resolve(request) {
-    HostWindowSceneResolution::SceneResolved(instance) => {
-      let id = registry.open(
-        title=request.title,
-        scene=request.scene,
-        metrics=request.metrics,
-        primary=request.primary,
-      )
-      match registry.lookup(id) {
-        Some(record) =>
-          HostWindowOpenResolution::OpenResolved(
-            HostWindowResolvedOpen::new(id~, record~, instance~),
-          )
-        None =>
-          HostWindowOpenResolution::OpenRejected(
-            "resolved window was not registered: \{id.value}",
-          )
-      }
-    }
-    HostWindowSceneResolution::SceneRejected(message) =>
-      HostWindowOpenResolution::OpenRejected(message)
-  }
-}

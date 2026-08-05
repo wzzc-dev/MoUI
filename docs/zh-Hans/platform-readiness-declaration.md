@@ -132,7 +132,7 @@ moon run examples/showcase/macos_skia --target native
 | L0: `moon check` | ✅ 通过 | `ci.yml → pr-profile` → `sh scripts/check.sh --profile pr` 含 `moon check` | 每次 PR |
 | L0: `moon fmt --check` | ✅ 通过 | `ci.yml → pr-profile` → `moon fmt --check` | 每次 PR |
 | L0: `moon info` | ✅ 无漂移 | `ci.yml → api-surface` → `moon info -p <pkg>` + `git diff --exit-code` | 每次 PR |
-| L1: `moon test` 包测试 | ✅ 通过 | `ci.yml → pr-profile` → `moon test moui/{core,views,render,backend/host,...}` | 每次 PR |
+| L1: `moon test` 包测试 | ✅ 通过 | `ci.yml → pr-profile` → `moon test moui/{core,views,render,backend,...}` | 每次 PR |
 | L1: 文本一致性测试 | ✅ 通过 | `sh scripts/check.sh --profile full` 本地/发布前覆盖；真实 Skia 文本证明由渲染器证明工作流覆盖 | 发布前 / 渲染器证明 |
 | L2: 真实 Skia 渲染器 | ✅ 全 17 特性通过 | `moui-renderer-real-skia-ci.yml → macos-real-skia` | 每次 PR |
 | L2: 文本/表情符号 (SkParagraph) | ✅ 通过 | `moui-renderer-real-skia-ci.yml → macos-real-skia --run-text-emoji-smoke` | 每次 PR |
@@ -193,7 +193,7 @@ moon run examples/showcase/windows_skia --target native
 | L0: `moon check` | ✅ 通过 | `ci.yml → pr-profile` → `sh scripts/check.sh --profile pr` 含 `moon check` | 每次 PR |
 | L0: `moon info` | ✅ 无漂移 | `ci.yml → api-surface` | 每次 PR |
 | L1: Linux 后端测试 | ✅ 通过 | `ci.yml → linux-platform` → `sh scripts/check.sh --profile platform` | 每次 PR |
-| L1: Linux 包测试 | ✅ 通过 | `ci.yml → linux-platform` — core/views/render/backend/host native 测试 | 每次 PR |
+| L1: Linux 包测试 | ✅ 通过 | `ci.yml → linux-platform` — core/views/render/backend native 测试 | 每次 PR |
 | L2: 真实 Skia 渲染器（Linux） | ✅ 通过 | `moui-renderer-real-skia-ci.yml → Linux renderer real Skia` | 运行记录 [28964136550](https://github.com/wzzc-dev/MoUI/actions/runs/28964136550), 2026-07-08 |
 | L2: Linux 文本/表情/异步图像 | ✅ 通过 | 同一工作流覆盖 text/emoji smoke 与 renderer smoke 成功标记 | 运行记录 28964136550 |
 | L2: 历史 Linux renderer 部分通过记录 | ℹ️ 历史诊断 | 运行记录 [27217209784](https://github.com/wzzc-dev/MoUI/actions/runs/27217209784) 曾有 Linux 文本项 failed；已由更新的运行记录 28964136550 取代 | 2026-06-17 |

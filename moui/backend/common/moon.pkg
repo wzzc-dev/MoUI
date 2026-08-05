@@ -1,0 +1,20 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend" @backend_host,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
+  "wzzc-dev/window/core" @window_core,
+  "wzzc-dev/window/dpi",
+}
+
+import {
+  "wzzc-dev/moui/views",
+} for "test"
+
+supported_targets = "+native+wasm-gc+wasm"
+
+options(
+  targets: { },
+)

@@ -1,10 +1,10 @@
 ///|
 /// Canvas2D renderer factory for hosts that expose a canvas identity through
-/// `HostSurfaceKit.surface_id`.
-pub fn canvas() -> @render.RendererBindingFactory {
-  @render.RendererBindingFactory::new(id="canvas2d", bind=kit => {
+/// `SurfaceContext.surface_id`.
+pub fn canvas() -> @render.RendererFactory {
+  @render.RendererFactory::new(id="canvas2d", bind=kit => {
     let canvas_id = kit.surface_id()
-    let create = (metrics : @render.RendererSurfaceMetrics) => {
+    let create = (metrics : @core.SurfaceMetrics) => {
       canvas2d_create_renderer(canvas_id~, metrics~)
     }
     @render.RendererBindingPlan::new(
@@ -21,8 +21,8 @@ pub fn canvas() -> @render.RendererBindingFactory {
 ///|
 pub fn Canvas2DRenderer::to_host_window_renderer(
   self : Canvas2DRenderer,
-) -> @render.HostWindowRenderer {
-  @render.HostWindowRenderer::new(
+) -> @render.WindowRenderer {
+  @render.WindowRenderer::new(
     resize=metrics => self.resize(metrics),
     render=commands => self.render(commands),
     render_frame=Some(frame => self.render_frame(frame)),

@@ -14,23 +14,23 @@ pub fn backend_info() -> @render.RendererBackendInfo
 
 pub fn browser_canvas2d_fallback_capabilities(provider_id~ : String, backend~ : @render.RendererBackendKind) -> Array[@render.RendererBackendFeatureCapability]
 
-pub fn canvas2d_fallback() -> @render.RendererBindingFactory
+pub fn canvas2d_fallback() -> @render.RendererFactory
 
 pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract
 
-pub fn create_browser_canvas2d_fallback_provider(create_canvas2d~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer) -> @render.RendererProvider
+pub fn create_browser_canvas2d_fallback_provider(create_canvas2d~ : (@core.SurfaceMetrics) -> WebGpuWasmRenderer) -> @render.RendererProvider
 
 pub fn create_renderer(canvas_id~ : String, logical_size~ : @core.Size, scale_factor? : Double, port~ : WebGpuHostRendererPort) -> WebGpuWasmRenderer raise WebGpuHostError
 
 pub fn create_surface(canvas_id~ : String, logical_size~ : @core.Size, scale_factor? : Double, port~ : WebGpuHostRendererPort) -> WebGpuHostSurface raise WebGpuHostError
 
-pub fn create_webgpu_provider(create_webgpu~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer) -> @render.RendererProvider
+pub fn create_webgpu_provider(create_webgpu~ : (@core.SurfaceMetrics) -> WebGpuWasmRenderer) -> @render.RendererProvider
 
 pub fn create_webgpu_renderer(canvas_id~ : String, logical_size~ : @core.Size, scale_factor? : Double) -> WebGpuWasmRenderer raise WebGpuHostError
 
 pub fn draw_commands_to_host_calls(Array[@core.DrawCommand], @core.Size) -> Array[WebGpuHostCall]
 
-pub fn from_env() -> Array[@render.RendererBindingFactory]
+pub fn from_env() -> Array[@render.RendererFactory]
 
 pub fn host_import_info() -> WebGpuHostImportInfo
 
@@ -42,7 +42,7 @@ pub fn required_capabilities() -> WebGpuHostCapabilities
 
 pub fn wasm_gc_host_port() -> WebGpuHostRendererPort
 
-pub fn webgpu() -> @render.RendererBindingFactory
+pub fn webgpu() -> @render.RendererFactory
 
 pub fn webgpu_provider_capabilities(provider_id~ : String, backend~ : @render.RendererBackendKind) -> Array[@render.RendererBackendFeatureCapability]
 
@@ -120,21 +120,21 @@ pub struct WebGpuHostRendererPort {
 }
 pub fn WebGpuHostRendererPort::capabilities(Self) -> WebGpuHostCapabilities raise WebGpuHostError
 pub fn WebGpuHostRendererPort::create_renderer(Self, WebGpuHostSurface) -> Unit raise WebGpuHostError
-pub fn WebGpuHostRendererPort::create_surface(Self, String, @render.RendererSurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError
+pub fn WebGpuHostRendererPort::create_surface(Self, String, @core.SurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError
 pub fn WebGpuHostRendererPort::dispose(Self) -> Unit
 pub fn WebGpuHostRendererPort::image_resource(Self, String) -> @render.ImageResourceRecord?
 pub fn WebGpuHostRendererPort::measure_text(Self, @core.TextLayoutInput) -> @core.TextLayoutResult
-pub fn WebGpuHostRendererPort::new(capabilities~ : () -> WebGpuHostCapabilities raise WebGpuHostError, create_surface~ : (String, @render.RendererSurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError, create_renderer~ : (WebGpuHostSurface) -> Unit raise WebGpuHostError, resize~ : (@render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError, measure_text~ : (@core.TextLayoutInput) -> @core.TextLayoutResult, register_font_data~ : (@core.FontFamily, Bytes) -> Unit, image_resource~ : (String) -> @render.ImageResourceRecord?, submit~ : (Array[WebGpuHostCall]) -> Unit raise WebGpuHostError, dispose~ : () -> Unit) -> Self
+pub fn WebGpuHostRendererPort::new(capabilities~ : () -> WebGpuHostCapabilities raise WebGpuHostError, create_surface~ : (String, @core.SurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError, create_renderer~ : (WebGpuHostSurface) -> Unit raise WebGpuHostError, resize~ : (@core.SurfaceMetrics) -> Unit raise WebGpuHostError, measure_text~ : (@core.TextLayoutInput) -> @core.TextLayoutResult, register_font_data~ : (@core.FontFamily, Bytes) -> Unit, image_resource~ : (String) -> @render.ImageResourceRecord?, submit~ : (Array[WebGpuHostCall]) -> Unit raise WebGpuHostError, dispose~ : () -> Unit) -> Self
 pub fn WebGpuHostRendererPort::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
-pub fn WebGpuHostRendererPort::resize(Self, @render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
+pub fn WebGpuHostRendererPort::resize(Self, @core.SurfaceMetrics) -> Unit raise WebGpuHostError
 pub fn WebGpuHostRendererPort::submit(Self, Array[WebGpuHostCall]) -> Unit raise WebGpuHostError
 
 pub struct WebGpuHostSurface {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn WebGpuHostSurface::canvas_id(Self) -> String
-pub fn WebGpuHostSurface::metrics(Self) -> @render.RendererSurfaceMetrics
-pub fn WebGpuHostSurface::new(canvas_id~ : String, metrics~ : @render.RendererSurfaceMetrics) -> Self
+pub fn WebGpuHostSurface::metrics(Self) -> @core.SurfaceMetrics
+pub fn WebGpuHostSurface::new(canvas_id~ : String, metrics~ : @core.SurfaceMetrics) -> Self
 
 pub struct WebGpuWasmRenderer {
   // private fields
@@ -150,12 +150,11 @@ pub fn WebGpuWasmRenderer::last_fallback_plan(Self) -> @render.RendererCommandPl
 pub fn WebGpuWasmRenderer::present_count(Self) -> Int
 pub fn WebGpuWasmRenderer::render(Self, Array[@core.DrawCommand]) -> Unit raise WebGpuHostError
 pub fn WebGpuWasmRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
-pub fn WebGpuWasmRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
+pub fn WebGpuWasmRenderer::resize(Self, @core.SurfaceMetrics) -> Unit raise WebGpuHostError
 pub fn WebGpuWasmRenderer::surface(Self) -> WebGpuHostSurface
 pub fn WebGpuWasmRenderer::text_system(Self) -> @core.TextSystem
-pub fn WebGpuWasmRenderer::to_host_window_renderer(Self) -> @render.HostWindowRenderer
+pub fn WebGpuWasmRenderer::to_host_window_renderer(Self) -> @render.WindowRenderer
 
 // Type aliases
 
 // Traits
-

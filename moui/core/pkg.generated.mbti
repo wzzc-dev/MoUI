@@ -1482,6 +1482,17 @@ pub(all) enum SurfaceLevel {
   Overlay
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct SurfaceMetrics {
+  logical_size : Size
+  physical_size : Size
+  scale_factor : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceMetrics::from_logical(size~ : Size, scale_factor? : Double) -> Self
+pub fn SurfaceMetrics::logical_size(Self) -> Size
+pub fn SurfaceMetrics::new(logical_size~ : Size, physical_size~ : Size, scale_factor? : Double) -> Self
+pub fn SurfaceMetrics::physical_size(Self) -> Size
+pub fn SurfaceMetrics::scale_factor(Self) -> Double
+
 pub(all) struct SurfaceScale {
   base : Brush
   raised : Brush

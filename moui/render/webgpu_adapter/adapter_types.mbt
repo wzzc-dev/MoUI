@@ -99,15 +99,15 @@ priv enum RoundedBrushHostPayload {
 ///|
 pub struct WebGpuHostSurface {
   priv canvas_id : String
-  priv mut metrics : @render.RendererSurfaceMetrics
+  priv mut metrics : @core.SurfaceMetrics
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub struct WebGpuHostRendererPort {
   priv capabilities : () -> WebGpuHostCapabilities raise WebGpuHostError
-  priv create_surface : (String, @render.RendererSurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError
+  priv create_surface : (String, @core.SurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError
   priv create_renderer : (WebGpuHostSurface) -> Unit raise WebGpuHostError
-  priv resize : (@render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
+  priv resize : (@core.SurfaceMetrics) -> Unit raise WebGpuHostError
   priv measure_text : (@core.TextLayoutInput) -> @core.TextLayoutResult
   priv register_font_data : (@core.FontFamily, Bytes) -> Unit
   priv image_resource : (String) -> @render.ImageResourceRecord?
@@ -123,7 +123,7 @@ pub struct WebGpuWasmRenderer {
   priv mut present_count : Int
   priv mut last_calls : Array[WebGpuHostCall]
   priv mut last_fallback_plan : @render.RendererCommandPlan
-  priv image_lifecycle : @render.ImageResourceLifecycle
+  priv image_lifecycle : @render_common.ImageResourceLifecycle
   priv layer_cache : WebGpuLayerCommandCache
 }
 
@@ -161,7 +161,7 @@ pub fn WebGpuHostAdapterInfo::new(
 ///|
 pub fn WebGpuHostSurface::new(
   canvas_id~ : String,
-  metrics~ : @render.RendererSurfaceMetrics,
+  metrics~ : @core.SurfaceMetrics,
 ) -> WebGpuHostSurface {
   { canvas_id, metrics }
 }
@@ -169,9 +169,9 @@ pub fn WebGpuHostSurface::new(
 ///|
 pub fn WebGpuHostRendererPort::new(
   capabilities~ : () -> WebGpuHostCapabilities raise WebGpuHostError,
-  create_surface~ : (String, @render.RendererSurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError,
+  create_surface~ : (String, @core.SurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError,
   create_renderer~ : (WebGpuHostSurface) -> Unit raise WebGpuHostError,
-  resize~ : (@render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError,
+  resize~ : (@core.SurfaceMetrics) -> Unit raise WebGpuHostError,
   measure_text~ : (@core.TextLayoutInput) -> @core.TextLayoutResult,
   register_font_data~ : (@core.FontFamily, Bytes) -> Unit,
   image_resource~ : (String) -> @render.ImageResourceRecord?,
@@ -286,7 +286,7 @@ pub fn WebGpuHostSurface::canvas_id(self : WebGpuHostSurface) -> String {
 ///|
 pub fn WebGpuHostSurface::metrics(
   self : WebGpuHostSurface,
-) -> @render.RendererSurfaceMetrics {
+) -> @core.SurfaceMetrics {
   self.metrics
 }
 
@@ -301,7 +301,7 @@ pub fn WebGpuHostRendererPort::capabilities(
 pub fn WebGpuHostRendererPort::create_surface(
   self : WebGpuHostRendererPort,
   canvas_id : String,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> WebGpuHostSurface raise WebGpuHostError {
   (self.create_surface)(canvas_id, metrics)
 }
@@ -317,7 +317,7 @@ pub fn WebGpuHostRendererPort::create_renderer(
 ///|
 pub fn WebGpuHostRendererPort::resize(
   self : WebGpuHostRendererPort,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> Unit raise WebGpuHostError {
   (self.resize)(metrics)
 }

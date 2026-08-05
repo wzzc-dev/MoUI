@@ -20,7 +20,7 @@ fn skia_test_bmp_data_uri() -> String {
 test "skia renderer decodes jpeg and bmp data uris through encoded image api" {
   guard skia_available() else { return () }
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     SkiaPresentTarget::new(description="test", present=_ => true),
@@ -83,7 +83,7 @@ test "skia renderer decodes host-provided jpeg and bmp file bytes" {
   }
 
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     SkiaPresentTarget::new(description="test", present=_ => true),
@@ -219,7 +219,7 @@ test "skia renderer dispose clears cached image resources and records disposal" 
   let source = skia_test_png_data_uri()
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -259,7 +259,7 @@ test "skia renderer notifies image lifecycle revisions for ready and disposed re
   let statuses : Array[@render.ImageResourceStatus] = []
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -324,7 +324,7 @@ test "skia renderer applies image load completions and notifies revision callbac
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -387,7 +387,7 @@ test "skia renderer async image loading waits for explicit decoded completion be
   let source = skia_test_png_data_uri()
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -437,7 +437,7 @@ test "skia renderer caches decoded async image completion without source decode"
   let source = "moui-skia-decoded-async://cache-ready"
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -496,7 +496,7 @@ test "skia renderer records failed image resources and reuses failed cache" {
   let missing_source = "moui-skia-missing-image-resource://not-a-file"
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -548,7 +548,7 @@ test "skia renderer notifies failed image lifecycle revision once for unchanged 
   let statuses : Array[@render.ImageResourceStatus] = []
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -605,7 +605,7 @@ test "skia renderer retries local image failures when the file appears" {
   }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,

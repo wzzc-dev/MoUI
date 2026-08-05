@@ -7,7 +7,7 @@
 /// platform entrypoint (macos, linux, windows, …) capture its own
 /// `SkiaPresentTarget` without the provider needing to know the platform.
 pub fn create_skia_raster_provider(
-  create_raster~ : (@render.RendererSurfaceMetrics) -> SkiaRasterRenderer,
+  create_raster~ : (@core.SurfaceMetrics) -> SkiaRasterRenderer,
 ) -> @render.RendererProvider {
   let caps = skia_provider_capabilities(
     provider_id="skia-raster",
@@ -29,7 +29,7 @@ pub fn create_skia_raster_provider(
 /// The `create_hybrid` closure receives metrics and returns a hybrid
 /// renderer with the platform present targets already wired.
 pub fn create_skia_hybrid_provider(
-  create_hybrid~ : (@render.RendererSurfaceMetrics) -> SkiaHybridRenderer,
+  create_hybrid~ : (@core.SurfaceMetrics) -> SkiaHybridRenderer,
 ) -> @render.RendererProvider {
   let caps = skia_provider_capabilities(
     provider_id="skia-hybrid",
@@ -49,9 +49,9 @@ pub fn create_skia_hybrid_provider(
 ///|
 /// Build a host-facing raster binding. The provider still has a real
 /// `RendererInstance` factory for diagnostics and tests, while production
-/// hosts create the richer `HostWindowRenderer` through the binding.
+/// hosts create the richer `WindowRenderer` through the binding.
 pub fn create_skia_raster_host_binding(
-  create_host_renderer~ : (@render.RendererSurfaceMetrics, @render.BoundSurface) -> @render.HostWindowRenderer,
+  create_host_renderer~ : (@core.SurfaceMetrics, @render.BoundSurface) -> @render.WindowRenderer,
 ) -> @render.RendererProviderBinding {
   let caps = skia_provider_capabilities(
     provider_id="skia-raster",
@@ -75,7 +75,7 @@ pub fn create_skia_raster_host_binding(
 /// Build a host-facing GPU binding. Its registration order relative to the
 /// raster binding is the platform's explicit `auto` policy.
 pub fn create_skia_hybrid_host_binding(
-  create_host_renderer~ : (@render.RendererSurfaceMetrics, @render.BoundSurface) -> @render.HostWindowRenderer,
+  create_host_renderer~ : (@core.SurfaceMetrics, @render.BoundSurface) -> @render.WindowRenderer,
 ) -> @render.RendererProviderBinding {
   let caps = skia_provider_capabilities(
     provider_id="skia-hybrid",
@@ -103,7 +103,7 @@ pub fn skia_provider_capabilities(
   provider_id~ : String,
   backend~ : @render.RendererBackendKind,
 ) -> Array[@render.RendererBackendFeatureCapability] {
-  @render.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
+  @render_common.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
     let base_note = skia_feature_note(feature)
     let note = match backend {
       @render.RendererBackendKind::SkiaGpuNative =>
@@ -154,7 +154,7 @@ fn skia_feature_note(feature : @render.RendererFeature) -> String {
     EmojiText =>
       "Skia raster detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark, and Hangul Jamo grapheme cluster samples, prefers emoji coverage characters and inferred language tags in system FontMgr FontFallbackRequest matching, stabilizes representative cluster interior carets, retries platform emoji font candidates before default-font fallback, and reports deterministic color emoji readiness through Typeface::has_color_glyphs and glyph format metadata."
     AsyncImage =>
-      "Skia raster image lifecycle uses renderer-neutral records, ImageResourceLoadCompletion, and revisioned snapshots. Platform backends expose local-file bytes through HostImageSource without decoding them; the Skia factory owns RendererImageDecoder format detection, RGBA decode, and completion creation. HostAsyncImageLoader de-duplicates in-flight work and gates late or cancelled callbacks before HostImageResourceRepaintTracker routes revision changes to the matching window. Skia caches immutable failures, retries a missing local file after it appears, applies ready completions to its renderer-local cache, and records callback, second-frame repaint, and disposal diagnostics."
+      "Skia raster image lifecycle uses renderer-neutral records, ImageResourceLoadCompletion, and revisioned snapshots. Platform backends expose local-file bytes through HostImageSource without decoding them; the Skia factory owns RendererImageDecoder format detection, RGBA decode, and completion creation. The common AsyncImageLoader de-duplicates in-flight work and gates late or cancelled callbacks before ImageResourceRepaintTracker routes revision changes to the matching window. Skia caches immutable failures, retries a missing local file after it appears, applies ready completions to its renderer-local cache, and records callback, second-frame repaint, and disposal diagnostics."
   }
 }
 
@@ -164,7 +164,7 @@ fn skia_feature_note(feature : @render.RendererFeature) -> String {
 fn skia_negotiate_raster_surface(
   surface : @render.SurfaceDescriptor,
 ) -> @render.SurfaceNegotiationResult {
-  @render.negotiate_cpu_raster_surface(
+  @render_common.negotiate_cpu_raster_surface(
     surface,
     label="raster",
     id="skia-raster",
@@ -178,7 +178,7 @@ fn skia_negotiate_raster_surface(
 fn skia_negotiate_gpu_surface(
   surface : @render.SurfaceDescriptor,
 ) -> @render.SurfaceNegotiationResult {
-  @render.negotiate_gpu_surface(
+  @render_common.negotiate_gpu_surface(
     surface,
     label="GPU",
     id="skia-gpu",
@@ -206,11 +206,11 @@ fn skia_route_for_gpu_handle(
 
 ///|
 fn skia_create_instance(
-  metrics : @render.RendererSurfaceMetrics,
-  create_raster~ : (@render.RendererSurfaceMetrics) -> SkiaRasterRenderer,
+  metrics : @core.SurfaceMetrics,
+  create_raster~ : (@core.SurfaceMetrics) -> SkiaRasterRenderer,
 ) -> @render.RendererInstance {
   let renderer = create_raster(metrics)
-  @render.new_provider_instance(
+  @render_common.new_provider_instance(
     render_frame=frame => renderer.render_frame(frame),
     recover=_reason => @render.RecoveryResult::FallbackToCpu,
     dispose=() => renderer.dispose(),
@@ -219,11 +219,11 @@ fn skia_create_instance(
 
 ///|
 fn skia_create_hybrid_instance(
-  metrics : @render.RendererSurfaceMetrics,
-  create_hybrid~ : (@render.RendererSurfaceMetrics) -> SkiaHybridRenderer,
+  metrics : @core.SurfaceMetrics,
+  create_hybrid~ : (@core.SurfaceMetrics) -> SkiaHybridRenderer,
 ) -> @render.RendererInstance {
   let hybrid = create_hybrid(metrics)
-  @render.new_provider_instance(
+  @render_common.new_provider_instance(
     render_frame=frame => hybrid.render_frame(frame),
     recover=_reason => @render.RecoveryResult::FallbackToCpu,
     dispose=() => {

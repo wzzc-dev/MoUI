@@ -3,26 +3,25 @@ package "wzzc-dev/moui/backend/android"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/common/embedded",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
-  "wzzc-dev/window/core",
 }
 
 // Values
 pub fn android_capability_matrix() -> AndroidBackendCapabilities
 
-pub fn android_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
+pub fn android_capability_summary(services? : @backend.HostServiceCapabilities) -> @backend.HostCapabilitySummary
 
-pub fn android_input_capabilities() -> @host.HostInputCapabilities
+pub fn android_input_capabilities() -> @backend.HostInputCapabilities
 
 pub fn android_readiness() -> AndroidBackendReadiness
 
-pub fn android_service_capabilities() -> @host.HostServiceCapabilities
+pub fn android_service_capabilities() -> @backend.HostServiceCapabilities
 
-pub fn android_surface_binding(Array[@render.RendererBindingFactory]) -> AndroidSurfaceBinding
+pub fn android_surface_binding(Array[@render.RendererFactory]) -> AndroidSurfaceBinding
 
 pub fn android_window_hosted_pump_host_sim(AndroidEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
@@ -30,11 +29,9 @@ pub fn app_environment() -> @services.AppEnvironment
 
 pub fn backend_info() -> AndroidBackendInfo
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : AndroidSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, binding~ : AndroidSurfaceBinding) -> @embedded_runtime_backend.HostedRuntimeSession?
-
 pub fn entry(options? : AndroidHostAppOptions, auto_exit_after_frames? : Int?) -> @runtime.PlatformEntry
 
-pub fn host_surface_binding_from_android(AndroidSurfaceBinding) -> @embedded_runtime_backend.HostSurfaceBinding
+pub fn host_surface_binding_from_android(AndroidSurfaceBinding) -> @embedded.HostSurfaceBinding
 
 // Errors
 
@@ -55,10 +52,10 @@ pub(all) struct AndroidBackendCapabilities {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct AndroidBackendInfo {
-  host_info : @host.HostAppInfo
+  host_info : @backend.HostAppInfo
   capabilities : AndroidBackendCapabilities
-  services : @host.HostServiceCapabilities
-  input : @host.HostInputCapabilities
+  services : @backend.HostServiceCapabilities
+  input : @backend.HostInputCapabilities
   readiness : AndroidBackendReadiness
   description : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -71,11 +68,11 @@ pub(all) struct AndroidBackendReadiness {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct AndroidEmbeddedRuntimeBackend {
-  backend : @embedded_runtime_backend.HostedWindowBackend
+  backend : @embedded.HostedWindowBackend
 }
 pub fn AndroidEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn AndroidEmbeddedRuntimeBackend::has_session(Self) -> Bool
-pub fn AndroidEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererBindingFactory], auto_exit_after_frames? : Int?) -> Self
+pub fn AndroidEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererFactory], auto_exit_after_frames? : Int?) -> Self
 pub fn AndroidEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn AndroidEmbeddedRuntimeBackend::surface_generation(Self) -> Int
 pub impl @wzzc-dev/window/android.ApplicationHandler for AndroidEmbeddedRuntimeBackend
@@ -91,7 +88,7 @@ pub struct AndroidSurfaceBinding {
   // private fields
 }
 pub fn AndroidSurfaceBinding::has_async_image_loader(Self) -> Bool
-pub fn AndroidSurfaceBinding::new(create_renderer~ : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?, sync_surface? : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
+pub fn AndroidSurfaceBinding::new(create_renderer~ : (AndroidSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererResolution?, sync_surface? : (AndroidSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit, image_loader? : @render.ImageLoader?) -> Self
 
 pub(all) struct AndroidSurfaceHandle {
   raw : UInt64

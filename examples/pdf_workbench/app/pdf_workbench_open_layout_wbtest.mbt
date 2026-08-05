@@ -20,7 +20,7 @@ test "pdf workbench opens via binary host service" {
       }
     },
   )
-  let services = @host.app_services(bridge~)
+  let services = @backend_common.app_services(bridge~)
   let update = PdfWorkbenchModel::new().update_with_services(
     OpenRequested,
     services,
@@ -83,7 +83,7 @@ test "pdf workbench runtime open click rebuilds loaded preview" {
       }
     },
   )
-  let services = @host.app_services(bridge~)
+  let services = @backend_common.app_services(bridge~)
   let runtime = PdfWorkbenchModel::new().runtime_with_services(
     services,
     width=1120.0,

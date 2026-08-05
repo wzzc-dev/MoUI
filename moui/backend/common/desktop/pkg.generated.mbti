@@ -1,0 +1,46 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/common/desktop"
+
+import {
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn decode_file_dialog_selection(Bytes, trim_paths? : Bool) -> Array[String]
+
+pub fn encode_host_filter_list(Array[String]) -> Bytes
+
+pub fn encode_host_string(String) -> Bytes
+
+pub fn encode_menu_commands(Array[@core.ActionCommand]) -> Bytes
+
+pub fn host_file_dialog_kind_code(@backend.HostFileDialogKind) -> Int
+
+pub fn menu_command_response(Array[@core.ActionCommand], Int) -> @backend.HostServiceResponse
+
+pub fn menu_command_response_with_unavailable(Array[@core.ActionCommand], Int) -> @backend.HostServiceResponse
+
+// Errors
+
+// Types and methods
+pub struct DesktopHostServices {
+  capabilities : @backend.HostServiceCapabilities
+  system_theme : @core.ColorScheme
+  clipboard : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse
+  open_url : (String) -> Bool
+  file_dialog : (@backend.HostFileDialogOptions) -> Array[String]
+  text_file : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse
+  binary_file : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse
+  settings : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse
+  show_menu : (Array[@core.ActionCommand]) -> @backend.HostServiceResponse
+  set_application_menu : (Array[@backend.HostApplicationMenu]) -> @backend.HostServiceResponse
+  list_directory : (String) -> @backend.HostServiceResponse
+}
+pub fn DesktopHostServices::bridge(Self) -> @backend.HostServiceBridge
+pub fn DesktopHostServices::new(capabilities~ : @backend.HostServiceCapabilities, system_theme~ : @core.ColorScheme, clipboard~ : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url~ : (String) -> Bool, file_dialog~ : (@backend.HostFileDialogOptions) -> Array[String], settings~ : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, show_menu~ : (Array[@core.ActionCommand]) -> @backend.HostServiceResponse, set_application_menu? : (Array[@backend.HostApplicationMenu]) -> @backend.HostServiceResponse, text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, list_directory? : (String) -> @backend.HostServiceResponse) -> Self
+
+// Type aliases
+
+// Traits
+

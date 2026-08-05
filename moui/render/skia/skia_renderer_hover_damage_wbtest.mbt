@@ -153,7 +153,7 @@ impl @core.ViewNode for SkiaHoverDamageStageNode with fn paint(_self, ctx) {
 test "skia hover damage preserves cached sibling pixels" {
   guard skia_available() else { return () }
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=24.0, height=8.0),
     ),
     SkiaPresentTarget::new(description="test", present=_ => true),

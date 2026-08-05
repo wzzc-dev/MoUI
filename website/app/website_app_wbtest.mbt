@@ -91,7 +91,7 @@ test "website selects Simplified Chinese route and catalog" {
   )
   let runtime = test_runtime(
     Model::new().program_with_services(
-      @host.app_services(bridge~),
+      @backend_common.app_services(bridge~),
       route_host=Some(route_host),
     ),
     width=1180.0,
@@ -128,7 +128,7 @@ test "website Get Started navigates and GitHub opens repository URL" {
     },
   )
   let runtime = Model::new().test_runtime_with_services(
-    @host.app_services(bridge~),
+    @backend_common.app_services(bridge~),
     width=1180.0,
     height=760.0,
   )
@@ -273,7 +273,7 @@ test "website docs portal loads runtime markdown through host text service" {
     },
   )
   let runtime = Model::new().test_runtime_with_services(
-    @host.app_services(bridge~),
+    @backend_common.app_services(bridge~),
     width=1180.0,
     height=760.0,
   )
@@ -726,7 +726,7 @@ test "website route host receives deep-link and anchor commands" {
   )
   let runtime = test_runtime(
     Model::new().program_with_services(
-      @host.app_services(bridge~),
+      @backend_common.app_services(bridge~),
       route_host=Some(route_host),
     ),
     width=1180.0,

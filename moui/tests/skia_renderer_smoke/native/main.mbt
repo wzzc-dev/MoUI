@@ -998,7 +998,7 @@ fn run_renderer_diagnostic_pixel_smoke() -> Unit {
   )
   let renderer_result = try
     @skia_renderer.create_with_present_target(
-      @render.RendererSurfaceMetrics::from_logical(
+      @core.SurfaceMetrics::from_logical(
         size=@core.Size::new(width=128.0, height=64.0),
         scale_factor=1.0,
       ),
@@ -1077,7 +1077,7 @@ fn run_gpu_metal_renderer_smoke() -> Unit {
   )
   let result = try
     @skia_renderer.create_with_present_target_and_route(
-      @render.RendererSurfaceMetrics::from_logical(
+      @core.SurfaceMetrics::from_logical(
         size=@core.Size::new(width=128.0, height=64.0),
         scale_factor=1.0,
       ),
@@ -1200,7 +1200,7 @@ fn run_async_image_second_frame_smoke() -> Unit {
   )
   let renderer_result = try
     @skia_renderer.create_with_present_target(
-      @render.RendererSurfaceMetrics::from_logical(
+      @core.SurfaceMetrics::from_logical(
         size=@core.Size::new(width=24.0, height=10.0),
         scale_factor=1.0,
       ),
@@ -1241,10 +1241,10 @@ fn run_async_image_second_frame_smoke() -> Unit {
     @render.ImageResourceStatus::ImageLoading,
   )
 
-  let host_renderer = @render.HostWindowRenderer::new(
+  let host_renderer = @render.WindowRenderer::new(
     resize=metrics => {
       renderer.resize(
-        @render.RendererSurfaceMetrics::new(
+        @core.SurfaceMetrics::new(
           logical_size=metrics.logical_size,
           physical_size=metrics.physical_size,
           scale_factor=metrics.scale_factor,
@@ -1279,19 +1279,19 @@ fn run_async_image_second_frame_smoke() -> Unit {
     ),
   )
   let window_id = @render.RenderWindowId::new(99)
-  let tracker = @render.HostImageResourceRepaintTracker::new()
+  let tracker = @render_common.ImageResourceRepaintTracker::new()
   let baseline = tracker.record_presented(window_id, host_renderer)
   if baseline.current_status_counts().loading_count() != 2 {
     remove_local_smoke_file(local_png_path)
     fail_smoke("Skia async image smoke did not baseline two loading images")
   }
   let redraws : Array[@render.RenderWindowId] = []
-  let completion_source = @render.HostImageResourceCompletionSource::new(
+  let completion_source = @render_common.ImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
     request_redraw=id => redraws.push(id),
   )
-  let loader = @render.HostAsyncImageLoader::new(start_load=(
+  let loader = @render_common.AsyncImageLoader::new(start_load=(
     _id,
     source,
     complete,
@@ -1357,7 +1357,7 @@ fn run_async_image_second_frame_smoke() -> Unit {
 
 ///|
 fn run_async_image_deferred_completion_smoke() -> Unit {
-  // 使用 HostNativeAsyncImageSource 模拟 deferred completion（非同步完成）。
+  // 使用 NativeAsyncImageSource 模拟 deferred completion（非同步完成）。
   // 这是迈向 off-main provider 的中间验证步骤：loader 不在 start_load 回调中
   // 同步调用 complete，而是将请求注册到 native_source，后续手动触发 completion。
   let local_png_path = smoke_temp_path(
@@ -1375,7 +1375,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
   )
   let renderer_result = try
     @skia_renderer.create_with_present_target(
-      @render.RendererSurfaceMetrics::from_logical(
+      @core.SurfaceMetrics::from_logical(
         size=@core.Size::new(width=24.0, height=10.0),
         scale_factor=1.0,
       ),
@@ -1420,10 +1420,10 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     @render.ImageResourceStatus::ImageLoading,
   )
 
-  let host_renderer = @render.HostWindowRenderer::new(
+  let host_renderer = @render.WindowRenderer::new(
     resize=metrics => {
       renderer.resize(
-        @render.RendererSurfaceMetrics::new(
+        @core.SurfaceMetrics::new(
           logical_size=metrics.logical_size,
           physical_size=metrics.physical_size,
           scale_factor=metrics.scale_factor,
@@ -1458,7 +1458,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     ),
   )
   let window_id = @render.RenderWindowId::new(100)
-  let tracker = @render.HostImageResourceRepaintTracker::new()
+  let tracker = @render_common.ImageResourceRepaintTracker::new()
   let baseline = tracker.record_presented(window_id, host_renderer)
   if baseline.current_status_counts().loading_count() != 2 {
     remove_local_smoke_file(local_png_path)
@@ -1467,14 +1467,14 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     )
   }
   let redraws : Array[@render.RenderWindowId] = []
-  let completion_source = @render.HostImageResourceCompletionSource::new(
+  let completion_source = @render_common.ImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
     request_redraw=id => redraws.push(id),
   )
-  // 使用 HostNativeAsyncImageSource 创建 deferred loader。
+  // 使用 NativeAsyncImageSource 创建 deferred loader。
   // start_load 回调只注册请求，不调用 complete —— 模拟异步加载尚未完成。
-  let native_source = @render.HostNativeAsyncImageSource::new()
+  let native_source = @render_common.NativeAsyncImageSource::new()
   let loader = native_source.loader()
   let scheduled = loader.schedule_loading_resources(
     window_id, host_renderer, completion_source,
@@ -1505,7 +1505,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     @skia_renderer.skia_image_load_completion(one_pixel_red_png_data_uri()),
   )
   if completion1.status() !=
-    @render.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
+    @render_common.NativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
       "Skia async image deferred-completion smoke first completion was not delivered",
@@ -1516,7 +1516,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     @skia_renderer.skia_image_load_completion(local_png_path),
   )
   if completion2.status() !=
-    @render.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
+    @render_common.NativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
       "Skia async image deferred-completion smoke second completion was not delivered",
@@ -1613,7 +1613,7 @@ fn main {
   )
   let renderer_result = try
     @skia_renderer.create_with_present_target(
-      @render.RendererSurfaceMetrics::from_logical(
+      @core.SurfaceMetrics::from_logical(
         size=@core.Size::new(width=216.0, height=152.0),
         scale_factor=1.0,
       ),

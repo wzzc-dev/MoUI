@@ -1,6 +1,6 @@
 ///|
 test "windows backend converts resize event" {
-  let event = @host.window_event_to_core(
+  let event = @window_host.window_event_to_core(
     @window_core.WindowEvent::SurfaceResized(
       @dpi.PhysicalSize::PhysicalSize(10, 20),
     ),
@@ -179,14 +179,14 @@ test "windows service bridge reports cancelled or disabled menu selections" {
 
 ///|
 test "windows backend converts resize event to host metrics" {
-  let event = @host.window_event_to_host(
+  let event = @window_host.window_event_to_host(
     @window_core.WindowEvent::SurfaceResized(
       @dpi.PhysicalSize::PhysicalSize(10, 20),
     ),
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
-    Some(@host.HostEvent::Resized(metrics)) => {
+    Some(@host.Event::Resized(metrics)) => {
       assert_true(
         metrics.logical_size == @core.Size::new(width=10.0, height=20.0),
       )
@@ -200,8 +200,68 @@ test "windows backend converts resize event to host metrics" {
 }
 
 ///|
+test "windows normalizes resize pointer and drag across common DPI scales" {
+  for dpi_case in [(1.25, 125, 100), (1.5, 150, 120), (2.0, 200, 160)] {
+    let (scale, physical_width, physical_height) = dpi_case
+    match
+      @window_host.transform_cross_platform_event(
+        @window_core.WindowEvent::SurfaceResized(
+          @dpi.PhysicalSize::PhysicalSize(physical_width, physical_height),
+        ),
+        scale_factor=scale,
+      ) {
+      @window_host.TransformedWindowEvent::DispatchHostEvent(
+        @host.Event::Resized(metrics)
+      ) => {
+        assert_true(
+          metrics.logical_size == @core.Size::new(width=100.0, height=80.0),
+        )
+        assert_true(metrics.scale_factor == scale)
+      }
+      _ => fail("expected DPI-normalized Windows resize")
+    }
+    match
+      @window_host.window_event_to_host_with_modifiers(
+        @window_core.WindowEvent::PointerMoved(
+          None,
+          @dpi.PhysicalPositionF64::PhysicalPositionF64(
+            12.0 * scale,
+            24.0 * scale,
+          ),
+          true,
+          @window_core.PointerSource::Mouse,
+        ),
+        @core.Point::new(x=0.0, y=0.0),
+        @core.KeyModifiers::none(),
+        scale_factor=scale,
+      ) {
+      Some(@host.Event::Pointer({ position, .. })) =>
+        assert_true(position == @core.Point::new(x=12.0, y=24.0))
+      _ => fail("expected DPI-normalized Windows pointer")
+    }
+    match
+      @window_host.window_event_to_host_with_modifiers(
+        @window_core.WindowEvent::DragDropped(
+          ["C:\\Users\\moui\\dpi.txt"],
+          @dpi.PhysicalPositionF64::PhysicalPositionF64(
+            20.0 * scale,
+            32.0 * scale,
+          ),
+        ),
+        @core.Point::new(x=0.0, y=0.0),
+        @core.KeyModifiers::none(),
+        scale_factor=scale,
+      ) {
+      Some(@host.Event::DragDrop({ position: Some(position), .. })) =>
+        assert_true(position == @core.Point::new(x=20.0, y=32.0))
+      _ => fail("expected DPI-normalized Windows drag")
+    }
+  }
+}
+
+///|
 test "windows backend converts pointer movement and left button" {
-  let moved = @host.window_event_to_core(
+  let moved = @window_host.window_event_to_core(
     @window_core.WindowEvent::PointerMoved(
       None,
       @dpi.PhysicalPositionF64::PhysicalPositionF64(3.0, 4.0),
@@ -218,7 +278,7 @@ test "windows backend converts pointer movement and left button" {
     _ => fail("expected pointer move")
   }
 
-  let down = @host.window_event_to_core(
+  let down = @window_host.window_event_to_core(
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
@@ -239,7 +299,7 @@ test "windows backend converts pointer movement and left button" {
 
 ///|
 test "windows backend converts wheel and focus into host input events" {
-  let wheel = @host.window_event_to_host(
+  let wheel = @window_host.window_event_to_host(
     @window_core.WindowEvent::MouseWheel(
       None,
       @window_core.MouseScrollDelta::LineDelta(2.0, -1.0),
@@ -249,7 +309,7 @@ test "windows backend converts wheel and focus into host input events" {
   )
   match wheel {
     Some(
-      @host.HostEvent::Scroll(
+      @host.Event::Scroll(
         {
           position: { x: 11.0, y: 12.0 },
           delta: @host.HostScrollDelta::Lines({ x: 2.0, y: -1.0 }),
@@ -259,19 +319,19 @@ test "windows backend converts wheel and focus into host input events" {
     ) => ()
     _ => fail("expected wheel event")
   }
-  let focus = @host.window_event_to_host(
+  let focus = @window_host.window_event_to_host(
     @window_core.WindowEvent::Focused(true),
     @core.Point::new(x=0.0, y=0.0),
   )
   match focus {
-    Some(@host.HostEvent::Focus({ focused: true, .. })) => ()
+    Some(@host.Event::Focus({ focused: true, .. })) => ()
     _ => fail("expected focus event")
   }
 }
 
 ///|
 test "windows backend converts file drag drop to host event contract" {
-  let drop = @host.window_event_to_host(
+  let drop = @window_host.window_event_to_host(
     @window_core.WindowEvent::DragDropped(
       ["C:\\Users\\moui\\note.md"],
       @dpi.PhysicalPositionF64::PhysicalPositionF64(24.0, 48.0),
@@ -280,7 +340,7 @@ test "windows backend converts file drag drop to host event contract" {
   )
   match drop {
     Some(
-      @host.HostEvent::DragDrop(
+      @host.Event::DragDrop(
         {
           phase: @core.DragDropPhase::Dropped,
           paths,
@@ -294,7 +354,7 @@ test "windows backend converts file drag drop to host event contract" {
 
 ///|
 test "windows backend converts close event" {
-  let event = @host.window_event_to_core(
+  let event = @window_host.window_event_to_core(
     @window_core.WindowEvent::CloseRequested,
     @core.Point::new(x=0.0, y=0.0),
   )
@@ -316,13 +376,13 @@ test "windows backend converts keyboard input event" {
     Some("a"),
     Some("A"),
   )
-  let event = @host.window_event_to_host_with_modifiers(
+  let event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::KeyboardInput(None, key_event, false),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::new(shift=true),
   )
   match event {
-    Some(@host.HostEvent::Keyboard(event)) => {
+    Some(@host.Event::Keyboard(event)) => {
       inspect(event.key, content="a")
       match event.text {
         Some(text) => inspect(text, content="a")
@@ -348,7 +408,7 @@ test "windows backend converts named keys and ignores synthetic input" {
     None,
     None,
   )
-  let event = @host.window_event_to_core(
+  let event = @window_host.window_event_to_core(
     @window_core.WindowEvent::KeyboardInput(None, key_event, false),
     @core.Point::new(x=0.0, y=0.0),
   )
@@ -364,7 +424,7 @@ test "windows backend converts named keys and ignores synthetic input" {
     }
     _ => fail("expected backspace keyboard event")
   }
-  let synthetic = @host.window_event_to_core(
+  let synthetic = @window_host.window_event_to_core(
     @window_core.WindowEvent::KeyboardInput(None, key_event, true),
     @core.Point::new(x=0.0, y=0.0),
   )
@@ -376,7 +436,7 @@ test "windows backend converts named keys and ignores synthetic input" {
 
 ///|
 test "windows backend converts ime commit into core composition end" {
-  let event = @host.window_event_to_core(
+  let event = @window_host.window_event_to_core(
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("x")),
     @core.Point::new(x=0.0, y=0.0),
   )
@@ -389,22 +449,21 @@ test "windows backend converts ime commit into core composition end" {
 
 ///|
 test "windows backend keeps ime composition separate at host layer" {
-  let delete = @host.window_event_to_host(
+  let delete = @window_host.window_event_to_host(
     @window_core.WindowEvent::Ime(@window_core.Ime::DeleteSurrounding(1, 2)),
     @core.Point::new(x=0.0, y=0.0),
   )
   match delete {
-    Some(
-      @host.HostEvent::TextInput(@core.TextInputEvent::DeleteSurrounding(1, 2))
-    ) => ()
+    Some(@host.Event::TextInput(@core.TextInputEvent::DeleteSurrounding(1, 2))) =>
+      ()
     _ => fail("expected delete surrounding")
   }
-  let event = @host.window_event_to_host(
+  let event = @window_host.window_event_to_host(
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("x")),
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
-    Some(@host.HostEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
+    Some(@host.Event::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
       inspect(text, content="x")
     _ => fail("expected host composition end")
   }
@@ -415,7 +474,7 @@ test "windows accessibility bridge reports UI Automation contract" {
   let info = windows_accessibility_bridge_info()
   inspect(info.kind.label(), content="uiautomation")
   inspect(info.semantics_bridge_available, content="true")
-  inspect(info.native_platform_bridge_available, content="false")
+  inspect(info.native_accessibility_bridge_available, content="false")
 }
 
 ///|

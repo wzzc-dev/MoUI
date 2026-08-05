@@ -18,8 +18,8 @@ pub(all) struct HostPlatformEventPublishResult {
 
 ///|
 pub(all) struct HostWindowEvent {
-  window_id : @backend_host.HostWindowId
-  event : @backend_host.HostEvent
+  window_id : @backend_host.WindowId
+  event : @backend_host.Event
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -31,7 +31,7 @@ pub struct HostWindowEventSource {
 ///|
 priv struct HostEventSubscriptionHandler {
   token : Int
-  handle : (@backend_host.HostEvent) -> Unit
+  handle : (@backend_host.Event) -> Unit
 }
 
 ///|
@@ -70,8 +70,8 @@ pub fn HostPlatformEventSources::window_events(
 ///|
 pub fn HostPlatformEventSources::publish(
   self : HostPlatformEventSources,
-  window_id~ : @backend_host.HostWindowId,
-  event~ : @backend_host.HostEvent,
+  window_id~ : @backend_host.WindowId,
+  event~ : @backend_host.Event,
 ) -> HostPlatformEventPublishResult {
   {
     host_event_count: self.host_events.publish(event),
@@ -81,8 +81,8 @@ pub fn HostPlatformEventSources::publish(
 
 ///|
 pub fn HostWindowEvent::new(
-  window_id~ : @backend_host.HostWindowId,
-  event~ : @backend_host.HostEvent,
+  window_id~ : @backend_host.WindowId,
+  event~ : @backend_host.Event,
 ) -> HostWindowEvent {
   { window_id, event }
 }
@@ -107,7 +107,7 @@ pub fn HostWindowEventSource::active_handler_count(
 ///|
 pub fn HostEventSource::publish(
   self : HostEventSource,
-  event : @backend_host.HostEvent,
+  event : @backend_host.Event,
 ) -> Int {
   let handlers = self.handlers.copy()
   for handler in handlers {
@@ -121,7 +121,7 @@ pub fn[Msg] HostEventSource::subscription(
   self : HostEventSource,
   key? : String = "host:event",
   label? : String = "Host event",
-  map~ : (@backend_host.HostEvent) -> Msg?,
+  map~ : (@backend_host.Event) -> Msg?,
 ) -> @core.Subscription[Msg] {
   let start = dispatch => {
     let token = self.add_handler(event => {
@@ -138,8 +138,8 @@ pub fn[Msg] HostEventSource::subscription(
 ///|
 pub fn HostWindowEventSource::publish(
   self : HostWindowEventSource,
-  window_id~ : @backend_host.HostWindowId,
-  event~ : @backend_host.HostEvent,
+  window_id~ : @backend_host.WindowId,
+  event~ : @backend_host.Event,
 ) -> Int {
   let handlers = self.handlers.copy()
   let window_event = HostWindowEvent::new(window_id~, event~)
@@ -171,7 +171,7 @@ pub fn[Msg] HostWindowEventSource::subscription(
 ///|
 fn HostEventSource::add_handler(
   self : HostEventSource,
-  handle : (@backend_host.HostEvent) -> Unit,
+  handle : (@backend_host.Event) -> Unit,
 ) -> Int {
   let token = self.next_handler_value
   self.next_handler_value = self.next_handler_value + 1

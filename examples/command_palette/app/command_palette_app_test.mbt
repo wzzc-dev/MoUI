@@ -62,7 +62,7 @@ test "command palette runtime exposes command rows" {
 ///|
 test "command palette host menu service dispatches selected command" {
   let saw_menu = Ref(false)
-  let services = @host.app_services(
+  let services = @backend_common.app_services(
     bridge=@host.HostServiceBridge::new(
       capabilities=@host.HostServiceCapabilities::new(menus=true),
       handle=request => {

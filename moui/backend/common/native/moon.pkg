@@ -1,0 +1,8 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/x/fs",
+  "wzzc-dev/moui/backend" @host,
+  "wzzc-dev/moui/render",
+}
+
+supported_targets = "native"

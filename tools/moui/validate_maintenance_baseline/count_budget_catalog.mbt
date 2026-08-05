@@ -9,9 +9,8 @@ struct CountBudget {
 ///|
 fn pub_all_budgets() -> Array[CountBudget] {
   [
-    // Actual ~178 after API growth (modifier adapters + state protocol);
-    // keep a small buffer for legitimate core enums.
-    { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 178 },
+    // SurfaceMetrics is the single backend/render-neutral surface DTO.
+    { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 179 },
     // 56 = 39 (ADR 0017 control theme tokens) + 17 growth: control theme
     // structs and style records added during view sub-package extraction.
     { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 56 },
@@ -24,12 +23,11 @@ fn pub_all_budgets() -> Array[CountBudget] {
     },
     {
       kind: "pub(all)",
-      label: "moui/backend/host",
-      path: "moui/backend/host",
-      // Host Wire v1 adds the versioned update/response envelopes and the
-      // revisioned PlatformView snapshot as required native-shell protocol.
-      // Raised to 73 with multi-window / desktop host surface growth.
-      max_count: 73,
+      label: "moui/backend",
+      path: "moui/backend",
+      // This tree-wide budget covers the root protocols plus common and
+      // concrete backend packages after backend/host was removed.
+      max_count: 92,
     },
     {
       kind: "pub(all)",

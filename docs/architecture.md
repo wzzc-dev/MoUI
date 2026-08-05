@@ -32,12 +32,16 @@ ViewDeclaration -> ElementTree
 | `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete `ViewNode` behavior constructed with `@core.View::from_node`. |
 | `moui/services/` | App-facing `AppServices`, typed `ServiceTask[T]`, `TimerSource`, `RouteSource`, and `AppEnvironment`; depends only on `moui/core`. |
 | `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render/semantics/platform tree generation, committed semantics generations and indices, event/action dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
-| `moui/backend/host/` | Shared host wire contracts for windows and services, `HostServiceBridge`, completion queues, WebView, async image loading, accessibility, input, redraw scheduling, renderer handoff, and adapters to `moui/services`. |
-| `moui/backend/platform_bridge/` | Neutral lifecycle and logical-coordinate bridge from platform facts to host contracts; it does not decode raw native input. |
-| `moui/backend/internal/embedded_runtime_backend/` | Shared runtime/session assembly for Android, iOS, and HarmonyOS embedded runtime backends; it attaches a resolved neutral `HostWindowRenderer` after `ApplicationHandler` surface callbacks. |
-| `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform backend implementations. macOS, Windows, and Linux are native host backends; Android, iOS, and HarmonyOS are embedded runtime backends driven by `wzzc-dev/window`; web is the canonical browser host. They decode native input locally and route neutral lifecycle facts through `platform_bridge`. |
-| `moui/backend/wechat/` | Direct Canvas2D callback host. It is in the bridge duplication inventory but intentionally does not fabricate a `WindowEvent` import. |
-| `moui/render/` | Renderer facade, provider-ID capability reports, `RendererProviderBinding` composition contract, fallback planning, shader/image helpers, and renderer-neutral command handling. |
+| `moui/backend/` | Platform-neutral event/window/service/input/IME/accessibility/platform-view protocols and DTOs. It has no runtime or renderer dependency. |
+| `moui/backend/common/` | Shared implementations: window registry/request queue, lifecycle core, unique platform-window mapping, frame/image/IME coordination, input state, and adapters to `moui/services`. |
+| `moui/backend/common/desktop/` | Shared desktop service router for macOS, Windows, and Linux; filesystem behavior is delegated to `host_services_native`. |
+| `moui/backend/common/native/` | Shared native filesystem I/O used by desktop backends and the embedded runtime, including raw filesystem image-source bytes. |
+| `moui/backend/common/embedded/services/` | Shared Android/iOS/HarmonyOS asynchronous service queue: clipboard and platform-channel requests return `Pending(id)`, complete once through native callbacks, and are cancelled on dispose. |
+| `moui/backend/common/embedded/` | Embedded session capability layer after `ApplicationHandler` callbacks: renderer binding, service-update mapping, IME, semantics, platform views, and native transport. Logical lifecycle and frame coordination reuse the shared common coordinators. |
+| `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform backend implementations. They decode native input locally and route neutral lifecycle facts through `backend/common`. |
+| `moui/backend/wechat/` | Direct Canvas2D callback host. The bridge boundary validator keeps it on that route without fabricating a `WindowEvent` import. |
+| `moui/render/` | Surface/frame/image/provider protocols and DTOs, including `WindowRenderer`, `SurfaceContext`, and `RendererFactory`. |
+| `moui/render/common/` | Provider selection, fallback planning, mailbox/GPU worker, image lifecycle/repaint, and shared drawing algorithms. |
 | `moui/render/skia/` | Native Skia renderer facade over `moui_skia`. |
 | `moui/render/webgpu_adapter/` | Browser WebGPU host-import adapter for `wasm-gc`. |
 | `moui/render/wgpu/` | Experimental native WGPU renderer and native text providers. |
@@ -107,17 +111,19 @@ Add new APIs to the narrowest owning package:
   `moui/views`.
 - Runtime lifecycle, inspector snapshots, effect/subscription diagnostics, and
   runtime construction belong in `moui/runtime`.
-- App-facing service protocols belong in `moui/services`; host wire protocol,
-  bridge, and completion queues belong in `moui/backend/host`.
+- App-facing service protocols belong in `moui/services`; backend wire
+  protocols belong in root `moui/backend`, while queues/adapters belong in
+  `moui/backend/common`.
 - Platform windows, neutral presenters, native handles, and host I/O belong in
   `moui/backend/<platform>`; those packages must not import a concrete renderer.
-- Renderer implementation and capability reporting belong in `moui/render/*`.
+- Renderer protocols/DTOs belong in root `moui/render`, shared algorithms in
+  `moui/render/common`, and concrete implementations in renderer subpackages.
 - Native Skia binding ownership, fallback parity, FFI borrow rules, and native
   capability manifests belong in `moui_skia`.
 
 Do not add a new top-level public package for every feature. Prefer the existing
 owning package unless the capability is independently reusable and cannot be
-owned cleanly by `views`, `runtime`, `backend/host`, `render`, or an addon
+owned cleanly by `views`, `runtime`, `backend`, `render`, or an addon
 workspace.
 
 ## Target Routes
@@ -130,21 +136,24 @@ workspace.
 - Android embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/android_window_hosted` composition via
   `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@android.entry())`
-  -> `wzzc-dev/window/android` `HostCmd` / `EventLoop` -> neutral Android
+  -> `wzzc-dev/window/android` `HostCmd` -> shared
+  `wzzc-dev/window/internal/embedded_dispatch` callback dispatch -> `EventLoop` -> neutral Android
   surface binding -> `moui/render/skia` -> `moui_skia`.
   The window template owns Android lifecycle, surface acquisition, and input;
   the embedded runtime backend owns runtime/session assembly and rendering.
 - iOS embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/ios_window_hosted` composition via
   `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@ios.entry())`
-  -> `wzzc-dev/window/ios` `HostCmd` / `EventLoop` -> neutral iOS surface
+  -> `wzzc-dev/window/ios` `HostCmd` -> shared embedded-host kernel ->
+  `EventLoop` -> neutral iOS surface
   binding -> `moui/render/skia` -> `moui_skia`.
   UIKit lifecycle, surface, and touch callbacks enter through the window event
   loop only.
 - HarmonyOS embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/harmonyos_window_hosted` composition via
   `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@harmonyos.entry())`
-  -> `wzzc-dev/window/harmonyos` `HostCmd` / `EventLoop` -> neutral HarmonyOS
+  -> `wzzc-dev/window/harmonyos` `HostCmd` -> shared embedded-host kernel ->
+  `EventLoop` -> neutral HarmonyOS
   surface binding -> `moui/render/skia` -> `moui_skia`.
   Native XComponent callbacks are the sole source for surface, pointer, resize,
   and detach events.
@@ -259,7 +268,7 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
   `moui_theme/fluent` package entrypoints plus focused packages such as
   `moui_theme/sickle`; `core` remains a neutral token runtime.
 - Spec-first views in `views`, including `text`, `button`, `text_field`, `container`, row/column layout, and spacer primitives.
-- Unified host boundaries in `backend/host`, with shared window-event mapping and platform hosts normalizing events into `HostEvent`.
+- Unified host boundaries in `backend`, with shared window-event mapping and platform hosts normalizing events into `Event`.
 - Native mainline rendering through factories in `render/skia`, with
   experimental native WGPU diagnostics retained under `render/wgpu`.
 - Web rendering through `render/webgpu_adapter` on `wasm-gc` only, with browser WebGPU host imports for visible drawing. The old JS-target WebGPU path is intentionally removed.
@@ -276,7 +285,8 @@ moui_theme/common/            addon construction surface: DesignPreset, DesignSy
 moui_theme/audit/             addon diagnostics: manifests, golden mappings, official-token/source-lock coverage, source-import records, runtime alignment, taxonomy/role/resolver/matrix reports (top-level pub fn, not DesignPreset methods)
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints: light/dark/high-contrast/system Theme helpers, tokens, and theme_for_variant over common
 moui_theme/sickle/            first-party hybrid skeuomorphic/flat Theme addon with light/dark and style-mode helpers
-moui/backend/host/            shared HostEvent, HostWindowEventSource, HostServiceBridge/queues, AppServices adapters, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
+moui/backend/                 neutral event/window/service/input/IME/accessibility protocols and DTOs
+moui/backend/common/          registry, request queues, lifecycle/frame/input/image coordination, service adapters
 moui/backend/windows/         Windows native host backend
 moui/backend/macos/           macOS native host backend
 moui/backend/linux/           Linux Wayland native host backend
@@ -285,7 +295,8 @@ moui/backend/ios/             iOS embedded runtime backend over shared host/runt
 moui/backend/harmonyos/       HarmonyOS embedded runtime backend over shared host/runtime contracts
 moui/backend/web/             canonical browser lifecycle/canvas-surface host on wasm-gc
 moui/backend/wechat/          WeChat lifecycle and neutral canvas-surface host
-moui/render/                  host-surface kit, renderer factory/provider contracts, shared draw helpers
+moui/render/                  SurfaceContext, WindowRenderer, RendererFactory, image/frame/provider protocols and DTOs
+moui/render/common/           provider selection, fallback, workers, image lifecycle, shared draw helpers
 moui/render/skia/             native Skia CPU/GPU factories and implementation over moui_skia
 moui/render/sun/              experimental native Sun CPU raster factory and implementation
 moui/render/canvas2d/         WeChat Canvas2D factory and implementation
@@ -441,14 +452,14 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   tests can still call `draw_commands()` for a full command stream. Renderers
   may degrade based on capability, but view constructors preserve brush, border,
   shadow, clip, image, and text intent.
-- Backends normalize platform events into `HostEvent`; they do not own UI
+- Backends normalize platform events into `Event`; they do not own UI
   state or mutate element/render trees directly.
 - `HostRuntimeDriver` owns redraw scheduling at the host boundary, dispatches
   normalized events into `AppRuntime`, and exposes platform-neutral draw frames
   for renderers. The redraw scheduler tracks `idle`, `scheduled`, `in-frame`,
   and `follow-up` states so repeated host callbacks coalesce and redraw
   requests made during presentation become the next frame.
-  `HostWindowRenderer::render_frame()` forwards retained cached-layer commands
+  `WindowRenderer::render_frame()` forwards retained cached-layer commands
   to renderers that implement frame rendering, while its renderer-neutral
   command cache remains the fallback for simpler backends. Native Skia now owns
   a renderer-local offscreen surface/image cache for repaint boundaries and
@@ -625,7 +636,7 @@ or runtime lowering arm for new controls.
 
 ## Platform Host Contract
 
-`backend/host` defines the shared boundary between platform packages and the
+`backend` defines the shared boundary between platform packages and the
 platform-neutral runtime. It covers window lifecycle, multi-window bookkeeping,
 host-event subscriptions, timer/route sources, WebView contracts, async image
 loading, typed host services, keyboard shortcuts, menus, file drop, and
@@ -634,15 +645,15 @@ renderer handoff. Full details: [Platform Host Contract](platform-host-contract.
 See [Platform notes](platform-notes.md) for setup, backend-specific constraints,
 and validation commands.
 
-## Platform Bridge
+## Backend Common Boundary
 
-`backend/platform_bridge` is the only shared platform-event conversion layer.
+`backend/common` is the only shared platform-event conversion layer.
 It owns Close, Focus, resize/scale, redraw, surface attach/detach, lifecycle
-state, and logical-coordinate normalization. It depends only on `core`, host
-contracts, and `window` value types. Platform packages keep raw pointer,
+state, unique platform-window mapping, and logical-coordinate normalization.
+Platform packages keep raw pointer,
 keyboard, IME, drag, and modifier decoding plus pacing and capability details.
 WeChat is the `direct-canvas-callback` exception: it remains subject to the
-duplication gate but imports no fictitious window-event API.
+backend common boundary gate but imports no fictitious window-event API.
 
 ## Accessibility
 
@@ -653,7 +664,7 @@ deltas, maintains stable-ID and node-route indices, and dispatches actions
 directly into runtime state plus typed TEA messages. Semantics reads and
 semantics-only updates do not require paint.
 
-`backend/web` translates committed deltas to ARIA. `backend/host` translates
+`backend/web` translates committed deltas to ARIA. `backend` translates
 the same runtime reads to `Milky2018/moon_accesskit` updates, and mobile hosts
 carry `SemanticsNodeId`, generation, and typed actions through the embedding
 channel. Platform adapters do not maintain a second revision, repeat runtime

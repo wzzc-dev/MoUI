@@ -68,7 +68,7 @@ fn assert_skia_unicode_17_grapheme_break_fixture(
 ) -> Unit raise {
   let actual = [0]
   let mut cursor = 0
-  for cluster in @render.text_grapheme_clusters(text) {
+  for cluster in @render_common.text_grapheme_clusters(text) {
     cursor += cluster.to_array().length()
     actual.push(cursor)
   }

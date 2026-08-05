@@ -36,14 +36,14 @@ pub(all) struct LinuxBackendReadiness {
 pub(all) struct LinuxAccessibilityBridgeInfo {
   kind : @runtime.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool
-  native_platform_bridge_available : Bool
+  native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub struct LinuxHostAppOptions {
-  priv scene_resolver : @runtime.HostWindowSceneResolver
+  priv scene_resolver : @runtime.WindowSceneResolver
   priv event_sources : @runtime.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
@@ -57,8 +57,8 @@ pub struct LinuxHostSmokeOptions {
 
 ///|
 priv struct LinuxSurfaceBinding {
-  create_renderer : (@window_linux.Window, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
-  sync_surface : (@window_linux.Window, @host.HostSurfaceMetrics) -> Unit
+  create_renderer : (@window_linux.Window, @core.SurfaceMetrics) -> @render.RendererResolution?
+  sync_surface : (@window_linux.Window, @core.SurfaceMetrics) -> Unit
 }
 
 ///|
@@ -71,15 +71,15 @@ pub(all) struct LinuxClientDecorationState {
 /// Native host backend: owns the Linux host runtime, native windows, and
 /// event-loop integration rather than attaching a runtime to an embedder.
 /// Platform-neutral window coordination (registry, runtime slots, requests,
-/// image resources, IME) lives in `coordinator` (@runtime.WindowHostCoordinator).
+/// image resources, IME) lives in `coordinator` (@window_host.WindowCoordinator).
 struct LinuxNativeHostBackend {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
-  coordinator : @runtime.WindowHostCoordinator
+  coordinator : @window_host.WindowCoordinator
   surface_binding : LinuxSurfaceBinding
   services : @host.HostServiceBridge
-  platform_slots : @platform_bridge.WindowSlotMap[
+  platform_slots : @window_host.WindowSlotMap[
     @window_linux.Window,
     LinuxClientDecorationState,
   ]
@@ -93,7 +93,7 @@ struct LinuxNativeHostBackend {
 
 ///|
 pub fn LinuxHostAppOptions::new(
-  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
+  scene_resolver? : @runtime.WindowSceneResolver = @runtime.WindowSceneResolver::unavailable(),
   event_sources? : @runtime.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
@@ -117,8 +117,8 @@ pub fn LinuxHostSmokeOptions::new(
 
 ///|
 fn LinuxSurfaceBinding::new(
-  create_renderer~ : (@window_linux.Window, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
-  sync_surface? : (@window_linux.Window, @host.HostSurfaceMetrics) -> Unit = (
+  create_renderer~ : (@window_linux.Window, @core.SurfaceMetrics) -> @render.RendererResolution?,
+  sync_surface? : (@window_linux.Window, @core.SurfaceMetrics) -> Unit = (
     _window,
     _metrics,
   ) => (),

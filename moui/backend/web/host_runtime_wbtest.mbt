@@ -9,7 +9,7 @@ test "web maps surface resize through current scale factor" {
     scale_factor=2.0,
   )
   match event {
-    Some(@host.HostEvent::Resized(metrics)) => {
+    Some(@host.Event::Resized(metrics)) => {
       assert_true(
         metrics.logical_size == @core.Size::new(width=400.0, height=300.0),
       )
@@ -37,7 +37,7 @@ test "web maps physical pointer positions through current scale factor" {
     scale_factor=2.0,
   )
   match event {
-    Some(@host.HostEvent::Pointer({ position, phase, .. })) => {
+    Some(@host.Event::Pointer({ position, phase, .. })) => {
       assert_true(position == @core.Point::new(x=120.0, y=60.0))
       assert_true(phase == @core.PointerPhase::Down)
     }
@@ -53,21 +53,21 @@ test "web derives window default canvas id without host string return" {
 
 ///|
 test "web app options carry optional scene resolver" {
-  let request = @host.HostWindowOpenRequest::new(
+  let request = @host.WindowOpenRequest::new(
     title="Inspector",
-    scene=@host.HostWindowScene::new(scene_id="inspector"),
-    metrics=@host.HostSurfaceMetrics::from_logical(
+    scene=@host.WindowScene::new(scene_id="inspector"),
+    metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=240.0),
     ),
   )
   match WebAppOptions::new().scene_resolver.resolve(request) {
-    @runtime.HostWindowSceneResolution::SceneRejected(message) =>
+    @runtime.WindowSceneResolution::SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Web scene resolver rejection")
   }
-  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
-    @runtime.HostWindowSceneResolution::SceneResolved(
-      @runtime.HostWindowSceneInstance::new(
+  let resolver = @runtime.WindowSceneResolver::new(resolve=request => {
+    @runtime.WindowSceneResolution::SceneResolved(
+      @runtime.WindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
@@ -78,7 +78,7 @@ test "web app options carry optional scene resolver" {
   })
   match
     WebAppOptions::new(scene_resolver=resolver).scene_resolver.resolve(request) {
-    @runtime.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    @runtime.WindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Web scene resolver")
   }
@@ -134,7 +134,7 @@ test "web tracks modifiers from keyboard input events" {
   )
   inspect(with_control.control, content="true")
 
-  let copy_event = @host.window_event_to_host_with_modifiers(
+  let copy_event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::KeyboardInput(
       None,
       @window_core.KeyEvent::KeyEvent(
@@ -154,7 +154,7 @@ test "web tracks modifiers from keyboard input events" {
     scale_factor=1.0,
   )
   match copy_event {
-    Some(@host.HostEvent::Keyboard(event)) =>
+    Some(@host.Event::Keyboard(event)) =>
       inspect(event.modifiers.control, content="true")
     _ => fail("expected keyboard event with control modifier")
   }

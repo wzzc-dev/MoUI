@@ -1,7 +1,7 @@
 ///|
 test "sun cpu raster preflight records canvas frame and resource telemetry" {
   let preflight = sun_cpu_raster_preflight(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
       scale_factor=2.0,
     ),
@@ -27,7 +27,7 @@ test "sun cpu raster preflight records canvas frame and resource telemetry" {
 ///|
 test "sun surface diagnostic reports cached layer admission telemetry" {
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     SunPresentTarget::new(description="diagnostic", present=_ => true),

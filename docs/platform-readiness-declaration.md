@@ -150,7 +150,7 @@ moon run examples/showcase/macos_skia --target native
 | L0: `moon check` | ✅ Passed | `ci.yml → pr-profile` → `sh scripts/check.sh --profile pr`, including `moon check` | Every PR |
 | L0: `moon fmt --check` | ✅ Passed | `ci.yml → pr-profile` → `moon fmt --check` | Every PR |
 | L0: `moon info` | ✅ No drift | `ci.yml → api-surface` → `moon info -p <pkg>` + `git diff --exit-code` | Every PR |
-| L1: `moon test` package tests | ✅ Passed | `ci.yml → pr-profile` → `moon test moui/{core,views,render,backend/host,...}` | Every PR |
+| L1: `moon test` package tests | ✅ Passed | `ci.yml → pr-profile` → `moon test moui/{core,views,render,backend,...}` | Every PR |
 | L1: text-consistency tests | ✅ Passed | Covered locally/before release by `sh scripts/check.sh --profile full`; real Skia text proof is covered by the renderer-proof workflow | Before release / renderer proof |
 | L2: real Skia renderer | ✅ All 17 features passed | `moui-renderer-real-skia-ci.yml → macos-real-skia` | Every PR |
 | L2: text/emoji (SkParagraph) | ✅ Passed | `moui-renderer-real-skia-ci.yml → macos-real-skia --run-text-emoji-smoke` | Every PR |
@@ -215,7 +215,7 @@ complete environment and can be manually triggered with `workflow_dispatch`.
 | L0: `moon check` | ✅ Passed | `ci.yml → pr-profile` → `sh scripts/check.sh --profile pr`, including `moon check` | Every PR |
 | L0: `moon info` | ✅ No drift | `ci.yml → api-surface` | Every PR |
 | L1: Linux backend tests | ✅ Passed | `ci.yml → linux-platform` → `sh scripts/check.sh --profile platform` | Every PR |
-| L1: Linux package tests | ✅ Passed | `ci.yml → linux-platform` — native tests for core/views/render/backend/host | Every PR |
+| L1: Linux package tests | ✅ Passed | `ci.yml → linux-platform` — native tests for core/views/render/backend | Every PR |
 | L2: real Skia renderer (Linux) | ✅ Passed | `moui-renderer-real-skia-ci.yml → Linux renderer real Skia` | Run [28964136550](https://github.com/wzzc-dev/MoUI/actions/runs/28964136550), 2026-07-08 |
 | L2: Linux text/emoji/async images | ✅ Passed | The same workflow reports successful text/emoji smoke and renderer smoke | Run 28964136550 |
 | L2: historical partial Linux renderer record | ℹ️ Historical diagnostic | Run [27217209784](https://github.com/wzzc-dev/MoUI/actions/runs/27217209784) once had a failed Linux text check; superseded by newer run 28964136550 | 2026-06-17 |

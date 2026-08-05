@@ -32,7 +32,7 @@ lowering arms for a new control.
 
 ## Create A Platform Service
 
-1. Add the typed request/response to `backend/host` first.
+1. Add the typed request/response to `backend` first.
 2. Gate dispatch through `HostServiceCapabilities`.
 3. Add platform-local bridge constructors in the relevant backend package.
 4. Keep unavailable platforms explicit with `HostServiceBridge::unavailable`.

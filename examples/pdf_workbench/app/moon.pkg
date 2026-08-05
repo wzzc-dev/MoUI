@@ -11,7 +11,8 @@ import {
 
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend" @host,
+  "wzzc-dev/moui/backend/common" @backend_common,
   "wzzc-dev/moui/runtime",
 } for "wbtest"
 

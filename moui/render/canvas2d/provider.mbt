@@ -7,7 +7,7 @@
 /// platform entrypoint (WeChat Mini Program, web) capture its own canvas
 /// setup without the provider needing to know the platform details.
 pub fn create_canvas2d_provider(
-  create_canvas2d~ : (@render.RendererSurfaceMetrics) -> Canvas2DRenderer,
+  create_canvas2d~ : (@core.SurfaceMetrics) -> Canvas2DRenderer,
 ) -> @render.RendererProvider {
   let caps = canvas2d_provider_capabilities(
     provider_id="wxCanvas2d",
@@ -29,7 +29,7 @@ pub fn canvas2d_provider_capabilities(
   provider_id~ : String,
   backend~ : @render.RendererBackendKind,
 ) -> Array[@render.RendererBackendFeatureCapability] {
-  @render.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
+  @render_common.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
     let status = match feature {
       @render.RendererFeature::RoundedRect
       | @render.RendererFeature::Gradient
@@ -55,7 +55,7 @@ pub fn canvas2d_provider_capabilities(
 fn canvas2d_negotiate_surface(
   surface : @render.SurfaceDescriptor,
 ) -> @render.SurfaceNegotiationResult {
-  @render.negotiate_cpu_raster_surface(
+  @render_common.negotiate_cpu_raster_surface(
     surface,
     label="Canvas 2D",
     id="canvas2d",
@@ -65,11 +65,11 @@ fn canvas2d_negotiate_surface(
 
 ///|
 fn canvas2d_create_instance(
-  metrics : @render.RendererSurfaceMetrics,
-  create_canvas2d~ : (@render.RendererSurfaceMetrics) -> Canvas2DRenderer,
+  metrics : @core.SurfaceMetrics,
+  create_canvas2d~ : (@core.SurfaceMetrics) -> Canvas2DRenderer,
 ) -> @render.RendererInstance {
   let renderer = create_canvas2d(metrics)
-  @render.new_provider_instance(
+  @render_common.new_provider_instance(
     render_frame=frame => renderer.render_frame(frame),
     recover=_reason => @render.RecoveryResult::RecoverySucceeded,
     dispose=() => renderer.dispose(),

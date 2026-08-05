@@ -71,12 +71,12 @@ moui build harmonyos showcase \
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.4-0.1.4",
+  "wzzc-dev/window@0.5.4-0.1.5",
   "wzzc-dev/moui_skia@0.1.7",
 }
 ```
 
-MoonBit 包生态仍不如更老的语言生态成熟。失败的 build 可能来自 registry cache state、package publication mistakes 或 dependency regressions，也可能来自 MoUI 代码。当 dependency-related failures 出现时，先运行 `moon update`，检查 resolved package versions，并确认 `wzzc-dev/window@0.5.4-0.1.4` 或其他包是否改变了行为。
+MoonBit 包生态仍不如更老的语言生态成熟。失败的 build 可能来自 registry cache state、package publication mistakes 或 dependency regressions，也可能来自 MoUI 代码。当 dependency-related failures 出现时，先运行 `moon update`，检查 resolved package versions，并确认 `wzzc-dev/window@0.5.4-0.1.5` 或其他包是否改变了行为。
 
 `window` package 仍携带 MoUI smoke helpers 和 evidence docs。使用
 `scripts/run-window-package-smoke.sh <platform>` 将已解析的 registry package 解包到临时目录，并在不创建本地 checkout 的情况下运行这些 helpers。例如在 macOS 上：
@@ -251,7 +251,7 @@ helper 使用 `--release --strip` build，复制 `index.html`、app wasm、MoUI 
 moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/runtime --target native
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test moui/render --target native
 moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
@@ -448,7 +448,7 @@ PDF Workbench app-only 和 `pdflite_adapter` checks 默认不再下载 PDFium。
 MoUI 在使用 Mooncakes frontends 和 tooling 时保持 production runtime boundaries 显式：
 
 - Layout 保持平台无关，但具体 flex/grid/list/stack placement 现在由 `moui/views` 中的 concrete `ViewNode` 实现，并通过 `View::from_node` 构造；`core/` 不应为单个 controls 增长 layout-engine dependencies。
-- `Milky2018/moon_accesskit` 是 `backend/host` 使用的 native accessibility tree representation；`@core.SemanticsNode` 保持平台无关，Web 继续使用其 ARIA adapter。
+- `Milky2018/moon_accesskit` 是 `backend` 使用的 native accessibility tree representation；`@core.SemanticsNode` 保持平台无关，Web 继续使用其 ARIA adapter。
 - `Milky2018/moon_zeno` 驱动 renderer path tessellation，将 MoUI
   `DrawPath` / `PathSpec` values 转换为 triangle meshes。SVG parsing 仍是 importer frontend 的职责。
 - `mizchi/markdown` 驱动 Markdown Editor 的 package-local parser adapter 和 rich text mapping。app-level editing model 见 [Markdown Editor](../markdown-editor.md)。

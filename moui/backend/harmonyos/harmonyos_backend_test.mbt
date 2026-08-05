@@ -36,8 +36,8 @@ test "harmonyos runtime session renders through supplied surface binding" {
     create_renderer=(_surface, _metrics) => {
       create_count.val = create_count.val + 1
       Some(
-        @render.HostRendererResolution::new(
-          renderer=@render.HostWindowRenderer::new(
+        @render.RendererResolution::new(
+          renderer=@render.WindowRenderer::new(
             resize=_ => resize_count.val = resize_count.val + 1,
             render=_ => (),
             render_frame=Some(_frame => {
@@ -58,7 +58,7 @@ test "harmonyos runtime session renders through supplied surface binding" {
     },
     sync_surface=(_surface, _metrics) => sync_count.val = sync_count.val + 1,
   )
-  let metrics = @host.HostSurfaceMetrics::from_logical(
+  let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=120.0, height=80.0),
   )
   let runtime = @runtime.AppRuntime::new_view(
@@ -66,11 +66,12 @@ test "harmonyos runtime session renders through supplied surface binding" {
     size=metrics.logical_size,
   )
   match
-    create_session(
+    @embedded_runtime.HostedRuntimeSession::create(
       runtime~,
-      surface=HarmonyOSSurfaceHandle::new(raw=42UL),
+      raw_handle=42UL,
       metrics~,
-      binding~,
+      binding=host_surface_binding_from_harmonyos(binding),
+      surface_generation=1,
     ) {
     Some(session) => {
       let first_generation = session.session_generation()
@@ -83,7 +84,7 @@ test "harmonyos runtime session renders through supplied surface binding" {
       inspect(render_count.val, content="1")
       inspect(completion_drain_count.val, content="1")
       inspect(session.present_count(), content="1")
-      let resized = @host.HostSurfaceMetrics::from_logical(
+      let resized = @core.SurfaceMetrics::from_logical(
         size=@core.Size::new(width=160.0, height=120.0),
       )
       ignore(session.resize(resized))
@@ -101,6 +102,7 @@ test "harmonyos runtime session renders through supplied surface binding" {
           raw_handle=84UL,
           metrics=resized,
           binding=host_surface_binding_from_harmonyos(binding),
+          surface_generation=2,
         ),
       )
       assert_true(session.raw_handle() == 84UL)

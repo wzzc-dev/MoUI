@@ -24,7 +24,7 @@ fn web_pointer_modifiers(bits : Int) -> @core.KeyModifiers {
 ///|
 fn WebApp::dispatch_web_pointer_input(
   self : WebApp,
-  window_id : @host.HostWindowId,
+  window_id : @host.WindowId,
   kind : Int,
   x_px : Double,
   y_px : Double,
@@ -36,7 +36,7 @@ fn WebApp::dispatch_web_pointer_input(
   match web_pointer_phase(kind) {
     Some(phase) => {
       let scale_factor = self.current_scale_factor(window_id)
-      let position = @host.physical_position_to_core(
+      let position = @window_host.physical_position_to_core(
         @dpi.PhysicalPositionF64(x_px, y_px),
         scale_factor~,
       )
@@ -46,13 +46,13 @@ fn WebApp::dispatch_web_pointer_input(
         position~,
         phase~,
         button~,
-        wheel_delta=@host.physical_position_to_core(
+        wheel_delta=@window_host.physical_position_to_core(
           @dpi.PhysicalPositionF64(delta_x_px, delta_y_px),
           scale_factor~,
         ),
         modifiers=self.modifiers,
       )
-      match self.coordinator.runtime_slots.lookup(window_id) {
+      match self.coordinator.runtime_slots().lookup(window_id) {
         Some(slot) => {
           // The browser ABI needs a synchronous consumption result. Keep the
           // shared host driver responsible for redraw scheduling, but bypass
@@ -62,7 +62,7 @@ fn WebApp::dispatch_web_pointer_input(
           ignore(
             self.coordinator.publish_platform_event(
               window_id,
-              @host.HostEvent::Pointer(pointer),
+              @host.Event::Pointer(pointer),
             ),
           )
           self.drain_async_host_services()
@@ -90,9 +90,7 @@ pub fn web_dispatch_pointer_input(
   match web_active_app.val {
     Some(app) =>
       match
-        app.coordinator.platform_windows.lookup_host(
-          @window_core.WindowId::from_raw(raw_id),
-        ) {
+        app.coordinator.lookup_window(@window_core.WindowId::from_raw(raw_id)) {
         Some(window_id) =>
           app.dispatch_web_pointer_input(
             window_id, kind, x_px, y_px, delta_x_px, delta_y_px, button, modifiers,

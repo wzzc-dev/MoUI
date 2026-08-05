@@ -34,7 +34,7 @@ packages expose narrower contracts for platform and renderer integration.
   element/layout/render state, effect/subscription lifecycle, inspector
   snapshots, and diagnostics; `core` no longer exposes `AppRuntime`,
   `RuntimeKernel`, or `RuntimeState`.
-- **Integration API**: `moui/backend/host`, `moui/render`, and renderer/provider
+- **Integration API**: `moui/backend`, `moui/render`, and renderer/provider
   packages. These packages are public for platform backends, renderers,
   examples, and observation tooling, but they are not the normal app authoring
   surface.
@@ -48,7 +48,7 @@ packages expose narrower contracts for platform and renderer integration.
 Before adding exported declarations, first decide which tier owns the new
 symbol. Prefer keeping app ergonomics in `views`, runtime construction and host
 runtime handles in `runtime`, neutral contracts in `core`, host routing in
-`backend/host`, and concrete renderer details in the renderer package that
+`backend`, and concrete renderer details in the renderer package that
 implements them.
 
 Run `moon info` after public API changes and review generated
@@ -67,7 +67,7 @@ entrypoint. It checks current generated interface files for:
 
 - line and exported-declaration budgets on key packages;
 - semantic classification budgets for the high-risk packages
-  `moui/core`, `moui/views`, `moui/runtime`, `moui/backend/host`, and
+  `moui/core`, `moui/views`, `moui/runtime`, `moui/backend`, and
   `moui/render`, so new public declarations must be categorized as
   `app_constructor`, `app_state_helper`, `app_style`,
   `advanced_core_protocol`, `runtime_diagnostic`, `host_contract`,

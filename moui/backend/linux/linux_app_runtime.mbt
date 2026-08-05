@@ -8,12 +8,10 @@ pub fn entry(
 ) -> @runtime.PlatformEntry {
   @runtime.PlatformEntry::new(id="linux", launch=request => {
     let factories = request.renderer_factories()
-    let image_source = @host_image_source.from_filesystem()
+    let image_source = @host_services_native.filesystem_image_source()
     let binding = LinuxSurfaceBinding::new(create_renderer=(window, metrics) => {
-      let renderer_metrics = @platform_bridge.renderer_metrics_from_host(
-        metrics,
-      )
-      let host_present = @render.HostPresentTarget::new(
+      let renderer_metrics = metrics
+      let host_present = @render.PresentTarget::new(
         description="Linux host CPU presenter",
         present=frame => {
           window.present_rgba_pixels(
@@ -40,7 +38,7 @@ pub fn entry(
           )
         None => None
       }
-      let kit = @render.HostSurfaceKit::new(
+      let kit = @render.SurfaceContext::new(
         surface=@render.SurfaceDescriptor::cpu_raster(
           width=renderer_metrics.logical_size.width,
           height=renderer_metrics.logical_size.height,
@@ -51,7 +49,7 @@ pub fn entry(
         gpu_surface~,
         image_source=Some(image_source),
       )
-      @render.resolve_host_renderer(factories, kit)
+      @render_common.resolve_renderer(factories, kit)
     })
     launch_linux_app(
       request.title(),
@@ -71,7 +69,7 @@ fn launch_linux_app(
   binding~ : LinuxSurfaceBinding,
   options~ : LinuxHostAppOptions,
   smoke_options~ : LinuxHostSmokeOptions,
-  window_requests~ : @host.HostWindowRequestQueue,
+  window_requests~ : @host.WindowRequests,
 ) -> Unit {
   let event_loop = @window_linux.EventLoop::new()
   let services = linux_service_bridge(
@@ -84,7 +82,7 @@ fn launch_linux_app(
     title,
     runtime,
     driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
-    coordinator: @runtime.WindowHostCoordinator::new(
+    coordinator: @window_host.WindowCoordinator::new(
       window_requests~,
       scene_resolver=options.scene_resolver,
       services~,
@@ -92,7 +90,7 @@ fn launch_linux_app(
     ),
     surface_binding: binding,
     services,
-    platform_slots: @platform_bridge.WindowSlotMap::new(),
+    platform_slots: @window_host.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,
     platform_attributes: options.platform_attributes,
@@ -121,20 +119,20 @@ fn linux_color_scheme_from_theme(
 
 ///|
 pub fn linux_adjust_host_event_for_client_decorations(
-  event : @host.HostEvent,
+  event : @host.Event,
   decorations : LinuxClientDecorationState,
-) -> @host.HostEvent? {
+) -> @host.Event? {
   if !decorations.active {
     Some(event)
   } else {
     match event {
-      @host.HostEvent::Pointer(pointer) => {
+      @host.Event::Pointer(pointer) => {
         let y = pointer.position.y - decorations.titlebar_height
         if y < 0.0 {
           None
         } else {
           Some(
-            @host.HostEvent::Pointer(
+            @host.Event::Pointer(
               @core.PointerEvent::new(
                 position=@core.Point::new(x=pointer.position.x, y~),
                 phase=pointer.phase,
@@ -146,13 +144,13 @@ pub fn linux_adjust_host_event_for_client_decorations(
           )
         }
       }
-      @host.HostEvent::Scroll(scroll) => {
+      @host.Event::Scroll(scroll) => {
         let y = scroll.position.y - decorations.titlebar_height
         if y < 0.0 {
           None
         } else {
           Some(
-            @host.HostEvent::Scroll(
+            @host.Event::Scroll(
               @host.HostScrollEvent::new(
                 position=@core.Point::new(x=scroll.position.x, y~),
                 delta=scroll.delta,
@@ -162,7 +160,7 @@ pub fn linux_adjust_host_event_for_client_decorations(
           )
         }
       }
-      @host.HostEvent::DragDrop(drop) =>
+      @host.Event::DragDrop(drop) =>
         match drop.position {
           Some(position) => {
             let y = position.y - decorations.titlebar_height
@@ -171,7 +169,7 @@ pub fn linux_adjust_host_event_for_client_decorations(
               None
             } else {
               Some(
-                @host.HostEvent::DragDrop(
+                @host.Event::DragDrop(
                   @core.DragDropEvent::new(
                     phase=drop.phase,
                     paths~,
@@ -183,8 +181,7 @@ pub fn linux_adjust_host_event_for_client_decorations(
           }
           None => Some(event)
         }
-      @host.HostEvent::Resized(metrics) =>
-        Some(@host.HostEvent::Resized(metrics))
+      @host.Event::Resized(metrics) => Some(@host.Event::Resized(metrics))
       _ => Some(event)
     }
   }

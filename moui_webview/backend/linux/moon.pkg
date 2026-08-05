@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/backend/host" @moui_host,
+  "wzzc-dev/moui/backend" @moui_host,
   "wzzc-dev/moui/render",
   "wzzc-dev/moui_webview/host",
   "wzzc-dev/window/linux" @window_linux,

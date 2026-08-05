@@ -155,7 +155,7 @@ diagnostic concerns.
    before mutation. Rejection is side-effect free. Acceptance commits local
    state, queues typed messages FIFO, drains synchronous TEA work, recommits
    semantics, and returns before/after generations plus pending-work state.
-8. Restrict `moui/backend/host` to transport. AccessKit, Web, and mobile use
+8. Restrict `moui/backend` to transport. AccessKit, Web, and mobile use
    runtime-owned node IDs, generations, and deltas, and do not keep another
    semantics revision or repeat action validation. Semantics-only Web changes
    are synchronized without requiring redraw.

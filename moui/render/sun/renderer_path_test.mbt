@@ -6,7 +6,7 @@ test "sun renderer DrawPath without fill or stroke is no-op" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,

@@ -1,7 +1,7 @@
 ///|
 test "canvas2d_renderer_create_and_resize" {
   let renderer = Canvas2DRenderer::new(canvas_id="test-canvas")
-  let metrics = @render.RendererSurfaceMetrics::new(
+  let metrics = @core.SurfaceMetrics::new(
     logical_size=@core.Size::new(width=375.0, height=812.0),
     physical_size=@core.Size::new(width=1125.0, height=2436.0),
     scale_factor=3.0,
@@ -48,7 +48,7 @@ test "canvas2d_renderer_render_frame_after_dispose" {
 
 ///|
 test "canvas2d_create_renderer_sets_metrics" {
-  let metrics = @render.RendererSurfaceMetrics::new(
+  let metrics = @core.SurfaceMetrics::new(
     logical_size=@core.Size::new(width=390.0, height=844.0),
     physical_size=@core.Size::new(width=1170.0, height=2532.0),
     scale_factor=3.0,

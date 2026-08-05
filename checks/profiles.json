@@ -93,10 +93,17 @@
           ]
         },
         {
-          "name": "platform bridge duplication budget",
+          "name": "backend common boundary",
           "argv": [
             "node",
-            "scripts/validate-platform-adapter-duplication.mjs"
+            "scripts/validate-backend-common-boundary.mjs"
+          ]
+        },
+        {
+          "name": "window host boundary",
+          "argv": [
+            "node",
+            "scripts/validate-window-lifecycle-boundary.mjs"
           ]
         },
         {
@@ -282,7 +289,47 @@
           "argv": [
             "moon",
             "test",
-            "moui/backend/host",
+            "moui/backend",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "desktop host services tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui/backend/common/desktop",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "embedded host services tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui/backend/common/embedded/services",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "native host services tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui/backend/common/native",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "embedded runtime tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui/backend/common/embedded",
             "--target",
             "native"
           ]

@@ -302,20 +302,20 @@ fn skia_paragraph_visual_order_metadata(
   offsets : Array[Int],
   bidi_ready~ : Bool,
 ) -> @core.TextParagraphVisualOrderMetadata {
-  let logical_clusters = @render.text_grapheme_clusters(text)
+  let logical_clusters = @render_common.text_grapheme_clusters(text)
   let boxes = skia_paragraph_cluster_boxes(logical_clusters, paragraph, offsets)
   let paragraph_bidi_observed = skia_paragraph_has_bidi_observation(boxes)
   let visual_clusters = if paragraph_bidi_observed {
-    @render.text_bidi_visual_clusters(text)
+    @render_common.text_bidi_visual_clusters(text)
   } else {
     logical_clusters
   }
-  let visual_order_differs = !@render.text_string_arrays_equal(
+  let visual_order_differs = !@render_common.text_string_arrays_equal(
     logical_clusters, visual_clusters,
   )
   {
-    logical_text: @render.text_join_clusters(logical_clusters),
-    visual_text: @render.text_join_clusters(visual_clusters),
+    logical_text: @render_common.text_join_clusters(logical_clusters),
+    visual_text: @render_common.text_join_clusters(visual_clusters),
     logical_cluster_count: logical_clusters.length(),
     visual_cluster_count: visual_clusters.length(),
     segment_count: boxes.length().max(1),
@@ -359,7 +359,7 @@ fn skia_paragraph_cluster_boxes(
       }
       boxes.push({
         has_rect,
-        rtl: native_rtl || @render.text_segment_class(cluster) == 4,
+        rtl: native_rtl || @render_common.text_segment_class(cluster) == 4,
       })
     }
     char_index = end_index
@@ -404,7 +404,7 @@ fn skia_paragraph_bidi_probe_ready(font : @core.FontSpec) -> Bool {
     ) {
     Some(paragraph) => {
       let offsets = skia_utf8_char_offsets(text)
-      let logical = @render.text_grapheme_clusters(text)
+      let logical = @render_common.text_grapheme_clusters(text)
       let visual = skia_paragraph_visual_order_metadata(
         text,
         paragraph,

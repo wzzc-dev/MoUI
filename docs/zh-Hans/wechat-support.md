@@ -16,9 +16,9 @@ staging template 前降低不受支持的特性。渲染经 CanvasRenderingConte
 - `moui/backend/wechat` 提供 canvas host callbacks、拥有 canvas surface host，并为
   小程序应用提供 `run_app` 入口。
 - `moui/render/canvas2d` 包装 `moui/render/canvas2d`，创建由 Canvas 2D API
-  驱动的 `HostWindowRenderer`。
+  驱动的 `WindowRenderer`。
 - `moui/render/canvas2d` 实现 Canvas 2D renderer，并通过 wasm-gc FFI imports
-  生成 `HostWindowRenderer` closures。
+  生成 `WindowRenderer` closures。
 - `window/wechat/template` 拥有小程序项目模板，以及到 MoonBit 导出 callbacks 的
   JS bridge。
 - `scripts/build-wechat-demo.sh` 是演示应用的规范构建脚本。

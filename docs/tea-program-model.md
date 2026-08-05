@@ -136,7 +136,7 @@ subscription descriptors, active subscription descriptors, active subscription
 kind-count summaries, and lifecycle entries for tooling. Concrete timer,
 window, host-event, route, or host-service adapters remain outside `core`; the
 core subscription runtime only owns the platform-neutral lifecycle,
-subscription plan diagnostics, and typed dispatch contract. `backend/host`
+subscription plan diagnostics, and typed dispatch contract. `backend`
 provides the integration-only `HostEventSource` fanout adapter for
 `Subscription::host_event`, `HostWindowEventSource` for
 `Subscription::window_event`; `@services.TimerSource` and

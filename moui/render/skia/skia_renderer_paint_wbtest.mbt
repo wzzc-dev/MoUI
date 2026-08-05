@@ -5,7 +5,7 @@ test "skia renderer paints blend and saturation filter pixels" {
     is Some(_)
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=32.0, height=16.0),
     ),
     target,
@@ -83,7 +83,7 @@ test "skia renderer paints path fill and stroke pixels" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=40.0, height=40.0),
     ),
     target,
@@ -141,7 +141,7 @@ test "skia renderer paints path linear gradient pixels" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=40.0, height=20.0),
     ),
     target,
@@ -197,7 +197,7 @@ test "skia renderer paints radial gradient brush pixels" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=24.0),
     ),
     target,
@@ -272,7 +272,7 @@ test "skia renderer paints built-in shader effect pixels" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=24.0, height=16.0),
     ),
     target,
@@ -322,7 +322,7 @@ test "skia renderer paints shader gradient and vignette pixels" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=24.0),
     ),
     target,

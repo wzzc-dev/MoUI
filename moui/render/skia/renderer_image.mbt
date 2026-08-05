@@ -292,15 +292,15 @@ fn skia_image_placement(
   image_size : @core.Size,
   fit : @core.ImageFit,
 ) -> SkiaImagePlacement {
-  let placement = @render.image_placement(frame, image_size, fit)
+  let placement = @render_common.image_placement(frame, image_size, fit)
   match placement.crop_axis {
-    @render.ImageCropAxis::None =>
+    @render_common.ImageCropAxis::None =>
       { frame: placement.frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0 }
-    @render.ImageCropAxis::Horizontal => {
+    @render_common.ImageCropAxis::Horizontal => {
       let inset = (1.0 - placement.visible) / 2.0
       { frame: placement.frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0 }
     }
-    @render.ImageCropAxis::Vertical => {
+    @render_common.ImageCropAxis::Vertical => {
       let inset = (1.0 - placement.visible) / 2.0
       { frame: placement.frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset }
     }

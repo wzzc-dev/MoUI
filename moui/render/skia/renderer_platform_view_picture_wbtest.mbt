@@ -2,7 +2,7 @@
 test "skia picture producer records platform view pixels before handoff" {
   guard skia_available() else { return () }
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     SkiaPresentTarget::new(description="platform-view-picture", present=_ => {

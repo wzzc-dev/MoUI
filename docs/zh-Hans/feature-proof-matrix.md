@@ -19,7 +19,7 @@
 | Core API (View/Element/Layout/Animation) | `pr-profile` | macOS-14 | check.sh --profile pr：core 包测试通过 |
 | Runtime lifecycle | `pr-profile` | macOS-14 | check.sh --profile pr：runtime effect/subscription/diagnostics |
 | Views controls (Text/Button/TextField/Container/Row/Column/Flex/Stack/Scroll/List/Grid/Navigation) | `pr-profile` | macOS-14 | check.sh --profile pr：views 包测试通过 |
-| Host services protocol (clipboard/menus/dialogs URL) | `pr-profile` | macOS-14 | check.sh --profile pr：backend/host 包测试通过 |
+| Host services protocol (clipboard/menus/dialogs URL) | `pr-profile` | macOS-14 | check.sh --profile pr：backend 包测试通过 |
 | Web wasm-gc build | `pr-profile` | macOS-14 | check.sh --profile pr：Web wasm-gc 构建成功 |
 | Renderer capability report consistency | `pr-profile` | macOS-14 | check.sh --profile pr：capabilities_test.mbt 通过 |
 | Text conformance (grapheme/cluster/caret) | `pr-profile` | macOS-14 | `sh scripts/check.sh --profile full` 包含文本 diagnostics |
@@ -51,7 +51,7 @@
 | ShaderEffect | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | 真实 procedural shader 像素 |
 | TextShaping | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | 真实 SkShaper/SkParagraph shaping，bidi Arabic/mixed-direction visual-order |
 | EmojiText | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | 真实 emoji cluster 渲染，keycap/regional-indicator/skin-tone-modifier fallback，通过 `Typeface::has_color_glyphs` 做确定性的 color glyph format 检测（font table tag query：COLR/sbix/CBDT/SVG），diagnostic 中的已解析字体名（`resolved_font_name` 字段） |
-| AsyncImage | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | 真实 completion 后 second-frame repaint，通过 HostNativeAsyncImageSource 的 deferred-completion，off-main-thread local-file I/O 以及平台 native worker（GCD/pthread/CreateThread）上的 Skia decode，provider 测试中验证带 `background_io` 和 `background_decode` 的 decoded RGBA completion payload |
+| AsyncImage | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | 真实 completion 后 second-frame repaint，通过 NativeAsyncImageSource 的 deferred-completion，off-main-thread local-file I/O 以及平台 native worker（GCD/pthread/CreateThread）上的 Skia decode，provider 测试中验证带 `background_io` 和 `background_decode` 的 decoded RGBA completion payload |
 
 ## L3 跨平台一致性
 
@@ -77,7 +77,7 @@ GPU readback elimination plan 的第 1 阶段已落地 window-surface GPU source
 
 | Gate | Source | L1 证明 |
 | --- | --- | --- |
-| Renderer mailbox control queue | `moui/render/render_frame_mailbox.mbt` | `moui/render` whitebox tests（capacity-two latest-wins；control messages never dropped） |
+| Renderer mailbox control queue | `moui/render/common/render_frame_mailbox.mbt` | `moui/render/common` whitebox tests（capacity-two latest-wins；control messages never dropped） |
 | Native Picture handoff | `moui_skia/native/skia_stub_gpu_worker.cpp` | 聚焦 native worker tests（`SkPicture` retain、independent thread、detach acknowledgement、zero readback counter）、macOS worker-owned Metal first-frame smoke、Android NDK GPU build、HarmonyOS native/HAP build 和 iOS simulator GPU build |
 | Context-loss recovery state machine | `moui/runtime/renderer_recovery.mbt` | `moui/runtime` whitebox tests（Idle → Lost → Recovering → Recovered → Idle；terminal `FallbackToRaster`） |
 | GPU promotion evidence | `docs/gpu-promotion-runbook.md` | promotion claim 前仍需要 matching-device evidence |

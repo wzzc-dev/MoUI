@@ -47,7 +47,8 @@ node scripts/validate-harness-invariants.mjs
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-backend-renderer-boundary.mjs
 node scripts/validate-renderer-provider-open-extension.mjs
-node scripts/validate-platform-adapter-duplication.mjs
+node scripts/validate-backend-common-boundary.mjs
+node scripts/validate-window-lifecycle-boundary.mjs
 node scripts/validate-core-theme-no-control-surface.mjs
 node scripts/validate-host-import-baseline.mjs
 moon run tools/moui/validate_source_file_policy --target native
@@ -75,7 +76,7 @@ moon test examples/agent_counter --target native
 moon test moui/render --target native
 moon test moui/render/skia --target native
 moon test moui/render/sun --target native
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test moui_tester --target native
 moon test moui_devtools --target native
 moon test moui_skia --target native
@@ -123,7 +124,7 @@ node scripts/external-consumer-ci.mjs --source package
 
 ## Focused
 
-Provider composition and Platform Bridge edits use the following minimum loop
+Provider composition and backend common boundary edits use the following minimum loop
 before broader profiles:
 
 ```sh
@@ -135,18 +136,20 @@ moon test moui/render/webgpu_adapter --target wasm-gc
 moon check moui/render/canvas2d --target wasm-gc
 moon test moui/backend/wechat --target wasm-gc
 node scripts/test-web-canvas2d-lazy-fallback.mjs
-moon test moui/backend/platform_bridge --target native
+moon test moui/backend/common --target native
 node scripts/validate-renderer-provider-open-extension.mjs
-node scripts/validate-platform-adapter-duplication.mjs
+node scripts/validate-backend-common-boundary.mjs
+node scripts/validate-window-lifecycle-boundary.mjs
 ```
 
-The Platform Bridge validator is a required PR-profile failure gate. Its
-schema-v2 normalization budgets, bridge imports, helper redefinitions, and
-WeChat `direct-canvas-callback` exception are checked by the MoonBit tool;
-expired allowlist entries fail. Rendering-composition changes also require the
-path-triggered macOS Skia and Web presentation smokes before a runtime claim.
+The backend common boundary validator is a required PR-profile failure gate. It checks
+direct bridge use by desktop/Web backends, shared embedded-runtime use by the
+three mobile backends, forbidden bridge-helper redefinitions, and the fixed
+WeChat `direct-canvas-callback` boundary. It has no similarity score, threshold,
+budget, allowlist, or expiry date. Rendering-composition changes also require
+the path-triggered macOS Skia and Web presentation smokes before a runtime claim.
 
-### Architecture convergence validators (ADR 0017–0020)
+### Architecture convergence validators (ADR 0017–0024)
 
 The four architecture validators from the convergence plan are enforced gates
 (PR profile per `checks/profiles.json`; also in the daily token list above)
@@ -154,23 +157,17 @@ and map to invariants P3/P5/P6/M6:
 
 ```sh
 node scripts/validate-core-theme-no-control-surface.mjs  # core keeps no control-only theme/API surface (ADR 0017, P3)
-node scripts/validate-host-import-baseline.mjs           # backend/host default imports stay contracts-only (ADR 0018, P5)
+node scripts/validate-host-import-baseline.mjs           # backend default imports stay contracts-only (ADR 0018, P5)
 node scripts/validate-renderer-provider-open-extension.mjs  # render providers stay open-extension; no central matrix (ADR 0019, P6)
-node scripts/validate-platform-adapter-duplication.mjs   # platform adapters converge on platform_bridge; no copies (ADR 0020, M6/P10)
+node scripts/validate-backend-common-boundary.mjs       # platform adapters use the single backend/common owner (ADR 0025, P10)
+node scripts/validate-window-lifecycle-boundary.mjs     # seven backends share lifecycle/frame ownership; window dispatch is physical-only
 ```
 
 Run them when touching their change surface: core/theme layering, host
 contracts, renderer provider composition, or platform adapters — the same
-surfaces the PR profile gates. When a validator switches from report-only to
-enforce, freeze the baseline in the same change and keep it shrinking or
-stable.
-
-**Adapter duplication budget policy.**
-`checks/platform-adapter-duplication-baseline.json` is the frozen
-post-convergence measurement. Budgets only shrink or stay; growth requires an
-RFC entry in the allowlist, and expired exemptions fail the gate. The
-renderer-provider manifest budgets follow the same shrink-or-stay rule for
-`RendererProviderBinding` composition (ADR 0019).
+surfaces the PR profile gates. Platform duplication is resolved in code when
+found; it is not recorded as an accepted similarity budget. Renderer-provider
+manifest budgets remain a separate ADR 0019 policy.
 
 **Platform profile expectation.** `sh scripts/check.sh --profile platform`
 runs shared platform service checks for host/Web contracts and opportunistic
@@ -209,7 +206,11 @@ moon test examples/agent_counter --target native
 moon test moui/render --target native
 moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
-moon test moui/backend/host --target native
+moon test moui/backend --target native
+moon test moui/backend/common/desktop --target native
+moon test moui/backend/common/native --target native
+moon test moui/backend/common/embedded/services --target native
+moon test moui/backend/common/embedded --target native
 moon test moui/backend/android --target native
 moon check examples/showcase/android_window_hosted --target native
 moon test moui/backend/ios --target native

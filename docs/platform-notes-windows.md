@@ -80,11 +80,11 @@ WebView2 flags remain owned by `moui_webview/build.js` `link_configs` for
 
 ## Host Architecture
 
-The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as
+The Windows host follows the same `Event` and `HostRuntimeDriver` path as
 macOS, with platform-specific ownership limited to Win32 window handles,
 services, lifecycle, resize handling, text-input session synchronization, and
 redraw requests. Concrete rendering is injected through
-ordered `RendererBindingFactory` values at the application entrypoint.
+ordered `RendererFactory` values at the application entrypoint.
 `backend/windows` supplies a neutral HWND GPU descriptor, GDI CPU presenter,
 and raw-byte `HostImageSource`; concrete Skia/WGPU construction stays in
 `render/skia` and `render/wgpu`. Text
@@ -98,12 +98,12 @@ service contract, and reports light/dark system theme from the current user's
 `AppsUseLightTheme` registry value.
 The native app entrypoint applies that reported theme to the runtime environment
 before creating the host driver, matching the macOS startup path. Windows
-theme-change events use the shared `HostEvent::ThemeChanged` runtime path when
+theme-change events use the shared `Event::ThemeChanged` runtime path when
 emitted by the local window backend.
 Right-click context-menu requests use the same `TrackPopupMenu` path and dispatch
 the selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/windows` backend are
-normalized through `HostEvent::DragDrop` and dispatched to
+normalized through `Event::DragDrop` and dispatched to
 `View::on_file_drop` targets, matching the macOS host path.
 The `render/wgpu.native(...)` diagnostic factory installs the sibling
 `render/wgpu/directwrite` provider
@@ -136,7 +136,7 @@ opening an empty HWND.
 The Windows host loop records the renderer image-resource revision after each
 present, routes later observed revision changes through the matching HWND's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
-calls the selected factory's neutral `HostAsyncImageLoader` after the presented
+calls the selected factory's neutral `AsyncImageLoader` after the presented
 revision is baselined, and removes tracked image revisions plus in-flight image
 loads when a host window is disposed. Windows reads local files as raw bytes;
 the selected renderer owns decode and completion. The required async

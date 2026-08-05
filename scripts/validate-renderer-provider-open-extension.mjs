@@ -6,7 +6,7 @@
  * Enforce validator for the renderer provider open-extension property
  * (ADR 0019). Checks that:
  *
- * 1. No renderer identity branching exists in moui/core, moui/backend/host,
+ * 1. No renderer identity branching exists in moui/core, moui/backend,
  *    or moui/runtime (non-composition-root) packages.
  * 2. Each renderer package (moui/render/skia, moui/render/wgpu, etc.)
  *    exports a create_*_provider function matching the RendererProvider
@@ -70,10 +70,7 @@ const SELECTION_ALLOWLIST_PREFIXES = [
   "moui/render",
 ];
 
-const SELECTION_ALLOWLIST_EXACT = [
-  "moui/backend/host/host_rendering_test.mbt",
-  "moui/render/native_gpu_selection_test.mbt",
-];
+const SELECTION_ALLOWLIST_EXACT = [];
 
 // ---------------------------------------------------------------------------
 // Check 1: No renderer identity branching in core/host/runtime
@@ -88,7 +85,7 @@ function checkIdentityBranching() {
     /\bRendererBackendKind::\w+\b/,
   ];
 
-  const restrictedDirs = ["moui/core", "moui/backend/host", "moui/runtime"];
+  const restrictedDirs = ["moui/core", "moui/backend", "moui/runtime"];
 
   for (const dir of restrictedDirs) {
     const files = walkMbtFiles(dir);
@@ -197,15 +194,32 @@ function checkPlatformSkiaProviderMigration() {
 // ---------------------------------------------------------------------------
 function checkBindingContract() {
   const providerContract = join(REPO_ROOT, "moui/render/provider_contract.mbt");
-  const content = readFileSync(providerContract, "utf-8");
-  const required = [
+  const providerSelection = join(
+    REPO_ROOT,
+    "moui/render/common/provider_selection.mbt",
+  );
+  const contractContent = readFileSync(providerContract, "utf-8");
+  const selectionContent = readFileSync(providerSelection, "utf-8");
+  const contractRequired = [
     "pub(all) struct RendererProviderBinding",
-    "pub fn select_renderer_provider_binding",
     "pub fn renderer_provider_binding_providers",
   ];
-  return required
-    .filter((symbol) => !content.includes(symbol))
-    .map((symbol) => `  moui/render/provider_contract.mbt: missing ${symbol}`);
+  const selectionRequired = [
+    "pub fn select_renderer_provider_binding",
+    "pub struct RendererProviderRegistry",
+    "pub fn resolve_renderer",
+  ];
+  return [
+    ...contractRequired
+      .filter((symbol) => !contractContent.includes(symbol))
+      .map((symbol) => `  moui/render/provider_contract.mbt: missing ${symbol}`),
+    ...selectionRequired
+      .filter((symbol) => !selectionContent.includes(symbol))
+      .map(
+        (symbol) =>
+          `  moui/render/common/provider_selection.mbt: missing ${symbol}`,
+      ),
+  ];
 }
 
 // ---------------------------------------------------------------------------

@@ -123,7 +123,7 @@ test "skia text system exposes measured caret positions" {
 
 ///|
 test "skia mixed text segmentation preserves grapheme clusters" {
-  let clusters = @render.text_grapheme_clusters(
+  let clusters = @render_common.text_grapheme_clusters(
     "A\u{1F469}\u{200D}\u{1F4BB}B\u{1F1FA}\u{1F1F8}",
   )
   inspect(clusters.length(), content="4")
@@ -132,32 +132,32 @@ test "skia mixed text segmentation preserves grapheme clusters" {
   inspect(clusters[2], content="B")
   inspect(clusters[3].to_array().length(), content="2")
 
-  let indic_clusters = @render.text_grapheme_clusters("क़्ष")
+  let indic_clusters = @render_common.text_grapheme_clusters("क़्ष")
   inspect(indic_clusters.length(), content="1")
   inspect(indic_clusters[0].to_array().length(), content="4")
-  let indic_latin_clusters = @render.text_grapheme_clusters("क़्A")
+  let indic_latin_clusters = @render_common.text_grapheme_clusters("क़्A")
   inspect(indic_latin_clusters.length(), content="2")
   inspect(indic_latin_clusters[0].to_array().length(), content="3")
   inspect(indic_latin_clusters[1], content="A")
-  let musical_clusters = @render.text_grapheme_clusters("A\u{1D165}B")
+  let musical_clusters = @render_common.text_grapheme_clusters("A\u{1D165}B")
   inspect(musical_clusters.length(), content="2")
   inspect(musical_clusters[0].to_array().length(), content="2")
   inspect(musical_clusters[1], content="B")
 
-  let segments = @render.text_mixed_segments("AB你好\u{1F642}CD")
+  let segments = @render_common.text_mixed_segments("AB你好\u{1F642}CD")
   inspect(segments.length(), content="4")
   inspect(segments[0], content="AB")
   inspect(segments[1], content="你好")
   inspect(segments[2], content="\u{1F642}")
   inspect(segments[3], content="CD")
 
-  let indic_segments = @render.text_mixed_segments("Aक़्षB")
+  let indic_segments = @render_common.text_mixed_segments("Aक़्षB")
   inspect(indic_segments.length(), content="3")
   inspect(indic_segments[0], content="A")
   inspect(indic_segments[1], content="क़्ष")
   inspect(indic_segments[2], content="B")
 
-  let musical_segments = @render.text_mixed_segments("A\u{1D165}B")
+  let musical_segments = @render_common.text_mixed_segments("A\u{1D165}B")
   inspect(musical_segments.length(), content="2")
   inspect(musical_segments[0].to_array().length(), content="2")
   inspect(musical_segments[1], content="B")
@@ -194,7 +194,7 @@ fn assert_skia_grapheme_clusters_match_core(
     inspect(boundaries[index], content="\{expected_boundaries[index]}")
   }
   let expected = skia_test_core_grapheme_cluster_texts(text)
-  let actual = @render.text_grapheme_clusters(text)
+  let actual = @render_common.text_grapheme_clusters(text)
   if actual.length() != expected.length() {
     fail(
       "expected \{expected.length()} Skia grapheme clusters, got \{actual.length()}",
@@ -1259,15 +1259,15 @@ test "skia fallback caret stabilization keeps Southeast and South Asian marks st
 
 ///|
 test "skia fallback caret stabilization keeps Hangul Jamo clusters stable" {
-  assert_true(@render.codepoint_is_hangul_l(0x1100))
-  assert_true(@render.codepoint_is_hangul_l(0xA960))
-  assert_true(@render.codepoint_is_hangul_v(0x1161))
-  assert_true(@render.codepoint_is_hangul_v(0xD7B0))
-  assert_true(@render.codepoint_is_hangul_t(0x11A8))
-  assert_true(@render.codepoint_is_hangul_t(0xD7CB))
-  assert_true(@render.codepoint_is_hangul_lv(0xAC00))
-  assert_true(@render.codepoint_is_hangul_lvt(0xAC01))
-  assert_false(@render.codepoint_is_hangul_cluster_codepoint(0x3131))
+  assert_true(@render_common.codepoint_is_hangul_l(0x1100))
+  assert_true(@render_common.codepoint_is_hangul_l(0xA960))
+  assert_true(@render_common.codepoint_is_hangul_v(0x1161))
+  assert_true(@render_common.codepoint_is_hangul_v(0xD7B0))
+  assert_true(@render_common.codepoint_is_hangul_t(0x11A8))
+  assert_true(@render_common.codepoint_is_hangul_t(0xD7CB))
+  assert_true(@render_common.codepoint_is_hangul_lv(0xAC00))
+  assert_true(@render_common.codepoint_is_hangul_lvt(0xAC01))
+  assert_false(@render_common.codepoint_is_hangul_cluster_codepoint(0x3131))
 
   let modern_jamo = skia_stabilize_grapheme_cluster_carets(
     "A\u{1100}\u{1161}\u{11A8}B",

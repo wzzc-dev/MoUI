@@ -1,0 +1,22 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "wzzc-dev/moui/core",
+}
+
+import {
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui/render",
+  "Milky2018/moon_accesskit" @accesskit,
+} for "test"
+
+import {
+  "wzzc-dev/moui/render",
+} for "wbtest"
+
+supported_targets = "+native+wasm-gc+wasm"
+
+options(
+  targets: { },
+)

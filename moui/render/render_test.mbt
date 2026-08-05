@@ -21,7 +21,7 @@ test "renderer descriptor models backend family selection and presentation" {
     family=@render.RendererFamily::Skia,
     presentation=@render.RendererPresentationModel::CpuPixelFrame,
     supported_targets=[@render.RendererTarget::Native],
-    capabilities=@render.renderer_provider_capabilities(
+    capabilities=@render_common.renderer_provider_capabilities(
       provider_id="test-skia",
       backend=@render.RendererBackendKind::SkiaRasterNative,
       capability_for=_feature => {
@@ -290,9 +290,9 @@ test "shadow command degrades to layered rect batches" {
 
 ///|
 test "render mailbox keeps one in-flight and latest pending frame" {
-  let mailbox = @render.RenderFrameMailbox::new()
+  let mailbox = @render_common.RenderFrameMailbox::new()
   let input = @render.RenderFrameInput::new(
-    metrics=@render.RendererSurfaceMetrics::from_logical(
+    metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=80.0),
     ),
     commands=[],
@@ -320,7 +320,7 @@ test "render mailbox keeps one in-flight and latest pending frame" {
 /// appended to an unbounded ordered queue and never dropped, even when the
 /// runtime/UI thread floods frame submissions.
 test "render mailbox control queue is ordered and never dropped" {
-  let mailbox = @render.RenderFrameMailbox::new()
+  let mailbox = @render_common.RenderFrameMailbox::new()
   assert_false(mailbox.has_control())
   inspect(mailbox.control_pending(), content="0")
   ignore(
@@ -370,9 +370,9 @@ test "render mailbox control queue is ordered and never dropped" {
 /// follow FIFO never-dropped. The renderer thread drains control before
 /// beginning the next frame; neither queue interferes with the other.
 test "render mailbox control and frame queues coexist without interference" {
-  let mailbox = @render.RenderFrameMailbox::new()
+  let mailbox = @render_common.RenderFrameMailbox::new()
   let input = @render.RenderFrameInput::new(
-    metrics=@render.RendererSurfaceMetrics::from_logical(
+    metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=64.0, height=64.0),
     ),
     commands=[],
@@ -424,7 +424,7 @@ test "render mailbox control and frame queues coexist without interference" {
 /// renderer thread must observe every control message in order, including
 /// any queued before the shutdown signal.
 test "render mailbox shutdown does not drop earlier control messages" {
-  let mailbox = @render.RenderFrameMailbox::new()
+  let mailbox = @render_common.RenderFrameMailbox::new()
   ignore(
     mailbox.submit_control(
       @render.RendererControlMessage::ContextLoss("vulkan-device-lost"),

@@ -1,6 +1,6 @@
 ///|
-/// Runtime-owned HostRuntimeDriver (ADR 0018). Moved from backend/host so
-/// that backend/host carries platform-neutral host contracts only.
+/// Runtime-owned HostRuntimeDriver (ADR 0018). Moved from backend so
+/// that backend carries platform-neutral host contracts only.
 pub(all) struct HostRuntimeDriver {
   runtime : AppRuntime
   scheduler : RedrawScheduler
@@ -26,8 +26,8 @@ pub fn HostRuntimeDriver::new(
 ///|
 pub fn HostRuntimeDriver::dispatch(
   self : HostRuntimeDriver,
-  event : @backend_host.HostEvent,
-) -> @backend_host.HostEventResult {
+  event : @backend_host.Event,
+) -> @backend_host.EventResult {
   match event {
     Resized(metrics) => {
       self.runtime.dispatch_event(@core.AppEvent::Resize(metrics.logical_size))
@@ -88,7 +88,7 @@ pub fn HostRuntimeDriver::dispatch(
 ///|
 /// Dispatch a platform view event directly to the runtime tree.
 /// Used by the `PlatformViewPlugin` infrastructure to route decoded native
-/// platform-view events without going through `HostEvent` (which no longer
+/// platform-view events without going through `Event` (which no longer
 /// carries a platform-view variant).
 pub fn HostRuntimeDriver::dispatch_platform_view(
   self : HostRuntimeDriver,
@@ -123,7 +123,7 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
   self : HostRuntimeDriver,
   intent : @core.CommandIntent,
   services : @backend_host.HostServiceBridge,
-) -> @backend_host.HostEventResult {
+) -> @backend_host.EventResult {
   match intent {
     @core.CommandIntent::Copy | @core.CommandIntent::Cut => {
       let result = self.runtime.dispatch_focused_text_command(intent)
@@ -182,7 +182,7 @@ pub fn HostRuntimeDriver::dispatch_action_command_with_services(
   self : HostRuntimeDriver,
   command : @core.ActionCommand,
   services : @backend_host.HostServiceBridge,
-) -> @backend_host.HostEventResult {
+) -> @backend_host.EventResult {
   match command.intent {
     @core.CommandIntent::Copy
     | @core.CommandIntent::Cut
@@ -204,10 +204,10 @@ pub fn HostRuntimeDriver::dispatch_keyboard_with_services(
   self : HostRuntimeDriver,
   event : @core.KeyboardEvent,
   services : @backend_host.HostServiceBridge,
-) -> @backend_host.HostEventResult {
+) -> @backend_host.EventResult {
   match keyboard_service_command_intent(event) {
     Some(intent) => self.dispatch_command_with_services(intent, services)
-    None => self.dispatch(@backend_host.HostEvent::Keyboard(event))
+    None => self.dispatch(@backend_host.Event::Keyboard(event))
   }
 }
 
@@ -215,7 +215,7 @@ pub fn HostRuntimeDriver::dispatch_keyboard_with_services(
 pub fn HostRuntimeDriver::show_context_menu(
   self : HostRuntimeDriver,
   services : @backend_host.HostServiceBridge,
-) -> @backend_host.HostEventResult {
+) -> @backend_host.EventResult {
   let commands = self.context_menu_commands()
   if commands.length() == 0 {
     return self.event_result()
@@ -433,7 +433,7 @@ pub fn HostRuntimeDriver::size(self : HostRuntimeDriver) -> @core.Size {
 ///|
 pub fn HostRuntimeDriver::event_result(
   self : HostRuntimeDriver,
-) -> @backend_host.HostEventResult {
+) -> @backend_host.EventResult {
   {
     needs_rebuild: self.runtime.needs_rebuild(),
     needs_redraw: self.runtime.needs_redraw(),
@@ -444,12 +444,12 @@ pub fn HostRuntimeDriver::event_result(
 
 ///|
 /// Dispatch a service completion through the runtime driver. Moved from
-/// backend/host per ADR 0018 so backend/host stays runtime-neutral.
+/// backend per ADR 0018 so backend stays runtime-neutral.
 pub fn HostRuntimeDriver::dispatch_service_completion(
   self : HostRuntimeDriver,
   completion : @backend_host.HostCompletedServiceResponse,
   services : @backend_host.HostServiceBridge,
-) -> @backend_host.HostEventResult {
+) -> @backend_host.EventResult {
   match (completion.request, completion.response) {
     (
       @backend_host.HostServiceRequest::Clipboard(

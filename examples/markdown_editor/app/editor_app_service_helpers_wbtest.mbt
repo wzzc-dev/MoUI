@@ -20,7 +20,7 @@ fn markdown_editor_clipboard_services(
       }
     },
   )
-  @host.app_services(bridge~)
+  @backend_common.app_services(bridge~)
 }
 
 ///|
@@ -76,7 +76,7 @@ fn markdown_editor_file_dialog_services(
       }
     },
   )
-  @host.app_services(bridge~)
+  @backend_common.app_services(bridge~)
 }
 
 ///|
@@ -126,7 +126,7 @@ fn markdown_editor_document_services(
       }
     },
   )
-  @host.app_services(bridge~)
+  @backend_common.app_services(bridge~)
 }
 
 ///|
@@ -145,12 +145,12 @@ fn markdown_editor_link_services(
       }
     },
   )
-  @host.app_services(bridge~)
+  @backend_common.app_services(bridge~)
 }
 
 ///|
 fn markdown_editor_async_clipboard_read_services(
-  queue : @host.HostServiceAsyncQueue,
+  queue : @backend_common.ServiceAsyncQueue,
 ) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(clipboard=true),
@@ -163,12 +163,12 @@ fn markdown_editor_async_clipboard_read_services(
       }
     },
   )
-  @host.app_services(bridge~, async_queue=Some(queue))
+  @backend_common.app_services(bridge~, async_queue=Some(queue))
 }
 
 ///|
 fn markdown_editor_async_file_dialog_services(
-  queue : @host.HostServiceAsyncQueue,
+  queue : @backend_common.ServiceAsyncQueue,
 ) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -183,5 +183,5 @@ fn markdown_editor_async_file_dialog_services(
       }
     },
   )
-  @host.app_services(bridge~, async_queue=Some(queue))
+  @backend_common.app_services(bridge~, async_queue=Some(queue))
 }

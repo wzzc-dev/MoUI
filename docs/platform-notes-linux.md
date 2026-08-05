@@ -1,11 +1,11 @@
 # Linux Platform Notes
 
 `backend/linux` is a minimal native Wayland host core. It uses the
-`wzzc-dev/window@0.5.4-0.1.4` Linux package for Wayland event-loop and window handles,
-normalizes window/input events through the shared `HostEvent` contract, and runs
+`wzzc-dev/window@0.5.4-0.1.5` Linux package for Wayland event-loop and window handles,
+normalizes window/input events through the shared `Event` contract, and runs
 the Showcase entrypoints through the same renderer/runtime boundary as macOS
 and Windows. Application entrypoints supply ordered
-`RendererBindingFactory` values for concrete rendering.
+`RendererFactory` values for concrete rendering.
 `backend/linux` exposes the window package's `Window::present_rgba_pixels`
 presenter, raw-byte image I/O, and an opaque Wayland GPU descriptor; Skia and
 WGPU construction stays in `render/skia` and `render/wgpu`.
@@ -21,7 +21,7 @@ current pointer coordinates: Linux backend tests cover modifier propagation into
 shared keyboard events and button events using the position carried by the
 window event rather than stale pointer state. The fork also exposes Wayland
 data-device clipboard selection and file drag/drop events to MoUI; drag/drop
-paths continue through `HostEvent::DragDrop` before reaching `View::on_file_drop`.
+paths continue through `Event::DragDrop` before reaching `View::on_file_drop`.
 Text-input focus state and IME requests are synchronized through the shared
 `TextInputSession` path used by other native hosts. That session now records
 `TextInputImeRequestDiagnostics` for each enabled/update request, including
@@ -55,7 +55,7 @@ Linux runtime requirements are intentionally native:
   validation can use Mesa llvmpipe through `vulkan-swrast`/Lavapipe when
   hardware Vulkan is not available.
 - Wayland development headers and generated xdg-shell protocol sources for the
-  `wzzc-dev/window@0.5.4-0.1.4` native stub.
+  `wzzc-dev/window@0.5.4-0.1.5` native stub.
 - `wl_data_device_manager` from the compositor for native clipboard selection
   and file drag/drop runtime behavior.
 - XDG desktop integration for Linux services: OpenURI goes through
@@ -139,7 +139,7 @@ WebKitGTK development packages are installed, the host syncs placements from
 `DrawFrame.platform_views` using the Wayland surface handle, offsets placement
 below client decorations when needed, pumps the GTK main context from the Linux
 event-loop wait path, forwards navigation/title/history/JavaScript events
-through `HostEvent::WebView`, and drains `HostWebViewCommandQueue` commands
+through `Event::WebView`, and drains `HostWebViewCommandQueue` commands
 after frame rendering. macOS, Windows, and Linux native bridges enforce the
 shared `WebViewNavigationPolicy` before committing a navigation; blocked URLs
 produce a `NavigationFailed` event. Matching-host smoke is still required before
@@ -148,7 +148,7 @@ The Linux host loop records the renderer image-resource
 revision after each present, routes later observed revision changes through the
 matching Wayland window's `request_redraw`, exposes tracked-window revision
 snapshots for diagnostics, calls the selected factory's neutral
-`HostAsyncImageLoader` after the presented revision is baselined, and removes
+`AsyncImageLoader` after the presented revision is baselined, and removes
 tracked image revisions plus in-flight image loads when a host window is
 disposed. Linux reads local files into `HostImageSource` bytes; the selected
 renderer owns decode and completion. Package tests cover the host route from a
@@ -188,7 +188,7 @@ writes, desktop URL opening, IME composition/cursor geometry, and file
 drag/drop are implemented host-service/input paths, but they remain
 matching-host runtime evidence boundaries: cite only logs that exercised the
 actual desktop/compositor service, not the package preflight summary alone.
-Record dependency-level facts from the `wzzc-dev/window@0.5.4-0.1.4`
+Record dependency-level facts from the `wzzc-dev/window@0.5.4-0.1.5`
 package smoke artifacts; keep the MoUI Showcase
 `linux_skia` run as the mainline application observation. Keep `linux_wgpu` as
 a WGPU diagnostic observation when a Vulkan/WGPU stack is configured.

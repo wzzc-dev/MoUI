@@ -1,108 +1,108 @@
 # Platform Host Contract
 
-> This document describes the shared boundary contract of `moui/backend/host`. For an overview,
+> This document describes the shared boundary contract of `moui/backend`. For an overview,
 > see [Architecture](architecture.md).
 
-`backend/host` is the shared boundary between platform packages and the
-platform-neutral runtime. It defines `HostSurfaceMetrics`, input capabilities,
-coordinate policies, `HostEvent`, text input session synchronization,
-file drag/drop normalization, and `HostWindowRegistry` for
-platform-neutral window lifecycle and multi-window bookkeeping. Per ADR 0018,
+Root `backend` defines platform-neutral protocols and DTOs: input capabilities,
+coordinate policies, `Event`, `WindowId`, window requests, services, IME,
+accessibility, and platform views. `SurfaceMetrics` lives in `core`. Per ADR 0018,
 `HostRuntimeDriver`, `RedrawScheduler`, and `HostWallClock` live in
-`moui/runtime`; `backend/host` consumes them as contracts but does not own
+`moui/runtime`; `backend` consumes them as contracts but does not own
 them.
 
-`backend/platform_bridge` sits immediately outside this contract. It converts
+`backend/common` implements the contract. It owns `WindowRegistry`,
+`WindowRequestQueue`, the unique platform-window map, lifecycle/frame/input
+state, text-input synchronization, and service adapters. It converts
 already-neutral Close, Focus, resize/scale, redraw, and surface lifecycle facts
-to `HostEvent`, keeps surface lifecycle state, and normalizes logical
+to `Event`, keeps surface lifecycle state, and normalizes logical
 coordinates. It imports this contract but is not imported by it. Raw native
 pointer, keyboard, IME, drag, and modifier decoding belongs to the concrete
 platform backend; WeChat's direct Canvas2D callbacks remain a deliberately
 non-window-hosted exception.
 
-`backend/host` also exposes
-`HostWindowRequestQueue` so app/runtime or higher-level host code can enqueue
+Root `backend` exposes the closure-based `WindowRequests` port;
+`backend/common` implements it with `WindowRequestQueue` so runtime or platform code can enqueue
 open, focus, close, resize, minimize, show, and primary-window requests without
 embedding those requests in a platform backend. `OpenWindow` requests carry a
 platform-neutral scene id and payload alongside title and metrics, so future
 multi-window hosts have enough app-level identity to choose the runtime/content
-for the new platform window. `HostWindowSceneResolver` is the matching shared
+for the new platform window. `WindowSceneResolver` is the matching shared
 contract for resolving those scene requests into new `AppRuntime` instances or
 explicit scene rejections before a platform backend allocates a native window.
-`HostEventSource` is the host-layer subscription adapter for app-owned
-host-event fanout: platform code can publish normalized `HostEvent` values,
+`HostEventSource` in `runtime` is the subscription adapter for app-owned
+host-event fanout: platform code can publish normalized `Event` values,
 while apps map selected events back into typed `Program` messages through
 `Subscription::host_event`; cancellation removes the publisher handler so late
 host events do not re-enter stale app state.
 `HostWindowEventSource` is the matching host-layer subscription adapter for
-window-scoped platform events: platform code can publish a `HostWindowId` plus
-normalized `HostEvent`, while apps map those `HostWindowEvent` values through
+window-scoped platform events: platform code can publish a `WindowId` plus
+normalized `Event`, while apps map those `HostWindowEvent` values through
 `Subscription::window_event`; cancellation removes the publisher handler so late
 window events do not re-enter stale app state.
 `HostPlatformEventSources` bundles the host-event and window-event sources for
 platform runtimes. Web, macOS, Windows, and Linux app options can carry that
 bundle; after a raw platform event is normalized and dispatched through the
-matching `HostRuntimeDriver`, the backend publishes the same `HostEvent` with
-its `HostWindowId` so app-owned `Subscription::host_event` and
+matching `HostRuntimeDriver`, the backend publishes the same `Event` with
+its `WindowId` so app-owned `Subscription::host_event` and
 `Subscription::window_event` adapters can observe real runtime events without
 moving platform event conversion into `core`.
 `@services.TimerSource` and `@services.RouteSource` are the app-facing
 subscription adapters. Platform schedulers and history/deep-link integrations
 adapt into those sources at the composition edge; cancellation runs their
-cleanup and stale callbacks cannot re-enter the Program. `backend/host` does not
+cleanup and stale callbacks cannot re-enter the Program. `backend` does not
 export a second app-facing timer or route model.
-`HostWindowRegistry::resolve_open_request` pairs a successful scene resolution
+`backend/common.resolve_open_request` pairs a successful scene resolution
 with the created registry record so the host can keep window id, scene metadata,
-and runtime together. `HostWindowRuntimeSlot` then wraps that record with a
+and runtime together. `WindowRuntimeSlot` then wraps that record with a
 `HostRuntimeDriver`, giving future multi-window hosts a shared per-window
 runtime/driver shape before platform-specific window and renderer handles are
-attached. `HostWindowRuntimeSlots` is the matching collection for lookup,
+attached. `WindowRuntimeSlots` is the matching collection for lookup,
 primary/focused slot selection, record synchronization, and closed-window
 cleanup, including shared helpers for inserting and syncing slots from
-`HostWindowRegistry`, applying platform-neutral window requests, and applying
+`WindowRegistry`, applying platform-neutral window requests, and applying
 host lifecycle events while keeping the slot record aligned.
-`HostPlatformWindowMap` binds platform window ids from `wzzc-dev/window` to
-MoUI `HostWindowId` values so event dispatch can route through the host registry
+`PlatformWindowMap` binds platform window ids from `wzzc-dev/window` to
+MoUI `WindowId` values so event dispatch can route through the host registry
 instead of assuming one global window.
 `HostWebViewCapabilities`, `HostWebViewCommandQueue`, and
 `HostWebViewEventSource` are the host-side contract for native platform
 WebViews. Hosts report whether native embedding is available, sync
 `DrawFrame.platform_views` to concrete WebView objects, dispatch
-`HostEvent::WebView` back into the runtime, and drain queued commands at the
+`Event::WebView` back into the runtime, and drain queued commands at the
 platform edge. Browser Web wasm reports unavailable instead of creating an
 iframe overlay.
 Web, macOS, Windows, and Linux should convert their native window events into
-`HostEvent` and then let `AppRuntime` update state, rebuild, and emit
+`Event` and then let `AppRuntime` update state, rebuild, and emit
 `DrawCommand` values.
 The active Web, macOS, Windows, and Linux hosts all open a primary
-`HostWindowRecord`, register the existing runtime/driver as a primary
-`HostWindowRuntimeSlot`, bind the platform window id to the host id, route
+`WindowRecord`, register the existing runtime/driver as a primary
+`WindowRuntimeSlot`, bind the platform window id to the host id, route
 incoming platform window events through that mapping, apply resize/focus/close
-`HostEvent` values through the registry, sync slot records after lifecycle
+`Event` values through the registry, sync slot records after lifecycle
 changes, and remove slot, platform binding, and record when a host window is
 disposed. That makes multi-window lifecycle state a shared host concern instead
 of a future platform-specific rewrite. Platform entries also accept a shared
-`HostWindowRequestQueue` through `AppBuilder::window_requests` and drain
+`WindowRequestQueue` through `AppBuilder::window_requests` and drain
 focus, close, resize, minimize, show, and set-primary requests at the platform
 edge. The same queue records ordered request completions, making accepted
 operations and explicit rejections observable. Active backends use the shared
 queue drain helper so completion recording stays a host contract instead of a
 platform-local loop.
-`HostWindowCommands` is the higher-level command facade over the same queue for
+`WindowCommands` is the higher-level command facade over the same queue for
 app-facing open/focus/resize/minimize/show/close helpers and shared draining
 into a registry or window runtime slots.
 Every application entrypoint calls `@runtime.run_app`, supplies ordered
-`RendererBindingFactory` values, supplies one platform `entry`, and calls
+`RendererFactory` values, supplies one platform `entry`, and calls
 `run`. Renderer-specific options are captured by renderer factories; platform-
 specific options are captured by the platform entry. With a resolver, `OpenWindow`
 requests resolve a scene into a new `AppRuntime`, create another platform
-window, create a neutral `HostSurfaceKit`, resolve a `HostWindowRenderer`, register a per-window
+window, create a neutral `SurfaceContext`, resolve a `WindowRenderer`, register a per-window
 `HostRuntimeDriver`, bind the platform id, and then route redraw, events,
 context menus, service completions, IME sync, and disposal through
 window-indexed slots. Without a resolver, hosts reject `OpenWindow` with the
 shared unavailable-resolver message.
 
-`HostWindowRenderer` is the renderer-neutral runtime handle used by native host
+`WindowRenderer` is the renderer-neutral runtime handle used by native host
 cores. Its stable constructor core contains resize, command/frame rendering,
 present-completion drain, text-system access, present-count diagnostics, and
 disposal. Optional behavior is grouped into opaque
@@ -114,24 +114,25 @@ consumes renderer-neutral image snapshots to route
 late-image redraws per open window and expose tracked-window revision plus
 loading/ready/failed/disposed status-count diagnostics, including
 previous/current counts on repaint results. Host cores depend on `core`,
-`runtime`, `backend/host`, the neutral `render` contract, and the platform
+`runtime`, `backend`, the neutral `render` contract, and the platform
 `window` package. They do not import `render/wgpu`, `render/skia`, `wgpu_mbt`,
 `moui_skia`, or another concrete renderer. Platform backends own native window
 handles, neutral CPU presenters, GPU descriptors, and lifecycle/I/O callbacks.
-Renderer packages own creation, decode, native renderer bindings, provider
-negotiation, and renderer diagnostics.
+`render/common` owns provider negotiation and shared algorithms; renderer
+subpackages own decode, native bindings, and renderer diagnostics.
 
-`HostImageResourceCompletionSource` is the host-layer boundary for native async
+`@render_common.ImageResourceCompletionSource` is the shared boundary for native async
 image loader completions. Native provider/platform loaders publish
 `@render.ImageResourceLoadCompletion` ready/failed results through
-`HostWindowRenderer::apply_image_resource_load_completion`, which returns a revisioned
+`WindowRenderer::apply_image_resource_load_completion`, which returns a revisioned
 `@render.ImageResourceSnapshot`; the host routes that snapshot through
-`HostImageResourceRepaintTracker`, requests redraw only for matching open
+`@render_common.ImageResourceRepaintTracker`, requests redraw only for matching open
 windows, ignores stale lower revisions, and discards closed-window completions.
-`HostAsyncImageLoader` is the neutral scheduler adapter for that boundary: it
+`@render_common.AsyncImageLoader` owns in-flight state and is erased behind the
+root `@render.ImageLoader` protocol before a backend stores it. It
 scans renderer snapshots for loading records, starts the selected factory's loader,
 deduplicates in-flight `(window, source)` work, and gates late or cancelled
-completion callbacks before they can apply to a renderer. `HostNativeAsyncImageSource`
+completion callbacks before they can apply to a renderer. `@render_common.NativeAsyncImageSource`
 is the host-owned deferred request source for platform loaders that need to
 record pending `(window, source)` work and deliver a completion later from an
 independent native callback. It proves the host boundary can receive late
@@ -155,36 +156,64 @@ assembly. `View` still describes UI declaration trees only, and
 
 ## Shell Embedding Bridge
 
-`EmbeddingHostBridge` is the private Android/iOS/HarmonyOS service boundary. It
-coalesces `EmbedderImeRequest` updates, transports runtime-owned full/delta
-semantics commits with `SemanticsNodeId` and `SemanticsGeneration`, and carries
-asynchronous text/image clipboard requests and responses. Its cursor suppresses
-unchanged transport without becoming a second revision authority. A disposed
-channel rejects late responses.
+`moui/backend` is the only owner of the neutral `HostServiceRequest`,
+`HostServiceResponse`, `HostServiceCapabilities`, `HostServiceBridge`, request-id,
+and completion contracts. The internal implementations are deliberately
+asymmetric where the hosts are asymmetric:
+
+- `backend/common/desktop` owns the synchronous desktop router. macOS, Windows,
+  and Linux provide native clipboard, URL, dialog, menu, and settings closures;
+  the package routes shared text/binary file and directory implementations from
+  `backend/common/native`.
+- `backend/common/native` owns native `@fs` I/O shared by desktop and embedded
+  backends, including the renderer-neutral raw-byte `HostImageSource`.
+- `backend/common/embedded/services` owns the callback queue. Clipboard and platform
+  channel requests return `Pending(id)` in FIFO order, complete at most once,
+  reject duplicate/late responses, and are cancelled during dispose. Other
+  desktop-only requests return `Unavailable` synchronously.
+
+`EmbeddedRuntimeHostBridge` is the private Android/iOS/HarmonyOS runtime
+aggregation boundary and the sole consumer of `backend/common/embedded/services`. It
+coalesces `EmbeddedImeRequest` updates, transports runtime-owned full/delta
+semantics commits with `SemanticsNodeId` and `SemanticsGeneration`, synchronizes
+platform-view placements/events, and maps pending service requests to the
+unchanged native wire schema. Its cursor suppresses unchanged transport without
+becoming a second revision authority. A disposed bridge cancels outstanding
+services and rejects late responses.
 
 ## Window Host Coordinator
 
-`WindowHostCoordinator` (moui/runtime) is the shared owner of host window state
-for all host backends: window records, runtime slots, platform-window maps,
+`WindowCoordinator` (`moui/backend/common`) is the shared owner of desktop/Web host
+window state: window records, runtime slots, platform-window maps,
 surface attachments, redraw/IME/close coordination, and host event dispatch
-into runtime slots. Native backends (macOS/Windows/Linux), the Web backend, and
-the embedded runtime backends keep only platform-private parts out of it:
-window creation attributes, raw native decoding, surface ownership, and IME
-sink specifics.
+into runtime slots. Native backends (macOS/Windows/Linux) and the Web backend
+keep only platform-private window creation, raw native decoding, surface
+ownership, and IME sink specifics out of it. Android/iOS/HarmonyOS use the
+parallel `EmbeddedWindowCoordinator`; both adapters share
+`FrameCoordinator`.
 
 Platforms contribute a `WindowSurfaceActions` per native window at attach time
-(`focus`, `request_surface_size`, `sync_surface`, `renderer_resize`,
+(`focus`, `request_resize`, `sync_observed_resize`,
 `set_minimized`, `set_visible`, `request_redraw`, `request_ime_update`, `drop`,
 `native_view_handle`, `dispose_platform_views`); the coordinator owns when each
-action runs. `apply_window_request` takes `open_window`/`dispose_window`/`exit`
-hooks so web can wrap native open failure, platform view disposal, and async
+action runs. Both resize actions return applied content metrics; the coordinator
+updates registry/runtime state, dispatches resize, and schedules redraw. Its
+`run_window_redraw` owns completion, pending-frame, image, IME, and follow-up
+redraw state. `apply_window_request` takes `open_window`/`dispose_window`/`exit`
+hooks so web can wrap native open failure, platform-view disposal, and async
 service queue teardown.
 
-Embedded-runtime backends share `moui/backend/internal/embedded_runtime_backend`
+Embedded-runtime backends share `moui/backend/common/embedded`
 (`HostedWindowBackend`, `HostedWindow` projection closures, `HostedRuntimeSession`).
 Android/iOS/HarmonyOS `window_hosted.mbt` are thin shells (platform window
 creation, surface handles, six `ApplicationHandler` slots, host simulation
-pump, IME sink injection) around that shared shell. Web reuses the coordinator
+pump, IME sink injection) around that shared shell. Their `HostCmd` values are
+decoded by the stateless `wzzc-dev/window/internal/embedded_dispatch` adapter.
+MoUI's `EmbeddedWindowCoordinator` uniquely owns lifecycle phase, surface
+generation, primary-window routing, detach, and exit intent. `HostedWindowBackend`
+owns session/renderer capabilities and `FrameCoordinator` owns redraw,
+completion, image repaint, and IME hook ordering after the callback enters
+MoUI. Web reuses the coordinator
 directly: `WebApp` holds one coordinator and `web_surface_actions` builds the
 `WindowSurfaceActions` projection; browser DOM routing stays in
 `moui/backend/web`.
@@ -213,20 +242,21 @@ and Showcase. Its `preflight_fields()` helper emits a renderer-neutral ready/gap
 field string for provider/package audits such as native Skia preflight logs;
 `HostServiceBridge`, `HostInputContract`, and platform backend setup remain the
 source of truth for actual behavior.
-Apps do not consume this bridge. `@host.app_services(...)` adapts it to
-`@services.AppServices`, and `@host.app_environment(...)` combines those
+Apps do not consume this bridge. `@backend_common.app_services(...)` adapts it to
+`@services.AppServices`, and `@backend_common.app_environment(...)` combines those
 services with optional `@services.TimerSource` and `@services.RouteSource`.
 Platform backends expose `app_environment()` to composition roots; Program
 closures capture the environment without placing it in business `Model` data.
 Services that cannot finish synchronously, especially browser clipboard reads
 and file dialogs that need a permission or picker callback, can return
-`HostServiceResponse::Pending` through `HostServiceAsyncQueue`. The host drains
+`HostServiceResponse::Pending` through `@backend_common.ServiceAsyncQueue`. The host drains
 pending requests into an in-flight set at the platform edge, completes them with
 the original request attached, and records the completion. Runtime-owned
 effects such as async paste are handed to `HostRuntimeDriver`. The host adapter
 converts app-owned operations to `ServiceTask[T]`; apps receive
 `ServiceTaskResult::Success`, `Failure`, or `Cancelled` through their typed
-message loop. Request ids and queue handlers stay private to `backend/host`, and
+message loop. Request ids are protocol values; queue handlers stay in
+`backend/common`, and
 stale task dispatch is rejected by the runtime task lifecycle.
 The Web backend wires that queue to browser host imports and exported wasm
 completion callbacks for clipboard reads and file pickers.
@@ -234,7 +264,7 @@ Web, macOS, and Windows entrypoints query that bridge at startup and install
 the reported light/dark scheme into `AppRuntime` before the first host driver
 layout/redraw pass, so initial view builds see the platform color scheme through
 `ComponentContext` environment reads.
-`ThemeChanged` window events are also normalized into `HostEvent::ThemeChanged`;
+`ThemeChanged` window events are also normalized into `Event::ThemeChanged`;
 `HostRuntimeDriver` applies them to runtime environment instead of leaking a
 platform-specific event into app code.
 
@@ -266,9 +296,9 @@ the platform action handler installed by the entrypoint (for example
 `@window_macos.set_system_menu_action_handler`). See
 [Non-render cookbook](non-render-component-cookbook.md) and
 Showcase's Platform workspace (`examples/showcase/app/platform`).
-App-facing multi-window lifecycle requests go through `HostWindowActions`
+App-facing multi-window lifecycle requests go through `WindowActions`
 (`open`, `close`, `focus`, `set_primary`, `resize`, `minimize`, `show`) on the
-shared `HostWindowRequestQueue`. Each resolved scene remains an independent
+shared `WindowRequestQueue`. Each resolved scene remains an independent
 `AppRuntime`; shared state is app-owned. See `examples/multi_window`.
 File drop targets use the `View::on_file_drop` modifier; hosts normalize native
 file drag/drop positions and paths before the runtime dispatches typed messages

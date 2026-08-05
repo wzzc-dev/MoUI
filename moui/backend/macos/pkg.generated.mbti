@@ -3,7 +3,7 @@ package "wzzc-dev/moui/backend/macos"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
   "wzzc-dev/window/dpi",
@@ -22,13 +22,13 @@ pub fn macos_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessi
 
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo
 
-pub fn macos_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
+pub fn macos_capability_summary(services? : @backend.HostServiceCapabilities) -> @backend.HostCapabilitySummary
 
-pub fn macos_input_capabilities() -> @host.HostInputCapabilities
+pub fn macos_input_capabilities() -> @backend.HostInputCapabilities
 
 pub fn macos_native_view_handle(@wzzc-dev/window/macos.Window) -> UInt64?
 
-pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
+pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @backend.HostServiceBridge
 
 pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
@@ -42,13 +42,13 @@ pub fn macos_wall_clock() -> @runtime.HostWallClock
 pub(all) struct MacosAccessibilityBridgeInfo {
   kind : @runtime.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool
-  native_platform_bridge_available : Bool
+  native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct MacosBackendInfo {
-  host_info : @host.HostAppInfo
+  host_info : @backend.HostAppInfo
   renderer_available : Bool
   accessibility : MacosAccessibilityBridgeInfo
   description : String
@@ -57,8 +57,8 @@ pub(all) struct MacosBackendInfo {
 pub struct MacosHostAppOptions {
   // private fields
 }
-pub fn MacosHostAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
-pub fn MacosHostAppOptions::platform_view_plugins(Self) -> Array[@host.PlatformViewPlugin]
+pub fn MacosHostAppOptions::new(scene_resolver? : @runtime.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
+pub fn MacosHostAppOptions::platform_view_plugins(Self) -> Array[@backend.PlatformViewPlugin]
 
 pub struct MacosHostSmokeOptions {
   // private fields

@@ -2,12 +2,12 @@
 package "examples/multi_window"
 
 import {
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/common",
   "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn runtime_and_host() -> (@runtime.AppRuntime, @runtime.HostWindowSceneResolver, @host.HostWindowRequestQueue)
+pub fn runtime_and_host() -> (@runtime.AppRuntime, @runtime.WindowSceneResolver, @common.WindowRequestQueue)
 
 // Errors
 

@@ -11,7 +11,7 @@
 - 作者：高见远（首席架构师）
 - 日期：2026-08
 - 适用仓库：`/Volumes/Data/Code/moon/MoUI`
-- 关联不变量：P5 / P6 / P9 / P11 / P12 / R1 / R2 / R3 / R7 / A2
+- 关联不变量：P5 / P6 / P9 / P10 / P11 / R1 / R2 / R3 / R7 / A2
 - 关联 ADR：0019（provider 契约）、0020（平台适配器重复度）、0022（native WGPU 实验性）、0023（sun 实验性）
 - 配套治理文书（非新 ADR）：`docs/decisions/0007-renderer-and-skia.md` 的 `## 0019-A` 小节（ADR 0019 补充条款 / Phase E close-out 补完，按主题合并归档）
 
@@ -30,7 +30,7 @@
 | 编号 | 真实问题 | 证据 |
 |------|----------|------|
 | D1 | 抽象**可被绕过**：平台基座暴露的注入点是 `<Platform>RendererProvider`（接受任意闭包），不是 `RendererProviderBinding`。13 个绑定包里有 6 个从未调用过 `select_renderer_provider_binding` | `moui/backend/macos/macos_backend.mbt:53`；grep 结果见 §1.2 |
-| D2 | 注入点本身被复制了 4 份，差异仅在窗口类型 | `macos_backend.mbt:53`、`linux_backend.mbt:59`、`windows_backend.mbt:53`、`internal/embedded_runtime_backend/hosted_window_backend.mbt:33` |
+| D2 | 注入点本身被复制了 4 份，差异仅在窗口类型 | `macos_backend.mbt:53`、`linux_backend.mbt:59`、`windows_backend.mbt:53`、`internal/embedded_runtime/hosted_window_backend.mbt:33` |
 | D3 | O(P×R) 组合爆炸 + 转发样板：**已恶化为功能缺陷**——9 条绑定线 7 条丢字段，合计 19 处能力丢失 | §1.3 实测；§1.3.1 漂移矩阵 |
 | D4 | `backend/web`、`backend/wechat` 两个平台基座直接 import 具体渲染器，破坏了 native 侧已建立的解耦 | `web/moon.pkg:7`、`wechat/moon.pkg:5`、`wechat/host_runtime.mbt:12,37` |
 
@@ -76,9 +76,9 @@
 ```
 moui/backend/macos/macos_backend.mbt:53-57
 pub struct MacosRendererProvider {
-  priv create_renderer : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-  priv sync_surface   : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader   : @render.HostAsyncImageLoader?
+  priv create_renderer : (@window_macos.Window, @host.SurfaceMetrics) -> @render.WindowRenderer?
+  priv sync_surface   : (@window_macos.Window, @host.SurfaceMetrics) -> Unit
+  priv image_loader   : @render.AsyncImageLoader?
 }
 ```
 
@@ -163,18 +163,18 @@ M3 的整体透传正是为一次性消除这 19 处丢失：绑定包不再镜�
 ### 1.4 真问题 D2：注入点被复制 4 份
 
 ```
-macos_backend.mbt:53    create_renderer : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-linux_backend.mbt:59    create_renderer : (@window_linux.Window,  @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-windows_backend.mbt:53  create_renderer : (@win.Window,           @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
-hosted_window_backend.mbt:33  create_renderer : (UInt64,          @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
+macos_backend.mbt:53    create_renderer : (@window_macos.Window, @host.SurfaceMetrics) -> @render.WindowRenderer?
+linux_backend.mbt:59    create_renderer : (@window_linux.Window,  @host.SurfaceMetrics) -> @render.WindowRenderer?
+windows_backend.mbt:53  create_renderer : (@win.Window,           @host.SurfaceMetrics) -> @render.WindowRenderer?
+hosted_window_backend.mbt:33  create_renderer : (UInt64,          @host.SurfaceMetrics) -> @render.WindowRenderer?
 ```
 
 四份结构完全同构（`create_renderer` + `sync_surface`/`sync` + `image_loader`），**唯一差异是第一个参数的窗口类型**。
 
-`internal/embedded_runtime_backend` 的 `RendererProviderAdapter` 已经把窗口类型擦除成 `UInt64` —— 这说明「类型擦除以复用」的思路在仓库内已有先例，只是用了最粗暴的擦除方式（丢失类型安全）。MoonBit 的泛型 struct 能同时拿到复用与类型安全，仓库内已有验证过的先例：
+`internal/embedded_runtime` 的 `RendererProviderAdapter` 已经把窗口类型擦除成 `UInt64` —— 这说明「类型擦除以复用」的思路在仓库内已有先例，只是用了最粗暴的擦除方式（丢失类型安全）。MoonBit 的泛型 struct 能同时拿到复用与类型安全，仓库内已有验证过的先例：
 
 ```
-moui/backend/platform_bridge/window_slot.mbt:27
+moui/backend/common/window_slot.mbt:27
 pub struct WindowSlotMap[W, X] { mut slots : Array[WindowSlot[W, X]] }
 pub fn[W, X] WindowSlotMap::new() -> WindowSlotMap[W, X] { { slots: [] } }
 ```
@@ -198,7 +198,7 @@ moui/backend/wechat/host_runtime.mbt:12   mut renderer : @canvas2d.Canvas2DRende
 moui/backend/wechat/host_runtime.mbt:37   let r = @canvas2d.Canvas2DRenderer::new(canvas_id~)
 ```
 
-实测该文件对 `r` 的全部用法只有 `r.resize(...)`（:38）、`r.text_system()`（:39）、`r.render(commands)`（:121）——**三个方法 `@render.HostWindowRenderer` 全部具备**。这是一个纯粹的历史遗留，修复成本极低。
+实测该文件对 `r` 的全部用法只有 `r.resize(...)`（:38）、`r.text_system()`（:39）、`r.render(commands)`（:121）——**三个方法 `@render.WindowRenderer` 全部具备**。这是一个纯粹的历史遗留，修复成本极低。
 
 ### 1.6 附带发现：工厂签名与校验器都还是「闭合矩阵」
 
@@ -224,11 +224,11 @@ create_canvas2d_provider  (create_canvas2d~: (RendererSurfaceMetrics) -> Canvas2
 
 ADR 0019 宣称消灭了「中央矩阵」，但矩阵只是从 `moui/render` 迁移到了校验器脚本里。新增渲染器仍然要改这份清单——**开放扩展性没有真正闭环**。
 
-**E8 达成了它的设计目标，但该目标本身不覆盖 D1。** Phase E 的 E8（`docs/plans/done/moui-architecture-convergence.md:111`）要求把 `validate-renderer-provider-open-extension.mjs` 切到 enforce，这一点已做到；其 `restrictedDirs = ["moui/core","moui/backend/host","moui/runtime"]`（`:99-101`）精确等于 ADR 0019 §Consequences（`docs/decisions/0007-renderer-and-skia.md:526-529`）指定的射程——守的是「core/host/runtime 不得分支渲染器身份」，且守住了。真正的缺口是：没有任何校验器检查绑定包是否走 `select_renderer_provider_binding`。D1 这条不变量**从未有过执行器**——不是门禁失效，是从来没建过这道门禁。附带两处配置事实（均非门禁失效）：
+**E8 达成了它的设计目标，但该目标本身不覆盖 D1。** Phase E 的 E8（`docs/plans/done/moui-architecture-convergence.md:111`）要求把 `validate-renderer-provider-open-extension.mjs` 切到 enforce，这一点已做到；其 `restrictedDirs = ["moui/core","moui/backend","moui/runtime"]`（`:99-101`）精确等于 ADR 0019 §Consequences（`docs/decisions/0007-renderer-and-skia.md:526-529`）指定的射程——守的是「core/host/runtime 不得分支渲染器身份」，且守住了。真正的缺口是：没有任何校验器检查绑定包是否走 `select_renderer_provider_binding`。D1 这条不变量**从未有过执行器**——不是门禁失效，是从来没建过这道门禁。附带两处配置事实（均非门禁失效）：
 
 (a) **PREFIXES 是死配置**：`SELECTION_ALLOWLIST_PREFIXES`（`:65-83`）的 12 条绑定包前缀（`moui/backend/*/skia`、`moui/render` 等）全部落在 `restrictedDirs` 之外，永不可能被命中；末条 `"moui/render"` 是 catch-all，会吞掉前面所有 `moui/render/*` 条目，前面那些本身就是冗余。这部分随本方案顺手清理，不影响门禁有效性。
 
-(b) **EXACT 是有效豁免，且是 M5 的验收抓手**：`SELECTION_ALLOWLIST_EXACT`（`:85-88`）含 `moui/backend/host/host_rendering_test.mbt`，说明校验器作者**明知** host 层有文件在直接消费 `NativeGpuPlatform`，于是主动登记例外——这不是疏忽。实测该文件 `:119-159` 共 6 处使用 `@render.NativeGpuPlatform::` / `@render.NativeRendererMode::`，其豁免随 M5 下沉后缩短（见 §3.5.2 M5 完成信号）。
+(b) **EXACT 是有效豁免，且是 M5 的验收抓手**：`SELECTION_ALLOWLIST_EXACT`（`:85-88`）含 `moui/backend/host_rendering_test.mbt`，说明校验器作者**明知** host 层有文件在直接消费 `NativeGpuPlatform`，于是主动登记例外——这不是疏忽。实测该文件 `:119-159` 共 6 处使用 `@render.NativeGpuPlatform::` / `@render.NativeRendererMode::`，其豁免随 M5 下沉后缩短（见 §3.5.2 M5 完成信号）。
 
 本方案新增的 `validate-options-field-drift.mjs` 正是要补 D1 没有执行器的那道口子（options 字段透传完整性），而非另起炉灶。
 
@@ -271,7 +271,7 @@ ADR 0019 宣称消灭了「中央矩阵」，但矩阵只是从 `moui/render` �
 +-----------------------------------|--------------------------------------+
                                     v
 +--------------------------------------------------------------------------+
-| moui/backend/host [契约] | moui/backend/platform_bridge [中性变换]        |
+| moui/backend [契约] | moui/backend/common [中性变换]        |
 +-----------------------------------|--------------------------------------+
                                     v
 +--------------------------------------------------------------------------+
@@ -286,10 +286,10 @@ ADR 0019 宣称消灭了「中央矩阵」，但矩阵只是从 `moui/render` �
 | `moui/core` | 跨运行时协议与值类型 | 控件词汇、运行时、渲染器 | P3 |
 | `moui/render` | provider 抽象、`RendererInstance`、`RendererProviderBinding`、`provider_shell`、**新增 `HostRendererAdapter[W]`**、**新增 `RendererProviderBinding::from_provider`** | import `moui/backend/*`（含 `host`）；出现任何具体渲染器分支；读取环境变量（本包 target 含 wasm） | P6；`render/moon.pkg` 现仅依赖 core/zeno/svg |
 | `moui/render/<renderer>` | 渲染器实现、provider-ID、能力上报、`negotiate`、**标准工厂 `create_<r>_provider`**；native-only 包可持有本渲染器族的选择策略（如 skia 的 `MOUI_SKIA_RENDERER` 解析） | import 任何 `moui/backend/*`；感知平台窗口类型 | P6、R1、R7 |
-| `moui/backend/host` | 主机服务契约（`HostSurfaceMetrics`、`PlatformViewPlugin`、`HostWindowRequestQueue`）；**新增 `HostSurfaceMetrics::normalized()`** | 具体平台行为；import `moui/render`（当前主 import 块无此依赖，须保持） | P5、ADR 0018 |
-| `moui/backend/platform_bridge` | 中性生命周期/坐标变换、`WindowSlotMap[W, X]` | import `moui/render` | P10、ADR 0020 |
+| `moui/backend` | 主机服务契约（`SurfaceMetrics`、`PlatformViewPlugin`、`WindowRequestQueue`）；**新增 `SurfaceMetrics::normalized()`** | 具体平台行为；import `moui/render`（当前主 import 块无此依赖，须保持） | P5、ADR 0018 |
+| `moui/backend/common` | 中性生命周期/坐标变换、`WindowSlotMap[W, X]` | import `moui/render` | P10、ADR 0020 |
 | `moui/backend/<platform>` | 事件循环、窗口创建、原生输入解码、平台服务；**注入点收敛为 `@render.HostRendererAdapter[Window]`** | import `moui/render/<renderer>`（web/wechat 当前违例，见 §4）；定义平台私有的 `<Platform>RendererProvider` | P5、P6、P10 |
-| `moui/backend/<platform>/<renderer>`（合成根） | 平台句柄 → surface descriptor 的映射、`RendererProviderBinding` 装配与注册顺序（即 `auto` 策略）、平台特有的 present target 与 image loader、渲染器特有 options | 复制平台 `HostAppOptions` 字段；自定义 metrics 转换；重复实现 `MOUI_SKIA_RENDERER` 解析；跳过 `select_renderer_provider_binding` | P6、P12、R2、R3 |
+| `moui/backend/<platform>/<renderer>`（合成根） | 平台句柄 → surface descriptor 的映射、`RendererProviderBinding` 装配与注册顺序（即 `auto` 策略）、平台特有的 present target 与 image loader、渲染器特有 options | 复制平台 `HostAppOptions` 字段；自定义 metrics 转换；重复实现 `MOUI_SKIA_RENDERER` 解析；跳过 `select_renderer_provider_binding` | P6、P10、R2、R3 |
 | `examples/*/app` | 应用逻辑 | 依赖 `moui/runtime`、`moui/render/*`、具体 backend、provider | P9 |
 | `examples/*/<platform>_<renderer>` | 入口装配（决定链接单元） | 应用逻辑 | P1、R3 |
 
@@ -323,7 +323,7 @@ ADR 0019 宣称消灭了「中央矩阵」，但矩阵只是从 `moui/render` �
 
 - 平台基座只依赖 `@render.HostRendererAdapter[Window]`，其中 `W` 由平台自己填。新增平台 = 新增基座，`moui/render` 与 `moui/render/<renderer>` **零改动**。
 - 新增渲染器 = 新增 `moui/render/<r>` 并导出 `create_<r>_provider`，`moui/backend/<platform>` **零改动**。
-- 唯一的 O(P×R) 剩余项是合成根本身——这是**不可消除的本质复杂度**：Metal layer 安装、X11/Wayland surface、HWND、Vulkan window 各自不同，`checks/platform-adapter-duplication-baseline.json` 已把「Texture native surface creation」「Discrete GPU enumeration and Metal/Vulkan/EGL device setup」列为 `allowUntil: null` 的永久豁免，本方案与该判断一致。
+- 唯一的 O(P×R) 剩余项是合成根本身——这是**不可消除的本质复杂度**：Metal layer 安装、X11/Wayland surface、HWND、Vulkan window 各自不同。后续 ADR 0020 修订明确只保留这些 native ABI/descriptor 差异，不再用永久豁免表达。
 
 本方案能做到的是**把合成根压缩到只剩本质复杂度**：约 130 行 vs 当前 341-1293 行。
 
@@ -337,7 +337,7 @@ ADR 0019 宣称消灭了「中央矩阵」，但矩阵只是从 `moui/render` �
 
 ### 3.1 M1：泛型 `HostRendererAdapter[W]`（消灭 4 份注入点复制）
 
-新增文件 `moui/render/host_adapter.mbt`。**关键设计点：metrics 用 `RendererSurfaceMetrics`（`moui/render` 自有类型）而非 `@host.HostSurfaceMetrics`**，这样 `moui/render` 不需要 import `moui/backend/host`，保住现有分层（`render/moon.pkg` 当前只依赖 core/zeno/svg）。
+新增文件 `moui/render/host_adapter.mbt`。**关键设计点：metrics 用 `RendererSurfaceMetrics`（`moui/render` 自有类型）而非 `@host.SurfaceMetrics`**，这样 `moui/render` 不需要 import `moui/backend`，保住现有分层（`render/moon.pkg` 当前只依赖 core/zeno/svg）。
 
 ```moonbit
 ///|
@@ -349,16 +349,16 @@ ADR 0019 宣称消灭了「中央矩阵」，但矩阵只是从 `moui/render` �
 /// Replaces the per-platform `MacosRendererProvider` / `LinuxRendererProvider`
 /// / `WindowsRendererProvider` / `RendererProviderAdapter` copies.
 pub struct HostRendererAdapter[W] {
-  priv create_renderer : (W, RendererSurfaceMetrics) -> HostWindowRenderer?
+  priv create_renderer : (W, RendererSurfaceMetrics) -> WindowRenderer?
   priv sync_surface : (W, RendererSurfaceMetrics) -> Unit
-  priv image_loader : HostAsyncImageLoader?
+  priv image_loader : AsyncImageLoader?
 }
 
 ///|
 pub fn[W] HostRendererAdapter::new(
-  create_renderer~ : (W, RendererSurfaceMetrics) -> HostWindowRenderer?,
+  create_renderer~ : (W, RendererSurfaceMetrics) -> WindowRenderer?,
   sync_surface? : (W, RendererSurfaceMetrics) -> Unit = (_window, _metrics) => (),
-  image_loader? : HostAsyncImageLoader? = None,
+  image_loader? : AsyncImageLoader? = None,
 ) -> HostRendererAdapter[W] {
   { create_renderer, sync_surface, image_loader }
 }
@@ -368,7 +368,7 @@ pub fn[W] HostRendererAdapter::create(
   self : HostRendererAdapter[W],
   window : W,
   metrics : RendererSurfaceMetrics,
-) -> HostWindowRenderer? {
+) -> WindowRenderer? {
   (self.create_renderer)(window, metrics)
 }
 
@@ -386,7 +386,7 @@ pub fn[W] HostRendererAdapter::sync(
 /// unambiguous against the private field of the same name.
 pub fn[W] HostRendererAdapter::async_image_loader(
   self : HostRendererAdapter[W],
-) -> HostAsyncImageLoader? {
+) -> AsyncImageLoader? {
   self.image_loader
 }
 ```
@@ -400,7 +400,7 @@ pub fn run_app_with_renderer_provider(
   runtime : @runtime.AppRuntime,
   provider~ : @render.HostRendererAdapter[@window_macos.Window],
   options? : MacosHostAppOptions = MacosHostAppOptions::new(),
-  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+  window_requests? : @host.WindowRequestQueue = @host.WindowRequestQueue::new(),
 ) -> Unit {
   // ... 其余逻辑不变，provider.image_loader 改为 provider.async_image_loader()
 }
@@ -413,9 +413,9 @@ pub fn run_app_with_renderer_provider(
 /// Deprecated: use `@render.HostRendererAdapter[@window_macos.Window]`.
 /// Kept for one release so downstream entrypoints migrate incrementally.
 pub fn MacosRendererProvider::new(
-  create_renderer~ : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
-  sync_surface? : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit = (_w, _m) => (),
-  image_loader? : @render.HostAsyncImageLoader? = None,
+  create_renderer~ : (@window_macos.Window, @host.SurfaceMetrics) -> @render.WindowRenderer?,
+  sync_surface? : (@window_macos.Window, @host.SurfaceMetrics) -> Unit = (_w, _m) => (),
+  image_loader? : @render.AsyncImageLoader? = None,
 ) -> @render.HostRendererAdapter[@window_macos.Window] {
   @render.HostRendererAdapter::new(
     create_renderer=(window, metrics) => {
@@ -440,14 +440,14 @@ pub fn MacosRendererProvider::new(
 /// Derive a host-facing binding from any `RendererProvider`. The binding
 /// rewires the provider's `create` so the `RendererInstance` contract stays
 /// truthful for diagnostics and isolated provider tests, while production
-/// hosts build the richer `HostWindowRenderer` through `create_host_renderer`.
+/// hosts build the richer `WindowRenderer` through `create_host_renderer`.
 ///
 /// This replaces per-renderer `create_*_host_binding` factories. It introduces
 /// no new provider ID and no new capability surface, so it is P11
 /// shrink-or-stay compliant.
 pub fn RendererProviderBinding::from_provider(
   provider : RendererProvider,
-  create_host_renderer : (RendererSurfaceMetrics, BoundSurface) -> HostWindowRenderer,
+  create_host_renderer : (RendererSurfaceMetrics, BoundSurface) -> WindowRenderer,
 ) -> RendererProviderBinding {
   let host_provider = {
     ..provider,
@@ -488,7 +488,7 @@ let binding = @render.RendererProviderBinding::from_provider(
 
 ```moonbit
 pub struct MacosSunAppOptions {
-  priv scene_resolver : @runtime.HostWindowSceneResolver
+  priv scene_resolver : @runtime.WindowSceneResolver
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
@@ -523,7 +523,7 @@ pub fn run_app_with_options(
   title : String,
   runtime : @runtime.AppRuntime,
   options? : @macos_host.MacosHostAppOptions = @macos_host.MacosHostAppOptions::new(),
-  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+  window_requests? : @host.WindowRequestQueue = @host.WindowRequestQueue::new(),
 ) -> Unit {
   @macos_host.run_app_with_renderer_provider(
     title,
@@ -564,7 +564,7 @@ pub fn run_app_with_options(
   runtime : @runtime.AppRuntime,
   options? : @macos_host.MacosHostAppOptions = @macos_host.MacosHostAppOptions::new(),
   renderer_options? : MacosSkiaRendererOptions = MacosSkiaRendererOptions::new(),
-  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+  window_requests? : @host.WindowRequestQueue = @host.WindowRequestQueue::new(),
 ) -> Unit {
   @macos_host.run_app_with_renderer_provider(
     title,
@@ -597,15 +597,15 @@ M3 改造后，绑定包的 `run_app_with_options` 改为接收 `@macos_host.Mac
 
 因 M1 已把 adapter 的 metrics 类型定为 `RendererSurfaceMetrics`，转换职责自然上移到**平台基座**（每平台一次，共 4 处），12 个绑定包里的 `renderer_metrics_from_host` 全部删除。
 
-归一化逻辑（scale <= 0 回落 1.0、physical == 0 由 logical × scale 推导）下沉到 `moui/backend/host`：
+归一化逻辑（scale <= 0 回落 1.0、physical == 0 由 logical × scale 推导）下沉到 `moui/backend`：
 
 ```moonbit
 ///|
 /// Normalize degenerate surface metrics once, so every platform base and
 /// renderer binding stops re-deriving the same fallbacks.
-pub fn HostSurfaceMetrics::normalized(
-  self : HostSurfaceMetrics,
-) -> HostSurfaceMetrics {
+pub fn SurfaceMetrics::normalized(
+  self : SurfaceMetrics,
+) -> SurfaceMetrics {
   let scale_factor = if self.scale_factor > 0.0 { self.scale_factor } else { 1.0 }
   let width = if self.physical_size.width > 0.0 {
     self.physical_size.width
@@ -617,7 +617,7 @@ pub fn HostSurfaceMetrics::normalized(
   } else {
     self.logical_size.height * scale_factor
   }
-  HostSurfaceMetrics::new(
+  SurfaceMetrics::new(
     logical_size=self.logical_size,
     physical_size=@core.Size::new(width~, height~),
     scale_factor~,
@@ -629,7 +629,7 @@ pub fn HostSurfaceMetrics::normalized(
 
 ```moonbit
 ///|
-fn renderer_metrics(metrics : @host.HostSurfaceMetrics) -> @render.RendererSurfaceMetrics {
+fn renderer_metrics(metrics : @host.SurfaceMetrics) -> @render.RendererSurfaceMetrics {
   let m = metrics.normalized()
   @render.RendererSurfaceMetrics::new(
     logical_size=m.logical_size,
@@ -706,13 +706,13 @@ fn select_route(platform~ : P, gpu_available~ : Bool) -> @render.SurfaceRoute {
 - `native_platform_surface.mbt:14,21,22,28` —— 泛型化状态：`resolve_surface_route` 已泛型化为 `pub fn[P : NativePlatformSurface](P, NativeRendererMode, ...)`，平台维度已开放。**结论（2026-08-03 复核）**：第二个参数 `NativeRendererMode` 保持封闭枚举是有意设计——它是渲染器偏好集合（Auto/SkiaGpu/SkiaRaster，无第三方扩展需求），不是平台扩展维度；平台类型通过 `P : NativePlatformSurface` 开放。下沉 M5 与用户决策（仅重命名变体、不动枚举位置）冲突，本提案此条目暂不实施。
 - `render/skia/hybrid_renderer.mbt:9,16,17,61`
 - 3 个 desktop provider 的 parse 调用（macos:91 / linux:36 / windows:47）
-- `backend/host/host_rendering_test.mbt:119-159`（见 §3.5.2 / B1(b)）
+- `backend/host_rendering_test.mbt:119-159`（见 §3.5.2 / B1(b)）
 
 > 顺带：`native_platform_surface.mbt:11` 那句注释「`NativeGpuPlatform` can reuse this logic without editing a central matrix」值得引用——它证明 ADR 0019 的意图确实是消灭中央矩阵，而 enum 本身留在中立层就是矩阵没消灭干净的残迹。
 
 ### 3.5.2 M5 完成信号（E8 EXACT 豁免缩短 = 不变量棘轮 shrink-or-stay 实证）
 
-`NativeGpuPlatform` / `NativeRendererMode` 下沉 skia 族后，`SELECTION_ALLOWLIST_EXACT`（`validate-renderer-provider-open-extension.mjs:85-88`）中 `"moui/backend/host/host_rendering_test.mbt"` 一行可被删除且 `validate-renderer-provider-open-extension.mjs` 仍通过。豁免名单缩短 = 不变量棘轮 shrink-or-stay 的实证，正好接上 P11「provider 预算只减不增」的口径。
+`NativeGpuPlatform` / `NativeRendererMode` 下沉 skia 族后，`SELECTION_ALLOWLIST_EXACT`（`validate-renderer-provider-open-extension.mjs:85-88`）中 `"moui/backend/host_rendering_test.mbt"` 一行可被删除且 `validate-renderer-provider-open-extension.mjs` 仍通过。豁免名单缩短 = 不变量棘轮 shrink-or-stay 的实证，正好接上 P11「provider 预算只减不增」的口径。
 
 ### 3.5.3 M5 与 R3 校验器的硬边界（B5）
 
@@ -755,7 +755,7 @@ fn select_route(platform~ : P, gpu_available~ : Bool) -> @render.SurfaceRoute {
 ///|
 priv struct WechatState {
   mut driver : @runtime.HostRuntimeDriver?
-  mut renderer : @render.HostWindowRenderer?   // was @canvas2d.Canvas2DRenderer?
+  mut renderer : @render.WindowRenderer?   // was @canvas2d.Canvas2DRenderer?
   mut needs_render : Bool
 }
 
@@ -769,10 +769,10 @@ pub fn run_app(
   logical_width~ : Double,
   logical_height~ : Double,
   scale_factor? : Double = 2.0,
-  create_renderer~ : (String, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer,
+  create_renderer~ : (String, @host.SurfaceMetrics) -> @render.WindowRenderer,
 ) -> Unit {
   let d = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
-  let host_metrics = @host.HostSurfaceMetrics::new(
+  let host_metrics = @host.SurfaceMetrics::new(
     logical_size=@core.Size::new(width=logical_width, height=logical_height),
     physical_size=@core.Size::new(
       width=logical_width * scale_factor,
@@ -796,7 +796,7 @@ pub fn run_app(
 }
 ```
 
-可行性已实测：`host_runtime.mbt` 对渲染器的全部调用只有 `resize`（:38）、`text_system()`（:39）、`render(commands)`（:121），`@render.HostWindowRenderer` 三者皆有。
+可行性已实测：`host_runtime.mbt` 对渲染器的全部调用只有 `resize`（:38）、`text_system()`（:39）、`render(commands)`（:121），`@render.WindowRenderer` 三者皆有。
 
 入口侧一行接线：
 
@@ -816,14 +816,14 @@ pub fn run_app(
 修复：新建 `moui/backend/web/webgpu` 绑定包，与 `backend/wechat/canvas` 对称。
 
 - 迁出到 `moui/backend/web/webgpu`：`WebRenderer::create`（:23-50）、`web_renderer_provider_bindings`（:57-86）、`host_renderer_from_webgpu`（:158-176）、`webgpu_renderer_backend_info`（:10）、`webgpu_canvas_surface_contract`（:15）、`WebRendererError`（:2）
-- 留在 `backend/web`：`WebRenderer` 包装结构（:5-7）及其转发方法（`resize`/`render`/`render_frame`/`text_system`/`image_*`/`dispose`，:96-155）—— 它们只操作 `@render.HostWindowRenderer`，已是渲染器无关的
+- 留在 `backend/web`：`WebRenderer` 包装结构（:5-7）及其转发方法（`resize`/`render`/`render_frame`/`text_system`/`image_*`/`dispose`，:96-155）—— 它们只操作 `@render.WindowRenderer`，已是渲染器无关的
 - 新增注入构造：
 
 ```moonbit
 // moui/backend/web (平台基座保留)
 ///|
 pub fn WebRenderer::from_host_renderer(
-  host_renderer : @render.HostWindowRenderer,
+  host_renderer : @render.WindowRenderer,
 ) -> WebRenderer {
   { host_renderer, }
 }
@@ -841,7 +841,7 @@ pub fn WebRenderer::from_host_renderer(
 | 平台 | 平台基座 | 绑定包 | 注入类型 |
 |------|----------|--------|----------|
 | macos/linux/windows | `backend/<p>` | `backend/<p>/{skia,sun,wgpu}` | `HostRendererAdapter[@window_<p>.Window]` |
-| ios/android/harmonyos | `backend/<p>` + `internal/embedded_runtime_backend` | `backend/<p>/skia` | `HostRendererAdapter[UInt64]` |
+| ios/android/harmonyos | `backend/<p>` + `internal/embedded_runtime` | `backend/<p>/skia` | `HostRendererAdapter[UInt64]` |
 | web | `backend/web` | `backend/web/webgpu`（新） | `HostRendererAdapter[String]`（canvas id） |
 | wechat | `backend/wechat` | `backend/wechat/canvas`（已存在） | 注入 `create_renderer` 闭包 |
 
@@ -859,7 +859,7 @@ pub fn WebRenderer::from_host_renderer(
 | 修复 D4（web/wechat） | 独立处理 | 独立处理 | 独立处理 | **纳入方案（§4）** |
 | P6 影响 | 无 | **违反**（渲染器实现选择逻辑渗入平台包） | 需改写边界表述 | 措辞微调，语义不变 |
 | P11 影响 | stay | **增长，需 RFC** | stay | **stay，不触发 RFC** |
-| P12 影响 | 略改善 | 不可评估 | 略改善 | **改善**（重复度单调下降，符合 shrink-or-stay） |
+| Platform Bridge 边界 | 略改善 | 不可评估 | 略改善 | **改善**（共享行为继续收进 owning package） |
 | MoonBit 可实现性 | 高 | **不可实现** | 高 | **高**（依赖已验证的 `WindowSlotMap[W,X]` 泛型模式） |
 | 链接期开销 | 不变（保持一包一链接单元） | **致命：无法条件排除 native-stub** | 不变 | **不变**（编译期选择机制原样保留） |
 | 迁移成本 | 低 | 不适用 | 中 | 中（可分 5 阶段，每阶段独立可回滚） |
@@ -907,7 +907,7 @@ pub fn WebRenderer::from_host_renderer(
 产出：
 - `moui/render/host_adapter.mbt`：`HostRendererAdapter[W]` + 4 个方法（M1）
 - `moui/render/provider_contract.mbt` 追加 `RendererProviderBinding::from_provider`（M2）
-- `moui/backend/host` 追加 `HostSurfaceMetrics::normalized()`（M4）
+- `moui/backend` 追加 `SurfaceMetrics::normalized()`（M4）
 - `moui/render/skia/desktop_selection.mbt`：`desktop_surface_route`（M5）
 - `scripts/validate-options-field-drift.mjs`（**新增**）：抽取各 `<Platform>HostAppOptions` 的字段集与对应绑定包实际透传字段做差集，非空即 fail。这是 §1.6「闭合矩阵」问题的解药——比对是**推导**出来的，不是硬编码渲染器→工厂列表
 
@@ -917,7 +917,7 @@ pub fn WebRenderer::from_host_renderer(
 ```
 moon check moui/render
 moon check moui/render/skia
-moon check moui/backend/host
+moon check moui/backend
 moon test moui/render --target native
 node scripts/validate-renderer-provider-open-extension.mjs
 node scripts/validate-api-surface.mjs
@@ -945,7 +945,7 @@ moon check moui/backend/macos/sun
 moon test moui/backend/macos --target native
 MOUI_MACOS_SUN_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/macos_sun --target native
 node scripts/validate-renderer-provider-open-extension.mjs
-node scripts/validate-platform-adapter-duplication.mjs
+node scripts/validate-backend-common-boundary.mjs
 node scripts/validate-options-field-drift.mjs   # 预期 18（macos/sun 的 event_sources 丢失已归零）
 ```
 
@@ -1013,14 +1013,14 @@ R2/R3 是本阶段的核心风险面：必须逐一验证三种 `--renderer` 模
 - `ios/skia`、`android/skia`、`harmonyos/skia` 应用 M1（`HostRendererAdapter[UInt64]` 替代 `RendererProviderAdapter`）
 - 删除 `MacosRendererProvider` / `LinuxRendererProvider` / `WindowsRendererProvider` / `RendererProviderAdapter` 四个 shim
 - 删除 `create_skia_raster_host_binding` / `create_skia_hybrid_host_binding`
-- **重新测量并下调 `checks/platform-adapter-duplication-baseline.json`**（P12 shrink-or-stay：预算只减不增，收敛完成后必须落基线）
+- **运行 Platform Bridge boundary gate**；发现共享行为时直接收进 owning package，不记录重复预算
 
 验证：
 ```
 moon check --target native
 moon check --target wasm-gc
 moon test --target native
-node scripts/validate-platform-adapter-duplication.mjs
+node scripts/validate-backend-common-boundary.mjs
 node scripts/validate-renderer-provider-open-extension.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-maintenance-baseline.mjs
@@ -1064,7 +1064,7 @@ sh scripts/check.sh --profile pr
 
 3. **`ios/android/harmonyos` 的 `W` 类型是否收紧？**（R-3）等价替换还是顺带收紧类型安全。
 
-4. **P12 基线下调幅度**：Phase 5 收敛后重新测量，是否同时把 `allowUntil: "2026-12-01"` 的「per-platform redraw frame loop」豁免一并处理（该项与本方案无关，但到期时间临近）。
+4. **平台 redraw 收敛**：Phase 5 后继续把 per-platform redraw frame loop 移入共享 coordinator；不登记临时豁免。
 
 5. **是否将「渲染器包导出契约」写入 `docs/invariants.md`**：建议新增一条 P13「每个 `moui/render/<r>` 必须且仅需导出 `create_<r>_provider`；host binding 由 `RendererProviderBinding::from_provider` 统一派生」，由简化后的 Check 2 机械校验。需要拍板是否新增不变量编号。
 
@@ -1078,7 +1078,7 @@ sh scripts/check.sh --profile pr
 | 共享装配壳已存在 | `moui/render/provider_shell.mbt:16-42,49-78,87-116` |
 | 平台基座不 import 具体渲染器 | `moui/backend/{macos,linux,windows}/moon.pkg` |
 | 真实注入点是平台私有结构 | `moui/backend/macos/macos_backend.mbt:53-57`；`macos_app_runtime.mbt:5-21,80-101` |
-| 注入点被复制 4 份 | `macos_backend.mbt:53`、`linux_backend.mbt:59`、`windows_backend.mbt:53`、`internal/embedded_runtime_backend/hosted_window_backend.mbt:33-45` |
+| 注入点被复制 4 份 | `macos_backend.mbt:53`、`linux_backend.mbt:59`、`windows_backend.mbt:53`、`internal/embedded_runtime/hosted_window_backend.mbt:33-45` |
 | 6 个包绕过 ADR 0019 协商 | grep `select_renderer_provider_binding` 命中 8 处，均不含 sun/wgpu 绑定包 |
 | `macos/sun` 使用裸闭包注入 | `moui/backend/macos/sun/macos_sun_provider.mbt:128-137` |
 | options 逐字段拆装样板 | `macos_sun_provider.mbt:2-125`；`macos_skia_provider.mbt:31-54,209-315` |
@@ -1087,7 +1087,7 @@ sh scripts/check.sh --profile pr
 | web 违例 | `moui/backend/web/moon.pkg:7`；`webgpu_renderer.mbt:57-86` |
 | wechat 违例 | `moui/backend/wechat/moon.pkg:5`；`host_runtime.mbt:12,37` |
 | wechat 渲染器用法仅 3 个方法 | `host_runtime.mbt:38,39,121` |
-| 泛型 struct 已验证可用 | `moui/backend/platform_bridge/window_slot.mbt:27,32`；使用处 `macos_app_runtime.mbt:103` |
+| 泛型 struct 已验证可用 | `moui/backend/common/window_slot.mbt:27,32`；使用处 `macos_app_runtime.mbt:103` |
 | 工厂签名已统一 | `render/skia/provider.mbt:9`、`render/sun/provider.mbt:13`、`render/wgpu/provider.mbt:9`、`render/canvas2d/provider.mbt:9` |
 | host binding 工厂仅 skia 有 | `render/skia/provider.mbt:53,77` |
 | 校验器内嵌闭合矩阵 | `scripts/validate-renderer-provider-open-extension.mjs:132-146` |
@@ -1096,9 +1096,9 @@ sh scripts/check.sh --profile pr
 | 渲染器包链接配置互斥 | `macos/skia/moon.pkg`、`macos/wgpu/moon.pkg`、`macos/sun/moon.pkg` 的 `cc-link-flags` 与 `native-stub` |
 | `render/skia` 为 native-only 且已含 env | `moui/render/skia/moon.pkg:5,16` |
 | `moui/render` 依赖极简 | `moui/render/moon.pkg:1-5`（core/zeno/svg） |
-| `moui/backend/host` 主块不依赖 render | `moui/backend/host/moon.pkg:1-6` |
+| `moui/backend` 主块不依赖 render | `moui/backend/moon.pkg:1-6` |
 | `resolve_surface_route` 签名 | `moui/render/pkg.generated.mbti:92` |
-| P12 永久豁免项 | `checks/platform-adapter-duplication-baseline.json` budget.allowlist |
+| Platform Bridge 边界 | `scripts/validate-backend-common-boundary.mjs` |
 | ADR 0019 原文 | `docs/decisions/0007-renderer-and-skia.md:390-470` |
 | ADR 0020 原文 | `docs/decisions/0011-platform-class-and-convergence.md:83` |
 | ADR 0023 原文 | `docs/decisions/0023-sun-experimental-renderer.md` |

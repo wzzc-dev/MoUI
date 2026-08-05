@@ -6,7 +6,7 @@ test "sun renderer draws platform view pixels before presenting frame" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,

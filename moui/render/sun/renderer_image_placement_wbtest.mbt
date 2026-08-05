@@ -176,7 +176,7 @@ test "sun renderer dispose clears cached image resources and records disposal" {
   let source = sun_image_placement_wbtest_png_data_uri()
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,

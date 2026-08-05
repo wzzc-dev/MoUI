@@ -131,13 +131,8 @@ fn app_bench_env_int(name : String, fallback : Int) -> Int {
 }
 
 ///|
-fn app_bench_metrics(
-  width : Double,
-  height : Double,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::from_logical(
-    size=@core.Size::new(width~, height~),
-  )
+fn app_bench_metrics(width : Double, height : Double) -> @core.SurfaceMetrics {
+  @core.SurfaceMetrics::from_logical(size=@core.Size::new(width~, height~))
 }
 
 ///|

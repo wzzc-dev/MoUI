@@ -145,7 +145,7 @@ fn skia_resolved_text_segments(
   text : String,
   resolution : SkiaFontResolution,
 ) -> SkiaResolvedTextLayout? {
-  let text_segments = @render.text_mixed_segments(text)
+  let text_segments = @render_common.text_mixed_segments(text)
   if text_segments.is_empty() {
     return None
   }

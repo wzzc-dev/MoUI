@@ -33,7 +33,7 @@ Custom-control 入口在 `moui/views` 中面向 app 暴露。App 代码、host �
 
 `@runtime.effect_plan_summary` 暴露 runtime-owned effect tree 诊断摘要，包括 batch、send、anonymous dispatch、structured run、task、none、scheduled leaf count、max depth、structured effect descriptor，以及重复 descriptor-key 的数量/名称，且不会运行 effect 回调。Program runtime snapshot 也报告 message queue 的 enqueue、drain、pending、max-pending 和 ignored program-dispatch 计数器，而不要求 `Msg` 值可序列化。每次 program-message drain 都被界定为一个 runtime turn：点击、`Effect::send` / `Effect::dispatch`、structured runner、effect task 或 subscription 同步排队的消息会保持 FIFO 顺序，但超过每 turn 上限的工作会留待下一个 host/runtime 入口处理，而不是让当前调用栈无限存活。由匿名 `Effect::dispatch` 或结构化 `Effect::run` 回调捕获的 dispatch closure 在 `AppRuntime::destroy()` 后会被忽略，因此迟到的 app-owned 回调不能重新进入已销毁的 program runtime。
 
-`Program` constructor 也接受 `subscriptions=model => ...`；每个 source 使用稳定 key，接收 typed dispatcher，并可返回 cleanup callback。runtime 按 key/kind 复用、重启或取消 source，并拒绝已取消或已销毁生命周期的 stale callback。`backend/host` 只提供 integration-only `HostEventSource`/`HostWindowEventSource`；面向应用的 timer 和 route adapter 是仅依赖 core 的 `@services.TimerSource` 与 `@services.RouteSource`。
+`Program` constructor 也接受 `subscriptions=model => ...`；每个 source 使用稳定 key，接收 typed dispatcher，并可返回 cleanup callback。runtime 按 key/kind 复用、重启或取消 source，并拒绝已取消或已销毁生命周期的 stale callback。`backend` 只提供 integration-only `HostEventSource`/`HostWindowEventSource`；面向应用的 timer 和 route adapter 是仅依赖 core 的 `@services.TimerSource` 与 `@services.RouteSource`。
 
 `Program::with_commands` 与 Program 一起声明 typed `ProgramCommand[Msg]`。runtime 随 model 同步当前 command map；键盘快捷键、原生应用菜单和 context-menu selection 都按 FIFO 排队相应 `Msg`，并进入同一个 `update`。应用不得安装在 TEA 之外直接修改 model 的 command closure。
 

@@ -41,7 +41,7 @@ fn SunCpuRasterPreflight::surface_ready(self : SunCpuRasterPreflight) -> Bool {
 
 ///|
 fn sun_cpu_raster_preflight(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> SunCpuRasterPreflight {
   let width = sun_dim_to_int(metrics.physical_size.width)
   let height = sun_dim_to_int(metrics.physical_size.height)

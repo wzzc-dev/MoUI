@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
   "moonbitlang/quickcheck",
   "mizchi/pixelmatch",
 }

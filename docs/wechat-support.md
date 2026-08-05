@@ -21,7 +21,7 @@ through the CanvasRenderingContext2D API.
   surface host, and provides a neutral `entry(WechatAppOptions)` platform
   closure.
 - `moui/render/canvas2d` implements the Canvas 2D renderer producing
-  `RendererBindingFactory`/`HostWindowRenderer` values with wasm FFI imports.
+  `RendererFactory`/`WindowRenderer` values with wasm FFI imports.
 - `examples/*/wechat_canvas` composes both sides with
   `@runtime.run_app(...).render(@render_canvas2d.canvas()).backend(@wechat.entry(...))`.
 - `window/wechat/template` owns the Mini Program project template and its JS

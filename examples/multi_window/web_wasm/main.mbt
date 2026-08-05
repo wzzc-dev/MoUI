@@ -4,6 +4,6 @@ fn main {
   @runtime.run_app("MoUI Multi-Window", runtime)
   .render_all(@webgpu_adapter.from_env())
   .backend(@web.entry(options=@web.WebAppOptions::new(scene_resolver=resolver)))
-  .window_requests(queue)
+  .window_requests(queue.requests())
   .run()
 }

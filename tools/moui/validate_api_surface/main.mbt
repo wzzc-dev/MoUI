@@ -310,7 +310,7 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_lines: 468,
       max_pub_all_lines: 35,
       required_tokens: [
-        "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend/host\"", "\"wzzc-dev/moui/render\"",
+        "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend\"", "\"wzzc-dev/moui/render\"",
         "pub struct AppRuntime", "pub fn[Model, Msg] new_program(", "pub fn[Model, Msg] new_program_with_dimensions(",
         "pub fn[Msg] new_view(", "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
         "pub fn AppRuntime::draw_frame(", "pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot",
@@ -335,11 +335,13 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 2103,
-      max_pub_lines: 620,
-      max_pub_all_lines: 177,
+      // SurfaceMetrics is the single backend/render-neutral surface DTO.
+      max_lines: 2114,
+      max_pub_lines: 625,
+      max_pub_all_lines: 178,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
+        "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",
         "pub(all) enum Effect", "type Subscription", "pub(all) struct DrawFrame",
         "pub(open) trait ViewNode", "View::from_node", "View::identity", "View::children",
         "View::layout", "View::paint", "View::event", "View::text_command_result",
@@ -422,34 +424,68 @@ fn package_budgets() -> Array[PackageBudget] {
       ],
     },
     {
-      label: "host contracts",
-      path: "moui/backend/host/pkg.generated.mbti",
-      package_token: "package \"wzzc-dev/moui/backend/host\"",
-      max_lines: 671,
-      max_pub_lines: 240,
-      max_pub_all_lines: 45,
+      label: "backend protocols",
+      path: "moui/backend/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/backend\"",
+      max_lines: 420,
+      max_pub_lines: 80,
+      max_pub_all_lines: 40,
       required_tokens: [
-        "pub fn app_services", "pub fn app_environment", "pub(all) enum HostEvent",
-        "pub(all) struct HostSurfaceMetrics", "pub(all) struct HostWindowId", "pub(all) struct TextInputSession",
+        "pub(all) enum Event", "pub(all) struct WindowId", "pub struct WindowRequests",
+        "pub struct HostServiceBridge", "pub struct PlatformViewPlugin",
+      ],
+      forbidden_tokens: [
+        "\"wzzc-dev/moui/render/skia\"", "\"wzzc-dev/moui/render/wgpu\"", "SkiaRasterRenderer",
+        "WindowRegistry", "WindowRequestQueue", "ServiceAsyncQueue", "Coordinator",
+      ],
+    },
+    {
+      label: "backend common",
+      path: "moui/backend/common/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/backend/common\"",
+      max_lines: 480,
+      max_pub_lines: 255,
+      max_pub_all_lines: 15,
+      required_tokens: [
+        "pub fn app_services", "pub fn app_environment", "pub(all) struct TextInputSession",
+        "pub struct ServiceAsyncQueue", "pub struct WindowRegistry", "pub struct WindowCoordinator",
+        "pub struct FrameCoordinator",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/render/skia\"", "\"wzzc-dev/moui/render/wgpu\"", "SkiaRasterRenderer",
       ],
     },
     {
-      label: "renderer facade",
+      label: "render protocols",
       path: "moui/render/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render\"",
-      // HostSurfaceKit and renderer binding factories erase concrete
+      // SurfaceContext and renderer factories erase concrete
       // renderer/platform types at the composition boundary.
-      max_lines: 982,
-      max_pub_lines: 346,
-      max_pub_all_lines: 51,
+      max_lines: 550,
+      max_pub_lines: 185,
+      max_pub_all_lines: 38,
       required_tokens: [
-        "RendererBackendKind", "RendererDescriptor", "RendererProviderBinding", "HostWindowRenderer",
+        "RendererBackendKind", "RendererDescriptor", "RendererProviderBinding", "WindowRenderer",
+        "SurfaceContext", "RendererFactory", "RendererResolution", "ImageLoader",
         "RenderFrameResult",
       ],
-      forbidden_tokens: ["\"wzzc-dev/moui/backend/host\"", "SkiaRasterRenderer"],
+      forbidden_tokens: [
+        "\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer", "RendererProviderRegistry",
+        "ImageResourceLifecycle", "AsyncImageLoader", "ImageResourceRepaintTracker",
+      ],
+    },
+    {
+      label: "render common",
+      path: "moui/render/common/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/render/common\"",
+      max_lines: 475,
+      max_pub_lines: 250,
+      max_pub_all_lines: 25,
+      required_tokens: [
+        "pub struct ImageResourceLifecycle", "pub struct AsyncImageLoader", "pub struct ImageResourceRepaintTracker",
+        "pub struct RendererProviderRegistry", "pub fn resolve_renderer", "pub fn window_renderer_with_cached_layer_fallback",
+      ],
+      forbidden_tokens: ["\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer"],
     },
     {
       label: "skia renderer",
@@ -461,20 +497,20 @@ fn package_budgets() -> Array[PackageBudget] {
       required_tokens: [
         "SkiaRasterRenderer", "skia_available", "skia_image_load_completion",
       ],
-      forbidden_tokens: ["\"wzzc-dev/moui/backend/host\""],
+      forbidden_tokens: ["\"wzzc-dev/moui/backend\""],
     },
     {
       label: "sun renderer",
       path: "moui/render/sun/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render/sun\"",
-      max_lines: 241,
+      max_lines: 242,
       max_pub_lines: 144,
       max_pub_all_lines: 1,
       required_tokens: [
         "SunRasterRenderer", "SunRendererError", "SunPixelFrame",
       ],
       forbidden_tokens: [
-        "\"wzzc-dev/moui/backend/host\"", "SkiaRasterRenderer", "WgpuRenderer",
+        "\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer", "WgpuRenderer",
       ],
     },
     {
@@ -488,7 +524,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "WebGpuHostCall", "WebGpuHostError", "WebGpuWasmRenderer",
       ],
       forbidden_tokens: [
-        "\"wzzc-dev/moui/backend/host\"", "SkiaRasterRenderer", "WgpuRenderer",
+        "\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer", "WgpuRenderer",
       ],
     },
     {
@@ -501,7 +537,7 @@ fn package_budgets() -> Array[PackageBudget] {
       required_tokens: [
         "NativeTextEngine", "HostWgpuSurface", "NativeTextLayout",
       ],
-      forbidden_tokens: ["\"wzzc-dev/moui/backend/host\"", "SkiaRasterRenderer"],
+      forbidden_tokens: ["\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer"],
     },
     {
       label: "native text protocol",
@@ -514,7 +550,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "NativeFontRegistrationPayload", "native_measure_layout_from_bytes",
       ],
       forbidden_tokens: [
-        "\"wzzc-dev/moui/backend/host\"", "HostWindowRenderer", "WgpuRenderer", "HostWgpuSurface",
+        "\"wzzc-dev/moui/backend\"", "HostWindowRenderer", "WgpuRenderer", "HostWgpuSurface",
         "RendererHandle",
       ],
     },
@@ -960,107 +996,10 @@ fn validate_core_legacy_family_budgets(
         path +
         ": core legacy family " +
         budget.label +
-        " occurrences=\{count}, above ratchet max \{budget.max_occurrences}; move new API to views/runtime/backend/host",
+        " occurrences=\{count}, above ratchet max \{budget.max_occurrences}; move new API to views/runtime/backend",
       )
     }
   }
-}
-
-///|
-fn runtime_consumer_roots() -> Array[String] {
-  [
-    "benchmarks", "examples", "moui/backend", "moui/tests", "moui/views", "moui_devtools",
-    "moui_tester", "website",
-  ]
-}
-
-///|
-fn backend_runtime_interface_paths() -> Array[String] {
-  [
-    "moui/backend/host/pkg.generated.mbti", "moui/backend/web/pkg.generated.mbti",
-    "moui/backend/macos/pkg.generated.mbti", "moui/backend/windows/pkg.generated.mbti",
-    "moui/backend/linux/pkg.generated.mbti", "moui/backend/android/pkg.generated.mbti",
-    "moui/backend/ios/pkg.generated.mbti", "moui/backend/harmonyos/pkg.generated.mbti",
-  ]
-}
-
-///|
-fn max_shared_app_runtime_imports() -> Int {
-  0
-}
-
-///|
-fn max_shared_app_core_imports() -> Int {
-  20
-}
-
-///|
-/// Post–domain-sugar refactor, `@core` is a first-class shared-app dependency;
-/// this list is retained only for tests that assert the guard still tracks paths.
-fn allowed_shared_app_core_imports() -> Array[String] {
-  [
-    "examples/markdown_editor/app/moon.pkg", "examples/mo_workbench/app/moon.pkg",
-    "examples/pdf_workbench/app/moon.pkg", "examples/showcase/app/moon.pkg", "website/app/moon.pkg",
-  ]
-}
-
-///|
-/// Shared apps are pure TEA packages. Runtime, host wire protocol, renderer,
-/// and concrete backend imports belong in composition or integration packages.
-fn allowed_shared_app_runtime_imports() -> Array[String] {
-  []
-}
-
-///|
-fn embedded_runtime_backend_internal_package_token() -> String {
-  "wzzc-dev/moui/backend/internal/embedded_runtime_backend"
-}
-
-///|
-fn allowed_embedded_runtime_backend_internal_imports() -> Array[String] {
-  [
-    "moui/backend/android/moon.pkg", "moui/backend/ios/moon.pkg", "moui/backend/harmonyos/moon.pkg",
-    "moui/backend/internal/embedded_runtime_backend/moon.pkg",
-  ]
-}
-
-///|
-fn validate_embedded_runtime_backend_internal_import_text(
-  path : String,
-  text : String,
-  failures : Array[String],
-) -> Unit {
-  if text.contains(embedded_runtime_backend_internal_package_token()) &&
-    !allowed_embedded_runtime_backend_internal_imports().contains(path) {
-    failures.push(
-      path +
-      ": internal embedded runtime session may only be imported by Android, iOS, and HarmonyOS backends",
-    )
-  }
-}
-
-///|
-fn validate_embedded_runtime_backend_internal_imports(
-  repo_root : String,
-  failures : Array[String],
-) -> Unit {
-  let paths : Array[String] = []
-  collect_moon_pkg_files(repo_root, "moui", paths, failures)
-  let mut import_count = 0
-  for path in paths {
-    let text = match read_repo_text(repo_root, path) {
-      Ok(value) => value
-      Err(message) => {
-        failures.push(message)
-        continue
-      }
-    }
-    if text.contains(embedded_runtime_backend_internal_package_token()) {
-      import_count += 1
-    }
-    validate_embedded_runtime_backend_internal_import_text(path, text, failures)
-  }
-  println("api surface: embedded runtime imports=\{import_count}/7")
 }
 
 ///|
@@ -1776,7 +1715,7 @@ fn validate_core_webview_ownership(
         source_hits += 1
         failures.push(
           path +
-          ": WebView command/event/policy/spec ownership belongs in moui/backend/host (" +
+          ": WebView command/event/policy/spec ownership belongs in moui/backend (" +
           rule.label +
           ") instead of core",
         )
@@ -1948,8 +1887,8 @@ fn run_checks(
   validate_core_routing_ownership(repo_root, failures)
   validate_core_runtime_boundary(repo_root, failures)
   validate_backend_runtime_interfaces(repo_root, failures)
-  validate_embedded_runtime_backend_internal_imports(repo_root, failures)
-  validate_platform_file_similarity(repo_root, failures)
+  validate_embedded_runtime_internal_imports(repo_root, failures)
+  validate_host_service_internal_imports(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)
   validate_shared_app_runtime_imports(repo_root, failures)
   validate_shared_app_core_imports(repo_root, failures)

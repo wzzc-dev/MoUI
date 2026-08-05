@@ -158,7 +158,7 @@ clear (any pressable element, not just buttons). Only the concrete control
 
 ---
 
-## 0018: Host contract split — runtime/render ownership leaves `backend/host`
+## 0018: Host contract split — runtime/render ownership leaves `backend`
 
 - **Date**: 2026-07-28
 - **Status**: Accepted
@@ -169,7 +169,7 @@ clear (any pressable element, not just buttons). Only the concrete control
 
 ### Context
 
-`moui/backend/host` is currently a thick package. Its `moon.pkg` directly
+`moui/backend` is currently a thick package. Its `moon.pkg` directly
 imports `wzzc-dev/moui/runtime` and `wzzc-dev/moui/render`, and the package
 contains implementation that is not host-contract work:
 
@@ -181,7 +181,7 @@ contains implementation that is not host-contract work:
 - async image loader, completion source, layer cache glue
 
 This bundles three distinct ownerships into one package: (a) platform-neutral
-**host contracts** (`HostEvent`, `HostCmd`, services facade,
+**host contracts** (`Event`, `HostCmd`, services facade,
 `EmbedderHostChannel`, capability summary), (b) **runtime lifecycle
 orchestration**, (c) **render completion / GPU recovery / image snapshot /
 layer cache**. Invariants P4 (runtime lifecycle → `moui/runtime`) and P6
@@ -191,18 +191,18 @@ layer cache**. Invariants P4 (runtime lifecycle → `moui/runtime`) and P6
 Forces:
 
 - Mobile sessions (`android`/`ios`/`harmonyos`) share `EmbedderHostChannel`;
-  that contract must stay in `backend/host` and remain platform-neutral.
-- Platform adapters translate native callbacks into `HostCmd`/`HostEvent`
+  that contract must stay in `backend` and remain platform-neutral.
+- Platform adapters translate native callbacks into `HostCmd`/`Event`
   only (invariant M6); they must not need to import runtime or render impl.
 - Native Skia mainline and Native WGPU diagnostic both render through host;
   the host surface glue is render-result plumbing, not host contract.
 
 ### Decision
 
-Split `backend/host` into three ownerships.
+Split `backend` into three ownerships.
 
-1. **`backend/host` = platform-neutral host contracts only.** Keep
-   `HostEvent`, `HostCmd`, `HostService` facade, `EmbedderHostChannel`,
+1. **`backend` = platform-neutral host contracts only.** Keep
+   `Event`, `HostCmd`, `HostService` facade, `EmbedderHostChannel`,
    `HostPlatformChannel`, capability summary, text-input session contract,
    window lifecycle **contracts**, window request **contracts**. The package
    imports only `moui/core` (neutral value types) and `wzzc-dev/window/core`
@@ -218,10 +218,10 @@ Split `backend/host` into three ownerships.
    `image_repaint.mbt`, `renderer.mbt` completion glue, async image loader
    completion, and layer-cache indexing move to `moui/render` (render
    surface contract) or the specific renderer provider package that owns the
-   resource. Window event **translation** (native → `HostEvent`) stays in
+   resource. Window event **translation** (native → `Event`) stays in
    platform adapters or a dedicated adapter helper, not host.
 
-Allowed `backend/host` import set after the split:
+Allowed `backend` import set after the split:
 
 ```text
 wzzc-dev/moui/core
@@ -277,36 +277,36 @@ orchestration.
 
 ### Consequences
 
-- `backend/host/moon.pkg` no longer imports `moui/runtime` or
-  `moui/render`. `moon info moui/backend/host` surface shrinks.
+- `backend/moon.pkg` no longer imports `moui/runtime` or
+  `moui/render`. `moon info moui/backend` surface shrinks.
 - New `moui/runtime/host_driver` (or files in `moui/runtime`) owns
   `HostRuntimeDriver`, wall clock, redraw scheduler.
 - New render-surface contract in `moui/render` owns completion, recovery,
   image snapshot, layer cache glue; providers implement the surface.
-- Platform adapters import only `backend/host` (+ their renderer provider);
+- Platform adapters import only `backend` (+ their renderer provider);
   no transitive runtime/render deps.
 - Invariants P5 tightened to "host contracts only"; P4/P6 reinforced.
 - New validator: `scripts/validate-host-import-baseline.mjs` enforces that
-  `backend/host/moon.pkg` imports neither `moui/runtime` nor `moui/render`.
+  `backend/moon.pkg` imports neither `moui/runtime` nor `moui/render`.
 
 ### Agent Notes
 
 - **Session context**: MoUI core/views/host/renderer/platform architecture
   convergence task; sub-task 3 (host 拆分).
 - **Agent model**: AtomCode (GLM-5.2).
-- **Key prompt or instruction**: "收缩 `moui/backend/host` 为平台中立的
+- **Key prompt or instruction**: "收缩 `moui/backend` 为平台中立的
   host contracts…拆出 `HostRuntimeDriver` 与 runtime orchestration…目标
-  依赖图中 `backend/host` 不再直接依赖 `moui/runtime`、`moui/render/*` 或
+  依赖图中 `backend` 不再直接依赖 `moui/runtime`、`moui/render/*` 或
   window 实现包。"
-- **Validation**: `moon info moui/backend/host` shows no runtime/render
-  symbols; `moon test moui/backend/host moui/runtime moui/render --target
+- **Validation**: `moon info moui/backend` shows no runtime/render
+  symbols; `moon test moui/backend moui/runtime moui/render --target
   native`; new validator green; daily profile green.
 
 ### References
 
 - `docs/invariants.md` P4/P5/P6/M6
 - `docs/architecture-map.md` ownership cheat sheet
-- `moui/backend/host/host_runtime_driver.mbt`, `renderer.mbt`,
+- `moui/backend/host_runtime_driver.mbt`, `renderer.mbt`,
   `host_surface.mbt`, `image_repaint.mbt`, `wall_clock.mbt`,
   `redraw_scheduler.mbt`
 - ADR 0005, ADR 0006, ADR 0011

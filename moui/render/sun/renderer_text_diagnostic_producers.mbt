@@ -88,7 +88,7 @@ pub fn SunRasterRenderer::emoji_font_fallback_diagnostic(
   let glyph_format = "coverage-mask"
   let font_source = "sun-registered-font-chain"
   let shaper = "font-fallback-plan"
-  let fallback_character = @render.representative_fallback_codepoint(
+  let fallback_character = @render_common.representative_fallback_codepoint(
     text,
     skip_joiners=true,
   )
@@ -230,7 +230,7 @@ pub fn SunRasterRenderer::text_selection_geometry_diagnostic(
 ///|
 fn sun_backend_text_maturity_summary() -> String {
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=1.0, height=1.0),
     ),
     SunPresentTarget::new(description="sun-backend-info-text-maturity", present=_ => {
@@ -329,7 +329,7 @@ fn sun_font_family_label(family : @core.FontFamily) -> String {
 ///|
 fn sun_text_contains_emoji_hint(text : String) -> Bool {
   for ch in text {
-    if @render.codepoint_is_emoji_hint(ch.to_int()) {
+    if @render_common.codepoint_is_emoji_hint(ch.to_int()) {
       return true
     }
   }
@@ -381,7 +381,7 @@ fn sun_positive_pixel_extent(value : Double) -> Int {
 ///|
 fn sun_font_fallback_language_tags(text : String) -> Array[String] {
   let tags : Array[String] = []
-  let representative = @render.representative_fallback_codepoint(
+  let representative = @render_common.representative_fallback_codepoint(
     text,
     skip_joiners=true,
   )
@@ -408,14 +408,14 @@ fn sun_fallback_script_tag(tags : Array[String]) -> String {
 fn sun_script_language_tag_for_codepoint(codepoint : Int) -> String? {
   if codepoint <= 0 {
     None
-  } else if @render.codepoint_is_emoji_hint(codepoint) {
+  } else if @render_common.codepoint_is_emoji_hint(codepoint) {
     Some("und-Zsye")
-  } else if @render.codepoint_is_kana(codepoint) {
+  } else if @render_common.codepoint_is_kana(codepoint) {
     Some("ja")
-  } else if @render.codepoint_is_cjk_ideograph(codepoint) {
+  } else if @render_common.codepoint_is_cjk_ideograph(codepoint) {
     Some("zh-Hans")
-  } else if @render.codepoint_is_hangul_cluster_codepoint(codepoint) ||
-    @render.codepoint_is_hangul_compatibility_jamo(codepoint) {
+  } else if @render_common.codepoint_is_hangul_cluster_codepoint(codepoint) ||
+    @render_common.codepoint_is_hangul_compatibility_jamo(codepoint) {
     Some("ko")
   } else if sun_codepoint_is_hebrew_script(codepoint) {
     Some("he")

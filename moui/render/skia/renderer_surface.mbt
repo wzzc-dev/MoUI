@@ -62,10 +62,7 @@ pub(all) enum SkiaPresentKind {
 /// the returned value before the next frame.
 pub struct HostGpuPresentTarget {
   priv description : String
-  priv create_window_surface : (
-    @skia_native.GpuContext?,
-    @render.RendererSurfaceMetrics,
-  ) -> @skia_native.Surface?
+  priv create_window_surface : (@skia_native.GpuContext?, @core.SurfaceMetrics) -> @skia_native.Surface?
   priv present_gpu : (@skia_native.GpuContext?, @skia_native.Surface) -> HostGpuPresentOutcome
 }
 
@@ -104,10 +101,7 @@ pub fn HostGpuPresentOutcome::next_surface(
 ///|
 pub fn HostGpuPresentTarget::new(
   description~ : String,
-  create_window_surface~ : (
-    @skia_native.GpuContext?,
-    @render.RendererSurfaceMetrics,
-  ) -> @skia_native.Surface?,
+  create_window_surface~ : (@skia_native.GpuContext?, @core.SurfaceMetrics) -> @skia_native.Surface?,
   present_gpu~ : (@skia_native.GpuContext?, @skia_native.Surface) -> HostGpuPresentOutcome,
 ) -> HostGpuPresentTarget {
   { description, create_window_surface, present_gpu }
@@ -121,7 +115,7 @@ pub fn HostGpuPresentTarget::description(self : HostGpuPresentTarget) -> String 
 ///|
 /// `SurfaceRoute` now lives in the cross-platform `moui/render` package
 /// (see `moui/render/skia_surface_route.mbt`) so cross-runtime packages such
-/// as `moui/backend/host` can carry the route on their value types without
+/// as `moui/backend` can carry the route on their value types without
 /// pulling in the native-only `moui/render/skia` dependency graph. Existing
 /// consumers that already import `@skia_renderer` should switch to
 /// `@render.SurfaceRoute`; new cross-runtime consumers must use
@@ -264,8 +258,8 @@ pub fn SkiaPixelFrame::pixels(self : SkiaPixelFrame) -> Bytes {
 /// Adapt a live Skia renderer to the renderer-neutral host lifecycle.
 pub fn SkiaRasterRenderer::to_host_window_renderer(
   self : SkiaRasterRenderer,
-) -> @render.HostWindowRenderer {
-  @render.HostWindowRenderer::new(
+) -> @render.WindowRenderer {
+  @render.WindowRenderer::new(
     resize=metrics => {
       self.resize(metrics) catch {
         err => println("error resizing Skia renderer: \{err.message()}")
@@ -387,7 +381,7 @@ fn create_gpu_context(
 
 ///|
 fn create_surface(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   surface_route : @render.SurfaceRoute,
   gpu_context : @skia_native.GpuContext?,
 ) -> @skia_native.Surface raise SkiaRendererError {
@@ -463,7 +457,7 @@ fn create_surface(
 
 ///|
 fn skia_surface_target(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   surface_route : @render.SurfaceRoute,
   gpu_context : @skia_native.GpuContext?,
 ) -> @moui_skia.SurfaceTargetDescriptor {
@@ -520,7 +514,7 @@ fn skia_surface_target_for_physical_size(
 
 ///|
 fn skia_raster_surface_target(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> @moui_skia.SurfaceTargetDescriptor {
   @moui_skia.SurfaceTargetDescriptor::raster_n32_premul(
     @moui_skia.ISize::new(
@@ -532,7 +526,7 @@ fn skia_raster_surface_target(
 
 ///|
 fn raster_surface_preflight(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> SkiaRasterSurfacePreflight {
   let target = skia_raster_surface_target(metrics)
   let command_list = @moui_skia.RenderCommandList::for_target(target).clear(
@@ -561,7 +555,7 @@ fn raster_surface_preflight(
 ///|
 pub fn SkiaRasterRenderer::resize(
   self : SkiaRasterRenderer,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> Unit raise SkiaRendererError {
   self.metrics = metrics
   self.surface = match self.gpu_target {

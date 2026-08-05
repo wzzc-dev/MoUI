@@ -34,9 +34,9 @@ workflow for agents and maintainers.
   diagnostics.
 - `views/` owns public constructor helpers and concrete custom view behavior,
   reusing bindings, styles, and modifiers without exposing runtime internals.
-- `backend/host/` owns `HostEvent`, surface metrics, input contracts, file
+- `backend/` owns `Event`, surface metrics, input contracts, file
   drag/drop normalization, text-input session state, and redraw driver behavior.
-- Platform packages convert native events into `HostEvent`; they do not mutate
+- Platform packages convert native events into `Event`; they do not mutate
   element trees directly.
 - Renderers consume `DrawCommand` values and do not depend on view constructors.
 - `examples/*/app/` packages contain shared app logic; platform subpackages stay
@@ -90,8 +90,8 @@ and Showcase if visible. Validate with renderer package tests and a Showcase Web
 
 ```text
 Change backend handling for <event>. Keep platform-specific code in backend/<platform>,
-normalize through backend/host HostEvent, add focused backend tests, and validate with
-moon test moui/backend/host --target native plus the affected backend package test.
+normalize through backend Event, add focused backend tests, and validate with
+moon test moui/backend --target native plus the affected backend package test.
 ```
 
 ### Update An Example
@@ -126,7 +126,7 @@ docs/testing.md. Also check AGENTS.md and skills/ when the guidance surface chan
   text architecture changed?
 - If renderer behavior changed, are capability code, tests, report, and Showcase
   synchronized?
-- If backend behavior changed, do events still flow through `HostEvent`?
+- If backend behavior changed, do events still flow through `Event`?
 - If an example changed, is shared app logic still under `examples/*/app/`?
 
 ## Decision & Session Logging

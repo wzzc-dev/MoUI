@@ -638,7 +638,7 @@ test "native renderer builds text vertices and atlas entries" {
     ),
   )
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=200.0),
     ),
   )
@@ -710,7 +710,7 @@ test "native renderer marks color glyph text vertices" {
     ),
   )
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=120.0, height=80.0),
     ),
   )
@@ -803,7 +803,7 @@ test "native renderer accepts layouts that omit whitespace glyphs" {
     ),
   )
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=160.0),
     ),
   )
@@ -869,7 +869,7 @@ test "native renderer blits platform glyph rows away from atlas top edge" {
     ),
   )
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=200.0),
     ),
   )
@@ -904,7 +904,7 @@ test "native renderer blits platform glyph rows away from atlas top edge" {
 test "native renderer builds cjk text vertices with fallback font" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=200.0),
     ),
   )
@@ -925,7 +925,7 @@ test "native renderer builds cjk text vertices with fallback font" {
 test "native renderer keeps text in draw item order" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=200.0),
     ),
   )
@@ -961,7 +961,7 @@ test "native renderer applies text alignment" {
   let frame = @core.Rect::new(x=10.0, y=0.0, width=160.0, height=24.0)
   let left = new_test_renderer_handle()
   left.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=120.0),
     ),
   )
@@ -976,7 +976,7 @@ test "native renderer applies text alignment" {
   ])
   let centered = new_test_renderer_handle()
   centered.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=120.0),
     ),
   )
@@ -1005,7 +1005,7 @@ test "native renderer vertically centers text in taller frames" {
   })
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=120.0),
     ),
   )
@@ -1026,7 +1026,7 @@ test "native renderer keeps text logical vertices stable across dpr" {
   })
   let scale_one = new_test_renderer_handle()
   scale_one.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=120.0),
       scale_factor=1.0,
     ),
@@ -1034,7 +1034,7 @@ test "native renderer keeps text logical vertices stable across dpr" {
   scale_one.render([command])
   let scale_two = new_test_renderer_handle()
   scale_two.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=120.0),
       scale_factor=2.0,
     ),
@@ -1071,7 +1071,7 @@ fn text_vertex_min_y(vertices : Array[TextVertex], height : Double) -> Double {
 test "native renderer clears glyph atlas when dpr changes" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=120.0),
       scale_factor=1.0,
     ),
@@ -1087,7 +1087,7 @@ test "native renderer clears glyph atlas when dpr changes" {
   ])
   assert_true(glyph_atlas_entry_count(renderer.glyph_atlas) > 0)
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=120.0),
       scale_factor=2.0,
     ),

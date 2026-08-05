@@ -22,7 +22,7 @@ fn moonbit_tool_wrapper_budgets() -> Array[WrapperBudget] {
       path: "scripts/validate-renderer-capability-consistency.mjs",
       max_lines: 12,
     },
-    { path: "scripts/validate-platform-adapter-duplication.mjs", max_lines: 12 },
+    { path: "scripts/validate-backend-common-boundary.mjs", max_lines: 12 },
     { path: "scripts/validate-platform-matrix.mjs", max_lines: 8 },
     { path: "scripts/validate-skia-entrypoints.mjs", max_lines: 16 },
     { path: "scripts/validate-web-runtime-handoff-manifest.mjs", max_lines: 28 },
@@ -32,6 +32,7 @@ fn moonbit_tool_wrapper_budgets() -> Array[WrapperBudget] {
       max_lines: 28,
     },
     { path: "scripts/validate-window-dependency.mjs", max_lines: 12 },
+    { path: "scripts/validate-window-lifecycle-boundary.mjs", max_lines: 12 },
     { path: "scripts/smoke-check.mjs", max_lines: 12 },
   ]
 }
@@ -42,11 +43,6 @@ fn moonbit_tool_wrapper_forbidden_tokens() -> Array[String] {
     "spawnSync(", "execSync(", "execFileSync(", "readFileSync(", "existsSync(", "node:fs",
     "_build/native/debug/build", "moon build",
   ]
-}
-
-///|
-fn moonbit_tool_wrapper_budget_paths() -> Array[String] {
-  moonbit_tool_wrapper_budgets().map(budget => budget.path)
 }
 
 ///|
@@ -91,7 +87,7 @@ fn validate_moonbit_tool_wrapper_budget_coverage(
   actual_paths : Array[String],
 ) -> Array[String] {
   let failures : Array[String] = []
-  let budget_paths = moonbit_tool_wrapper_budget_paths()
+  let budget_paths = moonbit_tool_wrapper_budgets().map(budget => budget.path)
   for path in actual_paths {
     if !array_contains(budget_paths, path) {
       failures.push("MoonBit tool wrapper missing maintenance budget: " + path)

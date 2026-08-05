@@ -47,8 +47,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   owns runtime state, tree/layout/paint, event dispatch, program message drain,
   effect task, subscription lifecycle, and diagnostics.
 - `moui/views/` returns app-facing `@moui.View[Msg]` values for app code.
-- `moui/backend/host/` defines shared host contracts; platform backends
-  normalize window and input events into `HostEvent`.
+- `moui/backend/` defines shared host contracts; platform backends
+  normalize window and input events into `Event`.
 - `moui/backend/<platform>/` owns only the neutral host; applications select
   `moui/render/skia` or another renderer factory in the composition root.
 - `moui/render/` provides the renderer facade, with native Skia raster, WebGPU

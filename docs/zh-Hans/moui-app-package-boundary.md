@@ -27,7 +27,7 @@
 - Runtime implementation：element tree、dirty state、runtime lifecycle、component
   storage、任务/订阅实际调度应属于 `moui/runtime`。
 - Platform service layer：WebView、文件对话框、剪贴板、窗口服务、平台 channel
-  应属于 `moui/backend/host` 或具体 backend。
+  应属于 `moui/backend` 或具体 backend。
 - Renderer implementation：Skia/WGPU/browser WebGPU 细节应属于 `moui/render/*`。
 - Design-system addon：Material、Fluent、Carbon、Primer 及其 component token
   应属于 `moui_theme/*` 或 `moui/views` 的 app-facing style facade。
@@ -62,13 +62,13 @@ app-facing facade/extension over `core`，第一阶段主要通过
   facade，以及 button/text field/picker 等低层 custom view 实现。
 - runtime/diagnostics 进入 `moui/runtime`：runtime inspector、program lifecycle
   snapshot、view/render diagnostics snapshot、`ComponentContext` runtime 构造细节。
-- 平台服务进入 `moui/backend/host`：WebView command/event/policy/spec、host
+- 平台服务进入 `moui/backend`：WebView command/event/policy/spec、host
   capability、host service contract。
 - renderer/backend 实现仍在 `moui/render/*` 和 `moui/backend/*`。
 
 只有当一个能力无法由上述层自然承接，且会被多个包稳定复用时，才考虑新增 addon
 或更专门的 package。新增 package 必须先说明它为什么不是 `views`、
-`runtime` 或 `backend/host` 的职责。
+`runtime` 或 `backend` 的职责。
 
 ## 当前 Core 收敛状态
 
@@ -91,7 +91,7 @@ app-facing facade/extension over `core`，第一阶段主要通过
   并使用 `@views.*Style` 与 `light_theme`/`theme`。详见
   `docs/plans/done/core-component-theme-to-views.md`（已被 ADR 0017 取代）。
 - **WebView ownership 已迁出**：`WebViewSpec`、`WebViewCommand`、
-  `WebViewEvent`、`WebViewNavigationPolicy` 已归 `moui/backend/host` 拥有。
+  `WebViewEvent`、`WebViewNavigationPolicy` 已归 `moui/backend` 拥有。
   `core` 只保留 renderer-neutral 的 `PlatformViewPlacement`、
   `PlatformViewProperty`、`PlatformViewEvent` 和 `AppEvent::PlatformView`。
   普通 app 使用 `moui/views.web_view` 以及 `@views.WebViewEvent` /
@@ -148,7 +148,7 @@ app-facing facade/extension over `core`，第一阶段主要通过
   以及具体 custom view 控件行为进入 `moui/views`。
 - runtime lifecycle、component runtime input、effect/subscription diagnostics
   summary、inspector snapshot 进入 `moui/runtime`。
-- host/platform service 协议进入 `moui/backend/host` 或具体 backend。
+- host/platform service 协议进入 `moui/backend` 或具体 backend。
 - `core` 只保留跨 runtime/backend/renderer/views 稳定成立的协议和值类型。
 
 `showcase/app` 可以作为 diagnostics 示例直接依赖 `@runtime`，也可以为了 renderer
@@ -205,7 +205,7 @@ capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当
 
 普通 app 可以按需直接依赖:
 
-- `wzzc-dev/moui/backend/host`:仅当 app 需要 host service / 平台服务协议时使用,例如文件对话框、异步图片、剪贴板、WebView command queue 或 host service 交互。普通 app 处理 WebView 事件时优先使用 `@views.WebViewEvent`。
+- `wzzc-dev/moui/backend`:仅当 app 需要 host service / 平台服务协议时使用,例如文件对话框、异步图片、剪贴板、WebView command queue 或 host service 交互。普通 app 处理 WebView 事件时优先使用 `@views.WebViewEvent`。
 
 普通 app 不应该直接依赖:
 
@@ -229,7 +229,7 @@ app-facing API 后移除;后者仅限 diagnostics 示例,不代表普通 app 默
 定位规则：
 
 - 它们只服务于宿主 app，不应被其他 app 或框架层依赖。
-- 它们可以依赖 `@core`、`@backend/host`、`@views` 以及 app 自身的共享 app 包，
+- 它们可以依赖 `@core`、`@backend`、`@views` 以及 app 自身的共享 app 包，
   视具体职责而定，但不应该被普通共享 app 包反向依赖。
 - 它们不进入领域 facade，也不向 `@core` / `@views` 注入 app 特定类型。
 - 评审时把它们视作 app 的实现细节，而不是框架 API 表面的一部分。
@@ -348,7 +348,7 @@ Diagnostics 类型的 owning package 是 `wzzc-dev/moui/runtime`。`core` 不再
 `InspectorSnapshot`、`ProgramRuntimeSnapshot` 或 `RenderInspectorSnapshot` 这类
 diagnostics/runtime 类型，领域 facade 也不转发。
 
-WebView 类型的 owning package 是 `wzzc-dev/moui/backend/host`。`core` 不再导出
+WebView 类型的 owning package 是 `wzzc-dev/moui/backend`。`core` 不再导出
 `WebViewSpec`、`WebViewCommand`、`WebViewEvent` 或
 `WebViewNavigationPolicy`，也不提供 `PlatformViewPlacement::web_view` 这类
 WebView 专有 helper；领域 facade 也不转发。
@@ -434,7 +434,7 @@ XComponent callbacks 仍是 surface、pointer、resize 和 detach events 的唯�
 
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/backend/web`
-- `wzzc-dev/moui/backend/host`
+- `wzzc-dev/moui/backend`
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}`
 - 具体 renderer package；平台入口应从 `moui/render/*` 选择 factory。
 - `wzzc-dev/moui/render/skia`
@@ -454,7 +454,7 @@ runtime + backend + renderer wiring。
   例如 `View`、event、layout、paint、semantics、text contract 等。
 - `moui/views`：app-facing constructor 与具体 custom view 控件行为实现。
 - `moui/runtime`：runtime state、element tree、layout/paint/event dispatch、program execution。
-- `moui/backend/host`：host service、window/event/service 协议。
+- `moui/backend`：host service、window/event/service 协议。
 - `moui/backend/*`：平台 backend。
 - `moui/render/*`：renderer facade 和具体 renderer 实现。
 - `moui_richtext`：富文本/Markdown 文档、编辑、命令、输入、粘贴、表格与源码映射逻辑
@@ -467,7 +467,7 @@ runtime + backend + renderer wiring。
 
 普通 app 默认依赖 `moui/<领域>`（按需）与 `moui/views`；直接依赖 `moui_richtext`、
 `moui_agent*`、`moui_theme/*` 等 addon 仅在 app 明确需要该能力时才允许。直接依赖
-`moui/core`、`moui/backend/host` 的普通 app 由 API surface guard 的 advanced-app
+`moui/core`、`moui/backend` 的普通 app 由 API surface guard 的 advanced-app
 白名单约束（当前覆盖 `examples/markdown_editor/app`、`examples/mo_workbench/app`、
 `examples/pdf_workbench/app`、`examples/showcase/app`、`website/app` 中的 core 导入，
 以及 `examples/showcase/app` 的 runtime 导入）。
@@ -479,14 +479,14 @@ runtime + backend + renderer wiring。
 - 这个 package 是普通共享 app、平台入口、测试，还是框架/控件实现？
 - 普通共享 app 是否依赖 `wzzc-dev/moui`、`wzzc-dev/moui/<领域>`（按需）与 `wzzc-dev/moui/views`？
 - 如果普通 app 直接 import `wzzc-dev/moui/core`，是否确实需要领域 facade 未覆盖的 kernel 类型（一等用法）？
-- 如果普通 app import `wzzc-dev/moui/backend/host`，是否确实需要 host service 协议？
+- 如果普通 app import `wzzc-dev/moui/backend`，是否确实需要 host service 协议？
 - 普通 app 是否错误依赖了 `runtime`、`render/*` 或平台 backend？
 - 新增领域 facade alias 是否是平台中立、app-safe、高频使用的类型，且已更新 API surface guard？
 - 新增低层 custom view helper 是否同时提供了 `moui/views` app-facing constructor？
 - 新增控件是否避免向 `core` 添加具体控件 enum variant、primitive constructor 或 runtime lowering 分支？
 - 新增 `core` API 是否真的是跨 runtime 的基础协议 / 抽象 UI kernel 能力？
 - 新增 style、form、webview、routing、rich text editor、diagnostics API 是否更适合
-  放在 `views`、`runtime`、`backend/host`、`moui_devtools` 或 addon？
+  放在 `views`、`runtime`、`backend`、`moui_devtools` 或 addon？
 - `moui_theme/*` 是否仍然只是 addon/preview 依赖，没有进入普通 app 默认依赖？
 
 如果一个改动需要突破上述规则，必须在同一个变更中写明理由，并说明为什么它不是更适合放在 `views`、`runtime`、`backend` 或 `render` 的职责。

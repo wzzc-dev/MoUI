@@ -40,7 +40,7 @@ pub fn platform_service_bridge() -> @host.HostServiceBridge {
 
 检查清单：
 
-- 先在 `backend/host` 中添加共享请求和响应类型。
+- 先在 `backend` 中添加共享请求和响应类型。
 - 让不可用服务受 capability gate 约束。
 - 为成功路径和 unavailable 路径添加宿主与后端测试。
 

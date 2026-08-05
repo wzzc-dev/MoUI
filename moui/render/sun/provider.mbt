@@ -11,7 +11,7 @@
 /// (ADR 0019 Phase E) instead of a central backend capability table.
 /// matrix.
 pub fn create_sun_provider(
-  create_sun~ : (@render.RendererSurfaceMetrics) -> SunRasterRenderer,
+  create_sun~ : (@core.SurfaceMetrics) -> SunRasterRenderer,
 ) -> @render.RendererProvider {
   let caps = sun_feature_capabilities()
   @render.RendererProvider::{
@@ -29,7 +29,7 @@ pub fn create_sun_provider(
 fn sun_negotiate_surface(
   surface : @render.SurfaceDescriptor,
 ) -> @render.SurfaceNegotiationResult {
-  @render.negotiate_cpu_raster_surface(
+  @render_common.negotiate_cpu_raster_surface(
     surface,
     label="Sun raster",
     id="sun-raster",
@@ -39,11 +39,11 @@ fn sun_negotiate_surface(
 
 ///|
 fn sun_create_instance(
-  metrics : @render.RendererSurfaceMetrics,
-  create_sun~ : (@render.RendererSurfaceMetrics) -> SunRasterRenderer,
+  metrics : @core.SurfaceMetrics,
+  create_sun~ : (@core.SurfaceMetrics) -> SunRasterRenderer,
 ) -> @render.RendererInstance {
   let renderer = create_sun(metrics)
-  @render.new_provider_instance(
+  @render_common.new_provider_instance(
     render_frame=frame => {
       // SunRasterRenderer::render raises SunRendererError on failure.
       // Catch it and return a non-presented result.

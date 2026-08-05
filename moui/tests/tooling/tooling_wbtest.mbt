@@ -49,7 +49,7 @@ test "quickcheck exercises svg rect lowering dimensions" {
         "\" height=\"" +
         height.to_string() +
         "\" fill=\"red\"/></svg>"
-      let result = @render.import_svg(svg)
+      let result = @render_common.import_svg(svg)
       result.diagnostics().length() == 0 &&
       result.commands().length() == 1 &&
       svg_rect_command_matches(result.commands()[0], width, height)

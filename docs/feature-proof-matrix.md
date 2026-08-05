@@ -25,7 +25,7 @@ rendering behavior, so L2 real Skia smoke runs on every PR.
 | Core API (View/Element/Layout/Animation) | `pr-profile` | macOS-14 | check.sh --profile pr: core package tests pass |
 | Runtime lifecycle | `pr-profile` | macOS-14 | check.sh --profile pr: runtime effects/subscriptions/diagnostics |
 | Views controls (Text/Button/TextField/Container/Row/Column/Flex/Stack/Scroll/List/Grid/Navigation) | `pr-profile` | macOS-14 | check.sh --profile pr: views package tests pass |
-| Host services protocol (clipboard/menus/dialogs URL) | `pr-profile` | macOS-14 | check.sh --profile pr: backend/host package tests pass |
+| Host services protocol (clipboard/menus/dialogs URL) | `pr-profile` | macOS-14 | check.sh --profile pr: backend package tests pass |
 | Web wasm-gc build | `pr-profile` | macOS-14 | check.sh --profile pr: Web wasm-gc build succeeds |
 | Renderer capability report consistency | `pr-profile` | macOS-14 | check.sh --profile pr: capabilities_test.mbt passes |
 | Text conformance (grapheme/cluster/caret) | `pr-profile` | macOS-14 | `sh scripts/check.sh --profile full` includes text diagnostics |
@@ -59,7 +59,7 @@ assert pixel markers and acceptance markers.
 | ShaderEffect | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real procedural shader pixels |
 | TextShaping | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real SkShaper/SkParagraph shaping, bidi Arabic/mixed-direction visual-order |
 | EmojiText | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real emoji cluster rendering, keycap/regional-indicator/skin-tone-modifier fallback, deterministic color glyph format detection via `Typeface::has_color_glyphs` (font table tag query: COLR/sbix/CBDT/SVG), resolved font name in diagnostic (`resolved_font_name` field) |
-| AsyncImage | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real second-frame repaint after completion, deferred-completion via HostNativeAsyncImageSource, off-main-thread local-file I/O plus Skia decode via platform native workers (GCD/pthread/CreateThread), decoded RGBA completion payloads with `background_io` and `background_decode` verification in provider tests |
+| AsyncImage | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real second-frame repaint after completion, deferred-completion via NativeAsyncImageSource, off-main-thread local-file I/O plus Skia decode via platform native workers (GCD/pthread/CreateThread), decoded RGBA completion payloads with `background_io` and `background_decode` verification in provider tests |
 
 ## L3 Cross-Platform Consistency
 
@@ -99,7 +99,7 @@ The Phase 2 promotion gate scaffolding has L1 package-test proof:
 
 | Gate | Source | L1 proof |
 | --- | --- | --- |
-| Renderer mailbox control queue | `moui/render/render_frame_mailbox.mbt` | `moui/render` whitebox tests (capacity-two latest-wins; control messages never dropped) |
+| Renderer mailbox control queue | `moui/render/common/render_frame_mailbox.mbt` | `moui/render/common` whitebox tests (capacity-two latest-wins; control messages never dropped) |
 | Native Picture handoff | `moui_skia/native/skia_stub_gpu_worker.cpp` | focused native worker tests (`SkPicture` retain, independent thread, detach acknowledgement, zero readback counter), macOS worker-owned Metal first-frame smoke, Android NDK GPU build, HarmonyOS native/HAP build, and iOS simulator GPU build |
 | Context-loss recovery state machine | `moui/runtime/renderer_recovery.mbt` | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; terminal `FallbackToRaster`) |
 | GPU promotion evidence | `docs/gpu-promotion-runbook.md` | matching-device evidence remains required before a promotion claim |

@@ -27,7 +27,7 @@ erased retained editor pixels before their cached layers were skipped.
 ## Validation
 
 - `moon test moui/runtime --target native`
-- `moon test moui/backend/host --target native`
+- `moon test moui/backend --target native`
 - `moon test moui/render/webgpu_adapter --target wasm-gc`
 - `moon test moui/render/skia --target native`
 - `moon test examples/markdown_editor/app --target native`

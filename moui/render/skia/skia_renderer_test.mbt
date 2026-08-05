@@ -52,7 +52,7 @@ test "skia surface routes keep raster default and gate metal gpu explicitly" {
   assert_true(@render.SurfaceRoute::MetalGpuSurfaceRoute.label() == "metal-gpu")
 
   let target = SkiaPresentTarget::new(description="test", present=_frame => true)
-  let metrics = @render.RendererSurfaceMetrics::from_logical(
+  let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=16.0, height=16.0),
   )
   if !skia_available() {
@@ -135,7 +135,7 @@ test "skia renderer fails explicitly when real skia is unavailable" {
     })
     try
       create_with_present_target(
-        @render.RendererSurfaceMetrics::from_logical(
+        @core.SurfaceMetrics::from_logical(
           size=@core.Size::new(width=16.0, height=16.0),
         ),
         target,
@@ -151,7 +151,7 @@ test "skia renderer fails explicitly when real skia is unavailable" {
     }
     try
       create_with_present_target(
-        @render.RendererSurfaceMetrics::from_logical(
+        @core.SurfaceMetrics::from_logical(
           size=@core.Size::new(width=16.0, height=16.0),
         ),
         target,
@@ -321,7 +321,7 @@ test "skia pixel frame carries presenter payload" {
     return ()
   }
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=1.0, height=1.0),
       scale_factor=2.0,
     ),

@@ -49,7 +49,7 @@ pub fn SkiaUnsupportedCommandDiagnostic::reason(
 
 ///|
 pub struct SkiaRasterRenderer {
-  priv mut metrics : @render.RendererSurfaceMetrics
+  priv mut metrics : @core.SurfaceMetrics
   priv target : SkiaPresentTarget
   priv gpu_target : HostGpuPresentTarget?
   priv font_resolution : SkiaFontResolution
@@ -59,7 +59,7 @@ pub struct SkiaRasterRenderer {
   priv mut gpu_surface_attached : Bool
   priv image_cache : Map[String, @skia_native.Image]
   priv failed_images : Map[String, String]
-  priv image_lifecycle : @render.ImageResourceLifecycle
+  priv image_lifecycle : @render_common.ImageResourceLifecycle
   priv async_image_loading : Bool
   priv mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
   priv mut present_count : Int
@@ -87,7 +87,7 @@ pub fn skia_available() -> Bool {
 pub fn backend_info() -> @render.RendererBackendInfo {
   let available = skia_available()
   let surface_preflight = raster_surface_preflight(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=1.0, height=1.0),
     ),
   )
@@ -155,7 +155,7 @@ pub fn skia_gpu_native_descriptor() -> @render.RendererDescriptor {
 
 ///|
 pub fn create_with_present_target(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
   async_image_loading? : Bool = false,
@@ -173,7 +173,7 @@ pub fn create_with_present_target(
 
 ///|
 pub fn create_with_present_target_and_route(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
   surface_route? : @render.SurfaceRoute = @render.SurfaceRoute::RasterSurfaceRoute,
   gpu_target? : HostGpuPresentTarget? = None,
@@ -208,7 +208,7 @@ pub fn create_with_present_target_and_route(
     gpu_surface_attached: gpu_target is None,
     image_cache: Map([]),
     failed_images: Map([]),
-    image_lifecycle: @render.ImageResourceLifecycle::new(),
+    image_lifecycle: @render_common.ImageResourceLifecycle::new(),
     async_image_loading,
     on_image_resource_change,
     present_count: 0,
@@ -246,16 +246,16 @@ pub fn SkiaRasterRenderer::render(
       )
       self.unsupported_command_count = 0
       self.unsupported_command_diagnostics.clear()
-      let canvas_scopes : Array[@render.PlanScopeKind] = []
-      let plan = @render.lower_draw_commands(commands)
+      let canvas_scopes : Array[@render_common.PlanScopeKind] = []
+      let plan = @render_common.lower_draw_commands(commands)
       for op in plan.ops {
         self.render_command(canvas, op, canvas_scopes)
       }
       if !canvas_scopes.is_empty() {
         for scope in canvas_scopes {
           self.record_unsupported_command(
-            @render.plan_scope_push_command(scope),
-            "command stream ended with an open \{@render.plan_scope_name(scope)} scope",
+            @render_common.plan_scope_push_command(scope),
+            "command stream ended with an open \{@render_common.plan_scope_name(scope)} scope",
           )
         }
       }
@@ -483,8 +483,8 @@ fn SkiaRasterRenderer::draw_frame_to_canvas(
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
   let stats = SkiaCachedLayerFrameStats::new()
-  let canvas_scopes : Array[@render.PlanScopeKind] = []
-  let plan = @render.lower_draw_commands(frame.commands)
+  let canvas_scopes : Array[@render_common.PlanScopeKind] = []
+  let plan = @render_common.lower_draw_commands(frame.commands)
   let complete = self.render_cached_command_range(
     canvas,
     plan.ops,
@@ -497,8 +497,8 @@ fn SkiaRasterRenderer::draw_frame_to_canvas(
   if !canvas_scopes.is_empty() {
     for scope in canvas_scopes {
       self.record_unsupported_command(
-        @render.plan_scope_push_command(scope),
-        "command stream ended with an open \{@render.plan_scope_name(scope)} scope",
+        @render_common.plan_scope_push_command(scope),
+        "command stream ended with an open \{@render_common.plan_scope_name(scope)} scope",
       )
     }
   }

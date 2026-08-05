@@ -6,7 +6,7 @@ test "sun renderer linear gradient debug shader uses fallback colors" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=1.0),
     ),
     target,
@@ -55,7 +55,7 @@ test "sun renderer solid shader fills fallback without diagnostic" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -93,7 +93,7 @@ test "sun renderer checker shader uses fallback colors and cell count" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -136,7 +136,7 @@ test "sun renderer vignette shader uses fallback center color" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,

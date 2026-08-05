@@ -55,7 +55,7 @@ pub fn canvas2d_preflight() -> @render.RendererBackendInfo {
 ///|
 pub fn Canvas2DRenderer::resize(
   self : Canvas2DRenderer,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> Unit {
   self.logical_width = metrics.logical_size.width
   self.logical_height = metrics.logical_size.height
@@ -73,7 +73,7 @@ pub fn Canvas2DRenderer::render(
   // Rendering is dispatched through the JS host bridge.
   // The actual CanvasRenderingContext2D calls are performed
   // in the canvas2d_runtime.js file.
-  let plan = @render.lower_draw_commands(commands)
+  let plan = @render_common.lower_draw_commands(commands)
   canvas2d_render_commands(
     self.canvas_id,
     self.logical_width,
@@ -90,7 +90,7 @@ pub fn Canvas2DRenderer::render_frame(
   if self.disposed {
     return @render.RenderFrameResult::new(presented=false)
   }
-  let plan = @render.lower_draw_commands(frame.commands)
+  let plan = @render_common.lower_draw_commands(frame.commands)
   canvas2d_render_commands(
     self.canvas_id,
     self.logical_width,
@@ -325,7 +325,7 @@ fn canvas2d_render_commands(
   canvas_id : String,
   width : Double,
   height : Double,
-  commands : Array[@render.PlanOp],
+  commands : Array[@render_common.PlanOp],
 ) -> Unit {
   let _ = canvas_id
   // Begin a new frame — clear the canvas
@@ -600,7 +600,7 @@ fn canvas2d_measure_text_impl(
 ///|
 pub fn canvas2d_create_renderer(
   canvas_id~ : String,
-  metrics~ : @render.RendererSurfaceMetrics,
+  metrics~ : @core.SurfaceMetrics,
 ) -> Canvas2DRenderer {
   let renderer = Canvas2DRenderer::new(canvas_id~)
   renderer.resize(metrics)
@@ -618,7 +618,7 @@ pub fn canvas2d_render_frame(
 ///|
 pub fn canvas2d_resize(
   renderer : Canvas2DRenderer,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> Unit {
   renderer.resize(metrics)
 }

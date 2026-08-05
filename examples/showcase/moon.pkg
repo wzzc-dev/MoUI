@@ -3,8 +3,9 @@ import {
   "examples/showcase/app",
   "examples/showcase/app/diagnostics",
   "wzzc-dev/moui",
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend" @host,
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
 }

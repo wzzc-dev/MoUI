@@ -5,8 +5,8 @@ fn app_builder_test_runtime() -> AppRuntime {
 }
 
 ///|
-fn app_builder_test_factory(id : String) -> @render.RendererBindingFactory {
-  @render.RendererBindingFactory::new(id~, bind=_kit => abort("not bound"))
+fn app_builder_test_factory(id : String) -> @render.RendererFactory {
+  @render.RendererFactory::new(id~, bind=_kit => abort("not bound"))
 }
 
 ///|
@@ -14,8 +14,7 @@ test "AppBuilder passes ordered factories and window requests to backend" {
   let launched = Ref(false)
   let title = Ref("")
   let factory_ids : Array[String] = []
-  let queue = @backend_host.HostWindowRequestQueue::new()
-  queue.close_window(@backend_host.HostWindowId::new(42))
+  let requests = @backend_host.WindowRequests::new(pending_count=() => 1)
   let pending_requests = Ref(0)
   let entry = PlatformEntry::new(id="test", launch=request => {
     launched.val = true
@@ -31,7 +30,7 @@ test "AppBuilder passes ordered factories and window requests to backend" {
     app_builder_test_factory("second"),
     app_builder_test_factory("third"),
   ])
-  .window_requests(queue)
+  .window_requests(requests)
   .backend(entry)
   .run()
   assert_true(launched.val)

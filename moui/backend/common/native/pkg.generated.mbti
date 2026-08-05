@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/common/native"
+
+import {
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/render",
+}
+
+// Values
+pub fn dispatch_binary_file(@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse
+
+pub fn dispatch_list_directory(String) -> @backend.HostServiceResponse
+
+pub fn dispatch_text_file(@backend.HostTextFileRequest) -> @backend.HostServiceResponse
+
+pub fn filesystem_image_source() -> @render.HostImageSource
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

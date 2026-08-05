@@ -158,7 +158,7 @@ import {
   "moonbitlang/core/env",
   "wzzc-dev/moui" @moui,
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/linux" @linux_backend,
   "wzzc-dev/moui/render/skia" @render_skia,
   "examples/showcase/app" @showcase_app,

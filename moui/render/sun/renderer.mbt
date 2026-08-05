@@ -15,7 +15,7 @@ pub fn SunRendererError::message(self : SunRendererError) -> String {
 
 ///|
 pub struct SunRasterRenderer {
-  mut metrics : @render.RendererSurfaceMetrics
+  mut metrics : @core.SurfaceMetrics
   target : SunPresentTarget
   mut canvas : @sun_graphics.Canvas
   mut present_count : Int
@@ -24,7 +24,7 @@ pub struct SunRasterRenderer {
   mut last_frame : SunPixelFrame?
   text_system : @sun_text.TextSystem
   resources : @sun_renderer.RendererResources
-  image_lifecycle : @render.ImageResourceLifecycle
+  image_lifecycle : @render_common.ImageResourceLifecycle
   async_image_loading : Bool
   mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
   mut canvas_stack : Array[@sun_graphics.Canvas]
@@ -46,7 +46,7 @@ pub struct SunRasterRenderer {
 ///|
 pub fn backend_info() -> @render.RendererBackendInfo {
   let preflight = sun_cpu_raster_preflight(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=1.0, height=1.0),
     ),
   )
@@ -79,7 +79,7 @@ pub fn sun_raster_native_descriptor() -> @render.RendererDescriptor {
 
 ///|
 pub fn create_with_present_target(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   target : SunPresentTarget,
   async_image_loading? : Bool = false,
 ) -> SunRasterRenderer raise SunRendererError {
@@ -100,7 +100,7 @@ pub fn create_with_present_target(
     resources: @sun_renderer.RendererResources::with_font_capacity(
       1024, 1024, 64, 256, 256, 128,
     ),
-    image_lifecycle: @render.ImageResourceLifecycle::new(),
+    image_lifecycle: @render_common.ImageResourceLifecycle::new(),
     async_image_loading,
     on_image_resource_change: None,
     canvas_stack: [],
@@ -125,7 +125,7 @@ pub fn create_with_present_target(
 ///|
 pub fn SunRasterRenderer::resize(
   self : SunRasterRenderer,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> Unit raise SunRendererError {
   self.metrics = metrics
   self.canvas = new_canvas_for_metrics(metrics)
@@ -142,8 +142,8 @@ pub fn SunRasterRenderer::render(
   self.canvas.scale(sx=self.metrics.scale_factor, sy=self.metrics.scale_factor)
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
-  let plan = @render.lower_draw_commands(commands)
-  let canvas_scopes : Array[@render.PlanScopeKind] = []
+  let plan = @render_common.lower_draw_commands(commands)
+  let canvas_scopes : Array[@render_common.PlanScopeKind] = []
   let opacity_stack : Array[Double] = []
   let blend_mode_stack : Array[@sun_graphics.BlendMode] = []
   let layer_spec_stack : Array[SunLayerScope] = []
@@ -164,8 +164,8 @@ pub fn SunRasterRenderer::render(
   if !canvas_scopes.is_empty() {
     for scope in canvas_scopes {
       self.record_unsupported_command(
-        @render.plan_scope_push_command(scope),
-        "command stream ended with an open \{@render.plan_scope_name(scope)} scope",
+        @render_common.plan_scope_push_command(scope),
+        "command stream ended with an open \{@render_common.plan_scope_name(scope)} scope",
       )
     }
     while !self.canvas_stack.is_empty() {
@@ -337,7 +337,7 @@ pub fn SunRasterRenderer::set_image_resource_change_callback(
 
 ///|
 fn new_canvas_for_metrics(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> @sun_graphics.Canvas raise SunRendererError {
   let width = sun_dim_to_int(metrics.physical_size.width)
   let height = sun_dim_to_int(metrics.physical_size.height)

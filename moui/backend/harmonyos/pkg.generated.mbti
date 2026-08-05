@@ -3,12 +3,11 @@ package "wzzc-dev/moui/backend/harmonyos"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/common/embedded",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
-  "wzzc-dev/window/core",
 }
 
 // Values
@@ -16,25 +15,23 @@ pub fn app_environment() -> @services.AppEnvironment
 
 pub fn backend_info() -> HarmonyOSBackendInfo
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : HarmonyOSSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, binding~ : HarmonyOSSurfaceBinding) -> @embedded_runtime_backend.HostedRuntimeSession?
-
 pub fn entry(auto_exit_after_frames? : Int?) -> @runtime.PlatformEntry
 
 pub fn harmonyos_capability_matrix() -> HarmonyOSBackendCapabilities
 
-pub fn harmonyos_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
+pub fn harmonyos_capability_summary(services? : @backend.HostServiceCapabilities) -> @backend.HostCapabilitySummary
 
-pub fn harmonyos_input_capabilities() -> @host.HostInputCapabilities
+pub fn harmonyos_input_capabilities() -> @backend.HostInputCapabilities
 
 pub fn harmonyos_readiness() -> HarmonyOSBackendReadiness
 
-pub fn harmonyos_service_capabilities() -> @host.HostServiceCapabilities
+pub fn harmonyos_service_capabilities() -> @backend.HostServiceCapabilities
 
-pub fn harmonyos_surface_binding(Array[@render.RendererBindingFactory]) -> HarmonyOSSurfaceBinding
+pub fn harmonyos_surface_binding(Array[@render.RendererFactory]) -> HarmonyOSSurfaceBinding
 
 pub fn harmonyos_window_hosted_pump_host_sim(HarmonyOSEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
-pub fn host_surface_binding_from_harmonyos(HarmonyOSSurfaceBinding) -> @embedded_runtime_backend.HostSurfaceBinding
+pub fn host_surface_binding_from_harmonyos(HarmonyOSSurfaceBinding) -> @embedded.HostSurfaceBinding
 
 // Errors
 
@@ -55,10 +52,10 @@ pub(all) struct HarmonyOSBackendCapabilities {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct HarmonyOSBackendInfo {
-  host_info : @host.HostAppInfo
+  host_info : @backend.HostAppInfo
   capabilities : HarmonyOSBackendCapabilities
-  services : @host.HostServiceCapabilities
-  input : @host.HostInputCapabilities
+  services : @backend.HostServiceCapabilities
+  input : @backend.HostInputCapabilities
   readiness : HarmonyOSBackendReadiness
   description : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -71,11 +68,11 @@ pub(all) struct HarmonyOSBackendReadiness {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct HarmonyOSEmbeddedRuntimeBackend {
-  backend : @embedded_runtime_backend.HostedWindowBackend
+  backend : @embedded.HostedWindowBackend
 }
 pub fn HarmonyOSEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn HarmonyOSEmbeddedRuntimeBackend::has_session(Self) -> Bool
-pub fn HarmonyOSEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererBindingFactory], auto_exit_after_frames? : Int?) -> Self
+pub fn HarmonyOSEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererFactory], auto_exit_after_frames? : Int?) -> Self
 pub fn HarmonyOSEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn HarmonyOSEmbeddedRuntimeBackend::surface_generation(Self) -> Int
 pub impl @wzzc-dev/window/harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend
@@ -84,7 +81,7 @@ pub struct HarmonyOSSurfaceBinding {
   // private fields
 }
 pub fn HarmonyOSSurfaceBinding::has_async_image_loader(Self) -> Bool
-pub fn HarmonyOSSurfaceBinding::new(create_renderer~ : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?, sync_surface? : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
+pub fn HarmonyOSSurfaceBinding::new(create_renderer~ : (HarmonyOSSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererResolution?, sync_surface? : (HarmonyOSSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit, image_loader? : @render.ImageLoader?) -> Self
 
 pub(all) struct HarmonyOSSurfaceHandle {
   raw : UInt64

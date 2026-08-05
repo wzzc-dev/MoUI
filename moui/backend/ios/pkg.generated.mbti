@@ -3,8 +3,8 @@ package "wzzc-dev/moui/backend/ios"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/common/embedded",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
@@ -15,23 +15,21 @@ pub fn app_environment() -> @services.AppEnvironment
 
 pub fn backend_info() -> IosBackendInfo
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : IosSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, binding~ : IosSurfaceBinding) -> @embedded_runtime_backend.HostedRuntimeSession?
-
 pub fn entry(auto_exit_after_frames? : Int?) -> @runtime.PlatformEntry
 
-pub fn host_surface_binding_from_ios(IosSurfaceBinding) -> @embedded_runtime_backend.HostSurfaceBinding
+pub fn host_surface_binding_from_ios(IosSurfaceBinding) -> @embedded.HostSurfaceBinding
 
 pub fn ios_capability_matrix() -> IosBackendCapabilities
 
-pub fn ios_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
+pub fn ios_capability_summary(services? : @backend.HostServiceCapabilities) -> @backend.HostCapabilitySummary
 
-pub fn ios_input_capabilities() -> @host.HostInputCapabilities
+pub fn ios_input_capabilities() -> @backend.HostInputCapabilities
 
 pub fn ios_readiness() -> IosBackendReadiness
 
-pub fn ios_service_capabilities() -> @host.HostServiceCapabilities
+pub fn ios_service_capabilities() -> @backend.HostServiceCapabilities
 
-pub fn ios_surface_binding(Array[@render.RendererBindingFactory]) -> IosSurfaceBinding
+pub fn ios_surface_binding(Array[@render.RendererFactory]) -> IosSurfaceBinding
 
 pub fn ios_window_hosted_pump_host_sim(IosEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
@@ -54,10 +52,10 @@ pub(all) struct IosBackendCapabilities {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct IosBackendInfo {
-  host_info : @host.HostAppInfo
+  host_info : @backend.HostAppInfo
   capabilities : IosBackendCapabilities
-  services : @host.HostServiceCapabilities
-  input : @host.HostInputCapabilities
+  services : @backend.HostServiceCapabilities
+  input : @backend.HostInputCapabilities
   readiness : IosBackendReadiness
   description : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -70,11 +68,11 @@ pub(all) struct IosBackendReadiness {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct IosEmbeddedRuntimeBackend {
-  backend : @embedded_runtime_backend.HostedWindowBackend
+  backend : @embedded.HostedWindowBackend
 }
 pub fn IosEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn IosEmbeddedRuntimeBackend::has_session(Self) -> Bool
-pub fn IosEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererBindingFactory], auto_exit_after_frames? : Int?) -> Self
+pub fn IosEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererFactory], auto_exit_after_frames? : Int?) -> Self
 pub fn IosEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn IosEmbeddedRuntimeBackend::surface_generation(Self) -> Int
 pub impl @wzzc-dev/window/ios.ApplicationHandler for IosEmbeddedRuntimeBackend
@@ -89,7 +87,7 @@ pub struct IosSurfaceBinding {
   // private fields
 }
 pub fn IosSurfaceBinding::has_async_image_loader(Self) -> Bool
-pub fn IosSurfaceBinding::new(create_renderer~ : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?, sync_surface? : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
+pub fn IosSurfaceBinding::new(create_renderer~ : (IosSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererResolution?, sync_surface? : (IosSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit, image_loader? : @render.ImageLoader?) -> Self
 
 pub(all) struct IosSurfaceHandle {
   raw : UInt64

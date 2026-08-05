@@ -19,7 +19,7 @@ fn binding_test_provider(id : String, accepts : Bool) -> RendererProvider {
               BoundSurface::new(
                 kind=RendererPresentationModel::CpuPixelFrame,
                 route=SurfaceRoute::RasterSurfaceRoute,
-                metrics=RendererSurfaceMetrics::from_logical(
+                metrics=@core.SurfaceMetrics::from_logical(
                   size=@core.Size::new(width~, height~),
                   scale_factor~,
                 ),
@@ -41,8 +41,8 @@ fn binding_test_provider(id : String, accepts : Bool) -> RendererProvider {
 }
 
 ///|
-fn binding_test_host_renderer() -> HostWindowRenderer {
-  HostWindowRenderer::new(resize=_metrics => (), render=_commands => (), text_system=() => {
+fn binding_test_host_renderer() -> WindowRenderer {
+  WindowRenderer::new(resize=_metrics => (), render=_commands => (), text_system=() => {
     @core.TextSystem::fallback()
   })
 }
@@ -57,7 +57,7 @@ test "RendererProviderBinding selects by registration negotiation" {
     provider=binding_test_provider("second", true),
     create_host_renderer=(_metrics, _surface) => binding_test_host_renderer(),
   )
-  guard select_renderer_provider_binding(
+  guard @render_common.select_renderer_provider_binding(
       [rejected, accepted],
       SurfaceDescriptor::cpu_raster(width=100.0, height=50.0, scale_factor=2.0),
     )
@@ -80,14 +80,14 @@ test "RendererProviderBinding projects providers for diagnostics" {
 }
 
 ///|
-fn binding_test_surface_kit() -> HostSurfaceKit {
-  HostSurfaceKit::new(
+fn binding_test_surface_kit() -> SurfaceContext {
+  SurfaceContext::new(
     surface=SurfaceDescriptor::cpu_raster(
       width=100.0,
       height=50.0,
       scale_factor=2.0,
     ),
-    metrics=RendererSurfaceMetrics::from_logical(
+    metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=50.0),
       scale_factor=2.0,
     ),
@@ -99,8 +99,8 @@ fn binding_test_factory(
   id : String,
   accepts : Bool,
   bound_count : Ref[Int],
-) -> RendererBindingFactory {
-  RendererBindingFactory::new(id~, bind=kit => {
+) -> RendererFactory {
+  RendererFactory::new(id~, bind=kit => {
     ignore(kit)
     bound_count.val = bound_count.val + 1
     RendererBindingPlan::new(
@@ -115,10 +115,10 @@ fn binding_test_factory(
 }
 
 ///|
-test "resolve_host_renderer binds factories lazily and stops after acceptance" {
+test "resolve_renderer binds factories lazily and stops after acceptance" {
   let first_count = Ref(0)
   let second_count = Ref(0)
-  let resolution = resolve_host_renderer(
+  let resolution = @render_common.resolve_renderer(
     [
       binding_test_factory("first", true, first_count),
       binding_test_factory("second", true, second_count),
@@ -131,10 +131,10 @@ test "resolve_host_renderer binds factories lazily and stops after acceptance" {
 }
 
 ///|
-test "resolve_host_renderer advances to the next rejected factory" {
+test "resolve_renderer advances to the next rejected factory" {
   let first_count = Ref(0)
   let second_count = Ref(0)
-  let resolution = resolve_host_renderer(
+  let resolution = @render_common.resolve_renderer(
     [
       binding_test_factory("first", false, first_count),
       binding_test_factory("second", true, second_count),

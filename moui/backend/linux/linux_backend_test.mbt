@@ -15,7 +15,10 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
   inspect(info.capabilities.accessibility, content="true")
   inspect(info.accessibility.kind.label(), content="at-spi")
   inspect(info.accessibility.semantics_bridge_available, content="true")
-  inspect(info.accessibility.native_platform_bridge_available, content="true")
+  inspect(
+    info.accessibility.native_accessibility_bridge_available,
+    content="true",
+  )
   inspect(info.services.clipboard, content="true")
   inspect(info.services.file_dialogs, content="true")
   inspect(info.services.file_access, content="true")
@@ -29,7 +32,7 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
 
 ///|
 test "linux client decoration commands reserve a titlebar" {
-  let metrics = @host.HostSurfaceMetrics::from_logical(
+  let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=320.0, height=232.0),
   )
   let decorations = LinuxClientDecorationState::new(active=true)
@@ -73,7 +76,7 @@ test "linux client decoration commands reserve a titlebar" {
 ///|
 test "linux client decoration metrics and input stay in the content space" {
   let decorations = LinuxClientDecorationState::new(active=true)
-  let content = @host.HostSurfaceMetrics::from_logical(
+  let content = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=320.0, height=200.0),
     scale_factor=2.0,
   )
@@ -85,7 +88,7 @@ test "linux client decoration metrics and input stay in the content space" {
   inspect(recovered.physical_size.height, content="400")
   match
     linux_adjust_host_event_for_client_decorations(
-      @host.HostEvent::Pointer(
+      @host.Event::Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=18.0),
           phase=@core.PointerPhase::Down,
@@ -98,7 +101,7 @@ test "linux client decoration metrics and input stay in the content space" {
   }
   match
     linux_adjust_host_event_for_client_decorations(
-      @host.HostEvent::Pointer(
+      @host.Event::Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=52.0),
           phase=@core.PointerPhase::Down,
@@ -106,7 +109,7 @@ test "linux client decoration metrics and input stay in the content space" {
       ),
       decorations,
     ) {
-    Some(@host.HostEvent::Pointer({ position, .. })) =>
+    Some(@host.Event::Pointer({ position, .. })) =>
       inspect(position.y, content="20")
     _ => fail("expected content pointer to be translated")
   }
@@ -124,16 +127,16 @@ test "linux backend carries tracked modifiers into keyboard events" {
     Some("a"),
     Some("A"),
   )
-  let modifiers = @host.modifiers_to_core(
+  let modifiers = @window_host.modifiers_to_core(
     @window_core.Modifiers::Modifiers(true, true, false, false),
   )
-  let event = @host.window_event_to_host_with_modifiers(
+  let event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::KeyboardInput(None, key_event, false),
     @core.Point::new(x=0.0, y=0.0),
     modifiers,
   )
   match event {
-    Some(@host.HostEvent::Keyboard(event)) => {
+    Some(@host.Event::Keyboard(event)) => {
       inspect(event.key, content="a")
       match event.text {
         Some(text) => inspect(text, content="a")
@@ -150,7 +153,7 @@ test "linux backend carries tracked modifiers into keyboard events" {
 
 ///|
 test "linux backend uses Wayland button event coordinates" {
-  let event = @host.window_event_to_host_with_modifiers(
+  let event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
@@ -162,7 +165,7 @@ test "linux backend uses Wayland button event coordinates" {
     @core.KeyModifiers::none(),
   )
   match event {
-    Some(@host.HostEvent::Pointer(event)) => {
+    Some(@host.Event::Pointer(event)) => {
       inspect(event.position.x, content="42")
       inspect(event.position.y, content="64")
       assert_true(event.phase == @core.PointerPhase::Down)
@@ -173,8 +176,30 @@ test "linux backend uses Wayland button event coordinates" {
 }
 
 ///|
+test "linux backend converts high dpi pointer coordinates to logical space" {
+  let event = @window_host.window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::PointerMoved(
+      None,
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(84.0, 128.0),
+      true,
+      @window_core.PointerSource::Mouse,
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match event {
+    Some(@host.Event::Pointer({ position, .. })) => {
+      inspect(position.x, content="42")
+      inspect(position.y, content="64")
+    }
+    _ => fail("expected logical high dpi pointer position")
+  }
+}
+
+///|
 test "linux backend preserves normalized vertical wheel direction" {
-  let event = @host.window_event_to_host_with_modifiers(
+  let event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::MouseWheel(
       None,
       @window_core.MouseScrollDelta::PixelDelta(
@@ -187,7 +212,7 @@ test "linux backend preserves normalized vertical wheel direction" {
   )
   match event {
     Some(
-      @host.HostEvent::Scroll(
+      @host.Event::Scroll(
         {
           position: { x: 8.0, y: 24.0 },
           delta: @host.HostScrollDelta::Pixels({ x: 0.0, y: -120.0 }),
@@ -196,6 +221,55 @@ test "linux backend preserves normalized vertical wheel direction" {
       )
     ) => ()
     _ => fail("expected normalized Linux wheel delta to stay negative")
+  }
+}
+
+///|
+test "linux backend converts high dpi pixel scroll delta to logical space" {
+  let event = @window_host.window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::MouseWheel(
+      None,
+      @window_core.MouseScrollDelta::PixelDelta(
+        @dpi.PhysicalPositionF64::PhysicalPositionF64(24.0, -120.0),
+      ),
+      @window_core.TouchPhase::Moved,
+    ),
+    @core.Point::new(x=8.0, y=24.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match event {
+    Some(
+      @host.Event::Scroll(
+        { delta: @host.HostScrollDelta::Pixels({ x: 12.0, y: -60.0 }), .. }
+      )
+    ) => ()
+    _ => fail("expected logical high dpi pixel scroll delta")
+  }
+}
+
+///|
+test "linux backend converts high dpi drag drop coordinates to logical space" {
+  let event = @window_host.window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::DragDropped(
+      ["/tmp/high-dpi.txt"],
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(96.0, 144.0),
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match event {
+    Some(
+      @host.Event::DragDrop(
+        {
+          phase: @core.DragDropPhase::Dropped,
+          position: Some({ x: 48.0, y: 72.0 }),
+          ..,
+        }
+      )
+    ) => ()
+    _ => fail("expected logical high dpi drag drop position")
   }
 }
 

@@ -46,7 +46,7 @@ test "file importer handles immediate host file selection" {
 
 ///|
 test "file importer handles mocked pending completion" {
-  let queue = @host.HostServiceAsyncQueue::new()
+  let queue = @backend_common.ServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
   let update = FileImporterModel::new().update_with_services(
     BrowseRequested,
@@ -84,7 +84,7 @@ test "file importer handles mocked pending completion" {
 
 ///|
 test "file importer runtime receives async file dialog completion" {
-  let queue = @host.HostServiceAsyncQueue::new()
+  let queue = @backend_common.ServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
   let runtime = test_runtime(
     FileImporterModel::new().program(
@@ -110,7 +110,7 @@ test "file importer runtime receives async file dialog completion" {
 
 ///|
 test "file importer runtime receives async file dialog rejection" {
-  let queue = @host.HostServiceAsyncQueue::new()
+  let queue = @backend_common.ServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
   let runtime = test_runtime(
     FileImporterModel::new().program(
@@ -161,7 +161,7 @@ test "file importer composes as effect-capable child program" {
 
 ///|
 test "file importer child effect maps pending completion into parent" {
-  let queue = @host.HostServiceAsyncQueue::new()
+  let queue = @backend_common.ServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
   let runtime = ParentImporterModel::new().runtime_with_services(
     services,
@@ -230,12 +230,12 @@ fn host_services_for_file_dialog(
       }
     },
   )
-  @host.app_services(bridge~)
+  @backend_common.app_services(bridge~)
 }
 
 ///|
 fn async_file_dialog_services(
-  queue : @host.HostServiceAsyncQueue,
+  queue : @backend_common.ServiceAsyncQueue,
 ) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(file_dialogs=true),
@@ -246,7 +246,7 @@ fn async_file_dialog_services(
       }
     },
   )
-  @host.app_services(bridge~, async_queue=Some(queue))
+  @backend_common.app_services(bridge~, async_queue=Some(queue))
 }
 
 ///|

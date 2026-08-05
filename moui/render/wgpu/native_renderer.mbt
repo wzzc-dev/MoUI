@@ -49,7 +49,7 @@ struct RendererHandle {
   image_cache : Map[String, NativeImageResource]
   decoded_image_cache : Map[String, NativeDecodedImage]
   failed_images : Map[String, Bool]
-  image_lifecycle : @render.ImageResourceLifecycle
+  image_lifecycle : @render_common.ImageResourceLifecycle
   font_cache : NativeFontCache
   glyph_atlas : GlyphAtlas
   mut visual_vertices : Array[VisualVertex]
@@ -86,7 +86,7 @@ priv struct NativePlanGpuBuffers {
 
 ///|
 fn RendererHandle::create_with_host_surface(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   host_surface : HostWgpuSurface,
 ) -> RendererHandle raise @wgpu_mbt.WgpuError {
   create_with_surface(
@@ -99,7 +99,7 @@ fn RendererHandle::create_with_host_surface(
 
 ///|
 fn RendererHandle::create_with_host_surface_and_text_engine(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   host_surface : HostWgpuSurface,
   text_engine : NativeTextEngine,
 ) -> RendererHandle raise @wgpu_mbt.WgpuError {
@@ -113,7 +113,7 @@ fn RendererHandle::create_with_host_surface_and_text_engine(
 
 ///|
 fn create_with_surface(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   instance : @wgpu_mbt.Instance,
   surface : @wgpu_mbt.Surface,
   text_engine : NativeTextEngine,
@@ -281,7 +281,7 @@ fn create_with_surface(
     image_cache: Map([]),
     decoded_image_cache: Map([]),
     failed_images: Map([]),
-    image_lifecycle: @render.ImageResourceLifecycle::new(),
+    image_lifecycle: @render_common.ImageResourceLifecycle::new(),
     font_cache: NativeFontCache::new_with_engine(text_engine),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],
@@ -296,7 +296,7 @@ fn create_with_surface(
 ///|
 fn RendererHandle::resize(
   self : RendererHandle,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> Unit {
   let scale_changed = self.scale_factor != metrics.scale_factor
   self.size = metrics.logical_size
@@ -344,7 +344,7 @@ fn RendererHandle::render(
 ) -> Unit {
   self.last_batches = @render.collect_rect_batches(commands)
   self.record_native_image_commands(commands)
-  let lowered = @render.lower_draw_commands(commands)
+  let lowered = @render_common.lower_draw_commands(commands)
   let plan = build_native_draw_plan(
     self.font_cache,
     self.glyph_atlas,
@@ -585,7 +585,7 @@ fn RendererHandle::dispose(self : RendererHandle) -> Unit {
 fn count_native_unsupported_commands(
   commands : Array[@core.DrawCommand],
 ) -> Int {
-  @render.plan_renderer_command_fallbacks(commands).fallback_count()
+  @render_common.plan_renderer_command_fallbacks(commands).fallback_count()
 }
 
 ///|

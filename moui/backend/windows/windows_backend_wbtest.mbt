@@ -1,7 +1,7 @@
 ///|
 test "windows menu command payload records utf8 byte lengths" {
   let encoded = @utf8.decode_lossy(
-    @platform_bridge.encode_menu_commands([
+    @host_services_desktop.encode_menu_commands([
       @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
       @core.ActionCommand::new(
         intent=@core.CommandIntent::Paste,
@@ -16,22 +16,22 @@ test "windows menu command payload records utf8 byte lengths" {
 
 ///|
 test "windows host options carry optional scene resolver and smoke options stay separate" {
-  let request = @host.HostWindowOpenRequest::new(
+  let request = @host.WindowOpenRequest::new(
     title="Inspector",
-    scene=@host.HostWindowScene::new(scene_id="inspector"),
-    metrics=@host.HostSurfaceMetrics::from_logical(
+    scene=@host.WindowScene::new(scene_id="inspector"),
+    metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=240.0),
     ),
   )
   match WindowsHostAppOptions::new().scene_resolver.resolve(request) {
-    @runtime.HostWindowSceneResolution::SceneRejected(message) =>
+    @runtime.WindowSceneResolution::SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Windows scene resolver rejection")
   }
   assert_false(WindowsHostSmokeOptions::new().first_frame_smoke_auto_exit)
-  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
-    @runtime.HostWindowSceneResolution::SceneResolved(
-      @runtime.HostWindowSceneInstance::new(
+  let resolver = @runtime.WindowSceneResolver::new(resolve=request => {
+    @runtime.WindowSceneResolution::SceneResolved(
+      @runtime.WindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
@@ -56,7 +56,7 @@ test "windows host options carry optional scene resolver and smoke options stay 
     None => fail("expected configured Windows platform event sources")
   }
   match options.scene_resolver.resolve(request) {
-    @runtime.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    @runtime.WindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Windows scene resolver")
   }
@@ -65,7 +65,7 @@ test "windows host options carry optional scene resolver and smoke options stay 
 ///|
 test "windows coordinator exposes async image loader hook" {
   let loader_started = Ref(0)
-  let loader = @render.HostAsyncImageLoader::new(start_load=(
+  let loader = @render_common.AsyncImageLoader::new(start_load=(
     _id,
     _source,
     _complete,
@@ -73,32 +73,29 @@ test "windows coordinator exposes async image loader hook" {
     loader_started.val = loader_started.val + 1
     None
   })
-  let coordinator = @runtime.WindowHostCoordinator::new(
-    window_requests=@host.HostWindowRequestQueue::new(),
-    scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
+  let coordinator = @window_host.WindowCoordinator::new(
+    window_requests=@window_host.WindowRequestQueue::new().requests(),
+    scene_resolver=@runtime.WindowSceneResolver::unavailable(),
     services=windows_service_bridge(),
     event_sources=None,
   )
-  let renderer = @render.HostWindowRenderer::new(
-    resize=_ => (),
-    render=_ => (),
-    text_system=() => @core.TextSystem::fallback(),
-  )
-  let tracker = @render.HostImageResourceRepaintTracker::new()
-  let completion = @render.HostImageResourceCompletionSource::new(
+  let renderer = @render.WindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+    @core.TextSystem::fallback()
+  })
+  let tracker = @render_common.ImageResourceRepaintTracker::new()
+  let completion = @render_common.ImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
   )
   ignore(
     coordinator.attach_surface(
-      @host.HostWindowId::new(1),
+      @host.WindowId::new(1),
       renderer,
-      @runtime.WindowSurfaceActions::new(
+      @window_host.WindowSurfaceActions::new(
         focus=() => (),
-        request_surface_size=_ => (),
-        sync_surface=_ => (),
-        renderer_resize=_ => (),
+        request_resize=metrics => metrics,
+        sync_observed_resize=metrics => metrics,
         set_minimized=_ => (),
         set_visible=_ => (),
         request_redraw=() => (),
@@ -107,12 +104,12 @@ test "windows coordinator exposes async image loader hook" {
         native_view_handle=() => None,
         dispose_platform_views=() => (),
       ),
-      image_loader=Some(loader),
+      image_loader=Some(loader.as_loader()),
     ),
   )
   match
     coordinator.schedule_image_resource_loads(
-      @host.HostWindowId::new(1),
+      @host.WindowId::new(1),
       renderer,
       completion,
     ) {
@@ -124,33 +121,31 @@ test "windows coordinator exposes async image loader hook" {
   }
   inspect(loader_started.val, content="0")
   inspect(
-    coordinator.cancel_image_resource_loads(@host.HostWindowId::new(1)),
+    coordinator.cancel_image_resource_loads(@host.WindowId::new(1)),
     content="0",
   )
 }
 
 ///|
 test "windows coordinator async image hook defaults to unavailable" {
-  let coordinator = @runtime.WindowHostCoordinator::new(
-    window_requests=@host.HostWindowRequestQueue::new(),
-    scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
+  let coordinator = @window_host.WindowCoordinator::new(
+    window_requests=@window_host.WindowRequestQueue::new().requests(),
+    scene_resolver=@runtime.WindowSceneResolver::unavailable(),
     services=windows_service_bridge(),
     event_sources=None,
   )
-  let renderer = @render.HostWindowRenderer::new(
-    resize=_ => (),
-    render=_ => (),
-    text_system=() => @core.TextSystem::fallback(),
-  )
-  let tracker = @render.HostImageResourceRepaintTracker::new()
-  let completion = @render.HostImageResourceCompletionSource::new(
+  let renderer = @render.WindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+    @core.TextSystem::fallback()
+  })
+  let tracker = @render_common.ImageResourceRepaintTracker::new()
+  let completion = @render_common.ImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
   )
   match
     coordinator.schedule_image_resource_loads(
-      @host.HostWindowId::new(2),
+      @host.WindowId::new(2),
       renderer,
       completion,
     ) {

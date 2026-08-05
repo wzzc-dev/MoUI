@@ -122,7 +122,7 @@ fn append_path_item(
   if !native_scissor_visible(scissor) {
     return
   }
-  let mesh = @render.tessellate_path(path)
+  let mesh = @render_common.tessellate_path(path)
   let start = vertices.length()
   for vertex in mesh.vertices() {
     push_path_visual_vertex(vertices, vertex, state, size)
@@ -283,7 +283,7 @@ fn push_visual_vertex(
 ///|
 fn push_path_visual_vertex(
   vertices : Array[VisualVertex],
-  vertex : @render.PathVertex,
+  vertex : @render_common.PathVertex,
   state : NativePaintState,
   size : @core.Size,
 ) -> Unit {

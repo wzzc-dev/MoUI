@@ -4,7 +4,7 @@ package "wzzc-dev/moui/runtime"
 import {
   "Milky2018/moon_accesskit",
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
 }
@@ -22,13 +22,11 @@ pub fn accesskit_role_from_semantics(@core.SemanticsRole) -> @moon_accesskit.Rol
 
 pub fn accesskit_update_from_semantics_read(SemanticsRead) -> NativeAccessibilityUpdate?
 
-pub fn drain_to_runtime_slots(@host.HostWindowCommands, @host.HostWindowRegistry, HostWindowRuntimeSlots) -> Array[@host.HostWindowRequestCompletion]
-
 pub fn[Msg] effect_plan_summary(@core.Effect[Msg]) -> EffectPlanSummary
 
 pub fn finish_first_frame_smoke_auto_exit(platform_name~ : String, title~ : String, flag~ : Bool, finish~ : () -> Unit) -> Bool
 
-pub fn install_platform_view_plugins(Array[@host.PlatformViewPlugin], (UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit
+pub fn install_platform_view_plugins(Array[@backend.PlatformViewPlugin], (UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit
 
 pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> AppRuntime
 
@@ -36,23 +34,13 @@ pub fn[Model, Msg] new_program_with_dimensions(program~ : @core.Program[Model, M
 
 pub fn[Msg] new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> AppRuntime
 
-pub fn resolve_open_request(@host.HostWindowRegistry, @host.HostWindowOpenRequest, HostWindowSceneResolver) -> HostWindowOpenResolution
-
 pub fn run_app(String, AppRuntime) -> AppBuilder
-
-pub fn runtime_slot_needs_redraw(HostWindowRuntimeSlot) -> Bool
 
 pub fn semantics_action_label(@core.SemanticsAction) -> String
 
 pub fn[Msg] subscription_plan_summary(@core.Subscription[Msg]) -> SubscriptionPlanSummary
 
-pub fn sync_platform_view_plugins(Array[@host.PlatformViewPlugin], UInt64, @core.DrawFrame, content_offset? : Double) -> Unit
-
-pub fn to_host_id(@render.RenderWindowId) -> @host.HostWindowId
-
-pub fn to_render_id(@host.HostWindowId) -> @render.RenderWindowId
-
-pub fn to_render_metrics(@host.HostSurfaceMetrics) -> @render.RendererSurfaceMetrics
+pub fn sync_platform_view_plugins(Array[@backend.PlatformViewPlugin], UInt64, @core.DrawFrame, content_offset? : Double) -> Unit
 
 // Errors
 
@@ -60,27 +48,27 @@ pub fn to_render_metrics(@host.HostSurfaceMetrics) -> @render.RendererSurfaceMet
 pub struct AppBuilder {
   title : String
   runtime : AppRuntime
-  renderer_factories : Array[@render.RendererBindingFactory]
+  renderer_factories : Array[@render.RendererFactory]
   backend : PlatformEntry?
-  window_requests : @host.HostWindowRequestQueue
+  window_requests : @backend.WindowRequests
 }
 pub fn AppBuilder::backend(Self, PlatformEntry) -> Self
-pub fn AppBuilder::render(Self, @render.RendererBindingFactory) -> Self
-pub fn AppBuilder::render_all(Self, Array[@render.RendererBindingFactory]) -> Self
+pub fn AppBuilder::render(Self, @render.RendererFactory) -> Self
+pub fn AppBuilder::render_all(Self, Array[@render.RendererFactory]) -> Self
 pub fn AppBuilder::run(Self) -> Unit
 pub async fn AppBuilder::run_async_pump(Self, frame_interval_ms? : Int) -> Unit
-pub fn AppBuilder::window_requests(Self, @host.HostWindowRequestQueue) -> Self
+pub fn AppBuilder::window_requests(Self, @backend.WindowRequests) -> Self
 
 pub struct AppLaunchRequest {
   title : String
   runtime : AppRuntime
-  renderer_factories : Array[@render.RendererBindingFactory]
-  window_requests : @host.HostWindowRequestQueue
+  renderer_factories : Array[@render.RendererFactory]
+  window_requests : @backend.WindowRequests
 }
-pub fn AppLaunchRequest::renderer_factories(Self) -> Array[@render.RendererBindingFactory]
+pub fn AppLaunchRequest::renderer_factories(Self) -> Array[@render.RendererFactory]
 pub fn AppLaunchRequest::runtime(Self) -> AppRuntime
 pub fn AppLaunchRequest::title(Self) -> String
-pub fn AppLaunchRequest::window_requests(Self) -> @host.HostWindowRequestQueue
+pub fn AppLaunchRequest::window_requests(Self) -> @backend.WindowRequests
 
 pub struct AppRuntime {
   // private fields
@@ -122,8 +110,6 @@ pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn AppRuntime::set_text_system(Self, @core.TextSystem) -> Unit
 pub fn AppRuntime::size(Self) -> @core.Size
 pub fn AppRuntime::text_system(Self) -> @core.TextSystem
-
-type CoordinatedSurface
 
 pub(all) enum EffectPlanKind {
   EffectPlanNone
@@ -181,8 +167,8 @@ pub struct HostEventSource {
 }
 pub fn HostEventSource::active_handler_count(Self) -> Int
 pub fn HostEventSource::new() -> Self
-pub fn HostEventSource::publish(Self, @host.HostEvent) -> Int
-pub fn[Msg] HostEventSource::subscription(Self, key? : String, label? : String, map~ : (@host.HostEvent) -> Msg?) -> @core.Subscription[Msg]
+pub fn HostEventSource::publish(Self, @backend.Event) -> Int
+pub fn[Msg] HostEventSource::subscription(Self, key? : String, label? : String, map~ : (@backend.Event) -> Msg?) -> @core.Subscription[Msg]
 
 pub(all) struct HostPlatformEventPublishResult {
   host_event_count : Int
@@ -194,7 +180,7 @@ pub struct HostPlatformEventSources {
 }
 pub fn HostPlatformEventSources::host_events(Self) -> HostEventSource
 pub fn HostPlatformEventSources::new(host_events? : HostEventSource, window_events? : HostWindowEventSource) -> Self
-pub fn HostPlatformEventSources::publish(Self, window_id~ : @host.HostWindowId, event~ : @host.HostEvent) -> HostPlatformEventPublishResult
+pub fn HostPlatformEventSources::publish(Self, window_id~ : @backend.WindowId, event~ : @backend.Event) -> HostPlatformEventPublishResult
 pub fn HostPlatformEventSources::window_events(Self) -> HostWindowEventSource
 
 pub(all) struct HostRuntimeDriver {
@@ -205,16 +191,16 @@ pub(all) struct HostRuntimeDriver {
 }
 pub fn HostRuntimeDriver::apply_render_frame_result(Self, @render.RenderFrameResult) -> Unit
 pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
-pub fn HostRuntimeDriver::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
-pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @core.ActionCommand, @host.HostServiceBridge) -> @host.HostEventResult
-pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @core.CommandIntent, @host.HostServiceBridge) -> @host.HostEventResult
-pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @core.KeyboardEvent, @host.HostServiceBridge) -> @host.HostEventResult
+pub fn HostRuntimeDriver::dispatch(Self, @backend.Event) -> @backend.EventResult
+pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @core.ActionCommand, @backend.HostServiceBridge) -> @backend.EventResult
+pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @core.CommandIntent, @backend.HostServiceBridge) -> @backend.EventResult
+pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @core.KeyboardEvent, @backend.HostServiceBridge) -> @backend.EventResult
 pub fn HostRuntimeDriver::dispatch_platform_view(Self, String, @core.PlatformViewEvent) -> Unit
-pub fn HostRuntimeDriver::dispatch_service_completion(Self, @host.HostCompletedServiceResponse, @host.HostServiceBridge) -> @host.HostEventResult
+pub fn HostRuntimeDriver::dispatch_service_completion(Self, @backend.HostCompletedServiceResponse, @backend.HostServiceBridge) -> @backend.EventResult
 pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@core.DrawCommand]
 pub fn HostRuntimeDriver::draw_frame(Self) -> @core.DrawFrame
 pub fn HostRuntimeDriver::environment(Self) -> @core.Environment
-pub fn HostRuntimeDriver::event_result(Self) -> @host.HostEventResult
+pub fn HostRuntimeDriver::event_result(Self) -> @backend.EventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::focused_text_input(Self) -> @core.TextInputState
 pub fn HostRuntimeDriver::new(runtime~ : AppRuntime, schedule_redraw~ : () -> Unit) -> Self
@@ -224,7 +210,7 @@ pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
 pub fn HostRuntimeDriver::set_environment(Self, @core.Environment) -> Unit
 pub fn HostRuntimeDriver::set_redraw_scheduler(Self, () -> Unit) -> Unit
 pub fn HostRuntimeDriver::set_text_system(Self, @core.TextSystem) -> Unit
-pub fn HostRuntimeDriver::show_context_menu(Self, @host.HostServiceBridge) -> @host.HostEventResult
+pub fn HostRuntimeDriver::show_context_menu(Self, @backend.HostServiceBridge) -> @backend.EventResult
 pub fn HostRuntimeDriver::size(Self) -> @core.Size
 
 pub(all) struct HostWallClock {
@@ -239,77 +225,18 @@ pub(all) struct HostWallClock {
 pub fn HostWallClock::new(Int, Int, Int, Int, Int, Int, second? : Int) -> Self
 
 pub(all) struct HostWindowEvent {
-  window_id : @host.HostWindowId
-  event : @host.HostEvent
+  window_id : @backend.WindowId
+  event : @backend.Event
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostWindowEvent::new(window_id~ : @host.HostWindowId, event~ : @host.HostEvent) -> Self
+pub fn HostWindowEvent::new(window_id~ : @backend.WindowId, event~ : @backend.Event) -> Self
 
 pub struct HostWindowEventSource {
   // private fields
 }
 pub fn HostWindowEventSource::active_handler_count(Self) -> Int
 pub fn HostWindowEventSource::new() -> Self
-pub fn HostWindowEventSource::publish(Self, window_id~ : @host.HostWindowId, event~ : @host.HostEvent) -> Int
+pub fn HostWindowEventSource::publish(Self, window_id~ : @backend.WindowId, event~ : @backend.Event) -> Int
 pub fn[Msg] HostWindowEventSource::subscription(Self, key? : String, label? : String, map~ : (HostWindowEvent) -> Msg?) -> @core.Subscription[Msg]
-
-pub(all) enum HostWindowOpenResolution {
-  OpenResolved(HostWindowResolvedOpen)
-  OpenRejected(String)
-}
-
-pub(all) struct HostWindowResolvedOpen {
-  id : @host.HostWindowId
-  record : @host.HostWindowRecord
-  instance : HostWindowSceneInstance
-}
-pub fn HostWindowResolvedOpen::new(id~ : @host.HostWindowId, record~ : @host.HostWindowRecord, instance~ : HostWindowSceneInstance) -> Self
-
-pub(all) struct HostWindowRuntimeSlot {
-  id : @host.HostWindowId
-  record : @host.HostWindowRecord
-  driver : HostRuntimeDriver
-}
-pub fn HostWindowRuntimeSlot::from_driver(record~ : @host.HostWindowRecord, driver~ : HostRuntimeDriver) -> Self
-pub fn HostWindowRuntimeSlot::from_resolved_open(HostWindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
-pub fn HostWindowRuntimeSlot::new(record~ : @host.HostWindowRecord, runtime~ : AppRuntime, schedule_redraw~ : () -> Unit) -> Self
-
-pub struct HostWindowRuntimeSlots {
-  mut slots : Array[HostWindowRuntimeSlot]
-}
-pub fn HostWindowRuntimeSlots::apply_host_event(Self, @host.HostWindowRegistry, @host.HostWindowId, @host.HostEvent) -> Bool
-pub fn HostWindowRuntimeSlots::apply_request(Self, @host.HostWindowRegistry, @host.HostWindowRequest) -> @host.HostWindowRequestResult
-pub fn HostWindowRuntimeSlots::count(Self) -> Int
-pub fn HostWindowRuntimeSlots::focused_slot(Self) -> HostWindowRuntimeSlot?
-pub fn HostWindowRuntimeSlots::insert(Self, HostWindowRuntimeSlot) -> Bool
-pub fn HostWindowRuntimeSlots::insert_from_registry(Self, @host.HostWindowRegistry, @host.HostWindowId, driver~ : HostRuntimeDriver) -> Bool
-pub fn HostWindowRuntimeSlots::is_empty(Self) -> Bool
-pub fn HostWindowRuntimeSlots::lookup(Self, @host.HostWindowId) -> HostWindowRuntimeSlot?
-pub fn HostWindowRuntimeSlots::new() -> Self
-pub fn HostWindowRuntimeSlots::open_slots(Self) -> Array[HostWindowRuntimeSlot]
-pub fn HostWindowRuntimeSlots::primary_slot(Self) -> HostWindowRuntimeSlot?
-pub fn HostWindowRuntimeSlots::remove(Self, @host.HostWindowId) -> HostWindowRuntimeSlot?
-pub fn HostWindowRuntimeSlots::remove_closed(Self) -> Int
-pub fn HostWindowRuntimeSlots::sync_from_registry(Self, @host.HostWindowRegistry, @host.HostWindowId) -> Bool
-pub fn HostWindowRuntimeSlots::sync_open_from_registry(Self, @host.HostWindowRegistry) -> Int
-pub fn HostWindowRuntimeSlots::sync_record(Self, @host.HostWindowRecord) -> Bool
-
-pub(all) struct HostWindowSceneInstance {
-  request : @host.HostWindowOpenRequest
-  runtime : AppRuntime
-}
-pub fn HostWindowSceneInstance::new(request~ : @host.HostWindowOpenRequest, runtime~ : AppRuntime) -> Self
-
-pub(all) enum HostWindowSceneResolution {
-  SceneResolved(HostWindowSceneInstance)
-  SceneRejected(String)
-}
-
-pub struct HostWindowSceneResolver {
-  resolve : (@host.HostWindowOpenRequest) -> HostWindowSceneResolution
-}
-pub fn HostWindowSceneResolver::new(resolve~ : (@host.HostWindowOpenRequest) -> HostWindowSceneResolution) -> Self
-pub fn HostWindowSceneResolver::resolve(Self, @host.HostWindowOpenRequest) -> HostWindowSceneResolution
-pub fn HostWindowSceneResolver::unavailable(reason? : String) -> Self
 
 pub struct InputDispatchResult {
   handled : Bool
@@ -758,65 +685,35 @@ pub fn ViewTreeInspectorSnapshot::node_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::nodes(Self) -> Array[ViewInspectorSummary]
 pub fn ViewTreeInspectorSnapshot::root_kind(Self) -> String
 
-pub struct WindowHostCoordinator {
-  window_requests : @host.HostWindowRequestQueue
-  scene_resolver : HostWindowSceneResolver
-  windows : @host.HostWindowRegistry
-  runtime_slots : HostWindowRuntimeSlots
-  platform_windows : @host.HostPlatformWindowMap
-  image_repaint_tracker : @render.HostImageResourceRepaintTracker
-  event_sources : HostPlatformEventSources?
-  text_input_session : @host.TextInputSession
-  services : @host.HostServiceBridge
-  mut surfaces : Array[CoordinatedSurface]
+pub(all) enum WindowOpenResolution {
+  OpenResolved(WindowResolvedOpen)
+  OpenRejected(String)
 }
-pub fn WindowHostCoordinator::active_runtime_slot(Self) -> HostWindowRuntimeSlot?
-pub fn WindowHostCoordinator::apply_platform_window_request(Self, @host.HostWindowId, @host.HostWindowRequest, (WindowSurfaceActions) -> Unit) -> @host.HostWindowRequestResult
-pub fn WindowHostCoordinator::apply_window_request(Self, @host.HostWindowRequest, open_window~ : (@host.HostWindowOpenRequest) -> @host.HostWindowRequestResult, dispose_window? : (@host.HostWindowId) -> Unit, exit~ : () -> Unit) -> @host.HostWindowRequestResult
-pub fn WindowHostCoordinator::attach_surface(Self, @host.HostWindowId, @render.HostWindowRenderer, WindowSurfaceActions, image_loader? : @render.HostAsyncImageLoader?) -> Bool
-pub fn WindowHostCoordinator::bind_renderer_image_resource_changes(Self, @host.HostWindowId) -> Unit
-pub fn WindowHostCoordinator::cancel_image_resource_loads(Self, @host.HostWindowId) -> Int
-pub fn WindowHostCoordinator::detach_surface(Self, @host.HostWindowId) -> WindowSurfaceActions?
-pub fn WindowHostCoordinator::dispatch_host_event(Self, @host.HostWindowId, @host.HostEvent, adjust~ : (@host.HostEvent) -> @host.HostEvent?) -> Unit
-pub fn WindowHostCoordinator::dispose_window(Self, @host.HostWindowId) -> Unit
-pub fn WindowHostCoordinator::drain_window_requests(Self, (@host.HostWindowRequest) -> @host.HostWindowRequestResult) -> Unit
-pub fn WindowHostCoordinator::image_resource_completion_source(Self) -> @render.HostImageResourceCompletionSource
-pub fn WindowHostCoordinator::image_resource_window_open(Self, @host.HostWindowId) -> Bool
-pub fn WindowHostCoordinator::new(window_requests~ : @host.HostWindowRequestQueue, scene_resolver~ : HostWindowSceneResolver, services~ : @host.HostServiceBridge, event_sources~ : HostPlatformEventSources?) -> Self
-pub fn WindowHostCoordinator::open_resolution(Self, @host.HostWindowOpenRequest) -> HostWindowOpenResolution
-pub fn WindowHostCoordinator::publish_platform_event(Self, @host.HostWindowId, @host.HostEvent) -> HostPlatformEventPublishResult?
-pub fn WindowHostCoordinator::register_primary_runtime_slot(Self, @host.HostWindowId, HostRuntimeDriver) -> Unit
-pub fn WindowHostCoordinator::request_image_resource_redraw_if_changed(Self, @host.HostWindowId) -> Bool
-pub fn WindowHostCoordinator::request_platform_redraw(Self, @host.HostWindowId) -> Unit
-pub fn WindowHostCoordinator::request_redraw(Self) -> Unit
-pub fn WindowHostCoordinator::request_redraw_window_if_needed(Self, @host.HostWindowId) -> Unit
-pub fn WindowHostCoordinator::rollback_window_record(Self, @host.HostWindowId) -> Unit
-pub fn WindowHostCoordinator::runtime_slot_lookup(Self, @host.HostWindowId) -> HostWindowRuntimeSlot?
-pub fn WindowHostCoordinator::runtime_slots_empty(Self) -> Bool
-pub fn WindowHostCoordinator::schedule_image_resource_loads(Self, @host.HostWindowId, @render.HostWindowRenderer, @render.HostImageResourceCompletionSource) -> @render.HostAsyncImageLoadScheduleResult?
-pub fn WindowHostCoordinator::services(Self) -> @host.HostServiceBridge
-pub fn WindowHostCoordinator::set_surface_frame_pending(Self, @host.HostWindowId, Bool) -> Unit
-pub fn WindowHostCoordinator::surface_actions(Self, @host.HostWindowId) -> WindowSurfaceActions?
-pub fn WindowHostCoordinator::surface_frame_pending(Self, @host.HostWindowId) -> Bool
-pub fn WindowHostCoordinator::surface_renderer(Self, @host.HostWindowId) -> @render.HostWindowRenderer?
-pub fn WindowHostCoordinator::sync_runtime_slot(Self, @host.HostWindowId) -> Unit
-pub fn WindowHostCoordinator::sync_runtime_slots(Self) -> Unit
-pub fn WindowHostCoordinator::sync_text_input_session(Self) -> Unit
 
-pub struct WindowSurfaceActions {
-  focus : () -> Unit
-  request_surface_size : (@host.HostSurfaceMetrics) -> Unit
-  sync_surface : (@host.HostSurfaceMetrics) -> Unit
-  renderer_resize : (@render.RendererSurfaceMetrics) -> Unit
-  set_minimized : (Bool) -> Unit
-  set_visible : (Bool) -> Unit
-  request_redraw : () -> Unit
-  request_ime_update : (@host.TextInputSessionAction) -> Unit
-  drop : () -> Unit
-  native_view_handle : () -> UInt64?
-  dispose_platform_views : () -> Unit
+pub(all) struct WindowResolvedOpen {
+  id : @backend.WindowId
+  record : @backend.WindowRecord
+  instance : WindowSceneInstance
 }
-pub fn WindowSurfaceActions::new(focus~ : () -> Unit, request_surface_size~ : (@host.HostSurfaceMetrics) -> Unit, sync_surface~ : (@host.HostSurfaceMetrics) -> Unit, renderer_resize~ : (@render.RendererSurfaceMetrics) -> Unit, set_minimized~ : (Bool) -> Unit, set_visible~ : (Bool) -> Unit, request_redraw~ : () -> Unit, request_ime_update~ : (@host.TextInputSessionAction) -> Unit, drop~ : () -> Unit, native_view_handle~ : () -> UInt64?, dispose_platform_views~ : () -> Unit) -> Self
+pub fn WindowResolvedOpen::new(id~ : @backend.WindowId, record~ : @backend.WindowRecord, instance~ : WindowSceneInstance) -> Self
+
+pub(all) struct WindowSceneInstance {
+  request : @backend.WindowOpenRequest
+  runtime : AppRuntime
+}
+pub fn WindowSceneInstance::new(request~ : @backend.WindowOpenRequest, runtime~ : AppRuntime) -> Self
+
+pub(all) enum WindowSceneResolution {
+  SceneResolved(WindowSceneInstance)
+  SceneRejected(String)
+}
+
+pub struct WindowSceneResolver {
+  resolve : (@backend.WindowOpenRequest) -> WindowSceneResolution
+}
+pub fn WindowSceneResolver::new(resolve~ : (@backend.WindowOpenRequest) -> WindowSceneResolution) -> Self
+pub fn WindowSceneResolver::resolve(Self, @backend.WindowOpenRequest) -> WindowSceneResolution
+pub fn WindowSceneResolver::unavailable(reason? : String) -> Self
 
 // Type aliases
 

@@ -355,8 +355,8 @@ pub fn skia_text_visual_order_diagnostic(
   if text == "" {
     return None
   }
-  let logical_clusters = @render.text_grapheme_clusters(text)
-  let visual_clusters = @render.text_bidi_visual_clusters(text)
+  let logical_clusters = @render_common.text_grapheme_clusters(text)
+  let visual_clusters = @render_common.text_bidi_visual_clusters(text)
   match skia_resolved_text_layout_for_resolution(font, text, font_resolution) {
     Some(layout) => {
       let mut glyph_count = 0
@@ -364,14 +364,14 @@ pub fn skia_text_visual_order_diagnostic(
         glyph_count += segment.glyph_run.glyphs.length()
       }
       Some({
-        logical_text: @render.text_join_clusters(logical_clusters),
-        visual_text: @render.text_join_clusters(visual_clusters),
+        logical_text: @render_common.text_join_clusters(logical_clusters),
+        visual_text: @render_common.text_join_clusters(visual_clusters),
         logical_cluster_count: logical_clusters.length(),
         visual_cluster_count: visual_clusters.length(),
         segment_count: layout.segments.length(),
         glyph_count,
         width: layout.width,
-        visual_order_differs: !@render.text_string_arrays_equal(
+        visual_order_differs: !@render_common.text_string_arrays_equal(
           logical_clusters, visual_clusters,
         ),
       })
@@ -506,7 +506,7 @@ pub fn skia_emoji_font_fallback_diagnostic(
           glyph_format,
         ),
         glyph_count,
-        cluster_count: @render.text_grapheme_clusters(text).length(),
+        cluster_count: @render_common.text_grapheme_clusters(text).length(),
         glyph_width: skia_positive_pixel_extent(layout.width),
         glyph_height: skia_positive_pixel_extent(layout.metrics.height),
         resolved_missing_glyph_count,

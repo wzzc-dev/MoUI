@@ -60,7 +60,7 @@
 - `node scripts/test-browser-runtime-events.mjs`
 - `node scripts/test-web-semantics-dom.mjs`
 - `moon test moui/runtime --target native`
-- `moon test moui/backend/host --target native`
+- `moon test moui/backend --target native`
 - `moon test moui/backend/web --target wasm-gc`
 - `moon build website/web_wasm --target wasm-gc`
 - `moon build website/playground/web_wasm --target wasm-gc`

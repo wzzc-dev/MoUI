@@ -22,7 +22,7 @@
 
 ## 创建平台服务
 
-1. 先把类型化 request/response 添加到 `backend/host`。
+1. 先把类型化 request/response 添加到 `backend`。
 2. 通过 `HostServiceCapabilities` 对 dispatch 进行 gate。
 3. 在相关 backend package 中添加 platform-local bridge constructor。
 4. 用 `HostServiceBridge::unavailable` 显式表示不可用平台。

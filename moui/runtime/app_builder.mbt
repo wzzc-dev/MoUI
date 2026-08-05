@@ -3,8 +3,8 @@
 pub struct AppLaunchRequest {
   title : String
   runtime : AppRuntime
-  renderer_factories : Array[@render.RendererBindingFactory]
-  window_requests : @backend_host.HostWindowRequestQueue
+  renderer_factories : Array[@render.RendererFactory]
+  window_requests : @backend_host.WindowRequests
 }
 
 ///|
@@ -20,14 +20,14 @@ pub fn AppLaunchRequest::runtime(self : AppLaunchRequest) -> AppRuntime {
 ///|
 pub fn AppLaunchRequest::renderer_factories(
   self : AppLaunchRequest,
-) -> Array[@render.RendererBindingFactory] {
+) -> Array[@render.RendererFactory] {
   self.renderer_factories.copy()
 }
 
 ///|
 pub fn AppLaunchRequest::window_requests(
   self : AppLaunchRequest,
-) -> @backend_host.HostWindowRequestQueue {
+) -> @backend_host.WindowRequests {
   self.window_requests
 }
 
@@ -78,9 +78,9 @@ pub async fn PlatformEntry::launch_async_pump(
 pub struct AppBuilder {
   title : String
   runtime : AppRuntime
-  renderer_factories : Array[@render.RendererBindingFactory]
+  renderer_factories : Array[@render.RendererFactory]
   backend : PlatformEntry?
-  window_requests : @backend_host.HostWindowRequestQueue
+  window_requests : @backend_host.WindowRequests
 }
 
 ///|
@@ -90,14 +90,14 @@ pub fn run_app(title : String, runtime : AppRuntime) -> AppBuilder {
     runtime,
     renderer_factories: [],
     backend: None,
-    window_requests: @backend_host.HostWindowRequestQueue::new(),
+    window_requests: @backend_host.WindowRequests::unavailable(),
   }
 }
 
 ///|
 pub fn AppBuilder::render(
   self : AppBuilder,
-  factory : @render.RendererBindingFactory,
+  factory : @render.RendererFactory,
 ) -> AppBuilder {
   let factories = self.renderer_factories.copy()
   factories.push(factory)
@@ -107,7 +107,7 @@ pub fn AppBuilder::render(
 ///|
 pub fn AppBuilder::render_all(
   self : AppBuilder,
-  factories : Array[@render.RendererBindingFactory],
+  factories : Array[@render.RendererFactory],
 ) -> AppBuilder {
   let next = self.renderer_factories.copy()
   for factory in factories {
@@ -127,7 +127,7 @@ pub fn AppBuilder::backend(
 ///|
 pub fn AppBuilder::window_requests(
   self : AppBuilder,
-  window_requests : @backend_host.HostWindowRequestQueue,
+  window_requests : @backend_host.WindowRequests,
 ) -> AppBuilder {
   { ..self, window_requests, }
 }

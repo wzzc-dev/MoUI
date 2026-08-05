@@ -139,7 +139,7 @@ test "sun renderer decodes jpeg data uri and local files" {
   }
   let data_uri_source = sun_codec_test_jpeg_data_uri()
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     SunPresentTarget::new(description="test", present=_ => true),
@@ -186,7 +186,7 @@ test "sun renderer decodes bmp sources with uppercase type and extension" {
   }
   let data_uri_source = sun_codec_test_bmp_data_uri_uppercase_type()
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     SunPresentTarget::new(description="test", present=_ => true),
@@ -236,7 +236,7 @@ test "sun renderer decodes image sources by byte signature fallback" {
   let data_uri_source = "data:image/jpeg;base64," +
     @base64.encode(sun_codec_test_bmp_bytes(), padding=true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     SunPresentTarget::new(description="test", present=_ => true),

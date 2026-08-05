@@ -14,14 +14,23 @@ attach/inject 桥接。
 ```text
 window/<platform>/template / 原生 Activity|UIApp|Ability
         → window HostCmd 队列
+        → window/internal/embedded_dispatch physical callback dispatch
         → EventLoop.pump / run_app
         → *EmbeddedRuntimeBackend (moui/backend/{android,ios,harmonyos})
-        → AndroidRuntimeSession / IosRuntimeSession / HarmonyOSRuntimeSession
-        → Skia HostWindowRenderer
+        → backend/common（中立 lifecycle/surface 转换）
+        → HostedWindowBackend / HostedRuntimeSession
+        → Skia WindowRenderer
 ```
 
 window-hosted 是唯一受支持的嵌入运行时后端路径。不要在 `HostCmd` 和
 `ApplicationHandler` 之外再添加生命周期、Surface 或输入桥接。
+
+`window/internal/embedded_dispatch` 只依赖 `window/core` 与 `window/dpi`，负责把
+物理 HostCmd 按顺序转换为 callback。MoUI 的
+`EmbeddedWindowCoordinator` 统一拥有 lifecycle phase、surface generation、
+当前 surface、primary-window routing、detach 与 exit intent；进入 MoUI 后，
+`embedded_runtime` 提供 session 能力，`FrameCoordinator` 统一拥有 redraw、
+completion、image repaint 与 IME hook 时序。
 
 ## 包
 
@@ -30,8 +39,11 @@ window-hosted 是唯一受支持的嵌入运行时后端路径。不要在 `Host
 | Android 嵌入运行时后端 | `moui/backend/android/window_hosted.mbt`（`AndroidEmbeddedRuntimeBackend`） |
 | iOS 嵌入运行时后端 | `moui/backend/ios/window_hosted.mbt`（`IosEmbeddedRuntimeBackend`） |
 | HarmonyOS 嵌入运行时后端 | `moui/backend/harmonyos/window_hosted.mbt`（`HarmonyOSEmbeddedRuntimeBackend`） |
+| 物理 callback dispatch | `window/modules/window/internal/embedded_dispatch` |
+| MoUI 逻辑 lifecycle/surface owner | `moui/backend/common` 中的 `EmbeddedWindowCoordinator` |
+| 共享 embedded callback services | `moui/backend/common/embedded/services` |
+| 共享 MoUI hosted runtime | `moui/backend/common/embedded` |
 | Counter 入口 | `examples/counter/{android,ios,harmonyos}_window_hosted` |
-| window 契约 | `window/docs/mobile-hosted-backend.md` |
 | 移动端状态 | `checks/platforms/{android,ios,harmonyos}.json` |
 
 ## 验证
@@ -41,6 +53,10 @@ Host-sim（不需要模拟器）：
 ```sh
 sh scripts/window-hosted-hostsim-smoke.sh
 ```
+
+默认 workspace 下，该脚本会解压当前 pin 的 `wzzc-dev/window` registry
+归档，先测试其中的 Android/iOS/HarmonyOS 包，再测试 MoUI backend。启用
+`window-dev-mode.sh on` 后，脚本改为测试本地 window workspace。
 
 VM facade（host-sim 加可选设备探针）：
 
@@ -54,7 +70,7 @@ WINDOW_HOSTED_IOS_SIM=1 sh scripts/window-hosted-vm-smoke.sh
 WINDOW_HOSTED_HARMONYOS_HVD=1 sh scripts/window-hosted-vm-smoke.sh
 ```
 
-只验证 window 包：
+只验证 window 包（本地 window dev mode）：
 
 ```sh
 moon test window/modules/window/android --target native
