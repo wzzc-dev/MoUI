@@ -2,7 +2,7 @@
 test "renderer remembers resize and batches" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=200.0),
     ),
   )
@@ -20,7 +20,7 @@ test "renderer remembers resize and batches" {
 test "native renderer tracks logical and physical resize metrics" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::new(
+    @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(width=320.0, height=200.0),
       physical_size=@core.Size::new(width=640.0, height=400.0),
       scale_factor=2.0,
@@ -35,7 +35,7 @@ test "native renderer tracks logical and physical resize metrics" {
 test "native renderer default scissor uses physical surface size" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::new(
+    @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(width=320.0, height=200.0),
       physical_size=@core.Size::new(width=640.0, height=400.0),
       scale_factor=2.0,
@@ -49,7 +49,7 @@ test "native renderer default scissor uses physical surface size" {
 test "native renderer clipped scissor uses physical pixels" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::new(
+    @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(width=320.0, height=200.0),
       physical_size=@core.Size::new(width=640.0, height=400.0),
       scale_factor=2.0,
@@ -80,7 +80,7 @@ test "native renderer clipped scissor uses physical pixels" {
 test "native renderer skips draw items for empty nested clip" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=100.0),
     ),
   )
@@ -106,7 +106,7 @@ test "native renderer skips draw items for empty nested clip" {
 test "native renderer skips clip that lands exactly on surface edge" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::new(
+    @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(width=760.0, height=420.0),
       physical_size=@core.Size::new(width=1520.0, height=840.0),
       scale_factor=2.0,
@@ -130,7 +130,7 @@ test "native renderer skips clip that lands exactly on surface edge" {
 test "native renderer transforms clip before computing scissor" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::new(
+    @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(width=100.0, height=100.0),
       physical_size=@core.Size::new(width=200.0, height=200.0),
       scale_factor=2.0,
@@ -165,7 +165,7 @@ test "native renderer transforms clip before computing scissor" {
 test "native renderer plans visual primitives instead of fallback-only batches" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=200.0),
     ),
   )
@@ -204,7 +204,7 @@ test "native renderer plans visual primitives instead of fallback-only batches" 
 test "native renderer plans radial brush as true radial visual payload" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=80.0),
     ),
   )
@@ -254,7 +254,7 @@ test "native smoke frame normalizes flipped readback rows" {
 test "native renderer plans radial stroke brush as true radial visual payload" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=80.0),
     ),
   )
@@ -291,7 +291,7 @@ test "native renderer plans radial stroke brush as true radial visual payload" {
 test "native renderer plans DrawPath mesh as visible visual triangles" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=100.0),
     ),
   )
@@ -332,7 +332,7 @@ test "native renderer plans DrawPath mesh as visible visual triangles" {
 test "native renderer plans radial DrawPath as true radial path payload" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=100.0),
     ),
   )
@@ -382,7 +382,7 @@ test "native renderer plans radial DrawPath as true radial path payload" {
 test "native renderer keeps DrawPath immediately after layer" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=100.0),
     ),
   )
@@ -422,7 +422,7 @@ test "native renderer keeps DrawPath immediately after layer" {
 test "native renderer keeps DrawPath immediately after nested filter" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=100.0),
     ),
   )
@@ -481,7 +481,7 @@ test "native visual shader shades radial path payloads" {
 test "native renderer plans image clip transform and opacity commands" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=200.0),
     ),
   )
@@ -526,7 +526,7 @@ test "native renderer plans image clip transform and opacity commands" {
 test "native renderer records image lifecycle diagnostics while planning" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=200.0),
     ),
   )
@@ -606,7 +606,7 @@ test "native wgpu renderer applies image load completions to lifecycle" {
 test "native renderer plans advanced GPU layer filter and shader items" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=100.0),
     ),
   )
@@ -686,7 +686,7 @@ test "native renderer plans advanced GPU layer filter and shader items" {
 test "native shader effect carries transform into advanced vertices" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=100.0),
     ),
   )
@@ -735,7 +735,7 @@ test "native shader effect carries transform into advanced vertices" {
 test "native renderer scopes inherit transform and clip but composite opacity once" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=100.0),
     ),
   )
@@ -809,7 +809,7 @@ test "native renderer scopes inherit transform and clip but composite opacity on
 test "native renderer filter scope inherits transform and transformed clip" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=100.0),
     ),
   )
@@ -860,7 +860,7 @@ test "native renderer filter scope inherits transform and transformed clip" {
 test "native renderer plans overlay layer for backdrop sampling pass" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=100.0),
     ),
   )

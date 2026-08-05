@@ -7,67 +7,13 @@ import {
 }
 
 // Values
-pub fn async_image_read_i32_le(Bytes, Int) -> Int
-
-pub fn builtin_shader_names() -> Array[String]
-
-pub fn codepoint_is_cjk(Int) -> Bool
-
-pub fn codepoint_is_cjk_ideograph(Int) -> Bool
-
-pub fn codepoint_is_emoji_hint(Int) -> Bool
-
-pub fn codepoint_is_hangul_cluster_codepoint(Int) -> Bool
-
-pub fn codepoint_is_hangul_compatibility_jamo(Int) -> Bool
-
-pub fn codepoint_is_hangul_l(Int) -> Bool
-
-pub fn codepoint_is_hangul_lv(Int) -> Bool
-
-pub fn codepoint_is_hangul_lvt(Int) -> Bool
-
-pub fn codepoint_is_hangul_syllable(Int) -> Bool
-
-pub fn codepoint_is_hangul_t(Int) -> Bool
-
-pub fn codepoint_is_hangul_v(Int) -> Bool
-
-pub fn codepoint_is_kana(Int) -> Bool
-
-pub fn codepoint_is_rtl_script(Int) -> Bool
-
 pub fn collect_rect_batches(Array[@core.DrawCommand]) -> Array[RectBatch]
-
-pub fn env_flag(String) -> Bool
 
 pub fn first_clear_color(Array[@core.DrawCommand]) -> @core.Color
 
 pub fn grow_capacity(UInt64) -> UInt64
 
-pub fn image_placement(@core.Rect, @core.Size, @core.ImageFit) -> ImagePlacement
-
-pub fn import_svg(String) -> SvgImportResult
-
-pub fn lower_draw_commands(Array[@core.DrawCommand]) -> DrawPlan
-
-pub fn negotiate_cpu_raster_surface(SurfaceDescriptor, label~ : String, id~ : String, presentation_model~ : RendererPresentationModel) -> SurfaceNegotiationResult
-
-pub fn negotiate_gpu_surface(SurfaceDescriptor, label~ : String, id~ : String, route_for~ : (GpuHostSurfaceDescriptor) -> SurfaceRoute) -> SurfaceNegotiationResult
-
-pub fn new_provider_instance(render_frame~ : (@core.DrawFrame) -> RenderFrameResult, recover~ : (String) -> RecoveryResult, dispose~ : () -> Unit) -> RendererInstance
-
-pub fn plan_renderer_command_fallbacks(Array[@core.DrawCommand]) -> RendererCommandPlan
-
-pub fn plan_scope_name(PlanScopeKind) -> String
-
-pub fn plan_scope_pop_command(PlanScopeKind) -> String
-
-pub fn plan_scope_push_command(PlanScopeKind) -> String
-
 pub fn rect_batches_to_vertices(Array[RectBatch], @core.Size) -> Array[RectVertex]
-
-pub fn rect_shader_wgsl() -> String
 
 pub fn rect_vertices_to_bytes(Array[RectVertex]) -> Bytes
 
@@ -77,41 +23,9 @@ pub fn render_present_completions_have_presented(Array[RenderPresentCompletion])
 
 pub fn render_present_completions_have_terminal(Array[RenderPresentCompletion]) -> Bool
 
-pub fn renderer_feature_capability(Array[RendererProvider], RendererFeature) -> RendererFeatureCapability?
-
-pub fn renderer_feature_capability_report(Array[RendererProvider]) -> Array[RendererFeatureCapability]
-
-pub fn renderer_feature_follow_ups(Array[RendererProvider]) -> Array[RendererFeatureCapability]
-
-pub fn renderer_features() -> Array[RendererFeature]
-
 pub fn renderer_provider_binding_providers(Array[RendererProviderBinding]) -> Array[RendererProvider]
 
-pub fn renderer_provider_capabilities(provider_id~ : String, backend~ : RendererBackendKind, capability_for~ : (RendererFeature) -> (RendererFeatureStatus, String)) -> Array[RendererBackendFeatureCapability]
-
-pub fn representative_fallback_codepoint(String, skip_joiners? : Bool) -> Int
-
-pub fn resolve_host_renderer(Array[RendererBindingFactory], HostSurfaceKit) -> HostRendererResolution?
-
-pub fn resolve_shader_effect(@core.ShaderEffectSpec) -> ShaderRegistryResult
-
-pub fn select_renderer_provider_binding(Array[RendererProviderBinding], SurfaceDescriptor) -> (RendererProviderBinding, BoundSurface)?
-
 pub fn size_dim_to_uint(Double) -> UInt
-
-pub fn tessellate_path(@core.PathSpec) -> PathMesh
-
-pub fn text_bidi_visual_clusters(String) -> Array[String]
-
-pub fn text_grapheme_clusters(String) -> Array[String]
-
-pub fn text_join_clusters(Array[String]) -> String
-
-pub fn text_mixed_segments(String) -> Array[String]
-
-pub fn text_segment_class(String) -> Int
-
-pub fn text_string_arrays_equal(Array[String], Array[String]) -> Bool
 
 // Errors
 
@@ -119,22 +33,12 @@ pub fn text_string_arrays_equal(Array[String], Array[String]) -> Bool
 pub(all) struct BoundSurface {
   kind : RendererPresentationModel
   route : SurfaceRoute
-  metrics : RendererSurfaceMetrics
+  metrics : @core.SurfaceMetrics
 }
 pub fn BoundSurface::kind(Self) -> RendererPresentationModel
-pub fn BoundSurface::metrics(Self) -> RendererSurfaceMetrics
-pub fn BoundSurface::new(kind~ : RendererPresentationModel, route~ : SurfaceRoute, metrics~ : RendererSurfaceMetrics) -> Self
+pub fn BoundSurface::metrics(Self) -> @core.SurfaceMetrics
+pub fn BoundSurface::new(kind~ : RendererPresentationModel, route~ : SurfaceRoute, metrics~ : @core.SurfaceMetrics) -> Self
 pub fn BoundSurface::route(Self) -> SurfaceRoute
-
-pub(all) struct DrawPlan {
-  ops : Array[PlanOp]
-  diagnostics : Array[DrawPlanDiagnostic]
-}
-
-pub(all) struct DrawPlanDiagnostic {
-  command : String
-  reason : String
-} derive(Eq, @debug.Debug)
 
 pub enum GpuHostSurfaceDescriptor {
   MetalLayer(UInt64)
@@ -149,251 +53,25 @@ pub fn GpuHostSurfaceDescriptor::egl_native_window(UInt64) -> Self?
 pub fn GpuHostSurfaceDescriptor::metal_layer(UInt64) -> Self?
 pub fn GpuHostSurfaceDescriptor::wayland_vulkan_surface(UInt64, UInt64) -> Self?
 
-pub struct GpuRenderWorker {
-  mut state : GpuRenderWorkerState
-  mut surface_generation : Int
-  mut gpu_context_generation : Int
-  mut next_sequence : Int
-  mut in_flight : GpuRenderWorkerFrame?
-  mut pending : GpuRenderWorkerFrame?
-  controls : Array[RendererControlMessage]
-  completions : Array[RenderPresentCompletion]
-  mut submitted : Int
-  mut started : Int
-  mut completed : Int
-  mut dropped : Int
-  mut replaced_pending : Int
-  mut rejected_generation : Int
-  mut recovery_count : Int
-  mut recovery_failures : Int
-  readback_count : Int
-  resource_cache_bytes : Int64
-  worker_thread_id : Int
-  mut fail_next_recovery : Bool
-}
-pub fn GpuRenderWorker::diagnostics(Self) -> GpuRenderWorkerDiagnostics
-pub fn GpuRenderWorker::drain_present_completions(Self) -> Array[RenderPresentCompletion]
-pub fn GpuRenderWorker::fail_next_context_recovery(Self) -> Unit
-pub fn GpuRenderWorker::gpu_context_generation(Self) -> Int
-pub fn GpuRenderWorker::new(surface_generation? : Int, worker_thread_id? : Int) -> Self
-pub fn GpuRenderWorker::poll(Self, completed_at_ms? : Double) -> Unit
-pub fn GpuRenderWorker::state(Self) -> GpuRenderWorkerState
-pub fn GpuRenderWorker::submit(Self, RenderFrameInput, image_resource_revision? : Int64, submitted_at_ms? : Double) -> RenderFrameResult
-pub fn GpuRenderWorker::submit_control(Self, RendererControlMessage) -> Int
-pub fn GpuRenderWorker::surface_generation(Self) -> Int
-
-pub(all) struct GpuRenderWorkerDiagnostics {
-  state : GpuRenderWorkerState
-  submitted : Int
-  started : Int
-  completed : Int
-  dropped : Int
-  replaced_pending : Int
-  rejected_generation : Int
-  surface_generation : Int
-  gpu_context_generation : Int
-  recovery_count : Int
-  recovery_failures : Int
-  readback_count : Int
-  resource_cache_bytes : Int64
-  in_flight : Bool
-  pending : Bool
-  control_pending : Int
-  worker_thread_id : Int
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct GpuRenderWorkerFrame {
-  sequence : Int
-  surface_generation : Int
-  image_resource_revision : Int64
-  submitted_at_ms : Double
-  input : RenderFrameInput
-} derive(@debug.Debug)
-
-pub(all) enum GpuRenderWorkerState {
-  Idle
-  Lost
-  Recovering
-  Recovered
-  FallbackToRaster
-  Shutdown
-} derive(Eq, ToJson, @debug.Debug)
-
-pub struct HostAsyncImageLoadScheduleResult {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostAsyncImageLoadScheduleResult::already_in_flight_count(Self) -> Int
-pub fn HostAsyncImageLoadScheduleResult::loading_count(Self) -> Int
-pub fn HostAsyncImageLoadScheduleResult::scheduled_count(Self) -> Int
-pub fn HostAsyncImageLoadScheduleResult::snapshot_revision(Self) -> Int
-pub fn HostAsyncImageLoadScheduleResult::window_id(Self) -> RenderWindowId
-
-pub struct HostAsyncImageLoader {
-  // private fields
-}
-pub fn HostAsyncImageLoader::cancel_all(Self) -> Int
-pub fn HostAsyncImageLoader::cancel_window(Self, RenderWindowId) -> Int
-pub fn HostAsyncImageLoader::diagnostics(Self) -> HostAsyncImageLoaderDiagnostics
-pub fn HostAsyncImageLoader::new(start_load~ : (RenderWindowId, String, (ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?) -> Self
-pub fn HostAsyncImageLoader::new_with_drain(start_load~ : (RenderWindowId, String, (ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?, drain~ : () -> Unit) -> Self
-pub fn HostAsyncImageLoader::schedule_loading_resources(Self, RenderWindowId, HostWindowRenderer, HostImageResourceCompletionSource) -> HostAsyncImageLoadScheduleResult
-
-pub struct HostAsyncImageLoaderDiagnostics {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostAsyncImageLoaderDiagnostics::already_in_flight_count(Self) -> Int
-pub fn HostAsyncImageLoaderDiagnostics::cancelled_count(Self) -> Int
-pub fn HostAsyncImageLoaderDiagnostics::completed_count(Self) -> Int
-pub fn HostAsyncImageLoaderDiagnostics::in_flight_count(Self) -> Int
-pub fn HostAsyncImageLoaderDiagnostics::scheduled_count(Self) -> Int
-
 pub struct HostGpuSurfaceBridge {
   descriptor : GpuHostSurfaceDescriptor
-  create_surface_fn : (RendererSurfaceMetrics) -> UInt64?
+  create_surface_fn : (@core.SurfaceMetrics) -> UInt64?
   present_fn : (UInt64) -> Bool
-  resize_fn : (RendererSurfaceMetrics) -> Unit
+  resize_fn : (@core.SurfaceMetrics) -> Unit
   dispose_fn : () -> Unit
 }
-pub fn HostGpuSurfaceBridge::create_surface(Self, RendererSurfaceMetrics) -> UInt64?
+pub fn HostGpuSurfaceBridge::create_surface(Self, @core.SurfaceMetrics) -> UInt64?
 pub fn HostGpuSurfaceBridge::descriptor(Self) -> GpuHostSurfaceDescriptor
 pub fn HostGpuSurfaceBridge::dispose(Self) -> Unit
-pub fn HostGpuSurfaceBridge::new(descriptor~ : GpuHostSurfaceDescriptor, create_surface~ : (RendererSurfaceMetrics) -> UInt64?, present~ : (UInt64) -> Bool, resize? : (RendererSurfaceMetrics) -> Unit, dispose? : () -> Unit) -> Self
+pub fn HostGpuSurfaceBridge::new(descriptor~ : GpuHostSurfaceDescriptor, create_surface~ : (@core.SurfaceMetrics) -> UInt64?, present~ : (UInt64) -> Bool, resize? : (@core.SurfaceMetrics) -> Unit, dispose? : () -> Unit) -> Self
 pub fn HostGpuSurfaceBridge::present(Self, UInt64) -> Bool
-pub fn HostGpuSurfaceBridge::resize(Self, RendererSurfaceMetrics) -> Unit
-
-pub struct HostImageResourceCompletionSource {
-  // private fields
-}
-pub fn HostImageResourceCompletionSource::complete(Self, RenderWindowId, HostWindowRenderer, ImageResourceLoadCompletion) -> HostImageResourceRepaintResult
-pub fn HostImageResourceCompletionSource::diagnostics(Self) -> HostImageResourceCompletionSourceDiagnostics
-pub fn HostImageResourceCompletionSource::new(tracker~ : HostImageResourceRepaintTracker, window_open~ : (RenderWindowId) -> Bool, request_redraw~ : (RenderWindowId) -> Unit) -> Self
-pub fn HostImageResourceCompletionSource::publish(Self, RenderWindowId, ImageResourceSnapshot) -> HostImageResourceRepaintResult
-
-pub struct HostImageResourceCompletionSourceDiagnostics {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostImageResourceCompletionSourceDiagnostics::discarded_closed_count(Self) -> Int
-pub fn HostImageResourceCompletionSourceDiagnostics::publish_count(Self) -> Int
-pub fn HostImageResourceCompletionSourceDiagnostics::recorded_count(Self) -> Int
-pub fn HostImageResourceCompletionSourceDiagnostics::redraw_requested_count(Self) -> Int
-pub fn HostImageResourceCompletionSourceDiagnostics::tracked_window_count(Self) -> Int
-pub fn HostImageResourceCompletionSourceDiagnostics::unchanged_count(Self) -> Int
-
-pub struct HostImageResourceRepaintResult {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostImageResourceRepaintResult::current_revision(Self) -> Int
-pub fn HostImageResourceRepaintResult::current_status_counts(Self) -> HostImageResourceStatusCounts
-pub fn HostImageResourceRepaintResult::previous_revision(Self) -> Int
-pub fn HostImageResourceRepaintResult::previous_status_counts(Self) -> HostImageResourceStatusCounts
-pub fn HostImageResourceRepaintResult::status(Self) -> HostImageResourceRepaintStatus
-pub fn HostImageResourceRepaintResult::window_id(Self) -> RenderWindowId
-
-pub struct HostImageResourceRepaintSnapshot {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostImageResourceRepaintSnapshot::tracked_window_count(Self) -> Int
-pub fn HostImageResourceRepaintSnapshot::tracked_windows(Self) -> Array[HostImageResourceTrackedWindow]
-
-pub(all) enum HostImageResourceRepaintStatus {
-  ImageRepaintRecorded
-  ImageRepaintUnchanged
-  ImageRepaintRequested
-  ImageRepaintDiscardedClosed
-} derive(Eq, ToJson, @debug.Debug)
-
-pub struct HostImageResourceRepaintTracker {
-  // private fields
-}
-pub fn HostImageResourceRepaintTracker::new() -> Self
-pub fn HostImageResourceRepaintTracker::record_presented(Self, RenderWindowId, HostWindowRenderer) -> HostImageResourceRepaintResult
-pub fn HostImageResourceRepaintTracker::remove_window(Self, RenderWindowId) -> Bool
-pub fn HostImageResourceRepaintTracker::request_redraw_for_snapshot_if_changed(Self, RenderWindowId, ImageResourceSnapshot, window_open~ : Bool, request_redraw~ : (RenderWindowId) -> Unit) -> HostImageResourceRepaintResult
-pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(Self, RenderWindowId, HostWindowRenderer, window_open~ : Bool, request_redraw~ : (RenderWindowId) -> Unit) -> HostImageResourceRepaintResult
-pub fn HostImageResourceRepaintTracker::revision_for(Self, RenderWindowId) -> Int?
-pub fn HostImageResourceRepaintTracker::snapshot(Self) -> HostImageResourceRepaintSnapshot
-pub fn HostImageResourceRepaintTracker::tracked_count(Self) -> Int
-
-pub struct HostImageResourceStatusCounts {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostImageResourceStatusCounts::disposed_count(Self) -> Int
-pub fn HostImageResourceStatusCounts::failed_count(Self) -> Int
-pub fn HostImageResourceStatusCounts::loading_count(Self) -> Int
-pub fn HostImageResourceStatusCounts::ready_count(Self) -> Int
-pub fn HostImageResourceStatusCounts::record_count(Self) -> Int
-
-pub struct HostImageResourceTrackedWindow {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostImageResourceTrackedWindow::revision(Self) -> Int
-pub fn HostImageResourceTrackedWindow::status_counts(Self) -> HostImageResourceStatusCounts
-pub fn HostImageResourceTrackedWindow::window_id(Self) -> RenderWindowId
+pub fn HostGpuSurfaceBridge::resize(Self, @core.SurfaceMetrics) -> Unit
 
 pub struct HostImageSource {
   read_fn : (String) -> Bytes?
 }
 pub fn HostImageSource::new(read~ : (String) -> Bytes?) -> Self
 pub fn HostImageSource::read(Self, String) -> Bytes?
-
-pub struct HostNativeAsyncImageCompletionResult {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostNativeAsyncImageCompletionResult::source(Self) -> String
-pub fn HostNativeAsyncImageCompletionResult::status(Self) -> HostNativeAsyncImageCompletionStatus
-pub fn HostNativeAsyncImageCompletionResult::window_id(Self) -> RenderWindowId
-
-pub(all) enum HostNativeAsyncImageCompletionStatus {
-  NativeAsyncImageCompletionDelivered
-  NativeAsyncImageCompletionMissing
-} derive(Eq, ToJson, @debug.Debug)
-
-pub struct HostNativeAsyncImageLoadRequest {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostNativeAsyncImageLoadRequest::source(Self) -> String
-pub fn HostNativeAsyncImageLoadRequest::window_id(Self) -> RenderWindowId
-
-pub struct HostNativeAsyncImageSource {
-  // private fields
-}
-pub fn HostNativeAsyncImageSource::complete(Self, RenderWindowId, ImageResourceLoadCompletion) -> HostNativeAsyncImageCompletionResult
-pub fn HostNativeAsyncImageSource::diagnostics(Self) -> HostNativeAsyncImageSourceDiagnostics
-pub fn HostNativeAsyncImageSource::loader(Self) -> HostAsyncImageLoader
-pub fn HostNativeAsyncImageSource::loader_with_drain(Self, spawn~ : (RenderWindowId, String) -> Unit, drain~ : () -> Unit) -> HostAsyncImageLoader
-pub fn HostNativeAsyncImageSource::new() -> Self
-pub fn HostNativeAsyncImageSource::pending_requests(Self) -> Array[HostNativeAsyncImageLoadRequest]
-
-pub struct HostNativeAsyncImageSourceDiagnostics {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostNativeAsyncImageSourceDiagnostics::cancelled_count(Self) -> Int
-pub fn HostNativeAsyncImageSourceDiagnostics::completed_count(Self) -> Int
-pub fn HostNativeAsyncImageSourceDiagnostics::missing_completion_count(Self) -> Int
-pub fn HostNativeAsyncImageSourceDiagnostics::pending_count(Self) -> Int
-pub fn HostNativeAsyncImageSourceDiagnostics::requested_count(Self) -> Int
-
-pub(all) struct HostPixelFrame {
-  width : Int
-  height : Int
-  row_bytes : Int
-  scale_factor : Double
-  pixels : Bytes
-}
-pub fn HostPixelFrame::height(Self) -> Int
-pub fn HostPixelFrame::new(width~ : Int, height~ : Int, row_bytes~ : Int, scale_factor~ : Double, pixels~ : Bytes) -> Self
-pub fn HostPixelFrame::pixels(Self) -> Bytes
-pub fn HostPixelFrame::row_bytes(Self) -> Int
-pub fn HostPixelFrame::scale_factor(Self) -> Double
-pub fn HostPixelFrame::width(Self) -> Int
-
-pub struct HostPresentTarget {
-  description : String
-  present_fn : (HostPixelFrame) -> Bool
-}
-pub fn HostPresentTarget::description(Self) -> String
-pub fn HostPresentTarget::new(description~ : String, present~ : (HostPixelFrame) -> Bool) -> Self
-pub fn HostPresentTarget::present(Self, HostPixelFrame) -> Bool
 
 pub struct HostRendererGpuRecoveryCapability {
   // private fields
@@ -410,79 +88,27 @@ pub struct HostRendererPlatformViewCapability {
 }
 pub fn HostRendererPlatformViewCapability::new(draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit) -> Self
 
-pub struct HostRendererResolution {
-  renderer : HostWindowRenderer
-  image_loader : HostAsyncImageLoader?
-}
-pub fn HostRendererResolution::image_loader(Self) -> HostAsyncImageLoader?
-pub fn HostRendererResolution::new(renderer~ : HostWindowRenderer, image_loader~ : HostAsyncImageLoader?) -> Self
-pub fn HostRendererResolution::renderer(Self) -> HostWindowRenderer
+pub(all) struct ImageLoadScheduleResult {
+  window_id : RenderWindowId
+  snapshot_revision : Int
+  loading_count : Int
+  scheduled_count : Int
+  already_in_flight_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ImageLoadScheduleResult::already_in_flight_count(Self) -> Int
+pub fn ImageLoadScheduleResult::loading_count(Self) -> Int
+pub fn ImageLoadScheduleResult::new(window_id~ : RenderWindowId, snapshot_revision~ : Int, loading_count~ : Int, scheduled_count~ : Int, already_in_flight_count~ : Int) -> Self
+pub fn ImageLoadScheduleResult::scheduled_count(Self) -> Int
+pub fn ImageLoadScheduleResult::snapshot_revision(Self) -> Int
+pub fn ImageLoadScheduleResult::window_id(Self) -> RenderWindowId
 
-pub struct HostSurfaceKit {
-  surface : SurfaceDescriptor
-  surface_id : String
-  metrics : RendererSurfaceMetrics
-  cpu_present : HostPresentTarget?
-  gpu_surface : HostGpuSurfaceBridge?
-  image_source : HostImageSource?
-}
-pub fn HostSurfaceKit::cpu_present(Self) -> HostPresentTarget?
-pub fn HostSurfaceKit::gpu_surface(Self) -> HostGpuSurfaceBridge?
-pub fn HostSurfaceKit::image_source(Self) -> HostImageSource?
-pub fn HostSurfaceKit::metrics(Self) -> RendererSurfaceMetrics
-pub fn HostSurfaceKit::new(surface~ : SurfaceDescriptor, surface_id? : String, metrics~ : RendererSurfaceMetrics, cpu_present? : HostPresentTarget?, gpu_surface? : HostGpuSurfaceBridge?, image_source? : HostImageSource?) -> Self
-pub fn HostSurfaceKit::surface(Self) -> SurfaceDescriptor
-pub fn HostSurfaceKit::surface_id(Self) -> String
-
-pub struct HostWindowRenderer {
+pub struct ImageLoader {
   // private fields
 }
-pub fn HostWindowRenderer::apply_image_resource_load_completion(Self, ImageResourceLoadCompletion) -> ImageResourceSnapshot
-pub fn HostWindowRenderer::dispose(Self) -> Unit
-pub fn HostWindowRenderer::drain_present_completions(Self) -> Array[RenderPresentCompletion]
-pub fn HostWindowRenderer::draw_platform_view_pixels(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
-pub fn HostWindowRenderer::gpu_fallback_active(Self) -> Bool
-pub fn HostWindowRenderer::gpu_recovery_count(Self) -> Int
-pub fn HostWindowRenderer::image_resource_snapshot(Self) -> ImageResourceSnapshot
-pub fn HostWindowRenderer::image_resources(Self) -> Array[ImageResourceRecord]
-pub fn HostWindowRenderer::inject_context_loss(Self) -> Unit
-pub fn HostWindowRenderer::new(resize~ : (RendererSurfaceMetrics) -> Unit, render~ : (Array[@core.DrawCommand]) -> Unit, render_frame? : ((@core.DrawFrame) -> RenderFrameResult)?, drain_present_completions? : (() -> Array[RenderPresentCompletion])?, text_system~ : () -> @core.TextSystem, present_count? : () -> Int, dispose? : () -> Unit, image? : HostRendererImageCapability, platform_view? : HostRendererPlatformViewCapability, gpu_recovery? : HostRendererGpuRecoveryCapability) -> Self
-pub fn HostWindowRenderer::present_count(Self) -> Int
-pub fn HostWindowRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
-pub fn HostWindowRenderer::render_frame(Self, @core.DrawFrame) -> RenderFrameResult
-pub fn HostWindowRenderer::resize(Self, RendererSurfaceMetrics) -> Unit
-pub fn HostWindowRenderer::set_image_resource_change_callback(Self, ((ImageResourceSnapshot) -> Unit)?) -> Unit
-pub fn HostWindowRenderer::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
-pub fn HostWindowRenderer::text_system(Self) -> @core.TextSystem
-
-pub enum ImageCropAxis {
-  None
-  Horizontal
-  Vertical
-}
-
-pub struct ImagePlacement {
-  frame : @core.Rect
-  crop_axis : ImageCropAxis
-  visible : Double
-}
-
-pub(all) struct ImageResourceLifecycle {
-  mut records : Map[String, ImageResourceRecord]
-  mut revision : Int
-} derive(Eq, @debug.Debug)
-pub fn ImageResourceLifecycle::apply_load_completion(Self, ImageResourceLoadCompletion) -> ImageResourceSnapshot
-pub fn ImageResourceLifecycle::changed_since(Self, Int) -> Bool
-pub fn ImageResourceLifecycle::dispose(Self, String) -> ImageResourceRecord
-pub fn ImageResourceLifecycle::evict_disposed(Self) -> Int
-pub fn ImageResourceLifecycle::lookup(Self, String) -> ImageResourceRecord?
-pub fn ImageResourceLifecycle::mark_failed(Self, String, diagnostic~ : String) -> ImageResourceRecord
-pub fn ImageResourceLifecycle::mark_loading(Self, String) -> ImageResourceRecord
-pub fn ImageResourceLifecycle::mark_ready(Self, String, width~ : Int, height~ : Int) -> ImageResourceRecord
-pub fn ImageResourceLifecycle::new() -> Self
-pub fn ImageResourceLifecycle::revision(Self) -> Int
-pub fn ImageResourceLifecycle::snapshot(Self) -> Array[ImageResourceRecord]
-pub fn ImageResourceLifecycle::snapshot_with_revision(Self) -> ImageResourceSnapshot
+pub fn ImageLoader::cancel_all(Self) -> Int
+pub fn ImageLoader::cancel_window(Self, RenderWindowId) -> Int
+pub fn ImageLoader::new(schedule~ : (RenderWindowId, WindowRenderer, (RenderWindowId, WindowRenderer, ImageResourceLoadCompletion) -> Unit) -> ImageLoadScheduleResult, cancel_window~ : (RenderWindowId) -> Int, cancel_all~ : () -> Int) -> Self
+pub fn ImageLoader::schedule_loading_resources(Self, RenderWindowId, WindowRenderer, complete~ : (RenderWindowId, WindowRenderer, ImageResourceLoadCompletion) -> Unit) -> ImageLoadScheduleResult
 
 pub(all) struct ImageResourceLoadCompletion {
   source : String
@@ -532,55 +158,27 @@ pub(all) enum ImageResourceStatus {
   ImageDisposed
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct PathMesh {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn PathMesh::diagnostics(Self) -> Array[String]
-pub fn PathMesh::vertices(Self) -> Array[PathVertex]
+pub(all) struct PixelFrame {
+  width : Int
+  height : Int
+  row_bytes : Int
+  scale_factor : Double
+  pixels : Bytes
+}
+pub fn PixelFrame::height(Self) -> Int
+pub fn PixelFrame::new(width~ : Int, height~ : Int, row_bytes~ : Int, scale_factor~ : Double, pixels~ : Bytes) -> Self
+pub fn PixelFrame::pixels(Self) -> Bytes
+pub fn PixelFrame::row_bytes(Self) -> Int
+pub fn PixelFrame::scale_factor(Self) -> Double
+pub fn PixelFrame::width(Self) -> Int
 
-pub struct PathVertex {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn PathVertex::components(Self) -> Array[Double]
-
-pub(all) enum PlanOp {
-  Clear(@core.Color)
-  FillRect(@core.Rect, @core.Color)
-  StrokeRect(@core.Rect, @core.Color, Double)
-  FillRoundedRect(@core.RoundedRect, @core.Color)
-  StrokeRoundedRect(@core.RoundedRect, @core.Color, Double)
-  FillRoundedRectBrush(@core.RoundedRect, @core.Brush)
-  StrokeRoundedRectBrush(@core.RoundedRect, @core.Brush, Double)
-  DrawShadow(@core.ShadowSpec)
-  DrawText(@core.TextRun)
-  DrawImage(@core.ImageRun)
-  PushClip(@core.Rect)
-  PopClip
-  PushRoundedClip(@core.RoundedRect)
-  PopRoundedClip
-  PushTransform(@core.Transform2D)
-  PopTransform
-  PushOpacity(Double)
-  PopOpacity
-  PushLayer(@core.LayerSpec)
-  PopLayer
-  BeginCachedLayer(@core.CachedLayerSpec)
-  EndCachedLayer(String)
-  DrawCachedLayer(@core.CachedLayerSpec)
-  PushFilter(@core.FilterEffect)
-  PopFilter
-  DrawPath(@core.PathSpec)
-  DrawShaderEffect(@core.ShaderEffectSpec)
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum PlanScopeKind {
-  Clip
-  RoundedClip
-  Transform
-  Opacity
-  Layer
-  Filter
-} derive(Eq)
+pub struct PresentTarget {
+  description : String
+  present_fn : (PixelFrame) -> Bool
+}
+pub fn PresentTarget::description(Self) -> String
+pub fn PresentTarget::new(description~ : String, present~ : (PixelFrame) -> Bool) -> Self
+pub fn PresentTarget::present(Self, PixelFrame) -> Bool
 
 pub(all) enum RecoveryResult {
   RecoverySucceeded
@@ -606,59 +204,13 @@ pub fn RectVertex::x(Self) -> Double
 pub fn RectVertex::y(Self) -> Double
 
 pub(all) struct RenderFrameInput {
-  metrics : RendererSurfaceMetrics
+  metrics : @core.SurfaceMetrics
   commands : Array[@core.DrawCommand]
   damage : @core.DamageRegion
   clear_color : @core.Color?
   cache_epoch : Int
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RenderFrameInput::new(metrics~ : RendererSurfaceMetrics, commands~ : Array[@core.DrawCommand], damage? : @core.DamageRegion, clear_color? : @core.Color?, cache_epoch? : Int) -> Self
-
-pub struct RenderFrameMailbox {
-  mut surface_generation : Int
-  mut next_sequence : Int
-  mut in_flight : RenderFramePacket?
-  mut pending : RenderFramePacket?
-  mut submitted : Int
-  mut started : Int
-  mut completed : Int
-  mut replaced_pending : Int
-  mut rejected_generation : Int
-  control_queue : Array[RendererControlMessage]
-  mut control_submitted : Int
-  mut control_drained : Int
-}
-pub fn RenderFrameMailbox::begin_next(Self) -> RenderFramePacket?
-pub fn RenderFrameMailbox::complete(Self, Int) -> Bool
-pub fn RenderFrameMailbox::control_pending(Self) -> Int
-pub fn RenderFrameMailbox::diagnostics(Self) -> RenderFrameMailboxDiagnostics
-pub fn RenderFrameMailbox::drain_control(Self) -> Array[RendererControlMessage]
-pub fn RenderFrameMailbox::has_control(Self) -> Bool
-pub fn RenderFrameMailbox::new(surface_generation? : Int) -> Self
-pub fn RenderFrameMailbox::replace_surface_generation(Self, Int) -> Unit
-pub fn RenderFrameMailbox::submit(Self, RenderFrameInput) -> Int
-pub fn RenderFrameMailbox::submit_control(Self, RendererControlMessage) -> Int
-
-pub(all) struct RenderFrameMailboxDiagnostics {
-  submitted : Int
-  started : Int
-  completed : Int
-  replaced_pending : Int
-  rejected_generation : Int
-  surface_generation : Int
-  in_flight : Bool
-  pending : Bool
-  control_pending : Int
-  control_submitted : Int
-  control_drained : Int
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct RenderFramePacket {
-  sequence : Int
-  surface_generation : Int
-  input : RenderFrameInput
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RenderFramePacket::new(sequence~ : Int, surface_generation~ : Int, RenderFrameInput) -> Self
+pub fn RenderFrameInput::new(metrics~ : @core.SurfaceMetrics, commands~ : Array[@core.DrawCommand], damage? : @core.DamageRegion, clear_color? : @core.Color?, cache_epoch? : Int) -> Self
 
 pub(all) struct RenderFrameResult {
   presented : Bool
@@ -734,22 +286,14 @@ pub fn RendererBackendKind::family(Self) -> RendererFamily
 pub fn RendererBackendKind::label(Self) -> String
 pub fn RendererBackendKind::short_label(Self) -> String
 
-pub struct RendererBindingFactory {
-  id : String
-  bind_fn : (HostSurfaceKit) -> RendererBindingPlan
-}
-pub fn RendererBindingFactory::bind(Self, HostSurfaceKit) -> RendererBindingPlan
-pub fn RendererBindingFactory::id(Self) -> String
-pub fn RendererBindingFactory::new(id~ : String, bind~ : (HostSurfaceKit) -> RendererBindingPlan) -> Self
-
 pub struct RendererBindingPlan {
   binding : RendererProviderBinding
-  image_loader : HostAsyncImageLoader?
+  image_loader : ImageLoader?
   surface : SurfaceDescriptor?
 }
 pub fn RendererBindingPlan::binding(Self) -> RendererProviderBinding
-pub fn RendererBindingPlan::image_loader(Self) -> HostAsyncImageLoader?
-pub fn RendererBindingPlan::new(binding~ : RendererProviderBinding, image_loader? : HostAsyncImageLoader?, surface? : SurfaceDescriptor?) -> Self
+pub fn RendererBindingPlan::image_loader(Self) -> ImageLoader?
+pub fn RendererBindingPlan::new(binding~ : RendererProviderBinding, image_loader? : ImageLoader?, surface? : SurfaceDescriptor?) -> Self
 pub fn RendererBindingPlan::surface(Self) -> SurfaceDescriptor?
 
 pub(all) enum RendererCapabilityStatus {
@@ -764,6 +308,7 @@ pub fn RendererCommandFallback::command(Self) -> String
 pub fn RendererCommandFallback::feature(Self) -> RendererFeature
 pub fn RendererCommandFallback::index(Self) -> Int
 pub fn RendererCommandFallback::kind(Self) -> RendererCommandFallbackKind
+pub fn RendererCommandFallback::new(index~ : Int, feature~ : RendererFeature, command~ : String, kind? : RendererCommandFallbackKind, reason~ : String) -> Self
 pub fn RendererCommandFallback::reason(Self) -> String
 
 pub(all) enum RendererCommandFallbackKind {
@@ -779,6 +324,7 @@ pub fn RendererCommandPlan::fallback_count(Self) -> Int
 pub fn RendererCommandPlan::fallbacks(Self) -> Array[RendererCommandFallback]
 pub fn RendererCommandPlan::final_filter_depth(Self) -> Int
 pub fn RendererCommandPlan::final_layer_depth(Self) -> Int
+pub fn RendererCommandPlan::new(total_commands~ : Int, fallback_count~ : Int, final_layer_depth~ : Int, final_filter_depth~ : Int, fallbacks~ : Array[RendererCommandFallback]) -> Self
 pub fn RendererCommandPlan::total_commands(Self) -> Int
 
 pub(all) enum RendererControlMessage {
@@ -797,6 +343,14 @@ pub(all) struct RendererDescriptor {
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererDescriptor::new(backend~ : RendererBackendKind, family~ : RendererFamily, presentation~ : RendererPresentationModel, supported_targets~ : Array[RendererTarget], capabilities~ : Array[RendererBackendFeatureCapability], description? : String) -> Self
+
+pub struct RendererFactory {
+  id : String
+  bind_fn : (SurfaceContext) -> RendererBindingPlan
+}
+pub fn RendererFactory::bind(Self, SurfaceContext) -> RendererBindingPlan
+pub fn RendererFactory::id(Self) -> String
+pub fn RendererFactory::new(id~ : String, bind~ : (SurfaceContext) -> RendererBindingPlan) -> Self
 
 pub(all) enum RendererFamily {
   Wgpu
@@ -852,7 +406,6 @@ pub struct RendererImageDecoder {
   decode_fn : (String, Bytes?) -> ImageResourceLoadCompletion
 }
 pub fn RendererImageDecoder::decode(Self, String, Bytes?) -> ImageResourceLoadCompletion
-pub fn RendererImageDecoder::loader(Self, HostImageSource?) -> HostAsyncImageLoader
 pub fn RendererImageDecoder::new(decode~ : (String, Bytes?) -> ImageResourceLoadCompletion) -> Self
 
 pub(all) struct RendererInstance {
@@ -860,7 +413,7 @@ pub(all) struct RendererInstance {
   recover : (String) -> RecoveryResult
   dispose : () -> Unit
 }
-pub fn RendererInstance::from_host_window_renderer(HostWindowRenderer) -> Self
+pub fn RendererInstance::from_host_window_renderer(WindowRenderer) -> Self
 
 pub(all) enum RendererPresentationModel {
   HostGpuSurface
@@ -875,26 +428,24 @@ pub(all) struct RendererProvider {
   descriptor : RendererDescriptor
   capabilities : () -> Array[RendererBackendFeatureCapability]
   negotiate : (SurfaceDescriptor) -> SurfaceNegotiationResult
-  create : (RendererSurfaceMetrics, BoundSurface) -> RendererInstance
+  create : (@core.SurfaceMetrics, BoundSurface) -> RendererInstance
 }
 pub fn RendererProvider::id(Self) -> String
 
 pub(all) struct RendererProviderBinding {
   provider : RendererProvider
-  create_host_renderer : (RendererSurfaceMetrics, BoundSurface) -> HostWindowRenderer
+  create_host_renderer : (@core.SurfaceMetrics, BoundSurface) -> WindowRenderer
 }
-pub fn RendererProviderBinding::new(provider~ : RendererProvider, create_host_renderer~ : (RendererSurfaceMetrics, BoundSurface) -> HostWindowRenderer) -> Self
+pub fn RendererProviderBinding::new(provider~ : RendererProvider, create_host_renderer~ : (@core.SurfaceMetrics, BoundSurface) -> WindowRenderer) -> Self
 pub fn RendererProviderBinding::provider(Self) -> RendererProvider
 
-pub(all) struct RendererProviderRegistry {
-  providers : Array[RendererProvider]
+pub struct RendererResolution {
+  renderer : WindowRenderer
+  image_loader : ImageLoader?
 }
-pub fn RendererProviderRegistry::from_providers(Array[RendererProvider]) -> Self
-pub fn RendererProviderRegistry::lookup(Self, String) -> RendererProvider?
-pub fn RendererProviderRegistry::new() -> Self
-pub fn RendererProviderRegistry::providers(Self) -> Array[RendererProvider]
-pub fn RendererProviderRegistry::register(Self, RendererProvider) -> Unit
-pub fn RendererProviderRegistry::select(Self, SurfaceDescriptor) -> (RendererProvider, BoundSurface)?
+pub fn RendererResolution::image_loader(Self) -> ImageLoader?
+pub fn RendererResolution::new(renderer~ : WindowRenderer, image_loader~ : ImageLoader?) -> Self
+pub fn RendererResolution::renderer(Self) -> WindowRenderer
 
 pub(all) enum RendererSelection {
   Default
@@ -905,32 +456,27 @@ pub fn RendererSelection::matches_backend(Self, RendererBackendKind) -> Bool
 pub fn RendererSelection::native_default() -> Self
 pub fn RendererSelection::web_default() -> Self
 
-pub(all) struct RendererSurfaceMetrics {
-  logical_size : @core.Size
-  physical_size : @core.Size
-  scale_factor : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RendererSurfaceMetrics::from_logical(size~ : @core.Size, scale_factor? : Double) -> Self
-pub fn RendererSurfaceMetrics::new(logical_size~ : @core.Size, physical_size~ : @core.Size, scale_factor? : Double) -> Self
-
 pub(all) enum RendererTarget {
   Native
   WasmGc
   Web
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct ShaderRegistryResult {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ShaderRegistryResult::diagnostic(Self) -> String
-pub fn ShaderRegistryResult::fallback(Self) -> @core.Brush
-pub fn ShaderRegistryResult::name(Self) -> String
-pub fn ShaderRegistryResult::status(Self) -> ShaderRegistryStatus
-
-pub(all) enum ShaderRegistryStatus {
-  ShaderReady
-  ShaderFallback
-} derive(Eq, ToJson, @debug.Debug)
+pub struct SurfaceContext {
+  surface : SurfaceDescriptor
+  surface_id : String
+  metrics : @core.SurfaceMetrics
+  cpu_present : PresentTarget?
+  gpu_surface : HostGpuSurfaceBridge?
+  image_source : HostImageSource?
+}
+pub fn SurfaceContext::cpu_present(Self) -> PresentTarget?
+pub fn SurfaceContext::gpu_surface(Self) -> HostGpuSurfaceBridge?
+pub fn SurfaceContext::image_source(Self) -> HostImageSource?
+pub fn SurfaceContext::metrics(Self) -> @core.SurfaceMetrics
+pub fn SurfaceContext::new(surface~ : SurfaceDescriptor, surface_id? : String, metrics~ : @core.SurfaceMetrics, cpu_present? : PresentTarget?, gpu_surface? : HostGpuSurfaceBridge?, image_source? : HostImageSource?) -> Self
+pub fn SurfaceContext::surface(Self) -> SurfaceDescriptor
+pub fn SurfaceContext::surface_id(Self) -> String
 
 pub(all) enum SurfaceDescriptor {
   CpuRaster(Double, Double, Double)
@@ -955,12 +501,6 @@ pub fn SurfaceRoute::is_gpu(Self) -> Bool
 pub fn SurfaceRoute::is_implemented(Self) -> Bool
 pub fn SurfaceRoute::label(Self) -> String
 
-pub struct SvgImportResult {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn SvgImportResult::commands(Self) -> Array[@core.DrawCommand]
-pub fn SvgImportResult::diagnostics(Self) -> Array[String]
-
 pub(all) struct WgpuSurfaceContract {
   source : WgpuSurfaceSourceKind
   backend : RendererBackendKind
@@ -973,6 +513,27 @@ pub(all) enum WgpuSurfaceSourceKind {
   NativeHostSurface
   WebCanvasSurface
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct WindowRenderer {
+  // private fields
+}
+pub fn WindowRenderer::apply_image_resource_load_completion(Self, ImageResourceLoadCompletion) -> ImageResourceSnapshot
+pub fn WindowRenderer::dispose(Self) -> Unit
+pub fn WindowRenderer::drain_present_completions(Self) -> Array[RenderPresentCompletion]
+pub fn WindowRenderer::draw_platform_view_pixels(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
+pub fn WindowRenderer::gpu_fallback_active(Self) -> Bool
+pub fn WindowRenderer::gpu_recovery_count(Self) -> Int
+pub fn WindowRenderer::image_resource_snapshot(Self) -> ImageResourceSnapshot
+pub fn WindowRenderer::image_resources(Self) -> Array[ImageResourceRecord]
+pub fn WindowRenderer::inject_context_loss(Self) -> Unit
+pub fn WindowRenderer::new(resize~ : (@core.SurfaceMetrics) -> Unit, render~ : (Array[@core.DrawCommand]) -> Unit, render_frame? : ((@core.DrawFrame) -> RenderFrameResult)?, drain_present_completions? : (() -> Array[RenderPresentCompletion])?, text_system~ : () -> @core.TextSystem, present_count? : () -> Int, dispose? : () -> Unit, image? : HostRendererImageCapability, platform_view? : HostRendererPlatformViewCapability, gpu_recovery? : HostRendererGpuRecoveryCapability) -> Self
+pub fn WindowRenderer::present_count(Self) -> Int
+pub fn WindowRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
+pub fn WindowRenderer::render_frame(Self, @core.DrawFrame) -> RenderFrameResult
+pub fn WindowRenderer::resize(Self, @core.SurfaceMetrics) -> Unit
+pub fn WindowRenderer::set_image_resource_change_callback(Self, ((ImageResourceSnapshot) -> Unit)?) -> Unit
+pub fn WindowRenderer::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
+pub fn WindowRenderer::text_system(Self) -> @core.TextSystem
 
 // Type aliases
 

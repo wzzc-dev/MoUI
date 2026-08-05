@@ -59,8 +59,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 |------|---------|
 | [mo-desktop-example](active/mo-desktop-example.md) | Add a responsive macOS-inspired MoUI desktop simulation with Web and macOS Skia entrypoints |
 | [window-cross-platform-parity](active/window-cross-platform-parity.md) | Align window (Windows/Linux/Web) with macOS reference in MoUI-ready semantics |
-| [moui-support-upstream-workspace](active/moui-support-upstream-workspace.md) | Complete the published-dependency handoff for the upstream-layout window workspace |
-| [platform-adapter-duplication-remediation](active/platform-adapter-duplication-remediation.md) | Finish the remaining Linux adapter duplication ratchet |
 | [view-node-trait-refactor](active/view-node-trait-refactor.md) | Complete the public ViewNode trait migration |
 | [moui-tier-tea-debt-convergence](active/moui-tier-tea-debt-convergence.md) | Converge platform tiers, strict TEA boundaries, entrypoints, and documentation debt |
 
@@ -68,6 +66,10 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [backend-render-package-convergence](done/backend-render-package-convergence.md) | Replace host/bridge packages with symmetric backend/render protocol and common implementation layers |
+| [platform-adapter-duplication-remediation](done/platform-adapter-duplication-remediation.md) | Eliminate shared platform behavior copies and remove similarity budgets |
+| [moui-support-upstream-workspace](done/moui-support-upstream-workspace.md) | Complete the upstream-layout migration, compatibility release, and published-dependency handoff |
+| [window-host-lifecycle-unification](done/window-host-lifecycle-unification.md) | Move all logical window lifecycle and frame coordination into MoUI window_host |
 | [backend-renderer-extraction](done/backend-renderer-extraction.md) | Move renderer construction out of platform backends and into composition roots |
 | [renderer-backend-decoupling](done/renderer-backend-decoupling.md) | Historical predecessor superseded by backend renderer extraction |
 | [renderer-provider-trait-refactor](done/renderer-provider-trait-refactor.md) | Historical provider proposal superseded by architecture convergence |

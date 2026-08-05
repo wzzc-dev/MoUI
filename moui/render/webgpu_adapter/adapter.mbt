@@ -63,7 +63,7 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor {
 /// the canvas-specific renderer factory while this package owns negotiation
 /// and its capability declaration.
 pub fn create_webgpu_provider(
-  create_webgpu~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer,
+  create_webgpu~ : (@core.SurfaceMetrics) -> WebGpuWasmRenderer,
 ) -> @render.RendererProvider {
   let caps = webgpu_provider_capabilities(
     provider_id="webgpu-wasm",
@@ -84,7 +84,7 @@ pub fn create_webgpu_provider(
 /// port, so this provider intentionally creates `WebGpuWasmRenderer` values
 /// instead of importing the WeChat-only `canvas2d` wasm host module.
 pub fn create_browser_canvas2d_fallback_provider(
-  create_canvas2d~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer,
+  create_canvas2d~ : (@core.SurfaceMetrics) -> WebGpuWasmRenderer,
 ) -> @render.RendererProvider {
   let caps = browser_canvas2d_fallback_capabilities(
     provider_id="canvas2d",
@@ -116,7 +116,7 @@ pub fn webgpu_provider_capabilities(
   provider_id~ : String,
   backend~ : @render.RendererBackendKind,
 ) -> Array[@render.RendererBackendFeatureCapability] {
-  @render.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
+  @render_common.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
     let status = match feature {
       @render.RendererFeature::Gradient | @render.RendererFeature::Transform =>
         @render.RendererFeatureStatus::Partial
@@ -131,7 +131,7 @@ pub fn browser_canvas2d_fallback_capabilities(
   provider_id~ : String,
   backend~ : @render.RendererBackendKind,
 ) -> Array[@render.RendererBackendFeatureCapability] {
-  @render.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
+  @render_common.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
     let status = match feature {
       @render.RendererFeature::Image | @render.RendererFeature::AsyncImage =>
         @render.RendererFeatureStatus::Partial
@@ -155,7 +155,7 @@ fn web_canvas_negotiate_surface(
           @render.BoundSurface::new(
             kind=@render.RendererPresentationModel::WebCanvas,
             route=@render.SurfaceRoute::RasterSurfaceRoute,
-            metrics=@render.RendererSurfaceMetrics::from_logical(
+            metrics=@core.SurfaceMetrics::from_logical(
               size=@core.Size::new(width~, height~),
               scale_factor~,
             ),
@@ -175,11 +175,11 @@ fn web_canvas_negotiate_surface(
 
 ///|
 fn webgpu_create_instance(
-  metrics : @render.RendererSurfaceMetrics,
-  create_webgpu~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer,
+  metrics : @core.SurfaceMetrics,
+  create_webgpu~ : (@core.SurfaceMetrics) -> WebGpuWasmRenderer,
 ) -> @render.RendererInstance {
   let renderer = create_webgpu(metrics)
-  @render.new_provider_instance(
+  @render_common.new_provider_instance(
     render_frame=frame => renderer.render_frame(frame),
     recover=_reason => @render.RecoveryResult::RecoverySucceeded,
     dispose=() => renderer.dispose(),
@@ -314,7 +314,7 @@ pub fn create_surface(
   scale_factor? : Double = 1.0,
   port~ : WebGpuHostRendererPort,
 ) -> WebGpuHostSurface raise WebGpuHostError {
-  let metrics = @render.RendererSurfaceMetrics::from_logical(
+  let metrics = @core.SurfaceMetrics::from_logical(
     size=logical_size,
     scale_factor~,
   )
@@ -338,8 +338,8 @@ pub fn create_renderer(
     size: logical_size,
     present_count: 0,
     last_calls: [],
-    last_fallback_plan: @render.plan_renderer_command_fallbacks([]),
-    image_lifecycle: @render.ImageResourceLifecycle::new(),
+    last_fallback_plan: @render_common.plan_renderer_command_fallbacks([]),
+    image_lifecycle: @render_common.ImageResourceLifecycle::new(),
     layer_cache: WebGpuLayerCommandCache::new(),
   }
 }
@@ -363,7 +363,7 @@ pub fn WebGpuWasmRenderer::backend_info(
 ///|
 pub fn WebGpuWasmRenderer::resize(
   self : WebGpuWasmRenderer,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> Unit raise WebGpuHostError {
   self.port.resize(metrics)
   self.surface.metrics = metrics
@@ -375,7 +375,9 @@ pub fn WebGpuWasmRenderer::render(
   self : WebGpuWasmRenderer,
   commands : Array[@core.DrawCommand],
 ) -> Unit raise WebGpuHostError {
-  self.last_fallback_plan = @render.plan_renderer_command_fallbacks(commands)
+  self.last_fallback_plan = @render_common.plan_renderer_command_fallbacks(
+    commands,
+  )
   self.record_web_image_commands(commands)
   let calls = draw_commands_to_host_calls(commands, self.size)
   self.port.submit(calls)

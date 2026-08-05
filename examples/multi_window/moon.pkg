@@ -1,5 +1,7 @@
 import {
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend" @host,
+  "wzzc-dev/moui/backend/common" @backend_common,
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/runtime",
   "examples/multi_window/app" @multi_window_app,

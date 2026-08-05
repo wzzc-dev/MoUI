@@ -101,7 +101,7 @@ test "markdown editor file sidebar renders optional directory tree" {
       }
     },
   )
-  app.pick_working_directory_for_test(@host.app_services(bridge~))
+  app.pick_working_directory_for_test(@backend_common.app_services(bridge~))
   let expanded = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
     expanded.any(command => {
@@ -190,7 +190,7 @@ test "markdown editor file tree lazily expands subdirectories" {
       }
     },
   )
-  let services = @host.app_services(bridge~)
+  let services = @backend_common.app_services(bridge~)
   app.pick_working_directory_for_test(services)
   inspect(listed_paths.length(), content="1")
   inspect(listed_paths[0], content="/tmp/project")
@@ -283,7 +283,7 @@ test "markdown editor file tree refresh reloads picked folder" {
       }
     },
   )
-  let services = @host.app_services(bridge~)
+  let services = @backend_common.app_services(bridge~)
   app.pick_working_directory_for_test(services)
   let initial = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
@@ -354,7 +354,7 @@ test "markdown editor file sidebar filters tree and recent files" {
       }
     },
   )
-  let services = @host.app_services(bridge~)
+  let services = @backend_common.app_services(bridge~)
   app.pick_working_directory_for_test(services)
   app.dispatch_message_for_test(services, SelectTreePath("/tmp/project/notes"))
 

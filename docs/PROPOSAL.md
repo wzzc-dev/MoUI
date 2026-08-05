@@ -13,7 +13,7 @@ MoUI 是一个原创的 MoonBit 跨平台声明式 GUI 框架，面向桌面应�
 1. 声明式 UI 核心：提供类型安全的 `View[Msg]`、事件、布局、绘制、Effect、Subscription 和运行时调度。
 2. 多渲染后端：支持 native Skia raster 主线、浏览器 WebGPU wasm-gc 路径、native WGPU 诊断路径、Sun CPU raster 自研实验性后端，以及浏览器 canvas 回退路径。
 3. 控件与主题系统：提供按钮、文本、输入、菜单、弹窗、导航、表格、富文本、Markdown 等控件能力，并支持 Material、Carbon、Primer、Fluent 和 Sickle 等主题。
-4. 跨平台宿主：通过 `moui/backend/host` 抽象窗口、输入、剪贴板、图片、计时器等服务，平台后端只负责薄适配。
+4. 跨平台宿主：通过 `moui/backend` 抽象窗口、输入、剪贴板、图片、计时器等服务，平台后端只负责薄适配。
 5. 工程化验证：提供 CI、API surface 检查、smoke gates、平台 smoke、示例应用和核心路径测试。
 
 ## 技术实现计划

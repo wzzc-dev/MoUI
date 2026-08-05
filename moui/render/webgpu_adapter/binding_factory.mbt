@@ -1,23 +1,23 @@
 ///|
 /// Browser WebGPU factory. The canvas id is supplied by the Web host through
-/// `HostSurfaceKit.surface_id` after each browser window is created.
-pub fn webgpu() -> @render.RendererBindingFactory {
+/// `SurfaceContext.surface_id` after each browser window is created.
+pub fn webgpu() -> @render.RendererFactory {
   browser_factory(canvas_fallback=false)
 }
 
 ///|
-pub fn canvas2d_fallback() -> @render.RendererBindingFactory {
+pub fn canvas2d_fallback() -> @render.RendererFactory {
   browser_factory(canvas_fallback=true)
 }
 
 ///|
-pub fn from_env() -> Array[@render.RendererBindingFactory] {
+pub fn from_env() -> Array[@render.RendererFactory] {
   [webgpu(), canvas2d_fallback()]
 }
 
 ///|
-fn browser_factory(canvas_fallback~ : Bool) -> @render.RendererBindingFactory {
-  @render.RendererBindingFactory::new(
+fn browser_factory(canvas_fallback~ : Bool) -> @render.RendererFactory {
+  @render.RendererFactory::new(
     id=if canvas_fallback { "canvas2d" } else { "webgpu-wasm" },
     bind=kit => {
       @render.RendererBindingPlan::new(
@@ -40,7 +40,7 @@ fn browser_binding(
   canvas_id : String,
   canvas_fallback : Bool,
 ) -> @render.RendererProviderBinding {
-  let create = (metrics : @render.RendererSurfaceMetrics) => {
+  let create = (metrics : @core.SurfaceMetrics) => {
     try! create_webgpu_renderer(
       canvas_id~,
       logical_size=metrics.logical_size,
@@ -61,8 +61,8 @@ fn browser_binding(
 ///|
 pub fn WebGpuWasmRenderer::to_host_window_renderer(
   self : WebGpuWasmRenderer,
-) -> @render.HostWindowRenderer {
-  @render.HostWindowRenderer::new(
+) -> @render.WindowRenderer {
+  @render.WindowRenderer::new(
     resize=metrics => self.resize(metrics) catch { _ => () },
     render=commands => self.render(commands) catch { _ => () },
     render_frame=Some(frame => self.render_frame(frame)),

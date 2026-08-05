@@ -90,7 +90,7 @@ test "wgpu web renderer forwards resize render and dispose to host port" {
   )
   inspect(created.val, content="1")
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=200.0, height=100.0),
     ),
   )
@@ -335,7 +335,10 @@ test "wgpu web command bridge forwards DrawPath to host ABI" {
   guard calls[1] is WebGpuHostCall::DrawPath(forwarded) else {
     fail("expected DrawPath host call")
   }
-  inspect(@render.tessellate_path(forwarded).vertices().length(), content="3")
+  inspect(
+    @render_common.tessellate_path(forwarded).vertices().length(),
+    content="3",
+  )
   assert_true(calls[2] is WebGpuHostCall::Present)
 }
 
@@ -368,7 +371,7 @@ test "wgpu web command bridge preserves radial DrawPath shader payload" {
     fail("expected radial path brush to stay visible to the host bridge")
   }
   assert_true(gradient.center_color == @core.Color::blue())
-  let mesh = @render.tessellate_path(forwarded)
+  let mesh = @render_common.tessellate_path(forwarded)
   inspect(mesh.vertices().length(), content="3")
   for vertex in mesh.vertices() {
     let components = vertex.components()

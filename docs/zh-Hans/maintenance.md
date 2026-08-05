@@ -13,14 +13,14 @@ MoUI 保持窄而明确的默认维护基线，让框架可以持续增长，而
 默认每日基线覆盖：
 
 - `moui/core` 和 `moui/views`
-- `moui/backend/host` 和 `moui/backend/web`
+- `moui/backend` 和 `moui/backend/web`
 - `moui/render`、`moui/render/skia` 和 `moui/render/webgpu_adapter`
 - fallback 安全的 `moui_skia` 检查
 - Showcase 应用/Web wasm-gc 验证
 - Markdown Editor 应用/Web wasm-gc 验证
 - 渲染器/provider 静态检查和轻量 Web handoff 验证
 - 超大源码文件、源码级 `pub(all)` 数量以及根 facade 类型转发数量的维护基线 ratchet
-- API surface 包预算，以及 `core`、`views`、`runtime`、`backend/host` 和 `render` 的语义分类预算
+- API surface 包预算，以及 `core`、`views`、`runtime`、`backend` 和 `render` 的语义分类预算
 
 完整平台运行时 smoke 是发布门禁或匹配主机门禁，不是默认每日门禁。每日检查不要求新鲜的匹配主机 promotion。
 
@@ -30,7 +30,7 @@ MoUI 保持窄而明确的默认维护基线，让框架可以持续增长，而
 
 该 guard 跟踪三类预算：
 
-- 当前热点的超大文件 ratchet，例如 `moui/core/unicode/grapheme_data.mbt`、`moui/runtime/view_tree.mbt`、`moui/views/form/form_validation_test.mbt`、`moui/backend/host/host_test.mbt`、Skia 渲染器文本/测试，以及大型示例应用文件；
+- 当前热点的超大文件 ratchet，例如 `moui/core/unicode/grapheme_data.mbt`、`moui/runtime/view_tree.mbt`、`moui/views/form/form_validation_test.mbt`、`moui/backend/common` 生命周期/图片测试、Skia 渲染器文本/测试，以及大型示例应用文件；
 - core、views、host、render、主线示例、Mo Workbench、PDF Workbench 和 Website 的直接包源码 `pub(all)` 数量；
 - `moui/moui.mbt` 中根 facade 的 `pub type` 转发数量。
 

@@ -22,7 +22,7 @@ wzzc-dev/moui  +  geometry/graphics/animation/text/state  +  views
 platform entrypoints        moui/runtime     # trees, dispatch, effects
 (web_wasm, *_skia, …)              │
 thin wiring only                   ▼
-        │                   moui/backend/host   # HostEvent, services, EmbedderHostChannel
+        │                   moui/backend   # Event, services, EmbedderHostChannel
         │                          │
         └────────────►     backend/<platform>  # neutral host only
                                    │
@@ -50,7 +50,7 @@ thin wiring only                   ▼
 | 公共控件 / 主题 helpers | `moui/views` |
 | 跨运行时协议 | `moui/core` |
 | AppRuntime / trees / effects | `moui/runtime` |
-| Host 服务与 embedder 通道 | `moui/backend/host` |
+| Host 服务与 embedder 通道 | `moui/backend` |
 | 原生宿主后端 | `moui/backend/{macos,windows,linux}` |
 | 嵌入运行时后端 | `moui/backend/{android,ios,harmonyos}` |
 | 中立宿主 surface/presenter | `moui/backend/<platform>` |

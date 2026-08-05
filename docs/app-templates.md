@@ -59,7 +59,7 @@ options(
 ```
 
 Default shared app imports should stay at `moui + views`. Add
-`"wzzc-dev/moui/backend/host"` only when the app calls host services, keep
+`"wzzc-dev/moui/backend"` only when the app calls host services, keep
 `runtime` in platform entrypoints or test-only imports when a runtime smoke
 needs it, add `core` only for low-level diagnostics or advanced framework
 contracts, and add the package to `moon.work` when it is part of this
@@ -485,7 +485,7 @@ Recommended checks:
 
 ```sh
 moon test moui/views --target native
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/command_palette/app --target native
 ```

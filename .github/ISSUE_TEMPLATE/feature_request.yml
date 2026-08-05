@@ -46,7 +46,7 @@ body:
         - moui/core (kernel contracts)
         - moui/views (controls & app-facing constructors)
         - moui/runtime (lifecycle, trees, dispatch)
-        - moui/backend/host (host service contracts)
+        - moui/backend (host service contracts)
         - moui/render/* (renderers)
         - moui_theme/* (design-system addons)
         - examples (apps)

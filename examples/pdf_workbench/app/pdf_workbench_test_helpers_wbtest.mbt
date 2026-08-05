@@ -171,7 +171,7 @@ fn pdf_workbench_test_binary_services(bytes : Bytes) -> @services.AppServices {
       }
     },
   )
-  @host.app_services(bridge~)
+  @backend_common.app_services(bridge~)
 }
 
 ///|

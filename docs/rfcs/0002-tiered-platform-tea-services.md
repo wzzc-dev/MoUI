@@ -24,7 +24,7 @@ combination outside the matrix requires a follow-up RFC.
 Add `wzzc-dev/moui/services` as an optional app-facing package that depends only
 on `moui/core`. It owns typed application service tasks and timer/route sources.
 Wire protocols, pending queues, and platform implementations remain in
-`moui/backend/host` and concrete backends.
+`moui/backend` and concrete backends.
 
 Application models contain business data, not runtime objects, host bridges, or
 service request identifiers. Services are captured by Program factories;

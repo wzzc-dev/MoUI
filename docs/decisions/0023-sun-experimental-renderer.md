@@ -25,8 +25,9 @@ Facts established during the 2026-08-02 architecture review:
 - Sun is reachable only through dedicated smoke entrypoints
   (`examples/showcase/{macos,linux,windows}_sun`) and platform provider tests
   (`backend/{macos,linux,windows}/sun`).
-- The three platform sun providers are near-mirror adapter shells, gated by
-  the platform file-similarity validator.
+- The three platform sun providers are thin nominal adapter shells. Shared
+  behavior must remain in its owning package, as enforced by the Platform
+  Bridge boundary validator rather than file-similarity accounting.
 - Sun's capability surface already diverges from Skia (e.g., blur uses a
   three-pass box blur; missing glyphs draw debug placeholder coverage).
 - Git history shows 75 commits touching sun paths; the stack is maintained,
@@ -107,8 +108,8 @@ open to either promotion (with RFC) or eventual removal (reusing this ADR).
   every Skia capability in sun; contributors know the boundary without
   archaeology.
 - **Harder**: the ~86K-line footprint remains; platform adapter shells must
-  keep passing the file-similarity gate; a future promotion requires an RFC
-  and product evidence.
+  keep passing the Platform Bridge boundary gate; a future promotion requires
+  an RFC and product evidence.
 - **Follow-up**: add the experimental note to
   `docs/renderer-capability-report.md`; register invariant R7; keep `moon.work`
   listing `./moui_sun` while it is exercised by tests.

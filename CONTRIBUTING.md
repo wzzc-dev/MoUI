@@ -79,7 +79,7 @@ short version:
   constructor and any private `*_control`/`*_layout`/`*_surface` helper.
 - **`moui/runtime`** — runtime lifecycle, element/layout/render tree
   execution, effects, subscriptions, diagnostics.
-- **`moui/backend/host`** — host service contracts; concrete platform
+- **`moui/backend`** — host service contracts; concrete platform
   behavior in the platform backend packages.
 - **`moui/render/*`** — renderer facade and concrete renderers (Skia, WGPU,
   WebGPU adapter).

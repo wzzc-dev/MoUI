@@ -10,14 +10,14 @@ pub(all) struct MacosBackendInfo {
 pub(all) struct MacosAccessibilityBridgeInfo {
   kind : @runtime.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool
-  native_platform_bridge_available : Bool
+  native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub struct MacosHostAppOptions {
-  priv scene_resolver : @runtime.HostWindowSceneResolver
+  priv scene_resolver : @runtime.WindowSceneResolver
   priv event_sources : @runtime.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
@@ -51,23 +51,23 @@ pub struct MacosHostSmokeOptions {
 
 ///|
 priv struct MacosSurfaceBinding {
-  create_renderer : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
-  sync_surface : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit
+  create_renderer : (@window_macos.Window, @core.SurfaceMetrics) -> @render.RendererResolution?
+  sync_surface : (@window_macos.Window, @core.SurfaceMetrics) -> Unit
 }
 
 ///|
 /// Native host backend: owns the macOS host runtime, native windows, and
 /// event-loop integration rather than attaching a runtime to an embedder.
 /// Platform-neutral window coordination (registry, runtime slots, requests,
-/// image resources, IME) lives in `coordinator` (@runtime.WindowHostCoordinator).
+/// image resources, IME) lives in `coordinator` (@window_host.WindowCoordinator).
 struct MacosNativeHostBackend {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
-  coordinator : @runtime.WindowHostCoordinator
+  coordinator : @window_host.WindowCoordinator
   surface_binding : MacosSurfaceBinding
   services : @host.HostServiceBridge
-  platform_slots : @platform_bridge.WindowSlotMap[@window_macos.Window, Unit]
+  platform_slots : @window_host.WindowSlotMap[@window_macos.Window, Unit]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
@@ -112,7 +112,7 @@ struct MacosNativeHostBackend {
 
 ///|
 pub fn MacosHostAppOptions::new(
-  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
+  scene_resolver? : @runtime.WindowSceneResolver = @runtime.WindowSceneResolver::unavailable(),
   event_sources? : @runtime.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
@@ -184,8 +184,8 @@ pub fn macos_native_view_handle(window : @window_macos.Window) -> UInt64? {
 
 ///|
 fn MacosSurfaceBinding::new(
-  create_renderer~ : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
-  sync_surface? : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit = (
+  create_renderer~ : (@window_macos.Window, @core.SurfaceMetrics) -> @render.RendererResolution?,
+  sync_surface? : (@window_macos.Window, @core.SurfaceMetrics) -> Unit = (
     _window,
     _metrics,
   ) => (),

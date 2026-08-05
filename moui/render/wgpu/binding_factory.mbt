@@ -7,11 +7,9 @@ extern "C" fn wgpu_windows_hinstance() -> @wgpu_c.OpaquePtr = "moui_wgpu_windows
 ///|
 /// Build a native WGPU factory. Platform text providers remain an explicit
 /// composition-root choice and are captured by the factory.
-pub fn native(
-  text_engine~ : NativeTextEngine,
-) -> @render.RendererBindingFactory {
+pub fn native(text_engine~ : NativeTextEngine) -> @render.RendererFactory {
   let image_decoder = native_image_decoder()
-  @render.RendererBindingFactory::new(id="wgpu", bind=kit => {
+  @render.RendererFactory::new(id="wgpu", bind=kit => {
     let descriptor = match kit.gpu_surface() {
       Some(bridge) => Some(bridge.descriptor())
       None => None
@@ -47,7 +45,9 @@ pub fn native(
     }
     @render.RendererBindingPlan::new(
       binding~,
-      image_loader=Some(image_decoder.loader(kit.image_source())),
+      image_loader=Some(
+        @render_common.image_loader(image_decoder, kit.image_source()),
+      ),
       surface~,
     )
   })
@@ -70,7 +70,7 @@ fn native_image_decoder() -> @render.RendererImageDecoder {
 
 ///|
 fn create_native_renderer(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   descriptor : @render.GpuHostSurfaceDescriptor,
   text_engine : NativeTextEngine,
 ) -> WgpuRenderer {
@@ -114,8 +114,8 @@ fn create_native_host_surface(
 ///|
 pub fn WgpuRenderer::to_host_window_renderer(
   self : WgpuRenderer,
-) -> @render.HostWindowRenderer {
-  @render.HostWindowRenderer::new(
+) -> @render.WindowRenderer {
+  @render.WindowRenderer::new(
     resize=metrics => self.resize(metrics),
     render=commands => self.render(commands),
     text_system=() => self.text_system(),

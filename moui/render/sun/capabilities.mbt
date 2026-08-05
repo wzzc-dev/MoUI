@@ -63,7 +63,7 @@ pub fn sun_feature_note(feature : @render.RendererFeature) -> String {
     @render.RendererFeature::EmojiText =>
       "moui_sun/text FontFallbackPlan selects registered fallback faces for emoji spans after requested family faces, so mixed Latin-plus-emoji Sun text can measure and draw without missing fallback diagnostics when coverage is registered; Sun raster renders the selected glyph coverage through FontFace and CoverageMask."
     @render.RendererFeature::AsyncImage =>
-      "Sun raster decodes PNG/JPEG/BMP data URI and backend-supplied HostImageSource bytes through moui_sun Pixmap codecs plus the mizchi/image JPEG adapter. The Sun factory owns RendererImageDecoder completion creation; the backend performs no image decode. Sun records renderer-local loading/ready/failed/disposed snapshots, clears cached pixmaps on dispose, keeps repeat draws revision-stable, retries missing local files after they appear, and exposes callback/apply ports through HostWindowRenderer for second-frame repaint routing."
+      "Sun raster decodes PNG/JPEG/BMP data URI and backend-supplied HostImageSource bytes through moui_sun Pixmap codecs plus the mizchi/image JPEG adapter. The Sun factory owns RendererImageDecoder completion creation; the backend performs no image decode. Sun records renderer-local loading/ready/failed/disposed snapshots, clears cached pixmaps on dispose, keeps repeat draws revision-stable, retries missing local files after they appear, and exposes callback/apply ports through WindowRenderer for second-frame repaint routing."
   }
 }
 

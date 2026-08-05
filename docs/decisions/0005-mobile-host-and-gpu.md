@@ -18,7 +18,7 @@ dispose behavior diverge.
 
 ### Decision
 
-`moui/backend/host` owns `EmbedderHostChannel` and the platform-neutral mobile
+`moui/backend` owns `EmbedderHostChannel` and the platform-neutral mobile
 payloads. Runtime sessions synchronize IME state and revisioned flattened
 semantics snapshots into the channel. Platform shells drain updates and return
 typed responses through a stable C ABI.
@@ -129,7 +129,7 @@ The shared Phase 2 scaffolding required before any platform can flip
   Android dynamically loads Vulkan on API 24+ and uses EGL/GLES when the
   loader or a present-capable queue is unavailable. Only a completed platform
   present reports `Presented`.
-- **Completion-driven host accounting** (`moui/backend/host` and platform
+- **Completion-driven host accounting** (`moui/backend` and platform
   backends): queued submission is not presentation. macOS, Windows, and Linux
   retain a `frame_pending` flag and poll completions without resubmitting the
   same frame; Android, iOS, and HarmonyOS drain completions on every VSync.

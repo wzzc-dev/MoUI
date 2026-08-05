@@ -15,14 +15,14 @@
 
 This plan covers `moui/core`, `moui/runtime`, all declaration producers in
 `moui/views`, `moui_richtext`, and `moui_webview`, platform accessibility
-transport in `moui/backend/host` and affected backends, `moui_agent`,
+transport in `moui/backend` and affected backends, `moui_agent`,
 `moui_agent_mcp`, and `examples/agent_counter`.
 
 The following are explicit non-goals for this change:
 
 - `wait_for`, screenshots, authorization policy, and cross-window global IDs;
 - the separate `core.Theme` / views-owned `ControlThemeSet` ownership change;
-- making `moui_webview` a core dependency or making a platform backend/host
+- making `moui_webview` a core dependency or making a platform backend
   mandatory;
 - replacing application confirmation UI or TEA `update` with semantic IDs.
 
@@ -118,7 +118,7 @@ The following are explicit non-goals for this change:
 
 ### Host, Agent, and MCP boundaries
 
-- `moui/backend/host` transports platform semantics only. AccessKit, Web, and
+- `moui/backend` transports platform semantics only. AccessKit, Web, and
   mobile payloads use `SemanticsNodeId`, generation, and deltas. Remove root
   recapture, JSON-string equality, bridge-local semantics revisions, duplicate
   validation, and platform action routing by `ElementId`.
@@ -286,7 +286,7 @@ The following are explicit non-goals for this change:
   leaf change does not recompute the full tree, reads do not increment paint,
   and a one-node change yields a delta rather than a full snapshot.
 - [x] Run focused native tests for `moui/core`, `moui/runtime`, `moui/views`,
-  `moui_richtext`, `moui_webview`, `moui/backend/host`, affected platform
+  `moui_richtext`, `moui_webview`, `moui/backend`, affected platform
   backends, `moui_agent`, `moui_agent_mcp`, and `examples/agent_counter`.
 - [x] Run corresponding wasm-gc checks/tests for every supported affected
   package and example.

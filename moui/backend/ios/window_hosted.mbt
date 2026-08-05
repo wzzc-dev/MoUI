@@ -5,17 +5,17 @@
 /// thin shell around the shared `HostedWindowBackend`; native surface access,
 /// the IME sink and window creation stay here.
 pub struct IosEmbeddedRuntimeBackend {
-  backend : @embedded_runtime_backend.HostedWindowBackend
+  backend : @embedded_runtime.HostedWindowBackend
 }
 
 ///|
 pub fn IosEmbeddedRuntimeBackend::new(
   title? : String = "MoUI",
-  runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
-  renderer_factories~ : Array[@render.RendererBindingFactory],
+  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
+  renderer_factories~ : Array[@render.RendererFactory],
   auto_exit_after_frames? : Int? = None,
 ) -> IosEmbeddedRuntimeBackend {
-  new_ios_embedded_runtime_backend(
+  new_ios_embedded_runtime(
     title~,
     runtime_factory~,
     surface_binding_factory=() => ios_surface_binding(renderer_factories),
@@ -40,15 +40,15 @@ pub fn entry(auto_exit_after_frames? : Int? = None) -> @runtime.PlatformEntry {
 }
 
 ///|
-fn new_ios_embedded_runtime_backend(
+fn new_ios_embedded_runtime(
   title~ : String,
-  runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
+  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
   surface_binding_factory~ : () -> IosSurfaceBinding,
   auto_exit_after_frames~ : Int?,
 ) -> IosEmbeddedRuntimeBackend {
   let ime_sink = IosImeSink::new()
   {
-    backend: @embedded_runtime_backend.HostedWindowBackend::new(
+    backend: @embedded_runtime.HostedWindowBackend::new(
       title~,
       runtime_factory~,
       surface_binding_factory=() => {
@@ -95,10 +95,10 @@ pub fn IosEmbeddedRuntimeBackend::has_session(
 
 ///|
 pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn resumed(
-  _self,
+  self,
   _event_loop,
 ) {
-  ()
+  self.backend.resumed()
 }
 
 ///|
@@ -106,27 +106,33 @@ pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn ca
   self,
   event_loop,
 ) {
-  if self.backend.has_window() {
-    return
-  }
-  let attrs = @window_core.WindowAttributes::default().with_title(
-    self.backend.title(),
-  )
-  let created : @window_ios.Window? = Some(event_loop.try_create_window(attrs)) catch {
-    _ => None
-  }
-  match created {
-    Some(window) => {
-      let hosted = @embedded_runtime_backend.HostedWindow::new(
-        scale_factor=fn() { window.scale_factor() },
-        inner_size=fn() { window.inner_size() },
-        request_redraw=fn() { window.request_redraw() },
+  ignore(
+    self.backend.ensure_surface(create=() => {
+      let attrs = @window_core.WindowAttributes::default().with_title(
+        self.backend.title(),
       )
-      self.backend.attach_session(hosted, raw_handle=window.view_handle())
-      window.request_redraw()
-    }
-    None => ()
-  }
+      let created : @window_ios.Window? = Some(
+        event_loop.try_create_window(attrs),
+      ) catch {
+        _ => None
+      }
+      match created {
+        Some(window) =>
+          Some(
+            (
+              @embedded_runtime.HostedWindow::new(
+                scale_factor=fn() { window.scale_factor() },
+                inner_size=fn() { window.inner_size() },
+                request_redraw=fn() { window.request_redraw() },
+                drop=fn() { window.drop() },
+              ),
+              window.view_handle(),
+            ),
+          )
+        None => None
+      }
+    }),
+  )
 }
 
 ///|
@@ -134,7 +140,7 @@ pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn de
   self,
   _event_loop,
 ) {
-  self.backend.detach_session()
+  self.backend.destroy_surfaces()
 }
 
 ///|
@@ -142,10 +148,7 @@ pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn su
   self,
   _event_loop,
 ) {
-  // Surface may already be destroyed; ensure session is detached.
-  if !self.backend.has_window() {
-    self.backend.detach_session()
-  }
+  self.backend.suspended()
 }
 
 ///|

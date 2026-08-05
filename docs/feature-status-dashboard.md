@@ -82,13 +82,13 @@ proof status:
 - **Implementation status**: supported (native Skia local-file sources use
   off-main-thread file I/O plus Skia decode into decoded RGBA completion
   payloads; provider tests assert `background_io` and `background_decode`)
-- **L1 proof**: `pr-profile` job passes (HostAsyncImageLoader dedup, late
+- **L1 proof**: `pr-profile` job passes (AsyncImageLoader dedup, late
   callback gating, completion routing, drain_fn spawn/drain cycle,
   decoded payload header plus `background_io` / `background_decode` flags
   asserted in provider tests)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
   pass on every PR (second-frame repaint marker after local/data URI
-  completions, deferred-completion marker after `HostNativeAsyncImageSource`
+  completions, deferred-completion marker after `NativeAsyncImageSource`
   completion via `--run-renderer-smoke`)
 - **Release readiness**: ready. The `moui-renderer-real-skia-ci.yml` workflow
   automatically obtains second-frame and deferred-completion markers on all
@@ -124,7 +124,7 @@ has L1 package-test proof:
 
 | Gate | L1 proof |
 | --- | --- |
-| Renderer mailbox control queue (`moui/render/render_frame_mailbox.mbt`) | `moui/render` whitebox tests (capacity-two latest-wins; `RendererControlMessage` never dropped) |
+| Renderer mailbox control queue (`moui/render/common/render_frame_mailbox.mbt`) | `moui/render/common` whitebox tests (capacity-two latest-wins; `RendererControlMessage` never dropped) |
 | Native Picture handoff (`moui_skia/native/skia_stub_gpu_worker.cpp`) | focused native tests (independent thread, retained picture, detach acknowledgement, zero readback counter) |
 | Context-loss recovery (`moui/runtime/renderer_recovery.mbt`) | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; `FallbackToRaster` after 2 failures) |
 | Window-hosted verification manifest | `moui_cli/verify.mbt` and `moui_cli/verify_wbtest.mbt` |

@@ -80,7 +80,7 @@ pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
   {
     kind: @runtime.NativeAccessibilityBridgeKind::AppKit,
     semantics_bridge_available: true,
-    native_platform_bridge_available: false,
+    native_accessibility_bridge_available: false,
     action_dispatch_available: true,
     description: "macOS exposes an AppKit accessibility bridge contract over the shared semantics tree; real NSAccessibility object binding is still a backend follow-up.",
   }
@@ -125,7 +125,7 @@ pub fn macos_capability_summary(
     ime_available=true,
     drag_drop_available=true,
     async_services=false,
-    native_accessibility_available=backend_info().accessibility.native_platform_bridge_available,
+    native_accessibility_available=backend_info().accessibility.native_accessibility_bridge_available,
     web_view_available=true,
     web_view_description="macOS WKWebView native embedding is available.",
     description="AppKit host with clipboard, file dialog, URL, system theme, native context menu, text input, and file-drop contracts.",
@@ -147,12 +147,12 @@ pub fn macos_service_bridge(
   clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_macos_clipboard,
   open_url? : (String) -> Bool = dispatch_macos_open_url,
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_macos_file_dialog,
-  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_macos_text_file,
-  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_macos_binary_file,
+  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
+  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
   settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_macos_settings,
   menu? : (Array[@core.ActionCommand]) -> Int = dispatch_macos_menu,
 ) -> @host.HostServiceBridge {
-  @host.HostServiceBridge::new(
+  @host_services_desktop.DesktopHostServices::new(
     capabilities=@host.HostServiceCapabilities::new(
       clipboard=true,
       file_dialogs=true,
@@ -162,37 +162,18 @@ pub fn macos_service_bridge(
       system_theme=true,
       settings=true,
     ),
-    handle=request => {
-      match request {
-        @host.HostServiceRequest::Clipboard(clipboard_request) =>
-          clipboard(clipboard_request)
-        @host.HostServiceRequest::OpenUrl(url) =>
-          if open_url(url) {
-            @host.HostServiceResponse::UrlOpened
-          } else {
-            @host.HostServiceResponse::Unavailable("open URL failed")
-          }
-        @host.HostServiceRequest::FileDialog(options) =>
-          @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
-        @host.HostServiceRequest::TextFile(text_file_request) =>
-          text_file(text_file_request)
-        @host.HostServiceRequest::BinaryFile(binary_file_request) =>
-          binary_file(binary_file_request)
-        @host.HostServiceRequest::ShowMenu(commands) =>
-          @platform_bridge.menu_command_response(commands, menu(commands))
-        @host.HostServiceRequest::SetApplicationMenu(menus) =>
-          dispatch_macos_application_menu(menus)
-        @host.HostServiceRequest::QuerySystemTheme =>
-          @host.HostServiceResponse::SystemTheme(system_theme)
-        @host.HostServiceRequest::Settings(settings_request) =>
-          settings(settings_request)
-        @host.HostServiceRequest::ListDirectory(path) =>
-          dispatch_macos_list_directory(path)
-        @host.HostServiceRequest::PlatformChannel(_) =>
-          @host.HostServiceResponse::Unavailable(request.unavailable_message())
-      }
+    system_theme~,
+    clipboard~,
+    open_url~,
+    file_dialog~,
+    text_file~,
+    binary_file~,
+    settings~,
+    show_menu=commands => {
+      @host_services_desktop.menu_command_response(commands, menu(commands))
     },
-  )
+    set_application_menu=dispatch_macos_application_menu,
+  ).bridge()
 }
 
 ///|
@@ -237,7 +218,7 @@ fn dispatch_macos_settings(
 
 ///|
 pub fn app_environment() -> @services.AppEnvironment {
-  @host.app_environment(
+  @window_host.app_environment(
     bridge=macos_service_bridge(),
     timer=Some(macos_timer_source()),
   )
@@ -371,90 +352,22 @@ fn dispatch_macos_application_menu(
 }
 
 ///|
-fn dispatch_macos_list_directory(path : String) -> @host.HostServiceResponse {
-  let names_opt : Array[String]? = Some(@fs.read_dir(path)) catch { _ => None }
-  let names = names_opt.unwrap_or([])
-  let entries : Array[@host.HostDirectoryEntry] = []
-  for name in names {
-    // Skip hidden files (starting with .)
-    if name.has_prefix(".") {
-      continue
-    }
-    let child_path = path + "/" + name
-    let is_dir_opt : Bool? = Some(@fs.is_dir(child_path)) catch { _ => None }
-    let is_dir = is_dir_opt.unwrap_or(false)
-    entries.push(
-      @host.HostDirectoryEntry::new(name~, path=child_path, is_directory=is_dir),
-    )
-  }
-  @host.HostServiceResponse::DirectoryListing(path, entries)
-}
-
-///|
-fn dispatch_macos_text_file(
-  request : @host.HostTextFileRequest,
-) -> @host.HostServiceResponse {
-  match request {
-    @host.HostTextFileRequest::ReadText(path) =>
-      if @fs.path_exists(path) {
-        let bytes = @fs.read_file_to_bytes(path) catch {
-          _ => return @host.HostServiceResponse::Unavailable("file read failed")
-        }
-        @host.HostServiceResponse::TextFileContent(
-          path,
-          @utf8.decode_lossy(bytes[:], ignore_bom=true),
-        )
-      } else {
-        @host.HostServiceResponse::Unavailable("file does not exist")
-      }
-    @host.HostTextFileRequest::WriteText(path, text) => {
-      let bytes = @utf8.encode(text[:], bom=false)
-      @fs.write_bytes_to_file(path, bytes) catch {
-        _ => return @host.HostServiceResponse::Unavailable("file write failed")
-      }
-      @host.HostServiceResponse::TextFileWritten(path)
-    }
-  }
-}
-
-///|
-fn dispatch_macos_binary_file(
-  request : @host.HostBinaryFileRequest,
-) -> @host.HostServiceResponse {
-  match request {
-    @host.HostBinaryFileRequest::ReadBytes(path) =>
-      if @fs.path_exists(path) {
-        let bytes = @fs.read_file_to_bytes(path) catch {
-          _ => return @host.HostServiceResponse::Unavailable("file read failed")
-        }
-        @host.HostServiceResponse::BinaryFileContent(path, bytes)
-      } else {
-        @host.HostServiceResponse::Unavailable("file does not exist")
-      }
-    @host.HostBinaryFileRequest::WriteBytes(path, bytes) => {
-      @fs.write_bytes_to_file(path, bytes) catch {
-        _ => return @host.HostServiceResponse::Unavailable("file write failed")
-      }
-      @host.HostServiceResponse::BinaryFileWritten(path)
-    }
-  }
-}
-
-///|
 fn dispatch_macos_menu(commands : Array[@core.ActionCommand]) -> Int {
-  macos_show_menu_bytes(@platform_bridge.encode_menu_commands(commands))
+  macos_show_menu_bytes(@host_services_desktop.encode_menu_commands(commands))
 }
 
 ///|
 fn dispatch_macos_file_dialog(
   options : @host.HostFileDialogOptions,
 ) -> Array[String] {
-  @platform_bridge.decode_file_dialog_selection(
+  @host_services_desktop.decode_file_dialog_selection(
     macos_file_dialog_bytes(
-      @platform_bridge.host_file_dialog_kind_code(options.kind),
-      @platform_bridge.encode_host_string(options.title),
-      @platform_bridge.encode_host_filter_list(options.filters),
-      @platform_bridge.encode_host_string(options.default_name.unwrap_or("")),
+      @host_services_desktop.host_file_dialog_kind_code(options.kind),
+      @host_services_desktop.encode_host_string(options.title),
+      @host_services_desktop.encode_host_filter_list(options.filters),
+      @host_services_desktop.encode_host_string(
+        options.default_name.unwrap_or(""),
+      ),
     ),
   )
 }

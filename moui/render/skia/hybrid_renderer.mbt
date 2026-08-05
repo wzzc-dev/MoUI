@@ -4,7 +4,7 @@
 /// the window-backed presenter can produce a public `Presented` completion.
 pub struct SkiaHybridRenderer {
   priv renderer : SkiaRasterRenderer
-  priv worker : @render.GpuRenderWorker
+  priv worker : @render_common.GpuRenderWorker
   priv surface_route : @render.SurfaceRoute
   priv requested : NativeRendererMode
   priv mut fallback_to_raster : Bool
@@ -15,7 +15,7 @@ pub struct SkiaHybridRenderer {
 pub fn create_hybrid_renderer(
   platform : NativeGpuPlatform,
   requested : NativeRendererMode,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
   gpu_available~ : Bool,
   gpu_promoted~ : Bool,
@@ -40,7 +40,7 @@ pub fn create_hybrid_renderer(
   )
   {
     renderer,
-    worker: @render.GpuRenderWorker::new(),
+    worker: @render_common.GpuRenderWorker::new(),
     surface_route,
     requested,
     fallback_to_raster: false,
@@ -140,6 +140,6 @@ pub fn SkiaHybridRenderer::fallback_to_raster(
 ///|
 pub fn SkiaRasterRenderer::metrics(
   self : SkiaRasterRenderer,
-) -> @render.RendererSurfaceMetrics {
+) -> @core.SurfaceMetrics {
   self.metrics
 }

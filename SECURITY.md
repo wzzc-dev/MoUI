@@ -68,7 +68,7 @@ dependencies. In-scope components:
 - **Web host imports** — the `web_wasm` host surface, browser WebGPU adapter,
   and any `extern "wasm"` / JS interop. Sandboxing, origin handling, and
   untrusted input handling are in scope.
-- **Host services** — `moui/backend/host` contracts and platform backends:
+- **Host services** — `moui/backend` contracts and platform backends:
   clipboard, file dialogs, WebView, text input, drag/drop. Untrusted input
   from these services is in scope.
 - **Runtime** — event dispatch, text input, and any path that processes
@@ -93,6 +93,6 @@ how the app wires host services and renders untrusted content. Integrators
 should:
 
 - Treat rich text, markdown, and WebView content as untrusted input.
-- Review the host-service contracts in `moui/backend/host` before enabling
+- Review the host-service contracts in `moui/backend` before enabling
   clipboard, file dialogs, or WebView in untrusted contexts.
 - Keep native FFI pins (`moui_skia`, Skia version) current with `main`.

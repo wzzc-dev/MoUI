@@ -11,13 +11,13 @@ import {
 // Values
 pub fn backend_info() -> @render.RendererBackendInfo
 
-pub fn create_wgpu_provider(create_wgpu~ : (@render.RendererSurfaceMetrics) -> WgpuRenderer) -> @render.RendererProvider
+pub fn create_wgpu_provider(create_wgpu~ : (@core.SurfaceMetrics) -> WgpuRenderer) -> @render.RendererProvider
 
-pub fn create_with_host_surface(@render.RendererSurfaceMetrics, HostWgpuSurface) -> WgpuRenderer raise @wgpu_mbt.WgpuError
+pub fn create_with_host_surface(@core.SurfaceMetrics, HostWgpuSurface) -> WgpuRenderer raise @wgpu_mbt.WgpuError
 
-pub fn create_with_host_surface_and_text_engine(@render.RendererSurfaceMetrics, HostWgpuSurface, text_engine~ : NativeTextEngine) -> WgpuRenderer raise @wgpu_mbt.WgpuError
+pub fn create_with_host_surface_and_text_engine(@core.SurfaceMetrics, HostWgpuSurface, text_engine~ : NativeTextEngine) -> WgpuRenderer raise @wgpu_mbt.WgpuError
 
-pub fn native(text_engine~ : NativeTextEngine) -> @render.RendererBindingFactory
+pub fn native(text_engine~ : NativeTextEngine) -> @render.RendererFactory
 
 pub fn native_image_load_completion(String) -> @render.ImageResourceLoadCompletion
 
@@ -128,9 +128,9 @@ pub fn WgpuRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
 pub fn WgpuRenderer::last_batch_count(Self) -> Int
 pub fn WgpuRenderer::present_count(Self) -> Int
 pub fn WgpuRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
-pub fn WgpuRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit
+pub fn WgpuRenderer::resize(Self, @core.SurfaceMetrics) -> Unit
 pub fn WgpuRenderer::text_system(Self) -> @core.TextSystem
-pub fn WgpuRenderer::to_host_window_renderer(Self) -> @render.HostWindowRenderer
+pub fn WgpuRenderer::to_host_window_renderer(Self) -> @render.WindowRenderer
 pub fn WgpuRenderer::unsupported_command_count(Self) -> Int
 
 // Type aliases

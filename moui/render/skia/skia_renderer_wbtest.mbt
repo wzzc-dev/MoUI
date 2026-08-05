@@ -21,7 +21,7 @@ test "skia transform maps MoUI affine fields to Skia matrix members" {
 ///|
 test "skia raster surface preflight consumes moui_skia resource descriptors" {
   let preflight = raster_surface_preflight(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
       scale_factor=2.0,
     ),
@@ -43,7 +43,7 @@ test "skia raster surface preflight consumes moui_skia resource descriptors" {
 ///|
 test "skia raster surface preflight clamps empty physical targets" {
   let preflight = raster_surface_preflight(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=0.0, height=8.0),
       scale_factor=2.0,
     ),

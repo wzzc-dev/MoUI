@@ -24,7 +24,7 @@ pub(all) enum SurfaceNegotiationResult {
 pub(all) struct BoundSurface {
   kind : RendererPresentationModel
   route : SurfaceRoute
-  metrics : RendererSurfaceMetrics
+  metrics : @core.SurfaceMetrics
 }
 
 ///|
@@ -55,7 +55,7 @@ pub(all) struct RendererInstance {
 /// host factory, while this adapter keeps the provider's `create` contract
 /// truthful for tooling and isolated provider tests.
 pub fn RendererInstance::from_host_window_renderer(
-  renderer : HostWindowRenderer,
+  renderer : WindowRenderer,
 ) -> RendererInstance {
   {
     render_frame: frame => renderer.render_frame(frame),
@@ -92,7 +92,7 @@ pub(all) struct RendererProvider {
   negotiate : (SurfaceDescriptor) -> SurfaceNegotiationResult
   /// Create a renderer instance from metrics and a negotiated
   /// bound surface. The returned instance is ready to render.
-  create : (RendererSurfaceMetrics, BoundSurface) -> RendererInstance
+  create : (@core.SurfaceMetrics, BoundSurface) -> RendererInstance
 }
 
 ///|
@@ -105,16 +105,16 @@ pub fn RendererProvider::id(self : RendererProvider) -> String {
 /// renderer lifecycle. `RendererInstance` deliberately remains a small
 /// renderer contract; native and embedded hosts use this binding to retain
 /// resize, text, image, present-completion, platform-view, and GPU-recovery
-/// behavior exposed by `HostWindowRenderer`.
+/// behavior exposed by `WindowRenderer`.
 pub(all) struct RendererProviderBinding {
   provider : RendererProvider
-  create_host_renderer : (RendererSurfaceMetrics, BoundSurface) -> HostWindowRenderer
+  create_host_renderer : (@core.SurfaceMetrics, BoundSurface) -> WindowRenderer
 }
 
 ///|
 pub fn RendererProviderBinding::new(
   provider~ : RendererProvider,
-  create_host_renderer~ : (RendererSurfaceMetrics, BoundSurface) -> HostWindowRenderer,
+  create_host_renderer~ : (@core.SurfaceMetrics, BoundSurface) -> WindowRenderer,
 ) -> RendererProviderBinding {
   { provider, create_host_renderer }
 }
@@ -127,88 +127,11 @@ pub fn RendererProviderBinding::provider(
 }
 
 ///|
-/// Select the first binding that accepts a surface. Registration order is the
-/// platform composition policy; identity is always `RendererProvider.id`, not
-/// `RendererBackendKind`.
-pub fn select_renderer_provider_binding(
-  bindings : Array[RendererProviderBinding],
-  surface : SurfaceDescriptor,
-) -> (RendererProviderBinding, BoundSurface)? {
-  for binding in bindings {
-    match (binding.provider.negotiate)(surface) {
-      SurfaceNegotiationResult::SurfaceAccepted(bound) =>
-        return Some((binding, bound))
-      SurfaceNegotiationResult::SurfaceRejected(_) => ()
-    }
-  }
-  None
-}
-
-///|
 /// Project registered bindings to their providers for capability diagnostics.
 pub fn renderer_provider_binding_providers(
   bindings : Array[RendererProviderBinding],
 ) -> Array[RendererProvider] {
   bindings.map(binding => binding.provider)
-}
-
-///|
-/// Simple provider registry. Holds a list of registered `RendererProvider`
-/// values and provides query helpers.
-pub(all) struct RendererProviderRegistry {
-  providers : Array[RendererProvider]
-}
-
-///|
-pub fn RendererProviderRegistry::new() -> RendererProviderRegistry {
-  { providers: [] }
-}
-
-///|
-pub fn RendererProviderRegistry::register(
-  self : RendererProviderRegistry,
-  provider : RendererProvider,
-) -> Unit {
-  self.providers.push(provider)
-}
-
-///|
-pub fn RendererProviderRegistry::providers(
-  self : RendererProviderRegistry,
-) -> Array[RendererProvider] {
-  self.providers.copy()
-}
-
-///|
-pub fn RendererProviderRegistry::lookup(
-  self : RendererProviderRegistry,
-  id : String,
-) -> RendererProvider? {
-  for provider in self.providers {
-    if provider.id == id {
-      return Some(provider)
-    }
-  }
-  None
-}
-
-///|
-/// Find the best provider for a given surface descriptor by trying each
-/// registered provider's `negotiate` in registration order. Returns the
-/// first provider that accepts the surface, or `None` if no provider
-/// accepts it.
-pub fn RendererProviderRegistry::select(
-  self : RendererProviderRegistry,
-  surface : SurfaceDescriptor,
-) -> (RendererProvider, BoundSurface)? {
-  for provider in self.providers {
-    match (provider.negotiate)(surface) {
-      SurfaceNegotiationResult::SurfaceAccepted(bound) =>
-        return Some((provider, bound))
-      SurfaceNegotiationResult::SurfaceRejected(_) => ()
-    }
-  }
-  None
 }
 
 ///|
@@ -231,18 +154,10 @@ pub fn SurfaceDescriptor::gpu_surface(
 }
 
 ///|
-/// Convenience: create a registry from an array of providers.
-pub fn RendererProviderRegistry::from_providers(
-  providers : Array[RendererProvider],
-) -> RendererProviderRegistry {
-  { providers: providers.copy() }
-}
-
-///|
 pub fn BoundSurface::new(
   kind~ : RendererPresentationModel,
   route~ : SurfaceRoute,
-  metrics~ : RendererSurfaceMetrics,
+  metrics~ : @core.SurfaceMetrics,
 ) -> BoundSurface {
   { kind, route, metrics }
 }
@@ -258,6 +173,6 @@ pub fn BoundSurface::route(self : BoundSurface) -> SurfaceRoute {
 }
 
 ///|
-pub fn BoundSurface::metrics(self : BoundSurface) -> RendererSurfaceMetrics {
+pub fn BoundSurface::metrics(self : BoundSurface) -> @core.SurfaceMetrics {
   self.metrics
 }

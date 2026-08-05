@@ -3,7 +3,7 @@ test "skia renderer resize updates presented frame metrics" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=3.0, height=2.0),
     ),
     target,
@@ -11,7 +11,7 @@ test "skia renderer resize updates presented frame metrics" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.resize(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=6.0),
       scale_factor=2.0,
     ),
@@ -37,7 +37,7 @@ test "skia renderer reports presenter failure without counting present" {
     false
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -67,7 +67,7 @@ test "skia unmatched scope pops are ignored and counted" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -109,7 +109,7 @@ test "skia mismatched scope pop preserves the active scope" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
     ),
     target,
@@ -158,7 +158,7 @@ test "skia unclosed scopes are counted and restored at frame boundary" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
     ),
     target,
@@ -228,7 +228,7 @@ test "skia unsupported command diagnostics reset per frame" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -295,7 +295,7 @@ test "skia renderer composites masked opacity layer pixels" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=24.0, height=24.0),
     ),
     target,
@@ -347,7 +347,7 @@ test "skia render_frame updates and reuses renderer-local cached layers" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -411,7 +411,7 @@ test "skia render_frame reuses cached layer when only origin changes" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -473,7 +473,7 @@ test "skia render_frame snapshots nested cached layers into parent cache" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=20.0, height=20.0),
     ),
     target,
@@ -543,7 +543,7 @@ test "skia picture producer caches nested layers as pictures without surfaces" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=20.0, height=20.0),
     ),
     target,
@@ -600,7 +600,7 @@ test "skia raster fallback replays cached layers recorded by GPU producer" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -651,7 +651,7 @@ test "skia render_frame cache miss does not present or replace last frame" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -693,7 +693,7 @@ test "skia render_frame cache miss does not present or replace last frame" {
 ///|
 test "skia render_frame resize clears renderer-local cached layers" {
   guard skia_available() else { return () }
-  let metrics = @render.RendererSurfaceMetrics::from_logical(
+  let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=12.0, height=12.0),
   )
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
@@ -735,7 +735,7 @@ test "skia render_frame treats empty cached layer draws as no-op" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -763,7 +763,7 @@ test "skia render_frame evicts cached layers by surface budget" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -799,7 +799,7 @@ test "skia cached layer admission records stay bounded" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -823,7 +823,7 @@ test "skia render_frame skips churny cached layer admission" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -869,7 +869,7 @@ test "skia render_frame keeps hot cached layer admitted across revisions" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,

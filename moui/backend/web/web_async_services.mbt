@@ -41,10 +41,10 @@ priv struct WebTextFileReadEntry {
 }
 
 ///|
-let web_active_async_queue : Ref[@host.HostServiceAsyncQueue?] = Ref(None)
+let web_active_async_queue : Ref[@window_host.ServiceAsyncQueue?] = Ref(None)
 
 ///|
-let web_shared_async_queue : @host.HostServiceAsyncQueue = @host.HostServiceAsyncQueue::new()
+let web_shared_async_queue : @window_host.ServiceAsyncQueue = @window_host.ServiceAsyncQueue::new()
 
 ///|
 let web_text_file_cache : Ref[Array[WebTextFileCacheEntry]] = Ref([])
@@ -156,7 +156,7 @@ fn WebAsyncHostServiceRequest::from_pending(
 
 ///|
 fn drain_web_async_host_service_requests(
-  queue : @host.HostServiceAsyncQueue,
+  queue : @window_host.ServiceAsyncQueue,
 ) -> Array[WebAsyncHostServiceRequest] {
   let requests : Array[WebAsyncHostServiceRequest] = []
   for pending in queue.drain_pending() {
@@ -204,13 +204,13 @@ fn dispatch_web_async_host_service_request(
 
 ///|
 fn set_web_async_host_service_queue(
-  queue : @host.HostServiceAsyncQueue?,
+  queue : @window_host.ServiceAsyncQueue?,
 ) -> Unit {
   web_active_async_queue.val = queue
 }
 
 ///|
-fn web_async_host_service_queue() -> @host.HostServiceAsyncQueue {
+fn web_async_host_service_queue() -> @window_host.ServiceAsyncQueue {
   web_shared_async_queue
 }
 

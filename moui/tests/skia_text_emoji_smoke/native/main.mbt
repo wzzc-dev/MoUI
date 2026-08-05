@@ -501,7 +501,7 @@ fn ime_candidate_anchor_observation_available(
     @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
   )
   let input = runtime.focused_text_input()
-  let diagnostics = @host.text_input_ime_request_diagnostics(input)
+  let diagnostics = @window_host.text_input_ime_request_diagnostics(input)
   println(
     "MoUI Skia text/emoji smoke ime anchor cursor=\{diagnostics.cursor} cursor_utf8=\{diagnostics.cursor_utf8} anchor_utf8=\{diagnostics.anchor_utf8} cursor_grapheme_boundary=\{diagnostics.cursor_is_grapheme_boundary} anchor_grapheme_boundary=\{diagnostics.anchor_is_grapheme_boundary} candidate_x=\{diagnostics.candidate_anchor.origin.x} candidate_y=\{diagnostics.candidate_anchor.origin.y} surrounding_utf8=\{diagnostics.surrounding_text_utf8_length}",
   )
@@ -782,7 +782,7 @@ fn main {
   )
   let renderer_result = try
     @skia_renderer.create_with_present_target(
-      @render.RendererSurfaceMetrics::from_logical(
+      @core.SurfaceMetrics::from_logical(
         size=@core.Size::new(width=176.0, height=188.0),
         scale_factor=1.0,
       ),

@@ -18,7 +18,7 @@ fn api_surface_semantic_categories() -> Array[String] {
 fn api_surface_classification_paths() -> Array[String] {
   [
     "moui/core/pkg.generated.mbti", "moui/views/pkg.generated.mbti", "moui/runtime/pkg.generated.mbti",
-    "moui/backend/host/pkg.generated.mbti", "moui/render/pkg.generated.mbti",
+    "moui/backend/pkg.generated.mbti", "moui/render/pkg.generated.mbti",
   ]
 }
 
@@ -28,12 +28,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/core/pkg.generated.mbti",
       category: "advanced_core_protocol",
-      max_count: 638,
+      max_count: 643,
     },
     {
       path: "moui/core/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 177,
+      max_count: 178,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -96,34 +96,34 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       max_count: 0,
     },
     {
-      path: "moui/backend/host/pkg.generated.mbti",
+      path: "moui/backend/pkg.generated.mbti",
       category: "host_contract",
-      max_count: 454,
+      max_count: 206,
     },
     {
-      path: "moui/backend/host/pkg.generated.mbti",
+      path: "moui/backend/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 64,
+      max_count: 44,
     },
     {
-      path: "moui/backend/host/pkg.generated.mbti",
+      path: "moui/backend/pkg.generated.mbti",
       category: "test_exposure",
       max_count: 0,
     },
     {
-      path: "moui/backend/host/pkg.generated.mbti",
+      path: "moui/backend/pkg.generated.mbti",
       category: "migration_debt",
       max_count: 0,
     },
     {
       path: "moui/render/pkg.generated.mbti",
       category: "renderer_contract",
-      max_count: 346,
+      max_count: 265,
     },
     {
       path: "moui/render/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 51,
+      max_count: 39,
     },
     {
       path: "moui/render/pkg.generated.mbti",
@@ -263,7 +263,7 @@ fn classify_api_surface_line(path : String, line : String) -> String? {
   if path == "moui/runtime/pkg.generated.mbti" {
     return Some("runtime_diagnostic")
   }
-  if path == "moui/backend/host/pkg.generated.mbti" {
+  if path == "moui/backend/pkg.generated.mbti" {
     return Some("host_contract")
   }
   if path == "moui/render/pkg.generated.mbti" {

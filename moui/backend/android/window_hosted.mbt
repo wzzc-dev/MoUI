@@ -5,7 +5,7 @@
 /// thin shell around the shared `HostedWindowBackend`; native window
 /// creation and raw surface access stay here.
 pub struct AndroidEmbeddedRuntimeBackend {
-  backend : @embedded_runtime_backend.HostedWindowBackend
+  backend : @embedded_runtime.HostedWindowBackend
 }
 
 ///|
@@ -43,11 +43,11 @@ pub fn AndroidHostAppOptions::with_status_bar_immersive(
 ///|
 pub fn AndroidEmbeddedRuntimeBackend::new(
   title? : String = "MoUI",
-  runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
-  renderer_factories~ : Array[@render.RendererBindingFactory],
+  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
+  renderer_factories~ : Array[@render.RendererFactory],
   auto_exit_after_frames? : Int? = None,
 ) -> AndroidEmbeddedRuntimeBackend {
-  new_android_embedded_runtime_backend(
+  new_android_embedded_runtime(
     title~,
     runtime_factory~,
     surface_binding_factory=() => android_surface_binding(renderer_factories),
@@ -84,14 +84,14 @@ pub fn entry(
 }
 
 ///|
-fn new_android_embedded_runtime_backend(
+fn new_android_embedded_runtime(
   title~ : String,
-  runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
+  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
   surface_binding_factory~ : () -> AndroidSurfaceBinding,
   auto_exit_after_frames~ : Int?,
 ) -> AndroidEmbeddedRuntimeBackend {
   {
-    backend: @embedded_runtime_backend.HostedWindowBackend::new(
+    backend: @embedded_runtime.HostedWindowBackend::new(
       title~,
       runtime_factory~,
       surface_binding_factory=() => {
@@ -132,10 +132,10 @@ pub fn AndroidEmbeddedRuntimeBackend::has_session(
 
 ///|
 pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend with fn resumed(
-  _self,
+  self,
   _event_loop,
 ) {
-  ()
+  self.backend.resumed()
 }
 
 ///|
@@ -143,32 +143,33 @@ pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend wi
   self,
   event_loop,
 ) {
-  if self.backend.has_window() {
-    return
-  }
-  let attrs = @window_core.WindowAttributes::default().with_title(
-    self.backend.title(),
+  ignore(
+    self.backend.ensure_surface(create=() => {
+      let attrs = @window_core.WindowAttributes::default().with_title(
+        self.backend.title(),
+      )
+      let created : @window_android.Window? = Some(
+        event_loop.try_create_window(attrs),
+      ) catch {
+        _ => None
+      }
+      match created {
+        Some(window) =>
+          Some(
+            (
+              @embedded_runtime.HostedWindow::new(
+                scale_factor=fn() { window.scale_factor() },
+                inner_size=fn() { window.inner_size() },
+                request_redraw=fn() { window.request_redraw() },
+                drop=fn() { window.drop() },
+              ),
+              window.native_window_handle(),
+            ),
+          )
+        None => None
+      }
+    }),
   )
-  let created : @window_android.Window? = Some(
-    event_loop.try_create_window(attrs),
-  ) catch {
-    _ => None
-  }
-  match created {
-    Some(window) => {
-      let hosted = @embedded_runtime_backend.HostedWindow::new(
-        scale_factor=fn() { window.scale_factor() },
-        inner_size=fn() { window.inner_size() },
-        request_redraw=fn() { window.request_redraw() },
-      )
-      self.backend.attach_session(
-        hosted,
-        raw_handle=window.native_window_handle(),
-      )
-      window.request_redraw()
-    }
-    None => ()
-  }
 }
 
 ///|
@@ -176,7 +177,7 @@ pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend wi
   self,
   _event_loop,
 ) {
-  self.backend.detach_session()
+  self.backend.destroy_surfaces()
 }
 
 ///|
@@ -184,10 +185,7 @@ pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend wi
   self,
   _event_loop,
 ) {
-  // Surface may already be destroyed; ensure session is detached.
-  if !self.backend.has_window() {
-    self.backend.detach_session()
-  }
+  self.backend.suspended()
 }
 
 ///|

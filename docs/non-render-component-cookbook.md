@@ -4,7 +4,7 @@ This cookbook collects the app-level patterns that can be built without touching
 `moui/render/*`, adding draw commands, or depending on a concrete renderer.
 The common rule is: keep state in the app model, use `views` constructors for
 composition, use `core` helpers for runtime-neutral contracts, and cross into
-`backend/host` only for services that truly belong to the platform.
+`backend` only for services that truly belong to the platform.
 
 ## Forms
 
@@ -294,7 +294,7 @@ Recommended checks:
 
 ```sh
 moon test moui/services --target native
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test examples/file_importer/app --target native
 moon test examples/showcase/app/platform --target native
 ```
@@ -407,18 +407,18 @@ moon test examples/command_palette/app --target native
 Hosts already apply resize to the surface. Apps that need the logical size in
 the model should obtain `HostWindowEventSource` (usually via
 `HostPlatformEventSources`) from host options and map
-`HostEvent::Resized` into a message.
+`Event::Resized` into a message.
 
 ```moonbit nocheck
 fn window_subscriptions(
-  source : @host.HostWindowEventSource,
+  source : @runtime.HostWindowEventSource,
 ) -> @moui.Subscription[LabMsg] {
   source.subscription(
     key="lab:window",
     label="Lab window events",
     map=window_event =>
       match window_event.event {
-        @host.HostEvent::Resized(metrics) =>
+        @backend.Event::Resized(metrics) =>
           Some(WindowResized(metrics.logical_size.width, metrics.logical_size.height))
         _ => None
       },
@@ -433,7 +433,7 @@ Web uses `WebAppOptions::event_sources`.
 Recommended checks:
 
 ```sh
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test examples/showcase/app/platform --target native
 ```
 
@@ -557,7 +557,7 @@ moon test moui/core --target native
 
 - Put reusable state contracts in `core`.
 - Put renderer-neutral view constructors in `views`.
-- Put platform requests in `backend/host` and active platform backends.
+- Put platform requests in `backend` and active platform backends.
 - Demonstrate user-facing workflows in Showcase or a shared `examples/*/app`
   package.
 - Update `docs/view-catalog.md` when a public constructor or its semantics

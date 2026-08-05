@@ -42,5 +42,7 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0003–0014 | [Core package and API](0003-core-package-and-api.md) | 2026-07-04 | Accepted |
 | 0001–0002 | [Editor and rich text](0001-editor-and-richtext.md) | 2026-06-28 | Accepted |
 | 0023 | [Sun CPU raster is an experimental renderer](0023-sun-experimental-renderer.md) | 2026-08-02 | Accepted |
+| 0024 | [Unified MoUI window-host lifecycle owner](0024-unified-window-host-lifecycle.md) | 2026-08-05 | Accepted |
+| 0025 | [Backend and render package convergence](0025-backend-render-package-convergence.md) | 2026-08-05 | Accepted |
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

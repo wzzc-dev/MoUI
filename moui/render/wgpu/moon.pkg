@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
   "Milky2018/wgpu_mbt",
   "Milky2018/wgpu_mbt/c" @wgpu_c,
   "moonbitlang/x/fs",

@@ -1,0 +1,13 @@
+import {
+  "Milky2018/moon_zeno" @zeno,
+  "mizchi/svg",
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+}
+
+supported_targets = "+native+wasm-gc+wasm"
+
+options(
+  targets: { },
+)

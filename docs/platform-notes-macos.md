@@ -2,7 +2,7 @@
 
 The macOS host core uses `wzzc-dev/window/macos` for AppKit windows, lifecycle,
 events, services, text-input session synchronization, renderer resize calls, and
-redraw requests. It creates a renderer-neutral `HostSurfaceKit` with an
+redraw requests. It creates a renderer-neutral `SurfaceContext` with an
 `NSImageView` CPU presenter, an opaque `CAMetalLayer` GPU descriptor, and a
 `HostImageSource`. The application supplies ordered factories from
 `render/skia`, `render/sun`, or `render/wgpu`; `backend/macos` never imports or
@@ -11,9 +11,9 @@ macOS native WebView support uses `WKWebView` as a host platform view attached
 to the window content view. `backend/macos` reports native WebView available
 when the WebKit-backed stub is linked, syncs placements from
 `DrawFrame.platform_views`, forwards WebView navigation/title/history/script
-events through `HostEvent::WebView`, and drains `HostWebViewCommandQueue`
+events through `Event::WebView`, and drains `HostWebViewCommandQueue`
 commands after frame rendering.
-Window events pass through the shared `backend/host` conversion helpers, and the
+Window events pass through the shared `backend` conversion helpers, and the
 native host never imports `render/wgpu`, `render/skia`, `wgpu_mbt`, or
 `moui_skia`.
 The macOS service bridge routes text clipboard requests through `NSPasteboard`,
@@ -25,11 +25,11 @@ appearance through the shared `HostServiceBridge` contract.
 The native app entrypoint applies that reported appearance to the runtime
 environment before creating the host driver, so components see the system color
 scheme on their initial build. AppKit theme-change events use the shared
-`HostEvent::ThemeChanged` runtime path when emitted by the local window backend.
+`Event::ThemeChanged` runtime path when emitted by the local window backend.
 Right-click context-menu requests use the same `NSMenu` path and dispatch the
 selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/macos` backend are normalized
-through `HostEvent::DragDrop` and dispatched to `View::on_file_drop`
+through `Event::DragDrop` and dispatched to `View::on_file_drop`
 targets.
 Native WGPU diagnostics can use either the shared Moon Cosmic provider or a platform
 provider. `render/wgpu` defaults to the CoreText/CoreGraphics provider
@@ -44,7 +44,7 @@ CoreText accepts them, and falls back to the system font for unavailable names
 before the renderer tries the composed Cosmic fallback.
 Choose the text engine with `@wgpu_renderer.native(text_engine=...)`, then
 compose it with `@macos_host.entry(options=...)`. Host options can carry a
-`HostWindowSceneResolver`; renderer options stay captured by the factory.
+`WindowSceneResolver`; renderer options stay captured by the factory.
 `core` still owns only the neutral `FontSpec`, `TextSystem`
 contract, and deterministic fallback text system; it does not name concrete
 macOS font files.
@@ -77,7 +77,7 @@ invocation.
 The macOS host loop records the renderer image-resource revision after each
 present, routes later observed revision changes through the matching window's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
-calls the selected factory's neutral `HostAsyncImageLoader` after the presented
+calls the selected factory's neutral `AsyncImageLoader` after the presented
 revision is baselined, and removes tracked image revisions plus in-flight image
 loads when a host window is disposed. `backend/macos` reads local files as raw
 bytes through `HostImageSource`; the selected renderer's `RendererImageDecoder`

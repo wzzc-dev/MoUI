@@ -36,10 +36,10 @@ The package boundaries follow that pipeline:
   event dispatch, program message drain, effect-task lifecycle, subscription
   lifecycle, and runtime diagnostics.
 - `views/` exposes public facade constructors that return `@moui.View[Msg]`.
-- `backend/host/` defines shared host contracts.
+- `backend/` defines shared host contracts.
 - `backend/web/` is the browser wasm-gc host.
 - `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
-  cores that normalize platform events into `HostEvent` and expose neutral
+  cores that normalize platform events into `Event` and expose neutral
   host surfaces.
 - `render/skia` owns the native Skia mainline factories; `render/wgpu` remains
   available for explicit native WGPU diagnostics. Applications compose either
@@ -190,7 +190,7 @@ MoUI treats platform backends as adapters around a shared host contract.
 
 Focus areas:
 
-- Keep `backend/host/` as the source of truth for `HostEvent`, surface, input,
+- Keep `backend/` as the source of truth for `Event`, surface, input,
   text input, file drag/drop, window event, metrics, and redraw contracts.
 - Keep Web on the single `wasm-gc + window/web + browser WebGPU host imports`
   path.
@@ -205,13 +205,13 @@ Focus areas:
   evidence and font-provider coverage (fonts-noto-core, fonts-dejavu-core).
 - Use `HostServiceBridge` as the typed host-service boundary for clipboard,
   menus, file dialogs, URL opening, and system-theme queries.
-- Use `HostServiceAsyncQueue` for browser or platform services that require
+- Use `ServiceAsyncQueue` for browser or platform services that require
   permission prompts, picker callbacks, or other async completion before the
   runtime can safely apply the result.
 - Keep Web clipboard behavior honest: copy/cut write selected text through a
   browser host import, focused browser text input can still paste through input
   events, and app-level clipboard reads/file dialogs flow through
-  `HostServiceAsyncQueue` into browser permission or picker callbacks. The app
+  `ServiceAsyncQueue` into browser permission or picker callbacks. The app
   sees only `ServiceTaskResult` messages; request ids and completion queues stay
   behind the host adapter.
 - Keep URL opening honest across active hosts: macOS uses `NSWorkspace`, Windows
@@ -224,34 +224,34 @@ Focus areas:
   Windows startup now installs the queried light/dark scheme into runtime
   environment before the first layout/redraw pass. Web startup uses the browser
   `prefers-color-scheme` query, and Web/macOS/Windows theme-change window events
-  flow through `HostEvent::ThemeChanged`.
-- Keep window lifecycle state flowing through `HostWindowRegistry`; active
+  flow through `Event::ThemeChanged`.
+- Keep window lifecycle state flowing through `WindowRegistry`; active
   entrypoints allocate primary window records, register the current
   runtime/driver as primary runtime slots, bind platform window ids to host ids,
   route incoming platform window events through that map, and sync those slots
   from the shared lifecycle path. Options-bearing runners drain
-  `HostWindowRequestQueue` for focus, close, resize, minimize, show, and
+  `WindowRequestQueue` for focus, close, resize, minimize, show, and
   set-primary requests. Drained request completions are recorded back onto the
   queue through a shared host helper so request outcomes stay observable.
   `OpenWindow` requests carry a platform-neutral scene id and payload.
-  `HostWindowSceneResolver` is the shared scene-to-`AppRuntime` contract for
-  that resolution step, and `HostWindowRegistry::resolve_open_request` pairs
-  successful resolutions with window records. `HostWindowRuntimeSlot` wraps
+  `WindowSceneResolver` is the shared scene-to-`AppRuntime` contract for
+  that resolution step, and `@backend_common.resolve_open_request` pairs
+  successful resolutions with window records. `WindowRuntimeSlot` wraps
   those records with per-window `HostRuntimeDriver` instances, while
-  `HostWindowRuntimeSlots` manages lookup, focused/primary slot selection, and
+  `WindowRuntimeSlots` manages lookup, focused/primary slot selection, and
   registry-backed insert/sync/request/lifecycle helpers plus closed-slot
   cleanup. Web creates another browser canvas and `WebRenderer`; native hosts
   create another platform window and ask their renderer provider for a
-  renderer-neutral `HostWindowRenderer`, then attach platform-window bindings,
+  renderer-neutral `WindowRenderer`, then attach platform-window bindings,
   platform slots, and per-window drivers before routing redraw/event/
-  context-menu/IME/dispose paths through `HostWindowId`.
+  context-menu/IME/dispose paths through `WindowId`.
 - Keep Linux readiness explicit through its backend readiness report until
   matching-host runtime evidence and native font provider support are available.
 
 Validation:
 
 ```sh
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test moui/backend/web --target wasm-gc
 sh scripts/check.sh --profile platform
 ```

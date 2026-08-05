@@ -2,7 +2,7 @@
 
 ## Window Package Dependency
 
-MoUI resolves the modified window host as `wzzc-dev/window@0.5.4-0.1.4` from
+MoUI resolves the modified window host as `wzzc-dev/window@0.5.4-0.1.5` from
 the MoonBit registry. A repo-local window checkout is no longer part of normal
 development. The fork package currently supplies target support that the
 upstream package does not yet cover for MoUI.
@@ -12,26 +12,26 @@ binding used by the native Skia raster mainline renderer.
 ## Shared Host Contract
 
 Platform backends normalize window, input, surface, focus, text input, redraw,
-and close events through `backend/host`. App code receives the same core event
+and close events through `backend`. App code receives the same core event
 model across Web, macOS, Windows, and the current Linux Wayland scaffold.
-`HostWindowRegistry` also provides shared bookkeeping for window ids, primary
+`WindowRegistry` also provides shared bookkeeping for window ids, primary
 windows, focused windows, close requests, closed-window cleanup, and per-window
 surface metrics so future multi-window platform hosts do not duplicate lifecycle
-state machines. `HostWindowRequestQueue` is the matching platform-neutral
+state machines. `WindowRequestQueue` is the matching platform-neutral
 request channel for opening, focusing, closing, resizing, minimizing, showing,
 and changing the primary window. `OpenWindow` requests include a scene id and
 payload in addition to title, metrics, and primary-window intent, giving future
 multi-window hosts a stable app-level key for selecting content/runtime when a
-new platform window is created. `HostWindowSceneResolver` resolves those
+new platform window is created. `WindowSceneResolver` resolves those
 requests into new `AppRuntime` instances or explicit scene rejections without
-embedding platform policy in app code. `HostWindowRegistry::resolve_open_request`
+embedding platform policy in app code. `@backend_common.resolve_open_request`
 then binds a resolved runtime to the registry record that owns the new window
-id, and `HostWindowRuntimeSlot` wraps the record with its `HostRuntimeDriver`.
-`HostWindowRuntimeSlots` stores those per-window drivers, supports lookup and
+id, and `WindowRuntimeSlot` wraps the record with its `HostRuntimeDriver`.
+`WindowRuntimeSlots` stores those per-window drivers, supports lookup and
 primary/focused slot selection, syncs updated lifecycle records from the
 registry, provides shared insert/sync/request/lifecycle-event helpers for
-active backends, and removes closed slots. `HostPlatformWindowMap` binds
-platform `WindowId` values to `HostWindowId` values, giving multi-window
+active backends, and removes closed slots. `PlatformWindowMap` binds
+platform `WindowId` values to `WindowId` values, giving multi-window
 dispatch a shared routing primitive before backends attach multiple
 renderer/window handle sets.
 Active platform entrypoints accept a shared queue through their options-bearing
@@ -47,11 +47,11 @@ Web creates the primary window through the same registry/slot path and supports
 resolver-backed `OpenWindow` requests through `WebAppOptions` captured by
 `@web.entry`. Native host cores create platform windows through the same path
 but do not choose concrete renderer families. Application entrypoints supply
-ordered `RendererBindingFactory` values and one platform `PlatformEntry` to
-`@runtime.run_app`. A resolved native window creates a neutral `HostSurfaceKit`,
-resolves a `HostWindowRenderer`, then registers a `HostRuntimeDriver`,
+ordered `RendererFactory` values and one platform `PlatformEntry` to
+`@runtime.run_app`. A resolved native window creates a neutral `SurfaceContext`,
+resolves a `WindowRenderer`, then registers a `HostRuntimeDriver`,
 platform binding, and platform slot, and routes redraw, events, context menus,
-host service completions, IME sync, and disposal by `HostWindowId`. Without a
+host service completions, IME sync, and disposal by `WindowId`. Without a
 scene resolver, hosts reject `OpenWindow` with the shared unavailable-resolver
 response.
 
@@ -61,7 +61,15 @@ options. Use `render/skia.from_env()` for the native Skia mainline and
 Android, iOS, and HarmonyOS use `wzzc-dev/window` as the embedded runtime
 backend's embedder. The template sends `HostCmd` through its `EventLoop` to the
 matching `*EmbeddedRuntimeBackend`, which assembles the MoUI runtime session and
-attaches the `HostWindowRenderer` resolved from application-supplied factories.
+attaches the `WindowRenderer` resolved from application-supplied factories.
+`wzzc-dev/window/internal/embedded_dispatch` is stateless physical callback
+dispatch for all three packages; platform `HostCmd` adapters retain only
+native payload decoding and nominal `ApplicationHandler`/`Window` effects.
+`EmbeddedWindowCoordinator` in `moui/backend/common` owns logical
+phase, surface generation, primary window, detach, and application exit.
+`HostedWindowBackend` and `FrameCoordinator` own the shared MoUI session,
+renderer kit, surface recreation, redraw, completion, image repaint, and IME
+hooks.
 Lifecycle, surface, and input must not bypass this route. HarmonyOS
 XComponent callbacks are the sole source for surface, pointer, resize, and
 detach. Fallback builds are build-system evidence only; matching-device or
@@ -74,7 +82,7 @@ when the required host and toolchain are available.
 The boundary is:
 
 ```text
-platform window event -> HostEvent -> AppRuntime -> DrawCommand -> renderer
+platform window event -> Event -> AppRuntime -> DrawCommand -> renderer
 ```
 
 Backends should keep platform details at the edge:
@@ -97,7 +105,7 @@ constructors and platform event conversion.
   updating the view `url` or sending `WebViewCommand::LoadUrl` through the host
   command queue.
 - The Sun factory forwards offscreen platform-view pixels through the neutral
-  `HostWindowRenderer` capability. This is renderer composition wiring;
+  `WindowRenderer` capability. This is renderer composition wiring;
   matching-host runtime smoke is still required before making a broader
   platform runtime readiness claim.
 - Typed host services are routed through `HostServiceBridge`, with explicit
@@ -121,7 +129,7 @@ constructors and platform event conversion.
   `HostCapabilitySummary::preflight_fields()` provides a renderer-neutral
   ready/gap field string for diagnostics without importing concrete renderer
   policy into host cores.
-- Permission- or callback-driven host services can use `HostServiceAsyncQueue`
+- Permission- or callback-driven host services can use `ServiceAsyncQueue`
   and return `HostServiceResponse::Pending` instead of blocking the runtime.
   Hosts drain pending requests into in-flight platform work, complete them with
   the original request, and record completions. Runtime-owned responses such as
@@ -131,7 +139,7 @@ constructors and platform event conversion.
 - Host service bridges can apply a reported light/dark system theme to a runtime
   `Environment`. Web, macOS, and Windows do this once at startup before the
   first layout/redraw pass. Runtime `ThemeChanged` window events are normalized
-  to `HostEvent::ThemeChanged` and update the environment through
+  to `Event::ThemeChanged` and update the environment through
   `HostRuntimeDriver`.
 - Web, macOS, and Windows route copy/cut/paste keyboard shortcuts through the
   active service bridge. When that bridge exposes clipboard support, focused
@@ -177,7 +185,7 @@ Product-class summary: [platform readiness declaration](platform-readiness-decla
 Use focused platform validation instead of broad all-repository native checks:
 
 ```sh
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test moui/backend/web --target wasm-gc
 sh scripts/check.sh --profile platform
 ```

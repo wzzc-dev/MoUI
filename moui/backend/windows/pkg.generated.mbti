@@ -3,7 +3,7 @@ package "wzzc-dev/moui/backend/windows"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
 }
@@ -17,13 +17,13 @@ pub fn windows_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAcces
 
 pub fn windows_accessibility_bridge_info() -> WindowsAccessibilityBridgeInfo
 
-pub fn windows_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
+pub fn windows_capability_summary(services? : @backend.HostServiceCapabilities) -> @backend.HostCapabilitySummary
 
-pub fn windows_host_info() -> @host.HostAppInfo
+pub fn windows_host_info() -> @backend.HostAppInfo
 
-pub fn windows_input_capabilities() -> @host.HostInputCapabilities
+pub fn windows_input_capabilities() -> @backend.HostInputCapabilities
 
-pub fn windows_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
+pub fn windows_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int, list_directory? : (String) -> @backend.HostServiceResponse) -> @backend.HostServiceBridge
 
 pub fn windows_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
@@ -35,7 +35,7 @@ pub fn windows_timer_source() -> @services.TimerSource
 pub(all) struct WindowsAccessibilityBridgeInfo {
   kind : @runtime.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool
-  native_platform_bridge_available : Bool
+  native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -43,7 +43,7 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 pub struct WindowsHostAppOptions {
   // private fields
 }
-pub fn WindowsHostAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
+pub fn WindowsHostAppOptions::new(scene_resolver? : @runtime.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin]) -> Self
 
 pub struct WindowsHostSmokeOptions {
   // private fields

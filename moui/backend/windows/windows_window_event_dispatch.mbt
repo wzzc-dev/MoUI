@@ -1,5 +1,5 @@
 ///|
-/// Routes neutral lifecycle events through Platform Bridge before retaining the
+/// Routes neutral lifecycle events through backend/common before retaining the
 /// Windows-local raw input decoder below that boundary.
 pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_event(
   self,
@@ -11,8 +11,7 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_eve
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match
-    self.coordinator.platform_windows.lookup_host(platform_window_id) {
+  let window_id = match self.coordinator.lookup_window(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }
@@ -20,78 +19,68 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_eve
     Some(slot) => Some(slot.window.surface_size())
     None => None
   }
+  let scale_factor = match self.platform_slots.lookup_host(window_id) {
+    Some(slot) => slot.window.scale_factor()
+    None => 1.0
+  }
   match
-    @platform_bridge.transform_cross_platform_event(
+    @window_host.transform_cross_platform_event(
       event,
-      scale_factor=1.0,
+      scale_factor~,
       surface_size~,
     ) {
-    @platform_bridge.TransformedWindowEvent::CloseRequested => {
-      self.dispatch_host_event(window_id, @host.HostEvent::CloseRequested)
+    @window_host.TransformedWindowEvent::CloseRequested => {
+      self.dispatch_host_event(window_id, @host.Event::CloseRequested)
       self.dispose_window(window_id)
       if self.coordinator.runtime_slots_empty() {
         event_loop.exit()
       }
       return ()
     }
-    @platform_bridge.TransformedWindowEvent::DispatchHostEvent(host_event) => {
-      match self.coordinator.surface_actions(window_id) {
-        Some(actions) =>
-          match host_event {
-            @host.HostEvent::Resized(metrics) => {
-              (actions.sync_surface)(metrics)
-              (actions.renderer_resize)(
-                @render.RendererSurfaceMetrics::new(
-                  logical_size=metrics.logical_size,
-                  physical_size=metrics.physical_size,
-                  scale_factor=metrics.scale_factor,
-                ),
-              )
-              (actions.request_redraw)()
-            }
-            _ => ()
-          }
-        None => ()
+    @window_host.TransformedWindowEvent::DispatchHostEvent(host_event) => {
+      match host_event {
+        @host.Event::Resized(metrics) =>
+          ignore(self.coordinator.sync_observed_resize(window_id, metrics))
+        _ => self.dispatch_host_event(window_id, host_event)
       }
-      self.dispatch_host_event(window_id, host_event)
       return ()
     }
-    @platform_bridge.TransformedWindowEvent::WindowRedrawRequired => {
+    @window_host.TransformedWindowEvent::WindowRedrawRequired => {
       if self.redraw_window(window_id) {
         event_loop.exit()
       }
       return ()
     }
-    @platform_bridge.TransformedWindowEvent::PlatformSpecific => ()
+    @window_host.TransformedWindowEvent::PlatformSpecific => ()
   }
   match event {
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = @platform_bridge.normalize_pointer_position(
+      self.last_pointer = @window_host.normalize_pointer_position(
         position,
-        scale_factor=1.0,
+        scale_factor~,
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @platform_bridge.normalize_pointer_position(
+      self.last_pointer = @window_host.normalize_pointer_position(
         position,
-        scale_factor=1.0,
+        scale_factor~,
       )
       self.dispatch_pointer_or_context_menu(window_id, event)
     }
     @window_core.WindowEvent::DragEntered(_, position)
     | @window_core.WindowEvent::DragMoved(position)
     | @window_core.WindowEvent::DragDropped(_, position) => {
-      self.last_pointer = @platform_bridge.normalize_pointer_position(
+      self.last_pointer = @window_host.normalize_pointer_position(
         position,
-        scale_factor=1.0,
+        scale_factor~,
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::DragLeft(Some(position)) => {
-      self.last_pointer = @platform_bridge.normalize_pointer_position(
+      self.last_pointer = @window_host.normalize_pointer_position(
         position,
-        scale_factor=1.0,
+        scale_factor~,
       )
       self.dispatch_window_event(window_id, event)
     }

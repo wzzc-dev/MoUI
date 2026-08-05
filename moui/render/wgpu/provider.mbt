@@ -7,7 +7,7 @@
 /// wired. The platform entrypoint captures its own surface creation in
 /// the closure, so the provider stays platform-agnostic.
 pub fn create_wgpu_provider(
-  create_wgpu~ : (@render.RendererSurfaceMetrics) -> WgpuRenderer,
+  create_wgpu~ : (@core.SurfaceMetrics) -> WgpuRenderer,
 ) -> @render.RendererProvider {
   let caps = wgpu_provider_capabilities(
     provider_id="wgpu",
@@ -27,7 +27,7 @@ pub fn wgpu_provider_capabilities(
   provider_id~ : String,
   backend~ : @render.RendererBackendKind,
 ) -> Array[@render.RendererBackendFeatureCapability] {
-  @render.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
+  @render_common.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
     let status = match feature {
       // Kept in line with the capability report's evidence gate: gradient and
       // transform support exists in the native WGPU visual pipeline, but the
@@ -47,18 +47,18 @@ pub fn wgpu_provider_capabilities(
 fn wgpu_negotiate_surface(
   surface : @render.SurfaceDescriptor,
 ) -> @render.SurfaceNegotiationResult {
-  @render.negotiate_gpu_surface(surface, label="WGPU", id="wgpu", route_for=_handle => {
+  @render_common.negotiate_gpu_surface(surface, label="WGPU", id="wgpu", route_for=_handle => {
     @render.SurfaceRoute::RasterSurfaceRoute
   })
 }
 
 ///|
 fn wgpu_create_instance(
-  metrics : @render.RendererSurfaceMetrics,
-  create_wgpu~ : (@render.RendererSurfaceMetrics) -> WgpuRenderer,
+  metrics : @core.SurfaceMetrics,
+  create_wgpu~ : (@core.SurfaceMetrics) -> WgpuRenderer,
 ) -> @render.RendererInstance {
   let renderer = create_wgpu(metrics)
-  @render.new_provider_instance(
+  @render_common.new_provider_instance(
     render_frame=frame => {
       renderer.render(frame.commands)
       @render.RenderFrameResult::new(presented=true)

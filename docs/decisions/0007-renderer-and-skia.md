@@ -316,7 +316,7 @@ damage rects addressed the wrong physical area.
    commands, without a leading `Clear`.
 2. Legacy command-only renderer adapters materialize
    `DrawCommand::Clear(frame.clear_color)` when lowering a frame. This applies
-   to `HostWindowRenderer` fallback rendering, browser WebGPU host calls, and
+   to `WindowRenderer` fallback rendering, browser WebGPU host calls, and
    Linux client-side decoration composition.
 3. Skia resolves rect damage to one conservative union rect, applies logical
    canvas scaling, clips the canvas to that rect, clears it, and executes the
@@ -468,7 +468,7 @@ Replace the closed matrix with a composable provider architecture.
 
 4. **Open extension property.** Adding a renderer = add a provider package
    that implements `RendererProvider` + register it in the chosen composition
-   root. It must not require edits to `moui/core`, `moui/backend/host`,
+   root. It must not require edits to `moui/core`, `moui/backend`,
    `moui/runtime` central switches, the `RendererProvider` contract itself,
    or any existing renderer's implementation. Compile-time composition is
    acceptable given MoonBit's link model, but the composition root's
@@ -525,7 +525,7 @@ branch on renderer identity, so ADR 0018's host-import baseline holds.
   to core/host/runtime/existing renderers.
 - Invariant P6/R1/R2 preserved; new validator
   `scripts/validate-renderer-provider-open-extension.mjs` enforces that
-  `moui/core`, `moui/backend/host`, and `moui/runtime` (non-composition-root)
+  `moui/core`, `moui/backend`, and `moui/runtime` (non-composition-root)
   do not branch on renderer identity.
 
 ### Implementation Progress (Phase E, 2026-07-29)
@@ -533,7 +533,7 @@ branch on renderer identity, so ADR 0018's host-import baseline holds.
 Provider implementation is now owned by Phase E of the
 [architecture-convergence plan](../plans/done/moui-architecture-convergence.md).
 `moui/render` exposes add-only provider bindings that pair a provider with a
-`HostWindowRenderer` factory. Each platform composition root registers its
+`WindowRenderer` factory. Each platform composition root registers its
 ordered bindings and negotiates the concrete surface; no central runtime
 selector participates in assembly.
 
@@ -621,7 +621,7 @@ now described. `pending` was rejected because WGPU has real runnable smoke, so
   - Phase E — `docs/plans/done/moui-architecture-convergence.md:94-125`（E1–E8，2026-07-29 声明 complete）
   - `docs/plans/active/renderer-backend-decoupling.md`（本补充条款承载的落地方案，Plan D）
   - `docs/plans/active/validation-hygiene-cleanup.md`（Phase 2/4/5，校验器挂靠与排序约束来源）
-  - 不变量 P5 / P6 / P9 / P11 / P12；产品约束 R1 / R2 / R3 / R7
+  - 不变量 P5 / P6 / P9 / P10 / P11；产品约束 R1 / R2 / R3 / R7
 
 > 本文不是新架构范式的提案。ADR 0019 的 provider 抽象本身正确且已落地；本补充条款只补齐 Phase E 声称完成、但门禁复盘显示**未真正达到验收**的遗留缺口，并记录其收敛方案 Plan D（详见 `docs/plans/active/renderer-backend-decoupling.md`）。不新增 ADR 编号、不引入新 provider ID。
 
@@ -633,9 +633,9 @@ ADR 0019（2026-07-28）用可组合的 provider 架构替换了「中央矩阵�
 
 1. **E6 未被执行（D1）**：E6（`moui-architecture-convergence.md:105-107`）要求「platform composition roots register compile-time provider bindings；selection = negotiation, not central switch」。但 13 个绑定包中有 6 个（`macos/sun`、`macos/wgpu`、`linux/sun`、`linux/wgpu`、`windows/sun`、`windows/wgpu`）从未调用 `select_renderer_provider_binding`，直接把裸闭包塞进平台私有的 `<Platform>RendererProvider` 注入点。ADR 0019 的协商流程在实践中是可选的——抽象没有强制力。
 
-2. **E8 达成了它的设计目标，但该目标本身不覆盖 D1**：E8（`moui-architecture-convergence.md:111`）要求把 `validate-renderer-provider-open-extension.mjs` 切到 enforce，这一点已做到；其 `restrictedDirs = ["moui/core","moui/backend/host","moui/runtime"]`（`:99-101`）精确等于 ADR 0019 §Consequences（`:526-529`）指定的射程——守的是「core/host/runtime 不得分支渲染器身份」，且守住了。真正的缺口是：没有任何校验器检查绑定包是否走 `select_renderer_provider_binding`。D1 这条不变量**从未有过执行器**——不是门禁失效，是从来没建过这道门禁。附带两处配置事实（均非门禁失效）：
+2. **E8 达成了它的设计目标，但该目标本身不覆盖 D1**：E8（`moui-architecture-convergence.md:111`）要求把 `validate-renderer-provider-open-extension.mjs` 切到 enforce，这一点已做到；其 `restrictedDirs = ["moui/core","moui/backend","moui/runtime"]`（`:99-101`）精确等于 ADR 0019 §Consequences（`:526-529`）指定的射程——守的是「core/host/runtime 不得分支渲染器身份」，且守住了。真正的缺口是：没有任何校验器检查绑定包是否走 `select_renderer_provider_binding`。D1 这条不变量**从未有过执行器**——不是门禁失效，是从来没建过这道门禁。附带两处配置事实（均非门禁失效）：
    - (a) **PREFIXES 是死配置**：`SELECTION_ALLOWLIST_PREFIXES`（`:65-83`）的 12 条绑定包前缀（`moui/backend/*/skia`、`moui/render` 等）全部落在 `restrictedDirs` 之外，永不可能被命中；末条 `"moui/render"` 是 catch-all，会吞掉前面所有 `moui/render/*` 条目，前面那些本身就是冗余。这部分随本方案顺手清理，不影响门禁有效性。
-   - (b) **EXACT 是有效豁免，且是 M5 的验收抓手**：`SELECTION_ALLOWLIST_EXACT`（`:85-88`）含 `moui/backend/host/host_rendering_test.mbt`，说明校验器作者**明知** host 层有文件在直接消费 `NativeGpuPlatform`，于是主动登记例外——这不是疏忽。实测该文件 `:119-159` 共 6 处使用 `@render.NativeGpuPlatform::` / `@render.NativeRendererMode::`，其豁免随 M5 下沉后缩短（见 Plan D §3.5.2 M5 完成信号）。
+   - (b) **EXACT 是有效豁免，且是 M5 的验收抓手**：`SELECTION_ALLOWLIST_EXACT`（`:85-88`）含 `moui/backend/host_rendering_test.mbt`，说明校验器作者**明知** host 层有文件在直接消费 `NativeGpuPlatform`，于是主动登记例外——这不是疏忽。实测该文件 `:119-159` 共 6 处使用 `@render.NativeGpuPlatform::` / `@render.NativeRendererMode::`，其豁免随 M5 下沉后缩短（见 Plan D §3.5.2 M5 完成信号）。
 
 3. **D3 已恶化为功能缺陷（19 处字段漂移）**：9 条桌面绑定线里 7 条在透传 `AppOptions` 时丢字段，合计 19 处能力丢失（矩阵见 Plan D §1.3.1）。其中 wgpu 三线全丢 `platform_view_plugins`，使平台视图插件（WebView/原生地图）整类功能不可用；`linux/skia` 也受损，证明无任何渲染器线是系统性正确的；漂移是单向增长的（`on_ready`/`min_window_size` 仅 macos 基座拥有）。这把 D3 的定性从「样板债」升级为「已交付的功能缺陷」。
 
@@ -657,7 +657,7 @@ ADR 0019（2026-07-28）用可组合的 provider 架构替换了「中央矩阵�
    - **M1** `HostRendererAdapter[W]`（泛型注入点，替换 4 份 `<Platform>RendererProvider` 复制）——直接依据仓库内已验证的 `WindowSlotMap[W,X]` 泛型模式。
    - **M2** `RendererProviderBinding::from_provider`（通用 host binding 派生，替换 skia 专有 `create_*_host_binding`，让 sun/wgpu/canvas2d/webgpu 零改动获得协商能力——归队 ADR 0019 的前提）。
    - **M3** options 整体透传（删除 `<Platform><Renderer>AppOptions` 逐字段镜像，从根上消除 19 处字段丢失；入口侧实测 0 个包必须改）。
-   - **M4** `HostSurfaceMetrics::normalized()` + 平台基座一次性 metrics 转换（删除 12 份 `renderer_metrics_from_host`）。
+   - **M4** `SurfaceMetrics::normalized()` + 平台基座一次性 metrics 转换（删除 12 份 `renderer_metrics_from_host`）。
    - **M5** `--renderer` / `MOUI_SKIA_RENDERER` 收敛到 `moui/render/skia`（native-only，零新增依赖）；并按 Plan D §3.5.1 把 `native_gpu_selection.mbt` 按职责一分为二（契约载荷留 `moui/render`，策略矩阵下沉 skia）。
 
 3. **web / wechat 违例修复纳入方案**（Plan D §4）：wechat 基座中性化渲染器类型（成本极低，优先）；web 拆出 `backend/web/webgpu` 绑定包，与 `backend/wechat/canvas` 对称。
@@ -670,7 +670,7 @@ ADR 0019（2026-07-28）用可组合的 provider 架构替换了「中央矩阵�
    - **与 `validate_renderer_capability_consistency`（Phase 4）正交不合并**：前者校验 options 透传完整性（D3 维度），后者校验「代码自报 vs renderer-capability-report 能力一致性」；输入与失败模式不同，合并会模糊责任边界。
    - 接入 `checks/profiles.json` 的 `pr` profile 须待 `validation-hygiene-cleanup` Phase 2 完成同一文件后再追加。
 
-6. **M5 完成信号（E8 EXACT 豁免缩短 = 不变量棘轮 shrink-or-stay 实证）**：`NativeGpuPlatform` / `NativeRendererMode` 下沉 skia 族后，`SELECTION_ALLOWLIST_EXACT`（`validate-renderer-provider-open-extension.mjs:85-88`）中 `"moui/backend/host/host_rendering_test.mbt"` 一行可被删除且 `validate-renderer-provider-open-extension.mjs` 仍通过。豁免名单缩短 = 不变量棘轮 shrink-or-stay 的实证，正好接上 Plan D 的 P11「provider 预算只减不增」口径。
+6. **M5 完成信号（E8 EXACT 豁免缩短 = 不变量棘轮 shrink-or-stay 实证）**：`NativeGpuPlatform` / `NativeRendererMode` 下沉 skia 族后，`SELECTION_ALLOWLIST_EXACT`（`validate-renderer-provider-open-extension.mjs:85-88`）中 `"moui/backend/host_rendering_test.mbt"` 一行可被删除且 `validate-renderer-provider-open-extension.mjs` 仍通过。豁免名单缩短 = 不变量棘轮 shrink-or-stay 的实证，正好接上 Plan D 的 P11「provider 预算只减不增」口径。
 
 7. **排序约束落地**：Plan D 的 Phase 1 不得先于 `validation-hygiene-cleanup` Phase 2；迁移各阶段验证块挂 `validate-options-field-drift.mjs`，阶段收益汇总以「剩余丢失字段数」单调列 19 → 18 → 18 → 16 → 0 贯穿，作为贯穿各阶段的机器验收门槛。
 
@@ -690,11 +690,10 @@ ADR 0019（2026-07-28）用可组合的 provider 架构替换了「中央矩阵�
 - **一处校验器放宽已撤销**：原 M5 草稿曾提议把 R3 校验器 `has_env` 放宽为「含 `desktop_surface_route` 调用」，但 B5 边界约束表明 `MOUI_SKIA_RENDERER` 读取点须留在各平台 skia provider（R3 `has_env` 硬依赖），故 R3 校验器**不放宽**；provider 调用 `resolve_surface_route` 满足 `has_parse` 的 OR 分支，R3 自然通过。
 - **R-2 认知风险长期存在**：任何「减少绑定包数量」的后续提议都会撞上 MoonBit 链接期约束（Plan D §5.1），已记录为长期约束。
 - **R-4**：Phase 2/5 让 sun/wgpu 首次真正出现在能力上报时，须用 `validate-renderer-provider-manifests.mjs` 实测确认 manifest 不报增长（其 ID 在 `render/sun/provider.mbt:18`、`render/wgpu/provider.mbt:17` 已声明，属「已声明未启用」非新增）。
-- **本补充条款不解决**：`run_*` 入口数量精简、`typealias` 可用性验证、embedded runtime `W=UInt64` 类型收紧、P12 基线下调幅度——列为 Plan D §7.2 未决项，待拍板。
+- **本补充条款不解决**：`run_*` 入口数量精简、`typealias` 可用性验证、embedded runtime `W=UInt64` 类型收紧、Platform Bridge 行为收敛——列为 Plan D §7.2 未决项，待拍板。
 
 ### 验收判据（gate）
 
 - 漂移归零：`validate-options-field-drift.mjs` 输出从 19 单调降至 0。
 - E7 Gate（Phase 5 落地后）：throwaway renderer 仅加 1 包 + 1 行注册挂上，core/host/runtime/既有渲染器零改动。
 - E8 EXACT 豁免缩短：M5 完成后 `SELECTION_ALLOWLIST_EXACT` 删除 `host_rendering_test.mbt` 一行仍通过。
-

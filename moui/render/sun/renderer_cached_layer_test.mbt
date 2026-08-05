@@ -6,7 +6,7 @@ test "sun renderer DrawCachedLayer respects surrounding opacity" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -51,7 +51,7 @@ test "sun renderer DrawCachedLayer respects surrounding opacity" {
 test "sun renderer cached layer restores filter blur stack after open child scope" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
     ),
     target,
@@ -93,7 +93,7 @@ test "sun renderer cached layer refreshes when physical size changes" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=6.0, height=6.0),
     ),
     target,
@@ -147,7 +147,7 @@ test "sun renderer cached layer reuses same-size moved frame" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -195,7 +195,7 @@ test "sun renderer cached layer reuses same-size moved frame" {
 test "sun renderer repeated same-key refresh records churn without retaining latest cache entry" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -243,7 +243,7 @@ test "sun renderer repeated same-key refresh records churn without retaining lat
 test "sun renderer skips churny cached layer admission" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -294,7 +294,7 @@ test "sun renderer skips churny cached layer admission" {
 test "sun renderer keeps hot cached layer admitted across revisions" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -360,7 +360,7 @@ test "sun renderer keeps hot cached layer admitted across revisions" {
 
 ///|
 test "sun renderer resize clears cached layers" {
-  let metrics = @render.RendererSurfaceMetrics::from_logical(
+  let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=8.0, height=8.0),
   )
   let target = SunPresentTarget::new(description="test", present=_ => true)
@@ -395,7 +395,7 @@ test "sun renderer resize clears cached layers" {
 test "sun renderer render_frame reports cached layer update and hit" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -442,7 +442,7 @@ test "sun renderer render_frame reports cached layer update and hit" {
 test "sun renderer cached layer diagnostic summary reports live entries and counters" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -496,7 +496,7 @@ test "sun renderer cached layer diagnostic summary reports live entries and coun
 test "sun cached layer diagnostic reports update evict and churn records" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -551,7 +551,7 @@ test "sun cached layer diagnostic reports update evict and churn records" {
 test "sun cached layer diagnostic accumulates FIFO evictions" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -591,7 +591,7 @@ test "sun cached layer diagnostic accumulates FIFO evictions" {
 test "sun renderer render_frame reports missing cached layer without presenting" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -645,7 +645,7 @@ test "sun renderer render_frame reports missing cached layer without presenting"
 test "sun renderer render_frame treats empty cached layer draws as no-op" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,

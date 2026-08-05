@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/core/json",
+  "wzzc-dev/moui/backend" @host,
+  "wzzc-dev/moui/backend/common" @window_host,
+}
+
+supported_targets = "native"

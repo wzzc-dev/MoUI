@@ -24,25 +24,32 @@ wzzc-dev/moui + geometry/graphics/animation/text/state + views + services
 moui/core                      # contracts & value types only
                                # (no control vocab, no runtime, no renderer)
         │
-        ├───────────────────────────────────────────┐
-        ▼                                           ▼
-moui/runtime                    moui/backend/host   # host CONTRACTS only (ADR 0018):
-trees, dispatch, effects,       HostEvent/HostCmd,  #   wire protocol, HostServiceBridge,
-HostRuntimeDriver,              completion queue,   #   AppServices adapter; NO app facade;
-RedrawScheduler,                EmbedderHostChannel,#   NO platform_bridge (no reverse dep)
-HostWallClock,                  platform channel,
-window_host_coordinator         capability summary,
-        │                       text-input session   # no edges down (contracts only)
-        ▼
-backend/<platform>   ──►  platform_bridge   # neutral lifecycle transforms (ADR 0020):
-(native decode,          close/focus/resize/scale/redraw, surface
-capability decl,         attach/detach, logical coords, window slots)
-HostSurfaceKit,          ──► normalized HostEvent/HostCmd (host contracts)
-presenter + I/O)
-        │ supplies neutral host surface capabilities
-        ▼
-moui/render                 # RendererProvider / RendererProviderBinding /
-                            # capability model (ADR 0019); never imports host
+        ├──────────────────────┬────────────────────────┐
+        ▼                      ▼                        ▼
+moui/runtime             moui/backend              moui/render
+trees, effects,          neutral event/window/     surface/frame/image/provider
+HostRuntimeDriver        input/service protocols   protocols and DTOs
+        │                      │                        │
+        └──────────┬───────────┘                        ▼
+                   ▼                            moui/render/common
+          moui/backend/common                  selection, fallback, mailbox,
+          registry, lifecycle core,            GPU worker, image lifecycle,
+          frame coordination, input state       shared drawing algorithms
+                   │                                   │
+          ┌────────┼────────┐                          │
+          ▼        ▼        ▼                          │
+       desktop  embedded  native                       │
+          │        │        │                          │
+          └────────┴────────┘                          │
+                   │                                   │
+                   ▼                                   │
+          backend/<platform>                           │
+          native decode, presenter, I/O                 │
+                   │ supplies SurfaceContext            │
+                   └──────────────────┬─────────────────┘
+                                      ▼
+                              renderer negotiation
+                                      │
         │
         ├────────────┬────────────┬────────────┬──────────────┐
         ▼            ▼            ▼            ▼              ▼
@@ -54,12 +61,12 @@ render/skia   render/wgpu  render/sun  render/canvas2d  render/webgpu_adapter
 ```
 
 Composition: an executable entrypoint builds an `AppBuilder` with
-`@runtime.run_app`, supplies ordered `RendererBindingFactory` values with
+`@runtime.run_app`, supplies ordered `RendererFactory` values with
 `.render`/`.render_all`, supplies a platform `PlatformEntry` with `.backend`,
-and calls `.run`. The backend creates a neutral `HostSurfaceKit` after its
+and calls `.run`. The backend creates a neutral `SurfaceContext` after its
 window exists; renderer factories bind and negotiate against that kit. No
 backend imports or constructs a concrete renderer. Renderer selection is
-**provider negotiation** (`resolve_host_renderer`), never a central switch.
+**provider negotiation** (`@render_common.resolve_renderer`), never a central switch.
 `RendererBackendKind` is diagnostic metadata only (ADR 0019, invariant P6).
 Extension cost (2026-08-03 audit): `moui/core` has ~210 enum variants of
 which ~2 are platform-related (~1%); adding a renderer costs one
@@ -70,14 +77,15 @@ stays a closed enum by design.
 
 **Cross-layer edges (imports, beyond the tree above):**
 
-- `moui/runtime` → `moui/backend/host` (`HostRuntimeDriver::dispatch` takes `@host.HostEvent`) and `moui/render` (`HostRuntimeDriver::apply_render_frame_result` takes `@render.RenderFrameResult`)
-- `backend/<platform>` → `moui/runtime` (`PlatformEntry`, host driver), `moui/backend/host` (wire bridge/queue), `moui/services` (adapted `AppEnvironment`), `platform_bridge` (transforms), and only the neutral `moui/render` host-surface contract
-- `platform_bridge` imports `moui/backend/host` contracts; **host does not import `platform_bridge`** (no reverse dependency, Phase F gate)
+- `moui/runtime` → `moui/backend` (`HostRuntimeDriver::dispatch` takes `@host.Event`) and `moui/render` (`HostRuntimeDriver::apply_render_frame_result` takes `@render.RenderFrameResult`)
+- `moui/backend/common` → root `backend`, `core`, `services`, `runtime`, neutral `render`, and `render/common`; root `backend` never imports common
+- `moui/render/common` → root `render` + `core`; root `render` never imports common
+- `backend/<platform>` → root/common backend layers, runtime, services, neutral render layers, and its matching `wzzc-dev/window` package; never a concrete renderer
 
 **Domain facades (ADR 0003 / 0014):** `geometry`/`graphics`/`animation`/`text`/`state` re-export curated `@core` types only; `core` never imports them.
 
 **Allowed direction:** app and views depend inward on facades/core; platform
-backends normalize lifecycle facts through `backend/platform_bridge` into
+backends normalize lifecycle facts through `backend/common` into
 host contracts and expose neutral surfaces; application entrypoints compose
 renderer factories with platform entries;
 renderers consume `DrawCommand` only.
@@ -88,12 +96,12 @@ renderers consume `DrawCommand` only.
 |---|---|
 | `examples/*/app` | `moui/runtime`, `moui/backend/*`, `moui/render/*`, concrete backends, providers |
 | `moui/core` | `views`, runtime, backends, renderers |
-| `moui/backend/host` (default) | `moui/runtime`, `moui/render` (ADR 0018: contracts only) |
-| `moui/backend/host` | `moui/backend/platform_bridge` (no reverse dependency, Phase F gate) |
-| `moui/render` | `moui/backend/host` (renderers consume `DrawCommand` only) |
+| `moui/backend` (root) | `moui/runtime`, `moui/render`, or `moui/backend/common` |
+| `moui/backend` | `moui/backend/common` (no reverse dependency, Phase F gate) |
+| `moui/render` | `moui/backend` (renderers consume `DrawCommand` only) |
 | view constructors | renderer fallback decisions, platform hosts |
 | platform backends | mutating element/render trees directly |
-| platform backends | duplicating lifecycle transforms (must go through `platform_bridge`) |
+| platform backends | duplicating lifecycle transforms (must go through `backend/common`) |
 | platform backends | concrete renderer packages, renderer FFI/native libraries, decode logic, or provider construction |
 
 ## Ownership cheat sheet
@@ -104,19 +112,25 @@ renderers consume `DrawCommand` only.
 | App-facing files/clipboard/URL/settings/menu tasks and timer/route sources | `moui/services` |
 | Cross-runtime protocols | `moui/core` |
 | AppRuntime / trees / effects / HostRuntimeDriver / RedrawScheduler / HostWallClock | `moui/runtime` |
-| Window host coordination (shared) | `moui/runtime/window_host_coordinator.mbt` |
-| Host wire contracts only (HostEvent/HostCmd/HostServiceBridge/completion queue/EmbedderHostChannel/platform channel) | `moui/backend/host` |
-| Neutral platform lifecycle bridge | `moui/backend/platform_bridge` |
-| Shared embedded-runtime host shell | `moui/backend/internal/embedded_runtime_backend` |
+| Window host coordination (shared) | `moui/backend/common` (`WindowCoordinator`, `EmbeddedWindowCoordinator`, `FrameCoordinator`) |
+| Backend protocols and DTOs (Event/HostCmd/HostServiceBridge/WindowRequests/platform channel) | `moui/backend` |
+| Shared backend state (registry/queue/lifecycle/frame/input/service adapters) | `moui/backend/common` |
+| Shared desktop host-service routing | `moui/backend/common/desktop` |
+| Shared native filesystem handlers and raw image-byte source | `moui/backend/common/native` |
+| Shared embedded callback service queue (`Pending(id)` + completion/cancel) | `moui/backend/common/embedded/services` |
+| Neutral platform lifecycle bridge | `moui/backend/common` |
+| Shared mobile session services (renderer, IME, semantics, platform-view, transport) | `moui/backend/common/embedded` |
+| Physical Android/iOS/HarmonyOS callback dispatch | `wzzc-dev/window/internal/embedded_dispatch` |
 | Native host backends (native decode + capability decl + neutral presenter/surface kit) | `moui/backend/{macos,windows,linux}` |
 | Embedded runtime backends | `moui/backend/{android,ios,harmonyos}` |
 | Web host backend | `moui/backend/web` |
-| Host surface kit + renderer provider/factory contracts | `moui/render` (`host_surface_kit.mbt`, `provider_contract.mbt`) |
+| SurfaceContext + renderer provider/factory/image protocols | `moui/render` |
+| Provider selection, fallback, workers, image lifecycle, shared drawing algorithms | `moui/render/common` |
 | Renderer implementations and factories | `moui/render/{skia,wgpu,sun,canvas2d,webgpu_adapter}` |
 | Application/platform composition | `examples/*/<platform>/main.mbt` through `@runtime.run_app` |
 | Skia FFI / native capability | `moui_skia` |
 | CPU raster stack (experimental) | `moui_sun` |
-| Embedded-runtime templates and event loops | `wzzc-dev/window/{android,ios,harmonyos}` |
+| Embedded-runtime templates, native payload adapters, and nominal event loops/windows | `wzzc-dev/window/{android,ios,harmonyos}` |
 | Rich text domain | `moui_richtext` |
 | Design-system addons | `moui_theme` (not an app default dep) |
 | Repo validators | `tools/moui/*` via `scripts/*.mjs` shells |

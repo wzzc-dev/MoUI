@@ -1,6 +1,6 @@
 ///|
 /// MoUI renderer facade. Core value types (`RendererBackendKind`,
-/// `RendererSurfaceMetrics`, `RenderFrameResult`, …) are defined in this
+/// `@core.SurfaceMetrics`, `RenderFrameResult`, …) are defined in this
 /// file. The package also owns the renderer-surface bridge types
 /// (`SurfaceRoute`, `ImageResourceRecord`, …), capability reporting
 /// (`RendererFeature`, `RendererFeatureCapability`, …), and the
@@ -11,12 +11,12 @@
 /// See `provider_contract.mbt` for:
 /// - `RendererProvider` — contract type for a renderer family
 /// - `RendererInstance` — live instance returned by a provider
-/// - `RendererProviderRegistry` — legacy provider collection with `select`
-/// - `RendererProviderBinding` / `select_renderer_provider_binding` — the
+/// - `RendererProviderBinding` — the
 ///   production composition path from negotiated provider to host lifecycle
 /// - `SurfaceDescriptor` / `BoundSurface` — surface negotiation types
 ///
-/// Concrete providers live in sub-packages:
+/// Provider selection and registries live in `moui/render/common`. Concrete
+/// providers live in sub-packages:
 /// - `moui/render/skia` — `create_skia_raster_provider`, `create_skia_hybrid_provider`
 /// - `moui/render/wgpu` — `create_wgpu_provider`
 /// - `moui/render/sun` — `create_sun_provider`
@@ -68,16 +68,9 @@ pub(all) enum RendererSelection {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RendererSurfaceMetrics {
-  logical_size : @core.Size
-  physical_size : @core.Size
-  scale_factor : Double
-} derive(Eq, Debug, ToJson)
-
-///|
-/// Renderer-level window identifier. Mirror of `HostWindowId` in the host
+/// Renderer-level window identifier. Mirror of `WindowId` in the host
 /// package — the host converts between the two at the API boundary so that
-/// `moui/render` never imports `moui/backend/host`.
+/// `moui/render` never imports `moui/backend`.
 pub(all) struct RenderWindowId {
   value : Int
 } derive(Eq, Debug, ToJson)
@@ -109,7 +102,7 @@ pub(all) struct RendererDescriptor {
 
 ///|
 pub(all) struct RenderFrameInput {
-  metrics : RendererSurfaceMetrics
+  metrics : @core.SurfaceMetrics
   commands : Array[@core.DrawCommand]
   damage : @core.DamageRegion
   clear_color : @core.Color?
@@ -165,30 +158,6 @@ pub(all) struct WgpuSurfaceContract {
   ready : Bool
   description : String
 } derive(Eq, Debug, ToJson)
-
-///|
-pub fn RendererSurfaceMetrics::new(
-  logical_size~ : @core.Size,
-  physical_size~ : @core.Size,
-  scale_factor? : Double = 1.0,
-) -> RendererSurfaceMetrics {
-  { logical_size, physical_size, scale_factor }
-}
-
-///|
-pub fn RendererSurfaceMetrics::from_logical(
-  size~ : @core.Size,
-  scale_factor? : Double = 1.0,
-) -> RendererSurfaceMetrics {
-  {
-    logical_size: size,
-    physical_size: @core.Size::new(
-      width=size.width * scale_factor,
-      height=size.height * scale_factor,
-    ),
-    scale_factor,
-  }
-}
 
 ///|
 pub fn RendererBackendInfo::new(
@@ -305,7 +274,7 @@ pub fn RendererDescriptor::new(
 
 ///|
 pub fn RenderFrameInput::new(
-  metrics~ : RendererSurfaceMetrics,
+  metrics~ : @core.SurfaceMetrics,
   commands~ : Array[@core.DrawCommand],
   damage? : @core.DamageRegion = @core.DamageRegion::full(
     "legacy render frame input",

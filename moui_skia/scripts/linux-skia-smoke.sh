@@ -589,7 +589,7 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
   "wzzc-dev/moui_skia/native" @skia_native,
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
@@ -668,7 +668,7 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
   cat > "$text_emoji_pkg" <<EOF
 import {
   "wzzc-dev/moui_skia/native" @skia_native,
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/render",

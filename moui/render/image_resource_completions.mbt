@@ -70,32 +70,3 @@ pub fn ImageResourceLoadCompletion::has_decoded_rgba_payload(
   self.decoded_row_bytes >= self.width * 4 &&
   self.decoded_pixels.length() >= self.decoded_row_bytes * self.height
 }
-
-///|
-pub fn ImageResourceLifecycle::apply_load_completion(
-  self : ImageResourceLifecycle,
-  completion : ImageResourceLoadCompletion,
-) -> ImageResourceSnapshot {
-  match self.lookup(completion.source) {
-    Some({ status: ImageResourceStatus::ImageLoading, .. }) =>
-      match completion.status {
-        ImageResourceLoadCompletionStatus::ImageLoadReady =>
-          ignore(
-            self.mark_ready(
-              completion.source,
-              width=completion.width,
-              height=completion.height,
-            ),
-          )
-        ImageResourceLoadCompletionStatus::ImageLoadFailed =>
-          ignore(
-            self.mark_failed(
-              completion.source,
-              diagnostic=completion.diagnostic,
-            ),
-          )
-      }
-    _ => ()
-  }
-  self.snapshot_with_revision()
-}

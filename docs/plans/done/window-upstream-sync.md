@@ -3,7 +3,7 @@
 - **Status**: complete
 - **Scope**: `window/` submodule branch split and upstream reference branches.
   The fork-facing compatibility migration continues in
-  `docs/plans/active/moui-support-upstream-workspace.md`.
+  `docs/plans/done/moui-support-upstream-workspace.md`.
 - **Upstream baseline**: `moonbit-community/window` `upstream/main` at `4640089`.
 
 ## Objective

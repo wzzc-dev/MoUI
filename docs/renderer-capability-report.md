@@ -49,7 +49,7 @@ Status meanings:
 | Shader effect | supported | supported | supported | supported | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have renderer-local pixel tests plus real native renderer pixel smoke coverage; unknown names still use fallback paths. Sun CPU raster now records the same unsupported-command diagnostic shape when an unknown shader name falls back to the spec fallback brush. |
 | Text shaping | supported | supported | supported | partial | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters plus inferred BCP47 script language tags before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes cluster interiors through the shared UAX-style `TextGraphemeBoundaries` scanner, exposes `TextSystem::layout_paragraph()` line metrics, paragraph caret rectangles, selection rectangles, and hit-test geometry, routes paragraph layout through native SkParagraph when available, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, and can draw optional SkShaper shaped glyph runs after linking. Sun raster exposes a renderer-backed `TextSystem` over `moui_sun/text` with requested-family-first fallback chain resolution across registered faces; renderer-local tests cover mixed Latin-plus-emoji measurement, no missing fallback diagnostic on covered draws, TextRun frame clipping, and paragraph metadata. The shared scanner uses generated Unicode 17.0 property predicates, `moui/core` runs curated and full vendored Unicode 17.0 default grapheme fixtures, and `moui/render/skia` runs the same fixture through `skia_grapheme_cluster_texts`. The real Skia smoke obtains bidi Arabic and mixed-direction visual-order markers plus paragraph wrapping, selection rectangles, hit testing, grapheme editing, and IME candidate/composition markers on macOS/Linux/Windows via `--run-text-emoji-smoke`. |
 | Emoji text | supported | supported | supported | partial | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo grapheme cluster samples, prefers emoji coverage characters and inferred language tags in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, retries platform emoji font candidates before default-font fallback, and reports deterministic color emoji readiness through `Typeface::has_color_glyphs` and glyph format metadata. Sun raster uses `moui_sun/text FontFallbackPlan` over the requested-family-first fallback chain so registered emoji coverage can be selected after a Latin primary face; renderer-local tests cover mixed Latin-plus-emoji measurement and covered draw diagnostics. The text/emoji smoke records high-saturation glyph/raster observation plus font/glyph metadata with a non-empty source/script/fallback-request-character-aware glyph key that matches the recorded source, text-system, shaper, script, fallback language tag payload, language-count, fallback request character, and format metadata, and obtains keycap, regional-indicator, and skin-tone-modifier fallback diagnostic markers on macOS/Linux/Windows via `--run-text-emoji-smoke`. |
-| Async image | supported | supported | supported | supported | Renderer-neutral lifecycle records, `ImageResourceLoadCompletion`, and monotonic revision snapshots are shared. Platform backends expose raw local-file bytes through `HostImageSource`; they do not decode images. Skia, Sun, and WGPU factories own `RendererImageDecoder` implementations and completion creation. `HostAsyncImageLoader` de-duplicates in-flight work and gates late/cancelled callbacks; hosts route repaint requests per window, cancel disposed-window work, and discard closed-window changes. Renderer tests cover decode/cache/retry behavior, while real Skia smoke separately records matching-host second-frame presentation. |
+| Async image | supported | supported | supported | supported | Renderer-neutral lifecycle records, `ImageResourceLoadCompletion`, and monotonic revision snapshots are shared. Platform backends expose raw local-file bytes through `HostImageSource`; they do not decode images. Skia, Sun, and WGPU factories own `RendererImageDecoder` implementations and completion creation. `AsyncImageLoader` de-duplicates in-flight work and gates late/cancelled callbacks; hosts route repaint requests per window, cancel disposed-window work, and discard closed-window changes. Renderer tests cover decode/cache/retry behavior, while real Skia smoke separately records matching-host second-frame presentation. |
 
 ## Renderer Descriptors
 
@@ -185,11 +185,11 @@ Native image support is synchronous from the app model's point of view.
 `WgpuRenderer::image_resources()` still exposes renderer-local image resource
 records, and `WgpuRenderer::image_resource_snapshot()` adds the monotonic
 revision/change signal used by factory-created WGPU bindings when they forward
-diagnostics through `HostWindowRenderer::image_resource_snapshot()`. Planned
+diagnostics through `WindowRenderer::image_resource_snapshot()`. Planned
 image commands are marked loading until the native cache can resolve them;
 successful synchronous decode/cache upload marks records ready with dimensions,
 and failed decodes mark records failed with a diagnostic. The shared host
-`HostImageResourceRepaintTracker` records the last presented revision for each
+`ImageResourceRepaintTracker` records the last presented revision for each
 window, treats that revision as a high-water mark so stale lower revision
 snapshots cannot roll back status diagnostics or trigger a redraw, routes
 repaint requests only to the matching open window when a newer revision is
@@ -198,21 +198,21 @@ lifecycle status counts, reports previous/current lifecycle status counts on
 each repaint result, and discards closed-window image changes while removing
 the closed window from the tracked repaint table. `ImageResourceLoadCompletion`
 is the renderer-neutral ready/failed payload for native async loaders, and
-`HostWindowRenderer::apply_image_resource_load_completion` is the host facade port that
+`WindowRenderer::apply_image_resource_load_completion` is the host facade port that
 lets renderer packages apply that payload before returning a revisioned
-snapshot. `HostImageResourceCompletionSource` then gives native
+snapshot. `ImageResourceCompletionSource` then gives native
 factory/platform loaders a host-layer boundary to route those snapshots; it
 does not decode images, mutate renderer caches, or prove matching-host
-loader/runtime behavior. `HostAsyncImageLoader` adds the host scheduler adapter
+loader/runtime behavior. `AsyncImageLoader` adds the host scheduler adapter
 for that boundary by scanning loading records, deduplicating in-flight source
 loads, and ignoring late completion callbacks after cancellation before they
-can apply to renderer state. `HostNativeAsyncImageSource` records pending
+can apply to renderer state. `NativeAsyncImageSource` records pending
 native `(window, source)` requests and lets a platform callback deliver
 `ImageResourceLoadCompletion` later through the same scheduler and repaint
 route; it is host-boundary observation for deferred completion delivery, not
 matching-host off-main runtime observation. Platform backends now create
 `HostImageSource` values that read only raw bytes. The selected
-`RendererBindingFactory` contributes a renderer-owned `RendererImageDecoder`;
+`RendererFactory` contributes a renderer-owned `RendererImageDecoder`;
 Skia, Sun, and WGPU perform their own format detection, decode, cache update,
 and ready/failed completion creation. Native host cores call the selected
 factory's neutral loader after each presented revision is baselined and cancel
@@ -239,7 +239,7 @@ tests also pin `ImageFit::Contain` letterboxing,
 `SkiaUnsupportedCommandDiagnostic`, `renderer_descriptor()`, backend info,
 fallback-safe availability checks, a basic Skia-backed text system, image
 resource records plus revisioned snapshots that factory-created bindings forward
-through `HostWindowRenderer`, an optional renderer-local image-resource change
+through `WindowRenderer`, an optional renderer-local image-resource change
 callback that publishes revisioned snapshots, neutral callback forwarding into
 native host baseline-guarded redraw scheduling,
 cached-image disposal diagnostics, and structured unsupported-command
@@ -308,7 +308,7 @@ unsupported-command diagnostics for unmatched pops, mismatched pops, unclosed
 scopes, unknown shader fallback, and per-frame diagnostic reset. Factory-created
 Skia bindings expose the same
 renderer image-resource records and revisioned snapshots through
-`HostWindowRenderer`, so host diagnostics can inspect loading, ready, failed,
+`WindowRenderer`, so host diagnostics can inspect loading, ready, failed,
 and disposed image resources without importing `render/skia`; macOS, Windows,
 and Linux hosts use the shared image repaint tracker to baseline presented
 Skia revisions, route per-window repaint requests, expose tracked-window

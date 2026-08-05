@@ -5,6 +5,7 @@ import {
   "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
   "wzzc-dev/moui/render/skia" @skia_renderer,
 }
 

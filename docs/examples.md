@@ -466,7 +466,7 @@ moon test examples/pdf_workbench/pdflite_service_protocol --target wasm-gc
 moon test examples/pdf_workbench/pdflite_service_native_transport --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
 MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdfium_adapter --target native
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon build examples/pdf_workbench/macos_skia --target native
 node scripts/pdf-workbench-native-smoke.mjs
 scripts/pdf-workbench-macos-smoke.sh
@@ -727,7 +727,7 @@ through `run.cmd`.
 
 ## Linux Native
 
-Linux examples use the `wzzc-dev/window@0.5.4-0.1.4` Wayland host core. The
+Linux examples use the `wzzc-dev/window@0.5.4-0.1.5` Wayland host core. The
 recommended native entrypoints compose `backend/linux` with `render/skia` and
 present Skia CPU pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
 host with a Wayland compositor and real Skia link flags:

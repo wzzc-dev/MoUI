@@ -1,9 +1,8 @@
 ///|
 priv struct WebWindowPlatformSlot {
-  host_id : @host.HostWindowId
-  platform_id : @window_core.WindowId
+  host_id : @host.WindowId
   window : @window_web.Window
-  renderer : @render.HostWindowRenderer
+  renderer : @render.WindowRenderer
 }
 
 ///|
@@ -26,20 +25,19 @@ fn WebWindowPlatformSlots::insert(
   self : WebWindowPlatformSlots,
   slot : WebWindowPlatformSlot,
 ) -> Bool {
-  match
-    (self.lookup_host(slot.host_id), self.lookup_platform(slot.platform_id)) {
-    (None, None) => {
+  match self.lookup_host(slot.host_id) {
+    None => {
       self.slots.push(slot)
       true
     }
-    _ => false
+    Some(_) => false
   }
 }
 
 ///|
 fn WebWindowPlatformSlots::lookup_host(
   self : WebWindowPlatformSlots,
-  host_id : @host.HostWindowId,
+  host_id : @host.WindowId,
 ) -> WebWindowPlatformSlot? {
   for slot in self.slots {
     if slot.host_id == host_id {
@@ -50,22 +48,9 @@ fn WebWindowPlatformSlots::lookup_host(
 }
 
 ///|
-fn WebWindowPlatformSlots::lookup_platform(
-  self : WebWindowPlatformSlots,
-  platform_id : @window_core.WindowId,
-) -> WebWindowPlatformSlot? {
-  for slot in self.slots {
-    if slot.platform_id == platform_id {
-      return Some(slot)
-    }
-  }
-  None
-}
-
-///|
 fn WebWindowPlatformSlots::remove_host(
   self : WebWindowPlatformSlots,
-  host_id : @host.HostWindowId,
+  host_id : @host.WindowId,
 ) -> WebWindowPlatformSlot? {
   let mut removed = None
   let kept = []

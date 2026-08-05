@@ -3,7 +3,7 @@ test "skia render_frame full damage clears entire surface" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -56,7 +56,7 @@ test "skia render_frame rects damage clears only dirty rects" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -116,7 +116,7 @@ test "skia render_frame empty damage falls back to full clear" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -157,7 +157,7 @@ test "skia render_frame skips draw_cached_layer outside damage rects" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -221,7 +221,7 @@ test "skia rect damage uses logical coordinates on hidpi surfaces" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
       scale_factor=2.0,
     ),
@@ -273,7 +273,7 @@ test "skia render_frame falls back to full damage when scope commands present" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,

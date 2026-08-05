@@ -62,83 +62,62 @@ pub(all) struct HarmonyOSBackendInfo {
 
 ///|
 pub struct HarmonyOSSurfaceBinding {
-  priv create_renderer : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
-  priv sync_surface : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @render.HostAsyncImageLoader?
+  priv create_renderer : (HarmonyOSSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererResolution?
+  priv sync_surface : (HarmonyOSSurfaceHandle, @core.SurfaceMetrics) -> Unit
+  priv image_loader : @render.ImageLoader?
 }
 
 ///|
 
 ///|
 pub fn HarmonyOSSurfaceBinding::new(
-  create_renderer~ : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
-  sync_surface? : (HarmonyOSSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
+  create_renderer~ : (HarmonyOSSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererResolution?,
+  sync_surface? : (HarmonyOSSurfaceHandle, @core.SurfaceMetrics) -> Unit = (
     _surface,
     _metrics,
   ) => (),
-  image_loader? : @render.HostAsyncImageLoader? = None,
+  image_loader? : @render.ImageLoader? = None,
 ) -> HarmonyOSSurfaceBinding {
   { create_renderer, sync_surface, image_loader }
 }
 
 ///|
 pub fn harmonyos_surface_binding(
-  factories : Array[@render.RendererBindingFactory],
+  factories : Array[@render.RendererFactory],
 ) -> HarmonyOSSurfaceBinding {
-  let image_source = @host_image_source.from_filesystem()
-  HarmonyOSSurfaceBinding::new(create_renderer=(surface, metrics) => {
-    let renderer_metrics = @render.RendererSurfaceMetrics::new(
-      logical_size=metrics.logical_size,
-      physical_size=metrics.physical_size,
-      scale_factor=metrics.scale_factor,
-    )
-    let present = @render.HostPresentTarget::new(
-      description="HarmonyOS host CPU presenter",
-      present=frame => {
-        harmonyos_present_pixels_to_surface(
-          surface.raw(),
-          frame.width(),
-          frame.height(),
-          frame.row_bytes(),
-          frame.pixels(),
-          frame.pixels().length(),
-        ) !=
-        0
-      },
-    )
-    let gpu_surface = match
-      @render.GpuHostSurfaceDescriptor::egl_native_window(surface.raw()) {
-      Some(descriptor) =>
-        Some(
-          @render.HostGpuSurfaceBridge::new(
-            descriptor~,
-            create_surface=_ => None,
-            present=_ => true,
-          ),
-        )
-      None => None
-    }
-    let kit = @render.HostSurfaceKit::new(
-      surface=@render.SurfaceDescriptor::cpu_raster(
-        width=renderer_metrics.logical_size.width,
-        height=renderer_metrics.logical_size.height,
-        scale_factor=renderer_metrics.scale_factor,
-      ),
-      metrics=renderer_metrics,
-      cpu_present=Some(present),
-      gpu_surface~,
-      image_source=Some(image_source),
-    )
-    @render.resolve_host_renderer(factories, kit)
-  })
+  let shared = @embedded_runtime.mobile_host_surface_binding(
+    factories,
+    presenter_description="HarmonyOS host CPU presenter",
+    cpu_present=(raw_handle, frame) => {
+      harmonyos_present_pixels_to_surface(
+        raw_handle,
+        frame.width(),
+        frame.height(),
+        frame.row_bytes(),
+        frame.pixels(),
+        frame.pixels().length(),
+      ) !=
+      0
+    },
+    gpu_descriptor=raw_handle => {
+      @render.GpuHostSurfaceDescriptor::egl_native_window(raw_handle)
+    },
+  )
+  HarmonyOSSurfaceBinding::new(
+    create_renderer=(surface, metrics) => {
+      (shared.create_renderer)(surface.raw(), metrics)
+    },
+    sync_surface=(surface, metrics) => (shared.sync)(surface.raw(), metrics),
+    image_loader=shared.image_loader,
+  )
 }
 
 ///|
 fn HarmonyOSSurfaceBinding::create(
   self : HarmonyOSSurfaceBinding,
   surface : HarmonyOSSurfaceHandle,
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.HostRendererResolution? {
+  metrics : @core.SurfaceMetrics,
+) -> @render.RendererResolution? {
   (self.create_renderer)(surface, metrics)
 }
 
@@ -146,7 +125,7 @@ fn HarmonyOSSurfaceBinding::create(
 fn HarmonyOSSurfaceBinding::sync(
   self : HarmonyOSSurfaceBinding,
   surface : HarmonyOSSurfaceHandle,
-  metrics : @host.HostSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> Unit {
   (self.sync_surface)(surface, metrics)
 }
@@ -159,31 +138,17 @@ pub fn HarmonyOSSurfaceBinding::has_async_image_loader(
 }
 
 ///|
-pub fn create_session(
-  runtime~ : @runtime.AppRuntime,
-  surface~ : HarmonyOSSurfaceHandle,
-  metrics~ : @host.HostSurfaceMetrics,
-  binding~ : HarmonyOSSurfaceBinding,
-) -> @embedded_runtime_backend.HostedRuntimeSession? {
-  @embedded_runtime_backend.HostedRuntimeSession::create(
-    runtime~,
-    raw_handle=surface.raw(),
-    metrics~,
-    binding=host_surface_binding_from_harmonyos(binding),
-  )
-}
-
-///|
 pub fn host_surface_binding_from_harmonyos(
   binding : HarmonyOSSurfaceBinding,
-) -> @embedded_runtime_backend.HostSurfaceBinding {
-  @embedded_runtime_backend.HostSurfaceBinding::new(
+) -> @embedded_runtime.HostSurfaceBinding {
+  @embedded_runtime.HostSurfaceBinding::new(
     create_renderer=fn(raw, metrics) {
       binding.create(HarmonyOSSurfaceHandle::new(raw~), metrics)
     },
     sync=fn(raw, metrics) {
       binding.sync(HarmonyOSSurfaceHandle::new(raw~), metrics)
     },
+    image_loader=binding.image_loader,
   )
 }
 

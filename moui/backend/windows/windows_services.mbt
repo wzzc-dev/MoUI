@@ -4,12 +4,13 @@ pub fn windows_service_bridge(
   clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_windows_clipboard,
   open_url? : (String) -> Bool = dispatch_windows_open_url,
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_windows_file_dialog,
-  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_windows_text_file,
-  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_windows_binary_file,
+  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
+  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
   settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_windows_settings,
   menu? : (Array[@core.ActionCommand]) -> Int = dispatch_windows_menu,
+  list_directory? : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_list_directory,
 ) -> @host.HostServiceBridge {
-  @host.HostServiceBridge::new(
+  @host_services_desktop.DesktopHostServices::new(
     capabilities=@host.HostServiceCapabilities::new(
       clipboard=true,
       file_dialogs=true,
@@ -19,46 +20,23 @@ pub fn windows_service_bridge(
       system_theme=true,
       settings=true,
     ),
-    handle=request => {
-      match request {
-        @host.HostServiceRequest::Clipboard(clipboard_request) =>
-          clipboard(clipboard_request)
-        @host.HostServiceRequest::OpenUrl(url) =>
-          if open_url(url) {
-            @host.HostServiceResponse::UrlOpened
-          } else {
-            @host.HostServiceResponse::Unavailable("open URL failed")
-          }
-        @host.HostServiceRequest::FileDialog(options) =>
-          @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
-        @host.HostServiceRequest::TextFile(text_file_request) =>
-          text_file(text_file_request)
-        @host.HostServiceRequest::BinaryFile(binary_file_request) =>
-          binary_file(binary_file_request)
-        @host.HostServiceRequest::ShowMenu(commands) =>
-          @platform_bridge.menu_command_response(commands, menu(commands))
-        @host.HostServiceRequest::SetApplicationMenu(_) =>
-          @host.HostServiceResponse::Unavailable(
-            "application menu bar service is unavailable",
-          )
-        @host.HostServiceRequest::QuerySystemTheme =>
-          @host.HostServiceResponse::SystemTheme(system_theme)
-        @host.HostServiceRequest::Settings(settings_request) =>
-          settings(settings_request)
-        @host.HostServiceRequest::ListDirectory(_) =>
-          @host.HostServiceResponse::Unavailable(
-            "directory listing service is unavailable",
-          )
-        @host.HostServiceRequest::PlatformChannel(_) =>
-          @host.HostServiceResponse::Unavailable(request.unavailable_message())
-      }
+    system_theme~,
+    clipboard~,
+    open_url~,
+    file_dialog~,
+    text_file~,
+    binary_file~,
+    settings~,
+    show_menu=commands => {
+      @host_services_desktop.menu_command_response(commands, menu(commands))
     },
-  )
+    list_directory~,
+  ).bridge()
 }
 
 ///|
 pub fn app_environment() -> @services.AppEnvironment {
-  @host.app_environment(
+  @window_host.app_environment(
     bridge=windows_service_bridge(),
     timer=Some(windows_timer_source()),
   )

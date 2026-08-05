@@ -76,6 +76,34 @@ pub fn RendererCommandFallback::index(self : RendererCommandFallback) -> Int {
 }
 
 ///|
+pub fn RendererCommandFallback::new(
+  index~ : Int,
+  feature~ : RendererFeature,
+  command~ : String,
+  kind? : RendererCommandFallbackKind = RendererCommandFallbackKind::PlannedFallback,
+  reason~ : String,
+) -> RendererCommandFallback {
+  { index, feature, command, kind, reason }
+}
+
+///|
+pub fn RendererCommandPlan::new(
+  total_commands~ : Int,
+  fallback_count~ : Int,
+  final_layer_depth~ : Int,
+  final_filter_depth~ : Int,
+  fallbacks~ : Array[RendererCommandFallback],
+) -> RendererCommandPlan {
+  {
+    total_commands,
+    fallback_count,
+    final_layer_depth,
+    final_filter_depth,
+    fallbacks,
+  }
+}
+
+///|
 pub fn RendererCommandFallback::feature(
   self : RendererCommandFallback,
 ) -> RendererFeature {
@@ -230,4 +258,11 @@ pub fn RendererFeatureCapability::note_for_provider(
     Some(capability) => capability.note
     None => "registered provider has no recorded capability for this feature"
   }
+}
+
+///|
+pub fn RendererFeatureCapability::needs_follow_up(
+  self : RendererFeatureCapability,
+) -> Bool {
+  self.providers.any(capability => capability.status.needs_follow_up())
 }
