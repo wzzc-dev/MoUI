@@ -1,6 +1,6 @@
 ---
 name: moui-framework-development-skill
-description: Change MoUI framework internals and repository quality gates. Use when modifying moui/core, moui/views, moui/runtime, backend/host, platform backends, renderers, moui_skia, moui_theme, public API, pkg.generated.mbti, maintenance baselines, smoke/gates.json, scripts, CI workflows, docs, AGENTS.md, or repo-local skills.
+description: Change MoUI framework internals and repository quality gates. Use when modifying moui/core, moui/views, moui/runtime, backend, platform backends, renderers, moui_skia, moui_theme, public API, pkg.generated.mbti, maintenance baselines, smoke/gates.json, scripts, CI workflows, docs, AGENTS.md, or repo-local skills.
 ---
 
 # MoUI Framework Development
@@ -42,27 +42,38 @@ Read only what the task needs:
   `AppEnvironment`.
 - `moui/runtime`: runtime lifecycle, element/layout/render trees, event
   dispatch, effects, subscriptions, diagnostics, inspector snapshots.
-- `moui/backend/host`: host wire protocol, `HostServiceBridge`, request and
-  completion queues, adapters to `moui/services`, window event sources, WebView
-  protocol, async image service, accessibility/input/redraw contracts, and the
-  shared `EmbedderHostChannel`. Per ADR 0018, `HostRuntimeDriver`,
+- `moui/backend`: neutral event/window/service/input/IME/accessibility/
+  platform-view protocols and DTOs, plus `HostServiceBridge` and
+  `EmbedderHostChannel`. Per ADR 0018, `HostRuntimeDriver`,
   `RedrawScheduler`, and `HostWallClock` moved to `moui/runtime`; render
   completion and GPU recovery moved to `moui/render`. Host carries
   platform-neutral contracts only.
-- `moui/backend/platform_bridge`: platform-to-host conversion for neutral
-  close/focus/resize/scale/redraw/surface lifecycle facts and logical
-  coordinates. It imports only `core`, `backend/host`, and window value types;
-  raw native input decoding stays in the concrete platform backend.
-- `moui/runtime/window_host_coordinator.mbt`: shared owner of host window
-  state (window records, runtime slots, platform-window maps, surface
-  attachments, redraw/IME/close coordination, host-event dispatch) for
-  macos/windows/linux/web. New platform window code must delegate to the
-  coordinator and contribute a `WindowSurfaceActions` projection instead of
-  re-implementing window state.
-- `moui/backend/internal/embedded_runtime_backend`: shared embedded-runtime
-  host shell (`HostedWindowBackend`, `HostedRuntimeSession`). Android/iOS/
-  HarmonyOS `window_hosted.mbt` are thin shells; add platform-specific parts
-  there, never copy shell logic.
+- `moui/backend/common`: shared window registry/request queue, lifecycle core,
+  unique platform-window mapping, frame/image/IME coordination, input state,
+  service adapters, and neutral event/coordinate conversion. Raw native input
+  decoding stays in the concrete platform backend. `WindowCoordinator` adapts macos/windows/linux/web,
+  `EmbeddedWindowCoordinator` adapts Android/iOS/HarmonyOS, and
+  `FrameCoordinator` owns shared completion/image/IME timing. New
+  platform window code must delegate to these adapters and contribute a
+  `WindowSurfaceActions` projection instead of re-implementing window state.
+- `moui/backend/common/desktop`: single synchronous desktop
+  service router; shared native file behavior comes from
+  `backend/common/native`.
+  macOS/Windows/Linux provide native closures and must not copy routing logic.
+- `moui/backend/common/embedded/services`: single asynchronous mobile
+  service queue for clipboard/platform-channel `Pending(id)`, FIFO drain,
+  completion, duplicate rejection, and dispose/cancel. Only `backend/common/embedded`
+  imports it.
+- `moui/backend/common/native`: shared native `@fs` text,
+  binary, directory, and raw filesystem image-byte source used by desktop
+  desktop and embedded backends.
+- `moui/backend/common/embedded`: embedded session capability layer
+  (`HostedWindowBackend`, `HostedRuntimeSession`, `EmbeddedRuntimeHostBridge`),
+  including renderer binding, IME, semantics, platform views, service update
+  mapping, and native transport. Logical lifecycle and frame/image state reuse
+  the common coordinators. Android/iOS/HarmonyOS
+  `window_hosted.mbt` are thin shells and must not access the embedded service
+  queue directly.
 - `moui/backend/{macos,windows,linux}`: native host backends that own the host
   runtime, native windows, and event-loop integration.
 - `moui/backend/{android,ios,harmonyos}`: embedded runtime backends. The
@@ -71,9 +82,11 @@ Read only what the task needs:
 - `moui/backend/<platform>` owns native windows/handles, CPU presentation, GPU
   descriptors, host I/O, and lifecycle only. It must not import or construct a
   concrete renderer.
-- `moui/render`: renderer facade, provider-ID capability aggregation, and the
-  `HostSurfaceKit`/`RendererBindingFactory` contracts. Application entrypoints
+- `moui/render`: surface/frame/image/provider protocols and DTOs, including
+  `WindowRenderer`, `SurfaceContext`, and `RendererFactory`. Application entrypoints
   register ordered factories and one platform entry; `RendererBackendKind` is diagnostic only.
+- `moui/render/common`: provider selection, fallback, mailbox/GPU worker,
+  image lifecycle/repaint, and shared drawing algorithms.
 - `moui/render/skia`: native Skia CPU/GPU factories and renderer over `moui_skia`.
 - `moui/render/webgpu_adapter`: browser WebGPU host-import adapter for
   `wasm-gc`.
@@ -85,25 +98,31 @@ Read only what the task needs:
 Do not add a new public package until the existing owning packages cannot
 naturally own the capability.
 
-## Architecture Convergence Pointers (ADR 0017–0020, 0023)
+## Architecture Convergence Pointers (ADR 0017–0024)
 
 When touching a convergence surface, run its matching gate in addition to the
 focused checks below:
 
 - **Host split (ADR 0018)**: `HostRuntimeDriver`, `RedrawScheduler`, and
   `HostWallClock` live in `moui/runtime`; render completion / GPU recovery
-  live in `moui/render`. `moui/backend/host` stays contracts-only in default
+  live in `moui/render`. `moui/backend` stays contracts-only in default
   imports. Gate: `node scripts/validate-host-import-baseline.mjs`.
 - **Renderer provider (ADR 0019)**: renderer implementations and
   provider-ID capability reporting go in `moui/render/*` as
   `RendererProvider` / `RendererProviderBinding`; composition roots assemble
   ordered bindings; `RendererBackendKind` is diagnostic metadata only. Gate:
   `node scripts/validate-renderer-provider-open-extension.mjs`.
-- **Platform bridge (ADR 0020)**: neutral close/focus/resize/scale/redraw/
+- **Backend common boundary (ADR 0020/0025)**: neutral close/focus/resize/scale/redraw/
   surface lifecycle and logical-coordinate normalization go through
-  `moui/backend/platform_bridge`; native pointer/keyboard/IME/drag decode
+  `moui/backend/common`; native pointer/keyboard/IME/drag decode
   stays platform-local. Gate:
-  `node scripts/validate-platform-adapter-duplication.mjs`.
+  `node scripts/validate-backend-common-boundary.mjs`. The gate has no
+  duplication budget or allowlist; shared behavior must move to its owner.
+- **Window lifecycle owner (ADR 0024/0025)**: `wzzc-dev/window/internal/embedded_dispatch`
+  is physical callback dispatch only. All seven platforms enter
+  `moui/backend/common`; embedded session services remain in
+  `backend/common/embedded`, which must not grow a second lifecycle or frame loop.
+  Gate: `node scripts/validate-window-lifecycle-boundary.mjs`.
 - **Theme layering (ADR 0017)**: `moui/core` carries no control vocabulary;
   control theme tokens live in `moui/views` as `ControlThemeSet`. Gate:
   `node scripts/validate-core-theme-no-control-surface.mjs`.
@@ -184,9 +203,9 @@ owning-package boundaries clear.
   typography role parity,
   component-token matrix coverage plus
   adaptation-difference closure.
-- `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
+- `backend/`: shared `Event`, surface metrics, input contracts,
   window lifecycle registry, window scene resolver, per-window runtime slot
-  collection, platform-window id map, renderer-neutral `HostWindowRenderer`
+  collection, platform-window id map, renderer-neutral `WindowRenderer`
   diagnostics, render-frame cached-layer fallback command replay, image-resource change callback bridge, image-resource repaint
   routing and tracked-window revision/status diagnostics plus repaint-result
   previous/current status counts,
@@ -210,7 +229,7 @@ owning-package boundaries clear.
   native WKWebView platform-view sync, CPU presenter, and neutral CAMetalLayer surface.
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
   optional WebView2 platform-view sync, CPU presenter, and neutral HWND surface.
-- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.4-0.1.4`, Linux
+- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.4-0.1.5`, Linux
   host-service bridge, text-input/IME request sync, drag/drop conversion, a
   neutral CPU presenter plus Wayland GPU surface descriptor,
   optional WebKitGTK platform-view sync, shared host event conversion, and
@@ -336,7 +355,7 @@ sh scripts/check.sh --profile daily
 
 The daily check runs `node scripts/validate-window-dependency.mjs`, which
 confirms that all known consumers pin the same published
-`wzzc-dev/window@0.5.4-0.1.4` version and that `moon.work` does not include a
+`wzzc-dev/window@0.5.4-0.1.5` version and that `moon.work` does not include a
 local window checkout.
 Keep the root README focused on reviewer/user quick paths; detailed `window/`
 submodule and local-source instructions belong in `docs/development.md` and this
@@ -446,7 +465,7 @@ Linux, and WebGPU wasm proof
 artifacts to validate as passed before mainline capability promotion; native
 WGPU diagnostic artifacts are uploaded separately but do not block the summary.
 The platform evidence manifest is schema v2 and records the
-`wzzc-dev/window@0.5.4-0.1.4` package monitor/cursor probe as
+`wzzc-dev/window@0.5.4-0.1.5` package monitor/cursor probe as
 `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native passed
 entries must also set `imeCandidateAnchor`, `imeSurroundingText`,
@@ -502,7 +521,7 @@ first-frame line, respectively.
 Use `record-macos-platform-runtime-evidence.mjs` only for macOS platform
 promotion after macOS `skiaEvidence` is passed and every native IME observation
 has already been recorded by `record-native-ime-evidence.mjs`. The macOS helper
-validates the `wzzc-dev/window@0.5.4-0.1.4` package runtime smoke transcript
+validates the `wzzc-dev/window@0.5.4-0.1.5` package runtime smoke transcript
 through `--window-smoke-log` for window/open/resize/redraw/input/monitor/cursor/shutdown
 source observations, and validates a Showcase or Markdown Editor `macos_skia`
 first-frame source log through `--app-runtime-log` before delegating to the
@@ -534,13 +553,13 @@ node scripts/validate-core-theme-no-control-surface.mjs
 node scripts/validate-host-import-baseline.mjs
 node scripts/validate-backend-renderer-boundary.mjs
 node scripts/validate-renderer-provider-open-extension.mjs
-node scripts/validate-platform-adapter-duplication.mjs
+node scripts/validate-backend-common-boundary.mjs
 node scripts/smoke-check.mjs --check
 moon check
 moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/render/skia --target native
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test moui/backend/android --target native
 moon check examples/showcase/android_window_hosted --target native
 moon test moui/backend/ios --target native

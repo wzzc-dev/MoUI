@@ -7,21 +7,21 @@ test "web backend exposes window-hosted wasm-gc lifecycle" {
 
 ///|
 test "web app options carry scene resolver and platform event sources" {
-  let request = @host.HostWindowOpenRequest::new(
+  let request = @host.WindowOpenRequest::new(
     title="Inspector",
-    scene=@host.HostWindowScene::new(scene_id="inspector"),
-    metrics=@host.HostSurfaceMetrics::from_logical(
+    scene=@host.WindowScene::new(scene_id="inspector"),
+    metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=240.0),
     ),
   )
   match WebAppOptions::new().scene_resolver.resolve(request) {
-    @runtime.HostWindowSceneResolution::SceneRejected(message) =>
+    @runtime.WindowSceneResolution::SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Web scene resolver rejection")
   }
-  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
-    @runtime.HostWindowSceneResolution::SceneResolved(
-      @runtime.HostWindowSceneInstance::new(
+  let resolver = @runtime.WindowSceneResolver::new(resolve=request => {
+    @runtime.WindowSceneResolution::SceneResolved(
+      @runtime.WindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
@@ -47,7 +47,7 @@ test "web app options carry scene resolver and platform event sources" {
     None => fail("expected configured Web route source")
   }
   match options.scene_resolver.resolve(request) {
-    @runtime.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    @runtime.WindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Web scene resolver")
   }
@@ -55,35 +55,35 @@ test "web app options carry scene resolver and platform event sources" {
 
 ///|
 test "web maps close event to host event" {
-  let event = @host.window_event_to_host_with_modifiers(
+  let event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::CloseRequested,
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=1.0,
   )
   match event {
-    Some(@host.HostEvent::CloseRequested) => ()
+    Some(@host.Event::CloseRequested) => ()
     _ => fail("expected close requested")
   }
 }
 
 ///|
 test "web maps browser theme change to host theme event" {
-  let event = @host.window_event_to_host_with_modifiers(
+  let event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::ThemeChanged(@window_core.Theme::Dark),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=1.0,
   )
   match event {
-    Some(@host.HostEvent::ThemeChanged(@core.ColorScheme::Dark)) => ()
+    Some(@host.Event::ThemeChanged(@core.ColorScheme::Dark)) => ()
     _ => fail("expected host theme change")
   }
 }
 
 ///|
 test "web maps surface resize to host metrics" {
-  let event = @host.window_event_to_host_with_modifiers(
+  let event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::SurfaceResized(
       @dpi.PhysicalSize::PhysicalSize(320, 200),
     ),
@@ -92,7 +92,7 @@ test "web maps surface resize to host metrics" {
     scale_factor=1.0,
   )
   match event {
-    Some(@host.HostEvent::Resized(metrics)) => {
+    Some(@host.Event::Resized(metrics)) => {
       assert_true(
         metrics.logical_size == @core.Size::new(width=320.0, height=200.0),
       )
@@ -109,14 +109,14 @@ test "web maps scale factor changes to host metrics" {
   let writer = @window_core.SurfaceSizeWriter::SurfaceSizeWriter(
     @dpi.PhysicalSize::PhysicalSize(640, 360),
   )
-  let event = @host.window_event_to_host_with_modifiers(
+  let event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::ScaleFactorChanged(2.0, writer),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=1.0,
   )
   match event {
-    Some(@host.HostEvent::Resized(metrics)) => {
+    Some(@host.Event::Resized(metrics)) => {
       assert_true(
         metrics.logical_size == @core.Size::new(width=320.0, height=180.0),
       )
@@ -131,7 +131,7 @@ test "web maps scale factor changes to host metrics" {
 
 ///|
 test "web maps pointer move and left button to host events" {
-  let moved = @host.window_event_to_host_with_modifiers(
+  let moved = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::PointerMoved(
       None,
       @dpi.PhysicalPositionF64::PhysicalPositionF64(12.0, 34.0),
@@ -144,14 +144,12 @@ test "web maps pointer move and left button to host events" {
   )
   match moved {
     Some(
-      @host.HostEvent::Pointer(
-        { position, phase: @core.PointerPhase::Move, .. }
-      )
+      @host.Event::Pointer({ position, phase: @core.PointerPhase::Move, .. })
     ) => assert_true(position == @core.Point::new(x=12.0, y=34.0))
     _ => fail("expected pointer move")
   }
 
-  let down = @host.window_event_to_host_with_modifiers(
+  let down = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
@@ -164,7 +162,7 @@ test "web maps pointer move and left button to host events" {
     scale_factor=1.0,
   )
   match down {
-    Some(@host.HostEvent::Pointer({ position, phase, button, .. })) => {
+    Some(@host.Event::Pointer({ position, phase, button, .. })) => {
       assert_true(position == @core.Point::new(x=5.0, y=6.0))
       assert_true(phase == @core.PointerPhase::Down)
       inspect(button, content="0")
@@ -175,7 +173,7 @@ test "web maps pointer move and left button to host events" {
 
 ///|
 test "web maps wheel and focus to host input events" {
-  let wheel = @host.window_event_to_host_with_modifiers(
+  let wheel = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::MouseWheel(
       None,
       @window_core.MouseScrollDelta::LineDelta(0.0, -3.0),
@@ -187,7 +185,7 @@ test "web maps wheel and focus to host input events" {
   )
   match wheel {
     Some(
-      @host.HostEvent::Scroll(
+      @host.Event::Scroll(
         {
           position: { x: 12.0, y: 34.0 },
           delta: @host.HostScrollDelta::Lines({ y: -3.0, .. }),
@@ -197,14 +195,14 @@ test "web maps wheel and focus to host input events" {
     ) => ()
     _ => fail("expected scroll event")
   }
-  let focus = @host.window_event_to_host_with_modifiers(
+  let focus = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::Focused(true),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=1.0,
   )
   match focus {
-    Some(@host.HostEvent::Focus({ focused: true, .. })) => ()
+    Some(@host.Event::Focus({ focused: true, .. })) => ()
     _ => fail("expected focus event")
   }
 }
@@ -221,14 +219,14 @@ test "web maps keyboard modifiers repeat and text" {
     Some("a"),
     Some("A"),
   )
-  let event = @host.window_event_to_host_with_modifiers(
+  let event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::KeyboardInput(None, key_event, false),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::new(shift=true),
     scale_factor=1.0,
   )
   match event {
-    Some(@host.HostEvent::Keyboard(event)) => {
+    Some(@host.Event::Keyboard(event)) => {
       inspect(event.key, content="a")
       match event.text {
         Some(text) => inspect(text, content="a")
@@ -254,20 +252,20 @@ test "web maps named keys and ignores synthetic keyboard input" {
     None,
     None,
   )
-  let event = @host.window_event_to_host_with_modifiers(
+  let event = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::KeyboardInput(None, key_event, false),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=1.0,
   )
   match event {
-    Some(@host.HostEvent::Keyboard(event)) => {
+    Some(@host.Event::Keyboard(event)) => {
       inspect(event.key, content="Enter")
       inspect(event.pressed, content="false")
     }
     _ => fail("expected named key event")
   }
-  let synthetic = @host.window_event_to_host_with_modifiers(
+  let synthetic = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::KeyboardInput(None, key_event, true),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
@@ -281,7 +279,7 @@ test "web maps named keys and ignores synthetic keyboard input" {
 
 ///|
 test "web maps ime composition lifecycle and redraw" {
-  let preedit = @host.window_event_to_host_with_modifiers(
+  let preedit = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::Ime(
       @window_core.Ime::Preedit(
         "ni",
@@ -293,7 +291,7 @@ test "web maps ime composition lifecycle and redraw" {
     scale_factor=1.0,
   )
   let expected_preedit = Some(
-    @host.HostEvent::TextInput(
+    @host.Event::TextInput(
       @core.TextInputEvent::CompositionUpdate(
         @core.CompositionUpdate::new(
           text="ni",
@@ -307,26 +305,26 @@ test "web maps ime composition lifecycle and redraw" {
     _ => fail("expected composition update")
   }
 
-  let ime = @host.window_event_to_host_with_modifiers(
+  let ime = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("hello")),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=1.0,
   )
   match ime {
-    Some(@host.HostEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
+    Some(@host.Event::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
       inspect(text, content="hello")
     _ => fail("expected composition end")
   }
 
-  let redraw = @host.window_event_to_host_with_modifiers(
+  let redraw = @window_host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::RedrawRequested,
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=1.0,
   )
   match redraw {
-    Some(@host.HostEvent::RedrawRequested) => ()
+    Some(@host.Event::RedrawRequested) => ()
     _ => fail("expected redraw requested")
   }
 }

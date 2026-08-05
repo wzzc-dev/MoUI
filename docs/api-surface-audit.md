@@ -57,7 +57,7 @@ their current counts.
 - Keep runtime inspector expansion in `moui/runtime`; do not forward diagnostics
   through `moui`, domain facades, or `moui/views`.
 - Keep host async-image, WebView, window, route, text-input, accessibility, and
-  redraw contracts in `moui/backend/host`; concrete platform packages should
+  redraw contracts in `moui/backend`; concrete platform packages should
   not leak into app packages.
 
 ## Update Rule

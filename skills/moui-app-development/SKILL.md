@@ -95,7 +95,7 @@ only for advanced kernel/diagnostic types not exposed by a domain facade or
 types behind `@animation`, text types behind `@text`, and focus scope types
 behind `@state`. Use `wzzc-dev/moui/services` for files, clipboard, URLs,
 settings, menus, timers, and routes. Production app imports must not include
-`runtime`, `backend/host`, concrete platform backends, or renderer packages.
+`runtime`, `backend`, concrete platform backends, or renderer packages.
 Design-system preview apps may depend on `moui_theme`; Showcase runtime/render
 inspection belongs in its module-root integration package and passes neutral
 DTOs into the app.

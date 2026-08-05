@@ -1,0 +1,27 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend" @host,
+  "wzzc-dev/moui/backend/common" @window_host,
+  "wzzc-dev/moui/backend/common/embedded/services" @host_services_embedded,
+  "wzzc-dev/moui/backend/common/native" @host_services_native,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
+  "wzzc-dev/window/core" @window_core,
+  "wzzc-dev/window/dpi",
+  "moonbitlang/core/json",
+}
+
+import {
+  "wzzc-dev/moui/views",
+} for "test"
+
+import {
+  "wzzc-dev/moui/views",
+} for "wbtest"
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

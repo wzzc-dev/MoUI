@@ -42,7 +42,7 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor {
 
 ///|
 pub fn create_with_host_surface(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   surface : HostWgpuSurface,
 ) -> WgpuRenderer raise @wgpu_mbt.WgpuError {
   { backend: RendererHandle::create_with_host_surface(metrics, surface) }
@@ -50,7 +50,7 @@ pub fn create_with_host_surface(
 
 ///|
 pub fn create_with_host_surface_and_text_engine(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   surface : HostWgpuSurface,
   text_engine~ : NativeTextEngine,
 ) -> WgpuRenderer raise @wgpu_mbt.WgpuError {
@@ -64,7 +64,7 @@ pub fn create_with_host_surface_and_text_engine(
 ///|
 pub fn WgpuRenderer::resize(
   self : WgpuRenderer,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> Unit {
   self.backend.resize(metrics)
 }

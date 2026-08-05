@@ -4,6 +4,7 @@ import {
   "mizchi/image",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
   "wzzc-dev/moui_sun/graphics" @sun_graphics,
   "wzzc-dev/moui_sun/renderer" @sun_renderer,
   "wzzc-dev/moui_sun/text" @sun_text,

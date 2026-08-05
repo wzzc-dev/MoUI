@@ -108,7 +108,7 @@ pub fn linux_capability_summary(
     ime_available=true,
     drag_drop_available=true,
     async_services=false,
-    native_accessibility_available=backend_info().accessibility.native_platform_bridge_available,
+    native_accessibility_available=backend_info().accessibility.native_accessibility_bridge_available,
     web_view_available~,
     web_view_description~,
     description="Wayland host summary with renderer/window readiness, Linux clipboard/file dialog/text-file/open URL/menu services, text-input/IME requests, file drag/drop, and AT-SPI accessibility binding.",
@@ -149,7 +149,7 @@ pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo {
   {
     kind: @runtime.NativeAccessibilityBridgeKind::ATSPI,
     semantics_bridge_available: true,
-    native_platform_bridge_available: true,
+    native_accessibility_bridge_available: true,
     action_dispatch_available: true,
     description: "Linux exposes an AT-SPI accessibility binding over the shared semantics tree with snapshot publish, action dispatch, and cleanup diagnostics.",
   }
@@ -178,26 +178,7 @@ pub fn linux_accessibility_bridge(
 
 ///|
 fn dispatch_linux_menu(commands : Array[@core.ActionCommand]) -> Int {
-  linux_show_menu_bytes(@platform_bridge.encode_menu_commands(commands))
-}
-
-///|
-fn dispatch_linux_list_directory(path : String) -> @host.HostServiceResponse {
-  let names_opt : Array[String]? = Some(@fs.read_dir(path)) catch { _ => None }
-  let names = names_opt.unwrap_or([])
-  let entries : Array[@host.HostDirectoryEntry] = []
-  for name in names {
-    if name.has_prefix(".") {
-      continue
-    }
-    let child_path = path + "/" + name
-    let is_dir_opt : Bool? = Some(@fs.is_dir(child_path)) catch { _ => None }
-    let is_dir = is_dir_opt.unwrap_or(false)
-    entries.push(
-      @host.HostDirectoryEntry::new(name~, path=child_path, is_directory=is_dir),
-    )
-  }
-  @host.HostServiceResponse::DirectoryListing(path, entries)
+  linux_show_menu_bytes(@host_services_desktop.encode_menu_commands(commands))
 }
 
 ///|
@@ -206,46 +187,29 @@ pub fn linux_service_bridge(
   clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_linux_clipboard,
   open_url? : (String) -> Bool = dispatch_linux_open_url,
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_linux_file_dialog,
-  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_linux_text_file,
-  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_linux_binary_file,
+  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
+  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
   settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_linux_settings,
   menu? : (Array[@core.ActionCommand]) -> Int = dispatch_linux_menu,
-  list_directory? : (String) -> @host.HostServiceResponse = dispatch_linux_list_directory,
+  list_directory? : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_list_directory,
 ) -> @host.HostServiceBridge {
-  @host.HostServiceBridge::new(capabilities=service_capabilities(), handle=request => {
-    match request {
-      @host.HostServiceRequest::QuerySystemTheme =>
-        @host.HostServiceResponse::SystemTheme(system_theme)
-      @host.HostServiceRequest::Clipboard(clipboard_request) =>
-        clipboard(clipboard_request)
-      @host.HostServiceRequest::OpenUrl(url) =>
-        if open_url(url) {
-          @host.HostServiceResponse::UrlOpened
-        } else {
-          @host.HostServiceResponse::Unavailable("open URL failed")
-        }
-      @host.HostServiceRequest::FileDialog(options) =>
-        @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
-      @host.HostServiceRequest::TextFile(text_file_request) =>
-        text_file(text_file_request)
-      @host.HostServiceRequest::BinaryFile(binary_file_request) =>
-        binary_file(binary_file_request)
-      @host.HostServiceRequest::Settings(settings_request) =>
-        settings(settings_request)
-      @host.HostServiceRequest::ShowMenu(commands) =>
-        @platform_bridge.menu_command_response_with_unavailable(
-          commands,
-          menu(commands),
-        )
-      @host.HostServiceRequest::SetApplicationMenu(_) =>
-        @host.HostServiceResponse::Unavailable(
-          "application menu bar service is unavailable",
-        )
-      @host.HostServiceRequest::ListDirectory(path) => list_directory(path)
-      @host.HostServiceRequest::PlatformChannel(_) =>
-        @host.HostServiceResponse::Unavailable(request.unavailable_message())
-    }
-  })
+  @host_services_desktop.DesktopHostServices::new(
+    capabilities=service_capabilities(),
+    system_theme~,
+    clipboard~,
+    open_url~,
+    file_dialog~,
+    text_file~,
+    binary_file~,
+    settings~,
+    show_menu=commands => {
+      @host_services_desktop.menu_command_response_with_unavailable(
+        commands,
+        menu(commands),
+      )
+    },
+    list_directory~,
+  ).bridge()
 }
 
 ///|
@@ -290,7 +254,7 @@ fn dispatch_linux_settings(
 
 ///|
 pub fn app_environment() -> @services.AppEnvironment {
-  @host.app_environment(
+  @window_host.app_environment(
     bridge=linux_service_bridge(),
     timer=Some(linux_timer_source()),
   )
@@ -330,7 +294,7 @@ fn dispatch_linux_clipboard(
           )
       }
     @host.HostClipboardRequest::WriteImage(mime_type, image_bytes) => {
-      let mime_encoded = @platform_bridge.encode_host_string(mime_type)
+      let mime_encoded = @host_services_desktop.encode_host_string(mime_type)
       if linux_clipboard_write_image_bytes(mime_encoded, image_bytes) != 0 {
         @host.HostServiceResponse::ClipboardWritten
       } else {
@@ -344,7 +308,7 @@ fn dispatch_linux_clipboard(
 
 ///|
 fn dispatch_linux_open_url(url : String) -> Bool {
-  let bytes = @platform_bridge.encode_host_string(url)
+  let bytes = @host_services_desktop.encode_host_string(url)
   linux_open_url_bytes(bytes, bytes.length()) != 0
 }
 
@@ -352,13 +316,13 @@ fn dispatch_linux_open_url(url : String) -> Bool {
 fn dispatch_linux_file_dialog(
   options : @host.HostFileDialogOptions,
 ) -> Array[String] {
-  let title = @platform_bridge.encode_host_string(options.title)
-  let filters = @platform_bridge.encode_host_filter_list(options.filters)
-  let default_name = @platform_bridge.encode_host_string(
+  let title = @host_services_desktop.encode_host_string(options.title)
+  let filters = @host_services_desktop.encode_host_filter_list(options.filters)
+  let default_name = @host_services_desktop.encode_host_string(
     options.default_name.unwrap_or(""),
   )
   let raw_bytes = linux_file_dialog_bytes(
-    @platform_bridge.host_file_dialog_kind_code(options.kind),
+    @host_services_desktop.host_file_dialog_kind_code(options.kind),
     title,
     title.length(),
     filters,
@@ -366,7 +330,7 @@ fn dispatch_linux_file_dialog(
     default_name,
     default_name.length(),
   )
-  let selection = @platform_bridge.decode_file_dialog_selection(
+  let selection = @host_services_desktop.decode_file_dialog_selection(
     raw_bytes,
     trim_paths=true,
   )
@@ -381,56 +345,6 @@ fn dispatch_linux_file_dialog(
     )
   }
   selection
-}
-
-///|
-fn dispatch_linux_text_file(
-  request : @host.HostTextFileRequest,
-) -> @host.HostServiceResponse {
-  match request {
-    @host.HostTextFileRequest::ReadText(path) =>
-      if @fs.path_exists(path) {
-        let bytes = @fs.read_file_to_bytes(path) catch {
-          _ => return @host.HostServiceResponse::Unavailable("file read failed")
-        }
-        @host.HostServiceResponse::TextFileContent(
-          path,
-          @utf8.decode_lossy(bytes[:], ignore_bom=true),
-        )
-      } else {
-        @host.HostServiceResponse::Unavailable("file does not exist")
-      }
-    @host.HostTextFileRequest::WriteText(path, text) => {
-      let bytes = @utf8.encode(text[:], bom=false)
-      @fs.write_bytes_to_file(path, bytes) catch {
-        _ => return @host.HostServiceResponse::Unavailable("file write failed")
-      }
-      @host.HostServiceResponse::TextFileWritten(path)
-    }
-  }
-}
-
-///|
-fn dispatch_linux_binary_file(
-  request : @host.HostBinaryFileRequest,
-) -> @host.HostServiceResponse {
-  match request {
-    @host.HostBinaryFileRequest::ReadBytes(path) =>
-      if @fs.path_exists(path) {
-        let bytes = @fs.read_file_to_bytes(path) catch {
-          _ => return @host.HostServiceResponse::Unavailable("file read failed")
-        }
-        @host.HostServiceResponse::BinaryFileContent(path, bytes)
-      } else {
-        @host.HostServiceResponse::Unavailable("file does not exist")
-      }
-    @host.HostBinaryFileRequest::WriteBytes(path, bytes) => {
-      @fs.write_bytes_to_file(path, bytes) catch {
-        _ => return @host.HostServiceResponse::Unavailable("file write failed")
-      }
-      @host.HostServiceResponse::BinaryFileWritten(path)
-    }
-  }
 }
 
 ///|

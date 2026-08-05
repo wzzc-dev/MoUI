@@ -1,0 +1,411 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum Event {
+  Resized(@core.SurfaceMetrics)
+  Pointer(@core.PointerEvent)
+  Scroll(HostScrollEvent)
+  Focus(HostFocusEvent)
+  Keyboard(@core.KeyboardEvent)
+  TextInput(@core.TextInputEvent)
+  DragDrop(@core.DragDropEvent)
+  ThemeChanged(@core.ColorScheme)
+  Command(@core.CommandIntent)
+  RedrawRequested
+  CloseRequested
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Event::to_core(Self) -> @core.AppEvent?
+
+pub(all) struct EventResult {
+  needs_rebuild : Bool
+  needs_redraw : Bool
+  redraw_requested : Bool
+  close_requested : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostAppInfo {
+  backend : HostBackendKind
+  uses_shared_event_model : Bool
+  uses_shared_surface_model : Bool
+  uses_shared_input_model : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostAppInfo::new(backend~ : HostBackendKind, description? : String, uses_shared_event_model? : Bool, uses_shared_surface_model? : Bool, uses_shared_input_model? : Bool) -> Self
+
+pub(all) struct HostApplicationMenu {
+  title : String
+  items : Array[HostApplicationMenuItem]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostApplicationMenu::new(title~ : String, items~ : Array[HostApplicationMenuItem]) -> Self
+
+pub(all) struct HostApplicationMenuItem {
+  title : String
+  action_id : Int
+  key_equivalent : String
+  key_modifier_mask : Int
+  separator : Bool
+  enabled : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostApplicationMenuItem::new(title~ : String, action_id~ : Int, key_equivalent? : String, key_modifier_mask? : Int, separator? : Bool, enabled? : Bool) -> Self
+pub fn HostApplicationMenuItem::separator() -> Self
+
+pub(all) enum HostBackendKind {
+  Native
+  Web
+  Wechat
+  Test
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostBackendKind::label(Self) -> String
+
+pub struct HostBinaryFileDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostBinaryFileDiagnostic::byte_length(Self) -> Int
+pub fn HostBinaryFileDiagnostic::operation(Self) -> String
+pub fn HostBinaryFileDiagnostic::path(Self) -> String
+
+pub(all) enum HostBinaryFileRequest {
+  ReadBytes(String)
+  WriteBytes(String, Bytes)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostBinaryFileRequest::diagnostic(Self) -> HostBinaryFileDiagnostic
+
+pub(all) struct HostCapabilitySummary {
+  backend : HostBackendKind
+  label : String
+  services : HostServiceCapabilities
+  input : HostInputCapabilities
+  window_lifecycle : Bool
+  multi_window : Bool
+  text_input_available : Bool
+  ime_available : Bool
+  drag_drop_available : Bool
+  async_services : Bool
+  native_accessibility_available : Bool
+  web_view_available : Bool
+  web_view_description : String
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostCapabilitySummary::from_contracts(info~ : HostAppInfo, services~ : HostServiceCapabilities, input~ : HostInputCapabilities, label? : String, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view_available? : Bool, web_view_description? : String, description? : String) -> Self
+pub fn HostCapabilitySummary::has_required_app_basics(Self) -> Bool
+pub fn HostCapabilitySummary::input_count(Self) -> Int
+pub fn HostCapabilitySummary::new(backend~ : HostBackendKind, label? : String, services? : HostServiceCapabilities, input? : HostInputCapabilities, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view_available? : Bool, web_view_description? : String, description? : String) -> Self
+pub fn HostCapabilitySummary::preflight_fields(Self) -> String
+pub fn HostCapabilitySummary::service_count(Self) -> Int
+pub fn HostCapabilitySummary::test_host(label? : String) -> Self
+pub fn HostCapabilitySummary::unavailable(label? : String, description? : String) -> Self
+
+pub(all) enum HostClipboardRequest {
+  ReadText
+  WriteText(String)
+  ReadImage
+  WriteImage(String, Bytes)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostCompletedServiceResponse {
+  id : HostServiceRequestId
+  request : HostServiceRequest
+  response : HostServiceResponse
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostCoordinatePolicy {
+  input_space : HostCoordinateSpace
+  surface_space : HostCoordinateSpace
+  scale_factor_applied : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostCoordinatePolicy::logical(description? : String) -> Self
+pub fn HostCoordinatePolicy::physical(description? : String) -> Self
+
+pub(all) enum HostCoordinateSpace {
+  LogicalPixels
+  PhysicalPixels
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostDirectoryEntry {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostDirectoryEntry::is_directory(Self) -> Bool
+pub fn HostDirectoryEntry::name(Self) -> String
+pub fn HostDirectoryEntry::new(name~ : String, path~ : String, is_directory? : Bool) -> Self
+pub fn HostDirectoryEntry::path(Self) -> String
+
+pub(all) enum HostFileDialogKind {
+  OpenFile
+  SaveFile
+  PickDirectory
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostFileDialogOptions {
+  kind : HostFileDialogKind
+  title : String
+  filters : Array[String]
+  default_name : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostFileDialogOptions::new(kind~ : HostFileDialogKind, title? : String, filters? : Array[String], default_name? : String?) -> Self
+
+pub(all) struct HostFocusEvent {
+  focused : Bool
+  pointer_cancel_position : @core.Point?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostFocusEvent::new(focused~ : Bool, pointer_cancel_position? : @core.Point?) -> Self
+pub fn HostFocusEvent::to_core(Self) -> @core.AppEvent?
+
+pub(all) struct HostInputCapabilities {
+  pointer : Bool
+  scroll : Bool
+  keyboard : Bool
+  focus : Bool
+  text_input : Bool
+  ime : Bool
+  clipboard : Bool
+  drag_drop : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostInputCapabilities::enabled_labels(Self) -> Array[String]
+pub fn HostInputCapabilities::new(pointer? : Bool, scroll? : Bool, keyboard? : Bool, focus? : Bool, text_input? : Bool, ime? : Bool, clipboard? : Bool, drag_drop? : Bool) -> Self
+pub fn HostInputCapabilities::none() -> Self
+
+pub(all) struct HostInputContract {
+  capabilities : HostInputCapabilities
+  coordinates : HostCoordinatePolicy
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostInputContract::new(capabilities? : HostInputCapabilities, coordinates? : HostCoordinatePolicy) -> Self
+
+pub(all) struct HostPendingServiceRequest {
+  id : HostServiceRequestId
+  request : HostServiceRequest
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum HostScrollDelta {
+  Lines(@core.Point)
+  Pixels(@core.Point)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostScrollDelta::to_logical_pixels(Self, line_extent? : Double) -> @core.Point
+
+pub(all) struct HostScrollEvent {
+  position : @core.Point
+  delta : HostScrollDelta
+  phase : HostScrollPhase
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostScrollEvent::new(position~ : @core.Point, delta~ : HostScrollDelta, phase? : HostScrollPhase) -> Self
+pub fn HostScrollEvent::to_pointer_event(Self) -> @core.PointerEvent
+
+pub(all) enum HostScrollPhase {
+  Started
+  Moved
+  Ended
+  Cancelled
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostServiceBridge {
+  // private fields
+}
+pub fn HostServiceBridge::can_handle(Self, HostServiceRequest) -> Bool
+pub fn HostServiceBridge::capabilities(Self) -> HostServiceCapabilities
+pub fn HostServiceBridge::dispatch(Self, HostServiceRequest) -> HostServiceResponse
+pub fn HostServiceBridge::environment_with_system_theme(Self, @core.Environment) -> @core.Environment
+pub fn HostServiceBridge::new(capabilities~ : HostServiceCapabilities, handle~ : (HostServiceRequest) -> HostServiceResponse) -> Self
+pub fn HostServiceBridge::query_system_theme(Self) -> @core.ColorScheme?
+pub fn HostServiceBridge::unavailable() -> Self
+
+pub(all) struct HostServiceCapabilities {
+  clipboard : Bool
+  menus : Bool
+  file_dialogs : Bool
+  file_access : Bool
+  open_url : Bool
+  system_theme : Bool
+  settings : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceCapabilities::enabled_labels(Self) -> Array[String]
+pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, file_access? : Bool, open_url? : Bool, system_theme? : Bool, settings? : Bool) -> Self
+pub fn HostServiceCapabilities::none() -> Self
+
+pub(all) enum HostServiceKind {
+  ClipboardService
+  MenuService
+  FileDialogService
+  TextFileService
+  BinaryFileService
+  OpenUrlService
+  SystemThemeService
+  SettingsService
+  DirectoryListingService
+  PlatformChannelService
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum HostServiceRequest {
+  Clipboard(HostClipboardRequest)
+  ShowMenu(Array[@core.ActionCommand])
+  SetApplicationMenu(Array[HostApplicationMenu])
+  FileDialog(HostFileDialogOptions)
+  TextFile(HostTextFileRequest)
+  BinaryFile(HostBinaryFileRequest)
+  OpenUrl(String)
+  QuerySystemTheme
+  Settings(HostSettingsRequest)
+  ListDirectory(String)
+  PlatformChannel(PlatformChannelRequest)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceRequest::kind(Self) -> HostServiceKind
+pub fn HostServiceRequest::unavailable_message(Self) -> String
+
+pub(all) struct HostServiceRequestId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceRequestId::new(Int) -> Self
+
+pub(all) enum HostServiceResponse {
+  Unavailable(String)
+  Pending(HostServiceRequestId)
+  ClipboardText(String)
+  ClipboardWritten
+  ClipboardImage(Bytes)
+  MenuAction(@core.ActionCommand)
+  MenuCommand(@core.CommandIntent)
+  ApplicationMenuInstalled
+  FileDialogSelection(Array[String])
+  TextFileContent(String, String)
+  TextFileWritten(String)
+  BinaryFileContent(String, Bytes)
+  BinaryFileWritten(String)
+  UrlOpened
+  SystemTheme(@core.ColorScheme)
+  SettingValue(String?)
+  SettingWritten
+  SettingRemoved
+  DirectoryListing(String, Array[HostDirectoryEntry])
+  PlatformChannel(PlatformChannelResponse)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceResponse::binary_file_diagnostic(Self) -> HostBinaryFileDiagnostic?
+pub fn HostServiceResponse::is_pending(Self) -> Bool
+
+pub(all) enum HostSettingsRequest {
+  Read(String)
+  Write(String, String)
+  Remove(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum HostTextFileRequest {
+  ReadText(String)
+  WriteText(String, String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct PlatformChannelRequest {
+  channel : String
+  operation : String
+  payload : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PlatformChannelRequest::new(channel~ : String, operation~ : String, payload? : String) -> Self
+
+pub(all) enum PlatformChannelResponse {
+  Ok(String)
+  Unavailable(String)
+  Error(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct PlatformViewPlugin {
+  kind : String
+  capabilities_summary : String
+  install_event_dispatcher : ((UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit
+  sync_platform_views : (UInt64, @core.DrawFrame, Double) -> Unit
+  drain_commands : (UInt64) -> Unit
+  dispose_platform_views : (UInt64) -> Unit
+  setup_platform_view_draw : ((UInt64, @core.DrawFrame, Double, ((@core.PlatformViewPixelSink) -> Unit) -> Unit) -> Unit)?
+  poll_native : (() -> Int64?)?
+}
+pub fn PlatformViewPlugin::new(kind~ : String, capabilities_summary~ : String, install_event_dispatcher~ : ((UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit, sync_platform_views~ : (UInt64, @core.DrawFrame, Double) -> Unit, drain_commands~ : (UInt64) -> Unit, dispose_platform_views~ : (UInt64) -> Unit, setup_platform_view_draw? : ((UInt64, @core.DrawFrame, Double, ((@core.PlatformViewPixelSink) -> Unit) -> Unit) -> Unit)?, poll_native? : (() -> Int64?)?) -> Self
+
+pub(all) struct WindowId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WindowId::new(Int) -> Self
+
+pub(all) enum WindowLifecyclePhase {
+  WindowCreated
+  WindowVisible
+  WindowFocused
+  WindowMinimized
+  WindowCloseRequested
+  WindowClosed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WindowOpenRequest {
+  title : String
+  scene : WindowScene
+  metrics : @core.SurfaceMetrics
+  primary : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WindowOpenRequest::new(title~ : String, scene? : WindowScene, metrics~ : @core.SurfaceMetrics, primary? : Bool) -> Self
+
+pub(all) struct WindowRecord {
+  id : WindowId
+  title : String
+  scene : WindowScene
+  metrics : @core.SurfaceMetrics
+  phase : WindowLifecyclePhase
+  primary : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WindowRecord::new(id~ : WindowId, title~ : String, scene? : WindowScene, metrics~ : @core.SurfaceMetrics, phase? : WindowLifecyclePhase, primary? : Bool) -> Self
+
+pub(all) enum WindowRequest {
+  OpenWindow(WindowOpenRequest)
+  FocusWindow(WindowId)
+  CloseWindow(WindowId)
+  ResizeWindow(WindowId, @core.SurfaceMetrics)
+  MinimizeWindow(WindowId)
+  ShowWindow(WindowId)
+  SetPrimaryWindow(WindowId)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WindowRequestCompletion {
+  request : WindowRequest
+  result : WindowRequestResult
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum WindowRequestResult {
+  WindowOpened(WindowId)
+  WindowUpdated(WindowId)
+  WindowRejected(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct WindowRequests {
+  push_fn : (WindowRequest) -> Unit
+  pending_count_fn : () -> Int
+  completed_count_fn : () -> Int
+  drain_fn : () -> Array[WindowRequest]
+  record_result_fn : (WindowRequest, WindowRequestResult) -> Unit
+  subscribe_completed_fn : ((WindowRequestCompletion) -> Unit) -> () -> Unit
+}
+pub fn WindowRequests::completed_count(Self) -> Int
+pub fn WindowRequests::drain(Self) -> Array[WindowRequest]
+pub fn WindowRequests::drain_with_handler(Self, (WindowRequest) -> WindowRequestResult) -> Array[WindowRequestCompletion]
+pub fn WindowRequests::new(push? : (WindowRequest) -> Unit, pending_count? : () -> Int, completed_count? : () -> Int, drain? : () -> Array[WindowRequest], record_result? : (WindowRequest, WindowRequestResult) -> Unit, subscribe_completed? : ((WindowRequestCompletion) -> Unit) -> () -> Unit) -> Self
+pub fn WindowRequests::pending_count(Self) -> Int
+pub fn WindowRequests::push(Self, WindowRequest) -> Unit
+pub fn WindowRequests::record_result(Self, WindowRequest, WindowRequestResult) -> Unit
+pub fn WindowRequests::subscribe_completed(Self, (WindowRequestCompletion) -> Unit) -> () -> Unit
+pub fn WindowRequests::unavailable() -> Self
+
+pub(all) struct WindowScene {
+  scene_id : String
+  payload : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WindowScene::main() -> Self
+pub fn WindowScene::new(scene_id~ : String, payload? : String) -> Self
+
+// Type aliases
+pub type PlatformViewEventCallback = (UInt64, String, @core.PlatformViewEvent) -> Unit
+
+// Traits
+

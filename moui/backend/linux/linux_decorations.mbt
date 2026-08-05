@@ -8,9 +8,9 @@ pub fn scaffold_surface_host(
   logical_width~ : Double,
   logical_height~ : Double,
   scale_factor? : Double = 1.0,
-) -> @host.SurfaceHostState {
-  @host.SurfaceHostState::new(
-    metrics=@host.HostSurfaceMetrics::from_logical(
+) -> @window_host.SurfaceState {
+  @window_host.SurfaceState::new(
+    metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=logical_width, height=logical_height),
       scale_factor~,
     ),
@@ -20,8 +20,8 @@ pub fn scaffold_surface_host(
 }
 
 ///|
-pub fn scaffold_input_host() -> @host.InputHostState {
-  @host.InputHostState::new(
+pub fn scaffold_input_host() -> @window_host.InputState {
+  @window_host.InputState::new(
     focused=false,
     contract=@host.HostInputContract::new(
       capabilities=@host.HostInputCapabilities::none(),
@@ -36,7 +36,7 @@ pub fn scaffold_input_host() -> @host.InputHostState {
 pub fn linux_client_decorated_commands(
   commands : Array[@core.DrawCommand],
   title~ : String,
-  metrics~ : @host.HostSurfaceMetrics,
+  metrics~ : @core.SurfaceMetrics,
   decorations~ : LinuxClientDecorationState,
 ) -> Array[@core.DrawCommand] {
   linux_client_decorated_commands_with_clear_color(
@@ -52,7 +52,7 @@ pub fn linux_client_decorated_commands(
 fn linux_client_decorated_commands_with_clear_color(
   commands : Array[@core.DrawCommand],
   title~ : String,
-  metrics~ : @host.HostSurfaceMetrics,
+  metrics~ : @core.SurfaceMetrics,
   decorations~ : LinuxClientDecorationState,
   clear_color~ : @core.Color,
 ) -> Array[@core.DrawCommand] {
@@ -136,15 +136,15 @@ fn linux_client_decorated_commands_with_clear_color(
 
 ///|
 pub fn linux_surface_metrics_for_content(
-  metrics : @host.HostSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   decorations : LinuxClientDecorationState,
-) -> @host.HostSurfaceMetrics {
+) -> @core.SurfaceMetrics {
   if !decorations.active {
     metrics
   } else {
     let logical_titlebar = decorations.titlebar_height
     let physical_titlebar = logical_titlebar * metrics.scale_factor
-    @host.HostSurfaceMetrics::new(
+    @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(
         width=metrics.logical_size.width,
         height=metrics.logical_size.height + logical_titlebar,
@@ -160,15 +160,15 @@ pub fn linux_surface_metrics_for_content(
 
 ///|
 pub fn linux_content_metrics_for_surface(
-  metrics : @host.HostSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   decorations : LinuxClientDecorationState,
-) -> @host.HostSurfaceMetrics {
+) -> @core.SurfaceMetrics {
   if !decorations.active {
     metrics
   } else {
     let logical_titlebar = decorations.titlebar_height
     let physical_titlebar = logical_titlebar * metrics.scale_factor
-    @host.HostSurfaceMetrics::new(
+    @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(
         width=metrics.logical_size.width,
         height=(metrics.logical_size.height - logical_titlebar).max(1.0),
@@ -185,20 +185,22 @@ pub fn linux_content_metrics_for_surface(
 ///|
 fn linux_request_surface_for_content(
   window : @window_linux.Window,
-  metrics : @host.HostSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   decorations : LinuxClientDecorationState,
 ) -> Unit {
   let surface_metrics = linux_surface_metrics_for_content(metrics, decorations)
   ignore(
-    window.request_surface_size(@host.host_metrics_to_dpi_size(surface_metrics)),
+    window.request_surface_size(
+      @window_host.host_metrics_to_dpi_size(surface_metrics),
+    ),
   )
 }
 
 ///|
 fn linux_window_surface_metrics(
   window : @window_linux.Window,
-) -> @host.HostSurfaceMetrics {
-  @host.surface_metrics_from_physical(
+) -> @core.SurfaceMetrics {
+  @window_host.surface_metrics_from_physical(
     window.surface_size(),
     scale_factor=window.scale_factor(),
   )

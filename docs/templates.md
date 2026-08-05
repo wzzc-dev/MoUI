@@ -42,7 +42,7 @@ pub fn platform_service_bridge() -> @host.HostServiceBridge {
 
 Checklist:
 
-- Add shared request and response types in `backend/host` first.
+- Add shared request and response types in `backend` first.
 - Keep unavailable services capability-gated.
 - Add host and backend tests for success and unavailable paths.
 

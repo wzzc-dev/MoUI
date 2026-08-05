@@ -39,9 +39,3 @@ pub(all) struct ImageResourceLoadCompletion {
   decoded_row_bytes : Int
   background_decode : Bool
 } derive(Eq, Debug, ToJson)
-
-///|
-pub(all) struct ImageResourceLifecycle {
-  mut records : Map[String, ImageResourceRecord]
-  mut revision : Int
-} derive(Eq, Debug)

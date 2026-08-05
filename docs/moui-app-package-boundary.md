@@ -37,7 +37,7 @@ to interoperate over a shared abstraction.
   `moui/runtime`.
 - An app-service implementation: app-facing file, clipboard, URL, settings,
   appearance, menu, timer, and route contracts belong in `moui/services`;
-  host wire protocol and platform channels belong in `moui/backend/host`.
+  host wire protocol and platform channels belong in `moui/backend`.
 - A renderer implementation: Skia, WGPU, and browser WebGPU details belong in
   `moui/render/*`.
 - A design-system addon: Material, Fluent, Carbon, Primer, and their component
@@ -82,14 +82,14 @@ The current target placement is:
   `ComponentContext` runtime-construction details.
 - App-facing platform capabilities belong in `moui/services`. WebView wire
   commands/events, host capabilities, and host-service protocol stay in
-  `moui/backend/host`.
+  `moui/backend`.
 - Renderer and backend implementations remain in `moui/render/*` and
   `moui/backend/*`.
 
 Consider a new addon or more specialized package only when the preceding layers
 cannot naturally own a capability and it will be stably reused by multiple
 packages. A new package must first explain why the responsibility does not
-belong in `views`, `runtime`, or `backend/host`.
+belong in `views`, `runtime`, or `backend`.
 
 ## Current Core Convergence Status
 
@@ -117,7 +117,7 @@ must not be reversed by moving them back into `core`.
   (superseded by ADR 0017).
 - **WebView ownership has moved out**: `WebViewSpec`, `WebViewCommand`,
   `WebViewEvent`, and `WebViewNavigationPolicy` are owned by
-  `moui/backend/host`. `core` retains only renderer-neutral
+  `moui/backend`. `core` retains only renderer-neutral
   `PlatformViewPlacement`, `PlatformViewProperty`, `PlatformViewEvent`, and
   `AppEvent::PlatformView`. Ordinary apps use the `moui/views.web_view` and
   `@views.WebViewEvent` / `@views.WebViewNavigationPolicy` facades; platform
@@ -187,7 +187,7 @@ compatibility aliases or deprecated transition entrypoints.
 - Runtime lifecycle, component-runtime input, effect/subscription diagnostic
   summaries, and inspector snapshots belong in `moui/runtime`.
 - App-facing service protocols belong in `moui/services`; host wire protocols
-  belong in `moui/backend/host` or a concrete backend.
+  belong in `moui/backend` or a concrete backend.
 - `core` retains only protocols and value types that remain stable across
   runtimes, backends, renderers, and views.
 
@@ -269,7 +269,7 @@ directly through `@core`.
 Ordinary apps must not directly depend on:
 
 - `wzzc-dev/moui/runtime`
-- `wzzc-dev/moui/backend/host`
+- `wzzc-dev/moui/backend`
 - `wzzc-dev/moui/render/*`
 - `wzzc-dev/moui/backend/{web,macos,windows,linux}`
 - concrete renderer packages; renderer factories belong in platform composition
@@ -291,7 +291,7 @@ Placement rules:
 
 - They serve only their host app and must not be depended on by another app or a
   framework layer.
-- They may depend on `@core`, `@backend/host`, `@views`, and the app’s own shared
+- They may depend on `@core`, `@backend`, `@views`, and the app’s own shared
   app package according to their specific responsibility, but an ordinary shared
   app package must not depend on them in the reverse direction.
 - They do not participate in domain facades and do not add app-specific types to
@@ -437,7 +437,7 @@ longer exports diagnostics/runtime types such as `EffectPlanSummary`,
 `ProgramRuntimeSnapshot`, or `RenderInspectorSnapshot`, and domain facades do
 not re-export them.
 
-The owning package for WebView types is `wzzc-dev/moui/backend/host`. `core` no
+The owning package for WebView types is `wzzc-dev/moui/backend`. `core` no
 longer exports `WebViewSpec`, `WebViewCommand`, `WebViewEvent`, or
 `WebViewNavigationPolicy`, nor does it provide WebView-specific helpers such as
 `PlatformViewPlacement::web_view`; domain facades do not re-export them.
@@ -548,7 +548,7 @@ Platform entrypoint packages may depend on:
 
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/backend/web`
-- `wzzc-dev/moui/backend/host`
+- `wzzc-dev/moui/backend`
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}`
 - one of `wzzc-dev/moui/render/{skia,wgpu,sun,canvas2d,webgpu_adapter}`
 - `wzzc-dev/window/{android,ios,harmonyos}` in the matching mobile entrypoint
@@ -575,7 +575,7 @@ may use lower-level packages.
 - `moui/runtime`: runtime state, element tree, layout/paint/event dispatch, and
   program execution.
 - `moui/services`: app-facing services and timer/route sources.
-- `moui/backend/host`: host wire, window, event, bridge, and queue protocols.
+- `moui/backend`: host wire, window, event, bridge, and queue protocols.
 - `moui/backend/*`: platform backends.
 - `moui/render/*`: renderer facades and concrete renderer implementations.
 - `moui_richtext`: an addon for rich-text/Markdown documents, editing, commands,
@@ -620,7 +620,7 @@ Before adding a dependency or public API, answer these questions:
 - Is a new `core` API truly a cross-runtime foundational protocol / abstract UI
   kernel capability?
 - Would a new style, form, WebView, routing, rich-text editor, or diagnostics
-  API fit better in `views`, `runtime`, `backend/host`, `moui_devtools`, or an
+  API fit better in `views`, `runtime`, `backend`, `moui_devtools`, or an
   addon?
 - Does `moui_theme/*` remain an addon/preview dependency rather than a default
   dependency of ordinary apps?

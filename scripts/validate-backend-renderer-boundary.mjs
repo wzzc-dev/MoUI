@@ -115,9 +115,7 @@ function isExecutablePackage(content) {
 }
 
 function hasPlatformBackendImport(content) {
-  return /wzzc-dev\/moui\/backend\/(?!host(?:"|\/)|platform_bridge(?:"|\/)|internal(?:"|\/))[^"\s]+/.test(
-    content,
-  );
+  return /wzzc-dev\/moui\/backend\/(?:macos|windows|linux|android|ios|harmonyos|web|wechat)(?:\/|"|\s|$)/.test(content);
 }
 
 function hasCompleteBuilderChain(content) {

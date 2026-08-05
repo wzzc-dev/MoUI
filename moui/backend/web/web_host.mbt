@@ -27,8 +27,8 @@ pub fn canvas_metrics(
   logical_width~ : Double,
   logical_height~ : Double,
   scale_factor? : Double = 1.0,
-) -> @host.HostSurfaceMetrics {
-  @host.HostSurfaceMetrics::from_logical(
+) -> @core.SurfaceMetrics {
+  @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=logical_width, height=logical_height),
     scale_factor~,
   )
@@ -47,8 +47,8 @@ pub fn canvas_surface_host(
   logical_width~ : Double,
   logical_height~ : Double,
   scale_factor? : Double = 1.0,
-) -> @host.SurfaceHostState {
-  @host.SurfaceHostState::new(
+) -> @window_host.SurfaceState {
+  @window_host.SurfaceState::new(
     metrics=canvas_metrics(logical_width~, logical_height~, scale_factor~),
     owns_surface=false,
     can_reconfigure=true,
@@ -56,8 +56,8 @@ pub fn canvas_surface_host(
 }
 
 ///|
-pub fn canvas_input_host() -> @host.InputHostState {
-  @host.InputHostState::new(
+pub fn canvas_input_host() -> @window_host.InputState {
+  @window_host.InputState::new(
     focused=false,
     contract=@host.HostInputContract::new(
       capabilities=@host.HostInputCapabilities::new(
@@ -107,7 +107,7 @@ pub fn web_capability_summary(
 
 ///|
 fn async_dispatch(
-  async_queue : @host.HostServiceAsyncQueue?,
+  async_queue : @window_host.ServiceAsyncQueue?,
   request : @host.HostServiceRequest,
   unavailable_msg : String,
 ) -> @host.HostServiceResponse {
@@ -132,7 +132,7 @@ pub fn web_service_bridge(
       @host.HostServiceRequest::Settings(request).unavailable_message(),
     )
   },
-  async_queue? : @host.HostServiceAsyncQueue? = None,
+  async_queue? : @window_host.ServiceAsyncQueue? = None,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -264,7 +264,7 @@ pub fn web_app_services(
   system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> @services.AppServices {
   let async_queue = web_async_host_service_queue()
-  @host.app_services(
+  @window_host.app_services(
     bridge=web_service_bridge(
       system_theme~,
       open_url=dispatch_web_open_url,
@@ -469,6 +469,6 @@ fn web_async_text_file_write(
 ) -> Unit = "window_web" "text_file_write_async"
 
 ///|
-pub fn request_animation_frame_event() -> @host.HostEvent {
-  @host.HostEvent::RedrawRequested
+pub fn request_animation_frame_event() -> @host.Event {
+  @host.Event::RedrawRequested
 }

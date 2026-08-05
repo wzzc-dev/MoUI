@@ -25,7 +25,7 @@ pub fn diagnostics_input(
 fn renderer_diagnostics(
   providers : Array[@render.RendererProvider],
 ) -> Array[@diagnostics.ShowcaseRendererFeatureDiagnostic] {
-  @render.renderer_feature_capability_report(providers).map(entry => {
+  @render_common.renderer_feature_capability_report(providers).map(entry => {
     let gap_or_partial = entry.providers.any(provider => {
       match provider.status {
         @render.RendererFeatureStatus::Partial

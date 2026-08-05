@@ -23,7 +23,7 @@ Web copy/cut shortcuts are forwarded from the hidden text input to the runtime
 and write selected text through a browser host import using the user-gesture
 `document.execCommand("copy")` path. Focused browser text input can still paste
 through normal input events; app-level async clipboard reads use
-`navigator.clipboard.readText()` and complete through `HostServiceAsyncQueue`
+`navigator.clipboard.readText()` and complete through `ServiceAsyncQueue`
 when browser permissions allow it.
 The Web host now advertises IME readiness because the local `window/web` bridge
 supports browser composition lifecycle events and accepts MoUI
@@ -48,7 +48,7 @@ The browser host import reads `prefers-color-scheme` at startup and listens for
 media-query changes through `window/web`; MoUI maps those events into runtime
 environment color-scheme updates.
 Browser file drag/drop events on the canvas are normalized through
-`HostEvent::DragDrop` and dispatched to `View::on_file_drop` targets. The
+`Event::DragDrop` and dispatched to `View::on_file_drop` targets. The
 Web platform receives browser-exposed file names or relative names rather than
 native filesystem paths.
 The Web backend intentionally does not implement `web_view` with an iframe

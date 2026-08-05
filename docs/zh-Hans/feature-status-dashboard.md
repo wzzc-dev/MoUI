@@ -57,8 +57,8 @@
 ### AsyncImage
 
 - **实现状态**：supported（native Skia local-file source 使用 off-main-thread file I/O 加 Skia decode，生成 decoded RGBA completion payload；provider 测试断言 `background_io` 和 `background_decode`）
-- **L1 证明**：`pr-profile` job 通过（HostAsyncImageLoader dedup、late callback gating、completion routing、drain_fn spawn/drain cycle、decoded payload header 以及 provider 测试中断言的 `background_io` / `background_decode` flag）
-- **L2 证明**：`macos-real-skia` / `linux-real-skia` / `windows-real-skia` 在每个 PR 上通过（local/data URI completion 后的 second-frame repaint marker，通过 `HostNativeAsyncImageSource` completion 的 deferred-completion marker，通过 `--run-renderer-smoke`）
+- **L1 证明**：`pr-profile` job 通过（AsyncImageLoader dedup、late callback gating、completion routing、drain_fn spawn/drain cycle、decoded payload header 以及 provider 测试中断言的 `background_io` / `background_decode` flag）
+- **L2 证明**：`macos-real-skia` / `linux-real-skia` / `windows-real-skia` 在每个 PR 上通过（local/data URI completion 后的 second-frame repaint marker，通过 `NativeAsyncImageSource` completion 的 deferred-completion marker，通过 `--run-renderer-smoke`）
 - **发布就绪**：就绪。`moui-renderer-real-skia-ci.yml` workflow 会在每个 PR 上自动获取三个平台的 second-frame 和 deferred-completion marker。
 - **Runtime 路径**：Off-main-thread file I/O 和 Skia decode 已通过平台 native worker 为 local-file source 实现（macOS 上 GCD，Linux 上 pthread，Windows 上 CreateThread）。`ImageResourceLoadCompletion` 可携带 decoded RGBA pixels、row bytes、`background_io` 和 `background_decode`，Skia 会把 decoded completion 直接应用到 image cache。
 
@@ -75,7 +75,7 @@ matching-device evidence 仍 pending。
 
 | Gate | L1 证明 |
 | --- | --- |
-| Renderer mailbox control queue (`moui/render/render_frame_mailbox.mbt`) | `moui/render` whitebox tests（capacity-two latest-wins；`RendererControlMessage` never dropped） |
+| Renderer mailbox control queue (`moui/render/common/render_frame_mailbox.mbt`) | `moui/render/common` whitebox tests（capacity-two latest-wins；`RendererControlMessage` never dropped） |
 | Native Picture handoff (`moui_skia/native/skia_stub_gpu_worker.cpp`) | 聚焦 native tests（independent thread、retained picture、detach acknowledgement、zero readback counter） |
 | Context-loss recovery (`moui/runtime/renderer_recovery.mbt`) | `moui/runtime` whitebox tests（Idle → Lost → Recovering → Recovered → Idle；`FallbackToRaster` after 2 failures） |
 | Window-hosted verification manifest | `moui_cli/verify.mbt` 和 `moui_cli/verify_wbtest.mbt` |

@@ -56,7 +56,7 @@ options(
 ```
 
 默认共享应用 imports 应保持为 `moui + views`。只有当应用调用宿主服务时才添加
-`"wzzc-dev/moui/backend/host"`；当运行时 smoke 需要时，把 `runtime` 放在平台入口
+`"wzzc-dev/moui/backend"`；当运行时 smoke 需要时，把 `runtime` 放在平台入口
 或仅测试 imports 中；只有低层诊断或高级框架契约需要时才添加 `core`；如果该包属于本仓库，
 将其添加到 `moon.work`。
 
@@ -477,7 +477,7 @@ pub fn EditorModel::program(
 
 ```sh
 moon test moui/views --target native
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/command_palette/app --target native
 ```

@@ -212,7 +212,7 @@ test "excel app preserves formula references for app-originated clipboard text" 
 
 ///|
 test "excel app applies pending clipboard read completions" {
-  let queue = @host.HostServiceAsyncQueue::new()
+  let queue = @backend_common.ServiceAsyncQueue::new()
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(clipboard=true),
     handle=request => {
@@ -224,7 +224,7 @@ test "excel app applies pending clipboard read completions" {
       }
     },
   )
-  let services = @host.app_services(bridge~, async_queue=Some(queue))
+  let services = @backend_common.app_services(bridge~, async_queue=Some(queue))
   let app = ExcelApp::new()
   app.model.set(ExcelModel::with_demo_data().select_cell(12, 0))
   let runtime = excel_dispatch_message(app, services, ExcelMsg::PasteCells)
@@ -1056,5 +1056,5 @@ fn clipboard_services(clipboard : Ref[String]) -> @services.AppServices {
       }
     },
   )
-  @host.app_services(bridge~)
+  @backend_common.app_services(bridge~)
 }

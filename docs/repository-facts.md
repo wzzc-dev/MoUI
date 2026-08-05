@@ -54,13 +54,15 @@ This file is generated from repository manifests and validator reports.
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 35 | 10 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 823 | 450 | 32 |
-| core (moui/core/pkg.generated.mbti) | 2103 | 620 | 177 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 720 | 389 | 31 |
+| core (moui/core/pkg.generated.mbti) | 2114 | 625 | 178 |
 | views facade (moui/views/pkg.generated.mbti) | 610 | 293 | 0 |
-| host contracts (moui/backend/host/pkg.generated.mbti) | 651 | 208 | 45 |
-| renderer facade (moui/render/pkg.generated.mbti) | 979 | 345 | 50 |
+| backend protocols (moui/backend/pkg.generated.mbti) | 410 | 71 | 38 |
+| backend common (moui/backend/common/pkg.generated.mbti) | 471 | 253 | 9 |
+| render protocols (moui/render/pkg.generated.mbti) | 540 | 176 | 36 |
+| render common (moui/render/common/pkg.generated.mbti) | 465 | 178 | 12 |
 | skia renderer (moui/render/skia/pkg.generated.mbti) | 232 | 122 | 6 |
-| sun renderer (moui/render/sun/pkg.generated.mbti) | 241 | 144 | 1 |
+| sun renderer (moui/render/sun/pkg.generated.mbti) | 242 | 144 | 1 |
 | webgpu adapter (moui/render/webgpu_adapter/pkg.generated.mbti) | 160 | 69 | 2 |
 | native wgpu renderer (moui/render/wgpu/pkg.generated.mbti) | 138 | 66 | 2 |
 | native text protocol (moui/render/wgpu/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |

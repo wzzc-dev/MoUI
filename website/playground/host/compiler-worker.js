@@ -163,7 +163,7 @@ function reachablePackageIds(manifest, roots) {
     "wzzc-dev/moui/core/unicode",
     "wzzc-dev/moui/core",
     "wzzc-dev/moui/backend/web",
-    "wzzc-dev/moui/backend/host",
+    "wzzc-dev/moui/backend",
     "Milky2018/moon_zeno",
   ];
   const rank = new Map(priority.map((id, index) => [id, index]));

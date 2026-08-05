@@ -41,7 +41,7 @@ lifecycle、surface creation 和 input，MoUI 入口负责 program 和 renderer 
 | Playground | MoonBit 原生浏览器教程和编辑器 | `website/playground/app/`, `website/playground/web_wasm/` | 使用 `moui_richtext` 构建的代码编辑器、受控 `main.mbt`/`moon.pkg` 文件、应用安全 import 验证、固定版本 MoonBit 编译器 Worker 桥接、沙盒预览宿主、本地持久化、分享 URL 协议，以及六份双语课程资产 |
 | Agent Counter | 最小 agent 可控制运行时示例 | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | 带有语义和命令意图流的 Counter 应用，用于 agent 观察和控制，另有原生 macOS Skia 入口 |
 | Counter | 最小 model/update/view 应用 | `examples/counter/app/` | 简单 `Program::simple` 流程、`center`/`card`、类型化按钮消息，以及保留的 macOS/Web 入口 |
-| Multi Window | 宿主管理的 scene 示例 | `examples/multi_window/app/` | 通过 `HostWindowActions`（`open` / `focus` / `close`）实现独立 main 和 inspector runtime，并配合 `HostWindowRequestQueue` 与 `HostWindowSceneResolver`；保留 macOS 和 multi-canvas Web route |
+| Multi Window | 宿主管理的 scene 示例 | `examples/multi_window/app/` | 通过 `WindowActions`（`open` / `focus` / `close`）实现独立 main 和 inspector runtime，并配合 `WindowRequestQueue` 与 `WindowSceneResolver`；保留 macOS 和 multi-canvas Web route |
 | HarmonyOS Demo | 平台中立 HarmonyOS 交互模型 | `examples/harmonyos_demo/app/` | viewport/tap feedback app model；canonical HarmonyOS composition 与设备证据统一由 Showcase 承担 |
 | Button Freeze Probe | 原生 Skia button freeze 复现 | `examples/button_freeze_probe/app/` | 最小 `data_filter_bar` 过滤 chip、重复点击计数器、primary/tonal 按钮对比，以及保留的 macOS Skia 入口 |
 | Showcase | 统一的组件、模式、平台和诊断目录 | `examples/showcase/app/` | 根 TEA shell；Components/Patterns/Platform 保持 app-safe，Diagnostics 接收中立 DTO，runtime/render 适配位于模块根集成包。Showcase 是唯一覆盖完整 14 路矩阵的示例。 |
@@ -403,7 +403,7 @@ moon test examples/pdf_workbench/pdflite_service_protocol --target wasm-gc
 moon test examples/pdf_workbench/pdflite_service_native_transport --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
 MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdfium_adapter --target native
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon build examples/pdf_workbench/macos_skia --target native
 node scripts/pdf-workbench-native-smoke.mjs
 scripts/pdf-workbench-macos-smoke.sh
@@ -643,7 +643,7 @@ package 会写入 `dist\windows-msvc\MoUIShowcase`，并包含 schema version 1
 
 ## Linux 原生
 
-Linux 示例使用 `wzzc-dev/window@0.5.4-0.1.4` Wayland host core。推荐的原生入口导入
+Linux 示例使用 `wzzc-dev/window@0.5.4-0.1.5` Wayland host core。推荐的原生入口导入
 `backend/linux` 与 `render/skia`，通过 AppBuilder 组合后由中立 Wayland `wl_shm` presenter
 呈现 Skia CPU pixel frames。请在已配置
 Wayland compositor 和真实 Skia link flags 的 Linux host 上运行：

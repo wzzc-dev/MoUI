@@ -3,8 +3,8 @@
 /// the neutral host renderer selected from application-supplied factories.
 priv struct WechatState {
   mut driver : @runtime.HostRuntimeDriver?
-  mut surface : @render.HostWindowRenderer?
-  mut renderer_factories : Array[@render.RendererBindingFactory]
+  mut surface : @render.WindowRenderer?
+  mut renderer_factories : Array[@render.RendererFactory]
   mut surface_id : String
   mut needs_render : Bool
 }
@@ -46,7 +46,7 @@ pub fn entry(options : WechatAppOptions) -> @runtime.PlatformEntry {
 ///|
 fn run_app_internal(
   runtime : @runtime.AppRuntime,
-  renderer_factories : Array[@render.RendererBindingFactory],
+  renderer_factories : Array[@render.RendererFactory],
   options : WechatAppOptions,
 ) -> Unit {
   state.driver = Some(
@@ -71,7 +71,7 @@ fn WechatState::attach_surface(
   logical_height : Double,
   scale_factor : Double,
 ) -> Unit {
-  let metrics = @render.RendererSurfaceMetrics::new(
+  let metrics = @core.SurfaceMetrics::new(
     logical_size=@core.Size::new(width=logical_width, height=logical_height),
     physical_size=@core.Size::new(
       width=logical_width * scale_factor,
@@ -79,7 +79,7 @@ fn WechatState::attach_surface(
     ),
     scale_factor~,
   )
-  let kit = @render.HostSurfaceKit::new(
+  let kit = @render.SurfaceContext::new(
     surface=@render.SurfaceDescriptor::cpu_raster(
       width=logical_width,
       height=logical_height,
@@ -88,7 +88,7 @@ fn WechatState::attach_surface(
     surface_id=self.surface_id,
     metrics~,
   )
-  match @render.resolve_host_renderer(self.renderer_factories, kit) {
+  match @render_common.resolve_renderer(self.renderer_factories, kit) {
     Some(resolution) => {
       match self.surface {
         Some(surface) => surface.dispose()
@@ -140,7 +140,7 @@ pub fn wechat_dispatch_pointer_input(
         _ => @core.PointerPhase::Cancel
       }
       let result = driver.dispatch(
-        @host.HostEvent::Pointer(
+        @host.Event::Pointer(
           @core.PointerEvent::new(
             position=@core.Point::new(x=x_px, y=y_px),
             phase~,

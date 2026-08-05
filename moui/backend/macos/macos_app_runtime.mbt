@@ -37,17 +37,15 @@ pub fn entry(
 
 ///|
 fn macos_surface_binding(
-  factories : Array[@render.RendererBindingFactory],
+  factories : Array[@render.RendererFactory],
 ) -> MacosSurfaceBinding {
-  let image_source = @host_image_source.from_filesystem()
+  let image_source = @host_services_native.filesystem_image_source()
   MacosSurfaceBinding::new(
     create_renderer=(window, metrics) => {
       match macos_native_view_handle(window) {
         Some(raw_view) => {
-          let renderer_metrics = @platform_bridge.renderer_metrics_from_host(
-            metrics,
-          )
-          let host_present = @render.HostPresentTarget::new(
+          let renderer_metrics = metrics
+          let host_present = @render.PresentTarget::new(
             description="macOS host CPU presenter",
             present=frame => {
               macos_present_pixels_to_view(
@@ -89,7 +87,7 @@ fn macos_surface_binding(
               )
             None => None
           }
-          let kit = @render.HostSurfaceKit::new(
+          let kit = @render.SurfaceContext::new(
             surface=@render.SurfaceDescriptor::cpu_raster(
               width=renderer_metrics.logical_size.width,
               height=renderer_metrics.logical_size.height,
@@ -100,7 +98,7 @@ fn macos_surface_binding(
             gpu_surface~,
             image_source=Some(image_source),
           )
-          @render.resolve_host_renderer(factories, kit)
+          @render_common.resolve_renderer(factories, kit)
         }
         None => None
       }
@@ -129,7 +127,7 @@ fn launch_macos_app(
   binding~ : MacosSurfaceBinding,
   options? : MacosHostAppOptions = MacosHostAppOptions::new(),
   smoke_options? : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
-  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+  window_requests? : @host.WindowRequests = @window_host.WindowRequestQueue::new().requests(),
 ) -> Unit {
   let (event_loop, app) = create_macos_app(
     title,
@@ -155,7 +153,7 @@ async fn launch_macos_app_async_pump(
   runtime : @runtime.AppRuntime,
   binding~ : MacosSurfaceBinding,
   options? : MacosHostAppOptions = MacosHostAppOptions::new(),
-  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+  window_requests? : @host.WindowRequests = @window_host.WindowRequestQueue::new().requests(),
   frame_interval_ms? : Int = 8,
 ) -> Unit {
   let (event_loop, app) = create_macos_app(
@@ -182,7 +180,7 @@ fn create_macos_app(
   binding~ : MacosSurfaceBinding,
   options~ : MacosHostAppOptions,
   smoke_options~ : MacosHostSmokeOptions,
-  window_requests~ : @host.HostWindowRequestQueue,
+  window_requests~ : @host.WindowRequests,
 ) -> (@window_macos.EventLoop, MacosNativeHostBackend) {
   let event_loop = @window_macos.EventLoop::EventLoop()
   let services = macos_service_bridge()
@@ -193,7 +191,7 @@ fn create_macos_app(
     title,
     runtime,
     driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
-    coordinator: @runtime.WindowHostCoordinator::new(
+    coordinator: @window_host.WindowCoordinator::new(
       window_requests~,
       scene_resolver=options.scene_resolver,
       services~,
@@ -201,7 +199,7 @@ fn create_macos_app(
     ),
     surface_binding: binding,
     services,
-    platform_slots: @platform_bridge.WindowSlotMap::new(),
+    platform_slots: @window_host.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,
     platform_attributes: options.platform_attributes,

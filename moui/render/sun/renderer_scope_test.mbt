@@ -6,7 +6,7 @@ test "sun renderer layer inherits 2x scale factor" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
       scale_factor=2.0,
     ),
@@ -43,7 +43,7 @@ test "sun renderer rectangular layer mask inherits 2x scale factor" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
       scale_factor=2.0,
     ),
@@ -86,7 +86,7 @@ test "sun renderer rectangular clip inherits 2x scale factor" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
       scale_factor=2.0,
     ),
@@ -125,7 +125,7 @@ test "sun renderer rounded clip inherits 2x scale factor" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
       scale_factor=2.0,
     ),
@@ -167,7 +167,7 @@ test "sun renderer transform scope translates drawing" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -204,7 +204,7 @@ test "sun renderer layer inherits transform scope" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -243,7 +243,7 @@ test "sun renderer nested filter inside transform scope" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -277,7 +277,7 @@ test "sun renderer nested filter inside transform scope" {
 test "sun unmatched scope pops are ignored and counted" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -311,7 +311,7 @@ test "sun unmatched scope pops are ignored and counted" {
 test "sun mismatched scope pop preserves active clip" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
     ),
     target,
@@ -352,7 +352,7 @@ test "sun mismatched scope pop preserves active clip" {
 test "sun unclosed scopes are counted and restored at frame boundary" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
     ),
     target,
@@ -413,7 +413,7 @@ test "sun unclosed scopes are counted and restored at frame boundary" {
 test "sun unsupported command diagnostics reset per frame" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,

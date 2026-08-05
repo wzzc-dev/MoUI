@@ -12,87 +12,96 @@ fn SkiaRasterRenderer::record_unsupported_command(
 fn SkiaRasterRenderer::render_command(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
-  command : @render.PlanOp,
-  canvas_scopes : Array[@render.PlanScopeKind],
+  command : @render_common.PlanOp,
+  canvas_scopes : Array[@render_common.PlanScopeKind],
 ) -> Unit {
   match command {
-    @render.PlanOp::Clear(color) => canvas.clear(skia_color(color))
-    @render.PlanOp::FillRect(rect, color) =>
+    @render_common.PlanOp::Clear(color) => canvas.clear(skia_color(color))
+    @render_common.PlanOp::FillRect(rect, color) =>
       canvas.draw_rect(skia_rect(rect), skia_paint(color))
-    @render.PlanOp::StrokeRect(rect, color, width) =>
+    @render_common.PlanOp::StrokeRect(rect, color, width) =>
       canvas.draw_rect(skia_rect(rect), skia_stroke_paint(color, width))
-    @render.PlanOp::FillRoundedRect(rounded, color) =>
+    @render_common.PlanOp::FillRoundedRect(rounded, color) =>
       canvas.draw_round_rect(
         skia_rect(rounded.rect),
         Float::from_double(rounded.radius),
         Float::from_double(rounded.radius),
         skia_paint(color),
       )
-    @render.PlanOp::StrokeRoundedRect(rounded, color, width) =>
+    @render_common.PlanOp::StrokeRoundedRect(rounded, color, width) =>
       canvas.draw_round_rect(
         skia_rect(rounded.rect),
         Float::from_double(rounded.radius),
         Float::from_double(rounded.radius),
         skia_stroke_paint(color, width),
       )
-    @render.PlanOp::FillRoundedRectBrush(rounded, brush) =>
+    @render_common.PlanOp::FillRoundedRectBrush(rounded, brush) =>
       self.draw_brush_rounded_rect(canvas, rounded, brush, stroke_width=None)
-    @render.PlanOp::StrokeRoundedRectBrush(rounded, brush, width) =>
+    @render_common.PlanOp::StrokeRoundedRectBrush(rounded, brush, width) =>
       self.draw_brush_rounded_rect(
         canvas,
         rounded,
         brush,
         stroke_width=Some(width),
       )
-    @render.PlanOp::DrawShadow(shadow) => self.draw_shadow(canvas, shadow)
-    @render.PlanOp::DrawText(run) => self.draw_text(canvas, run)
-    @render.PlanOp::DrawImage(run) => self.draw_image(canvas, run)
-    @render.PlanOp::PushClip(rect) => {
+    @render_common.PlanOp::DrawShadow(shadow) =>
+      self.draw_shadow(canvas, shadow)
+    @render_common.PlanOp::DrawText(run) => self.draw_text(canvas, run)
+    @render_common.PlanOp::DrawImage(run) => self.draw_image(canvas, run)
+    @render_common.PlanOp::PushClip(rect) => {
       ignore(canvas.save())
-      canvas_scopes.push(@render.PlanScopeKind::Clip)
+      canvas_scopes.push(@render_common.PlanScopeKind::Clip)
       canvas.clip_rect(skia_rect(rect), anti_alias=true)
     }
-    @render.PlanOp::PopClip =>
-      self.pop_canvas_scope(canvas, canvas_scopes, @render.PlanScopeKind::Clip)
-    @render.PlanOp::PushRoundedClip(rounded) => {
+    @render_common.PlanOp::PopClip =>
+      self.pop_canvas_scope(
+        canvas,
+        canvas_scopes,
+        @render_common.PlanScopeKind::Clip,
+      )
+    @render_common.PlanOp::PushRoundedClip(rounded) => {
       ignore(canvas.save())
-      canvas_scopes.push(@render.PlanScopeKind::RoundedClip)
+      canvas_scopes.push(@render_common.PlanScopeKind::RoundedClip)
       canvas.clip_rrect(skia_rrect(rounded), anti_alias=true)
     }
-    @render.PlanOp::PopRoundedClip =>
+    @render_common.PlanOp::PopRoundedClip =>
       self.pop_canvas_scope(
         canvas,
         canvas_scopes,
-        @render.PlanScopeKind::RoundedClip,
+        @render_common.PlanScopeKind::RoundedClip,
       )
-    @render.PlanOp::PushTransform(transform) => {
+    @render_common.PlanOp::PushTransform(transform) => {
       ignore(canvas.save())
-      canvas_scopes.push(@render.PlanScopeKind::Transform)
+      canvas_scopes.push(@render_common.PlanScopeKind::Transform)
       canvas.concat(skia_matrix(transform))
     }
-    @render.PlanOp::PopTransform =>
+    @render_common.PlanOp::PopTransform =>
       self.pop_canvas_scope(
         canvas,
         canvas_scopes,
-        @render.PlanScopeKind::Transform,
+        @render_common.PlanScopeKind::Transform,
       )
-    @render.PlanOp::PushOpacity(opacity) => {
+    @render_common.PlanOp::PushOpacity(opacity) => {
       ignore(canvas.save_layer(paint=skia_opacity_paint(opacity)))
-      canvas_scopes.push(@render.PlanScopeKind::Opacity)
+      canvas_scopes.push(@render_common.PlanScopeKind::Opacity)
     }
-    @render.PlanOp::PopOpacity =>
+    @render_common.PlanOp::PopOpacity =>
       self.pop_canvas_scope(
         canvas,
         canvas_scopes,
-        @render.PlanScopeKind::Opacity,
+        @render_common.PlanScopeKind::Opacity,
       )
-    @render.PlanOp::PushLayer(layer) => {
+    @render_common.PlanOp::PushLayer(layer) => {
       self.push_layer(canvas, layer)
-      canvas_scopes.push(@render.PlanScopeKind::Layer)
+      canvas_scopes.push(@render_common.PlanScopeKind::Layer)
     }
-    @render.PlanOp::PopLayer =>
-      self.pop_canvas_scope(canvas, canvas_scopes, @render.PlanScopeKind::Layer)
-    @render.PlanOp::BeginCachedLayer(spec) => {
+    @render_common.PlanOp::PopLayer =>
+      self.pop_canvas_scope(
+        canvas,
+        canvas_scopes,
+        @render_common.PlanScopeKind::Layer,
+      )
+    @render_common.PlanOp::BeginCachedLayer(spec) => {
       self.push_layer(
         canvas,
         @core.LayerSpec::new(
@@ -100,27 +109,31 @@ fn SkiaRasterRenderer::render_command(
           offscreen=true,
         ),
       )
-      canvas_scopes.push(@render.PlanScopeKind::Layer)
+      canvas_scopes.push(@render_common.PlanScopeKind::Layer)
     }
-    @render.PlanOp::EndCachedLayer(_) =>
-      self.pop_canvas_scope(canvas, canvas_scopes, @render.PlanScopeKind::Layer)
-    @render.PlanOp::DrawCachedLayer(spec) =>
+    @render_common.PlanOp::EndCachedLayer(_) =>
+      self.pop_canvas_scope(
+        canvas,
+        canvas_scopes,
+        @render_common.PlanScopeKind::Layer,
+      )
+    @render_common.PlanOp::DrawCachedLayer(spec) =>
       self.record_unsupported_command(
         "DrawCachedLayer",
         "renderer-local cached layer was requested without a host-expanded cache entry: \{spec.key}",
       )
-    @render.PlanOp::PushFilter(filter) => {
+    @render_common.PlanOp::PushFilter(filter) => {
       self.push_filter(canvas, filter)
-      canvas_scopes.push(@render.PlanScopeKind::Filter)
+      canvas_scopes.push(@render_common.PlanScopeKind::Filter)
     }
-    @render.PlanOp::PopFilter =>
+    @render_common.PlanOp::PopFilter =>
       self.pop_canvas_scope(
         canvas,
         canvas_scopes,
-        @render.PlanScopeKind::Filter,
+        @render_common.PlanScopeKind::Filter,
       )
-    @render.PlanOp::DrawPath(path) => self.draw_path(canvas, path)
-    @render.PlanOp::DrawShaderEffect(spec) =>
+    @render_common.PlanOp::DrawPath(path) => self.draw_path(canvas, path)
+    @render_common.PlanOp::DrawShaderEffect(spec) =>
       self.draw_shader_effect(canvas, spec)
   }
 }
@@ -129,8 +142,8 @@ fn SkiaRasterRenderer::render_command(
 fn SkiaRasterRenderer::pop_canvas_scope(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
-  canvas_scopes : Array[@render.PlanScopeKind],
-  expected : @render.PlanScopeKind,
+  canvas_scopes : Array[@render_common.PlanScopeKind],
+  expected : @render_common.PlanScopeKind,
 ) -> Unit {
   match canvas_scopes.pop() {
     Some(actual) =>
@@ -139,13 +152,13 @@ fn SkiaRasterRenderer::pop_canvas_scope(
       } else {
         canvas_scopes.push(actual)
         self.record_unsupported_command(
-          @render.plan_scope_pop_command(expected),
-          "pop did not match active \{@render.plan_scope_name(actual)} scope",
+          @render_common.plan_scope_pop_command(expected),
+          "pop did not match active \{@render_common.plan_scope_name(actual)} scope",
         )
       }
     None =>
       self.record_unsupported_command(
-        @render.plan_scope_pop_command(expected),
+        @render_common.plan_scope_pop_command(expected),
         "pop has no matching push scope",
       )
   }

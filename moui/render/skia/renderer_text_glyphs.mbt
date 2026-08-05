@@ -210,7 +210,7 @@ fn skia_default_fallback_draw_font(font : @core.FontSpec) -> @skia_native.Font? 
 ///|
 fn skia_text_contains_emoji_hint(text : String) -> Bool {
   for ch in text {
-    if @render.codepoint_is_emoji_hint(ch.to_int()) {
+    if @render_common.codepoint_is_emoji_hint(ch.to_int()) {
       return true
     }
   }
@@ -389,14 +389,14 @@ fn skia_push_language_tag(tags : Array[String], tag : String) -> Unit {
 fn skia_script_language_tag_for_codepoint(codepoint : Int) -> String? {
   if codepoint <= 0 {
     None
-  } else if @render.codepoint_is_emoji_hint(codepoint) {
+  } else if @render_common.codepoint_is_emoji_hint(codepoint) {
     Some("und-Zsye")
-  } else if @render.codepoint_is_kana(codepoint) {
+  } else if @render_common.codepoint_is_kana(codepoint) {
     Some("ja")
-  } else if @render.codepoint_is_cjk_ideograph(codepoint) {
+  } else if @render_common.codepoint_is_cjk_ideograph(codepoint) {
     Some("zh-Hans")
-  } else if @render.codepoint_is_hangul_cluster_codepoint(codepoint) ||
-    @render.codepoint_is_hangul_compatibility_jamo(codepoint) {
+  } else if @render_common.codepoint_is_hangul_cluster_codepoint(codepoint) ||
+    @render_common.codepoint_is_hangul_compatibility_jamo(codepoint) {
     Some("ko")
   } else if skia_codepoint_is_hebrew_script(codepoint) {
     Some("he")

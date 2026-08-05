@@ -1,12 +1,12 @@
 ///|
 pub fn runtime_and_host() -> (
   @runtime.AppRuntime,
-  @runtime.HostWindowSceneResolver,
-  @host.HostWindowRequestQueue,
+  @runtime.WindowSceneResolver,
+  @backend_common.WindowRequestQueue,
 ) {
-  let queue = @host.HostWindowRequestQueue::new()
+  let queue = @backend_common.WindowRequestQueue::new()
   let windows = window_actions(queue)
-  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
+  let resolver = @runtime.WindowSceneResolver::new(resolve=request => {
     match
       @multi_window_app.scene_from_window(
         @multi_window_app.WindowScene::new(
@@ -15,16 +15,14 @@ pub fn runtime_and_host() -> (
         ),
       ) {
       Some(scene) =>
-        @runtime.HostWindowSceneResolution::SceneResolved(
-          @runtime.HostWindowSceneInstance::new(
+        @runtime.WindowSceneResolution::SceneResolved(
+          @runtime.WindowSceneInstance::new(
             request~,
             runtime=runtime_for(scene, windows, request.metrics.logical_size),
           ),
         )
       None =>
-        @runtime.HostWindowSceneResolution::SceneRejected(
-          "unknown sample scene",
-        )
+        @runtime.WindowSceneResolution::SceneRejected("unknown sample scene")
     }
   })
   (
@@ -53,45 +51,45 @@ fn runtime_for(
 
 ///|
 fn window_actions(
-  queue : @host.HostWindowRequestQueue,
+  queue : @backend_common.WindowRequestQueue,
 ) -> @multi_window_app.WindowActions {
-  let host = @host.HostWindowActions::new(queue~)
+  let host = @backend_common.WindowActions::new(queue~)
   @multi_window_app.WindowActions::new(
     dispatch=request => {
       match request {
         @multi_window_app.WindowRequest::Open(open) =>
           host.open(
             title=open.title,
-            scene=@host.HostWindowScene::new(
+            scene=@host.WindowScene::new(
               scene_id=open.scene.scene_id,
               payload=open.scene.payload,
             ),
-            metrics=@host.HostSurfaceMetrics::from_logical(
+            metrics=@core.SurfaceMetrics::from_logical(
               size=@geometry.Size::new(width=open.width, height=open.height),
             ),
           )
         @multi_window_app.WindowRequest::Focus(id) =>
-          host.focus(@host.HostWindowId::new(id.value))
+          host.focus(@host.WindowId::new(id.value))
         @multi_window_app.WindowRequest::Close(id) =>
-          host.close(@host.HostWindowId::new(id.value))
+          host.close(@host.WindowId::new(id.value))
       }
     },
     subscribe=dispatch => {
       queue.subscribe_completed(completion => {
         match completion.result {
-          @host.HostWindowRequestResult::WindowOpened(id) =>
+          @host.WindowRequestResult::WindowOpened(id) =>
             dispatch(
               @multi_window_app.WindowEvent::Opened(
                 @multi_window_app.WindowId::new(id.value),
               ),
             )
-          @host.HostWindowRequestResult::WindowUpdated(id) =>
+          @host.WindowRequestResult::WindowUpdated(id) =>
             dispatch(
               @multi_window_app.WindowEvent::Updated(
                 @multi_window_app.WindowId::new(id.value),
               ),
             )
-          @host.HostWindowRequestResult::WindowRejected(message) =>
+          @host.WindowRequestResult::WindowRejected(message) =>
             dispatch(@multi_window_app.WindowEvent::Rejected(message))
         }
       })

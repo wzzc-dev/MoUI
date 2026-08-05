@@ -28,7 +28,7 @@ const unzipContains = (zip, path) => {
   return result.status === 0;
 };
 
-run(["moon", "test", "moui/backend/host", "--target", "native"]);
+run(["moon", "test", "moui/backend", "--target", "native"]);
 run(["moon", "test", "moui/backend/web", "--target", "wasm-gc"]);
 
 const windowZip = process.env.MOUI_WINDOW_PACKAGE_ZIP || windowDependencyCacheZip();

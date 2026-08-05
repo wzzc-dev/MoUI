@@ -62,85 +62,64 @@ pub(all) struct IosBackendInfo {
 
 ///|
 pub struct IosSurfaceBinding {
-  priv create_renderer : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?
-  priv sync_surface : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @render.HostAsyncImageLoader?
+  priv create_renderer : (IosSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererResolution?
+  priv sync_surface : (IosSurfaceHandle, @core.SurfaceMetrics) -> Unit
+  priv image_loader : @render.ImageLoader?
 }
 
 ///|
 
 ///|
 pub fn IosSurfaceBinding::new(
-  create_renderer~ : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostRendererResolution?,
-  sync_surface? : (IosSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
+  create_renderer~ : (IosSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererResolution?,
+  sync_surface? : (IosSurfaceHandle, @core.SurfaceMetrics) -> Unit = (
     _view,
     _metrics,
   ) => (),
-  image_loader? : @render.HostAsyncImageLoader? = None,
+  image_loader? : @render.ImageLoader? = None,
 ) -> IosSurfaceBinding {
   { create_renderer, sync_surface, image_loader }
 }
 
 ///|
 pub fn ios_surface_binding(
-  factories : Array[@render.RendererBindingFactory],
+  factories : Array[@render.RendererFactory],
 ) -> IosSurfaceBinding {
-  let image_source = @host_image_source.from_filesystem()
-  IosSurfaceBinding::new(create_renderer=(surface, metrics) => {
-    let renderer_metrics = @render.RendererSurfaceMetrics::new(
-      logical_size=metrics.logical_size,
-      physical_size=metrics.physical_size,
-      scale_factor=metrics.scale_factor,
-    )
-    let present = @render.HostPresentTarget::new(
-      description="iOS host CPU presenter",
-      present=frame => {
-        ios_present_pixels_to_view(
-          surface.raw(),
-          frame.width(),
-          frame.height(),
-          frame.row_bytes(),
-          frame.pixels(),
-          frame.pixels().length(),
-        ) !=
-        0
-      },
-    )
-    let gpu_surface = match
+  let shared = @embedded_runtime.mobile_host_surface_binding(
+    factories,
+    presenter_description="iOS host CPU presenter",
+    cpu_present=(raw_handle, frame) => {
+      ios_present_pixels_to_view(
+        raw_handle,
+        frame.width(),
+        frame.height(),
+        frame.row_bytes(),
+        frame.pixels(),
+        frame.pixels().length(),
+      ) !=
+      0
+    },
+    gpu_descriptor=raw_handle => {
       @render.GpuHostSurfaceDescriptor::metal_layer(
-        ios_metal_layer_for_view(surface.raw()),
-      ) {
-      Some(descriptor) =>
-        Some(
-          @render.HostGpuSurfaceBridge::new(
-            descriptor~,
-            create_surface=_ => None,
-            present=_ => true,
-          ),
-        )
-      None => None
-    }
-    let kit = @render.HostSurfaceKit::new(
-      surface=@render.SurfaceDescriptor::cpu_raster(
-        width=renderer_metrics.logical_size.width,
-        height=renderer_metrics.logical_size.height,
-        scale_factor=renderer_metrics.scale_factor,
-      ),
-      metrics=renderer_metrics,
-      cpu_present=Some(present),
-      gpu_surface~,
-      image_source=Some(image_source),
-    )
-    @render.resolve_host_renderer(factories, kit)
-  })
+        ios_metal_layer_for_view(raw_handle),
+      )
+    },
+  )
+  IosSurfaceBinding::new(
+    create_renderer=(surface, metrics) => {
+      (shared.create_renderer)(surface.raw(), metrics)
+    },
+    sync_surface=(surface, metrics) => (shared.sync)(surface.raw(), metrics),
+    image_loader=shared.image_loader,
+  )
 }
 
 ///|
 fn IosSurfaceBinding::create(
   self : IosSurfaceBinding,
   surface : IosSurfaceHandle,
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.HostRendererResolution? {
+  metrics : @core.SurfaceMetrics,
+) -> @render.RendererResolution? {
   (self.create_renderer)(surface, metrics)
 }
 
@@ -148,7 +127,7 @@ fn IosSurfaceBinding::create(
 fn IosSurfaceBinding::sync(
   self : IosSurfaceBinding,
   surface : IosSurfaceHandle,
-  metrics : @host.HostSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> Unit {
   (self.sync_surface)(surface, metrics)
 }
@@ -161,29 +140,15 @@ pub fn IosSurfaceBinding::has_async_image_loader(
 }
 
 ///|
-pub fn create_session(
-  runtime~ : @runtime.AppRuntime,
-  surface~ : IosSurfaceHandle,
-  metrics~ : @host.HostSurfaceMetrics,
-  binding~ : IosSurfaceBinding,
-) -> @embedded_runtime_backend.HostedRuntimeSession? {
-  @embedded_runtime_backend.HostedRuntimeSession::create(
-    runtime~,
-    raw_handle=surface.raw(),
-    metrics~,
-    binding=host_surface_binding_from_ios(binding),
-  )
-}
-
-///|
 pub fn host_surface_binding_from_ios(
   binding : IosSurfaceBinding,
-) -> @embedded_runtime_backend.HostSurfaceBinding {
-  @embedded_runtime_backend.HostSurfaceBinding::new(
+) -> @embedded_runtime.HostSurfaceBinding {
+  @embedded_runtime.HostSurfaceBinding::new(
     create_renderer=fn(raw, metrics) {
       binding.create(IosSurfaceHandle::new(raw~), metrics)
     },
     sync=fn(raw, metrics) { binding.sync(IosSurfaceHandle::new(raw~), metrics) },
+    image_loader=binding.image_loader,
   )
 }
 

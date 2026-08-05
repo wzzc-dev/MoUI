@@ -56,7 +56,7 @@ test "sun renderer accepts host bytes after an earlier source read failure" {
   defer (@fs.remove_file(source) catch { _ => () })
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -102,7 +102,7 @@ test "sun renderer accepts host bytes after an earlier source read failure" {
     _ => fail("expected local image retry fixture write")
   }
   let ready_renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,

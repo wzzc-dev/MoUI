@@ -1,5 +1,5 @@
 ///|
-fn path_mesh_payload(mesh : @render.PathMesh) -> String {
+fn path_mesh_payload(mesh : @render_common.PathMesh) -> String {
   let values : Array[String] = []
   for vertex in mesh.vertices() {
     for component in vertex.components() {

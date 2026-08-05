@@ -3,7 +3,7 @@
 本 cookbook 汇总了无需触碰 `moui/render/*`、无需添加绘制命令、也无需依赖具体渲染器即可
 构建的应用层模式。通用规则是：把状态保存在应用模型中，用 `views` 构造器组合界面，
 用 `core` 辅助函数处理运行时中立契约，并且只在服务确实属于平台时才跨入
-`backend/host`。
+`backend`。
 
 ## 表单
 
@@ -281,7 +281,7 @@ Web 宿主可能暴露文件名或浏览器 handle，而原生宿主可以暴露
 推荐检查：
 
 ```sh
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test moui/backend/web --target wasm-gc
 moon test examples/file_importer/app --target native
 moon test examples/showcase/app/platform --target native
@@ -319,7 +319,7 @@ fn subscriptions(
 推荐检查：
 
 ```sh
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test examples/showcase/app/platform --target native
 moon test examples/markdown_editor/app --target native
 ```
@@ -343,7 +343,7 @@ fn write_clipboard(
 推荐检查：
 
 ```sh
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test examples/showcase/app/platform --target native
 moon test examples/markdown_editor/app --target native
 ```
@@ -352,7 +352,7 @@ moon test examples/markdown_editor/app --target native
 
 优先使用安装在运行时（`Program::with_commands`）上的
 `@core.ActionCommand` / `@views.ActionCommandMap` 来提供可发现的快捷键。保持禁用命令可见。
-只有需要命令映射之外的组合键时，才过滤 `HostEvent::Keyboard`。
+只有需要命令映射之外的组合键时，才过滤 `Event::Keyboard`。
 
 ```moonbit nocheck
 fn action_command_map() -> @views.ActionCommandMap {
@@ -384,7 +384,7 @@ moon test examples/showcase/app/platform --target native
 
 宿主已经将 resize 应用到 surface。需要在模型中使用逻辑尺寸的应用，应从宿主选项获取
 `HostWindowEventSource`（通常通过 `HostPlatformEventSources`），并将
-`HostEvent::Resized` 映射为一条消息。
+`Event::Resized` 映射为一条消息。
 
 ```moonbit nocheck
 fn window_subscriptions(
@@ -395,7 +395,7 @@ fn window_subscriptions(
     label="Lab window events",
     map=window_event =>
       match window_event.event {
-        @host.HostEvent::Resized(metrics) =>
+        @host.Event::Resized(metrics) =>
           Some(WindowResized(metrics.logical_size.width, metrics.logical_size.height))
         _ => None
       },
@@ -409,7 +409,7 @@ fn window_subscriptions(
 推荐检查：
 
 ```sh
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test examples/showcase/app/platform --target native
 ```
 
@@ -529,7 +529,7 @@ moon test moui/core --target native
 
 - 将可复用状态契约放在 `core`。
 - 将渲染器中立的视图构造器放在 `views`。
-- 将平台请求放在 `backend/host` 和活动平台后端中。
+- 将平台请求放在 `backend` 和活动平台后端中。
 - 在 Showcase 或共享 `examples/*/app` 包中演示面向用户的工作流。
 - 公共构造器或其语义变化时，更新 `docs/view-catalog.md`。
 - 公共 API 变化后运行 `moon info`，并将生成的接口 diff 与实现提交一起保留。

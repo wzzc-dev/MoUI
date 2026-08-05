@@ -2,14 +2,14 @@
 /// Build a Skia CPU raster factory from the renderer-neutral host contract.
 pub fn raster(
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
-) -> @render.RendererBindingFactory {
+) -> @render.RendererFactory {
   let image_decoder = skia_image_decoder()
-  @render.RendererBindingFactory::new(id="skia-raster", bind=kit => {
+  @render.RendererFactory::new(id="skia-raster", bind=kit => {
     let target = match kit.cpu_present() {
       Some(host) =>
         SkiaPresentTarget::new(description=host.description(), present=frame => {
           host.present(
-            @render.HostPixelFrame::new(
+            @render.PixelFrame::new(
               width=frame.width(),
               height=frame.height(),
               row_bytes=frame.row_bytes(),
@@ -38,7 +38,9 @@ pub fn raster(
     })
     @render.RendererBindingPlan::new(
       binding~,
-      image_loader=Some(image_decoder.loader(kit.image_source())),
+      image_loader=Some(
+        @render_common.image_loader(image_decoder, kit.image_source()),
+      ),
     )
   })
 }
@@ -49,9 +51,9 @@ pub fn raster(
 /// factory can take over.
 pub fn gpu(
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
-) -> @render.RendererBindingFactory {
+) -> @render.RendererFactory {
   let image_decoder = skia_image_decoder()
-  @render.RendererBindingFactory::new(id="skia-hybrid", bind=kit => {
+  @render.RendererFactory::new(id="skia-hybrid", bind=kit => {
     let descriptor = match kit.gpu_surface() {
       Some(bridge) => {
         let descriptor = bridge.descriptor()
@@ -90,7 +92,9 @@ pub fn gpu(
     }
     @render.RendererBindingPlan::new(
       binding~,
-      image_loader=Some(image_decoder.loader(kit.image_source())),
+      image_loader=Some(
+        @render_common.image_loader(image_decoder, kit.image_source()),
+      ),
       surface~,
     )
   })
@@ -109,13 +113,13 @@ fn skia_image_decoder() -> @render.RendererImageDecoder {
 
 ///|
 fn skia_present_target_from_host(
-  host : @render.HostPresentTarget?,
+  host : @render.PresentTarget?,
 ) -> SkiaPresentTarget {
   match host {
     Some(host) =>
       SkiaPresentTarget::new(description=host.description(), present=frame => {
         host.present(
-          @render.HostPixelFrame::new(
+          @render.PixelFrame::new(
             width=frame.width(),
             height=frame.height(),
             row_bytes=frame.row_bytes(),
@@ -133,12 +137,12 @@ fn skia_present_target_from_host(
 
 ///|
 fn create_skia_gpu_host_renderer(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
   bridge : @render.HostGpuSurfaceBridge,
   descriptor : @render.GpuHostSurfaceDescriptor,
   font_resolution : SkiaFontResolution,
-) -> @render.HostWindowRenderer {
+) -> @render.WindowRenderer {
   let route = skia_gpu_surface_route(descriptor)
   let gpu_target = HostGpuPresentTarget::new(
     description="Skia direct host GPU presenter",
@@ -191,7 +195,7 @@ fn create_skia_gpu_host_renderer(
   }
   let fallback : Ref[SkiaRasterRenderer?] = Ref(None)
   let fallback_active : Ref[Bool] = Ref(false)
-  let activate_fallback : (@render.RendererSurfaceMetrics) -> Bool = next_metrics => {
+  let activate_fallback : (@core.SurfaceMetrics) -> Bool = next_metrics => {
     if fallback_active.val {
       return true
     }
@@ -247,7 +251,7 @@ fn create_skia_gpu_host_renderer(
       }
     }
   }
-  @render.HostWindowRenderer::new(
+  @render.WindowRenderer::new(
     resize=next_metrics => {
       if fallback_active.val {
         match fallback.val {
@@ -355,10 +359,10 @@ fn create_skia_gpu_host_renderer(
 /// Construct the synchronous CPU host path used both by the explicit raster
 /// factory and by GPU creation/recovery failures.
 fn create_skia_raster_host_renderer(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
   font_resolution : SkiaFontResolution,
-) -> @render.HostWindowRenderer {
+) -> @render.WindowRenderer {
   create_with_present_target(
     metrics,
     target,
@@ -371,7 +375,7 @@ fn create_skia_raster_host_renderer(
 
 ///|
 fn skia_gpu_surface_descriptor(
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> @moui_skia.SurfaceDescriptor {
   @moui_skia.SurfaceDescriptor::gpu_n32_premul(
     @moui_skia.ISize::new(
@@ -385,7 +389,7 @@ fn skia_gpu_surface_descriptor(
 fn skia_gpu_window_surface(
   context : @skia_native.GpuContext,
   descriptor : @render.GpuHostSurfaceDescriptor,
-  metrics : @render.RendererSurfaceMetrics,
+  metrics : @core.SurfaceMetrics,
 ) -> @skia_native.Surface? {
   let surface = skia_gpu_surface_descriptor(metrics)
   match descriptor {
@@ -470,7 +474,7 @@ fn skia_gpu_runtime_available(
 
 ///|
 /// Resolve the environment policy entirely inside the Skia renderer package.
-pub fn from_env() -> Array[@render.RendererBindingFactory] {
+pub fn from_env() -> Array[@render.RendererFactory] {
   let mode = match @env.get_env_var("MOUI_SKIA_RENDERER") {
     Some(value) => NativeRendererMode::parse(value)
     None => None
@@ -481,7 +485,7 @@ pub fn from_env() -> Array[@render.RendererBindingFactory] {
 ///|
 fn factories_for_mode(
   mode : NativeRendererMode?,
-) -> Array[@render.RendererBindingFactory] {
+) -> Array[@render.RendererFactory] {
   match mode {
     Some(NativeRendererMode::SkiaRaster) => [raster()]
     Some(NativeRendererMode::SkiaGpu) => [gpu()]

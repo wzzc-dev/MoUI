@@ -96,7 +96,7 @@ local workspace members from `moon.work`. The exact list is generated into
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.4-0.1.4",
+  "wzzc-dev/window@0.5.4-0.1.5",
   "wzzc-dev/moui_skia@0.1.7",
 }
 ```
@@ -105,7 +105,7 @@ The MoonBit package ecosystem is still not as mature as older language
 ecosystems. A failing build can come from registry cache state, package
 publication mistakes, or dependency regressions as well as from MoUI code. When
 dependency-related failures appear, first run `moon update`, inspect the
-resolved package versions, and check whether `wzzc-dev/window@0.5.4-0.1.4` or
+resolved package versions, and check whether `wzzc-dev/window@0.5.4-0.1.5` or
 another package changed behavior.
 
 The `window` package still carries MoUI smoke helpers and evidence docs. Use
@@ -474,7 +474,7 @@ Use focused package tests while editing internals:
 moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/runtime --target native
-moon test moui/backend/host --target native
+moon test moui/backend --target native
 moon test moui/render --target native
 moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
@@ -742,7 +742,7 @@ frontends and tooling:
   `View::from_node`; `core/` should not grow layout-engine dependencies for
   individual controls.
 - `Milky2018/moon_accesskit` is the native accessibility tree representation
-  used by `backend/host`; `@core.SemanticsNode` remains platform-neutral, and
+  used by `backend`; `@core.SemanticsNode` remains platform-neutral, and
   Web continues to use its ARIA adapter.
 - `Milky2018/moon_zeno` powers renderer path tessellation from MoUI
   `DrawPath` / `PathSpec` values into triangle meshes. SVG parsing remains the

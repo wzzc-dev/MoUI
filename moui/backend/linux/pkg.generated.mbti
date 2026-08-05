@@ -3,7 +3,8 @@ package "wzzc-dev/moui/backend/linux"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/common",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
 }
@@ -21,31 +22,31 @@ pub fn linux_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessi
 
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
 
-pub fn linux_adjust_host_event_for_client_decorations(@host.HostEvent, LinuxClientDecorationState) -> @host.HostEvent?
+pub fn linux_adjust_host_event_for_client_decorations(@backend.Event, LinuxClientDecorationState) -> @backend.Event?
 
-pub fn linux_capability_summary(services? : @host.HostServiceCapabilities, web_view_available? : Bool, web_view_description? : String) -> @host.HostCapabilitySummary
+pub fn linux_capability_summary(services? : @backend.HostServiceCapabilities, web_view_available? : Bool, web_view_description? : String) -> @backend.HostCapabilitySummary
 
-pub fn linux_client_decorated_commands(Array[@wzzc-dev/moui/core.DrawCommand], title~ : String, metrics~ : @host.HostSurfaceMetrics, decorations~ : LinuxClientDecorationState) -> Array[@wzzc-dev/moui/core.DrawCommand]
+pub fn linux_client_decorated_commands(Array[@wzzc-dev/moui/core.DrawCommand], title~ : String, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, decorations~ : LinuxClientDecorationState) -> Array[@wzzc-dev/moui/core.DrawCommand]
 
-pub fn linux_content_metrics_for_surface(@host.HostSurfaceMetrics, LinuxClientDecorationState) -> @host.HostSurfaceMetrics
+pub fn linux_content_metrics_for_surface(@wzzc-dev/moui/core.SurfaceMetrics, LinuxClientDecorationState) -> @wzzc-dev/moui/core.SurfaceMetrics
 
-pub fn linux_input_capabilities() -> @host.HostInputCapabilities
+pub fn linux_input_capabilities() -> @backend.HostInputCapabilities
 
-pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int, list_directory? : (String) -> @host.HostServiceResponse) -> @host.HostServiceBridge
+pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int, list_directory? : (String) -> @backend.HostServiceResponse) -> @backend.HostServiceBridge
 
-pub fn linux_surface_metrics_for_content(@host.HostSurfaceMetrics, LinuxClientDecorationState) -> @host.HostSurfaceMetrics
+pub fn linux_surface_metrics_for_content(@wzzc-dev/moui/core.SurfaceMetrics, LinuxClientDecorationState) -> @wzzc-dev/moui/core.SurfaceMetrics
 
 pub fn linux_timer_source() -> @services.TimerSource
 
 pub fn readiness() -> LinuxBackendReadiness
 
-pub fn scaffold_input_host() -> @host.InputHostState
+pub fn scaffold_input_host() -> @common.InputState
 
-pub fn scaffold_service_bridge() -> @host.HostServiceBridge
+pub fn scaffold_service_bridge() -> @backend.HostServiceBridge
 
-pub fn scaffold_surface_host(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @host.SurfaceHostState
+pub fn scaffold_surface_host(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @common.SurfaceState
 
-pub fn service_capabilities() -> @host.HostServiceCapabilities
+pub fn service_capabilities() -> @backend.HostServiceCapabilities
 
 // Errors
 
@@ -69,7 +70,7 @@ pub(all) struct LinuxATSPIBindingDiagnostics {
 pub(all) struct LinuxAccessibilityBridgeInfo {
   kind : @runtime.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool
-  native_platform_bridge_available : Bool
+  native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -89,12 +90,12 @@ pub(all) struct LinuxBackendCapabilities {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct LinuxBackendInfo {
-  host_info : @host.HostAppInfo
+  host_info : @backend.HostAppInfo
   window_backend_available : Bool
   renderer_available : Bool
   capabilities : LinuxBackendCapabilities
   accessibility : LinuxAccessibilityBridgeInfo
-  services : @host.HostServiceCapabilities
+  services : @backend.HostServiceCapabilities
   readiness : LinuxBackendReadiness
   description : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -114,7 +115,7 @@ pub fn LinuxClientDecorationState::new(active~ : Bool, titlebar_height? : Double
 pub struct LinuxHostAppOptions {
   // private fields
 }
-pub fn LinuxHostAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes) -> Self
+pub fn LinuxHostAppOptions::new(scene_resolver? : @runtime.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes) -> Self
 
 pub struct LinuxHostSmokeOptions {
   // private fields

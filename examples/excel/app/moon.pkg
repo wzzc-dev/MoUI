@@ -13,7 +13,8 @@ import {
 }
 
 import {
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend" @host,
+  "wzzc-dev/moui/backend/common" @backend_common,
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/core",
 } for "test"

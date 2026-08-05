@@ -2,7 +2,7 @@
 test "sun renderer text system measures mixed emoji through registered fallback faces" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -42,7 +42,7 @@ test "sun renderer text system measures mixed emoji through registered fallback 
 test "sun renderer draws mixed emoji text without missing fallback diagnostic" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -82,7 +82,7 @@ test "sun renderer draws mixed emoji text without missing fallback diagnostic" {
 test "sun renderer registers font file for requested family" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -120,7 +120,7 @@ test "sun renderer text drawing clips glyphs to the TextRun frame" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -171,7 +171,7 @@ test "sun renderer text drawing scales nonzero 2x frame without hiding glyphs" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=64.0, height=32.0),
       scale_factor=2.0,
     ),
@@ -233,7 +233,7 @@ test "sun renderer text drawing scales nonzero 2x frame without hiding glyphs" {
 test "sun renderer text system reports renderer paragraph metadata" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -264,7 +264,7 @@ test "sun renderer text system reports renderer paragraph metadata" {
 test "sun renderer text maturity diagnostic separates geometry readiness from gaps" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -301,7 +301,7 @@ test "sun renderer text maturity diagnostic separates geometry readiness from ga
 test "sun renderer text selection diagnostic records wrapped geometry" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -331,7 +331,7 @@ test "sun renderer text selection diagnostic records wrapped geometry" {
 test "sun renderer text selection diagnostic observes rtl visual order" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=96.0, height=24.0),
     ),
     target,
@@ -356,7 +356,7 @@ test "sun renderer text selection diagnostic observes rtl visual order" {
 test "sun renderer text visual order diagnostic records rtl metadata" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=96.0, height=24.0),
     ),
     target,
@@ -395,7 +395,7 @@ test "sun renderer text visual order diagnostic records rtl metadata" {
 test "sun renderer text selection diagnostic defaults to wrapped line range" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -415,7 +415,7 @@ test "sun renderer text selection diagnostic defaults to wrapped line range" {
 test "sun renderer text selection diagnostic normalizes grapheme range" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -440,7 +440,7 @@ test "sun renderer text selection diagnostic normalizes grapheme range" {
 test "sun renderer emoji fallback diagnostic reports registered font fallback without color proof" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -517,7 +517,7 @@ test "sun renderer emoji fallback diagnostic reports registered font fallback wi
 test "sun renderer fallback diagnostic prefers non ascii representative script metadata" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
     target,
@@ -556,7 +556,7 @@ test "sun renderer fallback diagnostic prefers non ascii representative script m
 test "sun renderer text system wraps measured text to max width" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=24.0, height=32.0),
     ),
     target,
@@ -597,7 +597,7 @@ test "sun renderer draws wrapped fallback text on later visual lines" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=30.0),
     ),
     target,

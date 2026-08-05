@@ -304,7 +304,7 @@ test "skia empty typeface drawing falls back when the glyph run is blank" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=1.0, height=1.0),
     ),
     target,
@@ -332,7 +332,7 @@ test "skia text drawing clips glyphs to the TextRun frame" {
   guard skia_test_native_text_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=96.0, height=36.0),
     ),
     target,

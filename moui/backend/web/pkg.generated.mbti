@@ -3,7 +3,8 @@ package "wzzc-dev/moui/backend/web"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
 }
@@ -19,13 +20,13 @@ pub fn canvas_host_constraints() -> CanvasHostConstraints
 
 pub fn canvas_input_host() -> @host.InputHostState
 
-pub fn canvas_metrics(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @host.HostSurfaceMetrics
+pub fn canvas_metrics(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @core.SurfaceMetrics
 
 pub fn canvas_surface_host(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @host.SurfaceHostState
 
 pub fn entry(options? : WebAppOptions) -> @runtime.PlatformEntry
 
-pub fn request_animation_frame_event() -> @host.HostEvent
+pub fn request_animation_frame_event() -> @host.Event
 
 pub fn semantics_to_aria(@wzzc-dev/moui/core.SemanticsNode) -> AriaNode
 
@@ -145,4 +146,3 @@ pub fn WebDocumentMetadata::new(title~ : String, description? : String, canonica
 // Type aliases
 
 // Traits
-

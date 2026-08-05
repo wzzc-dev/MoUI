@@ -37,7 +37,7 @@ test "sun renderer surface diagnostic summary tracks cpu pixel target" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=5.0, height=3.0),
       scale_factor=2.0,
     ),
@@ -62,7 +62,7 @@ test "sun renderer presents rect pixels" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -97,7 +97,7 @@ test "sun renderer applies multiply blend mode in layer compositing" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -139,7 +139,7 @@ test "sun renderer applies layer spec opacity at compositing" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -173,7 +173,7 @@ test "sun renderer applies rectangular layer mask" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -215,7 +215,7 @@ test "sun renderer applies rounded layer mask corners" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -256,7 +256,7 @@ test "sun renderer draws text without unsupported diagnostic" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=24.0, height=12.0),
     ),
     target,
@@ -299,7 +299,7 @@ test "sun renderer works at 2x scale factor" {
   })
   // Create with 2x scale factor
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
       scale_factor=2.0,
     ),
@@ -336,7 +336,7 @@ test "sun renderer renders linear gradient pixels" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=1.0),
     ),
     target,
@@ -379,7 +379,7 @@ fn sun_test_png_data_uri() -> String {
 test "sun renderer records ready image lifecycle once for cached image draws" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -444,7 +444,7 @@ test "sun renderer records ready image lifecycle once for cached image draws" {
 test "sun renderer records failed image lifecycle once for repeated decode errors" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -486,7 +486,7 @@ test "sun renderer records failed image lifecycle once for repeated decode error
 test "sun renderer async image loading waits for explicit completion" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -591,7 +591,7 @@ test "sun renderer rounded clip + blur integration" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -634,7 +634,7 @@ test "sun renderer nested layers with opacity compositing" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -673,7 +673,7 @@ test "sun renderer triple-pass blur produces smooth falloff" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=8.0),
     ),
     target,
@@ -716,7 +716,7 @@ test "sun renderer vignette shader paints radial fallback" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -754,7 +754,7 @@ test "sun renderer brightness filter applies via pixmap compositing" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -789,7 +789,7 @@ test "sun renderer blur filter softens edge" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=8.0),
     ),
     target,
@@ -840,7 +840,7 @@ test "sun renderer rounded clip draws center pixel" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -878,7 +878,7 @@ test "sun renderer rounded clip masks corner pixel" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -918,7 +918,7 @@ test "sun renderer rounded clip with zero radius acts as rect clip" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -954,7 +954,7 @@ test "sun renderer rounded clip with zero radius acts as rect clip" {
 test "sun renderer records disposed image resources after ready lifecycle" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -999,7 +999,7 @@ test "sun renderer records disposed image resources after ready lifecycle" {
 test "sun renderer exposes stale image load completion apply port" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -1048,7 +1048,7 @@ test "sun renderer cached layer renders and caches on first draw" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=4.0),
     ),
     target,
@@ -1084,7 +1084,7 @@ test "sun renderer cached layer renders and caches on first draw" {
 test "sun renderer cached layer hits on second render with same revision" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=4.0),
     ),
     target,
@@ -1117,7 +1117,7 @@ test "sun renderer cached layer hits on second render with same revision" {
 test "sun renderer cached layer misses on revision change" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=4.0),
     ),
     target,
@@ -1161,7 +1161,7 @@ test "sun renderer cached layer misses on revision change" {
 test "sun renderer DrawCachedLayer draws from cache" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=4.0),
     ),
     target,
@@ -1200,7 +1200,7 @@ test "sun renderer DrawCachedLayer draws from cache" {
 test "sun renderer dispose clears cached layers" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=4.0),
     ),
     target,
@@ -1243,7 +1243,7 @@ test "sun renderer DrawPath fills a rect path" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -1288,7 +1288,7 @@ test "sun renderer DrawPath strokes a rect path" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
@@ -1332,7 +1332,7 @@ test "sun renderer DrawShadow renders shadow behind rect" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=32.0, height=32.0),
     ),
     target,
@@ -1375,7 +1375,7 @@ test "sun renderer saturate filter desaturates red to gray" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -1416,7 +1416,7 @@ test "sun renderer contrast filter increases contrast" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -1450,7 +1450,7 @@ test "sun renderer checker shader alternates tiles" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
@@ -1497,7 +1497,7 @@ test "sun renderer radial gradient varies center to edge" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=1.0),
     ),
     target,
@@ -1539,7 +1539,7 @@ test "sun renderer screen blend mode brightens" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -1579,7 +1579,7 @@ test "sun renderer darken blend mode keeps darker" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -1620,7 +1620,7 @@ test "sun renderer lighten blend mode keeps lighter" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -1661,7 +1661,7 @@ test "sun renderer overlay blend mode combines correctly" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -1704,7 +1704,7 @@ test "sun renderer color matrix filter inverts via matrix" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
@@ -1749,7 +1749,7 @@ test "sun renderer gradient stroke on path" {
     true
   })
   let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
+    @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=1.0),
     ),
     target,

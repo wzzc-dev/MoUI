@@ -1,6 +1,6 @@
 # ADR 0011-0021: Platform Class and Convergence (merged)
 
-> 原编号保留为小节锚点: 0011-platform-product-class-and-mobile-readiness,0020-platform-adapter-convergence-and-duplication-budget,0021-mobile-platform-experimental-downgrade
+> 原编号保留为小节锚点: 0011-platform-product-class-and-mobile-readiness,0020-platform-bridge-convergence,0021-mobile-platform-experimental-downgrade
 
 ---
 
@@ -80,9 +80,9 @@ and host-sim coverage this ADR describes remain intact.
 
 ---
 
-## 0020: Platform Bridge convergence and duplication budget
+## 0020: Platform Bridge convergence
 
-- **Date**: 2026-07-28, amended 2026-07-29, amended 2026-08-01
+- **Date**: 2026-07-28, amended 2026-07-29, 2026-08-01, 2026-08-05
 - **Status**: Accepted
 - **Related**: ADR 0011 (platform product class), ADR 0018 (host contract
   split), ADR 0019 (renderer providers), invariants P5/M6
@@ -97,13 +97,13 @@ decode native input or gain a reverse dependency on a platform package.
 
 ### Decision
 
-`moui/backend/platform_bridge` is the single owner of the platform-to-neutral
-host bridge. It imports only `moui/core`, `moui/backend/host`, and `window`
+`moui/backend/common` is the single owner of the platform-to-neutral
+host bridge. It imports only `moui/core`, `moui/backend`, and `window`
 value types. There is no compatibility package at the previous path.
 
 The bridge owns only these cross-platform operations:
 
-- Close, focus, resize, scale, and redraw conversion to `HostEvent`.
+- Close, focus, resize, scale, and redraw conversion to `Event`.
 - Surface attach/detach, metrics, and lifecycle state.
 - Logical-coordinate normalization.
 
@@ -113,19 +113,18 @@ This preserves the native payload boundary while requiring every applicable
 desktop, Web, Android, iOS, and HarmonyOS backend to invoke the bridge after
 it has decoded a neutral lifecycle event.
 
-WeChat is included in the capability inventory and duplication scan as the
+WeChat is included in the capability inventory and boundary validation as the
 `direct-canvas-callback` exception. It must not fabricate a `WindowEvent`
 dependency; the validator instead confirms that its Canvas lifecycle does not
 redefine bridge responsibilities.
 
-The enforced PR gate is a MoonBit tool at
-`tools/moui/validate_platform_adapter_duplication`, kept reachable through the
-thin Node wrapper `scripts/validate-platform-adapter-duplication.mjs`. Its
-schema-v2 baseline declares the bridge modules, normalization token budgets,
-and only justified native exceptions. The wrapper passes the current UTC date;
-expired `allowUntil` entries fail, as do missing bridge imports/uses, bridge
-helper redefinitions, duplicated normalization over budget, and invalid WeChat
-usage.
+The enforced PR gate is the MoonBit tool
+`tools/moui/validate_backend_common_boundary`, reached through the thin Node
+wrapper `scripts/validate-backend-common-boundary.mjs`. It checks direct bridge
+use by desktop/Web backends, shared embedded-runtime use by mobile backends,
+bridge-helper redefinitions, and the fixed WeChat direct-canvas boundary. It
+does not measure file similarity and has no threshold, budget, allowlist, or
+expiry date.
 
 ### Consequences
 
@@ -133,49 +132,65 @@ usage.
   runtime ownership.
 - New applicable platform hosts must import and use the bridge rather than
   recreate lifecycle conversion helpers.
-- A genuine platform-specific duplication exception needs a baseline allowlist
-  reason and an expiry date; the budget may otherwise only shrink or remain
-  stable.
-- Bridge behavior is covered by `moon test moui/backend/platform_bridge
+- Shared behavior found in platform packages must move to its owning shared
+  package. Nominal type adaptation, native payload decode, and ABI-specific FFI
+  symbols remain platform-local.
+- Bridge behavior is covered by `moon test moui/backend/common
   --target native`; the validator has its own MoonBit fixture tests and is part
   of the PR profile.
 
-### Amendment (2026-08-01): window-host coordination and file-level similarity gate
+### Amendment (2026-08-01): window-host coordination
 
 The window-lifecycle state that was previously re-implemented per backend now
-lives in `WindowHostCoordinator` (moui/runtime, with `WindowSurfaceActions`
+lived in the then-current `WindowCoordinator` (formerly `moui/runtime`, with `WindowSurfaceActions`
 per-window projections). macOS/Windows/Linux and the Web backend all delegate
 window records, runtime slots, platform-window maps, surface attachment,
 redraw/IME/close coordination, and host-event dispatch to it; embedded-runtime
-backends share `moui/backend/internal/embedded_runtime_backend`
+backends share `moui/backend/common/embedded`
 (`HostedWindowBackend`/`HostedRuntimeSession`), leaving each platform's
 `window_hosted.mbt` as a thin shell.
 
-The api-surface validator gains a file-level mirror similarity gate
-(`validate_platform_file_similarity` in
-`tools/moui/validate_api_surface/platform_file_similarity.mbt`): platform
-identifiers are normalized to a placeholder token, mirror file pairs scoring
-above 80% similarity are rejected unless registered in
-`platform_file_similarity_budgets` with a reason and a per-pair budget row.
-Registered pairs include the Wave 2 shared embedded-runtime shells, renderer
-provider adapter shells, and pre-existing duplicate helper files
-(`menu_helpers`, `file_dialog_helpers`); new platform files must fold shared
-logic into the coordinator/shared packages instead of copying it.
+### Amendment (2026-08-05): unified window-host owner (ADR 0024)
+
+The 2026-08-01 placement is superseded by ADR 0024. The desktop/Web
+`WindowCoordinator`, embedded `EmbeddedWindowCoordinator`, and shared
+`FrameCoordinator` now live in `moui/backend/common`.
+`moui/runtime` retains `AppRuntime`, scene resolution, and `HostRuntimeDriver`
+only. `wzzc-dev/window/internal/embedded_dispatch` dispatches physical
+callbacks without logical phase, generation, primary-window, or exit state;
+embedded sessions and transport remain in `embedded_runtime`.
+
+### Amendment (2026-08-05): behavior uniqueness replaces similarity accounting
+
+File similarity and duplication-budget enforcement are removed. Similarity is
+not a sound proxy for ownership: nominal adapters can be intentionally alike,
+while behaviorally duplicated state machines can evade token thresholds. The
+acceptance rule is now structural: desktop service routing lives in
+`moui/backend/common/desktop`; embedded pending request/completion
+state lives in `moui/backend/common/embedded/services` and is consumed
+only by `moui/backend/common/embedded`; desktop request/resize/redraw
+state lives in `WindowCoordinator` in
+`moui/backend/common`; Android/iOS/HarmonyOS logical lifecycle
+and surface state live in `EmbeddedWindowCoordinator` in that package,
+while `wzzc-dev/window/internal/embedded_dispatch` is physical callback
+dispatch; post-callback mobile session/renderer/redraw/IME/semantics/
+platform-view/transport behavior lives in `embedded_runtime`.
 
 ### Rejected alternatives
 
-- Putting platform logic in `backend/host` would create host knowledge of
+- Putting platform logic in `backend` would create host knowledge of
   concrete platforms and violates the host-contract boundary.
 - Translating raw pointer/keyboard/IME/drag payloads in the bridge would erase
   necessary platform semantics.
-- Leaving each backend to maintain equivalent lifecycle helpers would make the
-  duplication budget unenforceable.
+- Leaving each backend to maintain equivalent lifecycle helpers would preserve
+  multiple behavioral owners and is rejected even when files are textually
+  dissimilar.
 
 ### References
 
 - `docs/invariants.md`
 - `docs/architecture-map.md`
-- `checks/platform-adapter-duplication-baseline.json`
+- `tools/moui/validate_backend_common_boundary`
 
 ---
 
@@ -228,4 +243,3 @@ WGPU is labeled non-mainline.
   and host-sim smoke re-run with `--require-passed`.
 - ADR 0011 remains accepted; its product-class decisions (points 1, 2, 3, 5)
   are superseded in part by this record.
-

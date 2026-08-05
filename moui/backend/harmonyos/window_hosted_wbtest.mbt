@@ -8,8 +8,8 @@ test "harmonyos window-hosted host-sim creates session and presents" {
     _metrics,
   ) => {
     Some(
-      @render.HostRendererResolution::new(
-        renderer=@render.HostWindowRenderer::new(
+      @render.RendererResolution::new(
+        renderer=@render.WindowRenderer::new(
           resize=_ => (),
           render=_ => (),
           render_frame=Some(_frame => {
@@ -25,7 +25,7 @@ test "harmonyos window-hosted host-sim creates session and presents" {
       ),
     )
   })
-  let app = new_harmonyos_embedded_runtime_backend(
+  let app = new_harmonyos_embedded_runtime(
     title="window-hosted-test",
     runtime_factory=metrics => {
       let runtime = @runtime.AppRuntime::new_view(
@@ -42,7 +42,7 @@ test "harmonyos window-hosted host-sim creates session and presents" {
       runtime
     },
     surface_binding_factory=() => binding,
-    auto_exit_after_frames=Some(1),
+    auto_exit_after_frames=None,
   )
   harmonyos_window_hosted_pump_host_sim(app, surface_handle=0x55UL)
   assert_true(app.frames_presented() >= 1)

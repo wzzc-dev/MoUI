@@ -28,7 +28,7 @@ Tier, L0-L3 evidence, and `product_class`/`ready` are independent. Source: `chec
 The default daily baseline covers:
 
 - `moui/core` and `moui/views`
-- `moui/backend/host` and `moui/backend/web`
+- `moui/backend` and `moui/backend/web`
 - `moui/render`, `moui/render/skia`, and `moui/render/webgpu_adapter`
 - fallback-safe `moui_skia` checks
 - Showcase app/Web wasm-gc validation
@@ -37,7 +37,7 @@ The default daily baseline covers:
 - maintenance baseline ratchets for oversized source files, source-level
   `pub(all)` counts, and root facade type-forwarding counts
 - API surface package budgets plus semantic classification budgets for
-  `core`, `views`, `runtime`, `backend/host`, and `render`
+  `core`, `views`, `runtime`, `backend`, and `render`
 
 Complete platform runtime smoke is a release or matching-host gate, not a
 default daily gate. Daily checks do not require fresh matching-host promotion.
@@ -58,7 +58,7 @@ The guard tracks three budgets:
 
 - oversized file ratchets for current hotspots such as `moui/core/unicode/grapheme_data.mbt`,
   `moui/runtime/view_tree.mbt`, `moui/views/form/form_validation_test.mbt`,
-  `moui/backend/host/host_test.mbt`, Skia renderer text/tests, and large
+  `moui/backend/common` lifecycle/image tests, Skia renderer text/tests, and large
   example app files;
 - direct package source `pub(all)` counts for core, views, host, render,
   mainline examples, Mo Workbench, PDF Workbench, and Website;

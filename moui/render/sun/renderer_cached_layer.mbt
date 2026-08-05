@@ -344,15 +344,15 @@ fn SunRasterRenderer::cached_layer_admission_skip_reason(
 
 ///|
 fn sun_find_cached_layer_end(
-  commands : Array[@render.PlanOp],
+  commands : Array[@render_common.PlanOp],
   start : Int,
   key : String,
 ) -> Int? {
   let mut depth = 0
   for index in start..<commands.length() {
     match commands[index] {
-      @render.PlanOp::BeginCachedLayer(_) => depth = depth + 1
-      @render.PlanOp::EndCachedLayer(end_key) =>
+      @render_common.PlanOp::BeginCachedLayer(_) => depth = depth + 1
+      @render_common.PlanOp::EndCachedLayer(end_key) =>
         if depth == 0 {
           if end_key == key {
             return Some(index)
@@ -371,10 +371,10 @@ fn sun_find_cached_layer_end(
 ///|
 fn SunRasterRenderer::render_cached_command_range(
   self : SunRasterRenderer,
-  commands : Array[@render.PlanOp],
+  commands : Array[@render_common.PlanOp],
   start : Int,
   end : Int,
-  canvas_scopes : Array[@render.PlanScopeKind],
+  canvas_scopes : Array[@render_common.PlanScopeKind],
   opacity_stack : Array[Double],
   blend_mode_stack : Array[@sun_graphics.BlendMode],
   layer_spec_stack : Array[SunLayerScope],
@@ -384,7 +384,7 @@ fn SunRasterRenderer::render_cached_command_range(
   let mut index = start
   while index < end {
     match commands[index] {
-      @render.PlanOp::BeginCachedLayer(spec) =>
+      @render_common.PlanOp::BeginCachedLayer(spec) =>
         match sun_find_cached_layer_end(commands, index + 1, spec.key) {
           Some(layer_end) => {
             if !self.render_or_draw_cached_layer(
@@ -407,13 +407,13 @@ fn SunRasterRenderer::render_cached_command_range(
             return false
           }
         }
-      @render.PlanOp::EndCachedLayer(_) => {
+      @render_common.PlanOp::EndCachedLayer(_) => {
         self.record_unsupported_command(
           "EndCachedLayer", "EndCachedLayer encountered without matching BeginCachedLayer",
         )
         return false
       }
-      @render.PlanOp::DrawCachedLayer(spec) => {
+      @render_common.PlanOp::DrawCachedLayer(spec) => {
         if !self.draw_cached_layer_from_cache(
             spec,
             sun_current_opacity(opacity_stack),
@@ -439,7 +439,7 @@ fn SunRasterRenderer::render_cached_command_range(
 fn SunRasterRenderer::render_or_draw_cached_layer(
   self : SunRasterRenderer,
   spec : @core.CachedLayerSpec,
-  commands : Array[@render.PlanOp],
+  commands : Array[@render_common.PlanOp],
   child_start : Int,
   child_end : Int,
   opacity : Double,
@@ -470,7 +470,7 @@ fn SunRasterRenderer::render_or_draw_cached_layer(
 fn SunRasterRenderer::update_cached_layer(
   self : SunRasterRenderer,
   spec : @core.CachedLayerSpec,
-  commands : Array[@render.PlanOp],
+  commands : Array[@render_common.PlanOp],
   child_start : Int,
   child_end : Int,
   opacity : Double,
@@ -503,7 +503,7 @@ fn SunRasterRenderer::update_cached_layer(
   self.filter_stack = []
   self.blur_radius_stack = []
   self.rounded_clip_stack = []
-  let child_scopes : Array[@render.PlanScopeKind] = []
+  let child_scopes : Array[@render_common.PlanScopeKind] = []
   let child_opacity : Array[Double] = []
   let child_blend : Array[@sun_graphics.BlendMode] = []
   let child_layer_specs : Array[SunLayerScope] = []
@@ -515,8 +515,8 @@ fn SunRasterRenderer::update_cached_layer(
   if !child_scopes.is_empty() {
     for scope in child_scopes {
       self.record_unsupported_command(
-        @render.plan_scope_push_command(scope),
-        "cached layer command stream ended with an open \{@render.plan_scope_name(scope)} scope",
+        @render_common.plan_scope_push_command(scope),
+        "cached layer command stream ended with an open \{@render_common.plan_scope_name(scope)} scope",
       )
     }
     while !self.canvas_stack.is_empty() {

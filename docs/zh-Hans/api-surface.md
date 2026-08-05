@@ -13,12 +13,12 @@ MoUI 仍是原型阶段，因此向后兼容还不是首要优先级。项目仍
 - **运行时 API**：`moui/runtime`。运行时消费者应通过
   `@runtime.AppRuntime`、`@runtime.new_view`、`@runtime.new_program` 或
   `@runtime.new_program_with_dimensions` 构造 runtime。Runtime 拥有 program execution、element/layout/render state、effect/subscription lifecycle、inspector snapshots 和 diagnostics；`core` 不再暴露 `AppRuntime`、`RuntimeKernel` 或 `RuntimeState`。
-- **集成 API**：`moui/backend/host`、`moui/render` 以及 renderer/provider 包。这些包面向 platform backends、renderers、examples 和 observation tooling 公开，但它们不是常规应用编写公开面。
+- **集成 API**：`moui/backend`、`moui/render` 以及 renderer/provider 包。这些包面向 platform backends、renderers、examples 和 observation tooling 公开，但它们不是常规应用编写公开面。
 - **诊断/插件 API**：诊断 renderer routes（例如 native WGPU）、`moui_theme/audit`、带源码映射的 theme previews、platform scaffolds，以及 opt-in smoke/evidence helpers。除非测试和文档明确将其提升，否则它们保持在 `core`、`views` 和 root facade 之外。
 
 ## 审查规则
 
-添加导出声明前，先判断新符号应归属于哪个层级。优先把应用易用性留在 `views`，把运行时构造和 host runtime handles 留在 `runtime`，把中立契约留在 `core`，把 host routing 留在 `backend/host`，把具体 renderer 细节留在实现它们的 renderer 包。
+添加导出声明前，先判断新符号应归属于哪个层级。优先把应用易用性留在 `views`，把运行时构造和 host runtime handles 留在 `runtime`，把中立契约留在 `core`，把 host routing 留在 `backend`，把具体 renderer 细节留在实现它们的 renderer 包。
 
 公共 API 变化后运行 `moon info`，并审查生成的 `pkg.generated.mbti` diff。对于无 API 变化的工作，这些文件应保持不变。
 
@@ -31,7 +31,7 @@ node scripts/validate-api-surface.mjs
 该 guard 用 MoonBit 实现在 `tools/moui/validate_api_surface/`。Node 脚本只是很薄的 build/run 入口。它会检查当前生成的 interface 文件：
 
 - 关键包的行数和导出声明预算；
-- 高风险包 `moui/core`、`moui/views`、`moui/runtime`、`moui/backend/host` 和
+- 高风险包 `moui/core`、`moui/views`、`moui/runtime`、`moui/backend` 和
   `moui/render` 的语义分类预算，因此新的 public declarations 必须归类为
   `app_constructor`、`app_state_helper`、`app_style`、
   `advanced_core_protocol`、`runtime_diagnostic`、`host_contract`、

@@ -31,7 +31,7 @@ Fixes #
 - [ ] `moui/core` — platform-neutral contracts / kernel
 - [ ] `moui/views` — controls & app-facing constructors
 - [ ] `moui/runtime` — lifecycle, trees, dispatch
-- [ ] `moui/backend/host` — host service contracts
+- [ ] `moui/backend` — host service contracts
 - [ ] `moui/render/*` — renderers
 - [ ] `moui_theme/*` — design-system addons
 - [ ] `examples/*/app` — shared app logic

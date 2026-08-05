@@ -350,7 +350,7 @@ fn submit_draw_path(
   renderer : HostWebGpuRenderer,
   path : @core.PathSpec,
 ) -> Unit raise WebGpuHostError {
-  let mesh = @render.tessellate_path(path)
+  let mesh = @render_common.tessellate_path(path)
   raise_for_host_status(
     host_draw_path_mesh(renderer, host_string(path_mesh_payload(mesh))),
   )

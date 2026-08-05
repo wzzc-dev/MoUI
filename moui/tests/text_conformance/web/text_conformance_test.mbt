@@ -19,7 +19,7 @@ fn diagnostic_web_port() -> @webgpu_adapter.WebGpuHostRendererPort {
       @webgpu_adapter.WebGpuHostSurface::new(canvas_id~, metrics~)
     },
     create_renderer=_surface => (),
-    resize=(_metrics : @render.RendererSurfaceMetrics) => (),
+    resize=(_metrics : @core.SurfaceMetrics) => (),
     measure_text=input => @core.TextSystem::fallback().measure_text(input),
     register_font_data=(_family, _data) => (),
     image_resource=_source => None,

@@ -18,7 +18,7 @@ function packagePath(importPath) {
 
 function isForbiddenBackend(importPath) {
   return importPath.startsWith("wzzc-dev/moui/backend/") &&
-    importPath !== "wzzc-dev/moui/backend/host";
+    importPath !== "wzzc-dev/moui/backend";
 }
 
 function walk(pkgPath) {

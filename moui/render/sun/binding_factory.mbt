@@ -1,13 +1,13 @@
 ///|
 /// Build a Sun CPU raster factory from the renderer-neutral host contract.
-pub fn raster() -> @render.RendererBindingFactory {
+pub fn raster() -> @render.RendererFactory {
   let image_decoder = sun_image_decoder()
-  @render.RendererBindingFactory::new(id="sun-raster", bind=kit => {
+  @render.RendererFactory::new(id="sun-raster", bind=kit => {
     let target = match kit.cpu_present() {
       Some(host) =>
         SunPresentTarget::new(description=host.description(), present=frame => {
           host.present(
-            @render.HostPixelFrame::new(
+            @render.PixelFrame::new(
               width=frame.width(),
               height=frame.height(),
               row_bytes=frame.row_bytes(),
@@ -35,7 +35,9 @@ pub fn raster() -> @render.RendererBindingFactory {
           err => abort(err.message())
         }
       }),
-      image_loader=Some(image_decoder.loader(kit.image_source())),
+      image_loader=Some(
+        @render_common.image_loader(image_decoder, kit.image_source()),
+      ),
     )
   })
 }
@@ -54,8 +56,8 @@ fn sun_image_decoder() -> @render.RendererImageDecoder {
 ///|
 pub fn SunRasterRenderer::to_host_window_renderer(
   self : SunRasterRenderer,
-) -> @render.HostWindowRenderer {
-  @render.HostWindowRenderer::new(
+) -> @render.WindowRenderer {
+  @render.WindowRenderer::new(
     resize=metrics => {
       self.resize(metrics) catch {
         err => println("error resizing Sun renderer: \{err.message()}")

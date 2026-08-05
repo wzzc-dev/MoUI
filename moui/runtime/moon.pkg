@@ -2,7 +2,7 @@ import {
   "Milky2018/moon_accesskit" @accesskit,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
-  "wzzc-dev/moui/backend/host" @backend_host,
+  "wzzc-dev/moui/backend" @backend_host,
 }
 
 import {
