@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/terminal/addon"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn encode_key(@core.KeyboardEvent) -> String?
+
+pub fn[Msg] keyboard_input(@core.View[Msg], (@core.KeyboardEvent) -> Msg?, (String) -> Msg?) -> @core.View[Msg]
+
+pub fn[Msg] terminal_selection_input(@core.View[Msg], (Int, Int) -> Msg?, (Int, Int) -> Msg?, () -> Msg?, cell_width~ : Double, cell_height~ : Double, scroll_offset~ : Int, total_lines~ : Int, rows~ : Int, cols~ : Int) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct TerminalKeyboardNode {
+}
+
+pub struct TerminalSelectionNode {
+  cell_width : Double
+  cell_height : Double
+  scroll_offset : Int
+  total_lines : Int
+  rows : Int
+  cols : Int
+}
+pub fn TerminalSelectionNode::cell_at(Self, @core.Point, @core.Rect) -> (Int, Int)
+pub fn TerminalSelectionNode::new(cell_width~ : Double, cell_height~ : Double, scroll_offset~ : Int, total_lines~ : Int, rows~ : Int, cols~ : Int) -> Self
+
+// Type aliases
+
+// Traits
+

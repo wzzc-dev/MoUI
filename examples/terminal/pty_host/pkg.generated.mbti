@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/terminal/pty_host"
+
+import {
+  "moonbitlang/async/raw_fd",
+}
+
+// Values
+pub async fn pty_read_loop(Pty, (Bytes) -> Unit) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct Pty {
+  fd : Int
+  pid : Int
+  raw : @raw_fd.RawFd
+}
+pub fn Pty::close(Self) -> Unit
+pub fn Pty::fd(Self) -> Int
+pub fn Pty::pid(Self) -> Int
+pub async fn Pty::read_output(Self, FixedArray[Byte]) -> Int
+pub fn Pty::resize(Self, Int, Int) -> Unit
+pub async fn Pty::spawn(String, Int, Int) -> Self?
+pub async fn Pty::write_input(Self, Bytes) -> Int
+
+// Type aliases
+
+// Traits
+

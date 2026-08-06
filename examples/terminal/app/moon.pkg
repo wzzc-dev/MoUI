@@ -1,0 +1,17 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui/text",
+}
+
+import {
+  "wzzc-dev/moui/core",
+} for "test"
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

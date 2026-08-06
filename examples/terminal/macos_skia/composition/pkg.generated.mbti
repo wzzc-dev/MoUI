@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/terminal/macos_skia/composition"
+
+import {
+  "examples/terminal/app",
+  "examples/terminal/pty_host",
+  "moonbitlang/async/aqueue",
+  "moonbitlang/core/ref",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
+}
+
+// Values
+pub async fn run_terminal() -> Unit
+
+pub fn terminal_program(@pty_host.Pty, @ref.Ref[((@app.Msg) -> Unit)?], @aqueue.Queue[InputWork], @ref.Ref[@runtime.AppRuntime?]) -> @core.Program[@app.Model, @app.Msg]
+
+pub fn terminal_view_wrapped(@app.Model) -> @core.View[@app.Msg]
+
+pub fn theme_command(@app.ThemePreference) -> @core.ActionCommand
+
+pub fn theme_menus() -> Array[@services.ApplicationMenu]
+
+// Errors
+
+// Types and methods
+pub enum InputWork {
+  Write(String)
+  Shutdown
+}
+
+// Type aliases
+
+// Traits
+

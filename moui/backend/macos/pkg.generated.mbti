@@ -24,6 +24,10 @@ pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo
 
 pub fn macos_capability_summary(services? : @backend.HostServiceCapabilities) -> @backend.HostCapabilitySummary
 
+pub fn macos_clipboard_read_text() -> String?
+
+pub fn macos_clipboard_write_text(String) -> Bool
+
 pub fn macos_input_capabilities() -> @backend.HostInputCapabilities
 
 pub fn macos_native_view_handle(@wzzc-dev/window/macos.Window) -> UInt64?
