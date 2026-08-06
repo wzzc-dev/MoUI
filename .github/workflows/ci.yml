@@ -203,12 +203,26 @@ jobs:
         shell: pwsh
         run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly
 
+      - name: Build WebView Demo Windows Skia entrypoint with WebView2
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 -Package examples/webview_demo/windows_skia -EnableWebView2 -BuildOnly
+
       - name: Package Showcase Windows Skia folder with MSVC
         shell: pwsh
         run: |
           powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
             -Package examples/showcase/windows_skia `
             -AppName MoUIShowcase `
+            -Version 0.1.0 `
+            -BuildNumber $env:GITHUB_RUN_NUMBER
+
+      - name: Package WebView Demo Windows Skia folder with WebView2
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
+            -Package examples/webview_demo/windows_skia `
+            -AppName MoUIWebViewDemo `
+            -EnableWebView2 `
             -Version 0.1.0 `
             -BuildNumber $env:GITHUB_RUN_NUMBER
 
