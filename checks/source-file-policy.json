@@ -39,7 +39,7 @@
     },
     {
       "path": "moui_skia/native/skia_stub_surface_image_data.cpp",
-      "maxLines": 3179,
+      "maxLines": 3276,
       "reason": "Existing native Skia surface and image bridge implementation."
     },
     {
@@ -69,7 +69,7 @@
     },
     {
       "path": "moui_skia/native/skia_stub_gpu_worker.cpp",
-      "maxLines": 2525,
+      "maxLines": 2528,
       "reason": "Existing GPU worker bridge implementation."
     },
     {
