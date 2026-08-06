@@ -31,6 +31,7 @@ members = [
   "./examples/mo_workbench",
   "./examples/code_editor",
   "./examples/webview_demo",
+  "./examples/terminal",
   "./benchmarks/app_cached_layer",
   "./benchmarks/full_cycle",
   "./website",

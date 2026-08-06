@@ -28,7 +28,9 @@ pub fn[Msg] button_group(
   button_width? : Double = 88.0,
   height? : Double = 36.0,
 ) -> @core.View[Msg] {
-  let resolved_theme = @common.views_ambient_theme(theme)
+  // `theme` 保持 Option 原样传给 button:不显式指定时按钮在 paint 期取
+  // `ctx.environment.theme`,跟随宿主主题(浅/深切换即时生效)。若在此
+  // resolve 成固定 theme,按钮会永远停留在调用时解析出的配色上。
   let buttons : Array[@core.View[Msg]] = []
   for item in items {
     let variant = if item.id == selected {
@@ -41,7 +43,7 @@ pub fn[Msg] button_group(
         item.label,
         on_click=item.message,
         variant~,
-        theme=resolved_theme,
+        theme?,
         width=button_width,
         height~,
       )
