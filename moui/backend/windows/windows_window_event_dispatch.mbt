@@ -39,8 +39,15 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_eve
     }
     @window_host.TransformedWindowEvent::DispatchHostEvent(host_event) => {
       match host_event {
-        @host.Event::Resized(metrics) =>
+        @host.Event::Resized(metrics) => {
           ignore(self.coordinator.sync_observed_resize(window_id, metrics))
+          // Win32 enters a modal move/size loop while the border is dragged.
+          // Present the resized surface from this synchronous callback so the
+          // desktop compositor never stretches the previous frame.
+          if self.redraw_window(window_id) {
+            event_loop.exit()
+          }
+        }
         _ => self.dispatch_host_event(window_id, host_event)
       }
       return ()

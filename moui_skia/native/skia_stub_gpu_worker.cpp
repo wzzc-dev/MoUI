@@ -1,3 +1,6 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include "skia_stub_common.h"
 
 #include <chrono>
