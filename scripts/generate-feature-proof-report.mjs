@@ -12,5 +12,5 @@ if (!args.includes("--timestamp")) {
 
 runMoonbitTool(
   "tools/moui/generate_feature_proof_report",
-  resolveToolPathArgs(args, ["--status", "--output"]),
+  resolveToolPathArgs(args, ["--output"], {}, ["--status"]),
 );

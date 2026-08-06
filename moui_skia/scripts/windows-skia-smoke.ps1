@@ -225,9 +225,9 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
   "wzzc-dev/moui_skia/native" @skia_native,
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
   "wzzc-dev/moui/render/skia" @skia_renderer,
 }
 
@@ -302,10 +302,9 @@ options(
         @"
 import {
   "wzzc-dev/moui_skia/native" @skia_native,
-  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/common" @window_host,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
   "wzzc-dev/moui/views",
 }

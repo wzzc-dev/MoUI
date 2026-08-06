@@ -244,6 +244,10 @@ pub fn skia_image_load_completion_from_bytes(
 fn skia_image_source_bytes(source : String) -> Bytes? {
   if source.has_prefix("data:") {
     skia_image_data_uri_bytes(source)
+  } else if @fs.path_exists(source) {
+    Some(@fs.read_file_to_bytes(source)) catch {
+      _ => None
+    }
   } else {
     None
   }

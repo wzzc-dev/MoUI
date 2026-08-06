@@ -41,8 +41,23 @@ pub async fn Pty::spawn(shell : String, cols : Int, rows : Int) -> Pty? {
   }
   let fd = packed.to_int() // 低 32 位
   let pid = (packed >> 32).to_int() // 高 32 位
-  let raw = @raw_fd.RawFd::RawFd(fd)
+  let raw = raw_fd_from_int(fd)
   Some({ fd, pid, raw })
+}
+
+///|
+/// 从原始 fd 整数构造 RawFd。
+/// Unix:系统 fd 即整数,直接包装。
+#cfg(not(platform="windows"))
+async fn raw_fd_from_int(fd : Int) -> @raw_fd.RawFd {
+  @raw_fd.RawFd::RawFd(fd)
+}
+
+///|
+/// Windows 上 PTY 宿主不可用(moonpty_* C stub 仅非 Windows 提供实现)。
+#cfg(platform="windows")
+async fn raw_fd_from_int(fd : Int) -> @raw_fd.RawFd {
+  abort("pty_host: PTY is not supported on Windows")
 }
 
 ///|

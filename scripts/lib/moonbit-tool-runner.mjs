@@ -5,11 +5,16 @@ import { fileURLToPath } from "node:url";
 export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const staticToolsRoot = resolve(repoRoot, "tools");
 
-export const resolveToolPathArgs = (args, pathFlags, defaults = {}) => {
+export const resolveToolPathArgs = (args, pathFlags, defaults = {}, passthroughFlags = []) => {
   const resolvedArgs = [...args];
   const seen = new Set();
   for (let index = 0; index < resolvedArgs.length; index += 1) {
     const flag = resolvedArgs[index];
+    if (passthroughFlags.includes(flag)) {
+      seen.add(flag);
+      index += 1;
+      continue;
+    }
     if (!pathFlags.includes(flag)) continue;
     seen.add(flag);
     const value = resolvedArgs[index + 1];

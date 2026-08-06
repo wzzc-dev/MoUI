@@ -106,6 +106,7 @@ jobs:
             const status = {};
             // Map display names to short keys used by generate-feature-proof-report.mjs
             const jobNameToKey = {
+              "MoonBit workspace baseline": "moonbit-workspace-baseline",
               "PR profile gate": "pr-profile",
               "Public API surface": "api-surface",
               "Linux platform contracts": "linux-platform",
