@@ -1,3 +1,6 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include "skia_stub_common.h"
 
 #include <cstdio>
@@ -2087,6 +2090,100 @@ moonbit_skia_surface_direct3d_window(
   return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
 #endif
 }
+
+// extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+// moonbit_skia_surface_direct3d_resize_window_surface(
+//   MoonbitSkiaSurface* wrapper,
+//   MoonbitSkiaGpuContext* context,
+//   uint64_t hwnd_ptr,
+//   int32_t width,
+//   int32_t height,
+//   int32_t origin,
+//   int32_t sample_count,
+//   int32_t stencil_bits
+// ) {
+//   if (
+//     wrapper == nullptr ||
+//     wrapper->surface == nullptr ||
+//     wrapper->host_present_handle == nullptr ||
+//     context == nullptr ||
+//     context->context == nullptr ||
+//     context->backend != MOONBIT_SKIA_GPU_BACKEND_D3D
+//   ) {
+//     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+//   }
+// #if defined(MOUI_SKIA_ENABLE_GPU_D3D) && \
+//   defined(MOUI_SKIA_HAS_GANESH_D3D_HEADERS)
+//   (void)hwnd_ptr;
+//   (void)sample_count;
+//   (void)stencil_bits;
+
+//   auto* swap_chain = moonbit_skia_d3d12_swap_chain(wrapper->host_present_handle);
+//   GrDirectContext* gpu_context = wrapper->gpu_context_owner;
+//   if (
+//     swap_chain == nullptr ||
+//     gpu_context == nullptr ||
+//     gpu_context != context->context ||
+//     width <= 0 ||
+//     height <= 0
+//   ) {
+//     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+//   }
+
+//   // Win32 resize callbacks can run while the previous frame is still queued.
+//   // Wait before releasing the wrapped back buffer, then ResizeBuffers only
+//   // after Ganesh has dropped its resource references.
+//   if (!moonbit_skia_d3d12_wait_for_frame(swap_chain)) {
+//     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+//   }
+//   wrapper->surface->unref();
+//   wrapper->surface = nullptr;
+//   wrapper->host_present_handle = nullptr;
+//   gpu_context->freeGpuResources();
+
+//   HRESULT hr = S_OK;
+//   if (
+//     swap_chain->width != static_cast<UINT>(width) ||
+//     swap_chain->height != static_cast<UINT>(height)
+//   ) {
+//     hr = swap_chain->swap_chain->ResizeBuffers(
+//       3,
+//       static_cast<UINT>(width),
+//       static_cast<UINT>(height),
+//       DXGI_FORMAT_R8G8B8A8_UNORM,
+//       0
+//     );
+//     if (FAILED(hr)) {
+//       swap_chain->last_device_removed_reason = swap_chain->device->GetDeviceRemovedReason();
+//       moonbit_skia_com_release(swap_chain);
+//       return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+//     }
+//     swap_chain->width = static_cast<UINT>(width);
+//     swap_chain->height = static_cast<UINT>(height);
+//   }
+//   swap_chain->frame_index = swap_chain->swap_chain->GetCurrentBackBufferIndex();
+//   MoonbitSkiaSurface* new_wrapper = moonbit_skia_d3d12_wrap_back_buffer(
+//     gpu_context,
+//     swap_chain,
+//     width,
+//     height,
+//     origin
+//   );
+//   if (new_wrapper->surface == nullptr) {
+//     moonbit_skia_com_release(swap_chain);
+//     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+//   }
+//   return new_wrapper;
+// #else
+//   (void)hwnd_ptr;
+//   (void)width;
+//   (void)height;
+//   (void)origin;
+//   (void)sample_count;
+//   (void)stencil_bits;
+//   return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+// #endif
+// }
 
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
 moonbit_skia_surface_direct3d_present_and_acquire_next(
