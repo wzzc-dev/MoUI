@@ -3,8 +3,8 @@ test "plain text and newlines" {
   let p = VtParser::new(TermScreen::new(10, 3))
   p.feed("hello")
   p.feed("\r\nworld")
-  debug_inspect(p.screen().line_at(0).text(), content="hello")
-  debug_inspect(p.screen().line_at(1).text(), content="world")
+  debug_inspect(p.screen().line_at(0).text(), content="\"hello\"")
+  debug_inspect(p.screen().line_at(1).text(), content="\"world\"")
   debug_inspect(p.screen().cursor_row(), content="1")
   debug_inspect(p.screen().cursor_col(), content="5")
 }
@@ -14,7 +14,7 @@ test "utf8 wide chars" {
   let p = VtParser::new(TermScreen::new(10, 1))
   p.feed("中文ab")
   debug_inspect(p.screen().cursor_col(), content="6")
-  debug_inspect(p.screen().line_at(0).text(), content="中文ab")
+  debug_inspect(p.screen().line_at(0).text(), content="\"中文ab\"")
 }
 
 ///|
@@ -23,9 +23,9 @@ test "sgr colors and reset" {
   p.feed("\u{1b}[31mred\u{1b}[0mplain")
   let runs = p.screen().line_at(0).runs()
   debug_inspect(runs.length(), content="2")
-  debug_inspect(runs[0].0, content="red")
+  debug_inspect(runs[0].0, content="\"red\"")
   debug_inspect(runs[0].2.fg, content="Indexed(1)")
-  debug_inspect(runs[1].0, content="plain")
+  debug_inspect(runs[1].0, content="\"plain\"")
   debug_inspect(runs[1].2.fg, content="Default")
 }
 
@@ -74,13 +74,13 @@ test "erase display and line" {
   let p = VtParser::new(TermScreen::new(4, 3))
   p.feed("abcd\r\nefgh\r\nijkl")
   p.feed("\u{1b}[2J")
-  debug_inspect(p.screen().line_at(0).text(), content="")
-  debug_inspect(p.screen().line_at(1).text(), content="")
-  debug_inspect(p.screen().line_at(2).text(), content="")
+  debug_inspect(p.screen().line_at(0).text(), content="\"\"")
+  debug_inspect(p.screen().line_at(1).text(), content="\"\"")
+  debug_inspect(p.screen().line_at(2).text(), content="\"\"")
   p.feed("\u{1b}[3;1H")
   p.feed("xy")
   p.feed("\u{1b}[K")
-  debug_inspect(p.screen().line_at(2).text(), content="xy")
+  debug_inspect(p.screen().line_at(2).text(), content="\"xy\"")
 }
 
 ///|
@@ -90,18 +90,18 @@ test "insert and delete lines" {
   p.feed("\u{1b}[2;3r") // 滚动区域 2-3
   p.feed("\u{1b}[2;1H") // 光标到 (2,1)
   p.feed("\u{1b}[L") // 插入一行:底行 c 进入回看头部
-  debug_inspect(p.screen().line_at(0).text(), content="c")
-  debug_inspect(p.screen().line_at(1).text(), content="a")
-  debug_inspect(p.screen().line_at(2).text(), content="")
-  debug_inspect(p.screen().line_at(3).text(), content="b")
-  debug_inspect(p.screen().line_at(4).text(), content="d")
+  debug_inspect(p.screen().line_at(0).text(), content="\"c\"")
+  debug_inspect(p.screen().line_at(1).text(), content="\"a\"")
+  debug_inspect(p.screen().line_at(2).text(), content="\"\"")
+  debug_inspect(p.screen().line_at(3).text(), content="\"b\"")
+  debug_inspect(p.screen().line_at(4).text(), content="\"d\"")
   p.feed("\u{1b}[M") // 删除一行:空行进入回看尾部
-  debug_inspect(p.screen().line_at(0).text(), content="c")
-  debug_inspect(p.screen().line_at(1).text(), content="")
-  debug_inspect(p.screen().line_at(2).text(), content="a")
-  debug_inspect(p.screen().line_at(3).text(), content="b")
-  debug_inspect(p.screen().line_at(4).text(), content="")
-  debug_inspect(p.screen().line_at(5).text(), content="d")
+  debug_inspect(p.screen().line_at(0).text(), content="\"c\"")
+  debug_inspect(p.screen().line_at(1).text(), content="\"\"")
+  debug_inspect(p.screen().line_at(2).text(), content="\"a\"")
+  debug_inspect(p.screen().line_at(3).text(), content="\"b\"")
+  debug_inspect(p.screen().line_at(4).text(), content="\"\"")
+  debug_inspect(p.screen().line_at(5).text(), content="\"d\"")
 }
 
 ///|
@@ -110,27 +110,27 @@ test "scroll region and su/sd" {
   p.feed("a\r\nb\r\nc\r\nd")
   p.feed("\u{1b}[2;3r")
   p.feed("\u{1b}[S") // 区域内上滚:顶行 b 进入回看
-  debug_inspect(p.screen().line_at(0).text(), content="b")
-  debug_inspect(p.screen().line_at(1).text(), content="a")
-  debug_inspect(p.screen().line_at(2).text(), content="c")
-  debug_inspect(p.screen().line_at(3).text(), content="")
-  debug_inspect(p.screen().line_at(4).text(), content="d")
+  debug_inspect(p.screen().line_at(0).text(), content="\"b\"")
+  debug_inspect(p.screen().line_at(1).text(), content="\"a\"")
+  debug_inspect(p.screen().line_at(2).text(), content="\"c\"")
+  debug_inspect(p.screen().line_at(3).text(), content="\"\"")
+  debug_inspect(p.screen().line_at(4).text(), content="\"d\"")
   p.feed("\u{1b}[T") // 区域内下滚:底行空进入回看头部
-  debug_inspect(p.screen().line_at(0).text(), content="")
-  debug_inspect(p.screen().line_at(1).text(), content="b")
-  debug_inspect(p.screen().line_at(2).text(), content="a")
-  debug_inspect(p.screen().line_at(3).text(), content="")
-  debug_inspect(p.screen().line_at(4).text(), content="c")
-  debug_inspect(p.screen().line_at(5).text(), content="d")
+  debug_inspect(p.screen().line_at(0).text(), content="\"\"")
+  debug_inspect(p.screen().line_at(1).text(), content="\"b\"")
+  debug_inspect(p.screen().line_at(2).text(), content="\"a\"")
+  debug_inspect(p.screen().line_at(3).text(), content="\"\"")
+  debug_inspect(p.screen().line_at(4).text(), content="\"c\"")
+  debug_inspect(p.screen().line_at(5).text(), content="\"d\"")
 }
 
 ///|
 test "osc title" {
   let p = VtParser::new(TermScreen::new(10, 2))
   p.feed("\u{1b}]0;My Shell\u{7}")
-  debug_inspect(p.screen().title(), content="My Shell")
+  debug_inspect(p.screen().title(), content="\"My Shell\"")
   p.feed("\u{1b}]2;Another:Title\u{1b}\\")
-  debug_inspect(p.screen().title(), content="Another:Title")
+  debug_inspect(p.screen().title(), content="\"Another:Title\"")
 }
 
 ///|
@@ -149,7 +149,7 @@ test "wrap mode and cursor visibility" {
   p.feed("\u{1b}[?7l") // 关闭自动换行
   p.feed("abcde")
   // 光标停在最后一列,后续字符覆盖
-  debug_inspect(p.screen().line_at(0).text(), content="abe")
+  debug_inspect(p.screen().line_at(0).text(), content="\"abe\"")
   p.feed("\u{1b}[?7h")
   p.feed("\u{1b}[?25l")
   debug_inspect(p.screen().cursor_visible(), content="false")
@@ -166,7 +166,7 @@ test "ris reset" {
   debug_inspect(p.screen().current_attrs().fg, content="Default")
   debug_inspect(p.screen().cursor_row(), content="0")
   debug_inspect(p.screen().cursor_col(), content="0")
-  debug_inspect(p.screen().line_at(0).text(), content="")
+  debug_inspect(p.screen().line_at(0).text(), content="\"\"")
 }
 
 ///|
@@ -189,7 +189,7 @@ test "unknown sequences ignored" {
   let p = VtParser::new(TermScreen::new(10, 2))
   p.feed("\u{1b}[?1000h\u{1b}(B\u{1b}=")
   p.feed("ok")
-  debug_inspect(p.screen().line_at(0).text(), content="ok")
+  debug_inspect(p.screen().line_at(0).text(), content="\"ok\"")
 }
 
 ///|
@@ -198,10 +198,10 @@ test "out of range scroll region clamps" {
   p.feed("\u{1b}[999;999r") // 越界滚动区域:必须 clamp 而非 panic
   p.feed("\u{1b}[B")
   p.feed("x")
-  debug_inspect(p.screen().line_at(1).text(), content="x")
+  debug_inspect(p.screen().line_at(1).text(), content="\"x\"")
   p.feed("\u{1b}[r") // 恢复全屏区域
   p.feed("\u{1b}[3;1Hy")
-  debug_inspect(p.screen().line_at(2).text(), content="y")
+  debug_inspect(p.screen().line_at(2).text(), content="\"y\"")
 }
 
 ///|
@@ -210,12 +210,12 @@ test "truncated utf8 discarded on escape" {
   // 中 = E4 B8 AD;E4 B8 后 ESC[31m 打断,再喂完整 "文"
   p.feed_bytes(Bytes::from_array([0xE4, 0xB8, 0x1B, 0x5B, 0x33, 0x31, 0x6D]))
   p.feed("文")
-  debug_inspect(p.screen().line_at(0).text(), content="文")
+  debug_inspect(p.screen().line_at(0).text(), content="\"文\"")
   // C0 打断同理
   let p2 = VtParser::new(TermScreen::new(10, 2))
   p2.feed_bytes(Bytes::from_array([0xE4, 0xB8, 0x0D, 0x0A]))
   p2.feed("文")
-  debug_inspect(p2.screen().line_at(1).text(), content="文")
+  debug_inspect(p2.screen().line_at(1).text(), content="\"文\"")
 }
 
 ///|
@@ -281,5 +281,5 @@ test "unbounded osc and params are capped" {
   let many_params = "\u{1b}[0;" + "1;".repeat(200) + "m"
   p.feed(many_params)
   p.feed("ok")
-  debug_inspect(p.screen().line_at(0).text(), content="ok")
+  debug_inspect(p.screen().line_at(0).text(), content="\"ok\"")
 }
