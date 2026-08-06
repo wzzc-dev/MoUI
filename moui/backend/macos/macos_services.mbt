@@ -8,6 +8,25 @@ extern "C" fn macos_clipboard_read_text_bytes() -> Bytes = "moui_macos_clipboard
 #borrow(text)
 extern "C" fn macos_clipboard_write_text_bytes(text : Bytes) -> Int = "moui_macos_clipboard_write_text"
 
+///|
+/// 写入剪贴板文本(macOS NSPasteboard)。返回是否写入成功。
+/// 宿主级便捷 API:供平台入口/示例直接复制文本,无需经过服务适配层。
+pub fn macos_clipboard_write_text(text : String) -> Bool {
+  macos_clipboard_write_text_bytes(@utf8.encode(text, bom=false)) != 0
+}
+
+///|
+/// 读取剪贴板文本;剪贴板无文本时返回 None。
+pub fn macos_clipboard_read_text() -> String? {
+  if macos_clipboard_has_text() != 0 {
+    Some(
+      @utf8.decode_lossy(macos_clipboard_read_text_bytes()[:], ignore_bom=false),
+    )
+  } else {
+    None
+  }
+}
+
 //|
 
 ///|
