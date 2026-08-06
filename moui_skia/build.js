@@ -919,6 +919,15 @@ function fallbackNativeRuntimeLinkFlags(platform) {
   return "-lc++";
 }
 
+function fallbackStubCcFlags(platform) {
+  if (platform === "windows") {
+    // MSVC defaults to C++14, which the native stubs already target.
+    return "";
+  }
+  // macOS (Xcode clang) and Linux default to pre-C++11 without this flag.
+  return "-std=c++17";
+}
+
 function main() {
   const config = readJsonFromStdin();
   const platform = skiaTargetPlatform(config);
@@ -941,7 +950,7 @@ function main() {
       JSON.stringify({
         vars: {
           MOUI_SKIA_STUB_CC_FLAGS:
-            process.env.MOUI_SKIA_STUB_CC_FLAGS || "",
+            process.env.MOUI_SKIA_STUB_CC_FLAGS || fallbackStubCcFlags(platform),
           MOUI_SKIA_CC_LINK_FLAGS:
             nativeRuntimeLinkFlags,
           MOUI_SKIA_ANDROID_LINK_FLAGS:
@@ -978,7 +987,7 @@ function main() {
     console.log(
       JSON.stringify({
         vars: {
-          MOUI_SKIA_STUB_CC_FLAGS: "",
+          MOUI_SKIA_STUB_CC_FLAGS: fallbackStubCcFlags(platform),
           MOUI_SKIA_CC_LINK_FLAGS: nativeRuntimeLinkFlags,
           MOUI_SKIA_ANDROID_LINK_FLAGS: "",
           MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,

@@ -19,8 +19,8 @@
 
 namespace {
 
-constexpr unsigned int k_log_domain = 0x4D4F;
-constexpr const char *k_log_tag = "MoUIHarmony";
+static const unsigned int k_log_domain = 0x4D4F;
+static const char *k_log_tag = "MoUIHarmony";
 
 void log_present_result(const char *message, int width, int height, int result) {
 #if defined(MOUI_HARMONYOS_HAS_HILOG)
@@ -60,7 +60,7 @@ extern "C" int moui_harmonyos_present_pixels_to_surface(
   }
 
 #if defined(MOUI_HARMONYOS_HAS_NATIVE_WINDOW)
-  auto *window = reinterpret_cast<OHNativeWindow *>(surface_handle);
+  OHNativeWindow *window = reinterpret_cast<OHNativeWindow *>(surface_handle);
   OHNativeWindowBuffer *native_buffer = nullptr;
   int fence_fd = -1;
 
@@ -100,7 +100,7 @@ extern "C" int moui_harmonyos_present_pixels_to_surface(
   const int max_src_rows = pixels_len / row_bytes;
   const int max_dst_rows = buffer_handle->size > 0 ? buffer_handle->size / buffer_row_bytes : copy_height;
   const int rows = std::min({copy_height, max_src_rows, max_dst_rows});
-  auto *dst = static_cast<uint8_t *>(mapped_addr);
+  uint8_t *dst = static_cast<uint8_t *>(mapped_addr);
 
   if (buffer_row_bytes < bytes_per_row || rows <= 0) {
     OH_NativeBuffer_Unmap(mapped_buffer);
