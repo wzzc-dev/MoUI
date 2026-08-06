@@ -143,20 +143,6 @@ pub fn entry(
           0
         },
       )
-      let gpu_surface = match
-        @render.GpuHostSurfaceDescriptor::d3d12_hwnd(
-          window.native_window_handle(),
-        ) {
-        Some(descriptor) =>
-          Some(
-            @render.HostGpuSurfaceBridge::new(
-              descriptor~,
-              create_surface=_ => None,
-              present=_ => true,
-            ),
-          )
-        None => None
-      }
       let kit = @render.SurfaceContext::new(
         surface=@render.SurfaceDescriptor::cpu_raster(
           width=renderer_metrics.logical_size.width,
@@ -165,7 +151,6 @@ pub fn entry(
         ),
         metrics=renderer_metrics,
         cpu_present=Some(host_present),
-        gpu_surface~,
         image_source=Some(image_source),
       )
       @render_common.resolve_renderer(factories, kit)
@@ -421,9 +406,9 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn can_create
   }
   match window {
     Some(window) => {
-      let metrics = @core.SurfaceMetrics::new(
-        logical_size=@window_host.physical_size_to_core(window.surface_size()),
-        physical_size=@window_host.physical_size_to_core(window.surface_size()),
+      let metrics = @window_host.make_surface_metrics(
+        window.surface_size(),
+        scale_factor=window.scale_factor(),
       )
       let window_id = self.coordinator
         .window_registry()
@@ -582,15 +567,35 @@ fn WindowsNativeHostBackend::dispatch_window_event(
       self.modifiers = @window_host.modifiers_to_core(modifiers)
     _ => ()
   }
+  let scale_factor = match self.platform_slots.lookup_host(window_id) {
+    Some(slot) => slot.window.scale_factor()
+    None => 1.0
+  }
   match
-    @window_host.window_event_to_host_with_modifiers(
+    windows_window_event_to_host(
       event,
       self.last_pointer,
       self.modifiers,
+      scale_factor~,
     ) {
     Some(host_event) => self.dispatch_host_event(window_id, host_event)
     None => ()
   }
+}
+
+///|
+fn windows_window_event_to_host(
+  event : @window_core.WindowEvent,
+  last_pointer : @core.Point,
+  modifiers : @core.KeyModifiers,
+  scale_factor~ : Double,
+) -> @host.Event? {
+  @window_host.window_event_to_host_with_modifiers(
+    event,
+    last_pointer,
+    modifiers,
+    scale_factor~,
+  )
 }
 
 ///|
@@ -679,9 +684,9 @@ fn WindowsNativeHostBackend::attach_resolved_window(
   window : @win.Window,
   resolved : @runtime.WindowResolvedOpen,
 ) -> @host.WindowRequestResult {
-  let metrics = @core.SurfaceMetrics::new(
-    logical_size=@window_host.physical_size_to_core(window.surface_size()),
-    physical_size=@window_host.physical_size_to_core(window.surface_size()),
+  let metrics = @window_host.make_surface_metrics(
+    window.surface_size(),
+    scale_factor=window.scale_factor(),
   )
   match (self.surface_binding.create_renderer)(window, metrics) {
     Some(resolution) => {

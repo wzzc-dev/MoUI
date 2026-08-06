@@ -6,6 +6,35 @@
 - **Upstream pin**: `moonbit-community/window@0.5.4` + 行为参考 `rust-windowing/winit`（见 `window/docs/upstream.md`）。
 - **Acceptance bar**: **MoUI-ready parity**，不是完整 winit / 不是 macOS 独有 API 1:1。
 
+## 2026-08-06 Windows interactive resize follow-up
+
+- [x] Reproduce Showcase resize with a real `HTBOTTOMRIGHT` drag using the
+  published Windows window dependency; the validated default route is
+  `skia-raster`.
+- [x] Keep resize redraw synchronous with the Win32 callback while the OS
+  modal move/size loop owns message dispatch.
+- [x] Validate first-frame DPI metrics, resize repaint, and post-resize mouse
+  message responsiveness through the MoUI Showcase consumer.
+- [x] Decode Windows pointer, wheel, and drag coordinates with the window's
+  current DPI scale so physical Win32 client positions match logical layout
+  and hit testing.
+- [x] Keep root `moon.work` on the published window dependency; the local
+  `window/` checkout is not a workspace member by default.
+
+The Windows D3D12 host-surface route is wired through the neutral
+`SurfaceContext` descriptor. `@render_skia.from_env()` controls whether the
+GPU factory is selected (`MOUI_SKIA_RENDERER=gpu`) or whether `auto` tries GPU
+before the raster fallback. Interactive resize now reuses the existing HWND
+swap chain and calls `ResizeBuffers` only after the wrapped Skia back buffer is
+released, avoiding the previous second-swap-chain `DXGI_ERROR_INVALID_CALL`
+path. A matching-host interactive GPU resize smoke remains the final runtime
+evidence item; CPU raster remains the explicit recovery/fallback route.
+
+The Windows native event queue reports `WM_MOUSE*` positions in physical
+client pixels. The backend now supplies the current `Window::scale_factor()`
+when decoding those events; previously only `last_pointer` was normalized,
+leaving direct pointer hit testing offset on scaled displays.
+
 ## Why now
 
 | 平台 | 现状（2026-07 调研） | 阻塞 MoUI 的点 |

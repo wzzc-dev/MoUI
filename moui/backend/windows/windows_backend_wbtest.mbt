@@ -15,6 +15,50 @@ test "windows menu command payload records utf8 byte lengths" {
 }
 
 ///|
+test "windows host decodes pointer movement and clicks in logical coordinates" {
+  let scale_factor = 1.5
+  let physical_position = @dpi.PhysicalPositionF64::PhysicalPositionF64(
+    150.0, 120.0,
+  )
+  let logical_position = @core.Point::new(x=100.0, y=80.0)
+  let moved = windows_window_event_to_host(
+    @window_core.WindowEvent::PointerMoved(
+      None,
+      physical_position,
+      true,
+      @window_core.PointerSource::Mouse,
+    ),
+    logical_position,
+    @core.KeyModifiers::none(),
+    scale_factor~,
+  )
+  match moved {
+    Some(
+      @host.Event::Pointer({ position, phase: @core.PointerPhase::Move, .. })
+    ) => assert_true(position == logical_position)
+    _ => fail("expected logical Windows pointer move")
+  }
+  let pressed = windows_window_event_to_host(
+    @window_core.WindowEvent::PointerButton(
+      None,
+      @window_core.ElementState::Pressed,
+      physical_position,
+      true,
+      @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
+    ),
+    logical_position,
+    @core.KeyModifiers::none(),
+    scale_factor~,
+  )
+  match pressed {
+    Some(
+      @host.Event::Pointer({ position, phase: @core.PointerPhase::Down, .. })
+    ) => assert_true(position == logical_position)
+    _ => fail("expected logical Windows pointer down")
+  }
+}
+
+///|
 test "windows host options carry optional scene resolver and smoke options stay separate" {
   let request = @host.WindowOpenRequest::new(
     title="Inspector",
