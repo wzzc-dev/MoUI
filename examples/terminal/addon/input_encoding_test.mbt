@@ -8,12 +8,18 @@ test "plain characters" {
 
 ///|
 test "special keys" {
-  debug_inspect(encode_key(@core.KeyboardEvent::new(key="Enter")), content="Some(\r)")
+  debug_inspect(
+    encode_key(@core.KeyboardEvent::new(key="Enter")),
+    content="Some(\r)",
+  )
   debug_inspect(
     encode_key(@core.KeyboardEvent::new(key="Backspace")),
     content="Some(\u{7f})",
   )
-  debug_inspect(encode_key(@core.KeyboardEvent::new(key="Tab")), content="Some(\t)")
+  debug_inspect(
+    encode_key(@core.KeyboardEvent::new(key="Tab")),
+    content="Some(\t)",
+  )
   debug_inspect(
     encode_key(@core.KeyboardEvent::new(key="ArrowUp")),
     content="Some(\u{1b}[A)",
