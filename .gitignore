@@ -38,3 +38,4 @@ build/wechat/*
 deliverables/*
 .reasonix/
 reasonix.toml
+*.obj
