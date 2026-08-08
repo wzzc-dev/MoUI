@@ -219,7 +219,6 @@ fn MarkdownEditorApp::overwrite_from_for_test(
   self.expanded_tree_paths = latest.expanded_tree_paths
   self.directory_tree_items = latest.directory_tree_items
   self.file_tree_expanded = latest.file_tree_expanded
-  self.selected_image_offset = latest.selected_image_offset
   self.image_centered = latest.image_centered
 }
 
