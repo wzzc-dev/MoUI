@@ -31,8 +31,9 @@ fn max_shared_app_core_imports() -> Int {
 /// this list is retained only for tests that assert the guard still tracks paths.
 fn allowed_shared_app_core_imports() -> Array[String] {
   [
-    "examples/markdown_editor/app/moon.pkg", "examples/mo_workbench/app/moon.pkg",
-    "examples/pdf_workbench/app/moon.pkg", "examples/showcase/app/moon.pkg", "website/app/moon.pkg",
+    "examples/browser/app/moon.pkg", "examples/markdown_editor/app/moon.pkg",
+    "examples/mo_workbench/app/moon.pkg", "examples/pdf_workbench/app/moon.pkg",
+    "examples/showcase/app/moon.pkg", "website/app/moon.pkg",
   ]
 }
 
