@@ -13,22 +13,13 @@ pub fn decode_data_url(url : String) -> String? {
     None => None
     Some(comma) => {
       let meta = rest.unsafe_substring(start=0, end=comma)
-      let payload = rest.unsafe_substring(
-        start=comma + 1,
-        end=rest.length(),
-      )
+      let payload = rest.unsafe_substring(start=comma + 1, end=rest.length())
       if meta.contains(";base64") {
-        let bytes = try {
-          Some(@base64.decode(payload))
-        } catch {
-          _ => None
-        }
+        let bytes = Some(@base64.decode(payload)) catch { _ => None }
         match bytes {
           None => None
           Some(b) => {
-            let text = try {
-              Some(@utf8.decode(b[:], ignore_bom=true))
-            } catch {
+            let text = Some(@utf8.decode(b[:], ignore_bom=true)) catch {
               _ => None
             }
             text
@@ -41,7 +32,8 @@ pub fn decode_data_url(url : String) -> String? {
   }
 }
 
-///| Decode percent-encoded payload (`%XX`). Consecutive `%XX` bytes are
+///|
+/// Decode percent-encoded payload (`%XX`). Consecutive `%XX` bytes are
 /// accumulated and decoded as UTF-8 so multi-byte characters survive.
 fn percent_decode(s : String) -> String {
   let buf = StringBuilder::new()
@@ -60,9 +52,9 @@ fn percent_decode(s : String) -> String {
       }
     }
     if pending.length() > 0 {
-      let text = try {
-        Some(@utf8.decode(Bytes::from_array(pending)[:], ignore_bom=true))
-      } catch {
+      let text = Some(
+        @utf8.decode(Bytes::from_array(pending)[:], ignore_bom=true),
+      ) catch {
         _ => None
       }
       match text {
@@ -75,9 +67,9 @@ fn percent_decode(s : String) -> String {
     i = i + 1
   }
   if pending.length() > 0 {
-    let text = try {
-      Some(@utf8.decode(Bytes::from_array(pending)[:], ignore_bom=true))
-    } catch {
+    let text = Some(
+      @utf8.decode(Bytes::from_array(pending)[:], ignore_bom=true),
+    ) catch {
       _ => None
     }
     match text {
@@ -88,7 +80,8 @@ fn percent_decode(s : String) -> String {
   buf.to_string()
 }
 
-///| Parse two hex digits at `start` as a byte value.
+///|
+/// Parse two hex digits at `start` as a byte value.
 fn parse_hex_byte(s : String, start : Int) -> Int? {
   fn digit(c : UInt16) -> Int? {
     let v = c.to_int()

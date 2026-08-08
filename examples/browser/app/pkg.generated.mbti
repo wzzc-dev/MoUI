@@ -4,14 +4,17 @@ package "examples/browser/app"
 import {
   "examples/browser/engine",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
 }
 
 // Values
-pub let default_html : String
+pub let default_proxy : String?
 
-pub fn program() -> @core.Program[Model, Msg]
+pub let default_url : String
 
-pub fn update(Model, Msg) -> Model
+pub fn program(initial_url? : String, proxy? : String?, environment? : @services.AppEnvironment) -> @core.Program[Model, Msg]
+
+pub fn update(Model, Msg) -> (Model, @core.Effect[Msg])
 
 pub fn view(Model) -> @core.View[Msg]
 
@@ -21,6 +24,9 @@ pub fn view(Model) -> @core.View[Msg]
 pub struct Model {
   address : String
   status : String
+  loading : Bool
+  pending_url : String
+  proxy : String?
   commands : Array[@core.DrawCommand]
   links : Array[@engine.LinkRegion]
   js : @engine.JsEngine
@@ -28,11 +34,12 @@ pub struct Model {
   script_errors : Int
   renders : Int
 }
-pub fn Model::new(address? : String) -> Self
+pub fn Model::new(address? : String, proxy? : String?) -> Self
 
 pub(all) enum Msg {
   AddressChanged(String)
   LoadAddress
+  PollNetwork
   CanvasDrag(@core.DragGestureEvent)
 }
 

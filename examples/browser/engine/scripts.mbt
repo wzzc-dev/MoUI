@@ -21,21 +21,31 @@ pub struct ScriptRunResult {
 pub fn JsEngine::new() -> JsEngine {
   let js = { engine: @js_engine.Engine() }
   // 安装 DOM shim;失败(引擎语法不兼容)时页面脚本的 document 用法照旧报错
-  js.engine.eval(dom_shim_js) catch { _ => () }
+  js.engine.eval(dom_shim_js) catch {
+    _ => ()
+  }
   js
 }
 
 ///|
 /// 新导航前重置影子 DOM 与事件监听;并同步 `location`。
 pub fn JsEngine::reset_dom(self : JsEngine, url : String) -> Unit {
-  self.engine.eval("__moui_reset()") catch { _ => () }
-  self.engine.eval("__moui_set_location(" + @json.to_json(url).stringify() + ")") catch { _ => () }
+  self.engine.eval("__moui_reset()") catch {
+    _ => ()
+  }
+  self.engine.eval(
+    "__moui_set_location(" + @json.to_json(url).stringify() + ")",
+  ) catch {
+    _ => ()
+  }
 }
 
 ///|
 /// 脚本执行完后取回影子 DOM 序列化的 body HTML 片段。
 pub fn JsEngine::dump_dom_html(self : JsEngine) -> String? {
-  let r = self.engine.call_json("__moui_dump_html", []) catch { _ => return None }
+  let r = self.engine.call_json("__moui_dump_html", []) catch {
+    _ => return None
+  }
   match r {
     Json::String(s) => Some(s)
     _ => None
@@ -68,7 +78,9 @@ pub fn JsEngine::pump_events(self : JsEngine) -> Unit {
   // timer checkpoint 可能触发新脚本注册;有限次迭代覆盖嵌套调度
   let mut rounds = 0
   while rounds < 8 && self.engine.has_pending_timers() {
-    self.engine.run_timer_checkpoint() catch { _ => break }
+    self.engine.run_timer_checkpoint() catch {
+      _ => break
+    }
     rounds = rounds + 1
   }
   self.dispatch_ready()
@@ -77,7 +89,9 @@ pub fn JsEngine::pump_events(self : JsEngine) -> Unit {
 ///|
 /// 派发 document 的 DOMContentLoaded 与 window 的 load(脚本全部执行完后)。
 pub fn JsEngine::dispatch_ready(self : JsEngine) -> Unit {
-  self.engine.eval("__moui_dispatch_ready()") catch { _ => () }
+  self.engine.eval("__moui_dispatch_ready()") catch {
+    _ => ()
+  }
 }
 
 ///|
@@ -154,20 +168,18 @@ pub fn extract_script_entries(html : String) -> Array[ScriptEntry] {
           @html.Node::Element(_) => ()
         }
       }
-      out.push(
-        {
-          inline: !has_src,
-          src: if has_src {
-            match e.attributes.get("src") {
-              Some(v) => v
-              None => ""
-            }
-          } else {
-            ""
-          },
-          body: buf.to_string(),
+      out.push({
+        inline: !has_src,
+        src: if has_src {
+          match e.attributes.get("src") {
+            Some(v) => v
+            None => ""
+          }
+        } else {
+          ""
         },
-      )
+        body: buf.to_string(),
+      })
     }
     for child in e.children {
       match child {

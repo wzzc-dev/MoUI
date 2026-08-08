@@ -4,7 +4,9 @@
 
 ///|
 fn run_and_dump(js : JsEngine, code : String) -> String? {
-  js.engine.eval(code) catch { _ => () }
+  js.engine.eval(code) catch {
+    _ => ()
+  }
   js.dump_dom_html()
 }
 
@@ -15,7 +17,6 @@ fn json_string_contains(j : Json, needle : String) -> Bool {
     _ => false
   }
 }
-
 
 ///|
 test "dom shim: createElement appendChild textContent" {
@@ -69,7 +70,9 @@ test "dom shim: getElementById and querySelector" {
     "root.appendChild(p); document.body.appendChild(root);" +
     "function __q1(){ var el = document.getElementById('app'); return el ? el.tag : 'none' }" +
     "function __q2(){ var el = document.querySelector('.msg'); return el ? el.textContent : 'none' }",
-  ) catch { _ => () }
+  ) catch {
+    _ => ()
+  }
   let r1 = js.engine.call_json("__q1", []) catch { _ => @json.to_json(()) }
   debug_inspect(json_string_contains(r1, "div"), content="true")
   let r2 = js.engine.call_json("__q2", []) catch { _ => @json.to_json(()) }
@@ -87,13 +90,18 @@ test "dom shim: documentFragment and innerHTML passthrough" {
     "document.body.appendChild(frag);" +
     "var box = document.createElement('div'); box.innerHTML = '<b>bold</b>'; document.body.appendChild(box);",
   )
-  debug_inspect(html, content="Some(\"<span>a</span><span>b</span><div><b>bold</b></div>\")")
+  debug_inspect(
+    html,
+    content="Some(\"<span>a</span><span>b</span><div><b>bold</b></div>\")",
+  )
 }
 
 ///|
 test "dom shim: reset clears tree between navigations" {
   let js = JsEngine::new()
-  ignore(run_and_dump(js, "document.body.appendChild(document.createElement('div'))"))
+  ignore(
+    run_and_dump(js, "document.body.appendChild(document.createElement('div'))"),
+  )
   js.reset_dom("https://example.com")
   let html = js.dump_dom_html()
   debug_inspect(html, content="Some(\"\")")
@@ -106,7 +114,9 @@ test "dom shim: DOMContentLoaded listeners fire after scripts" {
     "window.__ready = 0;" +
     "document.addEventListener('DOMContentLoaded', function(){ window.__ready = 1 });" +
     "window.addEventListener('load', function(){ window.__ready += 2 });",
-  ) catch { _ => () }
+  ) catch {
+    _ => ()
+  }
   js.dispatch_ready()
   js.engine.eval("function __qr(){ return window.__ready }")
   let r = js.engine.call_json("__qr", []) catch { _ => @json.to_json(()) }
@@ -120,7 +130,9 @@ test "dom shim: innerHTML setter survives page script reading it" {
   js.engine.eval(
     "var box = document.createElement('div'); box.innerHTML = '<i>x</i>';" +
     "var read = box.innerHTML; document.body.appendChild(box);",
-  ) catch { _ => () }
+  ) catch {
+    _ => ()
+  }
   js.engine.eval("function __qr2(){ return window.read }")
   let r = js.engine.call_json("__qr2", []) catch { _ => @json.to_json(()) }
   debug_inspect(json_string_contains(r, "<i>x</i>"), content="true")

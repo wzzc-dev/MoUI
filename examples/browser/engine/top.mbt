@@ -6,6 +6,9 @@ pub fn render_html(
   width : Double,
   height : Double,
 ) -> Array[@core.DrawCommand] {
-  let tree = @crater.render_html_to_paint_tree(html, @values.Size::new(width, height))
+  let tree = @crater.render_html_to_paint_tree(
+    html,
+    @values.Size::new(width, height),
+  )
   @translate.paint_node_to_commands(tree)
 }

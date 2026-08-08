@@ -32,7 +32,10 @@ pub impl Show for NetError with fn output(self, logger) {
 ///|
 /// 抓取一个页面,跟随重定向(最多 5 跳)。
 /// `proxy` 非 None 时,直连失败会自动经代理重试一次。
-pub async fn fetch_page(url : String, proxy? : String? = None) -> PageLoad raise NetError {
+pub async fn fetch_page(
+  url : String,
+  proxy? : String? = None,
+) -> PageLoad raise NetError {
   let mut current = url
   let mut hops = 0
   let mut use_proxy = proxy
@@ -47,7 +50,9 @@ pub async fn fetch_page(url : String, proxy? : String? = None) -> PageLoad raise
               // 直连失败且配置了代理:改走代理,并记住后续请求都走代理
               Some(p) => {
                 use_proxy = Some(p)
-                one_request(current, Some(p)) catch { _ => raise err }
+                one_request(current, Some(p)) catch {
+                  _ => raise err
+                }
               }
               None => raise err
             }
@@ -89,7 +94,10 @@ fn RawResponse::header(self : RawResponse, name : String) -> String? {
 }
 
 ///|
-async fn one_request(url : String, proxy_url : String?) -> RawResponse raise NetError {
+async fn one_request(
+  url : String,
+  proxy_url : String?,
+) -> RawResponse raise NetError {
   let (host, path) = split_url(url)
   let client = match proxy_url {
     Some(proxy_url) => {
@@ -100,21 +108,20 @@ async fn one_request(url : String, proxy_url : String?) -> RawResponse raise Net
         _ => raise NetError::InvalidUrl("invalid url: " + url)
       }
     }
-    None => @async_http.Client(host) catch {
-      _ => raise NetError::InvalidUrl("invalid url: " + url)
-    }
+    None =>
+      @async_http.Client(host) catch {
+        _ => raise NetError::InvalidUrl("invalid url: " + url)
+      }
   }
-  let response = try {
-    client.get(path)
-  } catch {
+  let response = client.get(path) catch {
     err => {
       client.close()
-      raise NetError::Network("network error for " + url + ": " + err.to_string())
+      raise NetError::Network(
+        "network error for " + url + ": " + err.to_string(),
+      )
     }
   }
-  let body = try {
-    @async_io.Reader::read_all(client).text()
-  } catch {
+  let body = @async_io.Reader::read_all(client).text() catch {
     err => {
       client.close()
       raise NetError::Network("read error for " + url + ": " + err.to_string())

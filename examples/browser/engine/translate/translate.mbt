@@ -5,20 +5,23 @@
 /// (clip/opacity scopes) -> children (stacking order) -> text/image ->
 /// borders -> polygon. Clip and opacity scopes are pushed before children
 /// and popped after, matching MoUI's stack-based draw model.
-pub fn paint_node_to_commands(root : @paint_model.PaintNode) -> Array[@core.DrawCommand] {
+pub fn paint_node_to_commands(
+  root : @paint_model.PaintNode,
+) -> Array[@core.DrawCommand] {
   let sorted_root = @paint_build.sort_tree_by_stacking_order(root)
   let out : Array[@core.DrawCommand] = []
   walk_node(sorted_root, 0.0, 0.0, out)
   out
 }
 
+///|
 fn walk_node(
   node : @paint_model.PaintNode,
   offset_x : Double,
   offset_y : Double,
   out : Array[@core.DrawCommand],
 ) -> Unit {
-  if !(node.paint.should_render()) {
+  if !node.paint.should_render() {
     return
   }
   let rect = node_rect(node, offset_x, offset_y)
@@ -153,6 +156,7 @@ fn walk_node(
   }
 }
 
+///|
 fn node_rect(
   node : @paint_model.PaintNode,
   offset_x : Double,
@@ -164,11 +168,17 @@ fn node_rect(
   }
 }
 
+///|
 fn max_radius(node : @paint_model.PaintNode) -> Double {
   let p = node.paint
   let mut m = 0.0
-  for r in [p.border_top_left_radius, p.border_top_right_radius,
-      p.border_bottom_right_radius, p.border_bottom_left_radius] {
+  for
+    r in [
+      p.border_top_left_radius,
+      p.border_top_right_radius,
+      p.border_bottom_right_radius,
+      p.border_bottom_left_radius,
+    ] {
     if r > m {
       m = r
     }
@@ -176,7 +186,8 @@ fn max_radius(node : @paint_model.PaintNode) -> Double {
   m
 }
 
-///| crater color (0-255 ints + alpha) -> MoUI color (0-1 doubles)
+///|
+/// crater color (0-255 ints + alpha) -> MoUI color (0-1 doubles)
 pub fn to_moui_color(c : @values.Color) -> @core.Color {
   {
     r: c.r.to_double() / 255.0,
@@ -186,15 +197,21 @@ pub fn to_moui_color(c : @values.Color) -> @core.Color {
   }
 }
 
+///|
 fn font_spec(p : @paint_model.PaintProperties) -> @core.FontSpec {
   {
     families: { families: [to_font_family(p.font_family)] },
     size: p.font_size,
-    weight: if p.is_bold { 700 } else { p.font_weight.to_int() },
+    weight: if p.is_bold {
+      700
+    } else {
+      p.font_weight.to_int()
+    },
     style: @core.FontStyle::Normal,
   }
 }
 
+///|
 fn to_font_family(name : String) -> @core.FontFamily {
   match name {
     "monospace" | "ui-monospace" => @core.FontFamily::Monospace
@@ -204,6 +221,7 @@ fn to_font_family(name : String) -> @core.FontFamily {
   }
 }
 
+///|
 fn draw_borders(
   node : @paint_model.PaintNode,
   offset_x : Double,
@@ -218,8 +236,12 @@ fn draw_borders(
   if t <= 0.0 && r <= 0.0 && b <= 0.0 && l <= 0.0 {
     return
   }
-  if t == r && r == b && b == l && p.border_top_color == p.border_bottom_color &&
-    p.border_top_color == p.border_left_color && p.border_top_color == p.border_right_color {
+  if t == r &&
+    r == b &&
+    b == l &&
+    p.border_top_color == p.border_bottom_color &&
+    p.border_top_color == p.border_left_color &&
+    p.border_top_color == p.border_right_color {
     out.push(
       @core.DrawCommand::StrokeRect(
         node_rect(node, offset_x, offset_y),
