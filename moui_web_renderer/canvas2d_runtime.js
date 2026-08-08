@@ -279,11 +279,28 @@ export function createCanvas2dImports(options = {}) {
   };
 
   const imagePlacement = (rect, imageWidth, imageHeight, fit) => {
+    const frameRatio = rect.width / Math.max(rect.height, 0.0001);
+    const imgRatio = imageWidth / Math.max(imageHeight, 0.0001);
+    const contain = () => {
+      if (imgRatio > frameRatio) {
+        const height = rect.width / imgRatio;
+        return {
+          dx: rect.x, dy: rect.y + (rect.height - height) * 0.5,
+          dw: rect.width, dh: height,
+          sx: 0, sy: 0, sw: imageWidth, sh: imageHeight,
+        };
+      }
+      const width = rect.height * imgRatio;
+      return {
+        dx: rect.x + (rect.width - width) * 0.5,
+        dy: rect.y,
+        dw: width, dh: rect.height,
+        sx: 0, sy: 0, sw: imageWidth, sh: imageHeight,
+      };
+    };
     if (Number(fit) === 2) {
       return { dx: rect.x, dy: rect.y, dw: rect.width, dh: rect.height };
     }
-    const frameRatio = rect.width / Math.max(rect.height, 0.0001);
-    const imgRatio = imageWidth / Math.max(imageHeight, 0.0001);
     if (Number(fit) === 1) {
       if (imgRatio > frameRatio) {
         const visible = frameRatio / imgRatio;
@@ -304,21 +321,60 @@ export function createCanvas2dImports(options = {}) {
         sw: imageWidth * visible, sh: imageHeight,
       };
     }
-    if (imgRatio > frameRatio) {
+    // ScaleDown: natural size (centered) when the image fits, else contain.
+    if (Number(fit) === 3) {
+      if (imageWidth <= rect.width && imageHeight <= rect.height) {
+        return {
+          dx: rect.x + (rect.width - imageWidth) * 0.5,
+          dy: rect.y + (rect.height - imageHeight) * 0.5,
+          dw: imageWidth, dh: imageHeight,
+          sx: 0, sy: 0, sw: imageWidth, sh: imageHeight,
+        };
+      }
+      return contain();
+    }
+    // FitWidth: fill the frame width; crop vertically when the scaled image
+    // is taller than the frame, else letterbox vertically.
+    if (Number(fit) === 4) {
       const height = rect.width / imgRatio;
+      if (height <= rect.height) {
+        return {
+          dx: rect.x, dy: rect.y + (rect.height - height) * 0.5,
+          dw: rect.width, dh: height,
+          sx: 0, sy: 0, sw: imageWidth, sh: imageHeight,
+        };
+      }
+      const visible = rect.height / height;
+      const inset = (1 - visible) * 0.5;
       return {
-        dx: rect.x, dy: rect.y + (rect.height - height) * 0.5,
-        dw: rect.width, dh: height,
-        sx: 0, sy: 0, sw: imageWidth, sh: imageHeight,
+        dx: rect.x, dy: rect.y,
+        dw: rect.width, dh: rect.height,
+        sx: 0, sy: inset * imageHeight,
+        sw: imageWidth, sh: imageHeight * visible,
       };
     }
-    const width = rect.height * imgRatio;
-    return {
-      dx: rect.x + (rect.width - width) * 0.5,
-      dy: rect.y,
-      dw: width, dh: rect.height,
-      sx: 0, sy: 0, sw: imageWidth, sh: imageHeight,
-    };
+    // FitHeight: fill the frame height; crop horizontally when the scaled
+    // image is wider than the frame, else letterbox horizontally.
+    if (Number(fit) === 5) {
+      const width = rect.height * imgRatio;
+      if (width <= rect.width) {
+        return {
+          dx: rect.x + (rect.width - width) * 0.5,
+          dy: rect.y,
+          dw: width, dh: rect.height,
+          sx: 0, sy: 0, sw: imageWidth, sh: imageHeight,
+        };
+      }
+      const visible = rect.width / width;
+      const inset = (1 - visible) * 0.5;
+      return {
+        dx: rect.x, dy: rect.y,
+        dw: rect.width, dh: rect.height,
+        sx: inset * imageWidth, sy: 0,
+        sw: imageWidth * visible, sh: imageHeight,
+      };
+    }
+    return contain();
   };
 
   // ---- Return the import object ----
