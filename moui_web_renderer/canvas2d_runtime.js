@@ -190,6 +190,280 @@ export function createCanvas2dImports(options = {}) {
     return `url(#${filterId})`;
   };
 
+  // ---- Text selection overlay (DOM) ----
+  //
+  // Mirrors the WebGPU host's selectable-text overlay: every DrawText run is
+  // also exposed as a transparent, absolutely-positioned <span> inside a
+  // `.moui-text-selection-layer` div so the browser can select/copy text that
+  // was rasterized into the canvas. Geometry is computed in MoonBit logical
+  // space from a renderer-side transform/clip state stack (Canvas2D's own
+  // ctx matrix is physical-space and not exposed here).
+
+  const identityTransform = () => ({ a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 });
+
+  const multiplyTransform = (left, right) => ({
+    a: left.a * right.a + left.c * right.b,
+    b: left.b * right.a + left.d * right.b,
+    c: left.a * right.c + left.c * right.d,
+    d: left.b * right.c + left.d * right.d,
+    tx: left.a * right.tx + left.c * right.ty + left.tx,
+    ty: left.b * right.tx + left.d * right.ty + left.ty,
+  });
+
+  const transformPoint = (transform, x, y) => ({
+    x: transform.a * x + transform.c * y + transform.tx,
+    y: transform.b * x + transform.d * y + transform.ty,
+  });
+
+  const transformRect = (transform, rect) => {
+    const p0 = transformPoint(transform, rect.x, rect.y);
+    const p1 = transformPoint(transform, rect.x + rect.width, rect.y);
+    const p2 = transformPoint(transform, rect.x, rect.y + rect.height);
+    const p3 = transformPoint(transform, rect.x + rect.width, rect.y + rect.height);
+    const minX = Math.min(p0.x, p1.x, p2.x, p3.x);
+    const maxX = Math.max(p0.x, p1.x, p2.x, p3.x);
+    const minY = Math.min(p0.y, p1.y, p2.y, p3.y);
+    const maxY = Math.max(p0.y, p1.y, p2.y, p3.y);
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  };
+
+  const intersectRects = (left, right) => {
+    if (!left) return right;
+    if (!right) return left;
+    const x = Math.max(left.x, right.x);
+    const y = Math.max(left.y, right.y);
+    const maxX = Math.min(left.x + left.width, right.x + right.width);
+    const maxY = Math.min(left.y + left.height, right.y + right.height);
+    if (maxX <= x || maxY <= y) return null;
+    return { x, y, width: maxX - x, height: maxY - y };
+  };
+
+  const cssPixels = value => `${Math.round(Number(value) * 100) / 100}px`;
+  const cssTextAlign = align => (Number(align) === 1 ? "center" : Number(align) === 2 ? "right" : "left");
+
+  const textSelectionOptions = options.textSelection ?? {};
+  const textSelectionEnabled = textSelectionOptions.enabled === true;
+  const textSelectionClassName =
+    `${textSelectionOptions.className || "moui-text-selection-layer"}`;
+
+  const canvasCursorValue = canvas => {
+    try {
+      const explicit = `${canvas?.style?.cursor ?? ""}`.trim();
+      const computed = explicit || `${globalThis.getComputedStyle?.(canvas)?.cursor ?? ""}`.trim();
+      return !computed || computed === "auto" ? "default" : computed;
+    } catch {
+      return "default";
+    }
+  };
+
+  const syncTextSelectionLayerGeometry = state => {
+    const canvas = state?.canvas;
+    const layer = state?.layer;
+    if (!canvas || !layer) return;
+    const host = layer.parentElement ?? canvas.parentElement;
+    const canvasRect = canvas.getBoundingClientRect?.() ?? {
+      left: 0,
+      top: 0,
+      width: canvas.clientWidth || canvas.width || 1,
+      height: canvas.clientHeight || canvas.height || 1,
+    };
+    const hostRect = host?.getBoundingClientRect?.() ?? { left: 0, top: 0 };
+    layer.style.left = `${canvasRect.left - hostRect.left + (host?.scrollLeft || 0)}px`;
+    layer.style.top = `${canvasRect.top - hostRect.top + (host?.scrollTop || 0)}px`;
+    layer.style.width = `${Math.max(1, canvasRect.width || canvas.clientWidth || 1)}px`;
+    layer.style.height = `${Math.max(1, canvasRect.height || canvas.clientHeight || 1)}px`;
+  };
+
+  const createTextSelectionLayer = canvas => {
+    if (!textSelectionEnabled || typeof document === "undefined" || !canvas) {
+      return null;
+    }
+    const host = canvas.parentElement ?? document.body;
+    if (!host) return null;
+    try {
+      if (globalThis.getComputedStyle?.(host)?.position === "static") {
+        host.style.position = "relative";
+      }
+    } catch {
+      // If style inspection is unavailable, the configured page CSS can own it.
+    }
+    const layer = document.createElement("div");
+    layer.className = textSelectionClassName;
+    layer.setAttribute("aria-hidden", "true");
+    layer.dataset.mouiCanvasId = canvas.id;
+    Object.assign(layer.style, {
+      position: "absolute",
+      left: "0px",
+      top: "0px",
+      width: "1px",
+      height: "1px",
+      overflow: "hidden",
+      pointerEvents: "none",
+      cursor: canvasCursorValue(canvas),
+      userSelect: "text",
+      WebkitUserSelect: "text",
+      zIndex: `${textSelectionOptions.zIndex ?? 1}`,
+      contain: "layout style paint",
+    });
+    host.appendChild(layer);
+    const state = { canvas, layer, runs: [], nodes: [] };
+    syncTextSelectionLayerGeometry(state);
+    return state;
+  };
+
+  const disposeTextSelectionLayer = state => {
+    if (!state) return;
+    state.runs = [];
+    state.nodes = [];
+    state.layer?.remove?.();
+  };
+
+  const textSelectionClipPath = run => {
+    const frame = run.frame;
+    const visible = run.visible;
+    if (!visible) return "";
+    const left = Math.max(0, visible.x - frame.x);
+    const top = Math.max(0, visible.y - frame.y);
+    const right = Math.max(0, frame.x + frame.width - (visible.x + visible.width));
+    const bottom = Math.max(0, frame.y + frame.height - (visible.y + visible.height));
+    if (left <= 0 && top <= 0 && right <= 0 && bottom <= 0) return "";
+    return `inset(${top}px ${right}px ${bottom}px ${left}px)`;
+  };
+
+  const pushSelectableRun = (selection, renderer, text, frame, font, align) => {
+    if (!text) return;
+    const state = renderer.renderState[renderer.renderState.length - 1] ?? {
+      transform: identityTransform(),
+      clip: null,
+    };
+    const transformed = transformRect(state.transform, frame);
+    const canvasClip = {
+      x: 0,
+      y: 0,
+      width: Math.max(1, Number(renderer.moonbitWidth || renderer.width || 1)),
+      height: Math.max(1, Number(renderer.moonbitHeight || renderer.height || 1)),
+    };
+    const clipped = intersectRects(transformed, state.clip);
+    const visible = intersectRects(clipped, canvasClip);
+    if (!visible || visible.width <= 0 || visible.height <= 0) return;
+    selection.runs.push({
+      text,
+      frame: transformed,
+      visible,
+      font: {
+        family: font.family || WEB_FONT_STACK,
+        style: font.style || "normal",
+        size: Math.max(1, Number(font.size) || 14),
+        weight: Number(font.weight) || 400,
+      },
+      align: Number(align) || 0,
+    });
+  };
+
+  const recordSelectableTextRun = (renderer, text, frame, font, align, alpha) => {
+    const selection = renderer.textSelection;
+    if (!selection || !text || alpha <= 0.01) return;
+    const logicalFrame = {
+      x: Number(frame.x) || 0,
+      y: Number(frame.y) || 0,
+      width: Math.max(0, Number(frame.width) || 0),
+      height: Math.max(0, Number(frame.height) || 0),
+    };
+    if (logicalFrame.width <= 0 || logicalFrame.height <= 0) return;
+    pushSelectableRun(selection, renderer, text, logicalFrame, font, align);
+  };
+
+  const applySelectableTextStyle = (span, run) => {
+    Object.assign(span.style, {
+      position: "absolute",
+      display: "block",
+      left: cssPixels(run.frame.x),
+      top: cssPixels(run.frame.y),
+      width: cssPixels(run.frame.width),
+      height: cssPixels(run.frame.height),
+      margin: "0",
+      padding: "0",
+      border: "0",
+      overflow: "hidden",
+      whiteSpace: "pre",
+      pointerEvents: "auto",
+      cursor: "inherit",
+      userSelect: "text",
+      WebkitUserSelect: "text",
+      color: "transparent",
+      WebkitTextFillColor: "transparent",
+      background: "transparent",
+      fontFamily: run.font.family,
+      fontStyle: run.font.style,
+      fontSize: cssPixels(run.font.size),
+      fontWeight: `${run.font.weight}`,
+      fontKerning: "none",
+      fontVariantLigatures: "none",
+      fontFeatureSettings: '"kern" 0, "liga" 0, "clig" 0, "calt" 0',
+      textRendering: "geometricPrecision",
+      lineHeight: cssPixels(Math.max(run.font.size, run.frame.height)),
+      textAlign: cssTextAlign(run.align),
+      letterSpacing: "0",
+    });
+    const clipPath = textSelectionClipPath(run);
+    span.style.clipPath = clipPath;
+    span.style.webkitClipPath = clipPath;
+  };
+
+  const selectableRunSignature = run => [
+    run.text,
+    run.frame.x,
+    run.frame.y,
+    run.frame.width,
+    run.frame.height,
+    run.visible.x,
+    run.visible.y,
+    run.visible.width,
+    run.visible.height,
+    run.font.family,
+    run.font.style,
+    run.font.size,
+    run.font.weight,
+    run.align,
+  ].join("\u0000");
+
+  const updateSelectableTextSpan = (record, run) => {
+    const signature = selectableRunSignature(run);
+    if (record.signature === signature && !record.hidden) return;
+    if (record.span.textContent !== run.text) record.span.textContent = run.text;
+    applySelectableTextStyle(record.span, run);
+    record.signature = signature;
+    record.hidden = false;
+  };
+
+  const syncTextSelectionLayer = renderer => {
+    const selection = renderer.textSelection;
+    if (!selection || typeof document === "undefined") return;
+    syncTextSelectionLayerGeometry(selection);
+    const runs = selection.runs ?? [];
+    const common = Math.min(selection.nodes.length, runs.length);
+    for (let index = 0; index < common; index += 1) {
+      updateSelectableTextSpan(selection.nodes[index], runs[index]);
+    }
+    for (let index = common; index < runs.length; index += 1) {
+      const span = document.createElement("span");
+      span.draggable = false;
+      const record = { span, signature: "", hidden: false };
+      updateSelectableTextSpan(record, runs[index]);
+      selection.layer.appendChild(span);
+      selection.nodes.push(record);
+    }
+    for (let index = runs.length; index < selection.nodes.length; index += 1) {
+      const record = selection.nodes[index];
+      if (!record.hidden) {
+        record.hidden = true;
+        record.span.textContent = "";
+        record.span.style.display = "none";
+      }
+    }
+    selection.runs = [];
+  };
+
   // ---- Renderer state helpers ----
 
   const rendererCtx = renderer => renderer.ctx;
@@ -465,6 +739,11 @@ export function createCanvas2dImports(options = {}) {
         failedImages: new Map(),
         presentCount: 0,
         layerCanvas: null,
+        renderState: [{
+          transform: identityTransform(),
+          clip: null,
+        }],
+        textSelection: createTextSelectionLayer(surface.canvas),
       };
       const handle = nextRendererHandle++;
       renderers.set(handle, renderer);
@@ -492,6 +771,10 @@ export function createCanvas2dImports(options = {}) {
     begin_frame(rendererHandle, width, height) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
+      renderer.renderState = [{
+        transform: identityTransform(),
+        clip: null,
+      }];
       renderer.moonbitWidth = Math.max(1, Number(width) || 1);
       renderer.moonbitHeight = Math.max(1, Number(height) || 1);
       renderer.width = renderer.moonbitWidth;
@@ -676,6 +959,14 @@ export function createCanvas2dImports(options = {}) {
       const drawY = physY + Math.max(ascent, (physH + ascent * 0.72) / 2);
       ctx.fillStyle = cssColor({ r, g, b, a });
       ctx.fillText(value, drawX, drawY);
+      recordSelectableTextRun(
+        renderer,
+        value,
+        { x: Number(x), y: Number(y), width: Number(width), height: Number(height) },
+        { family: fontFamily, style: fontStyle, size: fontSize, weight: fontWeight },
+        alignCode,
+        Number(a),
+      );
       return ok();
     },
 
@@ -816,6 +1107,21 @@ export function createCanvas2dImports(options = {}) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
       saveAndSetClip(renderer, scx(renderer, x), scy(renderer, y), scx(renderer, width), scy(renderer, height));
+      // Track logical-space clip for the text-selection overlay.
+      const current = renderer.renderState[renderer.renderState.length - 1] ?? {
+        transform: identityTransform(),
+        clip: null,
+      };
+      const transformed = transformRect(current.transform, {
+        x: Number(x),
+        y: Number(y),
+        width: Number(width),
+        height: Number(height),
+      });
+      renderer.renderState.push({
+        transform: current.transform,
+        clip: intersectRects(current.clip, transformed),
+      });
       return ok();
     },
     pop_clip(rendererHandle) {
@@ -823,6 +1129,7 @@ export function createCanvas2dImports(options = {}) {
       if (!renderer) return invalidResource();
       const ctx = rendererCtx(renderer);
       ctx.restore();
+      if (renderer.renderState.length > 1) renderer.renderState.pop();
       return ok();
     },
 
@@ -842,6 +1149,22 @@ export function createCanvas2dImports(options = {}) {
         Number(d),
         scx(renderer, tx), scy(renderer, ty)
       );
+      // Track logical-space transform for the text-selection overlay.
+      const current = renderer.renderState[renderer.renderState.length - 1] ?? {
+        transform: identityTransform(),
+        clip: null,
+      };
+      renderer.renderState.push({
+        transform: multiplyTransform(current.transform, {
+          a: Number(a),
+          b: Number(b),
+          c: Number(c),
+          d: Number(d),
+          tx: Number(tx),
+          ty: Number(ty),
+        }),
+        clip: current.clip,
+      });
       return ok();
     },
     pop_transform(rendererHandle) {
@@ -849,6 +1172,7 @@ export function createCanvas2dImports(options = {}) {
       if (!renderer) return invalidResource();
       const ctx = rendererCtx(renderer);
       ctx.restore();
+      if (renderer.renderState.length > 1) renderer.renderState.pop();
       return ok();
     },
 
@@ -1042,12 +1366,14 @@ export function createCanvas2dImports(options = {}) {
     present(rendererHandle) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
+      syncTextSelectionLayer(renderer);
       return ok();
     },
 
     renderer_dispose(rendererHandle) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return;
+      disposeTextSelectionLayer(renderer.textSelection);
       renderer.images.clear();
       renderer.loadedImages.clear();
       renderer.failedImages.clear();
