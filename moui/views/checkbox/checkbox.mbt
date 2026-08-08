@@ -284,6 +284,7 @@ fn[Msg] checkbox_event(
   }
 }
 
+///|
 fn append_checkbox_commands(
   commands : Array[@core.DrawCommand],
   label~ : String,

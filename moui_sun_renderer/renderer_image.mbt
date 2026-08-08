@@ -95,9 +95,7 @@ fn SunRasterRenderer::mark_sun_image_loading_if_needed(
 ) -> Unit {
   match self.image_lifecycle.lookup(source) {
     Some({ status: @render.ImageResourceStatus::ImageLoading, .. }) => ()
-    _ => {
-      ignore(self.image_lifecycle.mark_loading(source))
-    }
+    _ => ignore(self.image_lifecycle.mark_loading(source))
   }
 }
 

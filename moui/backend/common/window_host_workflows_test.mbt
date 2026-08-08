@@ -61,10 +61,12 @@ fn workflow_test_renderer(
     resize=_ => (),
     render_frame=_ => @render.RenderFrameResult::new(presented=true),
     text_system=() => @core.TextSystem::fallback(),
-    image_records=() => if with_image {
-      [@render.ImageResourceRecord::loading("asset.png")]
-    } else {
-      []
+    image_records=() => {
+      if with_image {
+        [@render.ImageResourceRecord::loading("asset.png")]
+      } else {
+        []
+      }
     },
     apply_image_load_completion=_ => true,
     image_decoder=if with_image {
@@ -121,9 +123,10 @@ test "last window close follows owner teardown order exactly once" {
   let images = @window_image.WindowImageTaskStates::new()
   let trace : Array[String] = []
   let renderer = workflow_test_renderer(trace, with_image=true)
-  let starter = @window_image.WindowImageTaskStarter::new(
-    start=(_request, _complete) => Some(() => trace.push("image-cancel")),
-  )
+  let starter = @window_image.WindowImageTaskStarter::new(start=(
+    _request,
+    _complete,
+  ) => Some(() => trace.push("image-cancel")))
   let services = @window_services.WindowServiceState::new(
     bridge=@backend_host.HostServiceBridge::unavailable(),
     dispose=() => trace.push("services"),

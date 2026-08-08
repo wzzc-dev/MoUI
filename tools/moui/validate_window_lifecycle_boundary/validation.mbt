@@ -182,7 +182,7 @@ fn validate_embedded_session(root : String, failures : Array[String]) -> Unit {
   let package_path = "moui/backend/common/embedded"
   match read_text(root, package_path + "/embedded_runtime_backend.mbt") {
     Some(text) if text.contains("@window_frame.WindowFrameState::new") &&
-      text.contains("@window_image.WindowImageState::new") => ()
+      text.contains("@window_image.WindowImageTasks::new") => ()
     _ =>
       failures.push("embedded sessions must compose the frame and image owners")
   }

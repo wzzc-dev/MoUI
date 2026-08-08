@@ -82,12 +82,12 @@ test "markdown editor scroll does not reparse session" {
   let after_first_frame = app.document_session_parse_count()
   let scroll_result = runtime.dispatch_pointer_input(
     @core.PointerEvent::new(
-        position=@geometry.Point::new(
-          x=app.editor_content_x(980.0, inner_x=8.0),
-          y=220.0,
-        ),
-        phase=@core.PointerPhase::Move,
-        wheel_delta=@geometry.Point::new(x=0.0, y=-220.0),
+      position=@geometry.Point::new(
+        x=app.editor_content_x(980.0, inner_x=8.0),
+        y=220.0,
+      ),
+      phase=@core.PointerPhase::Move,
+      wheel_delta=@geometry.Point::new(x=0.0, y=-220.0),
     ),
   )
   ignore(scroll_result)

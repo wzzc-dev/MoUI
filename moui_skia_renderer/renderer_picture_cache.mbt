@@ -65,7 +65,7 @@ fn SkiaRasterRenderer::render_picture_command_range(
     match commands[index] {
       @render_common.PlanOp::BeginRetainedLayer(spec) =>
         match find_cached_layer_end(commands, index + 1, spec.key) {
-          Some(layer_end) => {
+          Some(layer_end) =>
             if self.draw_picture_cached_layer(canvas, spec, stats) {
               index = layer_end + 1
             } else {
@@ -82,7 +82,6 @@ fn SkiaRasterRenderer::render_picture_command_range(
               }
               index = layer_end + 1
             }
-          }
           None => {
             self.record_unsupported_command(
               "BeginRetainedLayer",

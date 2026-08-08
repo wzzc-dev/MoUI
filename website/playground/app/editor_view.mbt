@@ -40,9 +40,7 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
     }),
     accepts_tab_input=true,
     visible_scroll_y=model.editor_scroll.y,
-    on_scroll=Some(y => {
-      EditorScrollChanged(@geometry.Point::new(x=0.0, y~))
-    }),
+    on_scroll=Some(y => EditorScrollChanged(@geometry.Point::new(x=0.0, y~))),
     visible_viewport_height=editor_height,
     visible_overscan=160.0,
     selection_caret=model.editor.cursors[0].position,

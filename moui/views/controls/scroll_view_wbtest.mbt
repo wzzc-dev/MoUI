@@ -290,22 +290,13 @@ test "scroll indicator is opt-in and draggable" {
   assert_true(paint.overlay_commands.length() == 1)
   let result = visible.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(
-        x=98.0,
-        y=80.0,
-        phase=@core.PointerPhase::Down,
-      ),
+      event=scroll_test_pointer(x=98.0, y=80.0, phase=@core.PointerPhase::Down),
       child_frames=layout.child_frames,
     ),
   )
   assert_true(result.captured)
   assert_true(
-    result
-      .state
-      .unwrap()
-      .read_slot(scroll_runtime_state_slot())
-      .offset
-      .y > 0.0,
+    result.state.unwrap().read_slot(scroll_runtime_state_slot()).offset.y > 0.0,
   )
   let hidden : @core.View[Unit] = scroll_container(
     child=scroll_test_rect(width=100.0, height=500.0),
@@ -339,11 +330,7 @@ test "scroll drag state and offset stay element-owned" {
   let initial = scroll_test_state_context()
   let down = view.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(
-        x=50.0,
-        y=50.0,
-        phase=@core.PointerPhase::Down,
-      ),
+      event=scroll_test_pointer(x=50.0, y=50.0, phase=@core.PointerPhase::Down),
       child_frames=layout.child_frames,
       state=initial,
     ),
@@ -351,24 +338,18 @@ test "scroll drag state and offset stay element-owned" {
   let after_down = down.state.unwrap_or(initial)
   let moved = view.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(
-        x=50.0,
-        y=20.0,
-        phase=@core.PointerPhase::Move,
-      ),
+      event=scroll_test_pointer(x=50.0, y=20.0, phase=@core.PointerPhase::Move),
       child_frames=layout.child_frames,
       state=after_down,
     ),
   )
   let after_move = moved.state.unwrap_or(after_down)
-  assert_true(after_move.read_slot(scroll_runtime_state_slot()).offset.y == 30.0)
+  assert_true(
+    after_move.read_slot(scroll_runtime_state_slot()).offset.y == 30.0,
+  )
   let released = view.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(
-        x=50.0,
-        y=20.0,
-        phase=@core.PointerPhase::Up,
-      ),
+      event=scroll_test_pointer(x=50.0, y=20.0, phase=@core.PointerPhase::Up),
       child_frames=layout.child_frames,
       state=after_move,
     ),

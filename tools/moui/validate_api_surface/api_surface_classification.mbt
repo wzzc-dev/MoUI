@@ -170,8 +170,8 @@ fn line_has_any_prefix(line : String, prefixes : Array[String]) -> Bool {
 ///|
 fn core_api_surface_name_tokens() -> Array[String] {
   [
-    "Accessibility", "ActionCommand", "Alignment", "Animation", "AppEvent", "Axis", "Controlled",
-    "Badge", "Binding", "BlendMode", "Border", "Brush", "Button", "CachedLayer",
+    "Accessibility", "ActionCommand", "Alignment", "Animation", "AppEvent", "Axis",
+    "Controlled", "Badge", "Binding", "BlendMode", "Border", "Brush", "Button", "CachedLayer",
     "CheckMark", "ChoiceControl", "Color", "Command", "Component", "Composition",
     "Constraints", "ContentSize", "ControlState", "CrossAxis", "Custom", "Damage",
     "DateValue", "Declaration", "DerivedState", "Drag", "Draw", "Easing", "Effect",

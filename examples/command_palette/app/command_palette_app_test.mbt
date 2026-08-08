@@ -94,7 +94,9 @@ test "command palette host menu service dispatches selected command" {
     @moui.Effect::Task(_descriptor, start) =>
       ignore(
         start(message => {
-          let (next, _effect) = model.val.update_with_services(message, services)
+          let (next, _effect) = model.val.update_with_services(
+            message, services,
+          )
           model.val = next
         }),
       )

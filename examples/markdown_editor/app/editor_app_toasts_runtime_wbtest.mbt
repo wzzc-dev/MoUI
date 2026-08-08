@@ -6,16 +6,14 @@ fn MarkdownEditorApp::push_toast_for_test(
 ) -> Unit {
   let queue = self.toasts
   let serial = queue.items.length()
-  self.toasts = 
-    queue.push(
-      @views.ToastQueueItem::new(
-        id="toast-" + serial.to_string(),
-        message~,
-        tone~,
-        dismiss=Some(DismissToastTick),
-      ),
-    )
-  
+  self.toasts = queue.push(
+    @views.ToastQueueItem::new(
+      id="toast-" + serial.to_string(),
+      message~,
+      tone~,
+      dismiss=Some(DismissToastTick),
+    ),
+  )
 }
 
 ///|

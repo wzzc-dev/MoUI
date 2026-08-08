@@ -1,7 +1,5 @@
 ///|
-fn runtime_test_cached_layer_source(
-  layer_index : Ref[Int],
-) -> @core.View[Unit] {
+fn runtime_test_cached_layer_source(layer_index : Ref[Int]) -> @core.View[Unit] {
   runtime_wb_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="RuntimeCachedLayerSource"),
     declaration=() => @core.ViewDeclaration::uncacheable(),

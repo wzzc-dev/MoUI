@@ -102,9 +102,12 @@ test "unavailable accesskit bridge is inert" {
     generation=@core.SemanticsGeneration::new(1UL),
     action=@core.SemanticsAction::Activate,
   )
-  assert_true(bridge.publish_semantics(@runtime.SemanticsRead::Unchanged(
-    @core.SemanticsGeneration::new(1UL),
-  )) is None)
+  assert_true(
+    bridge.publish_semantics(
+      @runtime.SemanticsRead::Unchanged(@core.SemanticsGeneration::new(1UL)),
+    )
+    is None,
+  )
   match bridge.perform_action(request) {
     @accesskit.AccessKitActionResult::BridgeUnavailable(_) => ()
     _ => fail("expected unavailable bridge")

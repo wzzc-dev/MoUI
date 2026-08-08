@@ -18,9 +18,7 @@ pub fn[T, Msg] ControlledValue::new(
 }
 
 ///|
-pub fn[T, Msg] ControlledValue::value(
-  self : ControlledValue[T, Msg],
-) -> T {
+pub fn[T, Msg] ControlledValue::value(self : ControlledValue[T, Msg]) -> T {
   self.current
 }
 

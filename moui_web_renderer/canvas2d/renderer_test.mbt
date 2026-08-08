@@ -1,4 +1,5 @@
 ///|
+#skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_renderer_create_and_resize" {
   let renderer = Canvas2DRenderer::new(canvas_id="test-canvas")
   let metrics = @core.SurfaceMetrics::new(
@@ -14,6 +15,7 @@ test "canvas2d_renderer_create_and_resize" {
 }
 
 ///|
+#skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_renderer_dispose" {
   let renderer = Canvas2DRenderer::new(canvas_id="test-canvas")
   assert_false(renderer.disposed)
@@ -22,6 +24,7 @@ test "canvas2d_renderer_dispose" {
 }
 
 ///|
+#skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_renderer_render_frame_empty" {
   let renderer = Canvas2DRenderer::new(canvas_id="test-canvas")
   let frame = @core.DrawFrame::new(
@@ -34,6 +37,7 @@ test "canvas2d_renderer_render_frame_empty" {
 }
 
 ///|
+#skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_renderer_render_frame_after_dispose" {
   let renderer = Canvas2DRenderer::new(canvas_id="test-canvas")
   renderer.dispose()
@@ -47,6 +51,7 @@ test "canvas2d_renderer_render_frame_after_dispose" {
 }
 
 ///|
+#skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_create_renderer_sets_metrics" {
   let metrics = @core.SurfaceMetrics::new(
     logical_size=@core.Size::new(width=390.0, height=844.0),
@@ -60,6 +65,7 @@ test "canvas2d_create_renderer_sets_metrics" {
 }
 
 ///|
+#skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_descriptor_has_wasm_gc_target" {
   let descriptor = canvas2d_descriptor()
   assert_eq(descriptor.supported_targets.length(), 1)
@@ -67,6 +73,7 @@ test "canvas2d_descriptor_has_wasm_gc_target" {
 }
 
 ///|
+#skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_image_resources_empty" {
   let renderer = Canvas2DRenderer::new(canvas_id="test-canvas")
   let resources = renderer.image_resources()

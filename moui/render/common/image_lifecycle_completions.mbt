@@ -13,10 +13,7 @@ pub fn ImageResourceLifecycle::apply_load_completion(
             height=completion.height,
           )
         @render.ImageResourceLoadCompletionStatus::ImageLoadFailed =>
-          self.mark_failed(
-            completion.source,
-            diagnostic=completion.diagnostic,
-          )
+          self.mark_failed(completion.source, diagnostic=completion.diagnostic)
       }
     _ => false
   }

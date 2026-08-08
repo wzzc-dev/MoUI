@@ -540,10 +540,9 @@ test "linux accessibility bridge dispatches semantics actions" {
     }
   }
   let target = target.unwrap()
-  let driver = @runtime.HostRuntimeDriver::new(
-    runtime~,
-    schedule_redraw=() => (),
-  )
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let bridge = linux_accessibility_bridge(driver)
   inspect(linux_accessibility_bridge_info().kind, content="at-spi")
   inspect(bridge.available, content="true")

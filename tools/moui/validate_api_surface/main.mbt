@@ -146,9 +146,7 @@ fn sugar_text_tokens() -> Array[String] {
 ///|
 /// Types forwarded by the `moui/state` domain sugar package.
 fn sugar_state_tokens() -> Array[String] {
-  [
-    "ColorScheme", "LayoutDirection", "FocusScope", "FocusScopeItem",
-  ]
+  ["ColorScheme", "LayoutDirection", "FocusScope", "FocusScopeItem"]
 }
 
 ///|
@@ -448,8 +446,8 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_all_lines: 31,
       required_tokens: [
         "RendererBackendKind", "RendererDescriptor", "RendererProvider", "RendererBindResult",
-        "RendererSession", "HostSurface", "NativeSurface", "FrameToken",
-        "RenderFrameSubmission", "RendererEvent", "RenderFrameResult",
+        "RendererSession", "HostSurface", "NativeSurface", "FrameToken", "RenderFrameSubmission",
+        "RendererEvent", "RenderFrameResult",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer", "RendererProviderRegistry",
@@ -466,8 +464,8 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_lines: 110,
       max_pub_all_lines: 12,
       required_tokens: [
-        "pub struct ImageResourceLifecycle", "pub fn resolve_renderer",
-        "pub fn renderer_feature_capability", "pub struct GpuRenderWorker",
+        "pub struct ImageResourceLifecycle", "pub fn resolve_renderer", "pub fn renderer_feature_capability",
+        "pub struct GpuRenderWorker",
       ],
       forbidden_tokens: ["\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer"],
     },

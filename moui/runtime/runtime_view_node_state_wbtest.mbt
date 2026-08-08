@@ -45,10 +45,7 @@ fn runtime_probe_state_slot() -> @core.ViewStateSlot[Int] {
 ///|
 test "RuntimeViewNode: direct mount leaves no pending build" {
   let runtime = RuntimeState::new_view(
-    root=runtime_state_probe_view(
-      kind="mounted-child",
-      declaration_token="one",
-    ),
+    root=runtime_state_probe_view(kind="mounted-child", declaration_token="one"),
     size=@core.Size::new(width=40.0, height=20.0),
   )
   assert_false(runtime.element_tree.root.dirty.has_build())

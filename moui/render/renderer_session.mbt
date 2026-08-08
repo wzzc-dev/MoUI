@@ -87,7 +87,9 @@ pub fn RendererSession::new(
   recover? : (String) -> RecoveryResult = _ => RecoverySucceeded,
   dispose? : () -> Unit = () => (),
   image_records? : () -> Array[ImageResourceRecord] = () => [],
-  apply_image_load_completion? : (ImageResourceLoadCompletion) -> Bool = _ => false,
+  apply_image_load_completion? : (ImageResourceLoadCompletion) -> Bool = _ => {
+    false
+  },
   image_source? : HostImageSource = HostImageSource::unavailable(),
   image_decoder? : RendererImageDecoder? = None,
   native_surface? : NativeSurface? = None,

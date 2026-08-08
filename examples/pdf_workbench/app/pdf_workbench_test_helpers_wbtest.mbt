@@ -89,54 +89,46 @@ fn run_pdf_workbench_effect_value(
   match current {
     @moui.Effect::Run(_descriptor, run) =>
       run(message => {
-        let next = model
-          .val
-          .update_with_services(
-            message,
-            services,
-            raster_services~,
-            document_services~,
-          )
+        let next = model.val.update_with_services(
+          message,
+          services,
+          raster_services~,
+          document_services~,
+        )
         model.val = next.model
         effect.val = next.effect
       })
     @moui.Effect::Task(_descriptor, start) =>
       ignore(
         start(message => {
-          let next = model
-            .val
-            .update_with_services(
-              message,
-              services,
-              raster_services~,
-              document_services~,
-            )
+          let next = model.val.update_with_services(
+            message,
+            services,
+            raster_services~,
+            document_services~,
+          )
           model.val = next.model
           effect.val = next.effect
         }),
       )
     @moui.Effect::Dispatch(run) =>
       run(message => {
-        let next = model
-          .val
-          .update_with_services(
-            message,
-            services,
-            raster_services~,
-            document_services~,
-          )
-        model.val = next.model
-        effect.val = next.effect
-      })
-    @moui.Effect::Send(message) => {
-      let next = model
-        .val
-        .update_with_services(
+        let next = model.val.update_with_services(
           message,
           services,
           raster_services~,
           document_services~,
         )
+        model.val = next.model
+        effect.val = next.effect
+      })
+    @moui.Effect::Send(message) => {
+      let next = model.val.update_with_services(
+        message,
+        services,
+        raster_services~,
+        document_services~,
+      )
       model.val = next.model
       effect.val = next.effect
     }

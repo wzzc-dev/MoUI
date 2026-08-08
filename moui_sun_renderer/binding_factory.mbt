@@ -40,9 +40,9 @@ pub fn raster() -> @render.RendererProvider {
       }
       @render.RendererBindResult::Bound(
         renderer.to_renderer_session(
-          image_source=surface.image_source().unwrap_or(
-            @render.HostImageSource::unavailable(),
-          ),
+          image_source=surface
+            .image_source()
+            .unwrap_or(@render.HostImageSource::unavailable()),
           image_decoder=Some(image_decoder),
         ),
       )
@@ -79,8 +79,9 @@ pub fn SunRasterRenderer::to_renderer_session(
     recover=_reason => @render.RecoveryResult::FallbackToCpu,
     dispose=() => self.dispose(),
     image_records=() => self.image_resources(),
-    apply_image_load_completion=completion =>
-      self.apply_image_resource_load_completion(completion),
+    apply_image_load_completion=completion => {
+      self.apply_image_resource_load_completion(completion)
+    },
     image_source~,
     image_decoder~,
     platform_view=@render.RendererPlatformViewCapability::new(

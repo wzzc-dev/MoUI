@@ -227,6 +227,7 @@ import {
   "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/backend/common/image" @window_image,
   "wzzc-dev/moui/render/common" @render_common,
   "wzzc-dev/moui_skia_renderer" @skia_renderer,
 }

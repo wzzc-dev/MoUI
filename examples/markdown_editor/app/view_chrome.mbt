@@ -145,10 +145,7 @@ fn MarkdownEditorApp::root_with_environment(
     320.0,
     viewport.height - fixed_height,
   )
-  self.root(
-    viewport_width=viewport.width,
-    viewport_height~,
-  )
+  self.root(viewport_width=viewport.width, viewport_height~)
 }
 
 ///|
@@ -286,9 +283,7 @@ fn MarkdownEditorApp::bottom_status_bar(
   )
 
   let save_state = if self.is_dirty() { "Unsaved" } else { "Saved" }
-  let transfer = markdown_editor_transfer_status_label(
-    self.transfer_status,
-  )
+  let transfer = markdown_editor_transfer_status_label(self.transfer_status)
   let transfer_suffix = if transfer == "" { "" } else { " / " + transfer }
   let status = save_state +
     " / " +

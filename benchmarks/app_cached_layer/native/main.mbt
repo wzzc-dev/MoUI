@@ -196,6 +196,7 @@ fn app_bench_pipeline_delta(
   }
 }
 
+///|
 fn app_bench_damage_full_count(damage : @core.DamageRegion) -> Int {
   if damage.kind() == "full" {
     1
@@ -276,9 +277,7 @@ fn app_bench_cached_frame(
   let damage_rect_count_sum = frame.damage.rect_count()
   let damage_rect_count_max = frame.damage.rect_count()
   let damage_full_count = app_bench_damage_full_count(frame.damage)
-  let damage_rect_frame_count = app_bench_damage_rect_frame_count(
-    frame.damage,
-  )
+  let damage_rect_frame_count = app_bench_damage_rect_frame_count(frame.damage)
   let damage_empty_count = app_bench_damage_empty_count(frame.damage)
   let begin_cached_layer_count = app_bench_begin_cached_layer_count(
     frame.commands,
@@ -286,10 +285,7 @@ fn app_bench_cached_frame(
   let end_retained_layer_count = app_bench_end_retained_layer_count(
     frame.commands,
   )
-  let first_damage_full_reason = app_bench_first_full_reason(
-    "",
-    frame.damage,
-  )
+  let first_damage_full_reason = app_bench_first_full_reason("", frame.damage)
   let render_start = app_bench_now_ms()
   let result = renderer.render_frame(frame)
   let render_ms = app_bench_now_ms() - render_start

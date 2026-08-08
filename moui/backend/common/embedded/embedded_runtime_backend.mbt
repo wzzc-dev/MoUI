@@ -48,9 +48,7 @@ pub fn EmbeddedRuntimeBackendCore::new(
     metrics,
     disposed: false,
   }
-  ignore(
-    core.attach_surface(renderer~, metrics~, surface_generation~),
-  )
+  ignore(core.attach_surface(renderer~, metrics~, surface_generation~))
   core
 }
 
@@ -126,9 +124,9 @@ pub fn EmbeddedRuntimeBackendCore::attach_surface(
       self.transport.request_frame()
     }),
   )
-  let image = @window_image.WindowImageTasks::new(
-    request_redraw=() => self.transport.request_frame(),
-  )
+  let image = @window_image.WindowImageTasks::new(request_redraw=() => {
+    self.transport.request_frame()
+  })
   self.frame = Some(frame)
   self.image = Some(image)
   self.host_bridge = Some(host_bridge)
@@ -233,8 +231,12 @@ pub fn EmbeddedRuntimeBackendCore::render_frame(
   }
   let renderer = frame_state.renderer()
   if frame_state.pending() {
-    let prior_completions = drain_embedded_renderer_events(renderer, image_state)
-    let prior_presented = frame_state.accept_present_completions(prior_completions)
+    let prior_completions = drain_embedded_renderer_events(
+      renderer, image_state,
+    )
+    let prior_presented = frame_state.accept_present_completions(
+      prior_completions,
+    )
     if prior_presented {
       let state = self.driver.event_result()
       if !state.needs_redraw && !state.redraw_requested {

@@ -60,6 +60,7 @@ fn[T] sectioned_list_entries(
   entries
 }
 
+///|
 fn[T, Msg] sectioned_entry_view(
   entry : SectionedListEntry[T],
   header : (@layout.SectionListSection[T]) -> @core.View[Msg],

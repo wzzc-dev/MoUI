@@ -267,11 +267,10 @@ pub fn request_redraw_window_if_needed(
   id : @backend_host.WindowId,
 ) -> Unit {
   match lifecycle.runtime_slot_lookup(id) {
-    Some(slot) => {
+    Some(slot) =>
       if runtime_slot_needs_redraw(slot) {
         request_platform_redraw(lifecycle, id)
       }
-    }
     None => ()
   }
 }

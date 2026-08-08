@@ -140,9 +140,7 @@ pub fn ExcelApp::update_with_services(
       self.cut_cells_to_clipboard(services)
     ContextMenuAction(ContextMenuAction::Paste) =>
       self.paste_cells_from_clipboard(services)
-    _ => {
-      (self.with_model(update(self.model, msg)), Effect::none())
-    }
+    _ => (self.with_model(update(self.model, msg)), Effect::none())
   }
 }
 
@@ -426,11 +424,7 @@ pub fn ExcelApp::set_status(
   status : String,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
   (
-    self.with_model({
-      ..self.model,
-      status,
-      file_status: ExcelFileStatus::Idle,
-    }),
+    self.with_model({ ..self.model, status, file_status: ExcelFileStatus::Idle }),
     Effect::none(),
   )
 }

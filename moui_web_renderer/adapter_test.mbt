@@ -900,22 +900,22 @@ test "wgpu web retained layer hit repositions geometry for scroll moves" {
   // The second frame remains self-contained. The renderer may skip its full
   // payload after matching the retained declaration against its local cache.
   let replay = renderer.render_frame(
-      @core.DrawFrame::new(
-        commands=[
-          @core.DrawCommand::BeginRetainedLayer(replay_spec),
-          @core.DrawCommand::DrawText(
-            @core.TextRun::new(
-              text="line three",
-              frame=replay_frame,
-              font=@core.FontSpec::new(size=13.0),
-              color=@core.Color::black(),
-            ),
+    @core.DrawFrame::new(
+      commands=[
+        @core.DrawCommand::BeginRetainedLayer(replay_spec),
+        @core.DrawCommand::DrawText(
+          @core.TextRun::new(
+            text="line three",
+            frame=replay_frame,
+            font=@core.FontSpec::new(size=13.0),
+            color=@core.Color::black(),
           ),
-          @core.DrawCommand::EndRetainedLayer(replay_spec.key),
-        ],
-        damage=@core.DamageRegion::full("replay"),
-        clear_color=@core.Color::white(),
-      ),
+        ),
+        @core.DrawCommand::EndRetainedLayer(replay_spec.key),
+      ],
+      damage=@core.DamageRegion::full("replay"),
+      clear_color=@core.Color::white(),
+    ),
   )
   inspect(replay.cache_hit_count, content="1")
   let mut text_y : Double? = None

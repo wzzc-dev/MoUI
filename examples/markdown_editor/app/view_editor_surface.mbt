@@ -441,12 +441,8 @@ fn editor_find_toggle(
 fn MarkdownEditorApp::appearance_spec(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorAppearanceSpec {
-  let base = self.writing_appearance
-    .spec(dark=self.dark_mode_enabled)
-  {
-    ..base,
-    font_family: markdown_editor_font_family_stack(self.font_family),
-  }
+  let base = self.writing_appearance.spec(dark=self.dark_mode_enabled)
+  { ..base, font_family: markdown_editor_font_family_stack(self.font_family) }
 }
 
 ///|
@@ -901,9 +897,7 @@ fn editor_source_layout(
     on_command_click=Some(offset => CommandClickAt(offset)),
     accepts_tab_input=true,
     visible_scroll_y=normalized_offset.y,
-    on_scroll=Some(y => {
-      EditorScrollChanged(@geometry.Point::new(x=0.0, y~))
-    }),
+    on_scroll=Some(y => EditorScrollChanged(@geometry.Point::new(x=0.0, y~))),
     visible_viewport_height=viewport_height,
     visible_overscan=markdown_editor_visible_overscan(viewport_height),
   ).key("markdown-editor")

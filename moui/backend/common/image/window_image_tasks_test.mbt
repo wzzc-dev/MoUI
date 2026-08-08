@@ -7,7 +7,8 @@ fn image_task_test_session(applied : Ref[Int]) -> @render.RendererSession {
     image_records=() => [@render.ImageResourceRecord::loading("asset.png")],
     apply_image_load_completion=completion => {
       applied.val = applied.val + 1
-      completion.status is @render.ImageResourceLoadCompletionStatus::ImageLoadReady
+      completion.status
+      is @render.ImageResourceLoadCompletionStatus::ImageLoadReady
     },
     image_source=@render.HostImageSource::new(read=_ => Some(b"image")),
     image_decoder=Some(

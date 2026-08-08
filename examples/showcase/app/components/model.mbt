@@ -306,7 +306,7 @@ pub fn update(
         },
       }
     }
-    SelectPlatform(id) => {
+    SelectPlatform(id) =>
       {
         ..model,
         selected_platform: platform_id_from_string(id).unwrap_or(
@@ -315,7 +315,6 @@ pub fn update(
         active_item: ComponentGalleryItemId::PlatformRoutes,
         page_scroll: @geometry.Point::new(x=0.0, y=0.0),
       }
-    }
     SelectMode(id) => { ..model, selected_mode: id }
     SelectDensity(id) => { ..model, selected_density: id }
     SampleTextChanged(value) => { ..model, sample_text: value }

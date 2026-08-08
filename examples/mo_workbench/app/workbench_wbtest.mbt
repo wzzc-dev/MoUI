@@ -80,10 +80,7 @@ test "code chat message list uses explicit scroll viewport" {
   guard shorter.children().get(0) is Some(shorter_scroll) else {
     fail("expected shorter scroll child")
   }
-  inspect(
-    scroll.declaration() == shorter_scroll.declaration(),
-    content="false",
-  )
+  inspect(scroll.declaration() == shorter_scroll.declaration(), content="false")
 }
 
 ///|

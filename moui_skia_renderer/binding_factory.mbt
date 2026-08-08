@@ -36,9 +36,9 @@ pub fn raster(
       }
       @render.RendererBindResult::Bound(
         renderer.to_renderer_session(
-          image_source=surface.image_source().unwrap_or(
-            @render.HostImageSource::unavailable(),
-          ),
+          image_source=surface
+            .image_source()
+            .unwrap_or(@render.HostImageSource::unavailable()),
           image_decoder=Some(image_decoder),
         ),
       )
@@ -87,9 +87,9 @@ pub fn gpu(
         platform,
         native_surface,
         font_resolution,
-        image_source=surface.image_source().unwrap_or(
-          @render.HostImageSource::unavailable(),
-        ),
+        image_source=surface
+          .image_source()
+          .unwrap_or(@render.HostImageSource::unavailable()),
         image_decoder=Some(image_decoder),
       )
       @render.RendererBindResult::Bound(session)

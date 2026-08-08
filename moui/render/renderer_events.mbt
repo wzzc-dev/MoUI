@@ -6,7 +6,10 @@ pub struct FrameToken {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn FrameToken::new(surface_generation~ : Int, sequence~ : Int) -> FrameToken {
+pub fn FrameToken::new(
+  surface_generation~ : Int,
+  sequence~ : Int,
+) -> FrameToken {
   { surface_generation, sequence }
 }
 
@@ -36,9 +39,7 @@ pub fn RenderFrameSubmission::new(
 }
 
 ///|
-pub fn RenderFrameSubmission::token(
-  self : RenderFrameSubmission,
-) -> FrameToken {
+pub fn RenderFrameSubmission::token(self : RenderFrameSubmission) -> FrameToken {
   self.token
 }
 

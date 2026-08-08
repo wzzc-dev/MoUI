@@ -82,9 +82,7 @@ pub fn WindowImageTasks::schedule(
 }
 
 ///|
-pub fn WindowImageTasks::take_scheduled_count(
-  self : WindowImageTasks,
-) -> Int {
+pub fn WindowImageTasks::take_scheduled_count(self : WindowImageTasks) -> Int {
   let count = self.scheduled_since_observation
   self.scheduled_since_observation = 0
   count
@@ -92,7 +90,11 @@ pub fn WindowImageTasks::take_scheduled_count(
 
 ///|
 pub fn WindowImageTasks::pending_count(self : WindowImageTasks) -> Int {
-  if self.disposed { 0 } else { self.tasks.length() }
+  if self.disposed {
+    0
+  } else {
+    self.tasks.length()
+  }
 }
 
 ///|

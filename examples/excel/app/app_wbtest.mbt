@@ -18,10 +18,7 @@ test "excel model loads, selects, edits, and formats workbook data" {
 ///|
 test "excel model applies range copy, paste, and selection navigation" {
   let model = ExcelModel::with_demo_data()
-  let ranged = {
-    ..model,
-    workbook: model.workbook.select_range(1, 0, 2, 1),
-  }
+  let ranged = { ..model, workbook: model.workbook.select_range(1, 0, 2, 1) }
   let copied = update(ranged, ExcelMsg::CopyCells)
   let pasted = update(copied.select_cell(10, 0), ExcelMsg::PasteCells)
   inspect(pasted.active_sheet().display_cell(10, 0), content="Widget A")
@@ -65,11 +62,7 @@ test "excel clipboard effect dispatches a typed completion into the model" {
     workbook: model.workbook.select_range(1, 0, 2, 1),
   })
   let latest = Ref(app)
-  let runtime = excel_tracked_runtime(
-    app,
-    latest,
-    services~,
-  )
+  let runtime = excel_tracked_runtime(app, latest, services~)
   assert_true(
     excel_dispatch_shortcut(
       runtime,
@@ -77,7 +70,8 @@ test "excel clipboard effect dispatches a typed completion into the model" {
         key="c",
         modifiers=@core.KeyModifiers::new(control=true),
       ),
-    ) is Some(_),
+    )
+    is Some(_),
   )
   inspect(clipboard.val, content="Widget A\t1200\nWidget B\t800")
   inspect(latest.val.model.status, content="Clipboard updated")
@@ -116,10 +110,8 @@ test "excel command map dispatches navigation and formatting messages" {
     services=@services.AppServices::unavailable(),
   )
   assert_true(
-    excel_dispatch_shortcut(
-      runtime,
-      @core.KeyboardEvent::new(key="Tab"),
-    ) is Some(_),
+    excel_dispatch_shortcut(runtime, @core.KeyboardEvent::new(key="Tab"))
+    is Some(_),
   )
   inspect(latest.val.model.selected_ref(), content="C2")
   assert_true(
@@ -129,7 +121,8 @@ test "excel command map dispatches navigation and formatting messages" {
         key="b",
         modifiers=@core.KeyModifiers::new(control=true),
       ),
-    ) is Some(_),
+    )
+    is Some(_),
   )
   assert_true(latest.val.model.selected_format().bold)
 }
@@ -161,9 +154,7 @@ fn excel_tracked_runtime(
       latest.val = current
       current.view()
     },
-  ).with_commands(commands=current => {
-    excel_program_commands(current)
-  })
+  ).with_commands(commands=current => excel_program_commands(current))
   @runtime.new_program_with_dimensions(
     program~,
     width=shell_width,
