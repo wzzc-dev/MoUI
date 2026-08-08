@@ -909,7 +909,10 @@ fn RuntimeState::apply_semantics_action_outcome(
     None => ()
   }
   match outcome.dirty {
-    ViewBuildDirty => self.request_component_rebuild(element.id)
+    ViewBuildDirty => {
+      self.mark_layout_dirty(element.id)
+      self.request_root_rebuild(reason="semantics action changed view state")
+    }
     ViewLayoutDirty => self.mark_layout_dirty(element.id)
     ViewPaintDirty => self.mark_dirty(element.id)
     ViewClean => ()

@@ -1,32 +1,33 @@
 ///|
 pub fn[Msg] scroll_container(
   child~ : @core.View[Msg],
-  offset? : @core.Point = @core.Point::new(x=0.0, y=0.0),
+  offset? : @core.Point,
   viewport? : @core.Size? = None,
-  state? : @core.ScrollState? = None,
   on_scroll? : ((@core.Point) -> Msg)? = None,
+  request? : @core.ScrollRequest,
   shows_indicator? : Bool = false,
   kind? : String = "Scroll",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let scrollable = state is Some(_) || on_scroll is Some(_)
+  let scrollable = offset is None || on_scroll is Some(_)
   @core.View::from_node(
     ScrollContainer::{
       offset,
       viewport,
+      request,
       shows_indicator,
       scrollable,
       kind,
       key,
     },
     children=_node => [child],
-    event=(node, ctx) => scroll_container_event(node, ctx, state, on_scroll),
+    event=(node, ctx) => scroll_container_event(node, ctx, on_scroll),
     semantics_actions=node => {
       if node.scrollable {
         [
           @core.ViewSemanticsActionHandler::scroll((ctx, direction) => {
             scroll_container_semantics_action(
-              node, ctx, direction, state, on_scroll,
+              node, ctx, direction, on_scroll,
             )
           }),
         ]
@@ -39,12 +40,86 @@ pub fn[Msg] scroll_container(
 
 ///|
 priv struct ScrollContainer {
-  offset : @core.Point
+  offset : @core.Point?
   viewport : @core.Size?
+  request : @core.ScrollRequest?
   shows_indicator : Bool
   scrollable : Bool
   kind : String
   key : String?
+}
+
+///|
+/// Element-owned scroll position and exactly-once request cursor.
+priv struct ScrollRuntimeState {
+  offset : @core.Point
+  applied_request_id : Int
+}
+
+///|
+impl @core.ViewStateValue for ScrollRuntimeState with fn view_state_type_key() {
+  @core.DeclarationKey::string("moui.views.ScrollRuntimeState.v1")
+}
+
+///|
+impl @core.ViewStateValue for ScrollRuntimeState with fn encode_view_state(
+  self,
+) {
+  let output = Buffer(size_hint=20)
+  output.write_double_be(self.offset.x)
+  output.write_double_be(self.offset.y)
+  output.write_int_be(self.applied_request_id)
+  output.to_bytes()
+}
+
+///|
+impl @core.ViewStateValue for ScrollRuntimeState with fn decode_view_state(
+  _self,
+  bytes,
+) {
+  if bytes.length() != 20 {
+    None
+  } else {
+    match (
+      @core.ViewStateValue::decode_view_state(0.0, bytes[0:8].to_owned()),
+      @core.ViewStateValue::decode_view_state(0.0, bytes[8:16].to_owned()),
+      @core.ViewStateValue::decode_view_state(0, bytes[16:20].to_owned()),
+    ) {
+      (Some(x), Some(y), Some(applied_request_id)) =>
+        Some({ offset: @core.Point::new(x~, y~), applied_request_id })
+      _ => None
+    }
+  }
+}
+
+///|
+fn scroll_runtime_state_slot() -> @core.ViewStateSlot[ScrollRuntimeState] {
+  @core.ViewStateSlot::new(
+    key=@core.DeclarationKey::string("moui.views.scroll.position"),
+    initial={
+      offset: @core.Point::new(x=0.0, y=0.0),
+      applied_request_id: -1,
+    },
+  )
+}
+
+///|
+fn scroll_runtime_state(
+  node : ScrollContainer,
+  state : @core.ViewStateContext,
+) -> ScrollRuntimeState {
+  let stored = state.read_slot(scroll_runtime_state_slot())
+  let current = match node.offset {
+    Some(offset) => { ..stored, offset, }
+    None => stored
+  }
+  match node.request {
+    Some(request) if request.id > current.applied_request_id => {
+      offset: request.offset,
+      applied_request_id: request.id,
+    }
+    _ => current
+  }
 }
 
 ///|
@@ -182,8 +257,27 @@ impl @core.ViewNode for ScrollContainer with fn declaration(self) {
   @common.view_declaration(
     layout=@common.view_exact_channel(
       @common.view_record_key("ScrollContainer.layout", [
-        ("offset", @common.view_point_key(self.offset)),
+        (
+          "offset",
+          @core.DeclarationKey::option(
+            self.offset.map(@common.view_point_key),
+          ),
+        ),
         ("viewport", @common.view_size_option_key(self.viewport)),
+        (
+          "request",
+          @core.DeclarationKey::option(
+            self.request.map(request => {
+              @core.DeclarationKey::record(
+                type_tag="moui.core.ScrollRequest.v1",
+                fields=[
+                  ("id", @core.DeclarationKey::int(request.id)),
+                  ("offset", @common.view_point_key(request.offset)),
+                ],
+              )
+            }),
+          ),
+        ),
       ]),
     ),
     paint=@common.view_exact_channel(
@@ -208,6 +302,7 @@ impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
   let viewport_size = self.viewport.unwrap_or(
     @common.first_child_size(ctx.child_sizes),
   )
+  let offset = scroll_runtime_state(self, ctx.state).offset
   @core.ViewLayoutResult::new(size=ctx.constraints.constrain(viewport_size), child_frames=[
     scroll_child_frame(
       frame=@core.Rect::new(
@@ -216,7 +311,7 @@ impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
         width=viewport_size.width,
         height=viewport_size.height,
       ),
-      offset=self.offset,
+      offset~,
       viewport=viewport_size,
       child_size=@common.first_child_size(ctx.child_sizes),
     ),
@@ -226,6 +321,7 @@ impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
 ///|
 impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
   let viewport_size = self.viewport.unwrap_or(ctx.frame.size)
+  let offset = scroll_runtime_state(self, ctx.state).offset
   {
     commands: [
       @core.DrawCommand::PushClip(
@@ -243,7 +339,7 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
       scroll_indicator_commands(
         ctx.frame,
         first_child_frame_size(ctx.child_frames, viewport_size),
-        self.offset,
+        offset,
       )
     } else {
       []
@@ -265,7 +361,6 @@ impl @core.ViewNode for ScrollContainer with fn semantics(_self) {
 fn[Msg] scroll_container_event(
   node : ScrollContainer,
   ctx : @core.ViewEventContext,
-  state : @core.ScrollState?,
   on_scroll : ((@core.Point) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
@@ -274,75 +369,43 @@ fn[Msg] scroll_container_event(
         scroll_indicator_event_result(
           ctx,
           event,
-          offset=node.offset,
+          node~,
           viewport=node.viewport,
-          state~,
           on_scroll~,
         )
       } else if scroll_container_drag_handles_event(node, ctx, event) {
-        scroll_container_drag_event(node, ctx, event, state, on_scroll)
+        scroll_container_drag_event(node, ctx, event, on_scroll)
       } else if ctx.frame.contains(event.position) &&
         (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
-        match (state, on_scroll) {
-          (Some(state), Some(handler)) => {
-            let viewport_size = node.viewport.unwrap_or(ctx.frame.size)
-            let child_size = first_child_frame_size(
-              ctx.child_frames,
-              viewport_size,
-            )
-            let current = state.offset()
-            let next = scroll_offset_after_wheel(
-              current,
-              event.wheel_delta,
-              viewport_size,
-              child_size,
-            )
-            if next == current {
-              @core.ViewEventResult::ignored()
-            } else {
-              state.scroll_to(x=next.x, y=next.y)
-              @common.view_event_result(
-                changed=true,
-                activated=true,
-                captured=true,
-                dirty=@core.ViewDirtyHint::ViewBuildDirty,
-                messages=[handler(event.wheel_delta)],
-              )
-            }
-          }
-          (Some(state), None) => {
-            let viewport_size = node.viewport.unwrap_or(ctx.frame.size)
-            let child_size = first_child_frame_size(
-              ctx.child_frames,
-              viewport_size,
-            )
-            let current = state.offset()
-            let next = scroll_offset_after_wheel(
-              current,
-              event.wheel_delta,
-              viewport_size,
-              child_size,
-            )
-            if next == current {
-              @core.ViewEventResult::ignored()
-            } else {
-              state.scroll_to(x=next.x, y=next.y)
-              @common.view_event_result(
-                changed=true,
-                captured=true,
-                dirty=@core.ViewDirtyHint::ViewBuildDirty,
-              )
-            }
-          }
-          (None, Some(handler)) =>
-            @common.view_event_result(
-              changed=true,
-              activated=true,
-              captured=true,
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
-              messages=[handler(event.wheel_delta)],
-            )
-          (None, None) => @core.ViewEventResult::ignored()
+        let viewport_size = node.viewport.unwrap_or(ctx.frame.size)
+        let child_size = first_child_frame_size(
+          ctx.child_frames,
+          viewport_size,
+        )
+        let current = scroll_runtime_state(node, ctx.state)
+        let next_offset = scroll_offset_after_wheel(
+          current.offset,
+          event.wheel_delta,
+          viewport_size,
+          child_size,
+        )
+        if next_offset == current.offset {
+          @core.ViewEventResult::ignored()
+        } else {
+          let next = { ..current, offset: next_offset, }
+          @common.view_event_result(
+            changed=true,
+            activated=on_scroll is Some(_),
+            captured=true,
+            state=Some(
+              ctx.state.with_slot(scroll_runtime_state_slot(), next),
+            ),
+            dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+            messages=match on_scroll {
+              Some(handler) => [handler(next_offset)]
+              None => []
+            },
+          )
         }
       } else {
         @core.ViewEventResult::ignored()
@@ -375,7 +438,6 @@ fn[Msg] scroll_container_drag_event(
   node : ScrollContainer,
   ctx : @core.ViewEventContext,
   event : @core.PointerEvent,
-  state : @core.ScrollState?,
   on_scroll : ((@core.Point) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   let slot = scroll_drag_state_slot()
@@ -433,41 +495,36 @@ fn[Msg] scroll_container_drag_event(
           messages: [],
         }
       }
-      let has_delta = delta.x != 0.0 || delta.y != 0.0
       let viewport_size = node.viewport.unwrap_or(ctx.frame.size)
       let child_size = first_child_frame_size(ctx.child_frames, viewport_size)
-      let current = scroll_offset(node.offset, state)
+      let current = scroll_runtime_state(node, ctx.state)
       let next = scroll_offset_after_wheel(
-        current, delta, viewport_size, child_size,
+        current.offset, delta, viewport_size, child_size,
       )
-      let moved = next != current
-      match state {
-        Some(scroll_state) =>
-          if moved {
-            scroll_state.scroll_to(x=next.x, y=next.y)
-          }
-        None => ()
-      }
-      let dispatch = match state {
-        Some(_) => moved
-        None => has_delta && on_scroll is Some(_)
+      let moved = next != current.offset
+      let dispatch = moved && (node.offset is None || on_scroll is Some(_))
+      let state_context = if moved {
+        next_context.with_slot(
+          scroll_runtime_state_slot(),
+          { ..current, offset: next, },
+        )
+      } else {
+        next_context
       }
       {
-        changed: moved || (state is None && dispatch),
+        changed: moved,
         activated: dispatch && on_scroll is Some(_),
         focused: false,
         captured: true,
-        state: Some(next_context),
+        state: Some(state_context),
         text_control: None,
-        dirty: if moved && state is Some(_) {
-          @core.ViewDirtyHint::ViewBuildDirty
-        } else if dispatch {
-          @core.ViewDirtyHint::ViewPaintDirty
+        dirty: if moved {
+          @core.ViewDirtyHint::ViewLayoutDirty
         } else {
           @core.ViewDirtyHint::ViewClean
         },
         messages: match on_scroll {
-          Some(handler) => if dispatch { [handler(delta)] } else { [] }
+          Some(handler) => if dispatch { [handler(next)] } else { [] }
           None => []
         },
       }
@@ -518,40 +575,38 @@ fn[Msg] scroll_container_semantics_action(
   node : ScrollContainer,
   ctx : @core.ViewSemanticsActionContext,
   direction : @core.SemanticsScrollDirection,
-  state : @core.ScrollState?,
   on_scroll : ((@core.Point) -> Msg)?,
 ) -> @core.ViewSemanticsActionResult[Msg] {
-  if state is None && on_scroll is None {
+  if !node.scrollable {
     return @core.ViewSemanticsActionResult::rejected()
   }
   let viewport = node.viewport.unwrap_or(ctx.frame.size)
   let child_size = first_child_frame_size(ctx.child_frames, viewport)
-  let current = match state {
-    Some(scroll_state) => scroll_state.offset()
-    None => node.offset
-  }
+  let current = scroll_runtime_state(node, ctx.state)
   let delta = semantics_scroll_wheel_delta(direction, viewport)
-  let next = scroll_offset_after_wheel(current, delta, viewport, child_size)
+  let next = scroll_offset_after_wheel(
+    current.offset,
+    delta,
+    viewport,
+    child_size,
+  )
   let messages = match on_scroll {
-    Some(handler) => [handler(delta)]
+    Some(handler) => [handler(next)]
     None => []
   }
-  if next == current && messages.is_empty() {
+  if next == current.offset && messages.is_empty() {
     return @core.ViewSemanticsActionResult::rejected()
   }
-  match state {
-    Some(scroll_state) =>
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewBuildDirty,
-        messages~,
-        commit=Some(() => scroll_state.set_offset(next)),
-      )
-    None =>
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewBuildDirty,
-        messages~,
-      )
-  }
+  @core.ViewSemanticsActionResult::accepted(
+    state=Some(
+      ctx.state.with_slot(
+        scroll_runtime_state_slot(),
+        { ..current, offset: next, },
+      ),
+    ),
+    dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+    messages~,
+  )
 }
 
 ///|
@@ -629,15 +684,15 @@ fn scroll_indicator_drag_slot() -> @core.ViewStateSlot[Bool] {
 fn[Msg] scroll_indicator_event_result(
   ctx : @core.ViewEventContext,
   event : @core.PointerEvent,
-  offset~ : @core.Point,
+  node~ : ScrollContainer,
   viewport~ : @core.Size?,
-  state~ : @core.ScrollState?,
   on_scroll~ : ((@core.Point) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   let viewport_size = viewport.unwrap_or(ctx.frame.size)
   let child_size = first_child_frame_size(ctx.child_frames, viewport_size)
+  let runtime_state = scroll_runtime_state(node, ctx.state)
   let current = scroll_clamp_offset(
-    scroll_offset(offset, state),
+    runtime_state.offset,
     viewport_size,
     child_size,
   )
@@ -670,10 +725,11 @@ fn[Msg] scroll_indicator_event_result(
   } else {
     current.y
   }
-  match state {
-    Some(state) => state.scroll_to(x=current.x, y=next_y)
-    None => ()
-  }
+  let next_offset = @core.Point::new(x=current.x, y=next_y)
+  let next_state = next_state.with_slot(
+    scroll_runtime_state_slot(),
+    { ..runtime_state, offset: next_offset, },
+  )
   {
     changed: should_move || next_state != ctx.state,
     activated: should_move && on_scroll is Some(_),
@@ -681,31 +737,16 @@ fn[Msg] scroll_indicator_event_result(
     captured: true,
     state: Some(next_state),
     text_control: None,
-    dirty: if state is Some(_) {
-      @core.ViewDirtyHint::ViewBuildDirty
-    } else {
-      @core.ViewDirtyHint::ViewLayoutDirty
-    },
+    dirty: @core.ViewDirtyHint::ViewLayoutDirty,
     messages: match on_scroll {
       Some(handler) =>
         if should_move {
-          [handler(@core.Point::new(x=0.0, y=current.y - next_y))]
+          [handler(next_offset)]
         } else {
           []
         }
       None => []
     },
-  }
-}
-
-///|
-fn scroll_offset(
-  offset : @core.Point,
-  state : @core.ScrollState?,
-) -> @core.Point {
-  match state {
-    Some(state) => state.offset()
-    None => offset
   }
 }
 

@@ -5,39 +5,51 @@ fn app_builder_test_runtime() -> AppRuntime {
 }
 
 ///|
-fn app_builder_test_factory(id : String) -> @render.RendererFactory {
-  @render.RendererFactory::new(id~, bind=_kit => abort("not bound"))
+fn app_builder_test_provider(id : String) -> @render.RendererProvider {
+  @render.RendererProvider::new(
+    id~,
+    descriptor=@render.RendererDescriptor::new(
+      backend=@render.RendererBackendKind::SkiaRasterNative,
+      family=@render.RendererFamily::Skia,
+      presentation=@render.RendererPresentationModel::CpuPixelFrame,
+      supported_targets=[@render.RendererTarget::Native],
+      capabilities=[],
+      description="app builder test provider",
+    ),
+    capabilities=() => [],
+    bind=_surface => @render.RendererBindResult::Rejected("not bound"),
+  )
 }
 
 ///|
-test "AppBuilder passes ordered factories and window requests to backend" {
+test "AppBuilder passes ordered providers and window requests to backend" {
   let launched = Ref(false)
   let title = Ref("")
-  let factory_ids : Array[String] = []
+  let provider_ids : Array[String] = []
   let requests = @backend_host.WindowRequests::new(pending_count=() => 1)
   let pending_requests = Ref(0)
   let entry = PlatformEntry::new(id="test", launch=request => {
     launched.val = true
     title.val = request.title()
-    for factory in request.renderer_factories() {
-      factory_ids.push(factory.id())
+    for provider in request.renderer_providers() {
+      provider_ids.push(provider.id())
     }
     pending_requests.val = request.window_requests().pending_count()
   })
   run_app("Builder Test", app_builder_test_runtime())
-  .render(app_builder_test_factory("first"))
+  .render(app_builder_test_provider("first"))
   .render_all([
-    app_builder_test_factory("second"),
-    app_builder_test_factory("third"),
+    app_builder_test_provider("second"),
+    app_builder_test_provider("third"),
   ])
   .window_requests(requests)
   .backend(entry)
   .run()
   assert_true(launched.val)
   inspect(title.val, content="Builder Test")
-  inspect(factory_ids.length(), content="3")
-  inspect(factory_ids[0], content="first")
-  inspect(factory_ids[1], content="second")
-  inspect(factory_ids[2], content="third")
+  inspect(provider_ids.length(), content="3")
+  inspect(provider_ids[0], content="first")
+  inspect(provider_ids[1], content="second")
+  inspect(provider_ids[2], content="third")
   inspect(pending_requests.val, content="1")
 }

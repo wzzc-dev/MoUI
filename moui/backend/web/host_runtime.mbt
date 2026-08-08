@@ -10,10 +10,13 @@ struct WebApp {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
-  services : @host.HostServiceBridge
-  async_services : @window_host.ServiceAsyncQueue
-  coordinator : @window_host.WindowCoordinator
-  renderer_factories : Array[@render.RendererFactory]
+  services : @window_services.WindowServiceState
+  async_services : @window_services.ServiceAsyncQueue
+  lifecycle : @window_lifecycle.WindowLifecycle
+  frames : @window_frame.WindowFrameStates
+  images : @window_image.WindowImageTaskStates
+  input : @window_input.WindowInputState
+  renderer_providers : Array[@render.RendererProvider]
   platform_slots : WebWindowPlatformSlots
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
@@ -49,9 +52,9 @@ pub fn backend_info() -> WebBackendInfo {
 fn run_app_internal(
   title : String,
   runtime : @runtime.AppRuntime,
-  renderer_factories : Array[@render.RendererFactory],
+  renderer_providers : Array[@render.RendererProvider],
   options~ : WebAppOptions,
-  window_requests? : @host.WindowRequests = @window_host.WindowRequestQueue::new().requests(),
+  window_requests? : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
 ) -> Unit {
   let event_loop = @window_web.EventLoop::new()
   event_loop.set_control_flow(@window_core.ControlFlow::Poll)
@@ -60,7 +63,7 @@ fn run_app_internal(
   set_web_route_source(options.route_source)
   let services = web_service_bridge(
     system_theme=match event_loop.system_theme() {
-      Some(theme) => @window_host.window_theme_to_color_scheme(theme)
+      Some(theme) => @window_input.window_theme_to_color_scheme(theme)
       None => @core.ColorScheme::Light
     },
     open_url=dispatch_web_open_url,
@@ -76,20 +79,23 @@ fn run_app_internal(
   runtime.set_environment(
     services.environment_with_system_theme(runtime.environment()),
   )
-  let coordinator = @window_host.WindowCoordinator::new(
-    window_requests~,
+  let lifecycle = @window_lifecycle.WindowLifecycle::new(
+    requests=window_requests,
     scene_resolver=options.scene_resolver,
-    services~,
-    event_sources=options.event_sources,
   )
   let app = WebApp::{
     title,
     runtime,
     driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
-    services,
+    services: @window_services.WindowServiceState::new(bridge=services),
     async_services,
-    coordinator,
-    renderer_factories,
+    lifecycle,
+    frames: @window_frame.WindowFrameStates::new(),
+    images: @window_image.WindowImageTaskStates::new(),
+    input: @window_input.WindowInputState::new(
+      event_sources=options.event_sources,
+    ),
+    renderer_providers,
     platform_slots: WebWindowPlatformSlots::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
@@ -107,7 +113,7 @@ pub fn entry(
     run_app_internal(
       request.title(),
       request.runtime(),
-      request.renderer_factories(),
+      request.renderer_providers(),
       options~,
       window_requests=request.window_requests(),
     )
@@ -150,22 +156,23 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
         window.surface_size(),
         window.scale_factor(),
       )
-      let window_id = self.coordinator
+      let window_id = self.lifecycle
         .window_registry()
         .open(title=self.title, metrics~, primary=true)
       ignore(
-        self.coordinator.bind_platform_window(
-          platform_id=window.id(),
-          window_id~,
-        ),
+        self.lifecycle.bind_platform_window(platform_id=window.id(), window_id~),
       )
-      self.coordinator.register_primary_runtime_slot(window_id, self.driver)
+      self.lifecycle.register_primary_runtime_slot(window_id, self.driver)
       self.driver.set_redraw_scheduler(() => {
-        self.coordinator.request_redraw_window_if_needed(window_id)
+        @window_host.request_redraw_window_if_needed(
+          self.lifecycle,
+          self.images,
+          window_id,
+        )
       })
       match
         resolve_web_renderer(
-          self.renderer_factories,
+          self.renderer_providers,
           window_web_default_canvas_id(window.id().into_raw()),
           metrics,
         ) {
@@ -174,24 +181,24 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
           event_loop.exit()
         }
         Some(resolution) => {
-          let renderer = resolution.renderer()
+          let renderer = resolution
           self.driver.set_text_system(renderer.text_system())
-          match self.coordinator.runtime_slot_lookup(window_id) {
+          match self.lifecycle.runtime_slot_lookup(window_id) {
             Some(slot) =>
               ignore(slot.driver.dispatch(@host.Event::Resized(metrics)))
             None => ()
           }
           ignore(
-            self.coordinator.attach_surface(
+            @window_host.attach_window_surface(
+              self.lifecycle,
+              self.frames,
+              self.images,
               window_id,
               renderer,
               self.web_surface_actions(window, renderer),
-              image_loader=resolution.image_loader(),
             ),
           )
-          ignore(
-            self.platform_slots.insert({ host_id: window_id, window, renderer }),
-          )
+          ignore(self.platform_slots.insert({ host_id: window_id, window }))
           register_web_semantics_runtime(
             window.id().into_raw(),
             window_web_default_canvas_id(window.id().into_raw()),
@@ -224,11 +231,15 @@ pub impl @window_web.ApplicationHandler for WebApp with fn new_events(
 ///|
 fn WebApp::redraw_window(self : WebApp, window_id : @host.WindowId) -> Unit {
   ignore(
-    self.coordinator.run_window_redraw(window_id, render=(
-      renderer,
-      _runtime_slot,
-      frame,
-    ) => renderer.render_frame(frame)),
+    @window_host.run_window_redraw(
+      self.lifecycle,
+      self.frames,
+      self.images,
+      self.input,
+      window_id,
+      render=(renderer, _runtime_slot, submission) =>
+        renderer.render_frame(submission),
+    ),
   )
 }
 
@@ -238,10 +249,13 @@ fn WebApp::drain_async_host_services(self : WebApp) -> Unit {
     dispatch_web_async_host_service_request(request)
   }
   for completion in self.async_services.drain_completed() {
-    match self.coordinator.active_runtime_slot() {
+    match self.lifecycle.active_runtime_slot() {
       Some(slot) =>
         ignore(
-          slot.driver.dispatch_service_completion(completion, self.services),
+          slot.driver.dispatch_service_completion(
+            completion,
+            self.services.bridge(),
+          ),
         )
       None => ()
     }
@@ -249,14 +263,16 @@ fn WebApp::drain_async_host_services(self : WebApp) -> Unit {
 }
 
 ///|
-fn runtime_slot_needs_redraw(slot : @window_host.WindowRuntimeSlot) -> Bool {
+fn runtime_slot_needs_redraw(
+  slot : @window_lifecycle.WindowRuntimeSlot,
+) -> Bool {
   let result = slot.driver.event_result()
   result.needs_redraw || result.redraw_requested
 }
 
 ///|
 fn WebApp::redraw_dirty_windows(self : WebApp) -> Unit {
-  for slot in self.coordinator.runtime_slots().open_slots() {
+  for slot in self.lifecycle.runtime_slots().open_slots() {
     if runtime_slot_needs_redraw(slot) {
       self.redraw_window(slot.id)
     }
@@ -280,9 +296,9 @@ fn WebApp::resize_renderer(
   window_id : @host.WindowId,
   metrics : @core.SurfaceMetrics,
 ) -> Unit {
-  match self.platform_slots.lookup_host(window_id) {
-    Some(slot) =>
-      slot.renderer.resize(
+  match self.frames.renderer(window_id) {
+    Some(renderer) =>
+      renderer.resize(
         @core.SurfaceMetrics::new(
           logical_size=metrics.logical_size,
           physical_size=metrics.physical_size,
@@ -300,14 +316,14 @@ fn WebApp::resize_renderer(
 fn WebApp::web_surface_actions(
   _self : WebApp,
   window : @window_web.Window,
-  renderer : @render.WindowRenderer,
-) -> @window_host.WindowSurfaceActions {
-  @window_host.WindowSurfaceActions::new(
+  renderer : @render.RendererSession,
+) -> @window_lifecycle.WindowSurfaceActions {
+  @window_lifecycle.WindowSurfaceActions::new(
     focus=fn() { window.focus_window() },
     request_resize=fn(metrics) {
       ignore(
         window.request_surface_size(
-          @window_host.host_metrics_to_dpi_size(metrics),
+          @window_input.host_metrics_to_dpi_size(metrics),
         ),
       )
       renderer.resize(@window_host.to_render_metrics(metrics))
@@ -322,13 +338,13 @@ fn WebApp::web_surface_actions(
     request_redraw=fn() { window.request_redraw() },
     request_ime_update=fn(action) {
       match action {
-        @window_host.TextInputSessionAction::EnableIme(request)
-        | @window_host.TextInputSessionAction::UpdateIme(request)
-        | @window_host.TextInputSessionAction::DisableIme(request) =>
+        @window_input.TextInputSessionAction::EnableIme(request)
+        | @window_input.TextInputSessionAction::UpdateIme(request)
+        | @window_input.TextInputSessionAction::DisableIme(request) =>
           window.request_ime_update(request) catch {
             _ => ()
           }
-        @window_host.TextInputSessionAction::NoImeChange => ()
+        @window_input.TextInputSessionAction::NoImeChange => ()
       }
     },
     drop=fn() { window.drop() },
@@ -341,34 +357,37 @@ fn WebApp::web_surface_actions(
 
 ///|
 fn resolve_web_renderer(
-  factories : Array[@render.RendererFactory],
+  providers : Array[@render.RendererProvider],
   surface_id : String,
   metrics : @core.SurfaceMetrics,
-) -> @render.RendererResolution? {
+) -> @render.RendererSession? {
   let renderer_metrics = @core.SurfaceMetrics::new(
     logical_size=metrics.logical_size,
     physical_size=metrics.physical_size,
     scale_factor=metrics.scale_factor,
   )
-  let kit = @render.SurfaceContext::new(
-    surface=@render.SurfaceDescriptor::cpu_raster(
-      width=metrics.logical_size.width,
-      height=metrics.logical_size.height,
-      scale_factor=metrics.scale_factor,
-    ),
-    surface_id~,
-    metrics=renderer_metrics,
-  )
-  @render_common.resolve_renderer(factories, kit)
+  let surface = @render.HostSurface::new(surface_id~, metrics=renderer_metrics)
+  @render_common.resolve_renderer(providers, surface)
 }
 
 ///|
 fn WebApp::dispose_window(self : WebApp, window_id : @host.WindowId) -> Unit {
-  self.coordinator.dispose_window(window_id)
+  @window_host.dispose_window(
+    self.lifecycle,
+    self.frames,
+    self.images,
+    self.services,
+    window_id,
+  )
   ignore(self.platform_slots.remove_host(window_id))
-  if self.coordinator.runtime_slots_empty() {
+  if self.lifecycle.runtime_slots_empty() {
     set_web_async_host_service_queue(None)
   }
+}
+
+///|
+fn WebApp::sync_text_input_session(self : WebApp) -> Unit {
+  @window_host.sync_text_input_session(self.lifecycle, self.input)
 }
 
 ///|
@@ -376,5 +395,5 @@ fn surface_metrics_from_physical(
   size : @dpi.PhysicalSize,
   scale_factor : Double,
 ) -> @core.SurfaceMetrics {
-  @window_host.surface_metrics_from_physical(size, scale_factor~)
+  @window_input.surface_metrics_from_physical(size, scale_factor~)
 }

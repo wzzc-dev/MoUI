@@ -24,22 +24,25 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `moui/views/` | Public view constructors、面向应用的 control APIs、default themes、form/navigation/data helpers，以及通过 `@core.View::from_node` 构造的具体 `ViewNode` behavior。 |
 | `moui/runtime/` | AppRuntime construction、runtime state、element/layout/render tree generation、event dispatch、program queue drain、effects、subscriptions、diagnostics 和 inspector snapshots。 |
 | `moui/backend/` | 面向 windows、routes、timers、host services、WebView、async image loading、accessibility、input、redraw scheduling 和 renderer handoff 的共享 host contracts。 |
-| `moui/backend/common/desktop/` | macOS、Windows 与 Linux 共用的 desktop service router，以及 text/binary/directory filesystem handlers。 |
-| `moui/backend/common/native/` | 桌面 backend 与 embedded runtime 共用的原生文件系统 I/O，包括原始文件图像字节源。 |
-| `moui/backend/common/embedded/services/` | Android、iOS 与 HarmonyOS 共用的异步 callback service queue：clipboard/platform-channel 返回 `Pending(id)`，由 native callback 完成，并在 dispose 时取消。 |
-| `moui/backend/common/embedded/` | Android、iOS 和 HarmonyOS 在 `ApplicationHandler` callbacks 之后共用的 service update、surface recreation、runtime/session/renderer-kit、redraw、IME、semantics、platform view 与 transport 协调层；它是 `host_services_embedded` 的唯一调用方。 |
+| `moui/backend/common/` | 无状态 DTO 转换与跨 owner window-host workflow；不持有宿主生命周期状态。 |
+| `moui/backend/common/lifecycle/` | Window registry/request queue、runtime slots、平台窗口映射、逻辑 phase、surface generation、exit intent 与 exactly-once close。 |
+| `moui/backend/common/frame/` | 逐窗口 `RendererSession`、pending/present completion、redraw、resize 与 IME frame hook。 |
+| `moui/backend/common/image/` | 只拥有可取消的 image I/O task、opaque-token completion、callback detach 与 cancellation；`image/native` 提供 filesystem image-byte source。 |
+| `moui/backend/common/input/` | 中立事件转换与 pointer/text/IME session state。平台原始 decode 留在具体 backend。 |
+| `moui/backend/common/services/` | Service facade、async completion 与 bridge 生命周期；`services/{desktop,embedded,native}` 拥有具体 router、callback transport 与 filesystem services。 |
+| `moui/backend/common/embedded/` | Android、iOS 和 HarmonyOS 的 embedded session 组合层：transport/session generation、renderer attach、IME、semantics、platform views 与 services；组合其他 owner，不复制 lifecycle/frame/image state。 |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | 具体平台 backend implementations。macOS、Windows 和 Linux 是原生宿主后端；Android、iOS 和 HarmonyOS 是由 `wzzc-dev/window` 驱动的嵌入运行时后端；web 是 canonical browser host。 |
-| `moui/backend/{macos,windows,linux,android,ios,harmonyos}/` | 只拥有平台窗口、surface、presenter、生命周期和中立 host I/O；renderer factory 不在 backend 内实现。 |
-| `moui/render/` | Renderer facade、共享 render capability models、fallback planning、shader/image helpers 和 renderer-neutral command handling。 |
-| `moui/render/skia/` | 基于 `moui_skia` 的 Native Skia renderer facade。 |
-| `moui/render/webgpu_adapter/` | `wasm-gc` 的 Browser WebGPU host-import adapter。 |
-| `moui/render/wgpu/` | 实验性 native WGPU renderer 和 native text providers。 |
-| `moui/render/sun/` | 实验性 Sun CPU raster renderer，基于仓库内 `moui_sun` workspace（ADR 0023：默认能力冻结，不在默认组合根）。 |
+| `moui/backend/{macos,windows,linux,android,ios,harmonyos}/` | 只拥有平台窗口、surface、presenter、生命周期和中立 host I/O；renderer provider 不在 backend 内实现。 |
+| `moui/render/` | Renderer-neutral frame/image/descriptor DTO、不透明 `HostSurface`/`NativeSurface` capability，以及 `RendererProvider`/`RendererSession` 两层生命周期契约；不包含平台或图形 API surface tag。 |
+| `moui_skia_renderer/` | 基于 `moui_skia` 的 Native Skia renderer facade。 |
+| `moui_web_renderer/` | `wasm-gc` 的 Browser WebGPU host-import adapter。 |
+| `moui_wgpu_renderer/` | 实验性 native WGPU renderer 和 native text providers。 |
+| `moui_sun_renderer/` | 实验性 Sun CPU raster renderer，基于仓库内 `moui_sun` workspace（ADR 0023：默认能力冻结，不在默认组合根）。 |
 | `moui_sun/` | 实验性 MoonBit 原生 CPU raster graphics/text/softbuffer workspace（ADR 0023）。 |
 | `moui_richtext/` | 富编辑应用使用的 Markdown/rich-text document、editor、command、input、paste、table 和 source-mapping 逻辑。 |
 | `moui_skia/` | 可编辑的 Skia binding 以及 native/fallback capability contract workspace。 |
 | `moui_theme/` | 可选设计系统 addon workspace，涵盖 Material、Carbon、Primer、Fluent、通用 source-mapped token diagnostics，以及 Sickle 等第一方 visual theme addons。 |
-| `moui_tester/` | Harnesses、fixtures 和 first-frame/native smoke helpers。 |
+| `moui_tests/` | 不发布的测试模块，`tester/` 承接 harness 与 fixtures，并包含集成测试、benchmark、文本一致性套件及 renderer smoke。 |
 | `moui_devtools/` | Devtools 和 overlay/debug helpers。 |
 | `moui_agent/`, `moui_agent_mcp/` | Agent protocol、schema、host runtime 和 MCP router support packages。 |
 | `examples/*/app/` | 共享应用逻辑包。除非刻意拆出 app-specific service package，否则这些包应保持平台无关。 |
@@ -99,37 +102,37 @@ HarmonyOS 可以运行在桌面硬件上；这不改变它们当前 MoUI 集成�
 ## 目标路线
 
 - Web app route：shared app package -> `examples/<app>/web_wasm` composition ->
-  `moui/backend/web` + `moui/render/webgpu_adapter`。
+  `moui/backend/web` + `moui_web_renderer`。
 - Native Skia route：shared app package -> platform `*_skia` entrypoint ->
-  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@platform.entry())`
-  -> 中立 platform surface + `moui/render/skia` -> `moui_skia`。
+  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::<Platform>)).backend(@platform.entry())`
+  -> 中立 platform surface + `moui_skia_renderer` -> `moui_skia`。
 - Android 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/android_window_hosted` composition，通过
-  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@android.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Android)).backend(@android.entry())`
   -> `wzzc-dev/window/android` `HostCmd` -> 共享
   `wzzc-dev/window/internal/embedded_dispatch` callback dispatch -> `EventLoop` -> 中立 Android
-  surface binding -> `moui/render/skia` -> `moui_skia`。
+  surface binding -> `moui_skia_renderer` -> `moui_skia`。
   window template 拥有 Android lifecycle、surface acquisition 和 input；嵌入运行时
   backend 负责 runtime/session 与中立 surface 装配。
 - iOS 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/ios_window_hosted` composition，通过
-  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@ios.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::IOS)).backend(@ios.entry())`
   -> `wzzc-dev/window/ios` `HostCmd` -> 共享 embedded-host kernel ->
   `EventLoop` -> 中立 iOS surface
-  binding -> `moui/render/skia` -> `moui_skia`。UIKit lifecycle、
+  binding -> `moui_skia_renderer` -> `moui_skia`。UIKit lifecycle、
   surface 和 touch callbacks 只能经由 window event loop 进入。
 - HarmonyOS 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/harmonyos_window_hosted` composition，通过
-  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@harmonyos.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::HarmonyOS)).backend(@harmonyos.entry())`
   -> `wzzc-dev/window/harmonyos` `HostCmd` -> 共享 embedded-host kernel ->
   `EventLoop` -> 中立 HarmonyOS
-  surface binding -> `moui/render/skia` -> `moui_skia`。
+  surface binding -> `moui_skia_renderer` -> `moui_skia`。
   Native XComponent callbacks 是 surface、pointer、resize 和 detach events 的唯一来源。
 - Native WGPU route：shared app package -> platform `*_wgpu` entrypoint ->
   `@runtime.run_app(...).render(@render_wgpu.native(...)).backend(@platform.entry())`
-  -> `moui/render/wgpu`。这是实验性且诊断性的路线，不是默认主线。
+  -> `moui_wgpu_renderer`。这是实验性且诊断性的路线，不是默认主线。
 
-平台入口应保持很薄：创建 program/runtime，通过 AppBuilder 组合 backend 与 renderer factory，并传入 app-owned service adapters。业务 model/update/view 逻辑应留在 shared app package。
+平台入口应保持很薄：创建 program/runtime，通过 AppBuilder 组合 backend 与 renderer provider，并传入 app-owned service adapters。业务 model/update/view 逻辑应留在 shared app package。
 
 嵌入运行时 session 共享 `EmbedderHostChannel`，用于有序 IME 更新、带 generation 前置条件的已提交语义，以及异步 clipboard/accessibility responses。见
 [Window-hosted MoUI](../window-hosted-moui.md)、ADR 0005 和 ADR 0006。现在的产品默认值是在每个 native Skia platform 上，只要 host GPU surface 可用（macOS、Windows、Linux、Android、iOS 和 HarmonyOS 的 `NativeGpuPlatform::gpu_promoted` 均为 `true`），就使用 `SkiaGpuNative`。Window-surface 路径是 Metal（macOS/iOS）、带 EGL/GLES fallback 的 Vulkan（Android）、EGL/GLES（HarmonyOS）、D3D12（Windows）和 Wayland Vulkan（Linux）。`SkiaRasterNative` 仍是显式 `skia-raster` 模式，并且是 terminal GPU failure 后的 sticky recovery fallback。Matching-device seven-gate manifests 仍是有用证据，并且在非 macOS hosts 上可能仍不完整，但它们不再阻挡产品 `auto` 默认值。Native `SkPicture`/POD handoff 运行在独立 `std::thread` 上，带 latest-wins frame slot、ordered controls、detach acknowledgement 和 polling diagnostics。Platform branches 在该 worker 上拥有 Metal、D3D12、Vulkan WSI 或 EGL context/surface/swapchain/synchronization resources，并且只有在 platform present call 后才发出 `Presented`。Android 动态加载 Vulkan，因此 API 23 仍可加载并 fallback 到 EGL/GLES。Native hosts 独立于 frame submission 轮询 worker completions，只计数 `Presented`，并在 terminal GPU recovery 切换到 raster 时保留当前 `AppRuntime`。
@@ -180,8 +183,8 @@ node scripts/validate-api-surface.mjs
   `moui_theme/fluent` package entrypoints 加上 `moui_theme/sickle` 等聚焦包留在此 addon 中；`core` 保持为中立 token runtime。
 - `views` 中 spec-first views，包括 `text`、`button`、`text_field`、`container`、row/column layout 和 spacer primitives。
 - `backend` 中统一的 host boundaries，带共享 window-event mapping，平台 hosts 将 events 归一化为 `Event`。
-- Native mainline rendering 通过基于 `render/skia` 的 provider packages 完成，并在 `render/wgpu` 下保留实验性 native WGPU diagnostics。
-- Web rendering 只通过 `wasm-gc` 上的 `render/webgpu_adapter` 完成，并使用 browser WebGPU host imports 进行可见绘制。旧 JS-target WebGPU path 已有意移除。
+- Native mainline rendering 通过基于 `moui_skia_renderer` 的 provider packages 完成，并在 `moui_wgpu_renderer` 下保留实验性 native WGPU diagnostics。
+- Web rendering 只通过 `wasm-gc` 上的 `moui_web_renderer` 完成，并使用 browser WebGPU host imports 进行可见绘制。旧 JS-target WebGPU path 已有意移除。
 
 ## 包
 
@@ -194,7 +197,13 @@ moui_theme/common/            addon construction surface: DesignPreset, DesignSy
 moui_theme/audit/             addon diagnostics: manifests, golden mappings, official-token/source-lock coverage, source-import records, runtime alignment, taxonomy/role/resolver/matrix reports (top-level pub fn, not DesignPreset methods)
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints: light/dark/high-contrast/system Theme helpers, tokens, and theme_for_variant over common
 moui_theme/sickle/            first-party hybrid skeuomorphic/flat Theme addon with light/dark and style-mode helpers
-moui/backend/            shared Event, HostWindowEventSource, @services.TimerSource, @services.RouteSource, metrics, WindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
+moui/backend/                 neutral Event/window/service/input/IME/accessibility protocols and DTOs
+moui/backend/common/          stateless DTO conversion and cross-owner workflows
+moui/backend/common/lifecycle/ registry, request, runtime slot, platform map, phase/generation and close
+moui/backend/common/frame/    per-window RendererSession, redraw/resize/present completion and IME frame hooks
+moui/backend/common/image/    image scheduling, repaint revision, completion, callback detach/cancellation
+moui/backend/common/input/    neutral conversion and pointer/text/IME session state
+moui/backend/common/services/ service facade, async completion, bridge lifetime and concrete service subpackages
 moui/backend/windows/         Windows 原生宿主后端（仅中立 host surface/presenter）
 moui/backend/macos/           macOS 原生宿主后端（仅中立 host surface/presenter）
 moui/backend/linux/           Linux Wayland 原生宿主后端（仅中立 host surface/presenter）
@@ -203,20 +212,20 @@ moui/backend/ios/             iOS 嵌入运行时后端，基于共享 host/runt
 moui/backend/harmonyos/       HarmonyOS 嵌入运行时后端，基于共享 host/runtime contracts
 moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
 moui/render/                  renderer facade and shared draw helpers
-moui/render/skia/             native Skia raster renderer facade over moui_skia
-moui/render/webgpu_adapter/   browser WebGPU host-import renderer for wasm-gc
-moui/render/wgpu/             experimental native wgpu renderer
-moui/render/wgpu/cosmic_text/ Moon Cosmic provider for native wgpu text
-moui/render/wgpu/coretext/    macOS CoreText provider for native wgpu text
-moui/render/wgpu/text_protocol/ shared native measure/run/raster/register bytes protocol
-moui/render/wgpu/directwrite/ Windows DirectWrite provider scaffold
-moui/render/wgpu/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffold
-moui/tests/tooling/           quickcheck and pixelmatch integration tests
-moui/tests/text_conformance/  opt-in native/Web text diagnostic matrix
-moui/tests/skia_renderer_smoke/native/ opt-in real Skia renderer pixel smoke
-moui/tests/skia_cached_layer_benchmark/ opt-in real Skia cached-layer benchmark harness
-moui/tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
-moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
+moui_skia_renderer/             native Skia raster renderer facade over moui_skia
+moui_web_renderer/   browser WebGPU host-import renderer for wasm-gc
+moui_wgpu_renderer/             experimental native wgpu renderer
+moui_wgpu_renderer/cosmic_text/ Moon Cosmic provider for native wgpu text
+moui_wgpu_renderer/coretext/    macOS CoreText provider for native wgpu text
+moui_wgpu_renderer/text_protocol/ shared native measure/run/raster/register bytes protocol
+moui_wgpu_renderer/directwrite/ Windows DirectWrite provider scaffold
+moui_wgpu_renderer/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffold
+moui_tests/tooling/           quickcheck and pixelmatch integration tests
+moui_tests/text_conformance/  opt-in native/Web text diagnostic matrix
+moui_tests/skia_renderer_smoke/native/ opt-in real Skia renderer pixel smoke
+moui_tests/skia_cached_layer_benchmark/ opt-in real Skia cached-layer benchmark harness
+moui_tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
+moui_tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
 examples/counter/{macos_skia,web_wasm}/ retained Counter platform entrypoints
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
@@ -274,53 +283,31 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ```
 
 - `View[Msg]` 是应用代码生成的不可变、不透明 public description；它包装一个内部 view protocol，包含 identity、children、layout、paint、event、semantics、text-control 和 focus behavior。
-- `ElementTree` 是已挂载 runtime tree。其 `ElementNode` entries 拥有 view identity、keys、child elements、dirty flags、control state、component state、layout cache 和 render cache。
+- `ElementTree` 是已挂载 runtime tree。其 `ElementNode` entries 拥有 view identity、keys、child elements、dirty flags、runtime-owned control slots、layout memoization 和 damage state；renderer resource/cache residency 不在此镜像。
 - `LayoutTree` 是最新 placement result。其 `PlacedNode` entries 携带 measurement 和 parent placement 产生的最终 frames。
 - `RenderTree` 是 paint-stage tree。其 `RenderNode` entries 将 hit testing 和 draw command payloads 附加到来自 `LayoutTree` 的 frames。
-- App code 通常应通过 `AppRuntime`、`Component` 和 `ComponentContext`。`RuntimeState`、`ElementTree`、`LayoutTree`、`RenderTree` 及其 node types 是 engine implementation details，尽管部分 core tests 仍会直接使用它们。
-- `ViewEnvironment` 是面向 TEA 的只读 environment snapshot。它暴露当前 viewport size 和 `Environment`，但不会让 app-level views 访问 `ComponentContext` subscriptions、bindings 或 component effects。
-- `ScrollState`、`FocusState` 和 `NavigationState` 是 reusable app structure 的首选 state holders，而不是临时 view-local fields。
-- `ComponentContext::run_effect` 注册带 key 的 component-scoped effects 和 cleanup callbacks。带稳定 key 的 effects 会在 rebuilds 之间复用，keys 消失或 component 离开 tree 时运行 cleanup。`ComponentContext` 也为小型可保存 string、bool 和 int state 暴露 scoped save/restore helpers。
-- `AppRuntime` 拥有 app-level `Program` diagnostics，包括 dispatch、
-  update、message queue、effect plan、scheduled effect、区分 send、anonymous dispatch、structured run 和 cancellable task effects 的 effect-kind counters、active/completed/cancelled effect-task lifecycle counters、active subscription counts/kind summaries、subscription plan、start/reuse/cancel、duplicate effect descriptor-key counters/names、duplicate subscription-key counters/names，以及来自 completed、canceled 或 destroyed lifetimes 的 stale callbacks 的 ignored effect-task 和 subscription dispatch counters，还有 runtime destruction 后触发的 anonymous 或 structured effect dispatchers 的 ignored program-dispatch counters。Program message drains 是有界 runtime turns，因此同步 self-queued work 可以留下 pending messages，而不是独占当前 host callback。Program runtime 和 runtime inspector snapshots 暴露 active effect-task descriptors、effect-task lifecycle entries、active subscription descriptors、active subscription kind-count summaries 和 subscription lifecycle entries，使 tooling 能识别哪些 tasks 和 sources 已完成、被复用或被取消，而无需检查 app messages。Runtime inspector snapshots 还暴露 pending rebuild/layout/paint/redraw work 的 structured dirty-state summary，包括 dirty element ids 和 legacy reason strings。Inspector snapshots 读取 cached layout/render/semantics state，不会 drain pending dirty work，因此 devtools 可消费稳定字段而不是解析 captions。来自 `Effect::run`、`ServiceTask::effect`、`Effect::task` 和 `Effect::service_task` 的 structured effect descriptors 会通过 effect summaries 传递，使 tooling 能识别 planned host-service 或 service/task runners，而无需检查 `Msg` 值；duplicate descriptor-key counts/names 让 planned key conflicts 在执行前可见。Runtime inspector snapshots 还暴露 rebuild、layout、paint 和 draw-command building 的 platform-neutral pipeline pass counters。Dirty summaries 也携带 latest damage kind、dirty-rect count、full-surface reason、cache epoch 和 cached-layer count，使工具能区分 retained boundary updates 与 full redraws，而无需解析 command streams。它保留 latest effect summary、latest scheduled effect summary 和 latest subscription plan summary（包括 planned subscription descriptors）供 inspector tooling 使用。这不同于 component-local `ComponentContext::watch` 和 `ComponentContext::run_effect`；program subscriptions 建模持续的 app event sources，而 build-context subscriptions 建模 component-local state invalidation 和 lifecycle effects。
+- App code 通过 `Program`、`Effect`、`Subscription` 和 `ViewEnvironment` 使用 `AppRuntime`。`RuntimeState`、`ElementTree`、`LayoutTree`、`RenderTree` 及其 node types 是 engine implementation details。
+- `ViewEnvironment` 是面向 TEA 的只读 environment snapshot。它暴露当前 viewport size 和 `Environment`，但不会把 backend/lifecycle ownership 或 renderer resources 暴露给 app-level views。
+- hover、pressed、drag、caret、selection、IME composition 与非受控普通滚动属于按 element identity 和 runtime lifetime 作用域化的 `ViewStateSlot`。slot 不得持有 service、runtime、renderer、task handle 或 cleanup closure；需要被应用读取/恢复的滚动和 focus 才进入 Model，并通过不可变 request id 驱动。
+- `AppRuntime` 拥有 app-level `Program` diagnostics，包括 message queue、effect/subscription lifecycle、stale dispatch rejection、pipeline pass counters 和 structured damage summary。Inspector 读取稳定的 layout/render/semantics snapshot，不会 drain pending work。它保留 effect、scheduled effect 与 subscription plan summary，供 tooling 在不检查 `Msg` 值的情况下识别 host-service/task runner。这是唯一的应用 state/effect 模型；不存在第二套 component lifecycle state machine。
 - Layout 使用 constraints down、measured size up，然后 parent placement，并将结果写入 `LayoutTree`。
-- Paint 消费 `LayoutTree` frames 来构建 `RenderTree`，并发出 platform-neutral `DrawCommand` 值。`RenderNode` entries 保留 paint bounds、content revisions 和 repaint-boundary cache keys。普通 host path 会向 `AppRuntime::draw_frame()` 请求 commands、`DamageRegion` 和 cache epoch。`DrawFrame.clear_color` 拥有 frame initialization，而其 command array 包含 view content，不包含前置 `Clear`；legacy command-only renderer adapters 在 lowering frame 时物化该 clear。Rect-damage renderers 必须在跳过 retained cached layers 前，将完整 command stream 约束到 effective damage clip。`DrawFrame.platform_views` 携带 `web_view` 等 native platform-view placements，而不把它们加入 `DrawCommand`。Legacy tests 仍可调用 `draw_commands()` 获取完整 command stream。Renderers 可以基于 capability degrade，但 view constructors 保留 brush、border、shadow、clip、image 和 text intent。
+- Paint 消费 `LayoutTree` frames 来构建 `RenderTree`，并发出 platform-neutral `DrawCommand` 值。普通 host path 会向 `AppRuntime::draw_frame()` 请求 commands 和 `DamageRegion`；每个 retained layer 每帧都携带完整 payload，renderer session 自己决定命中、更新与淘汰。runtime 不保存 cache epoch/residency，backend 不提供 command-cache fallback。`DrawFrame.clear_color` 拥有 frame initialization，而其 command array 包含 view content，不包含前置 `Clear`；`DrawFrame.platform_views` 携带 native platform-view placements，而不把它们加入 `DrawCommand`。
 - Backends 将 platform events 归一化为 `Event`；它们不拥有 UI state，也不直接修改 element/render trees。
-- `HostRuntimeDriver` 在 host boundary 拥有 redraw scheduling，将归一化 events 分派到 `AppRuntime`，并为 renderers 暴露 platform-neutral draw frames。redraw scheduler 跟踪 `idle`、`scheduled`、`in-frame` 和 `follow-up` 状态，使重复 host callbacks 合并，并让 presentation 期间产生的 redraw requests 成为下一帧。`WindowRenderer::render_frame()` 将 retained cached-layer commands 转发给实现 frame rendering 的 renderers，而它的 renderer-neutral command cache 仍是更简单 backends 的 fallback。Native Skia 现在拥有 renderer-local offscreen surface/image cache 用于 repaint boundaries，并报告 cache hit/miss/update/evict diagnostics。real-app cached-layer benchmark 使用 Showcase hover/scroll 和 Markdown Editor text input、scroll、caret-overlay interactions 来验证 sibling-boundary reuse、state-backed scroll redraw、rich-text block boundaries、editing overlays、command-count changes，以及剩余 rebuild、layout 和 damage bottlenecks；OS-level partial present 仍是独立的平台能力。
+- `HostRuntimeDriver` 在 host boundary 拥有 redraw scheduling，将归一化 events 分派到 `AppRuntime`，并为 renderers 暴露带 `FrameToken` 的 platform-neutral draw frame。`RendererSession::render_frame()` 接收完整 retained-layer 声明；Skia、Sun、WGPU 和 Web 的资源/缓存诊断留在各自 session。backend 只管理 pending frame、I/O task 与取消，applied image completion 才请求下一次 redraw。
 - `AppRuntime::focus_next` 和 `AppRuntime::focus_previous` 在共享 tab-order model 之上暴露显式 focus traversal entry points。
 
 ## 状态与绑定
 
-在 component builds 内，显示 state 应通过 `ComponentContext` 读取：
+应用状态只有一条闭环：`Program<Model, Msg>`、`Effect<Msg>`、`Subscription<Msg>`
+与只读 `ViewEnvironment`。业务数据、导航 route stack、表单值、文档和异步结果
+必须在 `Model` 中，由 typed `Msg` 经 `update` 修改；副作用只能通过 `Effect` 与
+`Subscription`。不再提供 `State`、`Binding`、`DerivedState`、`ComponentContext`、
+component watch/effect/saveable 或任意 Model setter。
 
-```moonbit
-@core.Component::new(ctx => {
-  let count = ctx.watch(self.count)
-  @views.text("Count: \{count}")
-})
-```
-
-普通应用状态使用 TEA-first controlled constructors，例如
-`@views.text_field(model.draft, on_input=DraftChanged)`。Component-local state 在跨越 `views` public API boundary 前，仍应投影为显式值和 typed messages；event handlers 和 model methods 可以在 component 内使用 `state.get()`、`state.set()` 和 `state.update()`。runtime 会在 rebuild 时取消并替换 build subscriptions，因此重复 builds 不会累积 listeners。
-
-Component-scoped side effects 应使用 `ctx.run_effect` 注册。当该 effect key 不再为该 component 注册，以及 component 离开 element tree 时，会调用返回的 cleanup callback：
-
-```moonbit
-@core.Component::new(ctx => {
-  ctx.run_effect(key="subscription", () => {
-    connect()
-    Some(() => disconnect())
-  })
-  @views.text("Connected")
-})
-```
-
-对于简单生命周期工作，`ctx.on_mount(key=..., ...)` 和
-`ctx.on_dispose(key=..., ...)` 是同一 keyed effect model 的具名包装。
-
-需要跨 rebuilds、resize 和 same-root remount 存活的 state 可以使用 scoped `save`、`restore` 或 `saveable` helpers，并配合 `SaveableCodec[T]`。string、bool 和 int helpers 仍作为同一 codec path 的 convenience wrappers。`saveable_*` helpers 返回 `State` 值，变化时写回 runtime store 并请求 component rebuilds。它们的 write-back subscriptions 与 `ctx.watch` 一样受 component lifecycle 作用域约束，因此旧 builds 的 stale handles 不会在 rebuild 或 unmount 后继续 invalidating component 或覆盖 saveable store。该 store 可通过 `SaveableStateSnapshot` snapshot/restore，用于更高层 state restoration flows。
-
-Environment values 通过 `ComponentContext` 流动，使 components 能响应 color scheme、locale、layout direction、accessibility contrast、reduced motion、content size category、text scale 和 scale factor 等 platform 与 accessibility signals。只需要读取这些值的 TEA apps 应使用 `ViewEnvironment`，并让 `ComponentContext` 只作用于 components 和高级 state holders。
+控件瞬态通过 `ViewStateSlot`/`ViewStateContext` 绑定到稳定 element identity 和
+runtime lifetime。hover、pressed、drag、caret、selection、IME composition 和非受控
+滚动不进入 Model；受控滚动/focus 使用 value + typed callback，程序化变化使用递增
+`ScrollRequest`/`FocusRequest`。slot 是低层 custom-control API，不从 app facade 重导出。
 
 ## 布局
 

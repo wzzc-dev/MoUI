@@ -100,6 +100,11 @@ Design-system preview apps may depend on `moui_theme`; Showcase runtime/render
 inspection belongs in its module-root integration package and passes neutral
 DTOs into the app.
 
+Executable composition roots depend on `wzzc-dev/moui` plus exactly the
+selected renderer publication module (`moui_skia_renderer`,
+`moui_web_renderer`, `moui_wgpu_renderer`, or `moui_sun_renderer`). Keep these
+module dependencies out of the shared `examples/<name>/app` package.
+
 ## App Pattern
 
 Prefer a typed TEA shape:

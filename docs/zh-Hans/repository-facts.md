@@ -9,8 +9,12 @@
 | 成员 |
 |---|
 | ./moui |
+| ./moui_skia_renderer |
+| ./moui_web_renderer |
+| ./moui_wgpu_renderer |
+| ./moui_sun_renderer |
+| ./moui_tests |
 | ./moui_richtext |
-| ./moui_tester |
 | ./moui_webview |
 | ./moui_devtools |
 | ./moui_agent |
@@ -56,11 +60,11 @@
 | views facade (moui/views/pkg.generated.mbti) | 1213 | 548 | 19 |
 | host contract (moui/backend/pkg.generated.mbti) | 1226 | 481 | 73 |
 | renderer facade (moui/render/pkg.generated.mbti) | 550 | 148 | 37 |
-| skia renderer (moui/render/skia/pkg.generated.mbti) | 161 | 93 | 3 |
-| sun renderer (moui/render/sun/pkg.generated.mbti) | 230 | 138 | 1 |
-| webgpu adapter (moui/render/webgpu_adapter/pkg.generated.mbti) | 143 | 60 | 2 |
-| native wgpu renderer (moui/render/wgpu/pkg.generated.mbti) | 136 | 65 | 2 |
-| native text protocol (moui/render/wgpu/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
+| skia renderer (moui_skia_renderer/pkg.generated.mbti) | 161 | 93 | 3 |
+| sun renderer (moui_sun_renderer/pkg.generated.mbti) | 230 | 138 | 1 |
+| webgpu adapter (moui_web_renderer/pkg.generated.mbti) | 143 | 60 | 2 |
+| native wgpu renderer (moui_wgpu_renderer/pkg.generated.mbti) | 136 | 65 | 2 |
+| native text protocol (moui_wgpu_renderer/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
 
 ## 工作区示例
 

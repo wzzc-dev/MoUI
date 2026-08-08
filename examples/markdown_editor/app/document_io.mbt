@@ -10,20 +10,20 @@ fn MarkdownEditorApp::load_document(
   path~ : String,
 ) -> Unit {
   self.replace_document_source(source, reason=LoadDocument)
-  self.document_path.set(path)
+  self.document_path = path
   self.record_recent_document_path(path)
-  self.saved_document.set(source)
-  self.selection.set({ caret: 0, selection: None })
+  self.saved_document = source
+  self.selection = { caret: 0, selection: None }
   self.reset_find_session()
   self.reset_format_palette()
-  self.transfer_status.set(TransferReady)
+  self.transfer_status = TransferReady
   self.clear_history()
   self.sync_target_inputs()
 }
 
 ///|
 fn MarkdownEditorApp::mark_document_saved(self : MarkdownEditorApp) -> Unit {
-  self.saved_document.set(self.document.get())
+  self.saved_document = self.document
 }
 
 ///|
@@ -31,7 +31,7 @@ pub fn MarkdownEditorApp::save_document_as(
   self : MarkdownEditorApp,
   path : String,
 ) -> Unit {
-  self.document_path.set(path)
+  self.document_path = path
   self.record_recent_document_path(path)
   self.mark_document_saved()
 }
@@ -44,14 +44,14 @@ fn MarkdownEditorApp::record_recent_document_path(
   if path.trim().to_owned() == "" {
     return
   }
-  let existing = self.recent_document_paths.get()
+  let existing = self.recent_document_paths
   let next : Array[String] = [path]
   for candidate in existing {
     if candidate != path && next.length() < 8 {
       next.push(candidate)
     }
   }
-  self.recent_document_paths.set(next)
+  self.recent_document_paths = next
 }
 
 ///|
@@ -61,9 +61,9 @@ fn MarkdownEditorApp::begin_transfer(
   self : MarkdownEditorApp,
   kind : MarkdownEditorTransferKind,
 ) -> Int {
-  let generation = self.transfer_generation.get() + 1
-  self.transfer_generation.set(generation)
-  self.transfer_status.set(TransferRunning(kind))
+  let generation = self.transfer_generation + 1
+  self.transfer_generation = generation
+  self.transfer_status = TransferRunning(kind)
   generation
 }
 
@@ -72,7 +72,7 @@ fn MarkdownEditorApp::transfer_is_current(
   self : MarkdownEditorApp,
   generation : Int,
 ) -> Bool {
-  self.transfer_generation.get() == generation
+  self.transfer_generation == generation
 }
 
 ///|
@@ -96,7 +96,7 @@ fn MarkdownEditorApp::request_document_save(
   self : MarkdownEditorApp,
   services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
-  let path = self.document_path.get()
+  let path = self.document_path
   if path == "" {
     self.request_file_save_as(services)
   } else {
@@ -124,7 +124,7 @@ fn MarkdownEditorApp::request_text_file_read(
   services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
   if path == "" {
-    self.transfer_status.set(TransferUnavailable("recent file path is empty"))
+    self.transfer_status = TransferUnavailable("recent file path is empty")
     return @moui.Effect::none()
   }
   let generation = self.begin_transfer(FileOpen)
@@ -180,35 +180,35 @@ fn MarkdownEditorApp::apply_directory_listing(
       let next_children = markdown_editor_tree_children_from_listing(
         path, entries,
       )
-      if self.working_directory.get() == path ||
-        self.directory_tree_items.get().length() == 0 {
-        self.directory_tree_items.set([
+      if self.working_directory == path ||
+        self.directory_tree_items.length() == 0 {
+        self.directory_tree_items = [
           markdown_editor_root_tree_item(path, next_children),
-        ])
+        ]
       } else {
-        self.directory_tree_items.set(
+        self.directory_tree_items = 
           markdown_editor_replace_tree_item_children(
-            self.directory_tree_items.get(),
+            self.directory_tree_items,
             path,
             next_children,
-          ),
-        )
+          )
+        
       }
-      let current = self.expanded_tree_paths.get()
+      let current = self.expanded_tree_paths
       if !markdown_editor_string_array_contains(current, path) {
         let next = current.copy()
         next.push(path)
-        self.expanded_tree_paths.set(next)
+        self.expanded_tree_paths = next
       }
     }
     Failure(error) =>
-      self.transfer_status.set(
-        TransferUnavailable("directory listing unavailable: " + error.message),
-      )
+      self.transfer_status = 
+        TransferUnavailable("directory listing unavailable: " + error.message)
+      
     Cancelled =>
-      self.transfer_status.set(
-        TransferUnavailable("directory listing cancelled"),
-      )
+      self.transfer_status = 
+        TransferUnavailable("directory listing cancelled")
+      
   }
 }
 
@@ -352,7 +352,7 @@ fn MarkdownEditorApp::toggle_tree_path(
   self : MarkdownEditorApp,
   id : String,
 ) -> Bool {
-  let expanded = self.expanded_tree_paths.get()
+  let expanded = self.expanded_tree_paths
   let next : Array[String] = []
   let mut removed = false
   for path in expanded {
@@ -365,7 +365,7 @@ fn MarkdownEditorApp::toggle_tree_path(
   if !removed {
     next.push(id)
   }
-  self.expanded_tree_paths.set(next)
+  self.expanded_tree_paths = next
   !removed
 }
 
@@ -374,7 +374,7 @@ fn MarkdownEditorApp::tree_path_is_directory(
   self : MarkdownEditorApp,
   path : String,
 ) -> Bool {
-  match markdown_editor_find_tree_item(self.directory_tree_items.get(), path) {
+  match markdown_editor_find_tree_item(self.directory_tree_items, path) {
     Some(item) => item.children.length() > 0
     None => false
   }
@@ -385,7 +385,7 @@ fn MarkdownEditorApp::tree_path_needs_load(
   self : MarkdownEditorApp,
   path : String,
 ) -> Bool {
-  match markdown_editor_find_tree_item(self.directory_tree_items.get(), path) {
+  match markdown_editor_find_tree_item(self.directory_tree_items, path) {
     Some(item) =>
       item.children.length() == 1 &&
       item.children[0].id == markdown_editor_tree_loading_placeholder_id(path)
@@ -449,7 +449,7 @@ fn MarkdownEditorApp::request_text_file_write_at(
 ) -> @moui.Effect[MarkdownEditorMsg] {
   services
   .files()
-  .write_text(path, self.document.get())
+  .write_text(path, self.document)
   .effect(map=result => {
     ServiceCompleted(TextFileWritten(generation, path, save_as, result))
   })
@@ -464,8 +464,8 @@ fn MarkdownEditorApp::save_file_dialog_options(
     filters=["md", "markdown"],
     default_name=Some(
       markdown_editor_default_save_name(
-        source=self.document.get(),
-        path=self.document_path.get(),
+        source=self.document,
+        path=self.document_path,
       ),
     ),
   )
@@ -473,14 +473,14 @@ fn MarkdownEditorApp::save_file_dialog_options(
 
 ///|
 fn MarkdownEditorApp::is_dirty(self : MarkdownEditorApp) -> Bool {
-  self.document.get() != self.saved_document.get()
+  self.document != self.saved_document
 }
 
 ///|
 /// True while a host file/clipboard transfer is in flight, so toolbar actions
 /// that would start another transfer can disable themselves.
 fn MarkdownEditorApp::transfer_in_progress(self : MarkdownEditorApp) -> Bool {
-  match self.transfer_status.get() {
+  match self.transfer_status {
     TransferRunning(_) => true
     _ => false
   }
@@ -570,8 +570,8 @@ fn MarkdownEditorApp::insert_text_at_cursor(
   self : MarkdownEditorApp,
   text : String,
 ) -> Unit {
-  let doc = self.document.get()
-  let sel = self.selection.get()
+  let doc = self.document
+  let sel = self.selection
   let caret = sel.caret
   let range = sel.selection
   let (before, after) = match range {
@@ -588,7 +588,7 @@ fn MarkdownEditorApp::insert_text_at_cursor(
       reason=MediaEdit,
     ),
   )
-  self.selection.set({ caret: new_caret, selection: None })
+  self.selection = { caret: new_caret, selection: None }
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
 }
@@ -603,7 +603,7 @@ fn MarkdownEditorApp::request_clipboard_export(
   let generation = self.begin_transfer(ClipboardExport)
   services
   .clipboard()
-  .write_text(self.document.get())
+  .write_text(self.document)
   .effect(map=result => {
     ServiceCompleted(ClipboardExported(generation, false, result))
   })
@@ -631,11 +631,11 @@ fn MarkdownEditorApp::request_open_target(
   let target = match self.open_target_value() {
     Some(target) => target
     None => {
-      self.transfer_status.set(
+      self.transfer_status = 
         TransferUnavailable(
           "open target requires an active link or image target",
-        ),
-      )
+        )
+      
       return @moui.Effect::none()
     }
   }
@@ -648,15 +648,15 @@ fn MarkdownEditorApp::request_open_target(
 
 ///|
 fn MarkdownEditorApp::open_target_value(self : MarkdownEditorApp) -> String? {
-  match self.target_kind.get() {
+  match self.target_kind {
     LinkTarget => {
-      let target = self.link_target.get().trim().to_owned()
+      let target = self.link_target.trim().to_owned()
       if target != "" {
         return Some(target)
       }
     }
     ImageTarget => {
-      let target = self.image_target.get().trim().to_owned()
+      let target = self.image_target.trim().to_owned()
       if target != "" {
         return Some(target)
       }
@@ -665,8 +665,8 @@ fn MarkdownEditorApp::open_target_value(self : MarkdownEditorApp) -> String? {
   }
   match
     markdown_editor_selected_link_target(
-      self.document.get(),
-      self.selection.get(),
+      self.document,
+      self.selection,
     ) {
     Some(target) =>
       if target.trim().to_owned() == "" {
@@ -677,8 +677,8 @@ fn MarkdownEditorApp::open_target_value(self : MarkdownEditorApp) -> String? {
     None =>
       match
         markdown_editor_selected_image_target(
-          self.document.get(),
-          self.selection.get(),
+          self.document,
+          self.selection,
         ) {
         Some(target) =>
           if target.trim().to_owned() == "" {
@@ -708,11 +708,11 @@ fn MarkdownEditorApp::apply_service_completion(
         Success(path) =>
           self.request_text_file_read_at(generation, path, services)
         Failure(error) => {
-          self.transfer_status.set(TransferUnavailable(error.message))
+          self.transfer_status = TransferUnavailable(error.message)
           @moui.Effect::none()
         }
         Cancelled => {
-          self.transfer_status.set(TransferCancelled(FileOpen))
+          self.transfer_status = TransferCancelled(FileOpen)
           @moui.Effect::none()
         }
       }
@@ -730,11 +730,11 @@ fn MarkdownEditorApp::apply_service_completion(
             save_as=true,
           )
         Failure(error) => {
-          self.transfer_status.set(TransferUnavailable(error.message))
+          self.transfer_status = TransferUnavailable(error.message)
           @moui.Effect::none()
         }
         Cancelled => {
-          self.transfer_status.set(TransferCancelled(FileSaveAs))
+          self.transfer_status = TransferCancelled(FileSaveAs)
           @moui.Effect::none()
         }
       }
@@ -746,11 +746,11 @@ fn MarkdownEditorApp::apply_service_completion(
       match result {
         Success(text) => {
           self.load_document(text, path~)
-          self.transfer_status.set(TransferOpened(path))
+          self.transfer_status = TransferOpened(path)
         }
         Failure(error) =>
-          self.transfer_status.set(TransferUnavailable(error.message))
-        Cancelled => self.transfer_status.set(TransferCancelled(FileOpen))
+          self.transfer_status = TransferUnavailable(error.message)
+        Cancelled => self.transfer_status = TransferCancelled(FileOpen)
       }
       @moui.Effect::none()
     }
@@ -760,23 +760,23 @@ fn MarkdownEditorApp::apply_service_completion(
       }
       match result {
         Success(_) => {
-          self.document_path.set(path)
+          self.document_path = path
           self.mark_document_saved()
           self.record_recent_document_path(path)
-          self.transfer_status.set(
+          self.transfer_status = 
             if save_as {
               TransferSavedAs(path)
             } else {
               TransferSaved(path)
-            },
-          )
+            }
+          
         }
         Failure(error) =>
-          self.transfer_status.set(TransferUnavailable(error.message))
+          self.transfer_status = TransferUnavailable(error.message)
         Cancelled =>
-          self.transfer_status.set(
-            TransferCancelled(if save_as { FileSaveAs } else { FileSave }),
-          )
+          self.transfer_status = 
+            TransferCancelled(if save_as { FileSaveAs } else { FileSave })
+          
       }
       @moui.Effect::none()
     }
@@ -787,12 +787,12 @@ fn MarkdownEditorApp::apply_service_completion(
       match result {
         Success(text) => {
           self.load_document(text, path="")
-          self.transfer_status.set(TransferImported)
+          self.transfer_status = TransferImported
         }
         Failure(error) =>
-          self.transfer_status.set(TransferUnavailable(error.message))
+          self.transfer_status = TransferUnavailable(error.message)
         Cancelled =>
-          self.transfer_status.set(TransferCancelled(ClipboardImport))
+          self.transfer_status = TransferCancelled(ClipboardImport)
       }
       @moui.Effect::none()
     }
@@ -802,25 +802,25 @@ fn MarkdownEditorApp::apply_service_completion(
       }
       match result {
         Success(_) =>
-          self.transfer_status.set(
+          self.transfer_status = 
             if html {
               TransferHtmlCopied
             } else {
               TransferCopied
-            },
-          )
+            }
+          
         Failure(error) =>
-          self.transfer_status.set(TransferUnavailable(error.message))
+          self.transfer_status = TransferUnavailable(error.message)
         Cancelled =>
-          self.transfer_status.set(
+          self.transfer_status = 
             TransferCancelled(
               if html {
                 ClipboardHtmlExport
               } else {
                 ClipboardExport
               },
-            ),
-          )
+            )
+          
       }
       @moui.Effect::none()
     }
@@ -829,21 +829,21 @@ fn MarkdownEditorApp::apply_service_completion(
         return @moui.Effect::none()
       }
       match result {
-        Success(_) => self.transfer_status.set(TransferTargetOpened)
+        Success(_) => self.transfer_status = TransferTargetOpened
         Failure(error) =>
-          self.transfer_status.set(TransferUnavailable(error.message))
-        Cancelled => self.transfer_status.set(TransferCancelled(OpenTarget))
+          self.transfer_status = TransferUnavailable(error.message)
+        Cancelled => self.transfer_status = TransferCancelled(OpenTarget)
       }
       @moui.Effect::none()
     }
     DirectoryPicked(result) =>
       match result {
         Success(path) => {
-          self.working_directory.set(path)
+          self.working_directory = path
           self.request_directory_listing(path, services)
         }
         Failure(error) => {
-          self.transfer_status.set(TransferUnavailable(error.message))
+          self.transfer_status = TransferUnavailable(error.message)
           @moui.Effect::none()
         }
         Cancelled => @moui.Effect::none()

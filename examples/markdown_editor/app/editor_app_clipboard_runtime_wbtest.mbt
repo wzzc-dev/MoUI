@@ -281,7 +281,7 @@ test "markdown editor paste command inserts image from selected alt text" {
 test "markdown editor runtime paste and typing complete autolinks" {
   let app = MarkdownEditorApp::new()
   app.set_document("Visit ")
-  let runtime = app.runtime(width=980.0, height=640.0)
+  let mut runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
@@ -305,6 +305,7 @@ test "markdown editor runtime paste and typing complete autolinks" {
   inspect(app.document(), content="Visit <https://moui.dev>")
 
   app.set_document("Visit https://moui.dev")
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
   )
@@ -314,6 +315,7 @@ test "markdown editor runtime paste and typing complete autolinks" {
   inspect(app.document(), content="Visit <https://moui.dev> ")
 
   app.set_document("Mail ")
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
   )
@@ -326,6 +328,7 @@ test "markdown editor runtime paste and typing complete autolinks" {
   inspect(app.document(), content="Mail <hello@example.dev>")
 
   app.set_document("Mail hello@example.dev")
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
   )
@@ -335,6 +338,7 @@ test "markdown editor runtime paste and typing complete autolinks" {
   inspect(app.document(), content="Mail <hello@example.dev> ")
 
   app.set_document("Visit https://moui.dev")
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
   )

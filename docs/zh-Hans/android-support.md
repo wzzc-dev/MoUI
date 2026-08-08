@@ -3,7 +3,7 @@
 Android 使用**嵌入运行时后端**路径，目前状态为 **experimental**（product_class `experimental`，`ready=false`）：代码路径可编译且 host-sim tests 通过，但在匹配设备证据落地前，不做任何开发/演示可用性或产品承诺。
 `wzzc-dev/window/android` 拥有 Android 生命周期、Surface 与输入队列；
 `moui/backend/android` 将这些回调转换为 MoUI runtime session，
-`moui/render/skia` 提供呈现器。
+`moui_skia_renderer` 提供呈现器。
 
 ## 入口
 

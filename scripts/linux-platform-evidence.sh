@@ -160,7 +160,7 @@ import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/linux" @linux_backend,
-  "wzzc-dev/moui/render/skia" @render_skia,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
   "examples/showcase/app" @showcase_app,
 }
 
@@ -180,7 +180,7 @@ PKGEOF
 echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
 
 # Also configure the first-frame smoke test moon.pkg
-first_frame_pkg="$REPO_ROOT/moui_tester/linux_skia_first_frame_smoke/moon.pkg"
+first_frame_pkg="$REPO_ROOT/moui_tests/tester/linux_skia_first_frame_smoke/moon.pkg"
 first_frame_backup="$first_frame_pkg.moui-evidence.bak"
 cp "$first_frame_pkg" "$first_frame_backup"
 
@@ -188,8 +188,8 @@ cat > "$first_frame_pkg" <<PKGEOF
 import {
   "wzzc-dev/moui" @moui,
   "wzzc-dev/moui/backend/linux",
-  "wzzc-dev/moui/render/skia" @render_skia,
-  "wzzc-dev/moui_tester/fixtures/text_input_app" @fixture,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "wzzc-dev/moui_tests/tester/fixtures/text_input_app" @fixture,
 }
 
 supported_targets = "native"
@@ -236,8 +236,8 @@ echo "  Built examples/showcase/linux_skia" | tee -a "$preflight_log"
 
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
   MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-  moon build moui_tester/linux_skia_first_frame_smoke --target native 2>&1 | tee -a "$preflight_log"
-echo "  Built moui_tester/linux_skia_first_frame_smoke" | tee -a "$preflight_log"
+  moon build moui_tests/tester/linux_skia_first_frame_smoke --target native 2>&1 | tee -a "$preflight_log"
+echo "  Built moui_tests/tester/linux_skia_first_frame_smoke" | tee -a "$preflight_log"
 
 #
 # Step 5: Start Weston headless
@@ -289,7 +289,7 @@ run_first_frame_mode() {
     MOUI_SKIA_RENDERER="$mode" \
     MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
     MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-    moon run moui_tester/linux_skia_first_frame_smoke --target native \
+    moon run moui_tests/tester/linux_skia_first_frame_smoke --target native \
       > "$output" 2>&1
   if ! grep -Fq "Linux renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" "$output"; then
     echo "Missing first-frame marker for MOUI_SKIA_RENDERER=$mode" >&2

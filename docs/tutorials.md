@@ -44,7 +44,7 @@ lowering arms for a new control.
    rasterization, embedded font registration, or startup text-engine options.
 2. Keep `core` limited to the neutral `TextSystem` contract and deterministic
    fallback.
-3. Put native provider work under the relevant `render/wgpu/*` package and keep
+3. Put native provider work under the relevant `moui_wgpu_renderer/*` package and keep
    Web text changes aligned with `backend/web`.
 4. Add focused core, renderer, backend, or provider tests for the boundary you
    changed.
@@ -58,8 +58,8 @@ lowering arms for a new control.
 3. Update native/Web renderer behavior or report the planned fallback.
 4. Update `docs/renderer-capability-report.md`.
 5. Run `moon test moui/render --target native`,
-   `moon test moui/render/wgpu --target native`, and
-   `moon test moui/render/webgpu_adapter --target wasm-gc`.
+   `moon test moui_wgpu_renderer --target native`, and
+   `moon test moui_web_renderer --target wasm-gc`.
 
 ## Add A Showcase Entry
 

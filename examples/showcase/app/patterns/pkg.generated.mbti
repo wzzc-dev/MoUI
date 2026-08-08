@@ -49,7 +49,7 @@ pub struct Model {
   data_filter : String
   workflow_step : Int
   notice : String
-  scroll : @core.ScrollState
+  scroll : @core.Point
 }
 pub fn Model::new(route? : String) -> Self
 pub fn Model::open(Self, String) -> Self
@@ -69,6 +69,7 @@ pub(all) enum Msg {
   WorkflowBack
   WorkflowNext
   DismissNotice
+  Scrolled(@core.Point)
 }
 
 pub(all) struct TodoItem {

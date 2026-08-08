@@ -48,32 +48,33 @@ Read only what the task needs:
   `RedrawScheduler`, and `HostWallClock` moved to `moui/runtime`; render
   completion and GPU recovery moved to `moui/render`. Host carries
   platform-neutral contracts only.
-- `moui/backend/common`: shared window registry/request queue, lifecycle core,
-  unique platform-window mapping, frame/image/IME coordination, input state,
-  service adapters, and neutral event/coordinate conversion. Raw native input
-  decoding stays in the concrete platform backend. `WindowCoordinator` adapts macos/windows/linux/web,
-  `EmbeddedWindowCoordinator` adapts Android/iOS/HarmonyOS, and
-  `FrameCoordinator` owns shared completion/image/IME timing. New
-  platform window code must delegate to these adapters and contribute a
-  `WindowSurfaceActions` projection instead of re-implementing window state.
-- `moui/backend/common/desktop`: single synchronous desktop
-  service router; shared native file behavior comes from
-  `backend/common/native`.
-  macOS/Windows/Linux provide native closures and must not copy routing logic.
-- `moui/backend/common/embedded/services`: single asynchronous mobile
-  service queue for clipboard/platform-channel `Pending(id)`, FIFO drain,
-  completion, duplicate rejection, and dispose/cancel. Only `backend/common/embedded`
-  imports it.
-- `moui/backend/common/native`: shared native `@fs` text,
-  binary, directory, and raw filesystem image-byte source used by desktop
-  desktop and embedded backends.
+- `moui/backend/common`: stateless DTO conversion and cross-owner window-host
+  workflows only. Stateful ownership is split across `common/lifecycle`
+  (registry, requests, runtime slots, platform ID map, phase/generation and
+  exactly-once close), `common/frame` (per-window renderer session, redraw,
+  resize, present completion and IME frame hook), `common/image` (cancellable
+  I/O tasks, tokenized completion, callback detach and cancellation),
+  `common/input` (pointer/text/IME session), and `common/services` (service
+  facade, async completion and bridge lifetime). Raw native input decoding
+  stays in the concrete platform backend. Platform backends hold these owners
+  directly and contribute `WindowSurfaceActions` to stateless workflows; do
+  not add another aggregate coordinator.
+- `moui/backend/common/services/desktop`: single synchronous desktop service
+  router. macOS/Windows/Linux provide native closures and must not copy routing
+  logic.
+- `moui/backend/common/services/embedded`: single asynchronous mobile service
+  queue for clipboard/platform-channel `Pending(id)`, FIFO drain, completion,
+  duplicate rejection, and dispose/cancel.
+- `moui/backend/common/services/native`: shared native `@fs` text, binary, and
+  directory services used by desktop and embedded backends.
+- `moui/backend/common/image/native`: shared filesystem image-byte source.
 - `moui/backend/common/embedded`: embedded session capability layer
   (`HostedWindowBackend`, `HostedRuntimeSession`, `EmbeddedRuntimeHostBridge`),
   including renderer binding, IME, semantics, platform views, service update
-  mapping, and native transport. Logical lifecycle and frame/image state reuse
-  the common coordinators. Android/iOS/HarmonyOS
-  `window_hosted.mbt` are thin shells and must not access the embedded service
-  queue directly.
+  mapping, and native transport. `EmbeddedSession` composes
+  `common/lifecycle::EmbeddedLifecycle` with the shared frame/image/input/
+  services owners; it must not own a second phase, surface generation, or frame
+  loop. Android/iOS/HarmonyOS `window_hosted.mbt` are thin shells.
 - `moui/backend/{macos,windows,linux}`: native host backends that own the host
   runtime, native windows, and event-loop integration.
 - `moui/backend/{android,ios,harmonyos}`: embedded runtime backends. The
@@ -82,15 +83,21 @@ Read only what the task needs:
 - `moui/backend/<platform>` owns native windows/handles, CPU presentation, GPU
   descriptors, host I/O, and lifecycle only. It must not import or construct a
   concrete renderer.
-- `moui/render`: surface/frame/image/provider protocols and DTOs, including
-  `WindowRenderer`, `SurfaceContext`, and `RendererFactory`. Application entrypoints
-  register ordered factories and one platform entry; `RendererBackendKind` is diagnostic only.
+- `moui/render`: renderer-neutral frame/image/descriptor DTOs plus opaque
+  `HostSurface`/`NativeSurface` capabilities and the two lifecycle contracts
+  `RendererProvider` and `RendererSession`. Application entrypoints register
+  ordered providers and one platform entry; root render has no platform or
+  graphics-API surface tag. `RendererBackendKind` is diagnostic only.
 - `moui/render/common`: provider selection, fallback, mailbox/GPU worker,
   image lifecycle/repaint, and shared drawing algorithms.
-- `moui/render/skia`: native Skia CPU/GPU factories and renderer over `moui_skia`.
-- `moui/render/webgpu_adapter`: browser WebGPU host-import adapter for
+- `moui_skia_renderer`: native Skia CPU/GPU providers, renderer, and
+  renderer-local `NativeGpuPlatform`/`SkiaSurfaceRoute` policy over `moui_skia`.
+- `moui_web_renderer`: browser WebGPU host-import adapter for
   `wasm-gc`.
-- `moui/render/wgpu`: experimental native WGPU renderer.
+- `moui_wgpu_renderer`: experimental native WGPU renderer.
+- `moui_sun_renderer`: experimental Sun CPU raster renderer over `moui_sun`.
+- `moui_tests`: unpublished integration tests, benchmarks, renderer smokes,
+  and tester smokes. Production unit tests remain with their owning module.
 - `moui_skia`: Skia binding, native capability manifests, fallback parity, FFI
   ownership, and native smoke marker coverage.
 - `moui_theme`: optional design-system addon diagnostics and theme builders.
@@ -98,7 +105,7 @@ Read only what the task needs:
 Do not add a new public package until the existing owning packages cannot
 naturally own the capability.
 
-## Architecture Convergence Pointers (ADR 0017–0024)
+## Architecture Convergence Pointers (ADR 0017–0027)
 
 When touching a convergence surface, run its matching gate in addition to the
 focused checks below:
@@ -107,10 +114,12 @@ focused checks below:
   `HostWallClock` live in `moui/runtime`; render completion / GPU recovery
   live in `moui/render`. `moui/backend` stays contracts-only in default
   imports. Gate: `node scripts/validate-host-import-baseline.mjs`.
-- **Renderer provider (ADR 0019)**: renderer implementations and
-  provider-ID capability reporting go in `moui/render/*` as
-  `RendererProvider` / `RendererProviderBinding`; composition roots assemble
-  ordered bindings; `RendererBackendKind` is diagnostic metadata only. Gate:
+- **Renderer provider/session (ADR 0019/0027)**: renderer implementations,
+  provider-ID capability reporting, and platform-handle interpretation go in
+  `moui_*_renderer`. Composition roots assemble ordered `RendererProvider`
+  values; each successful bind returns one per-window `RendererSession`.
+  Rejection is side-effect free and session disposal is idempotent.
+  `RendererBackendKind` is diagnostic metadata only. Gate:
   `node scripts/validate-renderer-provider-open-extension.mjs`.
 - **Backend common boundary (ADR 0020/0025)**: neutral close/focus/resize/scale/redraw/
   surface lifecycle and logical-coordinate normalization go through
@@ -120,13 +129,14 @@ focused checks below:
   duplication budget or allowlist; shared behavior must move to its owner.
 - **Window lifecycle owner (ADR 0024/0025)**: `wzzc-dev/window/internal/embedded_dispatch`
   is physical callback dispatch only. All seven platforms enter
-  `moui/backend/common`; embedded session services remain in
-  `backend/common/embedded`, which must not grow a second lifecycle or frame loop.
+  the matching backend-common owner; embedded session assembly remains in
+  `backend/common/embedded`, which must not grow a second lifecycle, surface
+  generation, or frame loop.
   Gate: `node scripts/validate-window-lifecycle-boundary.mjs`.
 - **Theme layering (ADR 0017)**: `moui/core` carries no control vocabulary;
   control theme tokens live in `moui/views` as `ControlThemeSet`. Gate:
   `node scripts/validate-core-theme-no-control-surface.mjs`.
-- **Sun CPU raster (ADR 0023)**: `moui_sun` + `moui/render/sun` is an
+- **Sun CPU raster (ADR 0023)**: `moui_sun` + `moui_sun_renderer` is an
   experimental renderer — no product commitment, not on default composition
   roots, capability freeze by default. New sun capabilities are exceptions
   requiring an ADR note.
@@ -203,12 +213,12 @@ owning-package boundaries clear.
   typography role parity,
   component-token matrix coverage plus
   adaptation-difference closure.
-- `backend/`: shared `Event`, surface metrics, input contracts,
-  window lifecycle registry, window scene resolver, per-window runtime slot
-  collection, platform-window id map, renderer-neutral `WindowRenderer`
-  diagnostics, render-frame cached-layer fallback command replay, image-resource change callback bridge, image-resource repaint
-  routing and tracked-window revision/status diagnostics plus repaint-result
-  previous/current status counts,
+- `backend/`: shared `Event`, surface metrics, input contracts, window scene
+  resolver, and neutral host protocols. Stateful registry/runtime slots,
+  platform-window mapping, renderer-session frame state, and tokenized image
+  I/O task delivery remain in their owning common packages. Renderer resource
+  status, cache residency, repaint revisions, and image diagnostics stay in
+  renderer sessions rather than backend mirrors,
   image-resource load completion apply bridge,
   native async image loading-record scheduler,
   native provider async-image scheduling hooks,
@@ -251,7 +261,7 @@ owning-package boundaries clear.
   window presenter/surface kit. Package checks are not runtime platform evidence.
   API 20 is the compatibility floor. Native XComponent callbacks exclusively
   own surface/pointer/resize/detach; ArkTS owns displaySync and platform services.
-- HarmonyOS composition entrypoints supply `render/skia` factories. Use
+- HarmonyOS composition entrypoints supply `moui_skia_renderer` providers. Use
   `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and static linking
   for `auto` / `skia-gpu` HarmonyOS cross-build checks. The locked
   `libskia.so` hides Ganesh internal symbols required by the separate
@@ -269,8 +279,8 @@ owning-package boundaries clear.
   tree/focus/action, and async loading/ready application logs.
 - Platform status is `passed`, `partial`, or `failed`. Use `partial` when
   useful runtime evidence exists but required observations are missing.
-- `render/`: renderer facade, shared draw helpers, and capability report API.
-- `render/skia/`: native Skia raster mainline renderer over the local
+- `moui/render`: renderer facade, shared draw helpers, and capability report API.
+- `moui_skia_renderer`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for
   unsupported Skia fallbacks, renderer-local image-resource lifecycle change
   callbacks, and `skia_image_load_completion` source decode completion payloads
@@ -280,33 +290,34 @@ owning-package boundaries clear.
   separate matching-host evidence and must not replace the raster mainline
   without real smoke proof. Host-layer completion routing and platform redraw
   scheduling from async image load/error notifications
-  remain outside `render/skia`.
-- `render/wgpu/`: experimental native wgpu renderer, including a renderer-owned
-  byte decoder used by factory-created image loader hooks.
-- `render/sun/`: **experimental** Sun CPU raster renderer over the
+  remain outside `moui_skia_renderer`.
+- `moui_wgpu_renderer`: experimental native wgpu renderer, including a renderer-owned
+  byte decoder used by provider-created image loader hooks.
+- `moui_sun_renderer`: **experimental** Sun CPU raster renderer over the
   repo-local `moui_sun` workspace (ADR 0023: experimental, capability freeze
   by default, not on default composition roots). It renders rects, rounded
   rects, paths, gradients, text (via moui_sun/text FontFace), images
   (PNG/BMP data URIs), shadows, layers, filters, and shader effects.
   TextShaping, EmojiText, and AsyncImage remain tracked as gaps; new
   capabilities are exceptions requiring an ADR note.
-- `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
-- `render/wgpu/coretext/`: macOS CoreText provider.
-- `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
-- `render/wgpu/fontconfig/`: Linux fontconfig/FreeType provider boundary with
+- `moui_wgpu_renderer/cosmic_text`: standalone Moon Cosmic provider.
+- `moui_wgpu_renderer/coretext`: macOS CoreText provider.
+- `moui_wgpu_renderer/directwrite`: Windows DirectWrite scaffold.
+- `moui_wgpu_renderer/fontconfig`: Linux fontconfig/FreeType provider boundary with
   a narrow native color-emoji path and Cosmic fallback for general text.
-- `render/wgpu/text_protocol/`: shared native text provider payload protocol.
-- `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
-- `moui/tests/skia_renderer_smoke/native`: opt-in real Skia renderer smoke that
+- `moui_wgpu_renderer/text_protocol`: shared native text provider payload protocol.
+- `moui_web_renderer`: wasm-gc bridge to browser WebGPU host imports, with
+  Canvas2D/WeChat under `moui_web_renderer/canvas2d`.
+- `moui_tests/skia_renderer_smoke/native`: opt-in real Skia renderer smoke that
   verifies MoUI draw commands against captured Skia presenter pixels and checks
   async image second-frame repaint through the host completion route.
-- `moui/tests/skia_text_emoji_smoke/native`: opt-in real Skia text/emoji proof
+- `moui_tests/skia_text_emoji_smoke/native`: opt-in real Skia text/emoji proof
   smoke that records renderer-proof markers only after captured Skia pixels and
   font/glyph metadata plus text-system evidence prove color emoji, ZWJ
   grapheme, paragraph wrapping, and bidi observations. Native paragraph
   wrapping, bidi layout, and selection-rectangle proof must use the real
   SkParagraph path and include `engine=skparagraph` markers.
-- `moui/tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
+- `moui_tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
   packages for comparing supported text systems and documented gaps.
 - `examples/*/app`: shared application logic.
 - `examples/*/{web_wasm,<platform>_<renderer>}`: platform/renderer profile
@@ -375,7 +386,7 @@ not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
 validation.
 `moui_sun` is a repo-local editable workspace member under the single
 `wzzc-dev/moui_sun` module. Keep Sun graphics/text/softbuffer surface area and
-its factory in `render/sun`; platform presentation stays renderer-neutral.
+its provider in `moui_sun_renderer`; platform presentation stays renderer-neutral.
 The daily profile also runs `moon test moui_skia --target native`. The binding
 status/capability files and `verify-platform-status.sh` /
 `verify-native-capability-contract.sh` are validated by the dedicated
@@ -549,6 +560,7 @@ Focused checks:
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-api-surface.mjs
+node scripts/validate-release-module-closures.mjs
 node scripts/validate-core-theme-no-control-surface.mjs
 node scripts/validate-host-import-baseline.mjs
 node scripts/validate-backend-renderer-boundary.mjs
@@ -558,7 +570,7 @@ node scripts/smoke-check.mjs --check
 moon check
 moon test moui/core --target native
 moon test moui/views --target native
-moon test moui/render/skia --target native
+moon test moui_skia_renderer --target native
 moon test moui/backend --target native
 moon test moui/backend/android --target native
 moon check examples/showcase/android_window_hosted --target native
@@ -568,7 +580,7 @@ moon test moui/backend/harmonyos --target native
 moon check examples/showcase/harmonyos_window_hosted --target native
 sh scripts/window-hosted-hostsim-smoke.sh
 moon test moui/backend/web --target wasm-gc
-moon test moui_tester --target native
+moon test moui_tests/tester --target native
 moon test moui_devtools --target native
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
@@ -624,12 +636,12 @@ mutation.
   `moui_skia` capability contracts, and docs in sync.
 - Product `auto` prefers `SkiaGpuNative` when the host exposes a usable GPU
   surface; `SkiaRasterNative` remains the explicit mode and sticky recovery
-  fallback. This policy belongs to `moui/render/skia`, never a platform backend.
+  fallback. This policy belongs to `moui_skia_renderer`, never a platform backend.
 - Web rendering goes through `moui/backend/web` and
-  `moui/render/webgpu_adapter` on `wasm-gc`.
+  `moui_web_renderer` on `wasm-gc`.
 - Native WGPU is diagnostic; keep it opt-in through `--wgpu-experimental`.
-- Text changes often span `moui/core`, `moui/render/skia`,
-  `moui/render/webgpu_adapter`, optional native WGPU text providers, and
+- Text changes often span `moui/core`, `moui_skia_renderer`,
+  `moui_web_renderer`, optional native WGPU text providers, and
   `docs/text-system.md`.
 - Platform behavior claims require matching-host tests or manual smoke.
 

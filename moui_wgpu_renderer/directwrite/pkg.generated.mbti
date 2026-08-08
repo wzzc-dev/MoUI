@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_wgpu_renderer/directwrite"
+
+import {
+  "wzzc-dev/moui_wgpu_renderer",
+}
+
+// Values
+pub fn directwrite_text_engine() -> @moui_wgpu_renderer.NativeTextEngine
+
+pub fn directwrite_text_provider() -> @moui_wgpu_renderer.NativePlatformTextProvider
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

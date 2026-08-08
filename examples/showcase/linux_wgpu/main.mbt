@@ -7,6 +7,7 @@ fn main {
   @runtime.run_app("MoUI Showcase", runtime)
   .render(
     @render_wgpu.native(
+      platform=@render_wgpu.WgpuNativePlatform::Linux,
       text_engine=@render_wgpu.native_platform_text_engine_with_fallback(
         @wgpu_fontconfig.fontconfig_text_provider(),
         fallback=@wgpu_cosmic.cosmic_text_engine(),

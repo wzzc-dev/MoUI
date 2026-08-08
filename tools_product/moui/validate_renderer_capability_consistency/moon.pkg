@@ -3,9 +3,9 @@ import {
   "moonbitlang/x/sys",
   "wzzc-dev/moui_tools" @tools,
   "wzzc-dev/moui/render",
-  "wzzc-dev/moui/render/skia" @render_skia,
-  "wzzc-dev/moui/render/sun" @render_sun,
-  "wzzc-dev/moui/render/wgpu" @render_wgpu,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "wzzc-dev/moui_sun_renderer" @render_sun,
+  "wzzc-dev/moui_wgpu_renderer" @render_wgpu,
 }
 
 import {

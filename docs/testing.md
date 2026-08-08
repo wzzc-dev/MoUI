@@ -28,7 +28,7 @@ baseline ratchets, API surface checks, renderer provider and native Skia
 entrypoint static checks, generated repository facts and source-file policy,
 smoke gate catalog validation, `moon check`, generated
 public-interface drift detection, core package tests, Web wasm-gc package tests,
-native Skia mainline package tests, `moui_tester` harness tests,
+native Skia mainline package tests, internal `moui_tests/tester` harness tests,
 `moui_devtools` snapshot/debug tests, Showcase and Markdown Editor app tests,
 and Web builds.
 
@@ -74,13 +74,13 @@ moon test moui_agent --target native
 moon test moui_agent_mcp --target native
 moon test examples/agent_counter --target native
 moon test moui/render --target native
-moon test moui/render/skia --target native
-moon test moui/render/sun --target native
+moon test moui_skia_renderer --target native
+moon test moui_sun_renderer --target native
 moon test moui/backend --target native
-moon test moui_tester --target native
+moon test moui_tests/tester --target native
 moon test moui_devtools --target native
 moon test moui_skia --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui_web_renderer --target wasm-gc
 moon test moui/backend/web --target wasm-gc
 moon check moui/runtime --target wasm-gc
 moon check moui_richtext --target wasm-gc
@@ -111,15 +111,19 @@ one workspace-wide `moon info`, and fails only when generation creates new
 differences. This keeps the check useful in a dirty working tree while a clean
 CI checkout still rejects uncommitted public-interface drift.
 
-The `external-consumer.yml` workflow copies
-`checks/external-consumer` outside the checkout and runs a Linux/macOS/Windows
-matrix against both `wzzc-dev/moui@0.1.7` from the registry and the current
-`moon package` archive. Its `moon tree` and resolved `.mooncakes` path checks
-must report `monorepoSource=false`:
+The `external-consumer.yml` workflow copies the selected base, Skia, or Web
+fixture outside the checkout. Until 0.2 is published, registry mode validates
+the stable base `wzzc-dev/moui@0.1.7`; package mode validates the 0.2 head
+archives for base-only, Skia, and Web consumers. Package-mode `moon tree`
+checks also reject concrete renderers and diagnostic/test dependencies from
+the base closure. Every resolved `.mooncakes` path must report
+`monorepoSource=false`:
 
 ```sh
-node scripts/external-consumer-ci.mjs --source registry
-node scripts/external-consumer-ci.mjs --source package
+node scripts/external-consumer-ci.mjs --source registry --profile base
+node scripts/external-consumer-ci.mjs --source package --profile base
+node scripts/external-consumer-ci.mjs --source package --profile skia
+node scripts/external-consumer-ci.mjs --source package --profile web
 ```
 
 ## Focused
@@ -129,11 +133,11 @@ before broader profiles:
 
 ```sh
 moon test moui/render --target native
-moon test moui/render/skia --target native
-moon test moui/render/wgpu --target native
-moon test moui/render/sun --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
-moon check moui/render/canvas2d --target wasm-gc
+moon test moui_skia_renderer --target native
+moon test moui_wgpu_renderer --target native
+moon test moui_sun_renderer --target native
+moon test moui_web_renderer --target wasm-gc
+moon check moui_web_renderer/canvas2d --target wasm-gc
 moon test moui/backend/wechat --target wasm-gc
 node scripts/test-web-canvas2d-lazy-fallback.mjs
 moon test moui/backend/common --target native
@@ -204,12 +208,19 @@ moon test moui_agent --target native
 moon test moui_agent_mcp --target native
 moon test examples/agent_counter --target native
 moon test moui/render --target native
-moon test moui/render/skia --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui_skia_renderer --target native
+moon test moui_web_renderer --target wasm-gc
 moon test moui/backend --target native
-moon test moui/backend/common/desktop --target native
-moon test moui/backend/common/native --target native
-moon test moui/backend/common/embedded/services --target native
+moon test moui/backend/common --target native
+moon test moui/backend/common/lifecycle --target native
+moon test moui/backend/common/frame --target native
+moon test moui/backend/common/image --target native
+moon test moui/backend/common/input --target native
+moon test moui/backend/common/services --target native
+moon test moui/backend/common/services/desktop --target native
+moon test moui/backend/common/services/embedded --target native
+moon test moui/backend/common/services/native --target native
+moon test moui/backend/common/image/native --target native
 moon test moui/backend/common/embedded --target native
 moon test moui/backend/android --target native
 moon check examples/showcase/android_window_hosted --target native
@@ -218,7 +229,8 @@ moon check examples/showcase/ios_window_hosted --target native
 moon test moui/backend/harmonyos --target native
 moon check examples/showcase/harmonyos_window_hosted --target native
 moon test moui/backend/web --target wasm-gc
-moon test moui_tester --target native
+moon test moui_tests/renderer_contract --target native
+moon test moui_tests/tester --target native
 moon test moui_devtools --target native
 moon test moui_skia --target native
 moon test examples/counter/app --target native
@@ -241,7 +253,7 @@ MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_window_
 sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
-Use `moon test moui/render/wgpu --target native` only for the native WGPU
+Use `moon test moui_wgpu_renderer --target native` only for the native WGPU
 diagnostic route. Use `moon fmt` before handoff. Run `moon info` and review
 `pkg.generated.mbti` diffs after public API changes.
 

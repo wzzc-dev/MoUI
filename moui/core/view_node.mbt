@@ -116,7 +116,6 @@ priv struct ViewAdapter[Msg] {
   focusable_snapshot : Bool
   semantics_action_handlers : Array[ViewSemanticsActionHandler[Msg]]
   children_snapshot : Array[View[Msg]]
-  build_child_fn : ((ComponentContext) -> View[Msg])?
   event_fn : (ViewEventContext) -> ViewEventResult[Msg]
   text_command_fn : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
     Msg,
@@ -132,7 +131,6 @@ fn[Msg] ViewAdapter::new(
   focusable~ : Bool,
   semantics_action_handlers~ : Array[ViewSemanticsActionHandler[Msg]],
   children~ : Array[View[Msg]],
-  build_child~ : ((ComponentContext) -> View[Msg])?,
   event~ : (ViewEventContext) -> ViewEventResult[Msg],
   text_command~ : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
     Msg,
@@ -146,7 +144,6 @@ fn[Msg] ViewAdapter::new(
     focusable_snapshot: focusable,
     semantics_action_handlers: semantics_action_handlers.copy(),
     children_snapshot: children.copy(),
-    build_child_fn: build_child,
     event_fn: event,
     text_command_fn: text_command,
   }
@@ -155,13 +152,6 @@ fn[Msg] ViewAdapter::new(
 ///|
 fn[Msg] ViewAdapter::children(self : ViewAdapter[Msg]) -> Array[View[Msg]] {
   self.children_snapshot.copy()
-}
-
-///|
-fn[Msg] ViewAdapter::build_child(
-  self : ViewAdapter[Msg],
-) -> ((ComponentContext) -> View[Msg])? {
-  self.build_child_fn
 }
 
 ///|
@@ -197,10 +187,6 @@ fn[Msg, NextMsg] ViewAdapter::map(
       handler.map(map)
     }),
     children=self.children_snapshot.map(child => child.map(map)),
-    build_child=match self.build_child() {
-      Some(build) => Some(ctx => build(ctx).map(map))
-      None => None
-    },
     event=context => {
       let result = self.event(context)
       {

@@ -167,8 +167,8 @@ moon run examples/showcase/macos_skia --target native
 |----------|------|----------|-------------|
 | L0: `moon check` | ✅ Passed | `ci.yml → windows-native` → `moon check` (cross-platform; not separately run in Windows CI, but protected by `check.sh --profile daily`) | Every PR |
 | L0: `moon info` | ✅ No drift | `ci.yml → api-surface` | Every PR |
-| L1: Windows backend tests | ✅ Passed | `ci.yml → windows-native` → `moon test moui/backend/windows --target native` + `moon test moui/render/skia --target native` | Every PR, Run [28964136358](https://github.com/wzzc-dev/MoUI/actions/runs/28964136358) |
-| L1: Windows Skia factory/binding tests | ✅ Passed | `moon test moui/render/skia --target native` in the same job | Every PR |
+| L1: Windows backend tests | ✅ Passed | `ci.yml → windows-native` → `moon test moui/backend/windows --target native` + `moon test moui_skia_renderer --target native` | Every PR, Run [28964136358](https://github.com/wzzc-dev/MoUI/actions/runs/28964136358) |
+| L1: Windows Skia factory/binding tests | ✅ Passed | `moon test moui_skia_renderer --target native` in the same job | Every PR |
 | L1: Windows MSVC build | ✅ Passed | `ci.yml → windows-native` → MSVC Skia entrypoint builds successfully; artifact uploaded | Every PR |
 | L2: real Skia renderer (Windows) | ✅ Passed | `moui-renderer-real-skia-ci.yml → windows-real-skia` | Every PR |
 | L2: Windows text/emoji | ✅ Passed | `moui-renderer-real-skia-ci.yml → windows-real-skia --run-text-emoji-smoke` | Every PR |
@@ -241,8 +241,8 @@ Most recent successful run: GitHub Actions Run
 `8a054c5914adbfa34a6943570c1ceb01cc603ef5`.
 
 The evidence script uses the dedicated
-`moui_tester/linux_skia_first_frame_smoke` test program (similar to macOS
-`moui_tester/macos_skia_first_frame_smoke`), hard-coded with
+`moui_tests/tester/linux_skia_first_frame_smoke` test program (similar to macOS
+`moui_tests/tester/macos_skia_first_frame_smoke`), hard-coded with
 `first_frame_smoke_auto_exit=true`; it exits automatically and prints a marker
 after presenting the first frame. That run proves the Linux Wayland + Skia
 first-frame route.
@@ -310,7 +310,7 @@ of `capture_moui_runtime_evidence.sh linux`.
 |----------|------|----------|-------------|
 | L0: build | ✅ Passed | `ci.yml → pr-profile` → Showcase/Markdown Editor Web wasm-gc build | Every PR |
 | L1: Web backend tests | ✅ Passed | `ci.yml → pr-profile` → `moon test moui/backend/web --target wasm-gc` | Every PR |
-| L1: WebGPU adapter tests | ✅ Passed | `ci.yml → pr-profile` → `moon test moui/render/webgpu_adapter --target wasm-gc` | Every PR |
+| L1: WebGPU adapter tests | ✅ Passed | `ci.yml → pr-profile` → `moon test moui_web_renderer --target wasm-gc` | Every PR |
 | L2: Web browser presentation | ✅ Passed | `checks/platforms/web.json` `rendererL2=passed` (`browser-webgpu`); CI / Pages browser session | Aligned with the structured platform contract |
 | L3: Web runtime-presentation manifest | ✅ Passed | `checks/platforms/web.json` `runtimeL3=passed` (browser presentation manifest); `scripts/ci-web-runtime-presentation.sh` / `record-web-runtime-presentation.mjs` | Aligned with the structured contract; do not downgrade without new evidence |
 
@@ -418,13 +418,13 @@ sh scripts/check.sh --profile daily
 moon run moui_skia/scripts/native_smoke --target native
 
 # L2 — 文本/表情符号核验（需真实 Skia）
-moon run moui/tests/skia_text_emoji_smoke/native --target native
+moon run moui_tests/skia_text_emoji_smoke/native --target native
 
 # L3 — macOS 平台运行时证据（macOS 主机）
 MOUI_FIRST_FRAME_EXIT=1 moon run examples/showcase/macos_skia --target native
 
 # L3 — Linux 首帧 / Wayland route 证据（Wayland 主机）
-moon run moui_tester/linux_skia_first_frame_smoke --target native
+moon run moui_tests/tester/linux_skia_first_frame_smoke --target native
 
 # L3 — Windows 平台运行时证据（MSVC 主机）（需要安装、配置 MSVC 工具链）
 set MOUI_FIRST_FRAME_EXIT=1

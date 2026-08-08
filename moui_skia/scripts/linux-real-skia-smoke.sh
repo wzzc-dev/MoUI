@@ -48,9 +48,9 @@ Options:
                         Relative paths are resolved from the repository root.
   --smoke-log PATH      Write the native smoke executable output to PATH.
                         Relative paths are resolved from the repository root.
-  --run-renderer-smoke  Also build and run moui/tests/skia_renderer_smoke/native
+  --run-renderer-smoke  Also build and run moui_tests/skia_renderer_smoke/native
                         after native smoke. Forwarded to linux-skia-smoke.sh.
-  --run-text-emoji-smoke Also build and run moui/tests/skia_text_emoji_smoke/native
+  --run-text-emoji-smoke Also build and run moui_tests/skia_text_emoji_smoke/native
                         after native smoke. Forwarded to linux-skia-smoke.sh.
                         Requires --enable-skparagraph or --require-skparagraph.
   --renderer-log PATH   Write the renderer smoke executable output to PATH.

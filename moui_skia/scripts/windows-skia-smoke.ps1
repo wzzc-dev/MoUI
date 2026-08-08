@@ -26,9 +26,9 @@ $nativePkg = Join-Path $repoRoot "native/moon.pkg"
 $backupPkg = "$nativePkg.smoke.bak"
 $smokePkg = Join-Path $repoRoot "scripts/native_smoke/moon.pkg"
 $smokeBackupPkg = "$smokePkg.smoke.bak"
-$rendererPkg = Join-Path $repoRoot "moui/tests/skia_renderer_smoke/native/moon.pkg"
+$rendererPkg = Join-Path $repoRoot "moui_tests/skia_renderer_smoke/native/moon.pkg"
 $rendererPkgBackup = "$rendererPkg.smoke.bak"
-$textEmojiPkg = Join-Path $repoRoot "moui/tests/skia_text_emoji_smoke/native/moon.pkg"
+$textEmojiPkg = Join-Path $repoRoot "moui_tests/skia_text_emoji_smoke/native/moon.pkg"
 $textEmojiPkgBackup = "$textEmojiPkg.smoke.bak"
 
 if ([string]::IsNullOrWhiteSpace($SkiaInclude) -or [string]::IsNullOrWhiteSpace($SkiaLibDir)) {
@@ -218,7 +218,7 @@ options(
       if ($RunRendererSmoke) {
         $originalRendererPkg = Get-Content -LiteralPath $rendererPkg -Raw
         Set-Content -LiteralPath $rendererPkgBackup -Value $originalRendererPkg -NoNewline
-        Write-Host "Backed up moui/tests/skia_renderer_smoke/native/moon.pkg to $rendererPkgBackup."
+        Write-Host "Backed up moui_tests/skia_renderer_smoke/native/moon.pkg to $rendererPkgBackup."
         @"
 import {
   "moonbitlang/core/encoding/base64",
@@ -228,7 +228,7 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/common" @render_common,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui_skia_renderer" @skia_renderer,
 }
 
 supported_targets = "native"
@@ -243,22 +243,22 @@ options(
   targets: { "main.mbt": [ "native" ] },
 )
 "@ | Set-Content -LiteralPath $rendererPkg -NoNewline
-        Write-Host "Wrote temporary moui/tests/skia_renderer_smoke/native/moon.pkg with Windows Skia link flags."
+        Write-Host "Wrote temporary moui_tests/skia_renderer_smoke/native/moon.pkg with Windows Skia link flags."
 
         $oldErrorActionPreference2 = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
         try {
           $env:MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM = "1"
           $env:MOUI_SKIA_DISABLE_PREBUILD_SKIA = "1"
-          moon build moui/tests/skia_renderer_smoke/native --target native 2>&1 | ForEach-Object { Write-Host $_ }
+          moon build moui_tests/skia_renderer_smoke/native --target native 2>&1 | ForEach-Object { Write-Host $_ }
           $rendererBuildStatus = $LASTEXITCODE
         } finally {
           $ErrorActionPreference = $oldErrorActionPreference2
         }
         if ($rendererBuildStatus -ne 0) {
-          throw "moon build moui/tests/skia_renderer_smoke/native failed with exit code $rendererBuildStatus"
+          throw "moon build moui_tests/skia_renderer_smoke/native failed with exit code $rendererBuildStatus"
         }
-        $rendererExe = Join-Path $repoRoot "_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
+        $rendererExe = Join-Path $repoRoot "_build/native/debug/build/wzzc-dev/moui_tests/skia_renderer_smoke/native/native.exe"
         if (!(Test-Path -LiteralPath $rendererExe)) {
           throw "MoUI Skia renderer smoke executable was not produced at $rendererExe"
         }
@@ -292,20 +292,20 @@ options(
 
         Set-Content -LiteralPath $rendererPkg -Value $originalRendererPkg -NoNewline
         Remove-Item -LiteralPath $rendererPkgBackup -ErrorAction SilentlyContinue
-        Write-Host "Restored moui/tests/skia_renderer_smoke/native/moon.pkg after renderer smoke."
+        Write-Host "Restored moui_tests/skia_renderer_smoke/native/moon.pkg after renderer smoke."
       }
 
       if ($RunTextEmojiSmoke) {
         $originalTextEmojiPkg = Get-Content -LiteralPath $textEmojiPkg -Raw
         Set-Content -LiteralPath $textEmojiPkgBackup -Value $originalTextEmojiPkg -NoNewline
-        Write-Host "Backed up moui/tests/skia_text_emoji_smoke/native/moon.pkg to $textEmojiPkgBackup."
+        Write-Host "Backed up moui_tests/skia_text_emoji_smoke/native/moon.pkg to $textEmojiPkgBackup."
         @"
 import {
   "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/moui/backend/common" @window_host,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui_skia_renderer" @skia_renderer,
   "wzzc-dev/moui/views",
 }
 
@@ -321,22 +321,22 @@ options(
   targets: { "main.mbt": [ "native" ] },
 )
 "@ | Set-Content -LiteralPath $textEmojiPkg -NoNewline
-        Write-Host "Wrote temporary moui/tests/skia_text_emoji_smoke/native/moon.pkg with Windows Skia link flags."
+        Write-Host "Wrote temporary moui_tests/skia_text_emoji_smoke/native/moon.pkg with Windows Skia link flags."
 
         $oldErrorActionPreference3 = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
         try {
           $env:MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM = "1"
           $env:MOUI_SKIA_DISABLE_PREBUILD_SKIA = "1"
-          moon build moui/tests/skia_text_emoji_smoke/native --target native 2>&1 | ForEach-Object { Write-Host $_ }
+          moon build moui_tests/skia_text_emoji_smoke/native --target native 2>&1 | ForEach-Object { Write-Host $_ }
           $textEmojiBuildStatus = $LASTEXITCODE
         } finally {
           $ErrorActionPreference = $oldErrorActionPreference3
         }
         if ($textEmojiBuildStatus -ne 0) {
-          throw "moon build moui/tests/skia_text_emoji_smoke/native failed with exit code $textEmojiBuildStatus"
+          throw "moon build moui_tests/skia_text_emoji_smoke/native failed with exit code $textEmojiBuildStatus"
         }
-        $textEmojiExe = Join-Path $repoRoot "_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe"
+        $textEmojiExe = Join-Path $repoRoot "_build/native/debug/build/wzzc-dev/moui_tests/skia_text_emoji_smoke/native/native.exe"
         if (!(Test-Path -LiteralPath $textEmojiExe)) {
           throw "MoUI Skia text/emoji smoke executable was not produced at $textEmojiExe"
         }
@@ -382,7 +382,7 @@ options(
 
         Set-Content -LiteralPath $textEmojiPkg -Value $originalTextEmojiPkg -NoNewline
         Remove-Item -LiteralPath $textEmojiPkgBackup -ErrorAction SilentlyContinue
-        Write-Host "Restored moui/tests/skia_text_emoji_smoke/native/moon.pkg after text/emoji smoke."
+        Write-Host "Restored moui_tests/skia_text_emoji_smoke/native/moon.pkg after text/emoji smoke."
       }
     } finally {
       Pop-Location

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "description": "Runtime neutrality, application state ownership, and renderer-resource ownership boundaries.",
+  "runtimeForbiddenTokens": [
+    "moon_accesskit",
+    "AccessKit",
+    "AppKit",
+    "UIAutomation",
+    "AT-SPI",
+    "NativeAccessibility",
+    "accesskit_"
+  ],
+  "appForbiddenTokens": [
+    "State[",
+    "Binding[",
+    "DerivedState",
+    "ComponentContext",
+    "ComponentRuntimeContextInput",
+    "@core.ViewStateSlot",
+    "@core.ViewStateContext",
+    "TextControlStateContext",
+    "build_child",
+    "component_host",
+    "@views.component",
+    "NavigationState",
+    "FocusState"
+  ],
+  "backendForbiddenTokens": [
+    "ImageResourceSnapshot",
+    "ImageResourceRepaintTracker",
+    "image_resource_snapshot",
+    "image_resource_revision",
+    "RendererImageCapability",
+    "AsyncImageLoader",
+    "ImageLoader",
+    "cache_epoch",
+    "missing_layer_keys",
+    "DrawCachedLayer"
+  ],
+  "globalForbiddenTokens": [
+    "RendererFactory",
+    "RendererBindingPlan",
+    "RendererProviderBinding",
+    "RendererInstance",
+    "WindowRenderer",
+    "RendererResolution",
+    "BoundSurface",
+    "GpuHostSurfaceDescriptor",
+    "HostGpuSurfaceBridge",
+    "DrawCachedLayer"
+  ]
+}

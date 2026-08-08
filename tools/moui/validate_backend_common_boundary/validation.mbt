@@ -1,33 +1,191 @@
 ///|
-fn old_host_path() -> String {
-  "moui/backend/" + "host"
+struct OwnershipPackageRule {
+  path : String
+  required_sources : Array[String]
+  required_imports : Array[String]
+  forbidden_imports : Array[String]
+  required_source_tokens : Array[String]
+  forbidden_source_tokens : Array[String]
 }
 
 ///|
-fn old_bridge_path() -> String {
-  "moui/backend/" + "platform_bridge"
+struct RendererModuleRule {
+  name : String
+  path : String
 }
 
 ///|
-fn event_platforms() -> Array[String] {
-  [
-    "moui/backend/macos", "moui/backend/windows", "moui/backend/linux", "moui/backend/web",
-  ]
+struct OwnershipConfig {
+  package_rules : Array[OwnershipPackageRule]
+  forbidden_package_manifests : Array[String]
+  legacy_symbols : Array[String]
+  source_roots : Array[String]
+  root_render_forbidden_tokens : Array[String]
+  renderer_modules : Array[RendererModuleRule]
 }
 
 ///|
-fn embedded_platforms() -> Array[String] {
-  ["moui/backend/android", "moui/backend/ios", "moui/backend/harmonyos"]
+fn json_object(value : Json) -> Map[String, Json]? {
+  match value {
+    Json::Object(fields) => Some(fields)
+    _ => None
+  }
 }
 
 ///|
-fn desktop_service_platforms() -> Array[String] {
-  ["moui/backend/macos", "moui/backend/windows", "moui/backend/linux"]
+fn json_required_string(
+  fields : Map[String, Json],
+  key : String,
+  label : String,
+  failures : Array[String],
+) -> String {
+  match fields.get(key) {
+    Some(Json::String(value)) if value.trim().to_owned() != "" => value
+    _ => {
+      failures.push(label + "." + key + " must be a non-empty string")
+      ""
+    }
+  }
 }
 
 ///|
-fn has_import(text : String, path : String) -> Bool {
-  text.contains("\"" + path + "\"")
+fn json_string_array(
+  fields : Map[String, Json],
+  key : String,
+  label : String,
+  required : Bool,
+  failures : Array[String],
+) -> Array[String] {
+  let values = match fields.get(key) {
+    Some(Json::Array(values)) => values
+    None if !required => return []
+    _ => {
+      failures.push(label + "." + key + " must be an array")
+      return []
+    }
+  }
+  let result : Array[String] = []
+  for index, value in values {
+    match value {
+      Json::String(item) if item.trim().to_owned() != "" => result.push(item)
+      _ =>
+        failures.push(
+          label +
+          "." +
+          key +
+          "[" +
+          index.to_string() +
+          "] must be a non-empty string",
+        )
+    }
+  }
+  result
+}
+
+///|
+fn parse_ownership_config(
+  text : String,
+) -> Result[OwnershipConfig, Array[String]] {
+  let failures : Array[String] = []
+  let parsed = @json.parse(text) catch {
+    _ => return Err(["checks/backend-common-ownership.json: invalid JSON"])
+  }
+  let root = match parsed {
+    Json::Object(fields) => fields
+    _ => return Err(["checks/backend-common-ownership.json must be an object"])
+  }
+  match root.get("schemaVersion") {
+    Some(Json::Number(value, repr=_)) if value == 1.0 => ()
+    _ =>
+      failures.push(
+        "checks/backend-common-ownership.json.schemaVersion must be 1",
+      )
+  }
+  let package_rules : Array[OwnershipPackageRule] = []
+  match root.get("packageRules") {
+    Some(Json::Array(values)) =>
+      for index, value in values {
+        let label = "checks/backend-common-ownership.json.packageRules[" +
+          index.to_string() +
+          "]"
+        let fields = match json_object(value) {
+          Some(fields) => fields
+          None => {
+            failures.push(label + " must be an object")
+            continue
+          }
+        }
+        package_rules.push({
+          path: json_required_string(fields, "path", label, failures),
+          required_sources: json_string_array(
+            fields, "requiredSources", label, false, failures,
+          ),
+          required_imports: json_string_array(
+            fields, "requiredImports", label, false, failures,
+          ),
+          forbidden_imports: json_string_array(
+            fields, "forbiddenImports", label, false, failures,
+          ),
+          required_source_tokens: json_string_array(
+            fields, "requiredSourceTokens", label, false, failures,
+          ),
+          forbidden_source_tokens: json_string_array(
+            fields, "forbiddenSourceTokens", label, false, failures,
+          ),
+        })
+      }
+    _ =>
+      failures.push(
+        "checks/backend-common-ownership.json.packageRules must be an array",
+      )
+  }
+  let renderer_modules : Array[RendererModuleRule] = []
+  match root.get("rendererModules") {
+    Some(Json::Array(values)) =>
+      for index, value in values {
+        let label = "checks/backend-common-ownership.json.rendererModules[" +
+          index.to_string() +
+          "]"
+        let fields = match json_object(value) {
+          Some(fields) => fields
+          None => {
+            failures.push(label + " must be an object")
+            continue
+          }
+        }
+        renderer_modules.push({
+          name: json_required_string(fields, "name", label, failures),
+          path: json_required_string(fields, "path", label, failures),
+        })
+      }
+    _ =>
+      failures.push(
+        "checks/backend-common-ownership.json.rendererModules must be an array",
+      )
+  }
+  let config = {
+    package_rules,
+    forbidden_package_manifests: json_string_array(
+      root, "forbiddenPackageManifests", "checks/backend-common-ownership.json",
+      true, failures,
+    ),
+    legacy_symbols: json_string_array(
+      root, "legacySymbols", "checks/backend-common-ownership.json", true, failures,
+    ),
+    source_roots: json_string_array(
+      root, "sourceRoots", "checks/backend-common-ownership.json", true, failures,
+    ),
+    root_render_forbidden_tokens: json_string_array(
+      root, "rootRenderForbiddenTokens", "checks/backend-common-ownership.json",
+      true, failures,
+    ),
+    renderer_modules,
+  }
+  if failures.is_empty() {
+    Ok(config)
+  } else {
+    Err(failures)
+  }
 }
 
 ///|
@@ -61,353 +219,180 @@ fn has_default_import(text : String, path : String) -> Bool {
 }
 
 ///|
-fn require_default_import(
-  package_path : String,
-  pkg : String,
-  dependency : String,
+fn validate_package_rule(
+  repo_root : String,
+  rule : OwnershipPackageRule,
   failures : Array[String],
 ) -> Unit {
-  if !has_default_import(pkg, dependency) {
-    failures.push(package_path + " must depend on " + dependency)
-  }
-}
-
-///|
-fn reject_default_import(
-  package_path : String,
-  pkg : String,
-  dependency : String,
-  failures : Array[String],
-) -> Unit {
-  if has_default_import(pkg, dependency) {
-    failures.push(package_path + " must not depend on " + dependency)
-  }
-}
-
-///|
-fn uses_common_event_owner(text : String) -> Bool {
-  text.contains("@window_host.transform_cross_platform_event") ||
-  text.contains("@window_host.normalize_pointer_position") ||
-  text.contains("@window_host.make_surface_metrics")
-}
-
-///|
-fn has_shared_event_contract(text : String) -> Bool {
-  text.contains("pub(all) enum TransformedWindowEvent") &&
-  text.contains("pub(all) enum PlatformSurfaceLifecycle") &&
-  text.contains("pub fn transform_cross_platform_event") &&
-  text.contains("pub fn make_surface_metrics") &&
-  text.contains("pub fn normalize_pointer_position")
-}
-
-///|
-fn redefined_shared_helper(text : String) -> String? {
-  for
-    helper in [
-      "make_surface_metrics", "normalize_pointer_position", "transform_cross_platform_event",
-    ] {
-    if text.contains("pub fn " + helper) || text.contains("fn " + helper) {
-      return Some(helper)
+  let pkg_path = rule.path + "/moon.pkg"
+  let pkg = match read_repo_text(repo_root, pkg_path) {
+    Ok(text) => text
+    Err(message) => {
+      failures.push(message)
+      return
     }
   }
-  None
-}
-
-///|
-fn collect_platform_sources(
-  repo_root : String,
-  package_path : String,
-  failures : Array[String],
-) -> Array[String] {
+  for dependency in rule.required_imports {
+    if !has_default_import(pkg, dependency) {
+      failures.push(rule.path + " must depend on " + dependency)
+    }
+  }
+  for dependency in rule.forbidden_imports {
+    if has_default_import(pkg, dependency) {
+      failures.push(rule.path + " must not depend on " + dependency)
+    }
+  }
+  for source in rule.required_sources {
+    let path = rule.path + "/" + source
+    if !@tools.file_exists(@tools.resolve_path(repo_root, path)) {
+      failures.push(path + " is required by backend ownership")
+    }
+  }
+  if rule.required_source_tokens.is_empty() &&
+    rule.forbidden_source_tokens.is_empty() {
+    return
+  }
   let files : Array[String] = []
-  collect_mbt_files(repo_root, package_path, files, failures)
-  files
-}
-
-///|
-fn validate_deleted_packages(
-  repo_root : String,
-  failures : Array[String],
-) -> Unit {
-  for old in [old_host_path(), old_bridge_path()] {
-    if @tools.directory_exists(@tools.resolve_path(repo_root, old)) {
-      failures.push(old + " must not exist after backend convergence")
+  collect_contract_files(repo_root, rule.path, files, failures)
+  for token in rule.required_source_tokens {
+    let found = Ref(false)
+    for path in files {
+      match read_repo_text(repo_root, path) {
+        Ok(text) if text.contains(token) => found.val = true
+        _ => ()
+      }
+    }
+    if !found.val {
+      failures.push(rule.path + " must use source token '" + token + "'")
     }
   }
-  let internal_path = @tools.resolve_path(repo_root, "moui/backend/internal")
-  if @tools.directory_exists(internal_path) {
-    failures.push(
-      "moui/backend/internal must not remain after common migration",
-    )
+  for path in files {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(text) => text
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    for token in rule.forbidden_source_tokens {
+      if text.contains(token) {
+        failures.push(path + " contains forbidden owner token '" + token + "'")
+      }
+    }
   }
 }
 
 ///|
-fn validate_common_contract(
+fn validate_removed_packages(
   repo_root : String,
+  config : OwnershipConfig,
   failures : Array[String],
 ) -> Unit {
-  let common = "moui/backend/common"
-  match read_repo_text(repo_root, common + "/moon.pkg") {
-    Ok(pkg) => {
-      if !has_import(pkg, "wzzc-dev/moui/backend") {
+  for path in config.forbidden_package_manifests {
+    let manifest = path + "/moon.pkg"
+    if @tools.file_exists(@tools.resolve_path(repo_root, manifest)) {
+      failures.push(manifest + " must not exist after ownership migration")
+    }
+  }
+}
+
+///|
+fn validate_legacy_symbols(
+  repo_root : String,
+  config : OwnershipConfig,
+  failures : Array[String],
+) -> Unit {
+  for root in config.source_roots {
+    let files : Array[String] = []
+    collect_contract_files(repo_root, root, files, failures)
+    for path in files {
+      let text = match read_repo_text(repo_root, path) {
+        Ok(text) => text
+        Err(message) => {
+          failures.push(message)
+          continue
+        }
+      }
+      for symbol in config.legacy_symbols {
+        if text.contains(symbol) {
+          failures.push(path + " contains removed contract '" + symbol + "'")
+        }
+      }
+    }
+  }
+}
+
+///|
+fn validate_root_render_surface(
+  repo_root : String,
+  config : OwnershipConfig,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = []
+  collect_contract_files(repo_root, "moui/render", files, failures)
+  for path in files {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(text) => text
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    for token in config.root_render_forbidden_tokens {
+      if text.contains(token) {
         failures.push(
-          common + " must depend on the root backend protocol package",
-        )
-      }
-      if !has_import(pkg, "wzzc-dev/moui/runtime") ||
-        !has_import(pkg, "wzzc-dev/moui/render") {
-        failures.push(common + " must own shared runtime/frame implementation")
-      }
-    }
-    Err(message) => failures.push(message)
-  }
-  match read_repo_text(repo_root, common + "/window_event_transformer.mbt") {
-    Ok(source) if has_shared_event_contract(source) => ()
-    Ok(_) => failures.push(common + " shared event contract is incomplete")
-    Err(message) => failures.push(message)
-  }
-  for child in ["desktop", "embedded", "native"] {
-    let path = common + "/" + child
-    if !@tools.directory_exists(@tools.resolve_path(repo_root, path)) {
-      failures.push(path + " is missing")
-    }
-  }
-  match
-    read_repo_text(repo_root, common + "/desktop/service_wire_encoding.mbt") {
-    Ok(source) if source.contains("encode_menu_commands") => ()
-    Ok(_) => failures.push(common + "/desktop must own desktop wire encoding")
-    Err(message) => failures.push(message)
-  }
-  match
-    read_repo_text(
-      repo_root,
-      common + "/embedded/services/session_transport.mbt",
-    ) {
-    Ok(source) if source.contains("HostSessionTransport") => ()
-    Ok(_) =>
-      failures.push(common + "/embedded/services must own session transport")
-    Err(message) => failures.push(message)
-  }
-}
-
-///|
-fn validate_protocol_dependency_graph(
-  repo_root : String,
-  failures : Array[String],
-) -> Unit {
-  match read_repo_text(repo_root, "moui/backend/moon.pkg") {
-    Ok(pkg) => {
-      require_default_import(
-        "moui/backend", pkg, "wzzc-dev/moui/core", failures,
-      )
-      for
-        forbidden in [
-          "wzzc-dev/moui/backend/common", "wzzc-dev/moui/runtime", "wzzc-dev/moui/render",
-        ] {
-        reject_default_import("moui/backend", pkg, forbidden, failures)
-      }
-    }
-    Err(message) => failures.push(message)
-  }
-  match read_repo_text(repo_root, "moui/render/moon.pkg") {
-    Ok(pkg) => {
-      require_default_import("moui/render", pkg, "wzzc-dev/moui/core", failures)
-      reject_default_import(
-        "moui/render", pkg, "wzzc-dev/moui/backend", failures,
-      )
-      reject_default_import(
-        "moui/render", pkg, "wzzc-dev/moui/render/common", failures,
-      )
-      for concrete in ["skia", "wgpu", "sun", "canvas2d", "webgpu_adapter"] {
-        reject_default_import(
-          "moui/render",
-          pkg,
-          "wzzc-dev/moui/render/" + concrete,
-          failures,
+          path +
+          " contains renderer-specific root surface token '" +
+          token +
+          "'",
         )
       }
     }
-    Err(message) => failures.push(message)
-  }
-  match read_repo_text(repo_root, "moui/render/common/moon.pkg") {
-    Ok(pkg) => {
-      require_default_import(
-        "moui/render/common", pkg, "wzzc-dev/moui/core", failures,
-      )
-      require_default_import(
-        "moui/render/common", pkg, "wzzc-dev/moui/render", failures,
-      )
-      reject_default_import(
-        "moui/render/common", pkg, "wzzc-dev/moui/backend", failures,
-      )
-      for concrete in ["skia", "wgpu", "sun", "canvas2d", "webgpu_adapter"] {
-        reject_default_import(
-          "moui/render/common",
-          pkg,
-          "wzzc-dev/moui/render/" + concrete,
-          failures,
-        )
-      }
-    }
-    Err(message) => failures.push(message)
-  }
-  match read_repo_text(repo_root, "moui/backend/common/moon.pkg") {
-    Ok(pkg) =>
-      require_default_import(
-        "moui/backend/common", pkg, "wzzc-dev/moui/backend", failures,
-      )
-    Err(message) => failures.push(message)
   }
 }
 
 ///|
-fn validate_event_platform(
+fn validate_renderer_isolation(
   repo_root : String,
-  package_path : String,
+  config : OwnershipConfig,
   failures : Array[String],
 ) -> Unit {
-  match read_repo_text(repo_root, package_path + "/moon.pkg") {
-    Ok(pkg) if !has_import(pkg, "wzzc-dev/moui/backend/common") =>
-      failures.push(package_path + " must import backend/common")
-    Ok(_) => ()
-    Err(message) => failures.push(message)
-  }
-  let used = Ref(false)
-  for path in collect_platform_sources(repo_root, package_path, failures) {
-    match read_repo_text(repo_root, path) {
-      Ok(source) => {
-        if uses_common_event_owner(source) {
-          used.val = true
-        }
-        match redefined_shared_helper(source) {
-          Some(helper) =>
-            failures.push(path + " redefines common event helper: " + helper)
-          None => ()
-        }
-      }
-      Err(message) => failures.push(message)
-    }
-  }
-  if !used.val {
-    failures.push(
-      package_path + " does not use backend/common event conversion",
-    )
-  }
-}
-
-///|
-fn validate_desktop_services(
-  repo_root : String,
-  package_path : String,
-  failures : Array[String],
-) -> Unit {
-  match read_repo_text(repo_root, package_path + "/moon.pkg") {
-    Ok(pkg) => {
-      if !has_import(pkg, "wzzc-dev/moui/backend/common/desktop") {
-        failures.push(package_path + " must import backend/common/desktop")
-      }
-      if !has_import(pkg, "wzzc-dev/moui/backend/common/native") {
-        failures.push(package_path + " must import backend/common/native")
-      }
-      if has_import(pkg, "wzzc-dev/moui/backend/common/embedded/services") {
-        failures.push(package_path + " must not import embedded service queues")
+  for renderer in config.renderer_modules {
+    let manifest_path = renderer.path + "/moon.mod"
+    let manifest = match read_repo_text(repo_root, manifest_path) {
+      Ok(text) => text
+      Err(message) => {
+        failures.push(message)
+        continue
       }
     }
-    Err(message) => failures.push(message)
-  }
-}
-
-///|
-fn validate_embedded_runtime(
-  repo_root : String,
-  failures : Array[String],
-) -> Unit {
-  let package_path = "moui/backend/common/embedded"
-  match read_repo_text(repo_root, package_path + "/moon.pkg") {
-    Ok(pkg) => {
-      if !has_import(pkg, "wzzc-dev/moui/backend/common") {
-        failures.push(package_path + " must import backend/common")
-      }
-      if !has_import(pkg, "wzzc-dev/moui/backend/common/embedded/services") {
-        failures.push(package_path + " must import embedded services")
-      }
-    }
-    Err(message) => failures.push(message)
-  }
-  let used = Ref(false)
-  for path in collect_platform_sources(repo_root, package_path, failures) {
-    match read_repo_text(repo_root, path) {
-      Ok(source) => {
-        if uses_common_event_owner(source) {
-          used.val = true
-        }
-        match redefined_shared_helper(source) {
-          Some(helper) =>
-            failures.push(path + " redefines common event helper: " + helper)
-          None => ()
-        }
-      }
-      Err(message) => failures.push(message)
-    }
-  }
-  if !used.val {
-    failures.push(
-      package_path + " does not use backend/common event conversion",
-    )
-  }
-}
-
-///|
-fn validate_embedded_platform(
-  repo_root : String,
-  package_path : String,
-  failures : Array[String],
-) -> Unit {
-  match read_repo_text(repo_root, package_path + "/moon.pkg") {
-    Ok(pkg) => {
-      if !has_import(pkg, "wzzc-dev/moui/backend/common/embedded") {
-        failures.push(package_path + " must import backend/common/embedded")
-      }
-      if has_import(pkg, "wzzc-dev/moui/backend/common/embedded/services") {
+    for other in config.renderer_modules {
+      if other.name != renderer.name && manifest.contains(other.name) {
         failures.push(
-          package_path + " must not import embedded service queues directly",
+          renderer.name + " must not depend on renderer module " + other.name,
         )
       }
-    }
-    Err(message) => failures.push(message)
-  }
-  for path in collect_platform_sources(repo_root, package_path, failures) {
-    match read_repo_text(repo_root, path) {
-      Ok(source) =>
-        match redefined_shared_helper(source) {
-          Some(helper) =>
-            failures.push(path + " redefines common event helper: " + helper)
-          None => ()
-        }
-      Err(message) => failures.push(message)
     }
   }
 }
 
 ///|
-fn validate_wechat(repo_root : String, failures : Array[String]) -> Unit {
-  for
-    path in collect_platform_sources(repo_root, "moui/backend/wechat", failures) {
+fn validate_wechat_boundary(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = []
+  collect_contract_files(repo_root, "moui/backend/wechat", files, failures)
+  for path in files {
+    if path.has_suffix(".mbti") ||
+      path.contains("_test.mbt") ||
+      path.contains("_wbtest.mbt") {
+      continue
+    }
     match read_repo_text(repo_root, path) {
-      Ok(source) => {
-        if source.contains("WindowEvent") {
-          failures.push(
-            path + " violates the WeChat direct-canvas callback boundary",
-          )
-        }
-        match redefined_shared_helper(source) {
-          Some(helper) =>
-            failures.push(path + " redefines common event helper: " + helper)
-          None => ()
-        }
-      }
-      Err(message) => failures.push(message)
+      Ok(text) if text.contains("WindowEvent") =>
+        failures.push(path + " violates the WeChat direct-canvas boundary")
+      _ => ()
     }
   }
 }
@@ -415,53 +400,43 @@ fn validate_wechat(repo_root : String, failures : Array[String]) -> Unit {
 ///|
 fn validate_repository(repo_root : String) -> Array[String] {
   let failures : Array[String] = []
-  validate_deleted_packages(repo_root, failures)
-  validate_protocol_dependency_graph(repo_root, failures)
-  validate_common_contract(repo_root, failures)
-  for platform in event_platforms() {
-    validate_event_platform(repo_root, platform, failures)
+  let config_text = match
+    read_repo_text(repo_root, "checks/backend-common-ownership.json") {
+    Ok(text) => text
+    Err(message) => return [message]
   }
-  for platform in desktop_service_platforms() {
-    validate_desktop_services(repo_root, platform, failures)
+  let config = match parse_ownership_config(config_text) {
+    Ok(config) => config
+    Err(messages) => return messages
   }
-  validate_embedded_runtime(repo_root, failures)
-  for platform in embedded_platforms() {
-    validate_embedded_platform(repo_root, platform, failures)
+  for rule in config.package_rules {
+    validate_package_rule(repo_root, rule, failures)
   }
-  validate_wechat(repo_root, failures)
+  validate_removed_packages(repo_root, config, failures)
+  validate_legacy_symbols(repo_root, config, failures)
+  validate_root_render_surface(repo_root, config, failures)
+  validate_renderer_isolation(repo_root, config, failures)
+  validate_wechat_boundary(repo_root, failures)
   failures
 }
 
 ///|
-test "common boundary predicates recognize the converged package layout" {
-  inspect(
-    has_import(
-      "import { \"wzzc-dev/moui/backend/common\" }", "wzzc-dev/moui/backend/common",
-    ),
-    content="true",
-  )
-  inspect(
-    uses_common_event_owner("@window_host.transform_cross_platform_event"),
-    content="true",
-  )
-  inspect(
-    has_shared_event_contract(
-      "pub(all) enum TransformedWindowEvent\n" +
-      "pub(all) enum PlatformSurfaceLifecycle\n" +
-      "pub fn transform_cross_platform_event\n" +
-      "pub fn make_surface_metrics\n" +
-      "pub fn normalize_pointer_position",
-    ),
-    content="true",
-  )
-}
-
-///|
-test "common boundary rejects duplicated shared helper definitions" {
-  inspect(
-    redefined_shared_helper("fn normalize_pointer_position() -> Unit { () }").unwrap(),
-    content="normalize_pointer_position",
-  )
+test "ownership config parses package and renderer rules" {
+  let text =
+    #|{
+    #|  "schemaVersion": 1,
+    #|  "packageRules": [{"path":"moui/backend/common","requiredImports":["owner"]}],
+    #|  "forbiddenPackageManifests": ["legacy"],
+    #|  "legacySymbols": ["OldOwner"],
+    #|  "sourceRoots": ["moui"],
+    #|  "rootRenderForbiddenTokens": ["Metal"],
+    #|  "rendererModules": [{"name":"renderer","path":"renderer"}]
+    #|}
+  let parsed = parse_ownership_config(text)
+  guard parsed is Ok(config) else { fail("expected ownership config") }
+  inspect(config.package_rules.length(), content="1")
+  assert_eq(config.package_rules[0].required_imports, ["owner"])
+  inspect(config.renderer_modules.length(), content="1")
 }
 
 ///|
@@ -473,12 +448,7 @@ test "dependency checks distinguish production and test imports" {
     #|
     #|import {
     #|  "wzzc-dev/moui/runtime",
-    #|  "wzzc-dev/moui/render/common",
     #|} for "test"
-  inspect(has_default_import(pkg, "wzzc-dev/moui/core"), content="true")
-  inspect(has_default_import(pkg, "wzzc-dev/moui/runtime"), content="false")
-  inspect(
-    has_default_import(pkg, "wzzc-dev/moui/render/common"),
-    content="false",
-  )
+  assert_true(has_default_import(pkg, "wzzc-dev/moui/core"))
+  assert_false(has_default_import(pkg, "wzzc-dev/moui/runtime"))
 }

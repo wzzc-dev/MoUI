@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "description": "Published MoUI modules, their repository directories, and dependency-safe release stages.",
+  "releaseStages": [
+    "base-bindings",
+    "renderers",
+    "addons",
+    "entrypoints"
+  ],
+  "modules": [
+    {
+      "name": "wzzc-dev/moui",
+      "directory": "moui",
+      "publication": "public",
+      "role": "base",
+      "releaseStage": "base-bindings"
+    },
+    {
+      "name": "wzzc-dev/moui_skia",
+      "directory": "moui_skia",
+      "publication": "public",
+      "role": "binding",
+      "releaseStage": "base-bindings"
+    },
+    {
+      "name": "wzzc-dev/moui_sun",
+      "directory": "moui_sun",
+      "publication": "public",
+      "role": "binding",
+      "releaseStage": "base-bindings"
+    },
+    {
+      "name": "wzzc-dev/moui_skia_renderer",
+      "directory": "moui_skia_renderer",
+      "publication": "public",
+      "role": "renderer",
+      "releaseStage": "renderers"
+    },
+    {
+      "name": "wzzc-dev/moui_web_renderer",
+      "directory": "moui_web_renderer",
+      "publication": "public",
+      "role": "renderer",
+      "releaseStage": "renderers"
+    },
+    {
+      "name": "wzzc-dev/moui_wgpu_renderer",
+      "directory": "moui_wgpu_renderer",
+      "publication": "public",
+      "role": "renderer",
+      "releaseStage": "renderers"
+    },
+    {
+      "name": "wzzc-dev/moui_sun_renderer",
+      "directory": "moui_sun_renderer",
+      "publication": "public",
+      "role": "renderer",
+      "releaseStage": "renderers"
+    },
+    {
+      "name": "wzzc-dev/moui_agent",
+      "directory": "moui_agent",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
+      "name": "wzzc-dev/moui_devtools",
+      "directory": "moui_devtools",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
+      "name": "wzzc-dev/moui_i18n",
+      "directory": "moui_i18n",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
+      "name": "wzzc-dev/moui_richtext",
+      "directory": "moui_richtext",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
+      "name": "wzzc-dev/moui_theme",
+      "directory": "moui_theme",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
+      "name": "wzzc-dev/moui_webview",
+      "directory": "moui_webview",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
+      "name": "wzzc-dev/moui_agent_mcp",
+      "directory": "moui_agent_mcp",
+      "publication": "public",
+      "role": "entrypoint",
+      "releaseStage": "entrypoints"
+    },
+    {
+      "name": "wzzc-dev/moui_cli",
+      "directory": "moui_cli",
+      "publication": "public",
+      "role": "entrypoint",
+      "releaseStage": "entrypoints"
+    },
+    {
+      "name": "wzzc-dev/moui_tests",
+      "directory": "moui_tests",
+      "publication": "internal",
+      "role": "tests"
+    }
+  ]
+}

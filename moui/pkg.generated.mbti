@@ -12,13 +12,19 @@ import {
 // Types and methods
 
 // Type aliases
+pub using @core {type ControlledValue}
+
 pub using @core {type Effect}
 
 pub using @core {type Environment}
 
+pub using @core {type FocusRequest}
+
 pub using @core {type Program}
 
 pub using @core {type ProgramCommand}
+
+pub using @core {type ScrollRequest}
 
 pub using @core {type SemanticId}
 

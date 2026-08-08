@@ -13,7 +13,7 @@ let required_native_pkg_vars : Map[String, String] = {
 // App-facing Skia entrypoints keep empty cc-link-flags; platform frameworks
 // and Skia provider flags live on backend/provider packages instead.
 let required_moui_entry_tokens : Map[String, Array[String]] = {
-  "moui/tests/skia_renderer_smoke/native/moon.pkg": [],
+  "moui_tests/skia_renderer_smoke/native/moon.pkg": [],
   "examples/showcase/macos_skia/moon.pkg": [],
   "examples/markdown_editor/macos_skia/moon.pkg": [],
   "examples/mo_workbench/macos_skia/moon.pkg": [],

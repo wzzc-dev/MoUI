@@ -1,10 +1,10 @@
 ///|
 fn host_test_text_field(
-  value : @core.State[String],
+  value : String,
   width? : Double = 240.0,
   height? : Double = 40.0,
   outlined? : Bool = false,
-) -> @core.View[Unit] {
+) -> @core.View[String] {
   let normal_border = if outlined {
     Some(
       @core.BorderStyle::new(
@@ -45,14 +45,39 @@ fn host_test_text_field(
     cursor_color=@core.Color::blue(),
     font=@core.FontSpec::new(size=16.0, weight=400),
   )
-  @views.component(ctx => {
-    @views.text_field(
-      ctx.watch(value),
-      on_input=next => value.set(next),
-      placeholder="Type",
-      style=field_style,
-      width~,
-      height~,
-    )
-  })
+  @views.text_field(
+    value,
+    on_input=next => next,
+    placeholder="Type",
+    style=field_style,
+    width~,
+    height~,
+  )
+}
+
+///|
+fn host_test_text_field_runtime(
+  value~ : Ref[String],
+  size~ : @core.Size,
+  width? : Double = 240.0,
+  height? : Double = 40.0,
+  outlined? : Bool = false,
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=value.val,
+      update=(_model, next) => {
+        value.val = next
+        next
+      },
+      view=model =>
+        @views.column(
+          [host_test_text_field(model, width~, height~, outlined~)],
+          spacing=0.0,
+          justify=@views.MainAlign::Start,
+          align=@views.CrossAlign::Start,
+        ),
+    ),
+    size~,
+  )
 }

@@ -59,8 +59,8 @@ fn provider_rules() -> Array[ProviderRule] {
     rules.push({
       path: "moui/backend/" + platform + "/moon.pkg",
       forbidden: [
-        "wzzc-dev/moui/render/skia", "wzzc-dev/moui/render/sun", "wzzc-dev/moui/render/wgpu",
-        "wzzc-dev/moui/render/canvas2d", "wzzc-dev/moui/render/webgpu_adapter", "Milky2018/wgpu_mbt",
+        "wzzc-dev/moui_skia_renderer", "wzzc-dev/moui_sun_renderer", "wzzc-dev/moui_wgpu_renderer",
+        "wzzc-dev/moui_web_renderer/canvas2d", "wzzc-dev/moui_web_renderer", "Milky2018/wgpu_mbt",
         "wzzc-dev/moui_skia", "wzzc-dev/moui_sun",
       ],
     })
@@ -89,7 +89,15 @@ fn provider_rules() -> Array[ProviderRule] {
   ]
   for item in renderer_forbidden {
     let (renderer, forbidden) = item
-    rules.push({ path: "moui/render/" + renderer + "/moon.pkg", forbidden })
+    let path = match renderer {
+      "skia" => "moui_skia_renderer/moon.pkg"
+      "sun" => "moui_sun_renderer/moon.pkg"
+      "wgpu" => "moui_wgpu_renderer/moon.pkg"
+      "canvas2d" => "moui_web_renderer/canvas2d/moon.pkg"
+      "webgpu_adapter" => "moui_web_renderer/moon.pkg"
+      _ => ""
+    }
+    rules.push({ path, forbidden })
   }
   rules
 }

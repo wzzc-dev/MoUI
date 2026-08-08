@@ -32,48 +32,53 @@ HostRuntimeDriver        input/service protocols   protocols and DTOs
         │                      │                        │
         └──────────┬───────────┘                        ▼
                    ▼                            moui/render/common
-          moui/backend/common                  selection, fallback, mailbox,
-          registry, lifecycle core,            GPU worker, image lifecycle,
-          frame coordination, input state       shared drawing algorithms
-                   │                                   │
-          ┌────────┼────────┐                          │
-          ▼        ▼        ▼                          │
-       desktop  embedded  native                       │
-          │        │        │                          │
-          └────────┴────────┘                          │
+          moui/backend/common                  provider selection, fallback,
+          stateless host workflows             mailbox/GPU worker,
+                   │                            shared drawing algorithms
+       ┌───────────┼───────────┬───────────┐           │
+       ▼           ▼           ▼           ▼           │
+   lifecycle     frame       image       input          │
+       │           │           │           │           │
+       └───────────┼───────────┴─────┬─────┘           │
+                   ▼                 ▼                 │
+               services          embedded             │
+             /    │    \       session assembly        │
+       desktop embedded native                          │
                    │                                   │
                    ▼                                   │
           backend/<platform>                           │
           native decode, presenter, I/O                 │
-                   │ supplies SurfaceContext            │
+                   │ supplies opaque HostSurface         │
                    └──────────────────┬─────────────────┘
                                       ▼
-                              renderer negotiation
+                         ordered provider binding
                                       │
         │
-        ├────────────┬────────────┬────────────┬──────────────┐
-        ▼            ▼            ▼            ▼              ▼
-render/skia   render/wgpu  render/sun  render/canvas2d  render/webgpu_adapter
-        │            │            │            │              │
-        ▼            ▼            ▼            ▼              ▼
-   moui_skia      wgpu_mbt    moui_sun     browser         browser WebGPU
-                (diagnostic) (experimental) canvas2d           host
+        ├────────────────┬────────────────┬────────────────┬────────────────┐
+        ▼                ▼                ▼                ▼
+moui_skia_renderer  moui_wgpu_renderer  moui_sun_renderer  moui_web_renderer
+        │                │                │                │
+        ▼                ▼                ▼                ├─ root: WebGPU host
+   moui_skia          wgpu_mbt         moui_sun            `─ canvas2d: fallback
+                    (diagnostic)     (experimental)
 ```
 
 Composition: an executable entrypoint builds an `AppBuilder` with
-`@runtime.run_app`, supplies ordered `RendererFactory` values with
+`@runtime.run_app`, supplies ordered `RendererProvider` values with
 `.render`/`.render_all`, supplies a platform `PlatformEntry` with `.backend`,
-and calls `.run`. The backend creates a neutral `SurfaceContext` after its
-window exists; renderer factories bind and negotiate against that kit. No
+and calls `.run`. The backend creates an opaque `HostSurface` after its
+window exists; providers bind in registration order and the first
+`Bound(RendererSession)` wins. No
 backend imports or constructs a concrete renderer. Renderer selection is
 **provider negotiation** (`@render_common.resolve_renderer`), never a central switch.
 `RendererBackendKind` is diagnostic metadata only (ADR 0019, invariant P6).
 Extension cost (2026-08-03 audit): `moui/core` has ~210 enum variants of
 which ~2 are platform-related (~1%); adding a renderer costs one
 `RendererBackendKind` diagnostic variant plus a provider package — no core
-or host contract changes. New platform types extend via the open
-`NativePlatformSurface` trait; renderer preference (`NativeRendererMode`)
-stays a closed enum by design.
+or host contract changes. Root render exposes only opaque native surface and
+display handles; renderer-local policies such as Skia's
+`NativeGpuPlatform`/`SkiaSurfaceRoute` interpret them. Renderer preference
+(`NativeRendererMode`) stays a renderer-local closed enum by design.
 
 **Cross-layer edges (imports, beyond the tree above):**
 
@@ -87,7 +92,7 @@ stays a closed enum by design.
 **Allowed direction:** app and views depend inward on facades/core; platform
 backends normalize lifecycle facts through `backend/common` into
 host contracts and expose neutral surfaces; application entrypoints compose
-renderer factories with platform entries;
+renderer providers with platform entries;
 renderers consume `DrawCommand` only.
 
 **Forbidden (high frequency):**
@@ -112,21 +117,23 @@ renderers consume `DrawCommand` only.
 | App-facing files/clipboard/URL/settings/menu tasks and timer/route sources | `moui/services` |
 | Cross-runtime protocols | `moui/core` |
 | AppRuntime / trees / effects / HostRuntimeDriver / RedrawScheduler / HostWallClock | `moui/runtime` |
-| Window host coordination (shared) | `moui/backend/common` (`WindowCoordinator`, `EmbeddedWindowCoordinator`, `FrameCoordinator`) |
 | Backend protocols and DTOs (Event/HostCmd/HostServiceBridge/WindowRequests/platform channel) | `moui/backend` |
-| Shared backend state (registry/queue/lifecycle/frame/input/service adapters) | `moui/backend/common` |
-| Shared desktop host-service routing | `moui/backend/common/desktop` |
-| Shared native filesystem handlers and raw image-byte source | `moui/backend/common/native` |
-| Shared embedded callback service queue (`Pending(id)` + completion/cancel) | `moui/backend/common/embedded/services` |
-| Neutral platform lifecycle bridge | `moui/backend/common` |
-| Shared mobile session services (renderer, IME, semantics, platform-view, transport) | `moui/backend/common/embedded` |
+| Stateless cross-owner window-host workflows and DTO conversion | `moui/backend/common` |
+| Registry, request queue, runtime slots, platform ID map, phase/generation, exactly-once close | `moui/backend/common/lifecycle` |
+| Per-window renderer session, redraw, resize, present completion, IME frame hook | `moui/backend/common/frame` |
+| Image loading, repaint revision, completion, callback detach, cancellation | `moui/backend/common/image` |
+| Input conversion and pointer/text/IME session state | `moui/backend/common/input` |
+| Service facade, async completion, and bridge lifetime | `moui/backend/common/services` |
+| Desktop/embedded/native service implementations | `moui/backend/common/services/{desktop,embedded,native}` |
+| Native filesystem image-byte source | `moui/backend/common/image/native` |
+| Shared mobile session assembly (transport, renderer attach, IME, semantics, platform views) | `moui/backend/common/embedded` |
 | Physical Android/iOS/HarmonyOS callback dispatch | `wzzc-dev/window/internal/embedded_dispatch` |
 | Native host backends (native decode + capability decl + neutral presenter/surface kit) | `moui/backend/{macos,windows,linux}` |
 | Embedded runtime backends | `moui/backend/{android,ios,harmonyos}` |
 | Web host backend | `moui/backend/web` |
-| SurfaceContext + renderer provider/factory/image protocols | `moui/render` |
+| Opaque HostSurface/NativeSurface + RendererProvider/RendererSession/image protocols | `moui/render` |
 | Provider selection, fallback, workers, image lifecycle, shared drawing algorithms | `moui/render/common` |
-| Renderer implementations and factories | `moui/render/{skia,wgpu,sun,canvas2d,webgpu_adapter}` |
+| Renderer implementations, providers, and platform policies | `moui_{skia,wgpu,sun,web}_renderer` (`moui_web_renderer/canvas2d` for Canvas2D) |
 | Application/platform composition | `examples/*/<platform>/main.mbt` through `@runtime.run_app` |
 | Skia FFI / native capability | `moui_skia` |
 | CPU raster stack (experimental) | `moui_sun` |
@@ -141,7 +148,7 @@ renderers consume `DrawCommand` only.
 |---|---|
 | Native Skia | **Mainline** |
 | Native WGPU | **Experimental** (engineering gate: `diagnostic` — runnable and testable, no product commitment) |
-| Sun CPU raster (`render/sun` + `moui_sun`) | **Experimental** (ADR 0023) — no product commitment, not on default composition roots, capability freeze by default |
+| Sun CPU raster (`moui_sun_renderer` + `moui_sun`) | **Experimental** (ADR 0023) — no product commitment, not on default composition roots, capability freeze by default |
 | Web `wasm-gc` + browser WebGPU imports | Main web path, with Canvas2D provider fallback |
 | Embedded runtime backend route | `experimental` — code paths compile; no usability/product commitment without matching-device evidence |
 | Product `auto` renderer | Prefer `SkiaGpuNative` when host GPU surface exists; `SkiaRasterNative` explicit/recovery |
@@ -153,6 +160,22 @@ renderers consume `DrawCommand` only.
 - Local `./window/modules/window*` members: enable local source only when
   intentionally editing `window` (`sh scripts/window-dev-mode.sh on`).
   Outside that window, keep `./window` out of `moon.work`.
+
+## Release module closures
+
+`wzzc-dev/moui` publishes only the neutral framework, runtime, platform
+backends, renderer protocols, and shared renderer algorithms. Concrete
+renderers are independent `wzzc-dev/moui_*_renderer` modules; dedicated
+integration tests and renderer smokes live in unpublished
+`moui_tests/`. Composition-root modules declare both the base module
+and their selected renderer module.
+
+`checks/release-modules.json` is the release directory/stage catalog. The
+required `node scripts/validate-release-module-closures.mjs` gate checks module
+names, dependency direction, workspace pins, base closure exclusions, and the
+unpublished `moui_tests/` boundary. Release stage order is base and bindings,
+then renderers, addons/agent, and finally agent MCP and CLI. Stage order
+does not require equal module versions after the 0.2 migration release.
 
 ## Where to go next
 

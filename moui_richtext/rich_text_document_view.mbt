@@ -136,7 +136,6 @@ fn rich_text_document_session_view_paint(
   visible_scroll_y : Double,
   visible_viewport_height : Double,
   visible_overscan : Double,
-  visible_scroll_state : @core.ScrollState?,
   cache : RichTextDocumentViewCache,
 ) -> @core.ViewPaintPlan {
   let commands : Array[@core.DrawCommand] = []
@@ -151,11 +150,8 @@ fn rich_text_document_session_view_paint(
     base_font,
     ctx.text_system,
   )
-  let current_scroll_y = markdown_session_current_scroll_y(
-    visible_scroll_y, visible_scroll_state,
-  )
   let (window_document, top_padding) = rich_text_document_view_window(
-    prepared, current_scroll_y, visible_viewport_height, visible_overscan,
+    prepared, visible_scroll_y, visible_viewport_height, visible_overscan,
   )
   // The parent scroll view already translates this view's frame by the
   // current offset. Only restore the omitted window prefix here.
@@ -209,7 +205,6 @@ fn rich_text_document_session_view_offset_at_point(
   visible_scroll_y : Double,
   visible_viewport_height : Double,
   visible_overscan : Double,
-  visible_scroll_state : @core.ScrollState?,
 ) -> Int? {
   ignore(visible_overscan)
   let content = rich_text_editor_content_rect(frame)
@@ -230,7 +225,6 @@ fn rich_text_document_session_view_offset_at_point(
   )
   ignore(visible_scroll_y)
   ignore(visible_viewport_height)
-  ignore(visible_scroll_state)
   rich_text_document_source_offset_at_point(
     wrapped, point, content, base_font, text_system,
   )

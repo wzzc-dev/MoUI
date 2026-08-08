@@ -754,28 +754,37 @@ test "markdown_viewer window positioning does not apply parent scroll twice" {
 }
 
 ///|
-test "markdown_viewer repaints a visible window from parent scroll state" {
+test "markdown_viewer repaints a visible window from controlled parent scroll" {
   let sections : Array[String] = []
   for index in 0..<80 {
     sections.push(
       "## Section \{index}\n\nParagraph \{index} has enough words to wrap across multiple lines in a narrow viewer.",
     )
   }
-  let state = @core.ScrollState::new()
-  let root : @core.View[Unit] = @views.scroll_view(
-    markdown_viewer(
-      source=sections.join("\n\n"),
-      size=@core.Size::new(width=320.0, height=0.0),
-      font=mv_font(),
-      visible_viewport_height=400.0,
-      visible_scroll_state=Some(state),
+  let observed = Ref(@core.Point::new(x=0.0, y=0.0))
+  let runtime = @runtime.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=@core.Point::new(x=0.0, y=0.0),
+      update=(_model, next) => {
+        observed.val = next
+        next
+      },
+      view=offset => {
+        @views.scroll_view(
+          markdown_viewer(
+            source=sections.join("\n\n"),
+            size=@core.Size::new(width=320.0, height=0.0),
+            font=mv_font(),
+            visible_scroll_y=offset.y,
+            visible_viewport_height=400.0,
+          ),
+          offset~,
+          width=320.0,
+          height=400.0,
+          on_scroll=Some(next => next),
+        )
+      },
     ),
-    state=Some(state),
-    width=320.0,
-    height=400.0,
-  )
-  let runtime = @runtime.AppRuntime::new_view(
-    root~,
     size=@core.Size::new(width=320.0, height=400.0),
   )
   runtime.set_text_system(mv_text_system())
@@ -789,7 +798,7 @@ test "markdown_viewer repaints a visible window from parent scroll state" {
       ),
     ),
   )
-  assert_true(state.offset().y >= 960.0)
+  assert_true(observed.val.y >= 960.0)
   let has_visible_text = runtime
     .draw_commands()
     .any(command => {

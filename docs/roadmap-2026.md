@@ -41,16 +41,16 @@ The package boundaries follow that pipeline:
 - `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
   cores that normalize platform events into `Event` and expose neutral
   host surfaces.
-- `render/skia` owns the native Skia mainline factories; `render/wgpu` remains
+- `moui_skia_renderer` owns the native Skia mainline providers; `moui_wgpu_renderer` remains
   available for explicit native WGPU diagnostics. Applications compose either
   with one platform backend.
 - `backend/linux/` is a Wayland host core with runtime-evidence, IME,
   clipboard, file dialog, directory listing, accessibility, and async image
   loading all wired through matching-host CI providers.
 - `render/` owns renderer facades and capability reporting.
-- `render/skia/` implements the native Skia raster renderer facade.
-- `render/wgpu/` implements the experimental native wgpu renderer.
-- `render/webgpu_adapter/` bridges wasm-gc apps to browser WebGPU host imports.
+- `moui_skia_renderer/` implements the native Skia raster renderer facade.
+- `moui_wgpu_renderer/` implements the experimental native wgpu renderer.
+- `moui_web_renderer/` bridges wasm-gc apps to browser WebGPU host imports.
 - `examples/*/app/` packages contain shared app logic; platform subpackages are
   entrypoints only.
 
@@ -174,14 +174,14 @@ Validation:
 
 ```sh
 moon test moui/render --target native
-moon test moui/render/skia --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui_skia_renderer --target native
+moon test moui_web_renderer --target wasm-gc
 sh scripts/check.sh --profile full
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
 
 Run `sh scripts/check.sh --profile full` or
-`moon test moui/render/wgpu --target native` only when touching the native WGPU
+`moon test moui_wgpu_renderer --target native` only when touching the native WGPU
 diagnostic renderer.
 
 ## Workstream 5: Platform Contracts
@@ -242,7 +242,7 @@ Focus areas:
   registry-backed insert/sync/request/lifecycle helpers plus closed-slot
   cleanup. Web creates another browser canvas and `WebRenderer`; native hosts
   create another platform window and ask their renderer provider for a
-  renderer-neutral `WindowRenderer`, then attach platform-window bindings,
+  renderer-neutral `RendererSession`, then attach platform-window bindings,
   platform slots, and per-window drivers before routing redraw/event/
   context-menu/IME/dispose paths through `WindowId`.
 - Keep Linux readiness explicit through its backend readiness report until

@@ -9,7 +9,12 @@ import { basename, dirname, join, relative } from "node:path";
 
 const root = process.cwd();
 const backendRoot = join(root, "moui", "backend");
+const ownershipConfig = JSON.parse(
+  readFileSync(join(root, "checks", "backend-common-ownership.json"), "utf8"),
+);
 const rendererPackagePattern =
+  /wzzc-dev\/moui_(?:skia|sun|wgpu|web)_renderer(?:\/|"|\s|$)/;
+const legacyRendererPackagePattern =
   /wzzc-dev\/moui\/render\/(?:skia|sun|wgpu|canvas2d|webgpu_adapter)(?:\/|"|\s|$)/;
 const rendererNativePackagePattern =
   /(?:wzzc-dev\/moui_(?:skia|sun)|Milky2018\/wgpu_mbt)/;
@@ -140,7 +145,11 @@ for (const path of walkDirectories(backendRoot)) {
 
 for (const path of backendFiles.filter((file) => file.endsWith("moon.pkg"))) {
   const content = productionMoonPkg(readFileSync(path, "utf8"));
-  for (const pattern of [rendererPackagePattern, rendererNativePackagePattern]) {
+  for (const pattern of [
+    rendererPackagePattern,
+    legacyRendererPackagePattern,
+    rendererNativePackagePattern,
+  ]) {
     const match = pattern.exec(content);
     if (match) {
       violations.push(
@@ -215,6 +224,34 @@ for (const pkg of allFiles.filter((path) => path.endsWith("moon.pkg"))) {
     violations.push(
       `${relative(root, pkg)} executable composition root must assemble renderer and backend through one AppBuilder chain`,
     );
+  }
+}
+
+for (const sourceRoot of ownershipConfig.sourceRoots) {
+  for (const path of walk(join(root, sourceRoot))) {
+    if (!path.endsWith(".mbt") && !path.endsWith(".mbti")) continue;
+    const content = readFileSync(path, "utf8");
+    for (const symbol of ownershipConfig.legacySymbols) {
+      const index = content.indexOf(symbol);
+      if (index >= 0) {
+        violations.push(
+          `${relative(root, path)}:${lineNumber(content, index)} contains removed renderer/backend contract: ${symbol}`,
+        );
+      }
+    }
+  }
+}
+
+for (const path of walk(join(root, "moui", "render"))) {
+  if (!path.endsWith(".mbt") && !path.endsWith(".mbti")) continue;
+  const content = readFileSync(path, "utf8");
+  for (const token of ownershipConfig.rootRenderForbiddenTokens) {
+    const index = content.indexOf(token);
+    if (index >= 0) {
+      violations.push(
+        `${relative(root, path)}:${lineNumber(content, index)} contains renderer-specific root surface token: ${token}`,
+      );
+    }
   }
 }
 

@@ -15,7 +15,6 @@ pub(all) struct DrawFrame {
   platform_views : Array[PlatformViewPlacement]
   damage : DamageRegion
   clear_color : Color
-  cache_epoch : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -149,9 +148,8 @@ pub fn DrawFrame::new(
   platform_views? : Array[PlatformViewPlacement] = [],
   damage~ : DamageRegion,
   clear_color? : Color = Color::white(),
-  cache_epoch? : Int = 0,
 ) -> DrawFrame {
-  { commands, platform_views, damage, clear_color, cache_epoch }
+  { commands, platform_views, damage, clear_color }
 }
 
 ///|
@@ -199,9 +197,8 @@ pub fn DrawCommand::bounds(self : DrawCommand) -> Rect? {
         RoundedMask(rounded) => Some(rounded.rect)
       }
     PopLayer => None
-    BeginCachedLayer(spec) => Some(spec.frame)
-    EndCachedLayer(_) => None
-    DrawCachedLayer(spec) => Some(spec.frame)
+    BeginRetainedLayer(spec) => Some(spec.frame)
+    EndRetainedLayer(_) => None
     PushFilter(filter) =>
       match filter {
         Blur(radius) =>

@@ -16,12 +16,6 @@ pub(all) struct ImageResourceRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct ImageResourceSnapshot {
-  revision : Int
-  records : Array[ImageResourceRecord]
-} derive(Eq, Debug, ToJson)
-
-///|
 pub(all) enum ImageResourceLoadCompletionStatus {
   ImageLoadReady
   ImageLoadFailed

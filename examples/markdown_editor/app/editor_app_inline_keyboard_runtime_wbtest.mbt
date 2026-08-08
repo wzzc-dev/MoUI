@@ -29,8 +29,8 @@ test "markdown editor runtime inline keyboard shortcut toggles selection" {
 test "markdown editor runtime ctrl inline shortcuts toggle selection" {
   let app = MarkdownEditorApp::new()
   app.set_document("Text bold word")
-  let runtime = app.runtime(width=980.0, height=640.0)
   app.set_selection(9, Some(@core.TextRange::new(start=5, end=9)))
+  let mut runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -41,6 +41,7 @@ test "markdown editor runtime ctrl inline shortcuts toggle selection" {
   )
   inspect(app.document(), content="Text **bold** word")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -51,6 +52,7 @@ test "markdown editor runtime ctrl inline shortcuts toggle selection" {
   )
   inspect(app.document(), content="Text bold word")
   app.set_selection(14, Some(@core.TextRange::new(start=10, end=14)))
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -66,8 +68,8 @@ test "markdown editor runtime ctrl inline shortcuts toggle selection" {
 test "markdown editor runtime ctrl code and strike shortcuts toggle selection" {
   let app = MarkdownEditorApp::new()
   app.set_document("Text code old")
-  let runtime = app.runtime(width=980.0, height=640.0)
   app.set_selection(9, Some(@core.TextRange::new(start=5, end=9)))
+  let mut runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -78,6 +80,7 @@ test "markdown editor runtime ctrl code and strike shortcuts toggle selection" {
   )
   inspect(app.document(), content="Text `code` old")
   app.set_selection(11, Some(@core.TextRange::new(start=6, end=10)))
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -88,6 +91,7 @@ test "markdown editor runtime ctrl code and strike shortcuts toggle selection" {
   )
   inspect(app.document(), content="Text code old")
   app.set_selection(13, Some(@core.TextRange::new(start=10, end=13)))
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -214,8 +218,8 @@ test "markdown editor runtime underline italic marker wraps tracked selection" {
 test "markdown editor runtime link strike and image shortcuts use tracked selection" {
   let app = MarkdownEditorApp::new()
   app.set_document("Text link old logo")
-  let runtime = app.runtime(width=980.0, height=640.0)
   app.set_selection(9, Some(@core.TextRange::new(start=5, end=9)))
+  let mut runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -226,6 +230,7 @@ test "markdown editor runtime link strike and image shortcuts use tracked select
   )
   inspect(app.document(), content="Text [link](https://example.com) old logo")
   app.set_selection(36, Some(@core.TextRange::new(start=33, end=36)))
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -239,6 +244,7 @@ test "markdown editor runtime link strike and image shortcuts use tracked select
     content="Text [link](https://example.com) ~~old~~ logo",
   )
   app.set_selection(45, Some(@core.TextRange::new(start=41, end=45)))
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -257,8 +263,8 @@ test "markdown editor runtime link strike and image shortcuts use tracked select
 test "markdown editor runtime ctrl k wraps tracked selection as link" {
   let app = MarkdownEditorApp::new()
   app.set_document("Visit docs today")
-  let runtime = app.runtime(width=980.0, height=640.0)
   app.set_selection(10, Some(@core.TextRange::new(start=6, end=10)))
+  let runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -268,7 +274,7 @@ test "markdown editor runtime ctrl k wraps tracked selection as link" {
     ),
   )
   inspect(app.document(), content="Visit [docs](https://example.com) today")
-  let editor_selection = app.selection.get()
+  let editor_selection = app.selection
   inspect(editor_selection.caret, content="11")
   guard editor_selection.selection is Some(selection) else {
     fail("expected linked selection")
@@ -281,8 +287,8 @@ test "markdown editor runtime ctrl k wraps tracked selection as link" {
 test "markdown editor runtime ctrl image shortcut wraps tracked selection" {
   let app = MarkdownEditorApp::new()
   app.set_document("Insert logo")
-  let runtime = app.runtime(width=980.0, height=640.0)
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
+  let runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(

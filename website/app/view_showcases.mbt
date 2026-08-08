@@ -124,13 +124,14 @@ fn Model::showcases_content(
           entry => {
             showcase_card(theme, entry, card_width, thumb_height, self.locale)
           },
-          state=self.showcase_grid_scroll,
           columns~,
           item_height=card_height,
           viewport_width=metrics.content_width,
           viewport_height=grid_height,
           row_spacing=20.0,
           column_spacing=16.0,
+          offset=self.showcase_grid_scroll,
+          on_scroll=Some(offset => ShowcaseGridScrolled(offset)),
           shows_indicator=true,
         ),
       ],

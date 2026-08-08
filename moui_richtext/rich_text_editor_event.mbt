@@ -1,7 +1,7 @@
 ///|
 fn[Msg] rich_text_editor_event(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   on_input~ : ((String) -> Msg)?,
@@ -12,9 +12,9 @@ fn[Msg] rich_text_editor_event(
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   accepts_tab_input~ : Bool,
   visible_scroll_y~ : Double,
+  on_scroll~ : ((Double) -> Msg)?,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
     @core.AppEvent::Pointer(event) =>
@@ -28,9 +28,9 @@ fn[Msg] rich_text_editor_event(
         on_command_click~,
         event~,
         visible_scroll_y~,
+        on_scroll~,
         visible_viewport_height~,
         visible_overscan~,
-        visible_scroll_state~,
       )
     @core.AppEvent::Keyboard(event) =>
       rich_text_keyboard_event(
@@ -63,7 +63,7 @@ fn[Msg] rich_text_editor_event(
 ///|
 fn[Msg] rich_text_pointer_event(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
@@ -71,9 +71,9 @@ fn[Msg] rich_text_pointer_event(
   on_command_click~ : ((Int) -> Msg)?,
   event~ : @core.PointerEvent,
   visible_scroll_y~ : Double,
+  on_scroll~ : ((Double) -> Msg)?,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewEventResult[Msg] {
   ignore(visible_overscan)
   let inside = ctx.frame.contains(event.position)
@@ -84,22 +84,20 @@ fn[Msg] rich_text_pointer_event(
       font,
       ctx.text_system,
       event~,
+      visible_scroll_y~,
+      on_scroll~,
       visible_viewport_height~,
-      visible_scroll_state~,
     )
   }
   match event.phase {
     @core.PointerPhase::Down =>
       if inside {
-        let text = value.get()
+        let text = value
         let document = format(text)
         let base_content = rich_text_editor_content_rect(ctx.frame)
-        let scroll_y = markdown_session_current_scroll_y(
-          visible_scroll_y, visible_scroll_state,
-        )
         let content = rich_text_scrolled_content_rect(
           base_content,
-          scroll_y~,
+          scroll_y=visible_scroll_y,
           visible_viewport_height~,
         )
         // A Cmd/Ctrl-held click opens links/images instead of moving the caret:
@@ -172,15 +170,12 @@ fn[Msg] rich_text_pointer_event(
     @core.PointerPhase::Move =>
       match ctx.text_control.text_selection_anchor {
         Some(anchor) => {
-          let text = value.get()
+          let text = value
           let document = format(text)
           let base_content = rich_text_editor_content_rect(ctx.frame)
-          let scroll_y = markdown_session_current_scroll_y(
-            visible_scroll_y, visible_scroll_state,
-          )
           let content = rich_text_scrolled_content_rect(
             base_content,
-            scroll_y~,
+            scroll_y=visible_scroll_y,
             visible_viewport_height~,
           )
           let caret = rich_text_document_source_offset_at_point(
@@ -234,38 +229,39 @@ fn[Msg] rich_text_pointer_event(
 
 ///|
 fn[Msg] rich_text_scroll_event(
-  value : @core.Binding[String],
+  value : String,
   format : RichTextFormatter,
   font : @core.FontSpec,
   text_system : @core.TextSystem,
   event~ : @core.PointerEvent,
+  visible_scroll_y~ : Double,
+  on_scroll~ : ((Double) -> Msg)?,
   visible_viewport_height~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewEventResult[Msg] {
-  match visible_scroll_state {
-    Some(state) => {
+  match on_scroll {
+    Some(handler) => {
       let viewport_height = if visible_viewport_height > 0.0 {
         visible_viewport_height
       } else {
         0.0
       }
       let content_height = rich_text_document_height(
-          format(value.get()),
+          format(value),
           font,
           text_system~,
         ) +
         48.0
       let max_scroll = max_double(0.0, content_height - viewport_height)
-      let current = state.offset()
       let next_y = min_double(
-        max_double(0.0, current.y - event.wheel_delta.y),
+        max_double(0.0, visible_scroll_y - event.wheel_delta.y),
         max_scroll,
       )
-      state.scroll_to(x=0.0, y=next_y)
       view_event_result(
-        changed=next_y != current.y,
+        changed=next_y != visible_scroll_y,
+        activated=next_y != visible_scroll_y,
         captured=true,
         dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        messages=if next_y != visible_scroll_y { [handler(next_y)] } else { [] },
       )
     }
     None => @core.ViewEventResult::ignored()
@@ -275,7 +271,7 @@ fn[Msg] rich_text_scroll_event(
 ///|
 fn[Msg] rich_text_keyboard_event(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   on_input~ : ((String) -> Msg)?,
@@ -314,7 +310,7 @@ fn[Msg] rich_text_keyboard_event(
     )
   }
   if @core.is_select_all_shortcut(event) {
-    let next_control = select_rich_text_control(ctx.text_control, value.get())
+    let next_control = select_rich_text_control(ctx.text_control, value)
     return view_event_result(
       changed=true,
       captured=true,
@@ -328,8 +324,7 @@ fn[Msg] rich_text_keyboard_event(
     )
   }
   if @core.is_undo_shortcut(event) {
-    let result = restore_text_history(ctx.text_control, value.get(), undo=true)
-    value.set(result.text)
+    let result = restore_text_history(ctx.text_control, value, undo=true)
     return view_event_result(
       changed=result.changed,
       captured=true,
@@ -345,8 +340,7 @@ fn[Msg] rich_text_keyboard_event(
     )
   }
   if @core.is_redo_shortcut(event) {
-    let result = restore_text_history(ctx.text_control, value.get(), undo=false)
-    value.set(result.text)
+    let result = restore_text_history(ctx.text_control, value, undo=false)
     return view_event_result(
       changed=result.changed,
       captured=true,
@@ -414,7 +408,7 @@ fn[Msg] rich_text_keyboard_event(
     }
   }
   if event.key == "ArrowUp" {
-    let text = value.get()
+    let text = value
     let document = format(text)
     let content = rich_text_editor_content_rect(ctx.frame)
     return rich_text_vertical_caret_move_result(
@@ -429,7 +423,7 @@ fn[Msg] rich_text_keyboard_event(
     )
   }
   if event.key == "ArrowDown" {
-    let text = value.get()
+    let text = value
     let document = format(text)
     let content = rich_text_editor_content_rect(ctx.frame)
     return rich_text_vertical_caret_move_result(
@@ -446,7 +440,7 @@ fn[Msg] rich_text_keyboard_event(
   if event.key == "ArrowLeft" {
     return rich_text_caret_move_result(
       ctx,
-      value.get(),
+      value,
       @core.TextCaretDirection::MoveLeft,
       event.modifiers.shift,
       on_selection_change,
@@ -455,7 +449,7 @@ fn[Msg] rich_text_keyboard_event(
   if event.key == "ArrowRight" {
     return rich_text_caret_move_result(
       ctx,
-      value.get(),
+      value,
       @core.TextCaretDirection::MoveRight,
       event.modifiers.shift,
       on_selection_change,
@@ -464,7 +458,7 @@ fn[Msg] rich_text_keyboard_event(
   if event.key == "Home" {
     return rich_text_line_edge_move_result(
       ctx,
-      value.get(),
+      value,
       home=true,
       on_selection_change,
     )
@@ -472,7 +466,7 @@ fn[Msg] rich_text_keyboard_event(
   if event.key == "End" {
     return rich_text_line_edge_move_result(
       ctx,
-      value.get(),
+      value,
       home=false,
       on_selection_change,
     )
@@ -500,7 +494,7 @@ fn[Msg] rich_text_keyboard_event(
 ///|
 fn[Msg] rich_text_input_event(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   on_input~ : ((String) -> Msg)?,
   on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
@@ -508,7 +502,7 @@ fn[Msg] rich_text_input_event(
   event~ : @core.TextInputEvent,
   record_history~ : Bool,
 ) -> @core.ViewEventResult[Msg] {
-  let text = value.get()
+  let text = value
   let result = match event {
     @core.TextInputEvent::InsertText(inserted) =>
       if inserted == "" {
@@ -583,9 +577,6 @@ fn[Msg] rich_text_input_event(
     }
     _ => apply_text_input(ctx.text_control, text, event, record_history~)
   }
-  if result.changed {
-    value.set(result.text)
-  }
   view_event_result(
     changed=result.changed,
     captured=result.changed,
@@ -608,7 +599,7 @@ fn[Msg] rich_text_input_event(
 ///|
 fn[Msg] rich_text_editor_command(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   format~ : RichTextFormatter,
   on_input~ : ((String) -> Msg)?,
   on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
@@ -617,7 +608,7 @@ fn[Msg] rich_text_editor_command(
   intent : @core.CommandIntent,
   paste_text~ : String?,
 ) -> @core.ViewTextCommandResult[Msg] {
-  let text = value.get()
+  let text = value
   let document = format(text)
   match intent {
     @core.CommandIntent::Copy =>
@@ -689,9 +680,6 @@ fn[Msg] rich_text_editor_command(
       }
     @core.CommandIntent::Undo => {
       let result = restore_text_history(ctx.text_control, text, undo=true)
-      if result.changed {
-        value.set(result.text)
-      }
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
         text_control=Some(result.control),
@@ -710,9 +698,6 @@ fn[Msg] rich_text_editor_command(
     }
     @core.CommandIntent::Redo => {
       let result = restore_text_history(ctx.text_control, text, undo=false)
-      if result.changed {
-        value.set(result.text)
-      }
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
         text_control=Some(result.control),
@@ -757,7 +742,6 @@ fn rich_text_input_state(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
   text_system~ : @core.TextSystem,
 ) -> @core.TextInputState {
   ignore(visible_overscan)
@@ -769,12 +753,9 @@ fn rich_text_input_state(
   }
   let display_text = rich_text_with_composition(text, control, focused=true)
   let base_content = rich_text_editor_content_rect(frame)
-  let scroll_y = markdown_session_current_scroll_y(
-    visible_scroll_y, visible_scroll_state,
-  )
   let content = rich_text_scrolled_content_rect(
     base_content,
-    scroll_y~,
+    scroll_y=visible_scroll_y,
     visible_viewport_height~,
   )
   let caret = boundaries.nearest_boundary(control.caret)

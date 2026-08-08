@@ -14,15 +14,9 @@ fn RenderNode::collect_draw_commands(
 fn RenderNode::collect_frame_commands(
   self : RenderNode,
   commands : Array[DrawCommand],
-  known_layers : Array[CachedLayerState],
-  previous_admissions : Array[CachedLayerAdmissionState],
-  next_known_layers : Array[CachedLayerState],
-  next_admissions : Array[CachedLayerAdmissionState],
 ) -> Unit {
   let overlays : Array[DrawCommand] = []
-  self.collect_frame_commands_with_overlays(
-    commands, overlays, known_layers, previous_admissions, next_known_layers, next_admissions,
-  )
+  self.collect_frame_commands_with_overlays(commands, overlays)
   for command in overlays {
     commands.push(command)
   }
@@ -33,62 +27,19 @@ fn RenderNode::collect_frame_commands_with_overlays(
   self : RenderNode,
   commands : Array[DrawCommand],
   overlays : Array[DrawCommand],
-  known_layers : Array[CachedLayerState],
-  previous_admissions : Array[CachedLayerAdmissionState],
-  next_known_layers : Array[CachedLayerState],
-  next_admissions : Array[CachedLayerAdmissionState],
 ) -> Unit {
   if self.is_repaint_boundary {
     match self.cached_layer_spec() {
       Some(spec) => {
-        let visible_streak = previous_admissions.cached_layer_visible_streak(
-            spec,
-          ) +
-          1
-        next_admissions.record_cached_layer_admission(spec, visible_streak)
-        if known_layers.has_current_cached_layer(spec) {
-          commands.push(DrawCachedLayer(spec))
-          next_known_layers.record_current_cached_layer(spec)
-          self.collect_cached_overlay_commands(overlays)
-        } else if visible_streak >= cached_layer_warmup_threshold() {
-          commands.push(BeginCachedLayer(spec))
-          self.collect_uncached_frame_commands_with_overlays(
-            commands, overlays, known_layers, previous_admissions, next_known_layers,
-            next_admissions,
-          )
-          commands.push(EndCachedLayer(spec.key))
-          next_known_layers.record_current_cached_layer(spec)
-        } else {
-          self.collect_uncached_frame_commands_with_overlays(
-            commands, overlays, known_layers, previous_admissions, next_known_layers,
-            next_admissions,
-          )
-        }
+        commands.push(BeginRetainedLayer(spec))
+        self.collect_uncached_frame_commands_with_overlays(commands, overlays)
+        commands.push(EndRetainedLayer(spec.key))
       }
       None =>
-        self.collect_uncached_frame_commands_with_overlays(
-          commands, overlays, known_layers, previous_admissions, next_known_layers,
-          next_admissions,
-        )
+        self.collect_uncached_frame_commands_with_overlays(commands, overlays)
     }
   } else {
-    self.collect_uncached_frame_commands_with_overlays(
-      commands, overlays, known_layers, previous_admissions, next_known_layers, next_admissions,
-    )
-  }
-}
-
-///|
-fn RenderNode::collect_cached_overlay_commands(
-  self : RenderNode,
-  overlays : Array[DrawCommand],
-) -> Unit {
-  match self.cached_overlay_draw_commands {
-    Some(cached_overlays) =>
-      for command in cached_overlays {
-        overlays.push(command)
-      }
-    None => ()
+    self.collect_uncached_frame_commands_with_overlays(commands, overlays)
   }
 }
 
@@ -142,18 +93,12 @@ fn RenderNode::collect_uncached_frame_commands_with_overlays(
   self : RenderNode,
   commands : Array[DrawCommand],
   overlays : Array[DrawCommand],
-  known_layers : Array[CachedLayerState],
-  previous_admissions : Array[CachedLayerAdmissionState],
-  next_known_layers : Array[CachedLayerState],
-  next_admissions : Array[CachedLayerAdmissionState],
 ) -> Unit {
   for command in self.paint_commands {
     commands.push(command)
   }
   for child in self.children {
-    child.collect_frame_commands_with_overlays(
-      commands, overlays, known_layers, previous_admissions, next_known_layers, next_admissions,
-    )
+    child.collect_frame_commands_with_overlays(commands, overlays)
   }
   for command in self.post_paint_commands {
     commands.push(command)
@@ -178,11 +123,11 @@ fn RenderNode::with_repaint_boundary_cache(self : RenderNode) -> RenderNode {
 }
 
 ///|
-fn RenderNode::cached_layer_spec(self : RenderNode) -> CachedLayerSpec? {
+fn RenderNode::cached_layer_spec(self : RenderNode) -> RetainedLayerSpec? {
   match self.layer_cache_key {
     Some(key) =>
       Some(
-        CachedLayerSpec::new(
+        RetainedLayerSpec::new(
           key~,
           frame=self.paint_bounds,
           content_revision=self.content_revision,
@@ -195,72 +140,6 @@ fn RenderNode::cached_layer_spec(self : RenderNode) -> CachedLayerSpec? {
 ///|
 fn RenderNode::repaint_boundary_cache_key(self : RenderNode) -> String {
   "element=\{self.element_id.value()};x=\{self.frame.origin.x};y=\{self.frame.origin.y};w=\{self.frame.size.width};h=\{self.frame.size.height}"
-}
-
-///|
-fn Array::has_current_cached_layer(
-  self : Array[CachedLayerState],
-  spec : CachedLayerSpec,
-) -> Bool {
-  self.any(layer => {
-    layer.key == spec.key && layer.content_revision == spec.content_revision
-  })
-}
-
-///|
-fn Array::record_current_cached_layer(
-  self : Array[CachedLayerState],
-  spec : CachedLayerSpec,
-) -> Unit {
-  for index in 0..<self.length() {
-    if self[index].key == spec.key {
-      self[index] = { key: spec.key, content_revision: spec.content_revision }
-      return
-    }
-  }
-  self.push({ key: spec.key, content_revision: spec.content_revision })
-}
-
-///|
-fn cached_layer_warmup_threshold() -> Int {
-  3
-}
-
-///|
-fn Array::cached_layer_visible_streak(
-  self : Array[CachedLayerAdmissionState],
-  spec : CachedLayerSpec,
-) -> Int {
-  for admission in self {
-    if admission.key == spec.key &&
-      admission.content_revision == spec.content_revision {
-      return admission.visible_streak
-    }
-  }
-  0
-}
-
-///|
-fn Array::record_cached_layer_admission(
-  self : Array[CachedLayerAdmissionState],
-  spec : CachedLayerSpec,
-  visible_streak : Int,
-) -> Unit {
-  for index in 0..<self.length() {
-    if self[index].key == spec.key {
-      self[index] = {
-        key: spec.key,
-        content_revision: spec.content_revision,
-        visible_streak,
-      }
-      return
-    }
-  }
-  self.push({
-    key: spec.key,
-    content_revision: spec.content_revision,
-    visible_streak,
-  })
 }
 
 ///|

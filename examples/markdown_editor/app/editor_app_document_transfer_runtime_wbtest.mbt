@@ -361,7 +361,7 @@ test "markdown editor runtime html export shortcut writes clipboard html" {
 
 ///|
 test "markdown editor runtime receives async clipboard import completion" {
-  let queue = @backend_common.ServiceAsyncQueue::new()
+  let queue = @backend_common_services.ServiceAsyncQueue::new()
   let services = markdown_editor_async_clipboard_read_services(queue)
   let app = MarkdownEditorApp::new()
   let runtime = app.runtime_with_services(services, width=980.0, height=640.0)
@@ -395,7 +395,7 @@ test "markdown editor runtime receives async clipboard import completion" {
 
 ///|
 test "markdown editor runtime receives async save as completion" {
-  let queue = @backend_common.ServiceAsyncQueue::new()
+  let queue = @backend_common_services.ServiceAsyncQueue::new()
   let services = markdown_editor_async_file_dialog_services(queue)
   let app = MarkdownEditorApp::new()
   app.set_document("# Async Save\n\nDraft")

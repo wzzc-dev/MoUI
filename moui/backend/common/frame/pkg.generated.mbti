@@ -1,0 +1,58 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/common/frame"
+
+import {
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct WindowFrameHooks {
+  prepare_frame : () -> Unit
+  finish_presented : (Bool) -> Unit
+  request_redraw : () -> Unit
+  sync_ime : () -> Unit
+}
+pub fn WindowFrameHooks::new(prepare_frame? : () -> Unit, finish_presented? : (Bool) -> Unit, request_redraw? : () -> Unit, sync_ime? : () -> Unit) -> Self
+
+pub struct WindowFrameState {
+  renderer : @render.RendererSession
+  hooks : WindowFrameHooks
+  surface_generation : Int
+  mut next_sequence : Int
+  mut current_token : @render.FrameToken?
+  mut presented_frames : Int
+  mut disposed : Bool
+}
+pub fn WindowFrameState::accept_present_completions(Self, Array[@render.RenderPresentCompletion]) -> Bool
+pub fn WindowFrameState::dispose(Self) -> Unit
+pub fn WindowFrameState::finish_submission(Self, @render.RenderFrameResult, Array[@render.RenderPresentCompletion]) -> Bool
+pub fn WindowFrameState::new(renderer~ : @render.RendererSession, surface_generation? : Int, hooks? : WindowFrameHooks) -> Self
+pub fn WindowFrameState::pending(Self) -> Bool
+pub fn WindowFrameState::prepare_submission(Self, @core.DrawFrame) -> @render.RenderFrameSubmission?
+pub fn WindowFrameState::presented_count(Self) -> Int
+pub fn WindowFrameState::renderer(Self) -> @render.RendererSession
+pub fn WindowFrameState::request_redraw(Self) -> Unit
+pub fn WindowFrameState::surface_generation(Self) -> Int
+pub fn WindowFrameState::sync_ime(Self) -> Unit
+
+pub struct WindowFrameStates {
+  // private fields
+}
+pub fn WindowFrameStates::attach(Self, @backend.WindowId, @render.RendererSession, surface_generation? : Int, hooks? : WindowFrameHooks) -> Bool
+pub fn WindowFrameStates::count(Self) -> Int
+pub fn WindowFrameStates::dispose_window(Self, @backend.WindowId) -> Bool
+pub fn WindowFrameStates::lookup(Self, @backend.WindowId) -> WindowFrameState?
+pub fn WindowFrameStates::new() -> Self
+pub fn WindowFrameStates::remove(Self, @backend.WindowId) -> WindowFrameState?
+pub fn WindowFrameStates::renderer(Self, @backend.WindowId) -> @render.RendererSession?
+
+// Type aliases
+
+// Traits
+

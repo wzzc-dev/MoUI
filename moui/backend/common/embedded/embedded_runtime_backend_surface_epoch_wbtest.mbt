@@ -7,9 +7,9 @@ test "surface detach cancels pending host service exactly once" {
     root=(@views.empty() : @core.View[Unit]),
     size=metrics.logical_size,
   )
-  let renderer = @render.WindowRenderer::new(
+  let renderer = @render.RendererSession::new(
     resize=_ => (),
-    render=_ => (),
+    render_frame=_ => @render.RenderFrameResult::new(presented=true),
     text_system=() => @core.TextSystem::fallback(),
     present_count=() => 0,
   )

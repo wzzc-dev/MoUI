@@ -133,19 +133,19 @@ fn files_inspector(
   height~ : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let content_width = markdown_editor_file_sidebar_content_width()
-  let recent_paths = app.recent_document_paths.get()
-  let file_filter_query = app.file_filter_query.get()
+  let recent_paths = app.recent_document_paths
+  let file_filter_query = app.file_filter_query
   let filtered_recent_paths = markdown_editor_filter_file_paths(
     recent_paths, file_filter_query,
   )
-  let working_directory = app.working_directory.get()
-  let tree_expanded = working_directory != "" && app.file_tree_expanded.get()
+  let working_directory = app.working_directory
+  let tree_expanded = working_directory != "" && app.file_tree_expanded
   let tree_items = markdown_editor_filter_tree_items(
-    app.directory_tree_items.get(),
+    app.directory_tree_items,
     file_filter_query,
   )
   let tree_expanded_paths = if file_filter_query.trim().to_owned() == "" {
-    app.expanded_tree_paths.get()
+    app.expanded_tree_paths
   } else {
     markdown_editor_tree_item_ids(tree_items)
   }
@@ -180,7 +180,7 @@ fn files_inspector(
     scroll_view(
       file_sidebar_recent_rows(
         filtered_recent_paths,
-        current_path=app.document_path.get(),
+        current_path=app.document_path,
         theme,
       ),
       width=content_width,
@@ -196,7 +196,7 @@ fn files_inspector(
     .foreground(theme.palette.muted),
     text(
       markdown_editor_file_sidebar_current_label(
-        path=app.document_path.get(),
+        path=app.document_path,
         fallback=session.active_heading,
         dirty=app.is_dirty(),
       ),
@@ -259,7 +259,6 @@ fn files_inspector(
           ),
           width=content_width,
           height=tree_scroll_height,
-          state=Some(app.file_tree_scroll),
         ),
       )
       if tree_items.length() == 0 {
@@ -574,7 +573,7 @@ fn outline_inspector(
 ) -> @moui.View[MarkdownEditorMsg] {
   let visible_outline = markdown_editor_folded_outline(
     session.outline,
-    app.folded_headings.get(),
+    app.folded_headings,
   )
   let active_index = markdown_editor_active_outline_index(
     session.outline,

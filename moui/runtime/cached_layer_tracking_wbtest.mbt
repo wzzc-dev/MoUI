@@ -1,6 +1,6 @@
 ///|
 fn runtime_test_cached_layer_source(
-  layer_index : @core.State[Int],
+  layer_index : Ref[Int],
 ) -> @core.View[Unit] {
   runtime_wb_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="RuntimeCachedLayerSource"),
@@ -11,7 +11,7 @@ fn runtime_test_cached_layer_source(
       )
     },
     paint=ctx => {
-      let index = layer_index.get()
+      let index = layer_index.val
       let commands : Array[@core.DrawCommand] = [
         @core.DrawCommand::FillRect(ctx.frame, @core.Color::black()),
       ]
@@ -35,7 +35,7 @@ fn runtime_test_cached_layer_source(
       match ctx.event {
         @core.AppEvent::Pointer(event) =>
           if ctx.frame.contains(event.position) {
-            layer_index.set(layer_index.get() + 1)
+            layer_index.val = layer_index.val + 1
             @core.ViewEventResult::message(())
           } else {
             @core.ViewEventResult::ignored()
@@ -48,7 +48,7 @@ fn runtime_test_cached_layer_source(
 
 ///|
 fn runtime_test_stable_cached_layer_source(
-  revision : @core.State[Int],
+  revision : Ref[Int],
 ) -> @core.View[Unit] {
   runtime_wb_fixture_view(
     identity=() => {
@@ -70,7 +70,7 @@ fn runtime_test_stable_cached_layer_source(
           @core.ViewPaintLayer::new(
             frame=ctx.frame,
             cache_key="runtime-stable-test-layer",
-            content_revision=revision.get(),
+            content_revision=revision.val,
             commands~,
           ),
         ],
@@ -84,7 +84,7 @@ fn runtime_test_stable_cached_layer_source(
       match ctx.event {
         @core.AppEvent::Pointer(event) =>
           if ctx.frame.contains(event.position) {
-            revision.set(revision.get() + 1)
+            revision.val = revision.val + 1
             @core.ViewEventResult::message(())
           } else {
             @core.ViewEventResult::ignored()
@@ -100,16 +100,16 @@ fn runtime_test_begin_cached_layer_count(
   commands : Array[@core.DrawCommand],
 ) -> Int {
   commands
-  .filter(command => command is @core.DrawCommand::BeginCachedLayer(_))
+  .filter(command => command is @core.DrawCommand::BeginRetainedLayer(_))
   .length()
 }
 
 ///|
-fn runtime_test_draw_cached_layer_count(
+fn runtime_test_retained_payload_count(
   commands : Array[@core.DrawCommand],
 ) -> Int {
   commands
-  .filter(command => command is @core.DrawCommand::DrawCachedLayer(_))
+  .filter(command => command is @core.DrawCommand::FillRect(_, _))
   .length()
 }
 
@@ -126,8 +126,8 @@ fn runtime_test_bump_cached_layer_revision(runtime : AppRuntime) -> Unit {
 }
 
 ///|
-test "runtime cached layer tracking is frame scoped for transient layers" {
-  let layer_index = @core.State::new(0)
+test "runtime retained layer declarations are frame scoped" {
+  let layer_index = Ref(0)
   let runtime = AppRuntime::new_view(
     root=runtime_test_cached_layer_source(layer_index),
     size=@core.Size::new(width=12.0, height=12.0),
@@ -137,40 +137,34 @@ test "runtime cached layer tracking is frame scoped for transient layers" {
     runtime_test_bump_cached_layer_revision(runtime)
   }
   let frame = runtime.draw_frame()
-  inspect(runtime_test_begin_cached_layer_count(frame.commands), content="0")
-  inspect(runtime_test_draw_cached_layer_count(frame.commands), content="0")
-  let count = runtime
-    .inspector_snapshot()
-    .runtime()
-    .dirty_state()
-    .cached_layer_count()
-  inspect(count, content="0")
+  inspect(runtime_test_begin_cached_layer_count(frame.commands), content="1")
+  inspect(runtime_test_retained_payload_count(frame.commands), content="1")
 }
 
 ///|
-test "runtime cached layer warms up before admission" {
-  let revision = @core.State::new(0)
+test "runtime retained layer payload is complete on every frame" {
+  let revision = Ref(0)
   let runtime = AppRuntime::new_view(
     root=runtime_test_stable_cached_layer_source(revision),
     size=@core.Size::new(width=12.0, height=12.0),
   )
   let first = runtime.draw_frame()
-  inspect(runtime_test_begin_cached_layer_count(first.commands), content="0")
-  inspect(runtime_test_draw_cached_layer_count(first.commands), content="0")
+  inspect(runtime_test_begin_cached_layer_count(first.commands), content="1")
+  inspect(runtime_test_retained_payload_count(first.commands), content="1")
   let second = runtime.draw_frame()
-  inspect(runtime_test_begin_cached_layer_count(second.commands), content="0")
-  inspect(runtime_test_draw_cached_layer_count(second.commands), content="0")
+  inspect(runtime_test_begin_cached_layer_count(second.commands), content="1")
+  inspect(runtime_test_retained_payload_count(second.commands), content="1")
   let third = runtime.draw_frame()
   inspect(runtime_test_begin_cached_layer_count(third.commands), content="1")
-  inspect(runtime_test_draw_cached_layer_count(third.commands), content="0")
+  inspect(runtime_test_retained_payload_count(third.commands), content="1")
   let fourth = runtime.draw_frame()
-  inspect(runtime_test_begin_cached_layer_count(fourth.commands), content="0")
-  inspect(runtime_test_draw_cached_layer_count(fourth.commands), content="1")
+  inspect(runtime_test_begin_cached_layer_count(fourth.commands), content="1")
+  inspect(runtime_test_retained_payload_count(fourth.commands), content="1")
 }
 
 ///|
-test "runtime cached layer revision change resets warmup" {
-  let revision = @core.State::new(0)
+test "runtime retained layer revision change keeps complete payload" {
+  let revision = Ref(0)
   let runtime = AppRuntime::new_view(
     root=runtime_test_stable_cached_layer_source(revision),
     size=@core.Size::new(width=12.0, height=12.0),
@@ -179,27 +173,27 @@ test "runtime cached layer revision change resets warmup" {
   ignore(runtime.draw_frame())
   ignore(runtime.draw_frame())
   inspect(
-    runtime_test_draw_cached_layer_count(runtime.draw_frame().commands),
+    runtime_test_begin_cached_layer_count(runtime.draw_frame().commands),
     content="1",
   )
   runtime_test_bump_cached_layer_revision(runtime)
   let first_changed = runtime.draw_frame()
   inspect(
     runtime_test_begin_cached_layer_count(first_changed.commands),
-    content="0",
+    content="1",
   )
   inspect(
-    runtime_test_draw_cached_layer_count(first_changed.commands),
-    content="0",
+    runtime_test_retained_payload_count(first_changed.commands),
+    content="1",
   )
   let second_changed = runtime.draw_frame()
   inspect(
     runtime_test_begin_cached_layer_count(second_changed.commands),
-    content="0",
+    content="1",
   )
   inspect(
-    runtime_test_draw_cached_layer_count(second_changed.commands),
-    content="0",
+    runtime_test_retained_payload_count(second_changed.commands),
+    content="1",
   )
   let third_changed = runtime.draw_frame()
   inspect(
@@ -207,16 +201,16 @@ test "runtime cached layer revision change resets warmup" {
     content="1",
   )
   inspect(
-    runtime_test_draw_cached_layer_count(third_changed.commands),
-    content="0",
+    runtime_test_retained_payload_count(third_changed.commands),
+    content="1",
   )
   let fourth_changed = runtime.draw_frame()
   inspect(
     runtime_test_begin_cached_layer_count(fourth_changed.commands),
-    content="0",
+    content="1",
   )
   inspect(
-    runtime_test_draw_cached_layer_count(fourth_changed.commands),
+    runtime_test_retained_payload_count(fourth_changed.commands),
     content="1",
   )
 }

@@ -15,7 +15,8 @@ Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 
 - App logic → `examples/<name>/app`; platform entrypoints stay thin wiring.
 - New built-in controls → concrete `@core.ViewNode` implementations in `moui/views`, constructed with `@core.View::from_node` (no new core view enum variants).
-- Cross-runtime protocols → `moui/core`; lifecycle trees → `moui/runtime`; backend protocols/state → `moui/backend` / `moui/backend/common`; render protocols/algorithms → `moui/render` / `moui/render/common`; concrete implementations stay in platform/renderer subpackages.
+- Cross-runtime protocols → `moui/core`; lifecycle trees → `moui/runtime`; backend protocols/state → `moui/backend` / `moui/backend/common`; render protocols/algorithms → `moui/render` / `moui/render/common`; concrete renderers live in independent `moui_*_renderer` modules.
+- Release closure: `wzzc-dev/moui` must not depend on concrete renderers, renderer bindings, diagnostic renderer stacks, or integration-test libraries. Composition roots declare their selected renderer module explicitly.
 - App deps: `wzzc-dev/moui` + domain facades + `views` only (no `runtime` / `render/*` / platform backends).
 - Mainline: Native Skia. Diagnostic: Native WGPU. Reclassify only with RFC.
 - Embedded-runtime product class: `experimental` (`ready=false`; code compiles, no usability/product commitment without matching-device evidence); `wzzc-dev/window` hosted entrypoints are canonical. Details: `docs/platform-readiness-declaration.md`, ADR 0021.
@@ -32,7 +33,7 @@ Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 | `moui/core` contracts | `docs/architecture-map.md`, `docs/invariants.md` | framework | `moon test moui/core --target native` + `moon info` if public API |
 | `moui/runtime` | `docs/architecture-map.md`, `docs/tea-program-model.md` | framework | `moon test moui/runtime --target native` |
 | `moui/backend`, `moui/backend/common`, platform backend | `docs/platform-host-contract.md`, platform notes | framework | root/common + affected backend tests |
-| `moui/render`, `moui/render/common`, concrete renderer, `moui_skia` | `docs/renderer-capability-report.md`, `moui_skia/AGENTS.md` | framework | root/common + affected renderer tests |
+| `moui/render`, `moui/render/common`, `moui_*_renderer`, `moui_skia` | `docs/renderer-capability-report.md`, `moui_skia/AGENTS.md` | framework | root/common + affected renderer tests |
 | Android / iOS / HarmonyOS embedded runtime backends | `docs/window-hosted-moui.md`, platform support doc | framework | path-triggered window-hosted evidence (not default daily) |
 | Theme / `moui_theme` / design systems | `docs/visual-theme-system.md` | framework | `sh scripts/check.sh --profile theme` |
 | Docs / guidance only | `docs/INDEX.md`, topic page | — | `node scripts/validate-guidance-consistency.mjs` |
@@ -53,6 +54,7 @@ Complex multi-package or platform work: write/update `docs/plans/active/<id>.md`
 | `docs/decisions/` | ADRs |
 | `docs/ai-sessions/` | Session logs (promote facts to `memories/repo/`) |
 | `checks/profiles.json` | Check profile catalog |
+| `checks/release-modules.json` | Published module directory/stage catalog |
 | `smoke/gates.json` | Smoke suite catalog |
 | `scripts/check.sh` | Primary check facade (`pr` / `daily` / `platform` / `theme`) |
 | `skills/` | Task workflows |
@@ -69,6 +71,7 @@ Pre-push static trio (every commit that touches guidance, API, or package layout
 ```sh
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-api-surface.mjs
+node scripts/validate-release-module-closures.mjs
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-renderer-capability-consistency.mjs
 node scripts/validate-doc-references.mjs

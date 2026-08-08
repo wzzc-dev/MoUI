@@ -72,7 +72,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
   environment? : @core.Environment = @core.Environment::neutral(),
 ) -> AppRuntime {
   let (initial_model, initial_effect) = program.runtime_init()
-  let model = @core.State::new(initial_model)
+  let model = Ref(initial_model)
   let program_runtime = ProgramRuntimeDiagnostics::new()
   let pending_messages : Array[Msg] = []
   let pending_index = Ref(0)
@@ -100,7 +100,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
   let sync_subscriptions = () => {
     syncing_subscriptions.val = true
     program_runtime.sync_subscriptions(
-      program.runtime_subscriptions(model.get()),
+      program.runtime_subscriptions(model.val),
       dispatch,
     )
     syncing_subscriptions.val = false
@@ -111,7 +111,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
         runtime.state.set_action_commands(
           ActionCommandMap::new(
             bindings=program
-              .runtime_commands(model.get())
+              .runtime_commands(model.val)
               .map(program_command => {
                 @core.CommandBinding::new(command=program_command.command(), handle=() => {
                   dispatch(program_command.message())
@@ -145,9 +145,13 @@ pub fn[Model, Msg] AppRuntime::new_program(
         pending_index.val = pending_index.val + 1
         processed_this_drain = processed_this_drain + 1
         program_runtime.record_dispatch()
-        let (next_model, effect) = program.runtime_update(model.get(), message)
+        let (next_model, effect) = program.runtime_update(model.val, message)
         program_runtime.record_update()
-        model.set(next_model)
+        model.val = next_model
+        match runtime_ref.val {
+          Some(runtime) => runtime.state.request_root_rebuild()
+          None => ()
+        }
         sync_commands()
         let effect_summary = effect_plan_summary(effect)
         let effect_count = run_effect(effect, dispatch, (descriptor, start) => {
@@ -183,9 +187,10 @@ pub fn[Model, Msg] AppRuntime::new_program(
   }
   let runtime = AppRuntime::{
     state: RuntimeState::new_view(
-      root=runtime_component_view(ctx => {
-        program.runtime_view(ctx.watch(model), ctx.view_environment())
-      }),
+      root=program.runtime_view(
+        model.val,
+        @core.ViewEnvironment::new(viewport_size=size, environment~),
+      ),
       size~,
       environment~,
       on_message=Some(dispatch),
@@ -196,6 +201,18 @@ pub fn[Model, Msg] AppRuntime::new_program(
     destroy_program_runtime_fn: Ref(() => ()),
   }
   runtime_ref.val = Some(runtime)
+  runtime.state.set_root_builder(() => {
+    adapt_view_for_runtime(
+      program.runtime_view(
+        model.val,
+        @core.ViewEnvironment::new(
+          viewport_size=runtime.state.size,
+          environment=runtime.state.environment,
+        ),
+      ),
+      dispatch,
+    )
+  })
   sync_commands()
   runtime.destroy_program_runtime_fn.val = () => {
     if program_active.val {
@@ -351,14 +368,6 @@ pub fn AppRuntime::draw_commands(self : AppRuntime) -> Array[@core.DrawCommand] 
 ///|
 pub fn AppRuntime::draw_frame(self : AppRuntime) -> @core.DrawFrame {
   self.state.build_draw_frame()
-}
-
-///|
-pub fn AppRuntime::invalidate_cached_layer_key(
-  self : AppRuntime,
-  key : String,
-) -> Unit {
-  self.state.invalidate_cached_layer_key(key)
 }
 
 ///|

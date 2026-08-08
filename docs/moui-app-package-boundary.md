@@ -272,7 +272,7 @@ Ordinary apps must not directly depend on:
 - `wzzc-dev/moui/backend`
 - `wzzc-dev/moui/render/*`
 - `wzzc-dev/moui/backend/{web,macos,windows,linux}`
-- concrete renderer packages; renderer factories belong in platform composition
+- concrete renderer packages; renderer providers belong in platform composition
   roots and are not dependencies of shared app packages.
 - `moui_theme/*`, unless the app itself is a design-system addon or preview app.
 
@@ -518,8 +518,8 @@ Desktop/Web/Wechat roots import `wzzc-dev/moui/runtime`, one concrete renderer p
 and one platform backend, then use
 `@runtime.run_app(...)`, `.render(...)` or `.render_all(...)`, and
 `.backend(...).run()`. Platform options are
-captured by `backend/<platform>.entry(...)`; renderer options are captured by
-the renderer factory. A composition root never imports a renderer-specific
+captured by `backend/<platform>.entry(...)`; renderer options and native-handle
+policy are captured by the renderer provider. A composition root never imports a renderer-specific
 backend subpackage.
 
 Moon `0.1.20260724` does not turn `pub using` aliases into wasm exports: the
@@ -533,7 +533,7 @@ compiled wasm exports.
 
 The three embedded runtime routes use the matching `wzzc-dev/window` template and a
 `*_window_hosted` entrypoint. Their `main.mbt` files construct the program and
-compose renderer factories with the platform `entry()` through `AppBuilder`.
+compose renderer providers with the platform `entry()` through `AppBuilder`.
 `HostCmd` and `ApplicationHandler` remain the only path for lifecycle, surface,
 and input callbacks; mobile executable roots do not export or forward a second
 embedding ABI.

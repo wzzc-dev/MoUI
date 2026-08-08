@@ -147,70 +147,13 @@ test "virtual node layout constrains children and inspector keeps identity" {
 }
 
 ///|
-test "virtual node component builds child and reports component inspector state" {
-  let root : @core.View[Unit] = @views.component(_ctx => {
-    runtime_test_rect(width=32.0, height=18.0, color=@core.Color::blue())
-  })
-  let runtime = AppRuntime::new_view(
-    root~,
-    size=@core.Size::new(width=100.0, height=100.0),
-  )
-  let layout = runtime.layout()
-  match layout.children.get(0) {
-    Some(child) =>
-      if child.frame.size != @core.Size::new(width=32.0, height=18.0) {
-        fail("expected component virtual node to lay out built child")
-      }
-    None => fail("expected component virtual node to build child")
-  }
-  let snapshot = runtime.inspector_snapshot()
-  if snapshot.view_tree().root_kind() != "Component" ||
-    snapshot.view_tree().component_count() != 1 {
-    fail("expected generic virtual node component in inspector")
-  }
-}
-
-///|
-test "virtual node component watch rebuilds built child" {
-  let width_state = @core.State::new(24.0)
-  let root : @core.View[Unit] = @views.component(ctx => {
-    runtime_test_rect(
-      width=ctx.watch(width_state),
-      height=10.0,
-      color=@core.Color::blue(),
-    )
-  })
-  let runtime = AppRuntime::new_view(
-    root~,
-    size=@core.Size::new(width=100.0, height=100.0),
-  )
-  match runtime.layout().children.get(0) {
-    Some(child) =>
-      if child.frame.size != @core.Size::new(width=24.0, height=10.0) {
-        fail("expected initial component child size")
-      }
-    None => fail("expected initial component child")
-  }
-  width_state.set(48.0)
-  match runtime.layout().children.get(0) {
-    Some(child) =>
-      if child.frame.size != @core.Size::new(width=48.0, height=10.0) {
-        fail("expected watched state to rebuild component child")
-      }
-    None => fail("expected rebuilt component child")
-  }
-}
-
-///|
-test "state-backed scroll rebuild is drained by a committed inspector snapshot" {
+test "runtime-slot scroll dispatches its resulting offset" {
   let received : Array[@core.Point] = []
-  let state = @core.ScrollState::new()
   let runtime = AppRuntime::new_view(
     root=@views.scroll_view(
       runtime_test_rect(width=20.0, height=200.0, color=@core.Color::blue()),
       width=20.0,
       height=40.0,
-      state=Some(state),
       on_scroll=Some(delta => delta),
     ),
     size=@core.Size::new(width=20.0, height=40.0),
@@ -226,10 +169,7 @@ test "state-backed scroll rebuild is drained by a committed inspector snapshot" 
       ),
     ),
   )
-  if state.offset() != @core.Point::new(x=0.0, y=12.0) {
-    fail("expected virtual node scroll to update scroll state")
-  }
-  if received != [@core.Point::new(x=0.0, y=-12.0)] {
+  if received != [@core.Point::new(x=0.0, y=12.0)] {
     fail("expected virtual node scroll to dispatch on_scroll message")
   }
   let snapshot = runtime.inspector_snapshot()
@@ -725,7 +665,6 @@ test "runtime dispatches semantic activation through typed action route" {
 
 ///|
 test "runtime scrolls nearest scroll view to keyed descendant" {
-  let state = @core.ScrollState::new()
   let target : @core.View[Unit] = @views.text(
     "Target",
     width=100.0,
@@ -743,7 +682,6 @@ test "runtime scrolls nearest scroll view to keyed descendant" {
   let runtime = AppRuntime::new_view(
     root=@views.scroll_view(
       content,
-      state=Some(state),
       width=100.0,
       height=100.0,
     ),
@@ -752,7 +690,7 @@ test "runtime scrolls nearest scroll view to keyed descendant" {
   assert_true(
     runtime.scroll_to_key("target", alignment=@core.ScrollAlignment::Start),
   )
-  assert_true(state.offset().y == 240.0)
+  assert_true(runtime.layout().children[0].frame.origin.y == -240.0)
   assert_true(!runtime.scroll_to_key("missing"))
 }
 
@@ -1334,7 +1272,6 @@ test "runtime clears hover on a button nested in an overlay" {
 /// region it actually paints.
 test "scroll_view child paint_bounds does not spill over earlier siblings" {
   let mut field_value = ""
-  let state = @core.ScrollState::new()
   // Sidebar: search field on top, scrollable story list below. The list is
   // much taller than the viewport so scrolling pushes its paint region up.
   let stories : Array[@core.View[String]] = []
@@ -1363,7 +1300,6 @@ test "scroll_view child paint_bounds does not spill over earlier siblings" {
         @views.column(stories, spacing=4.0),
         width=180.0,
         height=200.0,
-        state=Some(state),
       ),
     ],
     spacing=8.0,
@@ -1407,7 +1343,15 @@ test "scroll_view child paint_bounds does not spill over earlier siblings" {
   }
   // Scroll the list down so its child paint_bounds would historically grow up
   // over the search field.
-  state.scroll_to(x=0.0, y=300.0)
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=160.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@core.Point::new(x=0.0, y=-300.0),
+      ),
+    ),
+  )
   ignore(runtime.draw_frame())
   // Click the search field again. Without the fix, the scroll list's
   // paint_bounds covers the field and the click lands on a story button.

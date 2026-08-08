@@ -5,20 +5,16 @@ test "android window-hosted host-sim creates session and presents" {
   let pointer_count = Ref(0)
   let binding = AndroidSurfaceBinding::new(create_renderer=(_surface, _metrics) => {
     Some(
-      @render.RendererResolution::new(
-        renderer=@render.WindowRenderer::new(
-          resize=_ => (),
-          render=_ => (),
-          render_frame=Some(_frame => {
-            render_count.val = render_count.val + 1
-            @render.RenderFrameResult::new(presented=true)
-          }),
-          drain_present_completions=Some(() => []),
-          text_system=() => @core.TextSystem::fallback(),
-          present_count=() => render_count.val,
-          dispose=() => dispose_count.val = dispose_count.val + 1,
-        ),
-        image_loader=None,
+      @render.RendererSession::new(
+        resize=_ => (),
+        render_frame=_frame => {
+          render_count.val = render_count.val + 1
+          @render.RenderFrameResult::new(presented=true)
+        },
+        drain_events=Some(() => []),
+        text_system=() => @core.TextSystem::fallback(),
+        present_count=() => render_count.val,
+        dispose=() => dispose_count.val = dispose_count.val + 1,
       ),
     )
   })

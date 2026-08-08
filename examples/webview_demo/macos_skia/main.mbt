@@ -9,7 +9,9 @@ fn main {
     "MoUI WebView Demo",
     @webview_demo.runtime(commands~, capabilities~),
   )
-  .render_all(@render_skia.from_env())
+  .render_all(
+    @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS),
+  )
   .backend(
     @macos_backend.entry(
       options=@macos_backend.MacosHostAppOptions::new(platform_view_plugins=[

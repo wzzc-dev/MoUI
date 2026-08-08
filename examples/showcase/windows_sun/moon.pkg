@@ -1,7 +1,7 @@
 import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/windows" @windows_backend,
-  "wzzc-dev/moui/render/sun" @render_sun,
+  "wzzc-dev/moui_sun_renderer" @render_sun,
   "examples/showcase",
 }
 

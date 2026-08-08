@@ -13,9 +13,9 @@ pub(all) struct ShowcaseModel {
   /// Mobile list/detail: false shows the catalog list for the workspace.
   mobile_showing_detail : Bool
   /// Left-rail story list scroll (desktop) / mobile catalog scroll.
-  sidebar_scroll : @state.ScrollState
+  sidebar_scroll : @geometry.Point
   /// Right-hand detail canvas scroll.
-  detail_scroll : @state.ScrollState
+  detail_scroll : @geometry.Point
   diagnostics_input : @diagnostics.ShowcaseDiagnosticsInput
   components : @components.ComponentGalleryModel
   patterns : @patterns.Model
@@ -33,6 +33,8 @@ pub(all) enum ShowcaseMsg {
   SelectWorkspace(Workspace)
   NavQueryChanged(String)
   ShowMobileCatalog
+  SidebarScrolled(@geometry.Point)
+  DetailScrolled(@geometry.Point)
   ComponentsMsg(@components.ComponentGalleryMsg)
   PatternsMsg(@patterns.Msg)
   PlatformMsg(@platform.Msg)
@@ -114,8 +116,8 @@ pub fn ShowcaseModel::new(
     nav_query: "",
     // Deep links and mobile default land on detail; empty list is opt-in.
     mobile_showing_detail: true,
-    sidebar_scroll: @state.ScrollState::new(),
-    detail_scroll: @state.ScrollState::new(),
+    sidebar_scroll: @geometry.Point::new(x=0.0, y=0.0),
+    detail_scroll: @geometry.Point::new(x=0.0, y=0.0),
     diagnostics_input,
     components,
     patterns,

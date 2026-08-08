@@ -48,8 +48,7 @@ pub(all) struct CodeEditorModel {
   language_id : String
   mode : CodeEditorMode
   active_panel : CodeEditorSidePanel?
-  editor_scroll : @state.ScrollState
-  diff_scroll : @state.ScrollState
+  editor_scroll : @geometry.Point
   find_visible : Bool
   completion_visible : Bool
   cursors : Array[CodeCursor]
@@ -69,6 +68,7 @@ pub(all) enum CodeEditorMsg {
   SourceChanged(String)
   InsertText(String)
   SelectionChanged(Int, @text.TextRange?)
+  EditorScrollChanged(@geometry.Point)
   SetFindQuery(String)
   SetReplaceText(String)
   FindNext
@@ -103,8 +103,7 @@ pub fn CodeEditorModel::new() -> CodeEditorModel {
     language_id: "moonbit",
     mode: SourceEditor,
     active_panel: None,
-    editor_scroll: @state.ScrollState::new(),
-    diff_scroll: @state.ScrollState::new(),
+    editor_scroll: @geometry.Point::new(x=0.0, y=0.0),
     find_visible: false,
     completion_visible: false,
     cursors: [
@@ -219,6 +218,7 @@ pub fn update(
         selection: range,
         bracket_match: code_bracket_match(model.source, position),
       }
+    EditorScrollChanged(offset) => { ..model, editor_scroll: offset }
     SetFindQuery(value) => model.with_find(value)
     SetReplaceText(value) => model.with_replace(value)
     FindNext => model.select_next_match()

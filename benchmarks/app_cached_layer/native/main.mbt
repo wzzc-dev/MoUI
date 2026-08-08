@@ -28,7 +28,7 @@ struct CachedFrameSample {
   damage_rect_frame_count : Int
   damage_empty_count : Int
   begin_cached_layer_count : Int
-  draw_cached_layer_count : Int
+  end_retained_layer_count : Int
   overlay_only_frame_count : Int
   rebuild_pass_count : Int
   layout_pass_count : Int
@@ -58,17 +58,17 @@ struct CachedRunResult {
   damage_rect_frame_count : Int
   damage_empty_count : Int
   begin_cached_layer_count : Int
-  draw_cached_layer_count : Int
+  end_retained_layer_count : Int
   overlay_only_frame_count : Int
   rebuild_pass_count : Int
   layout_pass_count : Int
   paint_pass_count : Int
   draw_command_build_count : Int
   initial_begin_cached_layer_count : Int
-  initial_draw_cached_layer_count : Int
+  initial_end_retained_layer_count : Int
   initial_cache_update_count : Int
   warmup_begin_cached_layer_count : Int
-  warmup_draw_cached_layer_count : Int
+  warmup_end_retained_layer_count : Int
   warmup_cache_hit_count : Int
   warmup_cache_update_count : Int
   first_damage_full_reason : String
@@ -196,21 +196,6 @@ fn app_bench_pipeline_delta(
   }
 }
 
-///|
-fn app_bench_pipeline_plus(
-  left : AppBenchPipelineCounters,
-  right : AppBenchPipelineCounters,
-) -> AppBenchPipelineCounters {
-  {
-    rebuild_pass_count: left.rebuild_pass_count + right.rebuild_pass_count,
-    layout_pass_count: left.layout_pass_count + right.layout_pass_count,
-    paint_pass_count: left.paint_pass_count + right.paint_pass_count,
-    draw_command_build_count: left.draw_command_build_count +
-    right.draw_command_build_count,
-  }
-}
-
-///|
 fn app_bench_damage_full_count(damage : @core.DamageRegion) -> Int {
   if damage.kind() == "full" {
     1
@@ -255,7 +240,7 @@ fn app_bench_begin_cached_layer_count(
 ) -> Int {
   let mut count = 0
   for command in commands {
-    if command is @core.DrawCommand::BeginCachedLayer(_) {
+    if command is @core.DrawCommand::BeginRetainedLayer(_) {
       count = count + 1
     }
   }
@@ -263,12 +248,12 @@ fn app_bench_begin_cached_layer_count(
 }
 
 ///|
-fn app_bench_draw_cached_layer_count(
+fn app_bench_end_retained_layer_count(
   commands : Array[@core.DrawCommand],
 ) -> Int {
   let mut count = 0
   for command in commands {
-    if command is @core.DrawCommand::DrawCachedLayer(_) {
+    if command is @core.DrawCommand::EndRetainedLayer(_) {
       count = count + 1
     }
   }
@@ -284,99 +269,42 @@ fn app_bench_cached_frame(
   let pipeline_before = app_bench_pipeline_counters(runtime)
   let draw_start = app_bench_now_ms()
   let frame = runtime.draw_frame()
-  let mut draw_ms = app_bench_now_ms() - draw_start
-  let mut submitted_frames = 1
-  let mut command_count_sum = frame.commands.length()
-  let mut command_count_max = frame.commands.length()
-  let mut damage_rect_count_sum = frame.damage.rect_count()
-  let mut damage_rect_count_max = frame.damage.rect_count()
-  let mut damage_full_count = app_bench_damage_full_count(frame.damage)
-  let mut damage_rect_frame_count = app_bench_damage_rect_frame_count(
+  let draw_ms = app_bench_now_ms() - draw_start
+  let submitted_frames = 1
+  let command_count_sum = frame.commands.length()
+  let command_count_max = frame.commands.length()
+  let damage_rect_count_sum = frame.damage.rect_count()
+  let damage_rect_count_max = frame.damage.rect_count()
+  let damage_full_count = app_bench_damage_full_count(frame.damage)
+  let damage_rect_frame_count = app_bench_damage_rect_frame_count(
     frame.damage,
   )
-  let mut damage_empty_count = app_bench_damage_empty_count(frame.damage)
-  let mut begin_cached_layer_count = app_bench_begin_cached_layer_count(
+  let damage_empty_count = app_bench_damage_empty_count(frame.damage)
+  let begin_cached_layer_count = app_bench_begin_cached_layer_count(
     frame.commands,
   )
-  let mut draw_cached_layer_count = app_bench_draw_cached_layer_count(
+  let end_retained_layer_count = app_bench_end_retained_layer_count(
     frame.commands,
   )
-  let mut first_damage_full_reason = app_bench_first_full_reason(
+  let first_damage_full_reason = app_bench_first_full_reason(
     "",
     frame.damage,
   )
   let render_start = app_bench_now_ms()
   let result = renderer.render_frame(frame)
-  let mut render_ms = app_bench_now_ms() - render_start
-  let mut cache_hit_count = result.cache_hit_count
-  let mut cache_miss_count = result.cache_miss_count
-  let mut cache_update_count = result.cache_update_count
-  let mut cache_evict_count = result.cache_evict_count
-  let mut present_count = if result.presented { 1 } else { 0 }
-  let mut followup_count = 0
-  let mut pipeline = app_bench_pipeline_delta(
+  let render_ms = app_bench_now_ms() - render_start
+  let cache_hit_count = result.cache_hit_count
+  let cache_miss_count = result.cache_miss_count
+  let cache_update_count = result.cache_update_count
+  let cache_evict_count = result.cache_evict_count
+  let present_count = if result.presented { 1 } else { 0 }
+  let followup_count = 0
+  let pipeline = app_bench_pipeline_delta(
     pipeline_before,
     app_bench_pipeline_counters(runtime),
   )
-  let mut pending_result = result
-  while !pending_result.presented && followup_count < 32 {
-    if pending_result.cache_miss_count == 0 ||
-      pending_result.missing_layer_keys.length() == 0 {
-      fail_bench(
-        "\{label} produced an unpresented frame without cache-miss keys",
-      )
-    }
-    for key in pending_result.missing_layer_keys {
-      runtime.invalidate_cached_layer_key(key)
-    }
-    followup_count = followup_count + 1
-    submitted_frames = submitted_frames + 1
-    let follow_pipeline_before = app_bench_pipeline_counters(runtime)
-    let follow_draw_start = app_bench_now_ms()
-    let follow_frame = runtime.draw_frame()
-    draw_ms = draw_ms + app_bench_now_ms() - follow_draw_start
-    command_count_sum = command_count_sum + follow_frame.commands.length()
-    command_count_max = command_count_max.max(follow_frame.commands.length())
-    damage_rect_count_sum = damage_rect_count_sum +
-      follow_frame.damage.rect_count()
-    damage_rect_count_max = damage_rect_count_max.max(
-      follow_frame.damage.rect_count(),
-    )
-    damage_full_count = damage_full_count +
-      app_bench_damage_full_count(follow_frame.damage)
-    damage_rect_frame_count = damage_rect_frame_count +
-      app_bench_damage_rect_frame_count(follow_frame.damage)
-    damage_empty_count = damage_empty_count +
-      app_bench_damage_empty_count(follow_frame.damage)
-    begin_cached_layer_count = begin_cached_layer_count +
-      app_bench_begin_cached_layer_count(follow_frame.commands)
-    draw_cached_layer_count = draw_cached_layer_count +
-      app_bench_draw_cached_layer_count(follow_frame.commands)
-    first_damage_full_reason = app_bench_first_full_reason(
-      first_damage_full_reason,
-      follow_frame.damage,
-    )
-    let follow_render_start = app_bench_now_ms()
-    let follow_result = renderer.render_frame(follow_frame)
-    render_ms = render_ms + app_bench_now_ms() - follow_render_start
-    cache_hit_count = cache_hit_count + follow_result.cache_hit_count
-    cache_miss_count = cache_miss_count + follow_result.cache_miss_count
-    cache_update_count = cache_update_count + follow_result.cache_update_count
-    cache_evict_count = cache_evict_count + follow_result.cache_evict_count
-    pipeline = app_bench_pipeline_plus(
-      pipeline,
-      app_bench_pipeline_delta(
-        follow_pipeline_before,
-        app_bench_pipeline_counters(runtime),
-      ),
-    )
-    if follow_result.presented {
-      present_count = present_count + 1
-    }
-    pending_result = follow_result
-  }
-  if !pending_result.presented {
-    fail_bench("\{label} cache-miss follow-up frame was not presented")
+  if !result.presented {
+    fail_bench("\{label} renderer did not present a self-contained frame")
   }
   let overlay_only_frame_count = if cache_update_count == 0 &&
     cache_evict_count == 0 &&
@@ -403,7 +331,7 @@ fn app_bench_cached_frame(
     damage_rect_frame_count,
     damage_empty_count,
     begin_cached_layer_count,
-    draw_cached_layer_count,
+    end_retained_layer_count,
     overlay_only_frame_count,
     rebuild_pass_count: pipeline.rebuild_pass_count,
     layout_pass_count: pipeline.layout_pass_count,
@@ -579,7 +507,7 @@ fn app_bench_run_cached(
     "\{label} initial",
   )
   let mut warmup_begin_cached_layer_count = 0
-  let mut warmup_draw_cached_layer_count = 0
+  let mut warmup_end_retained_layer_count = 0
   let mut warmup_cache_hit_count = 0
   let mut warmup_cache_update_count = 0
   for index in 0..<warmup {
@@ -591,8 +519,8 @@ fn app_bench_run_cached(
     )
     warmup_begin_cached_layer_count = warmup_begin_cached_layer_count +
       warmup_sample.begin_cached_layer_count
-    warmup_draw_cached_layer_count = warmup_draw_cached_layer_count +
-      warmup_sample.draw_cached_layer_count
+    warmup_end_retained_layer_count = warmup_end_retained_layer_count +
+      warmup_sample.end_retained_layer_count
     warmup_cache_hit_count = warmup_cache_hit_count +
       warmup_sample.cache_hit_count
     warmup_cache_update_count = warmup_cache_update_count +
@@ -615,7 +543,7 @@ fn app_bench_run_cached(
   let mut damage_rect_frame_count = 0
   let mut damage_empty_count = 0
   let mut begin_cached_layer_count = 0
-  let mut draw_cached_layer_count = 0
+  let mut end_retained_layer_count = 0
   let mut overlay_only_frame_count = 0
   let mut rebuild_pass_count = 0
   let mut layout_pass_count = 0
@@ -646,8 +574,8 @@ fn app_bench_run_cached(
     damage_empty_count = damage_empty_count + sample.damage_empty_count
     begin_cached_layer_count = begin_cached_layer_count +
       sample.begin_cached_layer_count
-    draw_cached_layer_count = draw_cached_layer_count +
-      sample.draw_cached_layer_count
+    end_retained_layer_count = end_retained_layer_count +
+      sample.end_retained_layer_count
     overlay_only_frame_count = overlay_only_frame_count +
       sample.overlay_only_frame_count
     rebuild_pass_count = rebuild_pass_count + sample.rebuild_pass_count
@@ -685,17 +613,17 @@ fn app_bench_run_cached(
     damage_rect_frame_count,
     damage_empty_count,
     begin_cached_layer_count,
-    draw_cached_layer_count,
+    end_retained_layer_count,
     overlay_only_frame_count,
     rebuild_pass_count,
     layout_pass_count,
     paint_pass_count,
     draw_command_build_count,
     initial_begin_cached_layer_count: initial_sample.begin_cached_layer_count,
-    initial_draw_cached_layer_count: initial_sample.draw_cached_layer_count,
+    initial_end_retained_layer_count: initial_sample.end_retained_layer_count,
     initial_cache_update_count: initial_sample.cache_update_count,
     warmup_begin_cached_layer_count,
-    warmup_draw_cached_layer_count,
+    warmup_end_retained_layer_count,
     warmup_cache_hit_count,
     warmup_cache_update_count,
     first_damage_full_reason,
@@ -799,7 +727,7 @@ fn app_bench_speedup(full : FullRunResult, cached : CachedRunResult) -> Double {
 
 ///|
 fn app_bench_cached_json(result : CachedRunResult) -> String {
-  "{\"label\":\"\{result.label}\",\"frames\":\{result.frames},\"submitted_frames\":\{result.submitted_frames},\"avg_draw_ms\":\{app_bench_avg(result.elapsed_draw_ms, result.frames)},\"avg_render_ms\":\{app_bench_avg(result.elapsed_render_ms, result.frames)},\"avg_total_ms\":\{app_bench_avg(result.total_ms(), result.frames)},\"cache_hit_count\":\{result.cache_hit_count},\"cache_miss_count\":\{result.cache_miss_count},\"cache_update_count\":\{result.cache_update_count},\"cache_evict_count\":\{result.cache_evict_count},\"present_count\":\{result.present_count},\"followup_count\":\{result.followup_count},\"overlay_only_frames\":\{result.overlay_only_frame_count},\"avg_command_count\":\{app_bench_avg_int(result.command_count_sum, result.frames)},\"max_command_count\":\{result.command_count_max},\"rebuild_pass_count\":\{result.rebuild_pass_count},\"layout_pass_count\":\{result.layout_pass_count},\"paint_pass_count\":\{result.paint_pass_count},\"draw_command_build_count\":\{result.draw_command_build_count},\"avg_rebuild_pass_count\":\{app_bench_avg_int(result.rebuild_pass_count, result.frames)},\"avg_layout_pass_count\":\{app_bench_avg_int(result.layout_pass_count, result.frames)},\"avg_paint_pass_count\":\{app_bench_avg_int(result.paint_pass_count, result.frames)},\"avg_draw_command_build_count\":\{app_bench_avg_int(result.draw_command_build_count, result.frames)},\"avg_damage_rect_count\":\{app_bench_avg_int(result.damage_rect_count_sum, result.frames)},\"max_damage_rect_count\":\{result.damage_rect_count_max},\"damage_full_count\":\{result.damage_full_count},\"damage_rect_frame_count\":\{result.damage_rect_frame_count},\"damage_empty_count\":\{result.damage_empty_count},\"begin_cached_layer_count\":\{result.begin_cached_layer_count},\"draw_cached_layer_count\":\{result.draw_cached_layer_count},\"initial_begin_cached_layer_count\":\{result.initial_begin_cached_layer_count},\"initial_draw_cached_layer_count\":\{result.initial_draw_cached_layer_count},\"initial_cache_update_count\":\{result.initial_cache_update_count},\"warmup_begin_cached_layer_count\":\{result.warmup_begin_cached_layer_count},\"warmup_draw_cached_layer_count\":\{result.warmup_draw_cached_layer_count},\"warmup_cache_hit_count\":\{result.warmup_cache_hit_count},\"warmup_cache_update_count\":\{result.warmup_cache_update_count},\"first_damage_full_reason\":\"\{result.first_damage_full_reason}\"}"
+  "{\"label\":\"\{result.label}\",\"frames\":\{result.frames},\"submitted_frames\":\{result.submitted_frames},\"avg_draw_ms\":\{app_bench_avg(result.elapsed_draw_ms, result.frames)},\"avg_render_ms\":\{app_bench_avg(result.elapsed_render_ms, result.frames)},\"avg_total_ms\":\{app_bench_avg(result.total_ms(), result.frames)},\"cache_hit_count\":\{result.cache_hit_count},\"cache_miss_count\":\{result.cache_miss_count},\"cache_update_count\":\{result.cache_update_count},\"cache_evict_count\":\{result.cache_evict_count},\"present_count\":\{result.present_count},\"followup_count\":\{result.followup_count},\"overlay_only_frames\":\{result.overlay_only_frame_count},\"avg_command_count\":\{app_bench_avg_int(result.command_count_sum, result.frames)},\"max_command_count\":\{result.command_count_max},\"rebuild_pass_count\":\{result.rebuild_pass_count},\"layout_pass_count\":\{result.layout_pass_count},\"paint_pass_count\":\{result.paint_pass_count},\"draw_command_build_count\":\{result.draw_command_build_count},\"avg_rebuild_pass_count\":\{app_bench_avg_int(result.rebuild_pass_count, result.frames)},\"avg_layout_pass_count\":\{app_bench_avg_int(result.layout_pass_count, result.frames)},\"avg_paint_pass_count\":\{app_bench_avg_int(result.paint_pass_count, result.frames)},\"avg_draw_command_build_count\":\{app_bench_avg_int(result.draw_command_build_count, result.frames)},\"avg_damage_rect_count\":\{app_bench_avg_int(result.damage_rect_count_sum, result.frames)},\"max_damage_rect_count\":\{result.damage_rect_count_max},\"damage_full_count\":\{result.damage_full_count},\"damage_rect_frame_count\":\{result.damage_rect_frame_count},\"damage_empty_count\":\{result.damage_empty_count},\"begin_cached_layer_count\":\{result.begin_cached_layer_count},\"end_retained_layer_count\":\{result.end_retained_layer_count},\"initial_begin_cached_layer_count\":\{result.initial_begin_cached_layer_count},\"initial_end_retained_layer_count\":\{result.initial_end_retained_layer_count},\"initial_cache_update_count\":\{result.initial_cache_update_count},\"warmup_begin_cached_layer_count\":\{result.warmup_begin_cached_layer_count},\"warmup_end_retained_layer_count\":\{result.warmup_end_retained_layer_count},\"warmup_cache_hit_count\":\{result.warmup_cache_hit_count},\"warmup_cache_update_count\":\{result.warmup_cache_update_count},\"first_damage_full_reason\":\"\{result.first_damage_full_reason}\"}"
 }
 
 ///|
@@ -814,7 +742,7 @@ fn app_bench_print_scenario(
   full : FullRunResult,
 ) -> Unit {
   println(
-    "MoUI real app cached layer benchmark scenario=\{label} frames=\{cached.frames} cached_avg_ms=\{app_bench_avg(cached.total_ms(), cached.frames)} full_avg_ms=\{app_bench_avg(full.total_ms(), full.frames)} speedup=\{app_bench_speedup(full, cached)} cache_hits=\{cached.cache_hit_count} cache_misses=\{cached.cache_miss_count} cache_updates=\{cached.cache_update_count} begin_layers=\{cached.begin_cached_layer_count} draw_layers=\{cached.draw_cached_layer_count} overlay_only_frames=\{cached.overlay_only_frame_count} initial_begin_layers=\{cached.initial_begin_cached_layer_count} warmup_draw_layers=\{cached.warmup_draw_cached_layer_count} avg_cached_commands=\{app_bench_avg_int(cached.command_count_sum, cached.frames)} avg_full_commands=\{app_bench_avg_int(full.command_count_sum, full.frames)} avg_cached_rebuilds=\{app_bench_avg_int(cached.rebuild_pass_count, cached.frames)} avg_full_rebuilds=\{app_bench_avg_int(full.rebuild_pass_count, full.frames)} avg_cached_layouts=\{app_bench_avg_int(cached.layout_pass_count, cached.frames)} avg_full_layouts=\{app_bench_avg_int(full.layout_pass_count, full.frames)} avg_cached_paints=\{app_bench_avg_int(cached.paint_pass_count, cached.frames)} avg_full_paints=\{app_bench_avg_int(full.paint_pass_count, full.frames)} avg_cached_draw_builds=\{app_bench_avg_int(cached.draw_command_build_count, cached.frames)} avg_full_draw_builds=\{app_bench_avg_int(full.draw_command_build_count, full.frames)} avg_damage_rects=\{app_bench_avg_int(cached.damage_rect_count_sum, cached.frames)} damage_full_frames=\{cached.damage_full_count} first_full_reason=\{cached.first_damage_full_reason}",
+    "MoUI real app cached layer benchmark scenario=\{label} frames=\{cached.frames} cached_avg_ms=\{app_bench_avg(cached.total_ms(), cached.frames)} full_avg_ms=\{app_bench_avg(full.total_ms(), full.frames)} speedup=\{app_bench_speedup(full, cached)} cache_hits=\{cached.cache_hit_count} cache_misses=\{cached.cache_miss_count} cache_updates=\{cached.cache_update_count} begin_layers=\{cached.begin_cached_layer_count} end_layers=\{cached.end_retained_layer_count} overlay_only_frames=\{cached.overlay_only_frame_count} initial_begin_layers=\{cached.initial_begin_cached_layer_count} warmup_end_layers=\{cached.warmup_end_retained_layer_count} avg_cached_commands=\{app_bench_avg_int(cached.command_count_sum, cached.frames)} avg_full_commands=\{app_bench_avg_int(full.command_count_sum, full.frames)} avg_cached_rebuilds=\{app_bench_avg_int(cached.rebuild_pass_count, cached.frames)} avg_full_rebuilds=\{app_bench_avg_int(full.rebuild_pass_count, full.frames)} avg_cached_layouts=\{app_bench_avg_int(cached.layout_pass_count, cached.frames)} avg_full_layouts=\{app_bench_avg_int(full.layout_pass_count, full.frames)} avg_cached_paints=\{app_bench_avg_int(cached.paint_pass_count, cached.frames)} avg_full_paints=\{app_bench_avg_int(full.paint_pass_count, full.frames)} avg_cached_draw_builds=\{app_bench_avg_int(cached.draw_command_build_count, cached.frames)} avg_full_draw_builds=\{app_bench_avg_int(full.draw_command_build_count, full.frames)} avg_damage_rects=\{app_bench_avg_int(cached.damage_rect_count_sum, cached.frames)} damage_full_frames=\{cached.damage_full_count} first_full_reason=\{cached.first_damage_full_reason}",
   )
   println(
     "{\"benchmark\":\"moui-real-app-cached-layer\",\"scenario\":\"\{label}\",\"cached\":\{app_bench_cached_json(cached)},\"full_repaint\":\{app_bench_full_json(full)},\"speedup\":\{app_bench_speedup(full, cached)}}",

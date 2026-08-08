@@ -1,0 +1,12 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
+}
+
+supported_targets = "native"
+
+options(
+  link: { "native": { "cc-link-flags": "-lz" } },
+  targets: { },
+)

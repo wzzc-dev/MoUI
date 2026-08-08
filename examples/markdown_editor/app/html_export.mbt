@@ -1,8 +1,8 @@
 ///|
 fn MarkdownEditorApp::html_export_document(self : MarkdownEditorApp) -> String {
-  let snapshot = self.document_session.get().snapshot()
+  let snapshot = self.document_session.snapshot()
   let title = markdown_editor_document_title(
-    path=self.document_path.get(),
+    path=self.document_path,
     fallback=snapshot.active_heading,
   )
   markdown_editor_html_document(snapshot, title)

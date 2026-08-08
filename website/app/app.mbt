@@ -11,11 +11,11 @@ pub struct Model {
   mobile_menu_open : Bool
   docs_drawer_open : Bool
   compact_hero_tab : String
-  home_scroll : @state.ScrollState
-  docs_body_scroll : @state.ScrollState
-  docs_scroll : @state.ScrollState
-  showcase_grid_scroll : @state.ScrollState
-  tutorial_scroll : @state.ScrollState
+  home_scroll : @geometry.Point
+  docs_body_scroll : @geometry.Point
+  docs_scroll : @geometry.Point
+  showcase_grid_scroll : @geometry.Point
+  tutorial_scroll : @geometry.Point
   route_history : @views.RouteHistoryState
   pending_anchor : String?
   copied_text : String?
@@ -49,6 +49,11 @@ pub enum Msg {
   ToggleDocsDrawer
   CloseDocsDrawer
   SelectCompactHeroTab(String)
+  HomeScrolled(@geometry.Point)
+  DocsBodyScrolled(@geometry.Point)
+  DocsScrolled(@geometry.Point)
+  ShowcaseGridScrolled(@geometry.Point)
+  TutorialScrolled(@geometry.Point)
   HostRouteChanged(@services.RouteEvent)
   HostCatalogCompleted(Int, @services.ServiceTaskResult[String])
   HostDocsCompleted(Int, String, @services.ServiceTaskResult[String])
@@ -89,11 +94,11 @@ fn Model::new() -> Model {
     mobile_menu_open: false,
     docs_drawer_open: false,
     compact_hero_tab: "source",
-    home_scroll: @state.ScrollState::new(),
-    docs_body_scroll: @state.ScrollState::new(),
-    docs_scroll: @state.ScrollState::new(),
-    showcase_grid_scroll: @state.ScrollState::new(),
-    tutorial_scroll: @state.ScrollState::new(),
+    home_scroll: @geometry.Point::new(x=0.0, y=0.0),
+    docs_body_scroll: @geometry.Point::new(x=0.0, y=0.0),
+    docs_scroll: @geometry.Point::new(x=0.0, y=0.0),
+    showcase_grid_scroll: @geometry.Point::new(x=0.0, y=0.0),
+    tutorial_scroll: @geometry.Point::new(x=0.0, y=0.0),
     route_history: @views.RouteHistoryState::new(
       initial=@views.RouteLocation::new(path="home"),
       title="MoUI",
@@ -125,8 +130,14 @@ fn Model::update(self : Model, message : Msg) -> Model {
     CopyText(value) => { ..self, copied_text: Some(value) }
     OpenHome => { ..self.with_route("home"), copied_text: None }
     OpenHomeAt(offset_y) => {
-      self.home_scroll.scroll_to(x=0.0, y=max_website_double(0.0, offset_y))
-      { ..self.with_route("home"), copied_text: None }
+      {
+        ..self.with_route("home"),
+        home_scroll: @geometry.Point::new(
+          x=0.0,
+          y=max_website_double(0.0, offset_y),
+        ),
+        copied_text: None,
+      }
     }
     OpenHomeAnchor(anchor) =>
       { ..self.with_route("home?anchor=" + anchor), copied_text: None }
@@ -146,6 +157,11 @@ fn Model::update(self : Model, message : Msg) -> Model {
     ToggleDocsDrawer => { ..self, docs_drawer_open: !self.docs_drawer_open }
     CloseDocsDrawer => { ..self, docs_drawer_open: false }
     SelectCompactHeroTab(tab) => { ..self, compact_hero_tab: tab }
+    HomeScrolled(offset) => { ..self, home_scroll: offset }
+    DocsBodyScrolled(offset) => { ..self, docs_body_scroll: offset }
+    DocsScrolled(offset) => { ..self, docs_scroll: offset }
+    ShowcaseGridScrolled(offset) => { ..self, showcase_grid_scroll: offset }
+    TutorialScrolled(offset) => { ..self, tutorial_scroll: offset }
     HostRouteChanged(event) => self.with_host_route(event)
     HostCatalogCompleted(token, result) =>
       self.apply_catalog_completion(token, result)
@@ -167,18 +183,32 @@ fn Model::with_route(self : Model, route : String) -> Model {
     self.selected_doc_slug,
   )
   let anchor = location.query_value("anchor")
-  if page != self.page {
-    match page {
-      WebsiteHome => self.home_scroll.scroll_to(x=0.0, y=0.0)
-      WebsiteTutorial => self.tutorial_scroll.scroll_to(x=0.0, y=0.0)
-      WebsiteDocs => {
-        self.docs_body_scroll.scroll_to(x=0.0, y=0.0)
-        self.docs_scroll.scroll_to(x=0.0, y=0.0)
-      }
-      WebsiteShowcases => self.showcase_grid_scroll.scroll_to(x=0.0, y=0.0)
-    }
-  } else if page is WebsiteDocs && selected_doc_slug != self.selected_doc_slug {
-    self.docs_scroll.scroll_to(x=0.0, y=0.0)
+  let zero = @geometry.Point::new(x=0.0, y=0.0)
+  let home_scroll = if page != self.page && page is WebsiteHome {
+    zero
+  } else {
+    self.home_scroll
+  }
+  let tutorial_scroll = if page != self.page && page is WebsiteTutorial {
+    zero
+  } else {
+    self.tutorial_scroll
+  }
+  let docs_body_scroll = if page != self.page && page is WebsiteDocs {
+    zero
+  } else {
+    self.docs_body_scroll
+  }
+  let docs_scroll = if (page != self.page && page is WebsiteDocs) ||
+    (page is WebsiteDocs && selected_doc_slug != self.selected_doc_slug) {
+    zero
+  } else {
+    self.docs_scroll
+  }
+  let showcase_grid_scroll = if page != self.page && page is WebsiteShowcases {
+    zero
+  } else {
+    self.showcase_grid_scroll
   }
   let history = if self.route_history.current_route() == location.to_route() {
     self.route_history.replace(
@@ -207,6 +237,11 @@ fn Model::with_route(self : Model, route : String) -> Model {
     pending_anchor: anchor,
     mobile_menu_open: false,
     docs_drawer_open: false,
+    home_scroll,
+    tutorial_scroll,
+    docs_body_scroll,
+    docs_scroll,
+    showcase_grid_scroll,
   }
 }
 
@@ -669,17 +704,19 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
     WebsiteHome =>
       scroll_view(
         content,
-        state=Some(localized.home_scroll),
         width=metrics.body_scroll_width,
         height=metrics.body_height,
+        offset=localized.home_scroll,
+        on_scroll=Some(offset => HomeScrolled(offset)),
         shows_indicator=true,
       ).semantics_role(@core.SemanticsRole::Main)
     WebsiteTutorial =>
       scroll_view(
         content,
-        state=Some(localized.tutorial_scroll),
         width=metrics.body_scroll_width,
         height=metrics.body_height,
+        offset=localized.tutorial_scroll,
+        on_scroll=Some(offset => TutorialScrolled(offset)),
         shows_indicator=true,
       ).semantics_role(@core.SemanticsRole::Main)
   }

@@ -90,7 +90,7 @@ function Test-PackageUsesWgpu {
   $pkgPath = Join-Path $repoRoot (Join-Path (Convert-PackagePath $PackagePath) "moon.pkg")
   Require-Path $pkgPath "Missing MoonBit package manifest: $pkgPath"
   $pkg = Get-Content -LiteralPath $pkgPath -Raw
-  $usesWgpuRenderer = $pkg.Contains("wzzc-dev/moui/render/wgpu")
+  $usesWgpuRenderer = $pkg.Contains("wzzc-dev/moui_wgpu_renderer")
   return $usesWgpuRenderer
 }
 

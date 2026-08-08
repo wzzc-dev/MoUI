@@ -1,7 +1,7 @@
 ///|
 /// A local civil-time snapshot supplied by a platform host.
 ///
-/// `weekday` follows the browser/AppKit convention: Sunday is `0` and Saturday
+/// `weekday` follows the host calendar convention: Sunday is `0` and Saturday
 /// is `6`. It is an instantaneous value rather than a timer; applications that
 /// need updates should pair it with an app-facing `@services.TimerSource`
 /// subscription supplied by the composition root.

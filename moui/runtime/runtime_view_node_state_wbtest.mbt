@@ -43,20 +43,17 @@ fn runtime_probe_state_slot() -> @core.ViewStateSlot[Int] {
 }
 
 ///|
-test "RuntimeViewNode: mount leaves no pending build after eager child materialization" {
-  let build_count = Ref(0)
+test "RuntimeViewNode: direct mount leaves no pending build" {
   let runtime = RuntimeState::new_view(
-    root=runtime_component_view(_context => {
-      build_count.val = build_count.val + 1
-      runtime_state_probe_view(kind="mounted-child", declaration_token="one")
-    }),
+    root=runtime_state_probe_view(
+      kind="mounted-child",
+      declaration_token="one",
+    ),
     size=@core.Size::new(width=40.0, height=20.0),
   )
-  inspect(build_count.val, content="1")
-  assert_false(runtime.element_tree.root.has_dirty_build())
+  assert_false(runtime.element_tree.root.dirty.has_build())
   ignore(runtime.build_draw_frame())
-  assert_false(runtime.element_tree.root.has_dirty_build())
-  inspect(build_count.val, content="1")
+  assert_false(runtime.element_tree.root.dirty.has_build())
 }
 
 ///|

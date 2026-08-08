@@ -74,7 +74,6 @@ impl @core.ViewNode for TextViewerNode with fn paint(self, ctx) {
     0.0,
     0.0,
     320.0,
-    None,
     cache,
   )
 }
@@ -100,7 +99,7 @@ pub fn markdown_input_transform(
 
 ///|
 pub fn[Msg] markdown_editor(
-  value~ : @core.Binding[String],
+  value~ : String,
   placeholder~ : String,
   size~ : @core.Size,
   font~ : @core.FontSpec,
@@ -160,7 +159,7 @@ pub fn[Msg] controlled_markdown_editor(
   key? : String? = None,
 ) -> @core.View[Msg] {
   markdown_editor(
-    value=@core.Binding::new(get=() => value, set=_next => ()),
+    value~,
     placeholder~,
     size~,
     font~,
@@ -202,71 +201,38 @@ pub fn[Msg] controlled_markdown_session_editor(
   on_command_click? : ((Int) -> Msg)? = None,
   accepts_tab_input? : Bool = true,
   visible_scroll_y? : Double = 0.0,
+  on_scroll? : ((Double) -> Msg)? = None,
   visible_viewport_height? : Double = 0.0,
   visible_overscan? : Double = 320.0,
-  visible_scroll_state? : @core.ScrollState? = None,
   key? : String? = None,
 ) -> @core.View[Msg] {
-  match visible_scroll_state {
-    Some(state) =>
-      rich_text_component("MarkdownSessionEditorComponent", key, context => {
-        controlled_markdown_session_editor_snapshot(
-          session~,
-          selection~,
-          on_transaction~,
-          placeholder~,
-          size~,
-          font~,
-          foreground~,
-          placeholder_color~,
-          background~,
-          border~,
-          focused_border~,
-          cursor_color~,
-          corner_radius~,
-          source_mode~,
-          focus_mode~,
-          base_dir~,
-          on_selection_change~,
-          on_prefix_click~,
-          on_command_click~,
-          accepts_tab_input~,
-          visible_scroll_y=context.watch_scroll(state).y,
-          visible_viewport_height~,
-          visible_overscan~,
-          visible_scroll_state=Some(state),
-          key~,
-        )
-      })
-    None =>
-      controlled_markdown_session_editor_snapshot(
-        session~,
-        selection~,
-        on_transaction~,
-        placeholder~,
-        size~,
-        font~,
-        foreground~,
-        placeholder_color~,
-        background~,
-        border~,
-        focused_border~,
-        cursor_color~,
-        corner_radius~,
-        source_mode~,
-        focus_mode~,
-        base_dir~,
-        on_selection_change~,
-        on_prefix_click~,
-        on_command_click~,
-        accepts_tab_input~,
-        visible_scroll_y~,
-        visible_viewport_height~,
-        visible_overscan~,
-        visible_scroll_state=None,
-        key~,
-      )
-  }
+  controlled_markdown_session_editor_snapshot(
+    session~,
+    selection~,
+    on_transaction~,
+    placeholder~,
+    size~,
+    font~,
+    foreground~,
+    placeholder_color~,
+    background~,
+    border~,
+    focused_border~,
+    cursor_color~,
+    corner_radius~,
+    source_mode~,
+    focus_mode~,
+    base_dir~,
+    on_selection_change~,
+    on_prefix_click~,
+    on_command_click~,
+    accepts_tab_input~,
+    visible_scroll_y~,
+    on_scroll~,
+    visible_viewport_height~,
+    visible_overscan~,
+    key~,
+  )
 }
 
 ///|
@@ -292,9 +258,9 @@ fn[Msg] controlled_markdown_session_editor_snapshot(
   on_command_click~ : ((Int) -> Msg)?,
   accepts_tab_input~ : Bool,
   visible_scroll_y~ : Double,
+  on_scroll~ : ((Double) -> Msg)?,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
   key~ : String?,
 ) -> @core.View[Msg] {
   @core.View::from_node(
@@ -335,9 +301,9 @@ fn[Msg] controlled_markdown_session_editor_snapshot(
         on_command_click~,
         accepts_tab_input=node.accepts_tab_input,
         visible_scroll_y~,
+        on_scroll~,
         visible_viewport_height=node.visible_viewport_height,
         visible_overscan=node.visible_overscan,
-        visible_scroll_state~,
       )
     },
     text_command=(node, ctx, intent, paste_text) => {
@@ -476,7 +442,6 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn paint(self, ctx) {
     visible_scroll_y=self.visible_scroll_y,
     visible_viewport_height=self.visible_viewport_height,
     visible_overscan=self.visible_overscan,
-    visible_scroll_state=None,
   )
 }
 
@@ -499,7 +464,6 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn text_input_state(
       visible_scroll_y=self.visible_scroll_y,
       visible_viewport_height=self.visible_viewport_height,
       visible_overscan=self.visible_overscan,
-      visible_scroll_state=None,
       text_system=ctx.text_system,
     ),
   )

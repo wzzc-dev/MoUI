@@ -107,8 +107,6 @@ fn runtime_inspector_snapshot_from_state(
     damage_kind: state.stats.last_damage_region.kind(),
     damage_rect_count: state.stats.last_damage_region.rect_count(),
     damage_full_reason: state.stats.last_damage_region.full_reason(),
-    cache_epoch: state.stats.cache_epoch,
-    cached_layer_count: state.stats.known_layer_cache_keys.length(),
   }
   let draw_commands = state.cached_draw_commands()
   RuntimeInspectorSnapshot::{
@@ -344,17 +342,16 @@ fn render_inspector_from_commands(
         } else {
           clip_depth = clip_depth - 1
         }
-      PushLayer(_) | BeginCachedLayer(_) => {
+      PushLayer(_) | BeginRetainedLayer(_) => {
         layer_depth = layer_depth + 1
         max_layer_depth = runtime_devtools_max_int(max_layer_depth, layer_depth)
       }
-      PopLayer | EndCachedLayer(_) =>
+      PopLayer | EndRetainedLayer(_) =>
         if layer_depth == 0 {
           unbalanced_pop_count = unbalanced_pop_count + 1
         } else {
           layer_depth = layer_depth - 1
         }
-      DrawCachedLayer(_) => ()
       PushFilter(_) => {
         filter_depth = filter_depth + 1
         max_filter_depth = runtime_devtools_max_int(

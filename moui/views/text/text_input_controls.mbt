@@ -1,6 +1,6 @@
 ///|
 fn[Msg] text_field_control(
-  value~ : @core.Binding[String],
+  value~ : String,
   placeholder~ : String,
   size~ : @core.Size,
   theme? : @core.Theme,
@@ -11,7 +11,7 @@ fn[Msg] text_field_control(
   kind? : String = "TextField",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let value_snapshot = value.get()
+  let value_snapshot = value
   @core.View::from_node(
     SingleLineTextInput::{
       value: value_snapshot,
@@ -56,7 +56,7 @@ fn[Msg] text_field_control(
 fn[Msg] single_line_text_event(
   node : SingleLineTextInput,
   ctx : @core.ViewEventContext,
-  value : @core.Binding[String],
+  value : String,
   on_input : ((String) -> Msg)?,
   on_submit : Msg?,
   on_clear : Msg?,
@@ -85,7 +85,7 @@ fn[Msg] controlled_text_field_control(
   key? : String? = None,
 ) -> @core.View[Msg] {
   text_field_control(
-    value=@core.Binding::new(get=() => value, set=_next => ()),
+    value~,
     placeholder~,
     size~,
     theme?,
@@ -100,7 +100,7 @@ fn[Msg] controlled_text_field_control(
 
 ///|
 fn[Msg] search_bar_control(
-  query~ : @core.Binding[String],
+  query~ : String,
   placeholder~ : String,
   theme? : @core.Theme,
   variant? : @style.TextFieldVariant = @style.TextFieldVariant::Filled,
@@ -111,7 +111,7 @@ fn[Msg] search_bar_control(
   kind? : String = "SearchBar",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let query_snapshot = query.get()
+  let query_snapshot = query
   @core.View::from_node(
     SingleLineTextInput::{
       value: query_snapshot,
@@ -172,7 +172,7 @@ pub fn[Msg] controlled_search_bar_control(
   key? : String? = None,
 ) -> @core.View[Msg] {
   search_bar_control(
-    query=@core.Binding::new(get=() => query, set=_next => ()),
+    query~,
     placeholder~,
     theme?,
     variant~,

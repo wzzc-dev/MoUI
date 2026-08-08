@@ -2,27 +2,27 @@
 test "markdown editor find options toggle and affect matching" {
   let app = MarkdownEditorApp::new()
   // Defaults: case-insensitive, substring.
-  inspect(app.find_options.get().case_sensitive, content="false")
-  inspect(app.find_options.get().whole_word, content="false")
+  inspect(app.find_options.case_sensitive, content="false")
+  inspect(app.find_options.whole_word, content="false")
   // Case-sensitive off: "Foo" matches "foo".
   let insensitive = markdown_editor_find_matches("foo Foo bar", "foo")
   inspect(insensitive.length(), content="2")
   // Toggle case-sensitive on: only "Foo" matches "Foo".
-  let _ = app.update(ToggleFindCaseSensitive)
-  assert_true(app.find_options.get().case_sensitive)
+  app.update_in_place(ToggleFindCaseSensitive)
+  assert_true(app.find_options.case_sensitive)
   let sensitive = markdown_editor_find_matches(
     "foo Foo bar",
     "Foo",
-    options=app.find_options.get(),
+    options=app.find_options,
   )
   inspect(sensitive.length(), content="1")
   // Whole-word: "cat" should not match inside "catalog".
-  let _ = app.update(ToggleFindWholeWord)
-  assert_true(app.find_options.get().whole_word)
+  app.update_in_place(ToggleFindWholeWord)
+  assert_true(app.find_options.whole_word)
   let whole = markdown_editor_find_matches(
     "cat catalog cat",
     "cat",
-    options=app.find_options.get(),
+    options=app.find_options,
   )
   inspect(whole.length(), content="2")
 }
@@ -92,10 +92,10 @@ test "markdown editor regex find reports invalid syntax and replaces literal mat
   let app = MarkdownEditorApp::new()
   app.set_document("task-12 task-34")
   app.apply_action("find")
-  let _ = app.update(ToggleFindRegex)
+  app.update_in_place(ToggleFindRegex)
   app.update_find_query_for_test("[")
   inspect(app.find_match_count(), content="0")
-  guard app.selection.get().selection is None else {
+  guard app.selection.selection is None else {
     fail("expected invalid regex to clear the stale match selection")
   }
   let invalid_commands = app.runtime(width=1120.0, height=640.0).draw_commands()
@@ -117,8 +117,8 @@ test "markdown editor regex find reports invalid syntax and replaces literal mat
 ///|
 test "markdown editor settings round-trip through JSON" {
   let app = MarkdownEditorApp::new()
-  app.dark_mode_enabled.set(true)
-  let _ = app.update(ToggleFocusMode)
+  app.dark_mode_enabled = true
+  app.update_in_place(ToggleFocusMode)
   // Serialize to JSON and decode back; the decoded settings should reflect the
   // toggles. The host file I/O is bypassed by calling the decode helper on the
   // serialized text directly.

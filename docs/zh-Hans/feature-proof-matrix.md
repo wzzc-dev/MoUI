@@ -10,7 +10,7 @@
 | **L2** | 真实渲染器/平台上的 runtime 行为 | 每个 PR 和 push-to-main (`moui-renderer-real-skia-ci.yml`) | 匹配主机真实 Skia |
 | **L3** | 跨平台一致性 | `feature-proof-summary.yml` 在 `ci.yml` 完成后 | 所有 L2 平台通过 |
 
-框架渲染代码（`moui/render/skia/`、`moui/views/`）依赖 `moui_skia` 提供的真实 Skia 链接。任何框架变更都可能影响真实渲染行为，因此每个 PR 都会在 L2 运行真实 Skia smoke。
+框架渲染代码（`moui_skia_renderer/`、`moui/views/`）依赖 `moui_skia` 提供的真实 Skia 链接。任何框架变更都可能影响真实渲染行为，因此每个 PR 都会在 L2 运行真实 Skia smoke。
 
 ## L1 功能（ci.yml，每个 PR）
 
@@ -65,12 +65,12 @@ GPU readback elimination plan 的第 1 阶段已落地 window-surface GPU source
 
 | 平台 | 后端 | Surface route | 第 1 阶段 source | 第 2 阶段 promotion |
 | --- | --- | --- | --- | --- |
-| iOS | Metal | `MetalGpuSurfaceRoute` | worker-owned source；simulator GPU build/first frame | pending physical-device manifest |
-| macOS | Metal | `MetalGpuSurfaceRoute` | worker-owned context/picture replay/present；local first-frame smoke | matching-host claim recorded 2026-07-14 |
-| Android | Vulkan / GLES | `VulkanGpuSurfaceRoute` / `EglGpuSurfaceRoute` | worker-owned source；minSdk 23 GPU APK build | pending Vulkan and GLES device manifests |
-| HarmonyOS | EGL/GLES | `EglGpuSurfaceRoute` | worker-owned source；native/HAP build | pending signed-device manifest |
-| Windows | Direct3D 12 | `Direct3DGpuSurfaceRoute` | worker-owned source；MSVC validation pending | pending matching-device manifest |
-| Linux | Vulkan (Wayland) | `VulkanGpuSurfaceRoute` | worker-owned source；Wayland build/validation pending | pending matching-device manifest |
+| iOS | Metal | `SkiaSurfaceRoute::MetalGpuSurfaceRoute` | worker-owned source；simulator GPU build/first frame | pending physical-device manifest |
+| macOS | Metal | `SkiaSurfaceRoute::MetalGpuSurfaceRoute` | worker-owned context/picture replay/present；local first-frame smoke | matching-host claim recorded 2026-07-14 |
+| Android | Vulkan / GLES | `SkiaSurfaceRoute::VulkanGpuSurfaceRoute` / `SkiaSurfaceRoute::EglGpuSurfaceRoute` | worker-owned source；minSdk 23 GPU APK build | pending Vulkan and GLES device manifests |
+| HarmonyOS | EGL/GLES | `SkiaSurfaceRoute::EglGpuSurfaceRoute` | worker-owned source；native/HAP build | pending signed-device manifest |
+| Windows | Direct3D 12 | `SkiaSurfaceRoute::Direct3DGpuSurfaceRoute` | worker-owned source；MSVC validation pending | pending matching-device manifest |
+| Linux | Vulkan (Wayland) | `SkiaSurfaceRoute::VulkanGpuSurfaceRoute` | worker-owned source；Wayland build/validation pending | pending matching-device manifest |
 | Web | WebGPU | browser canvas | device-loss/fallback source path | pending Chrome WebGPU manifest |
 
 第 2 阶段 promotion gate 脚手架具有 L1 package-test 证明：

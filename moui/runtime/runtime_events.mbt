@@ -90,7 +90,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
     }
     Resize(size) => {
       self.size = size
-      self.dirty.needs_rebuild = self.element_tree.root.mark_component_tree_build_dirty()
+      self.request_root_rebuild(reason="viewport resized")
       self.dirty.needs_redraw = true
       self.dirty.needs_layout = true
       self.dirty.needs_paint = true

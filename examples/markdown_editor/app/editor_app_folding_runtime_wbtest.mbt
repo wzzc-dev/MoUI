@@ -22,10 +22,10 @@ test "markdown editor outline folds nested headings on toggle" {
     }),
   )
   // Toggle the fold on the H1 heading (source_start 0).
-  let _ = app.update(ToggleHeadingFold(0))
+  app.update_in_place(ToggleHeadingFold(0))
   assert_true(app.heading_is_folded(0))
   // Toggling again unfolds it.
-  let _ = app.update(ToggleHeadingFold(0))
+  app.update_in_place(ToggleHeadingFold(0))
   assert_true(!app.heading_is_folded(0))
 }
 
@@ -35,7 +35,7 @@ test "markdown editor folded outline hides nested children" {
   // hides its deeper-level children until the next same-or-higher heading.
   let app = MarkdownEditorApp::new()
   app.set_document("# First\n\n## Second\n\n### Third\n\n## Fourth")
-  let snapshot = MarkdownEditorSnapshot::parse(app.document.get())
+  let snapshot = MarkdownEditorSnapshot::parse(app.document)
   let all = markdown_editor_folded_outline(snapshot.outline, [])
   assert_eq(all.length(), 4)
   // Fold the H2 "Second" (the second outline item): it hides H3 "Third", and

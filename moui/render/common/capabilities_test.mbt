@@ -7,9 +7,9 @@ fn capability_test_provider(
   let capabilities = renderer_provider_capabilities(provider_id=id, backend~, capability_for=feature => {
     (status, "\{id} declares \{feature.label()}")
   })
-  {
-    id,
-    descriptor: @render.RendererDescriptor::new(
+  @render.RendererProvider::new(
+    id~,
+    descriptor=@render.RendererDescriptor::new(
       backend~,
       family=@render.RendererFamily::Skia,
       presentation=@render.RendererPresentationModel::CpuPixelFrame,
@@ -17,16 +17,9 @@ fn capability_test_provider(
       capabilities~,
       description="capability test provider",
     ),
-    capabilities: () => capabilities,
-    negotiate: _surface => {
-      @render.SurfaceNegotiationResult::SurfaceRejected("test only")
-    },
-    create: (_metrics, _surface) => @render.RendererInstance::{
-      render_frame: _frame => @render.RenderFrameResult::new(presented=false),
-      recover: _reason => @render.RecoveryResult::RecoverySucceeded,
-      dispose: () => (),
-    },
-  }
+    capabilities=() => capabilities,
+    bind=_surface => @render.RendererBindResult::Rejected("test only"),
+  )
 }
 
 ///|

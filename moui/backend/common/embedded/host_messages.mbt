@@ -11,7 +11,7 @@ using @host {
 }
 
 ///|
-using @window_host {text_input_ime_request_diagnostics}
+using @window_input {text_input_ime_request_diagnostics}
 
 ///|
 /// Wire-neutral IME request payload. Native adapters keep the existing JSON
@@ -77,7 +77,7 @@ pub(all) enum EmbeddedHostResponse {
   TextInput(@core.TextInputEvent)
   Command(@core.CommandIntent)
   Clipboard(HostServiceRequestId, HostServiceResponse)
-  Accessibility(@runtime.NativeAccessibilityActionRequest)
+  Accessibility(@runtime.PerformSemanticsActionRequest)
   PlatformView(Int, String, String, @core.PlatformViewEvent)
   PlatformChannel(HostServiceRequestId, PlatformChannelResponse)
 } derive(Eq, Debug, ToJson)
@@ -173,11 +173,11 @@ pub fn embedded_accessibility_response(
   action : @core.SemanticsAction,
 ) -> EmbeddedHostResponse {
   EmbeddedHostResponse::Accessibility(
-    @runtime.NativeAccessibilityActionRequest::new(
-      node_id~,
-      generation~,
-      action~,
-    ),
+    {
+      target: @core.SemanticsTarget::ByNodeId(node_id),
+      action,
+      precondition: @runtime.SemanticsGenerationPrecondition::Exact(generation),
+    },
   )
 }
 

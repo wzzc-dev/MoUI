@@ -149,7 +149,7 @@ moon run examples/showcase/macos_skia --target native
 |----------|------|----------|-------------|
 | L0: `moon check` | ✅ 通过 | `ci.yml → windows-native` → `moon check`（跨平台，不在 Win CI 中单独跑但受 `check.sh --profile daily` 保护） | 每次 PR |
 | L0: `moon info` | ✅ 无漂移 | `ci.yml → api-surface` | 每次 PR |
-| L1: Windows 后端测试 | ✅ 通过 | `ci.yml → windows-native` → `moon test moui/backend/windows --target native` + `moon test moui/render/skia --target native` | 每次 PR，运行记录 [28964136358](https://github.com/wzzc-dev/MoUI/actions/runs/28964136358) |
+| L1: Windows 后端测试 | ✅ 通过 | `ci.yml → windows-native` → `moon test moui/backend/windows --target native` + `moon test moui_skia_renderer --target native` | 每次 PR，运行记录 [28964136358](https://github.com/wzzc-dev/MoUI/actions/runs/28964136358) |
 | L1: Windows Skia composition wiring | ✅ 通过 | 同一作业构建 `examples/showcase/windows_skia`，并运行 backend 与 renderer package tests | 每次 PR |
 | L1: Windows MSVC 构建 | ✅ 通过 | `ci.yml → windows-native` → MSVC Skia 入口点构建成功，制品上传 | 每次 PR |
 | L2: 真实 Skia 渲染器（Windows） | ✅ 通过 | `moui-renderer-real-skia-ci.yml → windows-real-skia` | 每次 PR |
@@ -216,7 +216,7 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 
 最近成功运行: GitHub Actions 运行记录 [28889055278](https://github.com/wzzc-dev/MoUI/actions/runs/28889055278), 提交 `8a054c5914adbfa34a6943570c1ceb01cc603ef5`.
 
-证据脚本使用 `moui_tester/linux_skia_first_frame_smoke` 专用测试程序（类似 macOS 的 `moui_tester/macos_skia_first_frame_smoke`），硬编码 `first_frame_smoke_auto_exit=true`，呈现第一帧后自动退出并打印标记。该运行记录证明 Linux Wayland + Skia 首帧路由。
+证据脚本使用 `moui_tests/tester/linux_skia_first_frame_smoke` 专用测试程序（类似 macOS 的 `moui_tests/tester/macos_skia_first_frame_smoke`），硬编码 `first_frame_smoke_auto_exit=true`，呈现第一帧后自动退出并打印标记。该运行记录证明 Linux Wayland + Skia 首帧路由。
 
 代码级服务完整性：Linux 后端现已全部接通——clipboard（text + image 动态缓冲区 + GTK fallback）、file dialog（portal + zenity）、directory listing（`@fs.read_dir`）、text/binary file I/O、open URL（portal + xdg-open）、system theme、native menus（zenity + kdialog）、IME、drag-drop、AT-SPI accessibility、GLib timer、client-side decorations、multi-window、platform view plugins、async image loading（pthread + Skia decode）。`readiness()` 已标记 `ready: true` 且 `blocked_by: []`。
 
@@ -269,7 +269,7 @@ bash window/scripts/capture_moui_runtime_evidence.sh linux \
 |----------|------|----------|-------------|
 | L0: 构建 | ✅ 通过 | `ci.yml → pr-profile` → Showcase/Markdown Editor Web wasm-gc 构建 | 每次 PR |
 | L1: Web 后端测试 | ✅ 通过 | `ci.yml → pr-profile` → `moon test moui/backend/web --target wasm-gc` | 每次 PR |
-| L1: WebGPU 适配器测试 | ✅ 通过 | `ci.yml → pr-profile` → `moon test moui/render/webgpu_adapter --target wasm-gc` | 每次 PR |
+| L1: WebGPU 适配器测试 | ✅ 通过 | `ci.yml → pr-profile` → `moon test moui_web_renderer --target wasm-gc` | 每次 PR |
 | L2: Web 浏览器呈现 | ✅ 通过 | `checks/platforms/web.json` `rendererL2=passed`（`browser-webgpu`）；CI / Pages 浏览器会话 | 与结构化平台契约对齐 |
 | L3: Web 运行时呈现清单 | ✅ 通过 | `checks/platforms/web.json` `runtimeL3=passed`（浏览器呈现清单）；`scripts/ci-web-runtime-presentation.sh` / `record-web-runtime-presentation.mjs` | 与结构化契约对齐；无新证据时勿降级 |
 
@@ -372,13 +372,13 @@ sh scripts/check.sh --profile daily
 moon run moui_skia/scripts/native_smoke --target native
 
 # L2 — 文本/表情符号核验（需真实 Skia）
-moon run moui/tests/skia_text_emoji_smoke/native --target native
+moon run moui_tests/skia_text_emoji_smoke/native --target native
 
 # L3 — macOS 平台运行时证据（macOS 主机）
 MOUI_FIRST_FRAME_EXIT=1 moon run examples/showcase/macos_skia --target native
 
 # L3 — Linux 首帧 / Wayland route 证据（Wayland 主机）
-moon run moui_tester/linux_skia_first_frame_smoke --target native
+moon run moui_tests/tester/linux_skia_first_frame_smoke --target native
 
 # L3 — Windows 平台运行时证据（MSVC 主机）（需要安装、配置 MSVC 工具链）
 set MOUI_FIRST_FRAME_EXIT=1

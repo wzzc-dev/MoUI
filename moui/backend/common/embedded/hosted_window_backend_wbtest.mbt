@@ -1,16 +1,12 @@
 ///|
 fn hosted_backend_test_renderer(
   dispose_count : Ref[Int],
-) -> @render.RendererResolution {
-  @render.RendererResolution::new(
-    renderer=@render.WindowRenderer::new(
-      resize=_ => (),
-      render=_ => (),
-      render_frame=Some(_frame => @render.RenderFrameResult::new(presented=true)),
-      text_system=() => @core.TextSystem::fallback(),
-      dispose=() => dispose_count.val = dispose_count.val + 1,
-    ),
-    image_loader=None,
+) -> @render.RendererSession {
+  @render.RendererSession::new(
+    resize=_ => (),
+    render_frame=_frame => @render.RenderFrameResult::new(presented=true),
+    text_system=() => @core.TextSystem::fallback(),
+    dispose=() => dispose_count.val = dispose_count.val + 1,
   )
 }
 

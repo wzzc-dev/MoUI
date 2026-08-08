@@ -11,7 +11,9 @@ fn main {
       height=800.0,
     ),
   )
-  .render_all(@render_skia.from_env())
+  .render_all(
+    @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS),
+  )
   .backend(@macos_backend.entry())
   .run()
 }

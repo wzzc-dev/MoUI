@@ -102,19 +102,14 @@ pub fn HostRuntimeDriver::dispatch_platform_view(
 ///|
 pub fn HostRuntimeDriver::perform_semantics_action(
   self : HostRuntimeDriver,
-  request : NativeAccessibilityActionRequest,
-) -> NativeAccessibilityActionResult {
-  match
-    self.runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::ByNodeId(request.node_id),
-      action: request.action,
-      precondition: SemanticsGenerationPrecondition::Exact(request.generation),
-    }) {
+  request : PerformSemanticsActionRequest,
+) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError] {
+  match self.runtime.perform_semantics_action(request) {
     Ok(receipt) => {
       self.request_redraw_if_needed()
-      NativeAccessibilityActionResult::Handled(receipt)
+      Ok(receipt)
     }
-    Err(error) => NativeAccessibilityActionResult::Rejected(error)
+    Err(error) => Err(error)
   }
 }
 
@@ -380,19 +375,6 @@ pub fn HostRuntimeDriver::draw_frame(
   self : HostRuntimeDriver,
 ) -> @core.DrawFrame {
   self.runtime.draw_frame()
-}
-
-///|
-pub fn HostRuntimeDriver::apply_render_frame_result(
-  self : HostRuntimeDriver,
-  result : @render.RenderFrameResult,
-) -> Unit {
-  if result.cache_miss_count > 0 {
-    for key in result.missing_layer_keys {
-      self.runtime.invalidate_cached_layer_key(key)
-    }
-    self.request_redraw_if_needed()
-  }
 }
 
 ///|

@@ -70,9 +70,7 @@ pub(all) struct ComponentGalleryModel {
   active_item : ComponentGalleryItemId
   selected_platform : PlatformId
   session_runtime : SessionRuntimeInfo
-  page_scroll : @state.ScrollState
-  sidebar_scroll : @state.ScrollState
-  content_scroll : @state.ScrollState
+  page_scroll : @geometry.Point
   search_query : String
   sample_text : String
   sample_number : String
@@ -107,6 +105,7 @@ pub(all) enum ComponentGalleryMsg {
   ProbeAction
   ProbeSubmit
   ToggleCheckboxGroupItem(String)
+  PageScrolled(@geometry.Point)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -231,9 +230,7 @@ pub fn ComponentGalleryModel::new(
       Some(info) => info
       None => SessionRuntimeInfo::for_platform(active_platform)
     },
-    page_scroll: @state.ScrollState::new(),
-    sidebar_scroll: @state.ScrollState::new(),
-    content_scroll: @state.ScrollState::new(),
+    page_scroll: @geometry.Point::new(x=0.0, y=0.0),
     search_query: "",
     sample_text: "Showcase Components",
     sample_number: "24",
@@ -279,11 +276,15 @@ pub fn update(
   match message {
     SelectItem(id) => {
       let next = gallery_item_id_from_string(id).unwrap_or(model.active_item)
-      if next != model.active_item {
-        model.page_scroll.scroll_to(x=0.0, y=0.0)
-        model.content_scroll.scroll_to(x=0.0, y=0.0)
+      {
+        ..model,
+        active_item: next,
+        page_scroll: if next != model.active_item {
+          @geometry.Point::new(x=0.0, y=0.0)
+        } else {
+          model.page_scroll
+        },
       }
-      { ..model, active_item: next }
     }
     SearchChanged(query) => {
       let next = if gallery_item_matches_query(
@@ -294,21 +295,25 @@ pub fn update(
       } else {
         first_gallery_item_matching(query).unwrap_or(model.active_item)
       }
-      if next != model.active_item {
-        model.page_scroll.scroll_to(x=0.0, y=0.0)
-        model.content_scroll.scroll_to(x=0.0, y=0.0)
+      {
+        ..model,
+        search_query: query,
+        active_item: next,
+        page_scroll: if next != model.active_item {
+          @geometry.Point::new(x=0.0, y=0.0)
+        } else {
+          model.page_scroll
+        },
       }
-      { ..model, search_query: query, active_item: next }
     }
     SelectPlatform(id) => {
-      model.page_scroll.scroll_to(x=0.0, y=0.0)
-      model.content_scroll.scroll_to(x=0.0, y=0.0)
       {
         ..model,
         selected_platform: platform_id_from_string(id).unwrap_or(
           model.selected_platform,
         ),
         active_item: ComponentGalleryItemId::PlatformRoutes,
+        page_scroll: @geometry.Point::new(x=0.0, y=0.0),
       }
     }
     SelectMode(id) => { ..model, selected_mode: id }
@@ -336,6 +341,7 @@ pub fn update(
       }
       { ..model, checkbox_group_selection: next }
     }
+    PageScrolled(offset) => { ..model, page_scroll: offset }
     Reset =>
       {
         ..model,

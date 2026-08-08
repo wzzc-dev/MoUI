@@ -25,24 +25,17 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/backend",
       path: "moui/backend",
-      // This tree-wide budget covers the root protocols plus common and
-      // concrete backend packages after backend/host was removed.
-      max_count: 92,
+      // AccessKit's backend-owned adapter adds one package-level protocol
+      // record while the common owners replace the former coordinator.
+      max_count: 95,
     },
     {
       kind: "pub(all)",
       label: "moui/render",
       path: "moui/render",
-      // 62 includes the host-neutral surface kit added for application-owned
-      // renderer/backend composition.
-      // system (RendererProvider, RendererInstance, RendererProviderRegistry,
-      // SurfaceDescriptor, BoundSurface, SurfaceNegotiationResult,
-      // RendererRecoveryKind, RendererProviderDescriptor, provider factory
-      // aliases, RendererProviderBinding) + 4 for shared renderer contracts
-      // introduced by the maintainability convergence: DrawPlan/PlanOp and
-      // lowering helpers, text segmentation pipeline, image placement
-      // geometry, and the provider shell assembler. Integration types stay
-      // budgeted here rather than leaking into the app facade.
+      // Root render carries renderer-neutral DTOs plus the two-layer
+      // RendererProvider/RendererSession and opaque HostSurface contract.
+      // Concrete routes and platform handle meaning stay renderer-local.
       max_count: 62,
     },
     {

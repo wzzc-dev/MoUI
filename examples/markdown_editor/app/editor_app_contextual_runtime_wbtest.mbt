@@ -146,7 +146,7 @@ test "markdown editor app undo and redo selected block range move command" {
   app.apply_action("move-block-down")
   inspect(app.document(), content="Gamma\n\nAlpha\n\nBeta")
   inspect(app.selection_caret(), content="15")
-  guard app.selection.get().selection is Some(moved_selection) else {
+  guard app.selection.selection is Some(moved_selection) else {
     fail("expected moved block range selection")
   }
   inspect(moved_selection.start, content="8")

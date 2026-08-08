@@ -293,20 +293,21 @@ test "hidden semantics consumes descendant dirtiness without repeated work" {
 }
 
 ///|
-test "semantics-only component rebuild consumes queues without redraw" {
-  let label = @core.State::new("before")
+test "semantics-only root reconciliation consumes queues without redraw" {
+  let label = Ref("before")
+  let build = () => runtime_semantics_only_leaf(label.val)
   let runtime = RuntimeState::new_view(
-    root=runtime_component_view(context => {
-      runtime_semantics_only_leaf(context.watch(label))
-    }),
+    root=build(),
     size=@core.Size::new(width=100.0, height=24.0),
   )
+  runtime.set_root_builder(() => adapt_view_for_runtime(build(), _message => ()))
   ignore(runtime.cached_semantics())
   runtime.dirty.needs_redraw = false
   runtime.dirty.rebuild_wakeup_redraw = false
   let layout_passes = runtime.stats.layout_pass_count
   let paint_passes = runtime.stats.paint_pass_count
-  label.set("after")
+  label.val = "after"
+  runtime.request_root_rebuild(reason="test model changed")
   inspect(runtime.dirty.needs_rebuild, content="true")
   inspect(runtime.dirty.needs_redraw, content="true")
   let snapshot = runtime.cached_semantics()
@@ -318,20 +319,18 @@ test "semantics-only component rebuild consumes queues without redraw" {
 }
 
 ///|
-test "nested component replacement runs the newly captured build closure" {
-  let label = @core.State::new("before")
+test "root replacement runs the newly captured view closure" {
+  let label = Ref("before")
+  let build = () => runtime_semantics_only_leaf(label.val)
   let runtime = RuntimeState::new_view(
-    root=runtime_component_view(outer_context => {
-      let captured = outer_context.watch(label)
-      runtime_component_view(_inner_context => {
-        runtime_semantics_only_leaf(captured)
-      })
-    }),
+    root=build(),
     size=@core.Size::new(width=100.0, height=24.0),
   )
+  runtime.set_root_builder(() => adapt_view_for_runtime(build(), _message => ()))
   let before = runtime.cached_semantics()
   assert_eq(before.nodes()[0].label, "before")
-  label.set("after")
+  label.val = "after"
+  runtime.request_root_rebuild(reason="test model changed")
   let after = runtime.cached_semantics()
   assert_eq(after.nodes()[0].label, "after")
   assert_true(after.generation() > before.generation())
@@ -414,19 +413,21 @@ test "clean semantics action lookup does not recompute the tree" {
 
 ///|
 test "removed semantics nodes and action routes are pruned from the tree" {
-  let visible = @core.State::new(true)
+  let visible = Ref(true)
   let semantic_id = @core.SemanticId::parse("test.removed.route").unwrap()
+  let build = () => {
+    let children = if visible.val {
+      [runtime_semantics_action_leaf(semantic_id)]
+    } else {
+      []
+    }
+    runtime_semantics_dynamic_container(children)
+  }
   let runtime = RuntimeState::new_view(
-    root=runtime_component_view(context => {
-      let children = if context.watch(visible) {
-        [runtime_semantics_action_leaf(semantic_id)]
-      } else {
-        []
-      }
-      runtime_semantics_dynamic_container(children)
-    }),
+    root=build(),
     size=@core.Size::new(width=100.0, height=24.0),
   )
+  runtime.set_root_builder(() => adapt_view_for_runtime(build(), _message => ()))
   let initial = runtime.cached_semantics()
   let initial_nodes = initial.nodes()
   guard initial_nodes.search_by(node => node.semantic_id == Some(semantic_id))
@@ -434,7 +435,8 @@ test "removed semantics nodes and action routes are pruned from the tree" {
     fail("missing initial semantic node")
   }
   let initial_node = initial_nodes[initial_index]
-  visible.set(false)
+  visible.val = false
+  runtime.request_root_rebuild(reason="test model changed")
   let removed = runtime.cached_semantics()
   assert_false(
     runtime.semantics.semantics_tree.nodes.contains(initial_node.node_id),
@@ -460,7 +462,8 @@ test "removed semantics nodes and action routes are pruned from the tree" {
     Err(SemanticsActionDispatchError::TargetNotFound(_)) => ()
     _ => fail("removed node id must not retain an action route")
   }
-  visible.set(true)
+  visible.val = true
+  runtime.request_root_rebuild(reason="test model changed")
   let restored = runtime.cached_semantics()
   let restored_nodes = restored.nodes()
   guard restored_nodes.search_by(node => node.semantic_id == Some(semantic_id))
@@ -475,18 +478,21 @@ test "removed semantics nodes and action routes are pruned from the tree" {
 test "one changed leaf publishes a one-node delta" {
   let changed_id = @core.SemanticId::parse("test.delta.changed").unwrap()
   let stable_id = @core.SemanticId::parse("test.delta.stable").unwrap()
-  let label = @core.State::new("before")
+  let label = Ref("before")
+  let build = () => {
+    runtime_semantics_dynamic_container([
+      runtime_semantics_identified_leaf(changed_id, label.val),
+      runtime_semantics_identified_leaf(stable_id, "stable"),
+    ])
+  }
   let runtime = RuntimeState::new_view(
-    root=runtime_component_view(context => {
-      runtime_semantics_dynamic_container([
-        runtime_semantics_identified_leaf(changed_id, context.watch(label)),
-        runtime_semantics_identified_leaf(stable_id, "stable"),
-      ])
-    }),
+    root=build(),
     size=@core.Size::new(width=100.0, height=48.0),
   )
+  runtime.set_root_builder(() => adapt_view_for_runtime(build(), _message => ()))
   let initial = runtime.cached_semantics()
-  label.set("after")
+  label.val = "after"
+  runtime.request_root_rebuild(reason="test model changed")
   match runtime.read_semantics(Some(initial.generation())) {
     Ok(SemanticsRead::Delta(delta)) => {
       let upserted = delta.upserted()
@@ -502,21 +508,24 @@ test "one changed leaf publishes a one-node delta" {
 ///|
 test "merged descendants rebuild after their internal nodes are pruned" {
   let child_id = @core.SemanticId::parse("test.merge.child").unwrap()
-  let parent_label = @core.State::new("parent")
+  let parent_label = Ref("parent")
+  let build = () => {
+    runtime_semantics_merge_container(
+      runtime_semantics_identified_leaf(child_id, "child"),
+      parent_label.val,
+    )
+  }
   let runtime = RuntimeState::new_view(
-    root=runtime_component_view(context => {
-      runtime_semantics_merge_container(
-        runtime_semantics_identified_leaf(child_id, "child"),
-        context.watch(parent_label),
-      )
-    }),
+    root=build(),
     size=@core.Size::new(width=100.0, height=24.0),
   )
+  runtime.set_root_builder(() => adapt_view_for_runtime(build(), _message => ()))
   let initial = runtime.cached_semantics()
   assert_eq(initial.nodes().length(), 1)
   assert_eq(initial.nodes()[0].label, "parent child")
   assert_eq(runtime.semantics.semantics_tree.nodes.length(), 1)
-  parent_label.set("updated")
+  parent_label.val = "updated"
+  runtime.request_root_rebuild(reason="test model changed")
   let updated = runtime.cached_semantics()
   assert_eq(updated.nodes().length(), 1)
   assert_eq(updated.nodes()[0].label, "updated child")

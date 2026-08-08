@@ -228,7 +228,9 @@ pub async fn run_terminal() -> Unit {
   runtime_ref.val = Some(runtime)
   let window_task : async () -> Unit = async fn() {
     @runtime.run_app("MoUI Terminal", runtime)
-    .render_all(@render_skia.from_env())
+    .render_all(
+      @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS),
+    )
     .backend(
       @macos_host.entry(
         options=@macos_host.MacosHostAppOptions::new(
