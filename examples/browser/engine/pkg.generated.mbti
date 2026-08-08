@@ -1,0 +1,49 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/browser/engine"
+
+import {
+  "dowdiness/js_engine",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn decode_data_url(String) -> String?
+
+pub fn extract_scripts(String) -> Array[String]
+
+pub fn render_html(String, Double, Double) -> Array[@core.DrawCommand]
+
+pub fn render_html_document(String, Double, Double) -> RenderResult
+
+// Errors
+
+// Types and methods
+pub struct JsEngine {
+  engine : @js_engine.Engine
+}
+pub fn JsEngine::drain_output(Self) -> Array[String]
+pub fn JsEngine::new() -> Self
+pub fn JsEngine::run_scripts(Self, Array[String]) -> ScriptRunResult
+
+pub struct LinkRegion {
+  x : Double
+  y : Double
+  width : Double
+  height : Double
+  href : String
+}
+
+pub struct RenderResult {
+  commands : Array[@core.DrawCommand]
+  links : Array[LinkRegion]
+}
+
+pub struct ScriptRunResult {
+  outputs : Array[String]
+  errors : Array[String]
+}
+
+// Type aliases
+
+// Traits
+

@@ -69,6 +69,7 @@ entrypoint supplies the program and renderer provider. Run
 | Excel | Spreadsheet workbook prototype | `examples/excel/app/`, `examples/excel/{cell,formula,sheet,xlsx}/`, `examples/excel/macos_skia/` | Native `.xlsx` workflow, spreadsheet shell, formulas, editing, and typed file services |
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone plus typed `ServiceTaskResult` success/failure/cancellation flow |
 | WebView Demo | Native platform WebView pattern | `examples/webview_demo/app/` | Controlled WebView with retained macOS Skia and Web fallback entrypoints |
+| Browser | Pure-MoonBit HTML browser demo | `examples/browser/app/`, `examples/browser/engine/` | crater (HTML/CSS/paint) + dowdiness/js_engine (pure-MoonBit JS) rendered through MoUI canvas: address bar, link hit-testing, data-URL navigation, page scripts |
 | PDF Workbench | PDF reading and light editing prototype | `examples/pdf_workbench/app/` | Typed binary file services, PDF adapters, and retained macOS Skia entrypoint |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette, typed `ProgramCommand`, and context-menu service flow through the same TEA queue |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |

@@ -72,7 +72,6 @@ pub struct MarkdownEditorApp {
   priv mut expanded_tree_paths : Array[String]
   priv mut directory_tree_items : Array[@views.TreeItem]
   priv mut file_tree_expanded : Bool
-  priv mut selected_image_offset : Int?
   priv mut image_centered : Bool
 }
 
@@ -346,7 +345,6 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     editor_scroll: @geometry.Point::new(x=0.0, y=0.0),
     file_filter_query: "",
     file_tree_expanded: true,
-    selected_image_offset: None,
     image_centered: false,
   }
 }

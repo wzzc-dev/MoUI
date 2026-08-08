@@ -409,8 +409,6 @@ test "markdown editor runtime front matter shortcuts insert metadata" {
 test "markdown editor image center wraps image in center tags" {
   let app = MarkdownEditorApp::new()
   app.set_document("Before\n\n![photo](img.png)\n\nAfter")
-  let offset = app.document().find("![photo]").unwrap_or(0)
-  app.selected_image_offset = Some(offset)
   app.update_in_place(ToggleImageCenter)
   let doc = app.document()
   assert_true(doc.contains("<center>"))
