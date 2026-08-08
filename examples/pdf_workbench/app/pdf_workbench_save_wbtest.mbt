@@ -16,7 +16,7 @@ test "pdf workbench save writes original bytes when clean" {
       }
     },
   )
-  let services = @backend_common.app_services(bridge~)
+  let services = @backend_common_services.app_services(bridge~)
   let model = match
     PdfWorkbenchDocument::from_bytes(path="/tmp/minimum.pdf", bytes~) {
     Loaded(document) =>
@@ -67,7 +67,7 @@ test "pdf workbench save as defaults to current PDF file name" {
       }
     },
   )
-  let services = @backend_common.app_services(bridge~)
+  let services = @backend_common_services.app_services(bridge~)
   let model = match
     PdfWorkbenchDocument::from_bytes(path="/tmp/quarterly-review", bytes~) {
     Loaded(document) =>
@@ -141,7 +141,7 @@ test "pdf workbench dirty save uses document writeback service" {
       }
     },
   )
-  let services = @backend_common.app_services(bridge~)
+  let services = @backend_common_services.app_services(bridge~)
   let document_services = PdfWorkbenchDocumentServices::new(
     load=(path, input) => {
       reload_count.val = reload_count.val + 1
@@ -238,7 +238,7 @@ test "pdf workbench save keeps clean state when reload after writeback fails" {
       }
     },
   )
-  let services = @backend_common.app_services(bridge~)
+  let services = @backend_common_services.app_services(bridge~)
   let document_services = PdfWorkbenchDocumentServices::new(
     load=(_path, _input) => Failed("reload parse failed for test"),
     writeback=_document => WritebackReady(output, ["fake writeback applied"]),

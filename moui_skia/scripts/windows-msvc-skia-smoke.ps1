@@ -46,9 +46,9 @@ $nativePkg = Join-Path $mouiSkiaRoot "native/moon.pkg"
 $backupPkg = "$nativePkg.smoke.bak"
 $smokePkg = Join-Path $mouiSkiaRoot "scripts/native_smoke/moon.pkg"
 $smokeBackupPkg = "$smokePkg.smoke.bak"
-$rendererPkg = Join-Path $repoRoot "moui/tests/skia_renderer_smoke/native/moon.pkg"
+$rendererPkg = Join-Path $repoRoot "moui_tests/skia_renderer_smoke/native/moon.pkg"
 $rendererPkgBackup = "$rendererPkg.smoke.bak"
-$textEmojiPkg = Join-Path $repoRoot "moui/tests/skia_text_emoji_smoke/native/moon.pkg"
+$textEmojiPkg = Join-Path $repoRoot "moui_tests/skia_text_emoji_smoke/native/moon.pkg"
 $textEmojiPkgBackup = "$textEmojiPkg.smoke.bak"
 . (Join-Path $PSScriptRoot "windows-msvc-skia-paths.ps1")
 
@@ -209,10 +209,10 @@ if (Test-Path -LiteralPath $smokeBackupPkg) {
   throw "scripts/native_smoke/moon.pkg smoke backup already exists: $smokeBackupPkg. Resolve the stale backup before running smoke."
 }
 if ($RunRendererSmoke -and (Test-Path -LiteralPath $rendererPkgBackup)) {
-  throw "moui/tests/skia_renderer_smoke/native/moon.pkg smoke backup already exists: $rendererPkgBackup. Resolve the stale backup before running smoke."
+  throw "moui_tests/skia_renderer_smoke/native/moon.pkg smoke backup already exists: $rendererPkgBackup. Resolve the stale backup before running smoke."
 }
 if ($RunTextEmojiSmoke -and (Test-Path -LiteralPath $textEmojiPkgBackup)) {
-  throw "moui/tests/skia_text_emoji_smoke/native/moon.pkg smoke backup already exists: $textEmojiPkgBackup. Resolve the stale backup before running smoke."
+  throw "moui_tests/skia_text_emoji_smoke/native/moon.pkg smoke backup already exists: $textEmojiPkgBackup. Resolve the stale backup before running smoke."
 }
 
 $resolvedSmokeLog = ""
@@ -481,7 +481,7 @@ exit /b %SMOKE_STATUS%
     $originalRendererPkg = Get-Content -LiteralPath $rendererPkg -Raw
     try {
       Set-Content -LiteralPath $rendererPkgBackup -Value $originalRendererPkg -NoNewline
-      Write-Host "Backed up moui/tests/skia_renderer_smoke/native/moon.pkg to $rendererPkgBackup."
+      Write-Host "Backed up moui_tests/skia_renderer_smoke/native/moon.pkg to $rendererPkgBackup."
       @"
 import {
   "moonbitlang/core/encoding/base64",
@@ -491,7 +491,7 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/common" @render_common,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui_skia_renderer" @skia_renderer,
 }
 
 supported_targets = "native"
@@ -506,7 +506,7 @@ options(
   targets: { "main.mbt": [ "native" ] },
 )
 "@ | Set-Content -LiteralPath $rendererPkg -NoNewline
-      Write-Host "Wrote temporary moui/tests/skia_renderer_smoke/native/moon.pkg with Windows MSVC Skia link flags."
+      Write-Host "Wrote temporary moui_tests/skia_renderer_smoke/native/moon.pkg with Windows MSVC Skia link flags."
 
       if ($resolvedRendererLog.Length -eq 0) {
         $resolvedRendererLog = Join-Path ([System.IO.Path]::GetTempPath()) "moui-skia-msvc-renderer-smoke-$PID.log"
@@ -535,7 +535,7 @@ set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
 set MOUI_SKIA_DISABLE_PREBUILD_SKIA=1
 echo building renderer smoke...
-moon build moui/tests/skia_renderer_smoke/native --target native
+moon build moui_tests/skia_renderer_smoke/native --target native
 if errorlevel 1 exit /b %errorlevel%
 set RENDERER_EXE=%CD%\_build\native\debug\build\wzzc-dev\moui\tests\skia_renderer_smoke\native\native.exe
 if not exist "%RENDERER_EXE%" (
@@ -586,7 +586,7 @@ exit /b %RENDERER_STATUS%
       if (Test-Path -LiteralPath $rendererPkgBackup) {
         Set-Content -LiteralPath $rendererPkg -Value $originalRendererPkg -NoNewline
         Remove-Item -LiteralPath $rendererPkgBackup -ErrorAction SilentlyContinue
-        Write-Host "Restored moui/tests/skia_renderer_smoke/native/moon.pkg after Windows MSVC Skia smoke."
+        Write-Host "Restored moui_tests/skia_renderer_smoke/native/moon.pkg after Windows MSVC Skia smoke."
       }
     }
   }
@@ -598,14 +598,14 @@ exit /b %RENDERER_STATUS%
     $originalTextEmojiPkg = Get-Content -LiteralPath $textEmojiPkg -Raw
     try {
       Set-Content -LiteralPath $textEmojiPkgBackup -Value $originalTextEmojiPkg -NoNewline
-      Write-Host "Backed up moui/tests/skia_text_emoji_smoke/native/moon.pkg to $textEmojiPkgBackup."
+      Write-Host "Backed up moui_tests/skia_text_emoji_smoke/native/moon.pkg to $textEmojiPkgBackup."
       @"
 import {
   "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/moui/backend/common" @window_host,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui_skia_renderer" @skia_renderer,
   "wzzc-dev/moui/views",
 }
 
@@ -621,7 +621,7 @@ options(
   targets: { "main.mbt": [ "native" ] },
 )
 "@ | Set-Content -LiteralPath $textEmojiPkg -NoNewline
-      Write-Host "Wrote temporary moui/tests/skia_text_emoji_smoke/native/moon.pkg with Windows MSVC Skia link flags."
+      Write-Host "Wrote temporary moui_tests/skia_text_emoji_smoke/native/moon.pkg with Windows MSVC Skia link flags."
 
       if ($resolvedTextEmojiLog.Length -eq 0) {
         $resolvedTextEmojiLog = Join-Path ([System.IO.Path]::GetTempPath()) "moui-skia-msvc-text-emoji-smoke-$PID.log"
@@ -650,7 +650,7 @@ set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
 set MOUI_SKIA_DISABLE_PREBUILD_SKIA=1
 echo building text/emoji smoke...
-moon build moui/tests/skia_text_emoji_smoke/native --target native
+moon build moui_tests/skia_text_emoji_smoke/native --target native
 if errorlevel 1 exit /b %errorlevel%
 set TEXT_EMOJI_EXE=%CD%\_build\native\debug\build\wzzc-dev\moui\tests\skia_text_emoji_smoke\native\native.exe
 if not exist "%TEXT_EMOJI_EXE%" (
@@ -713,7 +713,7 @@ exit /b %TEXT_EMOJI_STATUS%
       if (Test-Path -LiteralPath $textEmojiPkgBackup) {
         Set-Content -LiteralPath $textEmojiPkg -Value $originalTextEmojiPkg -NoNewline
         Remove-Item -LiteralPath $textEmojiPkgBackup -ErrorAction SilentlyContinue
-        Write-Host "Restored moui/tests/skia_text_emoji_smoke/native/moon.pkg after Windows MSVC Skia smoke."
+        Write-Host "Restored moui_tests/skia_text_emoji_smoke/native/moon.pkg after Windows MSVC Skia smoke."
       }
     }
   }

@@ -401,7 +401,7 @@ fn project_entrypoint_checks(
       let package_markers = [
         "wzzc-dev/moui/runtime",
         "wzzc-dev/moui/backend/" + platform,
-        "wzzc-dev/moui/render/skia",
+        "wzzc-dev/moui_skia_renderer",
       ]
       let main_markers = [
         "@runtime.run_app", ".render_all(", ".backend(@platform_host.entry())",

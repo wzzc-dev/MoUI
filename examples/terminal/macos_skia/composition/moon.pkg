@@ -7,7 +7,7 @@ import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
   "wzzc-dev/moui/backend/macos" @macos_host,
-  "wzzc-dev/moui/render/skia" @render_skia,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
   "examples/terminal/app",
   "examples/terminal/addon",
   "examples/terminal/pty_host" @pty,

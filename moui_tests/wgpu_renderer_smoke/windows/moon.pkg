@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
+  "wzzc-dev/moui_wgpu_renderer/directwrite" @wgpu_directwrite,
+  "Milky2018/wgpu_mbt",
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  targets: { "main.mbt": [ "native" ] },
+)

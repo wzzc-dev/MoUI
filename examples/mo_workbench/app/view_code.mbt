@@ -860,10 +860,14 @@ fn code_message_list(
   @views.padding_edges(
     @views.scroll_view(
       @views.list(rows, spacing=4.0),
-      state=Some(model.scroll_state),
       width=inner_width,
       height=inner_height,
-      on_scroll=Some(delta => CodeMsg::MessageListScrolled(delta)),
+      offset=model.scroll_offset,
+      on_scroll=Some(offset => CodeMsg::MessageListScrolled(offset)),
+      request=@moui.ScrollRequest::new(
+        id=model.scroll_request_id,
+        offset=model.scroll_offset,
+      ),
     ),
     top=12.0,
     left=28.0,

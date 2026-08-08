@@ -62,7 +62,7 @@ test "command palette runtime exposes command rows" {
 ///|
 test "command palette host menu service dispatches selected command" {
   let saw_menu = Ref(false)
-  let services = @backend_common.app_services(
+  let services = @backend_common_services.app_services(
     bridge=@host.HostServiceBridge::new(
       capabilities=@host.HostServiceCapabilities::new(menus=true),
       handle=request => {
@@ -89,21 +89,19 @@ test "command palette host menu service dispatches selected command" {
   inspect(summary.descriptors()[0].key(), content="menu:context")
   inspect(summary.descriptors()[0].kind(), content="service")
   inspect(summary.descriptors()[0].label(), content="Show context menu")
-  let model = @state.State::new(opening)
+  let model = Ref(opening)
   match effect {
     @moui.Effect::Task(_descriptor, start) =>
       ignore(
         start(message => {
-          let (next, _effect) = model
-            .get()
-            .update_with_services(message, services)
-          model.set(next)
+          let (next, _effect) = model.val.update_with_services(message, services)
+          model.val = next
         }),
       )
     _ => fail("expected typed menu service task")
   }
   assert_true(saw_menu.val)
-  inspect(model.get().last_result, content="Dispatched: Save Document")
+  inspect(model.val.last_result, content="Dispatched: Save Document")
 }
 
 ///|

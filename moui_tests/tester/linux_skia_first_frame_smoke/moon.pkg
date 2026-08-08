@@ -1,0 +1,15 @@
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/linux",
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "wzzc-dev/moui_tests/tester/fixtures/text_input_app" @fixture,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { "main.mbt": [ "native" ] },
+)

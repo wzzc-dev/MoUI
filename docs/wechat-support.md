@@ -20,8 +20,9 @@ through the CanvasRenderingContext2D API.
 - `moui/backend/wechat` exposes the canvas host callbacks, owns the canvas
   surface host, and provides a neutral `entry(WechatAppOptions)` platform
   closure.
-- `moui/render/canvas2d` implements the Canvas 2D renderer producing
-  `RendererFactory`/`WindowRenderer` values with wasm FFI imports.
+- `moui_web_renderer/canvas2d` implements the Canvas 2D renderer producing
+  a `RendererProvider` that binds a per-window `RendererSession` with wasm FFI
+  imports.
 - `examples/*/wechat_canvas` composes both sides with
   `@runtime.run_app(...).render(@render_canvas2d.canvas()).backend(@wechat.entry(...))`.
 - `window/wechat/template` owns the Mini Program project template and its JS
@@ -45,7 +46,7 @@ through the CanvasRenderingContext2D API.
 │  ┌─────▼────────────────────────────────▼─────┐ │
 │  │         MoonBit WebAssembly Module          │ │
 │  │  ┌──────────────────────────────────────┐  │ │
-│  │  │  moui/render/canvas2d                │  │ │
+│  │  │  moui_web_renderer/canvas2d                │  │ │
 │  │  │  DrawCommand → Canvas2D API          │  │ │
 │  │  └──────────────────────────────────────┘  │ │
 │  │  ┌──────────────────────────────────────┐  │ │

@@ -50,10 +50,10 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 - `moui/backend/` defines shared host contracts; platform backends
   normalize window and input events into `Event`.
 - `moui/backend/<platform>/` owns only the neutral host; applications select
-  `moui/render/skia` or another renderer factory in the composition root.
+  `moui_skia_renderer` or another renderer provider in the composition root.
 - `moui/render/` provides the renderer facade, with native Skia raster, WebGPU
-  adapter, and experimental native WGPU implementations under `render/skia/`,
-  `render/webgpu_adapter/`, and `render/wgpu/`.
+  adapter, and experimental native WGPU implementations under `moui_skia_renderer/`,
+  `moui_web_renderer/`, and `moui_wgpu_renderer/`.
 - `moui_theme/` is an optional addon workspace member for source-mapped
   Material, Carbon, Primer, and Fluent theme previews plus the first-party
   Smartisan-inspired Sickle hybrid skeuomorphic/flat theme.

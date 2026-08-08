@@ -158,7 +158,7 @@ function reachablePackageIds(manifest, roots) {
     "wzzc-dev/window/core",
     "wzzc-dev/moui/views",
     "wzzc-dev/moui/runtime",
-    "wzzc-dev/moui/render/webgpu_adapter",
+    "wzzc-dev/moui_web_renderer",
     "wzzc-dev/moui/render",
     "wzzc-dev/moui/core/unicode",
     "wzzc-dev/moui/core",
@@ -247,7 +247,7 @@ async function compile(request) {
     { path: "wzzc-dev/moui", alias: "moui" },
     { path: "wzzc-dev/moui/runtime", alias: "runtime" },
     { path: "wzzc-dev/moui/backend/web", alias: "web" },
-    { path: "wzzc-dev/moui/render/webgpu_adapter", alias: "webgpu_adapter" },
+    { path: "wzzc-dev/moui_web_renderer", alias: "webgpu_adapter" },
     prelude,
   ];
   let runner;

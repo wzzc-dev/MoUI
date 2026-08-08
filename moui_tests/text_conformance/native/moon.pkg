@@ -1,0 +1,18 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
+  "wzzc-dev/moui_skia_renderer" @skia_renderer,
+  "wzzc-dev/moui_skia/native" @skia_native,
+  "wzzc-dev/moui_wgpu_renderer/cosmic_text",
+  "wzzc-dev/moui_wgpu_renderer/directwrite",
+  "wzzc-dev/moui_wgpu_renderer/fontconfig",
+} for "test"
+
+supported_targets = "native"
+
+options(
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { },
+)

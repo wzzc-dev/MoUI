@@ -33,9 +33,9 @@ Options:
   --extra-link-flags STR Extra linker flags appended to cc-link-flags.
   --smoke-log PATH       Write the native smoke executable output to PATH.
                          Relative paths are resolved from the repository root.
-  --run-renderer-smoke   Also build and run moui/tests/skia_renderer_smoke/native
+  --run-renderer-smoke   Also build and run moui_tests/skia_renderer_smoke/native
                          after native smoke. Requires --skia-include/--skia-lib-dir.
-  --run-text-emoji-smoke Also build and run moui/tests/skia_text_emoji_smoke/native
+  --run-text-emoji-smoke Also build and run moui_tests/skia_text_emoji_smoke/native
                          after native smoke. Requires --enable-skparagraph or
                          --require-skparagraph for SkParagraph bidi/emoji markers.
   --renderer-log PATH    Write the renderer smoke executable output to PATH.
@@ -243,9 +243,9 @@ native_pkg="$moui_skia_root/native/moon.pkg"
 backup_pkg="$native_pkg.smoke.bak"
 smoke_pkg="$moui_skia_root/scripts/native_smoke/moon.pkg"
 smoke_backup_pkg="$smoke_pkg.smoke.bak"
-renderer_pkg="$repo_root/moui/tests/skia_renderer_smoke/native/moon.pkg"
+renderer_pkg="$repo_root/moui_tests/skia_renderer_smoke/native/moon.pkg"
 renderer_pkg_backup="$renderer_pkg.smoke.bak"
-text_emoji_pkg="$repo_root/moui/tests/skia_text_emoji_smoke/native/moon.pkg"
+text_emoji_pkg="$repo_root/moui_tests/skia_text_emoji_smoke/native/moon.pkg"
 text_emoji_pkg_backup="$text_emoji_pkg.smoke.bak"
 smoke_log=""
 smoke_log_is_temporary=0
@@ -495,12 +495,12 @@ restore_native_pkg() {
   if [[ -f "$renderer_pkg_backup" ]]; then
     cp "$renderer_pkg_backup" "$renderer_pkg"
     rm -f "$renderer_pkg_backup"
-    echo "Restored moui/tests/skia_renderer_smoke/native/moon.pkg after Linux Skia smoke."
+    echo "Restored moui_tests/skia_renderer_smoke/native/moon.pkg after Linux Skia smoke."
   fi
   if [[ -f "$text_emoji_pkg_backup" ]]; then
     cp "$text_emoji_pkg_backup" "$text_emoji_pkg"
     rm -f "$text_emoji_pkg_backup"
-    echo "Restored moui/tests/skia_text_emoji_smoke/native/moon.pkg after Linux Skia smoke."
+    echo "Restored moui_tests/skia_text_emoji_smoke/native/moon.pkg after Linux Skia smoke."
   fi
 }
 trap restore_native_pkg EXIT
@@ -582,7 +582,7 @@ fi
 
 if [[ $run_renderer_smoke -eq 1 ]]; then
   cp "$renderer_pkg" "$renderer_pkg_backup"
-  echo "Backed up moui/tests/skia_renderer_smoke/native/moon.pkg to $renderer_pkg_backup."
+  echo "Backed up moui_tests/skia_renderer_smoke/native/moon.pkg to $renderer_pkg_backup."
   cat > "$renderer_pkg" <<EOF
 import {
   "moonbitlang/core/encoding/base64",
@@ -592,7 +592,7 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/common" @render_common,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui_skia_renderer" @skia_renderer,
 }
 
 supported_targets = "native"
@@ -607,13 +607,13 @@ options(
   targets: { "main.mbt": [ "native" ] },
 )
 EOF
-  echo "Wrote temporary moui/tests/skia_renderer_smoke/native/moon.pkg with Linux Skia link flags."
+  echo "Wrote temporary moui_tests/skia_renderer_smoke/native/moon.pkg with Linux Skia link flags."
 
   cd "$repo_root"
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
     MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-    moon build moui/tests/skia_renderer_smoke/native --target native
-  renderer_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
+    moon build moui_tests/skia_renderer_smoke/native --target native
+  renderer_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tests/skia_renderer_smoke/native/native.exe"
   if [[ ! -x "$renderer_exe" ]]; then
     echo "MoUI Skia renderer smoke executable was not produced at $renderer_exe" >&2
     exit 1
@@ -655,7 +655,7 @@ EOF
 
   cp "$renderer_pkg_backup" "$renderer_pkg"
   rm -f "$renderer_pkg_backup"
-  echo "Restored moui/tests/skia_renderer_smoke/native/moon.pkg after renderer smoke."
+  echo "Restored moui_tests/skia_renderer_smoke/native/moon.pkg after renderer smoke."
 fi
 
 if [[ $run_text_emoji_smoke -eq 1 ]]; then
@@ -664,14 +664,14 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
     exit 2
   fi
   cp "$text_emoji_pkg" "$text_emoji_pkg_backup"
-  echo "Backed up moui/tests/skia_text_emoji_smoke/native/moon.pkg to $text_emoji_pkg_backup."
+  echo "Backed up moui_tests/skia_text_emoji_smoke/native/moon.pkg to $text_emoji_pkg_backup."
   cat > "$text_emoji_pkg" <<EOF
 import {
   "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/moui/backend/common" @window_host,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui_skia_renderer" @skia_renderer,
   "wzzc-dev/moui/views",
 }
 
@@ -687,13 +687,13 @@ options(
   targets: { "main.mbt": [ "native" ] },
 )
 EOF
-  echo "Wrote temporary moui/tests/skia_text_emoji_smoke/native/moon.pkg with Linux Skia link flags."
+  echo "Wrote temporary moui_tests/skia_text_emoji_smoke/native/moon.pkg with Linux Skia link flags."
 
   cd "$repo_root"
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
     MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-    moon build moui/tests/skia_text_emoji_smoke/native --target native
-  text_emoji_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe"
+    moon build moui_tests/skia_text_emoji_smoke/native --target native
+  text_emoji_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tests/skia_text_emoji_smoke/native/native.exe"
   if [[ ! -x "$text_emoji_exe" ]]; then
     echo "MoUI Skia text/emoji smoke executable was not produced at $text_emoji_exe" >&2
     exit 1
@@ -746,5 +746,5 @@ EOF
 
   cp "$text_emoji_pkg_backup" "$text_emoji_pkg"
   rm -f "$text_emoji_pkg_backup"
-  echo "Restored moui/tests/skia_text_emoji_smoke/native/moon.pkg after text/emoji smoke."
+  echo "Restored moui_tests/skia_text_emoji_smoke/native/moon.pkg after text/emoji smoke."
 fi

@@ -29,7 +29,7 @@ pub fn ios_readiness() -> IosBackendReadiness
 
 pub fn ios_service_capabilities() -> @backend.HostServiceCapabilities
 
-pub fn ios_surface_binding(Array[@render.RendererFactory]) -> IosSurfaceBinding
+pub fn ios_surface_binding(Array[@render.RendererProvider]) -> IosSurfaceBinding
 
 pub fn ios_window_hosted_pump_host_sim(IosEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
@@ -72,7 +72,7 @@ pub struct IosEmbeddedRuntimeBackend {
 }
 pub fn IosEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn IosEmbeddedRuntimeBackend::has_session(Self) -> Bool
-pub fn IosEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererFactory], auto_exit_after_frames? : Int?) -> Self
+pub fn IosEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int?) -> Self
 pub fn IosEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn IosEmbeddedRuntimeBackend::surface_generation(Self) -> Int
 pub impl @wzzc-dev/window/ios.ApplicationHandler for IosEmbeddedRuntimeBackend
@@ -86,8 +86,7 @@ pub fn IosImeSink::new() -> Self
 pub struct IosSurfaceBinding {
   // private fields
 }
-pub fn IosSurfaceBinding::has_async_image_loader(Self) -> Bool
-pub fn IosSurfaceBinding::new(create_renderer~ : (IosSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererResolution?, sync_surface? : (IosSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit, image_loader? : @render.ImageLoader?) -> Self
+pub fn IosSurfaceBinding::new(create_renderer~ : (IosSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?, sync_surface? : (IosSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> Self
 
 pub(all) struct IosSurfaceHandle {
   raw : UInt64

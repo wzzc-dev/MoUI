@@ -1,0 +1,16 @@
+import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui_skia_renderer" @skia_renderer,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  "native-stub": [ "bench_clock.c" ],
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { "main.mbt": [ "native" ] },
+)

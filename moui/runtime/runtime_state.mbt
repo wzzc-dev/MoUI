@@ -16,8 +16,8 @@ priv struct RuntimeState {
   begin_message_batch : () -> Unit
   end_message_batch : () -> Unit
   mut event_observer : (AppEvent) -> Unit
+  mut root_builder : (() -> &RuntimeViewNode)?
   clock : Clock
-  saveable_state : SaveableStateStore
   mut pending_scroll_request : ScrollRequest?
   mut closed : Bool
   semantics : SemanticsSubsystem
@@ -77,15 +77,12 @@ fn RuntimeState::new_runtime_view_node(
     begin_message_batch,
     end_message_batch,
     event_observer: _event => (),
+    root_builder: None,
     clock: Clock::new(),
-    saveable_state: SaveableStateStore::new(),
     pending_scroll_request: None,
     closed: false,
     semantics: SemanticsSubsystem::new(),
   }
-  let mounted = mount_runtime_view_node_for_runtime(root, Some(state), 1)
-  state.element_tree = ElementTree::new(mounted.node)
-  state.next_element_id = mounted.next_id
   state.mark_dirty(state.element_tree.id())
   state.render_current_tree()
   state
@@ -135,7 +132,7 @@ fn RuntimeState::set_environment(
 ) -> Unit {
   if self.environment != environment {
     self.environment = environment
-    self.dirty.needs_rebuild = self.element_tree.root.mark_component_tree_build_dirty()
+    self.request_root_rebuild(reason="environment changed")
     self.dirty.needs_layout = true
     self.dirty.needs_paint = true
     self.dirty.needs_redraw = true
@@ -183,9 +180,6 @@ fn RuntimeState::complete_semantics_destroy_request(
 
 ///|
 fn RuntimeState::destroy_now(self : RuntimeState) -> Unit {
-  self.element_tree.root.cancel_component_tree_subscriptions(
-    reason=ComponentEffectCancelReason::EffectRuntimeDestroyed,
-  )
   self.element_tree = ElementTree::empty()
   self.layout_tree = LayoutTree::empty()
   self.render_tree = RenderTree::empty()
@@ -200,10 +194,7 @@ fn RuntimeState::destroy_now(self : RuntimeState) -> Unit {
   self.stats.paint_pass_count = 0
   self.stats.semantics_recompute_count = 0
   self.stats.draw_command_build_count = 0
-  self.stats.cache_epoch = 0
   self.stats.last_damage_region = DamageRegion::empty()
-  self.stats.known_layer_cache_keys.clear()
-  self.stats.cached_layer_admissions.clear()
   self.closed = true
   self.semantics.semantics_tree = SemanticsTree::empty()
   self.semantics.committed_semantics = SemanticsSnapshot::empty()
@@ -327,26 +318,16 @@ fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   let commands : Array[DrawCommand] = Array::new(
     capacity=self.stats.last_command_count.max(64),
   )
-  let next_known_layers : Array[CachedLayerState] = []
-  let next_admissions : Array[CachedLayerAdmissionState] = []
   self.rebuild_if_possible()
   self.ensure_render_tree()
-  self.render_tree.root.collect_frame_commands(
-    commands,
-    self.stats.known_layer_cache_keys,
-    self.stats.cached_layer_admissions,
-    next_known_layers,
-    next_admissions,
-  )
+  self.render_tree.root.collect_frame_commands(commands)
   let platform_views = self.platform_tree.placements()
-  self.record_cached_layer_frame(next_known_layers, next_admissions)
   self.stats.last_command_count = commands.length()
   DrawFrame::new(
     commands~,
     platform_views~,
     damage=self.stats.last_damage_region,
     clear_color=Color::white(),
-    cache_epoch=self.stats.cache_epoch,
   )
 }
 
@@ -362,53 +343,53 @@ fn RuntimeState::cached_draw_commands(
 ///|
 fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
   if self.dirty.needs_rebuild {
-    if self.element_tree.root.has_dirty_build() {
-      self.stats.rebuild_pass_count = self.stats.rebuild_pass_count + 1
-      let result = self.element_tree.root.rebuild_dirty_components(
-        self,
-        self.next_element_id,
-      )
-      self.element_tree = ElementTree::new(result.node)
-      self.next_element_id = result.next_id
-      self.clear_stale_pointer_capture()
-      self.mark_current_dirty_elements()
+    match self.root_builder {
+      Some(build) => {
+        self.stats.rebuild_pass_count = self.stats.rebuild_pass_count + 1
+        let result = reconcile_element_for_runtime(
+          self.element_tree.root,
+          build(),
+          Some(self),
+          self.next_element_id,
+        )
+        self.element_tree = ElementTree::new(result.node)
+        self.next_element_id = result.next_id
+        self.clear_stale_pointer_capture()
+        self.mark_current_dirty_elements()
+      }
+      None => ()
     }
-    self.dirty.needs_rebuild = self.element_tree.root.has_dirty_build()
-    if !self.dirty.needs_rebuild {
-      self.dirty.dirty_build_elements.clear()
-      self.refresh_dirty_element_queue()
-    }
+    self.dirty.needs_rebuild = false
+    self.dirty.dirty_build_elements.clear()
+    self.refresh_dirty_element_queue()
   }
 }
 
 ///|
-fn RuntimeState::request_component_rebuild(
+fn RuntimeState::set_root_builder(
   self : RuntimeState,
-  id : ElementId,
+  builder : () -> &RuntimeViewNode,
 ) -> Unit {
-  if self.element_tree.root.mark_build_dirty_by_id(id) {
-    self.queue_dirty_element(id)
-    self.queue_build_dirty(id)
+  self.root_builder = Some(builder)
+}
+
+///|
+fn RuntimeState::request_root_rebuild(
+  self : RuntimeState,
+  reason? : String = "program model changed",
+) -> Unit {
+  if self.root_builder is Some(_) {
     self.dirty.needs_rebuild = true
-    if id == self.element_tree.id() {
-      self.dirty.full_damage_reason = Some("root component rebuild")
-    }
+    self.dirty.full_damage_reason = Some(reason)
+    self.queue_dirty_element(self.element_tree.id())
+    self.queue_build_dirty(self.element_tree.id())
     self.request_rebuild_wakeup()
   }
 }
 
 ///|
 fn RuntimeState::request_activation_rebuild(self : RuntimeState) -> Unit {
-  if !self.element_tree.root.has_dirty_build() &&
-    self.element_tree.root.mark_root_component_build_dirty() {
-    self.queue_dirty_element(self.element_tree.id())
-    self.queue_build_dirty(self.element_tree.id())
-  }
-  self.dirty.needs_rebuild = self.element_tree.root.has_dirty_build()
-  if self.dirty.needs_rebuild {
-    self.dirty.full_damage_reason = Some("activation rebuild")
-    self.request_rebuild_wakeup()
-  }
+  self.request_root_rebuild(reason="activation rebuild")
 }
 
 ///|
@@ -457,7 +438,7 @@ priv struct AnimFocusState {
 }
 
 ///|
-/// Subsystem: render counters and layer-cache bookkeeping.
+/// Subsystem: render counters and damage bookkeeping.
 priv struct RenderStats {
   mut rebuild_pass_count : Int
   mut layout_pass_count : Int
@@ -465,10 +446,7 @@ priv struct RenderStats {
   mut semantics_recompute_count : Int
   mut draw_command_build_count : Int
   mut last_command_count : Int
-  mut cache_epoch : Int
   mut last_damage_region : DamageRegion
-  known_layer_cache_keys : Array[CachedLayerState]
-  cached_layer_admissions : Array[CachedLayerAdmissionState]
 }
 
 ///|
@@ -524,10 +502,7 @@ fn RenderStats::new() -> RenderStats {
     semantics_recompute_count: 0,
     draw_command_build_count: 0,
     last_command_count: 0,
-    cache_epoch: 0,
     last_damage_region: DamageRegion::empty(),
-    known_layer_cache_keys: [],
-    cached_layer_admissions: [],
   }
 }
 

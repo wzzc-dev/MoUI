@@ -166,7 +166,7 @@ import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/macos" @macos_backend,
-  "wzzc-dev/moui/render/skia" @render_skia,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
   "examples/showcase/app",
 }
 
@@ -193,7 +193,7 @@ import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/macos" @macos_host,
-  "wzzc-dev/moui/render/skia" @render_skia,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/window/dpi",
   "wzzc-dev/window/macos" @window_macos,
   "examples/markdown_editor/app",

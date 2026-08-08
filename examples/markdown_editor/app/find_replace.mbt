@@ -409,17 +409,17 @@ fn markdown_editor_replace_source_range(
 fn MarkdownEditorApp::refresh_find_matches(
   self : MarkdownEditorApp,
 ) -> Array[@text.TextRange] {
-  let query = self.find_query.get()
+  let query = self.find_query
   let matches : Array[@text.TextRange] = if query == "" {
     []
   } else {
     markdown_editor_find_matches(
-      self.document.get(),
+      self.document,
       query,
-      options=self.find_options.get(),
+      options=self.find_options,
     )
   }
-  self.find_matches.set(matches)
+  self.find_matches = matches
   matches
 }
 
@@ -427,7 +427,7 @@ fn MarkdownEditorApp::refresh_find_matches(
 fn MarkdownEditorApp::refresh_find_matches_if_visible(
   self : MarkdownEditorApp,
 ) -> Unit {
-  if self.find_visible.get() {
+  if self.find_visible {
     ignore(self.refresh_find_matches())
   }
 }

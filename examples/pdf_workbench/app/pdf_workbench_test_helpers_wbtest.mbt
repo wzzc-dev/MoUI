@@ -63,25 +63,25 @@ fn run_pdf_workbench_effect_chain(
   raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
 ) -> PdfWorkbenchUpdate {
-  let model = @state.State::new(update.model)
-  let effect = @state.State::new(update.effect)
+  let model = Ref(update.model)
+  let effect = Ref(update.effect)
   let mut turns = 0
-  while turns < 8 && !(effect.get() is @moui.Effect::NoEffect) {
-    let current = effect.get()
-    effect.set(@moui.Effect::none())
+  while turns < 8 && !(effect.val is @moui.Effect::NoEffect) {
+    let current = effect.val
+    effect.val = @moui.Effect::none()
     run_pdf_workbench_effect_value(
       current, model, effect, services, raster_services, document_services,
     )
     turns = turns + 1
   }
-  PdfWorkbenchUpdate::new(model.get(), effect=effect.get())
+  PdfWorkbenchUpdate::new(model.val, effect=effect.val)
 }
 
 ///|
 fn run_pdf_workbench_effect_value(
   current : @moui.Effect[PdfWorkbenchMsg],
-  model : @state.State[PdfWorkbenchModel],
-  effect : @state.State[@moui.Effect[PdfWorkbenchMsg]],
+  model : Ref[PdfWorkbenchModel],
+  effect : Ref[@moui.Effect[PdfWorkbenchMsg]],
   services : @services.AppServices,
   raster_services : PdfWorkbenchRasterServices,
   document_services : PdfWorkbenchDocumentServices,
@@ -90,55 +90,55 @@ fn run_pdf_workbench_effect_value(
     @moui.Effect::Run(_descriptor, run) =>
       run(message => {
         let next = model
-          .get()
+          .val
           .update_with_services(
             message,
             services,
             raster_services~,
             document_services~,
           )
-        model.set(next.model)
-        effect.set(next.effect)
+        model.val = next.model
+        effect.val = next.effect
       })
     @moui.Effect::Task(_descriptor, start) =>
       ignore(
         start(message => {
           let next = model
-            .get()
+            .val
             .update_with_services(
               message,
               services,
               raster_services~,
               document_services~,
             )
-          model.set(next.model)
-          effect.set(next.effect)
+          model.val = next.model
+          effect.val = next.effect
         }),
       )
     @moui.Effect::Dispatch(run) =>
       run(message => {
         let next = model
-          .get()
+          .val
           .update_with_services(
             message,
             services,
             raster_services~,
             document_services~,
           )
-        model.set(next.model)
-        effect.set(next.effect)
+        model.val = next.model
+        effect.val = next.effect
       })
     @moui.Effect::Send(message) => {
       let next = model
-        .get()
+        .val
         .update_with_services(
           message,
           services,
           raster_services~,
           document_services~,
         )
-      model.set(next.model)
-      effect.set(next.effect)
+      model.val = next.model
+      effect.val = next.effect
     }
     @moui.Effect::Batch(effects) =>
       for nested in effects {
@@ -171,7 +171,7 @@ fn pdf_workbench_test_binary_services(bytes : Bytes) -> @services.AppServices {
       }
     },
   )
-  @backend_common.app_services(bridge~)
+  @backend_common_services.app_services(bridge~)
 }
 
 ///|

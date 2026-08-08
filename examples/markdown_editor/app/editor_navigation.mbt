@@ -1,60 +1,60 @@
 ///|
 fn MarkdownEditorApp::toggle_source_preview(self : MarkdownEditorApp) -> Unit {
-  self.source_preview_visible.set(!self.source_preview_visible.get())
+  self.source_preview_visible = !self.source_preview_visible
 }
 
 ///|
 fn MarkdownEditorApp::toggle_source_mode(self : MarkdownEditorApp) -> Unit {
-  self.source_mode_enabled.set(!self.source_mode_enabled.get())
+  self.source_mode_enabled = !self.source_mode_enabled
 }
 
 ///|
 fn MarkdownEditorApp::toggle_outline(self : MarkdownEditorApp) -> Unit {
-  self.outline_visible.set(!self.outline_visible.get())
+  self.outline_visible = !self.outline_visible
 }
 
 ///|
 fn MarkdownEditorApp::toggle_file_sidebar(self : MarkdownEditorApp) -> Unit {
-  self.file_sidebar_visible.set(!self.file_sidebar_visible.get())
+  self.file_sidebar_visible = !self.file_sidebar_visible
 }
 
 ///|
 fn MarkdownEditorApp::toggle_document_info(self : MarkdownEditorApp) -> Unit {
-  self.document_info_visible.set(!self.document_info_visible.get())
+  self.document_info_visible = !self.document_info_visible
 }
 
 ///|
 fn MarkdownEditorApp::toggle_focus_mode(self : MarkdownEditorApp) -> Unit {
-  self.focus_mode_enabled.set(!self.focus_mode_enabled.get())
+  self.focus_mode_enabled = !self.focus_mode_enabled
 }
 
 ///|
 fn MarkdownEditorApp::toggle_typewriter_mode(self : MarkdownEditorApp) -> Unit {
-  self.typewriter_mode_enabled.set(!self.typewriter_mode_enabled.get())
+  self.typewriter_mode_enabled = !self.typewriter_mode_enabled
   self.maybe_center_typewriter_selection()
 }
 
 ///|
 fn MarkdownEditorApp::toggle_zen_mode(self : MarkdownEditorApp) -> Unit {
-  if self.zen_mode_enabled.get() {
-    self.zen_mode_enabled.set(false)
+  if self.zen_mode_enabled {
+    self.zen_mode_enabled = false
   } else {
-    self.zen_mode_enabled.set(true)
+    self.zen_mode_enabled = true
     self.close_find()
     self.reset_format_palette()
-    self.file_sidebar_visible.set(false)
-    self.document_info_visible.set(false)
-    self.outline_visible.set(false)
-    self.source_preview_visible.set(false)
+    self.file_sidebar_visible = false
+    self.document_info_visible = false
+    self.outline_visible = false
+    self.source_preview_visible = false
   }
 }
 
 ///|
 fn MarkdownEditorApp::toggle_format_palette(self : MarkdownEditorApp) -> Unit {
-  if self.format_palette_visible.get() {
+  if self.format_palette_visible {
     self.reset_format_palette()
   } else {
-    self.format_palette_visible.set(true)
+    self.format_palette_visible = true
   }
 }
 
@@ -65,28 +65,28 @@ fn MarkdownEditorApp::toggle_find_option(
   self : MarkdownEditorApp,
   field~ : String,
 ) -> Unit {
-  let options = self.find_options.get()
+  let options = self.find_options
   let next = match field {
     "case_sensitive" => { ..options, case_sensitive: !options.case_sensitive }
     "whole_word" => { ..options, whole_word: !options.whole_word }
     "regex" => { ..options, regex: !options.regex }
     _ => options
   }
-  self.find_options.set(next)
+  self.find_options = next
   self.refresh_find_matches_if_visible()
 }
 
 ///|
 fn MarkdownEditorApp::reset_format_palette(self : MarkdownEditorApp) -> Unit {
-  self.format_palette_visible.set(false)
-  self.format_palette_query.set("")
+  self.format_palette_visible = false
+  self.format_palette_query = ""
 }
 
 ///|
 fn MarkdownEditorApp::cycle_writing_appearance(
   self : MarkdownEditorApp,
 ) -> Unit {
-  self.writing_appearance.set(self.writing_appearance.get().next())
+  self.writing_appearance = self.writing_appearance.next()
 }
 
 ///|
@@ -94,13 +94,13 @@ fn MarkdownEditorApp::set_writing_appearance(
   self : MarkdownEditorApp,
   appearance : MarkdownEditorAppearance,
 ) -> Unit {
-  self.writing_appearance.set(appearance)
+  self.writing_appearance = appearance
 }
 
 ///|
 fn MarkdownEditorApp::toggle_find(self : MarkdownEditorApp) -> Unit {
-  if self.find_visible.get() {
-    self.find_visible.set(false)
+  if self.find_visible {
+    self.find_visible = false
   } else {
     self.open_find()
   }
@@ -108,21 +108,21 @@ fn MarkdownEditorApp::toggle_find(self : MarkdownEditorApp) -> Unit {
 
 ///|
 fn MarkdownEditorApp::open_find(self : MarkdownEditorApp) -> Unit {
-  self.find_visible.set(true)
+  self.find_visible = true
   match
     markdown_editor_find_query_from_selection(
-      self.document.get(),
-      self.selection.get(),
+      self.document,
+      self.selection,
     ) {
-    Some(query) => self.find_query.set(query)
+    Some(query) => self.find_query = query
     None =>
       match
         markdown_editor_find_seed_from_caret_word(
-          self.document.get(),
-          self.selection.get(),
+          self.document,
+          self.selection,
         ) {
         Some(seed) => {
-          self.find_query.set(seed.query)
+          self.find_query = seed.query
           self.select_find_match(seed.range)
         }
         None => ()
@@ -133,44 +133,44 @@ fn MarkdownEditorApp::open_find(self : MarkdownEditorApp) -> Unit {
 
 ///|
 fn MarkdownEditorApp::close_find(self : MarkdownEditorApp) -> Unit {
-  self.find_visible.set(false)
-  self.find_matches.set([])
+  self.find_visible = false
+  self.find_matches = []
 }
 
 ///|
 fn MarkdownEditorApp::reset_find_session(self : MarkdownEditorApp) -> Unit {
-  self.find_visible.set(false)
-  self.find_query.set("")
-  self.find_matches.set([])
-  self.replace_text.set("")
+  self.find_visible = false
+  self.find_query = ""
+  self.find_matches = []
+  self.replace_text = ""
 }
 
 ///|
 fn MarkdownEditorApp::dismiss_auxiliary_panels(
   self : MarkdownEditorApp,
 ) -> Unit {
-  if self.zen_mode_enabled.get() {
-    self.zen_mode_enabled.set(false)
-  } else if self.find_visible.get() {
+  if self.zen_mode_enabled {
+    self.zen_mode_enabled = false
+  } else if self.find_visible {
     self.close_find()
-  } else if self.format_palette_visible.get() ||
-    self.file_sidebar_visible.get() ||
-    self.document_info_visible.get() ||
-    self.outline_visible.get() ||
-    self.source_preview_visible.get() ||
-    self.more_menu_visible.get() ||
-    self.active_menu.get() != "" {
+  } else if self.format_palette_visible ||
+    self.file_sidebar_visible ||
+    self.document_info_visible ||
+    self.outline_visible ||
+    self.source_preview_visible ||
+    self.more_menu_visible ||
+    self.active_menu != "" {
     self.reset_format_palette()
-    self.file_sidebar_visible.set(false)
-    self.document_info_visible.set(false)
-    self.outline_visible.set(false)
-    self.source_preview_visible.set(false)
-    self.more_menu_visible.set(false)
-    self.active_menu.set("")
+    self.file_sidebar_visible = false
+    self.document_info_visible = false
+    self.outline_visible = false
+    self.source_preview_visible = false
+    self.more_menu_visible = false
+    self.active_menu = ""
   } else {
-    let selection = self.selection.get()
+    let selection = self.selection
     if selection.selection is Some(_) {
-      self.selection.set({ caret: selection.caret, selection: None })
+      self.selection = { caret: selection.caret, selection: None }
       self.sync_target_inputs()
     }
   }
@@ -184,9 +184,9 @@ fn MarkdownEditorApp::jump_to_outline(
   let caret = markdown_editor_clamp_int(
     source_start,
     0,
-    markdown_editor_text_length(self.document.get()),
+    markdown_editor_text_length(self.document),
   )
-  self.selection.set({ caret, selection: None })
+  self.selection = { caret, selection: None }
   self.sync_target_inputs()
   self.scroll_to_source(caret)
 }
@@ -195,8 +195,8 @@ fn MarkdownEditorApp::jump_to_outline(
 fn MarkdownEditorApp::maybe_center_typewriter_selection(
   self : MarkdownEditorApp,
 ) -> Unit {
-  if self.typewriter_mode_enabled.get() {
-    let selection = self.selection.get()
+  if self.typewriter_mode_enabled {
+    let selection = self.selection
     let anchor = match selection.selection {
       Some(range) => range.normalized().start
       None => selection.caret
@@ -209,8 +209,8 @@ fn MarkdownEditorApp::maybe_center_typewriter_selection(
 fn MarkdownEditorApp::jump_to_next_heading(self : MarkdownEditorApp) -> Unit {
   match
     markdown_editor_next_outline_start(
-      self.document_session.get().outline,
-      self.selection.get().caret,
+      self.document_session.outline,
+      self.selection.caret,
     ) {
     Some(source_start) => self.jump_to_outline(source_start)
     None => ()
@@ -223,8 +223,8 @@ fn MarkdownEditorApp::jump_to_previous_heading(
 ) -> Unit {
   match
     markdown_editor_previous_outline_start(
-      self.document_session.get().outline,
-      self.selection.get().caret,
+      self.document_session.outline,
+      self.selection.caret,
     ) {
     Some(source_start) => self.jump_to_outline(source_start)
     None => ()
@@ -291,13 +291,13 @@ fn MarkdownEditorApp::scroll_to_source_with_anchor(
 ) -> Unit {
   let appearance = self.appearance_spec()
   let editor_font = markdown_editor_appearance_font(appearance)
-  let session = self.document_session.get()
-  let source_mode = self.source_mode_enabled.get()
+  let session = self.document_session
+  let source_mode = self.source_mode_enabled
   let editor_width = markdown_editor_primary_editor_width(
-    self.source_preview_visible.get(),
-    self.outline_visible.get(),
-    self.file_sidebar_visible.get(),
-    self.document_info_visible.get(),
+    self.source_preview_visible,
+    self.outline_visible,
+    self.file_sidebar_visible,
+    self.document_info_visible,
     appearance,
   )
   let viewport_height = markdown_editor_viewport_height()
@@ -326,7 +326,7 @@ fn MarkdownEditorApp::scroll_to_source_with_anchor(
     width=editor_width,
     height=editor_font.size * 1.55,
   )
-  self.editor_scroll.scroll_to(
+  self.editor_scroll = @geometry.Point::new(
     x=0.0,
     y=markdown_editor_clamp_double(
       markdown_editor_scroll_anchor_y(rect, viewport_height, center~),
@@ -351,23 +351,23 @@ fn markdown_editor_scroll_anchor_y(
 
 ///|
 fn MarkdownEditorApp::find_next(self : MarkdownEditorApp) -> Unit {
-  self.find_visible.set(true)
+  self.find_visible = true
   let matches = self.refresh_find_matches()
   if matches.length() == 0 {
     return
   }
-  let index = markdown_editor_find_next_index(matches, self.selection.get())
+  let index = markdown_editor_find_next_index(matches, self.selection)
   self.select_find_match(matches[index])
 }
 
 ///|
 fn MarkdownEditorApp::find_previous(self : MarkdownEditorApp) -> Unit {
-  self.find_visible.set(true)
+  self.find_visible = true
   let matches = self.refresh_find_matches()
   if matches.length() == 0 {
     return
   }
-  let index = markdown_editor_find_previous_index(matches, self.selection.get())
+  let index = markdown_editor_find_previous_index(matches, self.selection)
   self.select_find_match(matches[index])
 }
 
@@ -376,30 +376,30 @@ fn MarkdownEditorApp::update_find_query(
   self : MarkdownEditorApp,
   query : String,
 ) -> Unit {
-  self.find_query.set(query)
-  if !self.find_visible.get() {
+  self.find_query = query
+  if !self.find_visible {
     return
   }
   let matches = self.refresh_find_matches()
   if query == "" {
-    let selection = self.selection.get()
+    let selection = self.selection
     if selection.selection is Some(_) {
-      self.selection.set({ caret: selection.caret, selection: None })
+      self.selection = { caret: selection.caret, selection: None }
       self.sync_target_inputs()
     }
     return
   }
   if matches.length() == 0 {
-    let selection = self.selection.get()
+    let selection = self.selection
     if selection.selection is Some(_) {
-      self.selection.set({ caret: selection.caret, selection: None })
+      self.selection = { caret: selection.caret, selection: None }
       self.sync_target_inputs()
     }
     return
   }
   let index = markdown_editor_find_live_update_index(
     matches,
-    self.selection.get(),
+    self.selection,
   )
   if index >= 0 {
     self.select_find_match(matches[index])
@@ -411,7 +411,7 @@ fn MarkdownEditorApp::select_find_match(
   self : MarkdownEditorApp,
   range : @text.TextRange,
 ) -> Unit {
-  self.selection.set({ caret: range.end, selection: Some(range) })
+  self.selection = { caret: range.end, selection: Some(range) }
   self.sync_target_inputs()
   self.scroll_to_source(range.start)
 }
@@ -420,17 +420,17 @@ fn MarkdownEditorApp::select_find_match(
 fn MarkdownEditorApp::replace_current_find_match(
   self : MarkdownEditorApp,
 ) -> Unit {
-  let source = self.document.get()
-  let replacement = self.replace_text.get()
+  let source = self.document
+  let replacement = self.replace_text
   let matches = self.refresh_find_matches()
   if matches.length() == 0 {
     return
   }
-  let active = markdown_editor_find_active_index(matches, self.selection.get())
+  let active = markdown_editor_find_active_index(matches, self.selection)
   let index = if active >= 0 {
     active
   } else {
-    markdown_editor_find_next_index(matches, self.selection.get())
+    markdown_editor_find_next_index(matches, self.selection)
   }
   let range = matches[index]
   let before = self.history_entry()
@@ -441,7 +441,7 @@ fn MarkdownEditorApp::replace_current_find_match(
     return
   }
   self.push_undo(before)
-  self.redo_stack.set([])
+  self.redo_stack = []
   self.replace_document_source(next_source, reason=ReplaceEdit)
   let end = range.start + markdown_editor_text_length(replacement)
   let next_matches = self.refresh_find_matches()
@@ -449,10 +449,10 @@ fn MarkdownEditorApp::replace_current_find_match(
     markdown_editor_next_match_after_replacement(next_matches, range.start, end) {
     Some(next_range) => self.select_find_match(next_range)
     None => {
-      self.selection.set({
+      self.selection = {
         caret: end,
         selection: markdown_editor_replacement_selection(range.start, end),
-      })
+      }
       self.sync_target_inputs()
       self.scroll_to_source(range.start)
     }
@@ -463,8 +463,8 @@ fn MarkdownEditorApp::replace_current_find_match(
 fn MarkdownEditorApp::replace_all_find_matches(
   self : MarkdownEditorApp,
 ) -> Unit {
-  let source = self.document.get()
-  let replacement = self.replace_text.get()
+  let source = self.document
+  let replacement = self.replace_text
   let matches = self.refresh_find_matches()
   if matches.length() == 0 {
     return
@@ -477,33 +477,33 @@ fn MarkdownEditorApp::replace_all_find_matches(
   }
   let before = self.history_entry()
   self.push_undo(before)
-  self.redo_stack.set([])
+  self.redo_stack = []
   self.replace_document_source(next_source, reason=ReplaceEdit)
   let start = matches[0].start
   let end = start + markdown_editor_text_length(replacement)
-  self.selection.set({
+  self.selection = {
     caret: end,
     selection: markdown_editor_replacement_selection(start, end),
-  })
+  }
   self.sync_target_inputs()
   self.scroll_to_source(start)
 }
 
 ///|
 fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
-  let session = self.document_session.get()
+  let session = self.document_session
   let source = session.source
-  let selection = self.selection.get()
+  let selection = self.selection
   let active_block = markdown_editor_session_active_block(session, selection)
   let block_label = markdown_editor_session_active_block_label(active_block)
-  self.block_label.set(block_label)
+  self.block_label = block_label
   match
     markdown_editor_session_selected_link_target(
       source, selection, active_block,
     ) {
     Some(target) => {
-      self.link_target.set(target)
-      self.target_kind.set(LinkTarget)
+      self.link_target = target
+      self.target_kind = LinkTarget
       return
     }
     None => ()
@@ -513,8 +513,8 @@ fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
       source, selection, active_block,
     ) {
     Some(target) => {
-      self.image_target.set(target)
-      self.target_kind.set(ImageTarget)
+      self.image_target = target
+      self.target_kind = ImageTarget
     }
     None =>
       match
@@ -522,20 +522,20 @@ fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
           source, selection, active_block,
         ) {
         Some(text) => {
-          self.footnote_text.set(text)
-          self.target_kind.set(FootnoteTarget)
+          self.footnote_text = text
+          self.target_kind = FootnoteTarget
         }
         None =>
           match markdown_editor_session_selected_html_block_text(active_block) {
             Some(text) => {
-              self.html_block_text.set(text)
-              self.target_kind.set(HtmlBlockTarget)
+              self.html_block_text = text
+              self.target_kind = HtmlBlockTarget
             }
             None =>
               if block_label == "Table" {
-                self.target_kind.set(TableTools)
+                self.target_kind = TableTools
               } else {
-                self.target_kind.set(PlainSelection)
+                self.target_kind = PlainSelection
               }
           }
       }

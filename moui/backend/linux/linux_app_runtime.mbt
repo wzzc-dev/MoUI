@@ -7,8 +7,8 @@ pub fn entry(
   smoke_options? : LinuxHostSmokeOptions = LinuxHostSmokeOptions::new(),
 ) -> @runtime.PlatformEntry {
   @runtime.PlatformEntry::new(id="linux", launch=request => {
-    let factories = request.renderer_factories()
-    let image_source = @host_services_native.filesystem_image_source()
+    let providers = request.renderer_providers()
+    let image_source = @host_image_native.filesystem_image_source()
     let binding = LinuxSurfaceBinding::new(create_renderer=(window, metrics) => {
       let renderer_metrics = metrics
       let host_present = @render.PresentTarget::new(
@@ -23,33 +23,18 @@ pub fn entry(
           0
         },
       )
-      let gpu_surface = match
-        @render.GpuHostSurfaceDescriptor::wayland_vulkan_surface(
-          window.wl_display(),
-          window.wl_surface(),
-        ) {
-        Some(descriptor) =>
-          Some(
-            @render.HostGpuSurfaceBridge::new(
-              descriptor~,
-              create_surface=_ => None,
-              present=_ => true,
-            ),
-          )
-        None => None
-      }
-      let kit = @render.SurfaceContext::new(
-        surface=@render.SurfaceDescriptor::cpu_raster(
-          width=renderer_metrics.logical_size.width,
-          height=renderer_metrics.logical_size.height,
-          scale_factor=renderer_metrics.scale_factor,
-        ),
+      let native_surface = @render.NativeSurface::new(
+        surface_handle=window.wl_surface(),
+        display_handle=Some(window.wl_display()),
+        present=_ => true,
+      )
+      let surface = @render.HostSurface::new(
         metrics=renderer_metrics,
         cpu_present=Some(host_present),
-        gpu_surface~,
+        native_surface~,
         image_source=Some(image_source),
       )
-      @render_common.resolve_renderer(factories, kit)
+      @render_common.resolve_renderer(providers, surface)
     })
     launch_linux_app(
       request.title(),
@@ -82,15 +67,18 @@ fn launch_linux_app(
     title,
     runtime,
     driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
-    coordinator: @window_host.WindowCoordinator::new(
-      window_requests~,
+    lifecycle: @window_lifecycle.WindowLifecycle::new(
+      requests=window_requests,
       scene_resolver=options.scene_resolver,
-      services~,
+    ),
+    frames: @window_frame.WindowFrameStates::new(),
+    images: @window_image.WindowImageTaskStates::new(),
+    input: @window_input.WindowInputState::new(
       event_sources=options.event_sources,
     ),
     surface_binding: binding,
-    services,
-    platform_slots: @window_host.WindowSlotMap::new(),
+    services: @window_services.WindowServiceState::new(bridge=services),
+    platform_slots: @window_lifecycle.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,
     platform_attributes: options.platform_attributes,

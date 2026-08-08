@@ -9,12 +9,18 @@ on:
 
 jobs:
   external-consumer:
-    name: ${{ matrix.os }} / ${{ matrix.source }}
+    name: ${{ matrix.os }} / ${{ matrix.source }} / ${{ matrix.profile }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, macos-14, windows-2022]
         source: [registry, package]
+        profile: [base, skia, web]
+        exclude:
+          - source: registry
+            profile: skia
+          - source: registry
+            profile: web
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -33,4 +39,4 @@ jobs:
 
       - name: Validate external consumer
         shell: bash
-        run: node scripts/external-consumer-ci.mjs --source "${{ matrix.source }}"
+        run: node scripts/external-consumer-ci.mjs --source "${{ matrix.source }}" --profile "${{ matrix.profile }}"

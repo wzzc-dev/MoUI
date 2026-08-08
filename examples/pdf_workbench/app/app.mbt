@@ -80,8 +80,8 @@ pub struct PdfWorkbenchModel {
   raster_status : PdfWorkbenchRasterStatus
   raster_page : PdfWorkbenchRasterPage?
   raster_cache : Array[PdfWorkbenchRasterPage]
-  sidebar_scroll : @state.ScrollState
-  inspector_scroll : @state.ScrollState
+  sidebar_scroll : @geometry.Point
+  inspector_scroll : @geometry.Point
   preview_scroll_offset : @geometry.Point
   reader_fullscreen : Bool
   query : String
@@ -133,6 +133,8 @@ pub enum PdfWorkbenchMsg {
   AnnotationTextChanged(String)
   AddAnnotationForCurrentPage
   PreviewScrolled(@geometry.Point)
+  SidebarScrolled(@geometry.Point)
+  InspectorScrolled(@geometry.Point)
   ToggleReaderFullscreen
   ZoomIn
   ZoomOut
@@ -158,8 +160,8 @@ pub fn PdfWorkbenchModel::new() -> PdfWorkbenchModel {
     raster_status: PdfWorkbenchRasterStatus::RasterIdle,
     raster_page: None,
     raster_cache: [],
-    sidebar_scroll: @state.ScrollState::new(),
-    inspector_scroll: @state.ScrollState::new(),
+    sidebar_scroll: @geometry.Point::new(x=0.0, y=0.0),
+    inspector_scroll: @geometry.Point::new(x=0.0, y=0.0),
     preview_scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
     reader_fullscreen: false,
     query: "",
@@ -275,6 +277,10 @@ fn PdfWorkbenchModel::update_with_services(
       PdfWorkbenchUpdate::new(self.add_annotation_for_current_page())
     PreviewScrolled(delta) =>
       PdfWorkbenchUpdate::new(self.scroll_preview(delta))
+    SidebarScrolled(offset) =>
+      PdfWorkbenchUpdate::new({ ..self, sidebar_scroll: offset })
+    InspectorScrolled(offset) =>
+      PdfWorkbenchUpdate::new({ ..self, inspector_scroll: offset })
     ToggleReaderFullscreen =>
       PdfWorkbenchUpdate::new(self.toggle_reader_fullscreen())
     ZoomIn =>

@@ -22,17 +22,16 @@ fn PickerOption::label(self : PickerOption) -> String {
 ///|
 fn[Msg] picker_control(
   items~ : Array[PickerOption],
-  selected~ : @core.Binding[String],
+  selected~ : @core.ControlledValue[String, Msg],
   placeholder~ : String,
   theme? : @core.Theme,
   style? : @style.PickerStyle,
   max_height~ : Double,
-  on_select? : ((String) -> Msg)? = None,
   kind? : String = "Picker",
   key? : String? = None,
 ) -> @core.View[Msg] {
   let items_snapshot = items.copy()
-  let selected_snapshot = selected.get()
+  let selected_snapshot = selected.value()
   @core.View::from_node(
     Picker::{
       items: items_snapshot,
@@ -44,7 +43,7 @@ fn[Msg] picker_control(
       kind,
       key,
     },
-    event=(node, ctx) => picker_event(node, ctx, selected, on_select),
+    event=(node, ctx) => picker_event(node, ctx, selected),
     semantics_actions=_node => {
       [
         @core.ViewSemanticsActionHandler::activate(ctx => {
@@ -159,8 +158,7 @@ impl @core.ViewNode for Picker with fn focusable(_self) {
 fn[Msg] picker_event(
   node : Picker,
   ctx : @core.ViewEventContext,
-  selected : @core.Binding[String],
-  on_select : ((String) -> Msg)?,
+  selected : @core.ControlledValue[String, Msg],
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
     @core.AppEvent::Pointer(event) =>
@@ -171,7 +169,6 @@ fn[Msg] picker_event(
         items=node.items,
         selected~,
         max_height=node.max_height,
-        on_select~,
       )
     @core.AppEvent::Keyboard(event) =>
       handle_picker_keyboard(
@@ -179,7 +176,6 @@ fn[Msg] picker_event(
         event,
         items=node.items,
         selected~,
-        on_select~,
       )
     _ => @core.ViewEventResult::ignored()
   }
@@ -331,9 +327,8 @@ fn[Msg] handle_picker_pointer(
   event : @core.PointerEvent,
   frame~ : @core.Rect,
   items~ : Array[PickerOption],
-  selected~ : @core.Binding[String],
+  selected~ : @core.ControlledValue[String, Msg],
   max_height~ : Double,
-  on_select~ : ((String) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   let inside_button = frame.contains(event.position)
   let popup_frame = picker_popup_frame(items, frame, max_height)
@@ -344,7 +339,6 @@ fn[Msg] handle_picker_pointer(
     if event.phase == @core.PointerPhase::Up && inside_popup {
       match picker_item_id_at_position(items, popup_frame, event.position) {
         Some(id) => {
-          selected.set(id)
           @common.view_event_result(
             changed=true,
             activated=true,
@@ -352,7 +346,7 @@ fn[Msg] handle_picker_pointer(
             captured=true,
             state=Some({ ..state, expanded: false }),
             dirty=@core.ViewDirtyHint::ViewBuildDirty,
-            messages=picker_messages(on_select, id),
+            messages=[selected.changed(id)],
           )
         }
         None =>
@@ -408,8 +402,7 @@ fn[Msg] handle_picker_keyboard(
   state : @core.ViewStateContext,
   event : @core.KeyboardEvent,
   items~ : Array[PickerOption],
-  selected~ : @core.Binding[String],
-  on_select~ : ((String) -> Msg)?,
+  selected~ : @core.ControlledValue[String, Msg],
 ) -> @core.ViewEventResult[Msg] {
   if !event.pressed {
     @core.ViewEventResult::ignored()
@@ -422,16 +415,15 @@ fn[Msg] handle_picker_keyboard(
     )
   } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
     if state.expanded {
-      match picker_selected_id_or_first(items, selected.get()) {
+      match picker_selected_id_or_first(items, selected.value()) {
         Some(id) => {
-          selected.set(id)
           @common.view_event_result(
             changed=true,
             activated=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
             dirty=@core.ViewDirtyHint::ViewBuildDirty,
-            messages=picker_messages(on_select, id),
+            messages=[selected.changed(id)],
           )
         }
         None =>
@@ -455,18 +447,6 @@ fn[Msg] handle_picker_keyboard(
   }
 }
 
-///|
-fn[Msg] picker_messages(
-  on_select : ((String) -> Msg)?,
-  id : String,
-) -> Array[Msg] {
-  match on_select {
-    Some(handler) => [handler(id)]
-    None => []
-  }
-}
-
-///|
 fn picker_selected_label(
   items : Array[PickerOption],
   selected_id : String,

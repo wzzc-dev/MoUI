@@ -9,68 +9,6 @@ priv struct ElementEventResult {
 }
 
 ///|
-fn ElementNode::rebuild_dirty_components(
-  self : ElementNode,
-  runtime : RuntimeState,
-  next_id : Int,
-) -> ReconcileResult {
-  let mut next = next_id
-  let mut dirty_kind = ReconcileDirtyKind::clean()
-  if self.dirty.needs_build {
-    if self.view_node.has_build_child() {
-      let built = build_component_child(
-        self.view_node,
-        runtime,
-        self.id,
-        self.component.component_subscriptions,
-        self.component.component_effects,
-      )
-      self.component.component_subscriptions = built.subscriptions
-      self.component.component_effects = built.effects
-      let result = if self.children.length() > 0 {
-        reconcile_element_for_runtime(
-          self.children[0],
-          built.child_view_node,
-          Some(runtime),
-          next,
-        )
-      } else {
-        let mounted = mount_runtime_view_node_for_runtime(
-          built.child_view_node,
-          Some(runtime),
-          next,
-        )
-        {
-          node: mounted.node,
-          next_id: mounted.next_id,
-          dirty_kind: ReconcileDirtyKind::layout(),
-        }
-      }
-      self.children = [result.node]
-      next = result.next_id
-      dirty_kind = dirty_kind.combine(result.dirty_kind)
-    }
-    self.dirty.needs_build = false
-  }
-  let children : Array[ElementNode] = []
-  for child in self.children {
-    let result = child.rebuild_dirty_components(runtime, next)
-    children.push(result.node)
-    next = result.next_id
-    dirty_kind = dirty_kind.combine(result.dirty_kind)
-  }
-  self.children = children
-  self.refresh_descendant_dirty_flags()
-  self.apply_descendant_reconcile_dirty(dirty_kind)
-  { node: self, next_id: next, dirty_kind }
-}
-
-///|
-fn ElementNode::has_dirty_build(self : ElementNode) -> Bool {
-  self.dirty.has_build()
-}
-
-///|
 fn ElementNode::has_dirty_layout(self : ElementNode) -> Bool {
   self.dirty.has_layout()
 }
@@ -118,7 +56,6 @@ fn ElementNode::view_tree_inspector_snapshot(
   {
     root_kind: runtime_view_node_inspector_kind_label(self.view_node),
     node_count: nodes.length(),
-    component_count: self.inspector_component_count(),
     control_count: self.inspector_control_count(),
     modified_count: self.inspector_modified_count(),
     dirty_build_count: nodes.filter(node => node.needs_build).length(),
@@ -151,15 +88,6 @@ fn ElementNode::collect_view_summaries(
 }
 
 ///|
-fn ElementNode::inspector_component_count(self : ElementNode) -> Int {
-  let mut count = if self.view_node.has_build_child() { 1 } else { 0 }
-  for child in self.children {
-    count = count + child.inspector_component_count()
-  }
-  count
-}
-
-///|
 fn ElementNode::inspector_control_count(self : ElementNode) -> Int {
   let mut count = if runtime_view_node_inspector_is_control(self.view_node) {
     1
@@ -183,25 +111,6 @@ fn ElementNode::inspector_modified_count(self : ElementNode) -> Int {
     count = count + child.inspector_modified_count()
   }
   count
-}
-
-///|
-fn ElementNode::mark_build_dirty_by_id(
-  self : ElementNode,
-  id : ElementId,
-) -> Bool {
-  if self.id == id {
-    self.dirty.mark_build_only()
-    true
-  } else {
-    for child in self.children {
-      if child.mark_build_dirty_by_id(id) {
-        self.dirty.mark_build_descendant()
-        return true
-      }
-    }
-    false
-  }
 }
 
 ///|
@@ -315,73 +224,12 @@ fn ElementNode::collect_dirty_element_ids_by_kind(
 }
 
 ///|
-fn ElementNode::mark_root_component_build_dirty(self : ElementNode) -> Bool {
-  if self.view_node.has_build_child() {
-    self.dirty.mark_build_only()
-    true
-  } else {
-    false
-  }
-}
-
-///|
-fn ElementNode::mark_component_tree_build_dirty(self : ElementNode) -> Bool {
-  let mut found = false
-  if self.view_node.has_build_child() {
-    self.dirty.mark_build()
-    self.clear_cached_layout_and_paint()
-    found = true
-  }
-  for child in self.children {
-    found = child.mark_component_tree_build_dirty() || found
-  }
-  if found {
-    self.dirty.mark_layout()
-    self.clear_cached_layout_and_paint()
-  }
-  found
-}
-
-///|
 fn ElementNode::mark_subtree_layout_dirty(self : ElementNode) -> Unit {
   self.dirty.mark_layout()
   self.clear_cached_layout_and_paint()
   for child in self.children {
     child.mark_subtree_layout_dirty()
   }
-}
-
-///|
-fn ElementNode::cancel_component_tree_subscriptions(
-  self : ElementNode,
-  reason? : ComponentEffectCancelReason = ComponentEffectCancelReason::EffectUnmounted,
-) -> Unit {
-  self.cancel_component_subscriptions()
-  self.cancel_component_effects(reason~)
-  for child in self.children {
-    child.cancel_component_tree_subscriptions(reason~)
-  }
-}
-
-///|
-fn ElementNode::cancel_component_subscriptions(self : ElementNode) -> Unit {
-  for subscription in self.component.component_subscriptions {
-    subscription.cancel()
-  }
-  self.component.component_subscriptions.clear()
-}
-
-///|
-fn ElementNode::cancel_component_effects(
-  self : ElementNode,
-  reason~ : ComponentEffectCancelReason,
-) -> Unit {
-  ComponentEffect::finish_reuse(
-    self.component.component_effects,
-    reason~,
-    cancel_reused=true,
-  )
-  self.component.component_effects.clear()
 }
 
 ///|

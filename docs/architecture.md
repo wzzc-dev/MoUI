@@ -6,7 +6,7 @@ Doc catalog: [`INDEX.md`](INDEX.md). Constraints: [`invariants.md`](invariants.m
 MoUI is a multi-platform MoonBit GUI framework. The repository is organized
 around one rule: app logic stays platform-neutral, while host backends own
 windows, lifecycle, platform services, neutral surface capabilities, and host
-I/O. Application entrypoints compose platform entries with renderer factories.
+I/O. Application entrypoints compose platform entries with renderer providers.
 
 The current mainline is native Skia raster plus the Web
 `wasm-gc + backend/web + browser WebGPU host imports` path. Native WGPU remains
@@ -33,24 +33,26 @@ ViewDeclaration -> ElementTree
 | `moui/services/` | App-facing `AppServices`, typed `ServiceTask[T]`, `TimerSource`, `RouteSource`, and `AppEnvironment`; depends only on `moui/core`. |
 | `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render/semantics/platform tree generation, committed semantics generations and indices, event/action dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
 | `moui/backend/` | Platform-neutral event/window/service/input/IME/accessibility/platform-view protocols and DTOs. It has no runtime or renderer dependency. |
-| `moui/backend/common/` | Shared implementations: window registry/request queue, lifecycle core, unique platform-window mapping, frame/image/IME coordination, input state, and adapters to `moui/services`. |
-| `moui/backend/common/desktop/` | Shared desktop service router for macOS, Windows, and Linux; filesystem behavior is delegated to `host_services_native`. |
-| `moui/backend/common/native/` | Shared native filesystem I/O used by desktop backends and the embedded runtime, including raw filesystem image-source bytes. |
-| `moui/backend/common/embedded/services/` | Shared Android/iOS/HarmonyOS asynchronous service queue: clipboard and platform-channel requests return `Pending(id)`, complete once through native callbacks, and are cancelled on dispose. |
-| `moui/backend/common/embedded/` | Embedded session capability layer after `ApplicationHandler` callbacks: renderer binding, service-update mapping, IME, semantics, platform views, and native transport. Logical lifecycle and frame coordination reuse the shared common coordinators. |
+| `moui/backend/common/` | Stateless DTO conversion and cross-owner window-host workflows. It holds no host lifecycle state. |
+| `moui/backend/common/lifecycle/` | Window registry/request queue, runtime slots, unique platform-window mapping, logical phase, surface generation, exit intent, and exactly-once close. |
+| `moui/backend/common/frame/` | Per-window `RendererSession`, pending/present completion, redraw, resize, and IME frame hooks. |
+| `moui/backend/common/image/` | Renderer image-request scheduling, cancellation, and host I/O task lifetime; `image/native` owns the filesystem image-byte source. Resource status, decoding, cache, and repaint decisions stay in the renderer session. |
+| `moui/backend/common/input/` | Neutral event conversion plus pointer/text/IME session state. Raw native decoding stays in concrete backends. |
+| `moui/backend/common/services/` | Service facade, async completion, and bridge lifetime; `services/{desktop,embedded,native}` own the concrete routers, callback transport, and filesystem services. |
+| `moui/backend/common/embedded/` | Embedded session assembly after `ApplicationHandler` callbacks: transport/session generation, renderer attach, service-update mapping, IME, semantics, and platform views. It composes the other owners without duplicating lifecycle/frame/image state. |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform backend implementations. They decode native input locally and route neutral lifecycle facts through `backend/common`. |
 | `moui/backend/wechat/` | Direct Canvas2D callback host. The bridge boundary validator keeps it on that route without fabricating a `WindowEvent` import. |
-| `moui/render/` | Surface/frame/image/provider protocols and DTOs, including `WindowRenderer`, `SurfaceContext`, and `RendererFactory`. |
-| `moui/render/common/` | Provider selection, fallback planning, mailbox/GPU worker, image lifecycle/repaint, and shared drawing algorithms. |
-| `moui/render/skia/` | Native Skia renderer facade over `moui_skia`. |
-| `moui/render/webgpu_adapter/` | Browser WebGPU host-import adapter for `wasm-gc`. |
-| `moui/render/wgpu/` | Experimental native WGPU renderer and native text providers. |
-| `moui/render/sun/` | Experimental Sun CPU raster renderer over the repo-local `moui_sun` workspace (ADR 0023: capability freeze by default, not on default composition roots). |
+| `moui/render/` | Renderer-neutral frame/image/descriptor DTOs, opaque `HostSurface`/`NativeSurface` capabilities, and the two renderer lifecycle contracts `RendererProvider`/`RendererSession`. It contains no platform or graphics-API surface tag. |
+| `moui/render/common/` | Provider selection, fallback planning, mailbox/GPU worker, renderer-neutral image event helpers, retained-layer algorithms, and shared drawing algorithms. |
+| `moui_skia_renderer/` | Native Skia renderer facade over `moui_skia`. |
+| `moui_web_renderer/` | Browser WebGPU host-import adapter for `wasm-gc`. |
+| `moui_wgpu_renderer/` | Experimental native WGPU renderer and native text providers. |
+| `moui_sun_renderer/` | Experimental Sun CPU raster renderer over the repo-local `moui_sun` workspace (ADR 0023: capability freeze by default, not on default composition roots). |
 | `moui_sun/` | Experimental MoonBit-native CPU raster graphics/text/softbuffer workspace (ADR 0023). |
 | `moui_richtext/` | Markdown/rich-text document, editor, command, input, paste, table, and source-mapping logic used by rich editing apps. |
 | `moui_skia/` | Editable Skia binding and native/fallback capability contract workspace. |
 | `moui_theme/` | Optional design-system addon workspace for Material, Carbon, Primer, Fluent, common source-mapped token diagnostics, and first-party visual theme addons such as Sickle. |
-| `moui_tester/` | Harnesses, fixtures, and first-frame/native smoke helpers. |
+| `moui_tests/` | Unpublished test harnesses and fixtures under `tester/`, integration tests, benchmarks, text conformance suites, and renderer smokes. |
 | `moui_devtools/` | Devtools and overlay/debug helpers. |
 | `moui_agent/`, `moui_agent_mcp/` | Agent protocol, schema, host runtime, and MCP router support packages. |
 | `examples/*/app/` | Shared app logic packages. These should be platform-neutral unless an app-specific service package is intentionally separate. |
@@ -116,8 +118,9 @@ Add new APIs to the narrowest owning package:
   `moui/backend/common`.
 - Platform windows, neutral presenters, native handles, and host I/O belong in
   `moui/backend/<platform>`; those packages must not import a concrete renderer.
-- Renderer protocols/DTOs belong in root `moui/render`, shared algorithms in
-  `moui/render/common`, and concrete implementations in renderer subpackages.
+- Renderer protocols/DTOs and opaque host capabilities belong in root
+  `moui/render`, shared algorithms in `moui/render/common`, and concrete
+  implementations plus platform-handle interpretation in renderer modules.
 - Native Skia binding ownership, fallback parity, FFI borrow rules, and native
   capability manifests belong in `moui_skia`.
 
@@ -129,40 +132,40 @@ workspace.
 ## Target Routes
 
 - Web app route: shared app package -> `examples/<app>/web_wasm` composition ->
-  `moui/backend/web` + `moui/render/webgpu_adapter`.
+  `moui/backend/web` + `moui_web_renderer`.
 - Native Skia route: shared app package -> platform `*_skia` entrypoint ->
-  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@platform.entry())`
-  -> neutral platform surface + `moui/render/skia` -> `moui_skia`.
+  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::<Platform>)).backend(@platform.entry())`
+  -> neutral platform surface + `moui_skia_renderer` -> `moui_skia`.
 - Android embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/android_window_hosted` composition via
-  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@android.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Android)).backend(@android.entry())`
   -> `wzzc-dev/window/android` `HostCmd` -> shared
   `wzzc-dev/window/internal/embedded_dispatch` callback dispatch -> `EventLoop` -> neutral Android
-  surface binding -> `moui/render/skia` -> `moui_skia`.
+  surface binding -> `moui_skia_renderer` -> `moui_skia`.
   The window template owns Android lifecycle, surface acquisition, and input;
   the embedded runtime backend owns runtime/session assembly and rendering.
 - iOS embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/ios_window_hosted` composition via
-  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@ios.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::IOS)).backend(@ios.entry())`
   -> `wzzc-dev/window/ios` `HostCmd` -> shared embedded-host kernel ->
   `EventLoop` -> neutral iOS surface
-  binding -> `moui/render/skia` -> `moui_skia`.
+  binding -> `moui_skia_renderer` -> `moui_skia`.
   UIKit lifecycle, surface, and touch callbacks enter through the window event
   loop only.
 - HarmonyOS embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/harmonyos_window_hosted` composition via
-  `@runtime.run_app(...).render_all(@render_skia.from_env()).backend(@harmonyos.entry())`
+  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::HarmonyOS)).backend(@harmonyos.entry())`
   -> `wzzc-dev/window/harmonyos` `HostCmd` -> shared embedded-host kernel ->
   `EventLoop` -> neutral HarmonyOS
-  surface binding -> `moui/render/skia` -> `moui_skia`.
+  surface binding -> `moui_skia_renderer` -> `moui_skia`.
   Native XComponent callbacks are the sole source for surface, pointer, resize,
   and detach events.
 - Native WGPU route: shared app package -> platform `*_wgpu` entrypoint ->
-  `render/wgpu.native(...)` + platform `entry()` composition. This is experimental and
+  `@render_wgpu.native(...)` + platform `entry()` composition. This is experimental and
   diagnostic, not the default mainline.
 
 Platform entrypoints should stay thin: create the program/runtime, add ordered
-renderer factories, add one platform entry, and pass app-owned service
+renderer providers, add one platform entry, and pass app-owned service
 adapters. Binding selection uses `RendererProvider.id`; the optional
 `RendererBackendKind` classification is diagnostic-only. Desktop product lists
 prefer Skia GPU then raster according to the requested route; Web registers
@@ -269,9 +272,9 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
   `moui_theme/sickle`; `core` remains a neutral token runtime.
 - Spec-first views in `views`, including `text`, `button`, `text_field`, `container`, row/column layout, and spacer primitives.
 - Unified host boundaries in `backend`, with shared window-event mapping and platform hosts normalizing events into `Event`.
-- Native mainline rendering through factories in `render/skia`, with
-  experimental native WGPU diagnostics retained under `render/wgpu`.
-- Web rendering through `render/webgpu_adapter` on `wasm-gc` only, with browser WebGPU host imports for visible drawing. The old JS-target WebGPU path is intentionally removed.
+- Native mainline rendering through providers in `moui_skia_renderer`, with
+  experimental native WGPU diagnostics retained under `moui_wgpu_renderer`.
+- Web rendering through `moui_web_renderer` on `wasm-gc` only, with browser WebGPU host imports for visible drawing. The old JS-target WebGPU path is intentionally removed.
 
 ## Packages
 
@@ -286,7 +289,12 @@ moui_theme/audit/             addon diagnostics: manifests, golden mappings, off
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints: light/dark/high-contrast/system Theme helpers, tokens, and theme_for_variant over common
 moui_theme/sickle/            first-party hybrid skeuomorphic/flat Theme addon with light/dark and style-mode helpers
 moui/backend/                 neutral event/window/service/input/IME/accessibility protocols and DTOs
-moui/backend/common/          registry, request queues, lifecycle/frame/input/image coordination, service adapters
+moui/backend/common/          stateless DTO conversion and cross-owner window-host workflows
+moui/backend/common/lifecycle/ registry, requests, runtime slots, platform map, phase/generation, close
+moui/backend/common/frame/    per-window renderer session, redraw/resize/present completion, IME frame hooks
+moui/backend/common/image/    cancellable image I/O tasks, completion delivery, callback detach/cancellation
+moui/backend/common/input/    neutral conversion and pointer/text/IME session state
+moui/backend/common/services/ service facade, async completion, bridge lifetime and concrete service subpackages
 moui/backend/windows/         Windows native host backend
 moui/backend/macos/           macOS native host backend
 moui/backend/linux/           Linux Wayland native host backend
@@ -295,24 +303,24 @@ moui/backend/ios/             iOS embedded runtime backend over shared host/runt
 moui/backend/harmonyos/       HarmonyOS embedded runtime backend over shared host/runtime contracts
 moui/backend/web/             canonical browser lifecycle/canvas-surface host on wasm-gc
 moui/backend/wechat/          WeChat lifecycle and neutral canvas-surface host
-moui/render/                  SurfaceContext, WindowRenderer, RendererFactory, image/frame/provider protocols and DTOs
+moui/render/                  opaque HostSurface/NativeSurface, RendererProvider/RendererSession, image/frame DTOs
 moui/render/common/           provider selection, fallback, workers, image lifecycle, shared draw helpers
-moui/render/skia/             native Skia CPU/GPU factories and implementation over moui_skia
-moui/render/sun/              experimental native Sun CPU raster factory and implementation
-moui/render/canvas2d/         WeChat Canvas2D factory and implementation
-moui/render/webgpu_adapter/   browser WebGPU/Canvas2D factories, adapter, and JS renderer runtime
-moui/render/wgpu/             experimental native wgpu renderer
-moui/render/wgpu/cosmic_text/ Moon Cosmic provider for native wgpu text
-moui/render/wgpu/coretext/    macOS CoreText provider for native wgpu text
-moui/render/wgpu/text_protocol/ shared native measure/run/raster/register bytes protocol
-moui/render/wgpu/directwrite/ Windows DirectWrite provider scaffold
-moui/render/wgpu/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffold
-moui/tests/tooling/           quickcheck and pixelmatch integration tests
-moui/tests/text_conformance/  opt-in native/Web text diagnostic matrix
-moui/tests/skia_renderer_smoke/native/ opt-in real Skia renderer pixel smoke
-moui/tests/skia_cached_layer_benchmark/ opt-in real Skia cached-layer benchmark harness
-moui/tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
-moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
+moui_skia_renderer/             native Skia CPU/GPU providers, platform policy, and implementation over moui_skia
+moui_sun_renderer/              experimental native Sun CPU raster provider and implementation
+moui_web_renderer/canvas2d/     WeChat Canvas2D provider and implementation
+moui_web_renderer/              browser WebGPU/Canvas2D providers, adapter, and JS renderer runtime
+moui_wgpu_renderer/             experimental native wgpu renderer
+moui_wgpu_renderer/cosmic_text/ Moon Cosmic provider for native wgpu text
+moui_wgpu_renderer/coretext/    macOS CoreText provider for native wgpu text
+moui_wgpu_renderer/text_protocol/ shared native measure/run/raster/register bytes protocol
+moui_wgpu_renderer/directwrite/ Windows DirectWrite provider scaffold
+moui_wgpu_renderer/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffold
+moui_tests/tooling/           quickcheck and pixelmatch integration tests
+moui_tests/text_conformance/  opt-in native/Web text diagnostic matrix
+moui_tests/skia_renderer_smoke/native/ opt-in real Skia renderer pixel smoke
+moui_tests/skia_cached_layer_benchmark/ opt-in real Skia cached-layer benchmark harness
+moui_tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
+moui_tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
 examples/counter/{macos_skia,web_wasm}/ retained Counter platform entrypoints
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
@@ -377,26 +385,24 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   it wraps an internal view protocol with identity, children, layout, paint,
   event, semantics, text-control, and focus behavior.
 - `ElementTree` is the mounted runtime tree. Its `ElementNode` entries own
-  view identity, keys, child elements, dirty flags, control state, component state,
-  layout cache, and render cache.
+  view identity, keys, child elements, dirty flags, control transient slots,
+  layout memoization, and damage state. Renderer resource/cache residency is
+  never mirrored here.
 - `LayoutTree` is the latest placement result. Its `PlacedNode` entries carry
   the final frames produced by measurement and parent placement.
 - `RenderTree` is the paint-stage tree. Its `RenderNode` entries attach hit
   testing and draw command payloads to frames that came from `LayoutTree`.
-- App code should normally go through `AppRuntime`, `Component`, and
-  `ComponentContext`; `RuntimeState`, `ElementTree`, `LayoutTree`, `RenderTree`,
-  and their node types are engine implementation details even though some core
-  tests still exercise them directly.
+- App code goes through `Program`, `Effect`, `Subscription`, and
+  `ViewEnvironment`; `RuntimeState`, `ElementTree`, `LayoutTree`, `RenderTree`,
+  and their node types are engine implementation details.
 - `ViewEnvironment` is the read-only TEA-facing environment snapshot. It exposes
-  the current viewport size and `Environment` without giving app-level views
-  access to `ComponentContext` subscriptions, bindings, or component effects.
-- `ScrollState`, `FocusState`, and `NavigationState` are the preferred state
-  holders for reusable app structure instead of ad hoc view-local fields.
-- `ComponentContext::run_effect` registers keyed component-scoped effects with
-  cleanup callbacks. Effects with stable keys are reused across rebuilds, and
-  cleanups run when keys disappear or the component leaves the tree.
-  `ComponentContext` also exposes scoped save/restore helpers for small saveable
-  string, bool, and int state.
+  the current viewport size and `Environment` without exposing mutable state,
+  lifecycle effects, or model setters to app-level views.
+- Hover, pressed, drag, caret, selection, IME composition, and ordinary
+  uncontrolled scroll are element-owned `ViewStateSlot` values. Slots are
+  scoped to element identity and runtime lifetime; they cannot retain services,
+  renderers, tasks, or cleanup closures. Observable scroll and focus use model
+  values plus immutable `ScrollRequest`/`FocusRequest` ids.
 - `AppRuntime` owns app-level `Program` diagnostics, including dispatch,
   update, message queue, effect plan, scheduled effect, effect-kind counters
   that distinguish send, anonymous dispatch, structured run, and cancellable
@@ -426,27 +432,25 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   before execution. Runtime
   inspector snapshots also expose platform-neutral pipeline pass counters for
   rebuild, layout, paint, and draw-command building. Dirty summaries also carry
-  the latest damage kind, dirty-rect count, full-surface reason, cache epoch,
-  and cached-layer count so tools can distinguish retained boundary updates
-  from full redraws without parsing command streams. It keeps
+  the latest damage kind, dirty-rect count, and full-surface reason so tools
+  can distinguish retained boundary updates from full redraws without parsing
+  command streams. It keeps
   the latest effect summary, latest scheduled effect summary, and latest
   subscription plan summary, including planned subscription descriptors, for
-  inspector tooling. This is separate from
-  component-local `ComponentContext::watch` and
-  `ComponentContext::run_effect`; program subscriptions model ongoing app event
-  sources, while build-context subscriptions model component-local state
-  invalidation and lifecycle effects.
+  inspector tooling. This is the single application state/effect model; there
+  is no second component lifecycle state machine.
 - Layout uses constraints down, measured size up, then parent placement, and
   writes the result into `LayoutTree`.
 - Paint consumes `LayoutTree` frames to build `RenderTree` and emits
   platform-neutral `DrawCommand` values. `RenderNode` entries retain paint
-  bounds, content revisions, and repaint-boundary cache keys. The normal host
-  path asks `AppRuntime::draw_frame()` for commands plus a `DamageRegion` and
-  cache epoch. `DrawFrame.clear_color` owns frame initialization, while its
+  bounds, content revisions, and retained layer declarations. The normal host
+  path asks `AppRuntime::draw_frame()` for commands plus a `DamageRegion`.
+  `DrawFrame.clear_color` owns frame initialization, while its
   command array contains view content without a leading `Clear`; legacy
   command-only renderer adapters materialize that clear when lowering the
   frame. Rect-damage renderers must constrain the complete command stream to
-  the effective damage clip before skipping retained cached layers.
+  the effective damage clip. Every retained layer carries its complete current
+  frame payload so a renderer can rebuild it after eviction.
   `DrawFrame.platform_views` carries native platform-view
   placements such as `web_view` without adding them to `DrawCommand`. Legacy
   tests can still call `draw_commands()` for a full command stream. Renderers
@@ -459,10 +463,9 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   for renderers. The redraw scheduler tracks `idle`, `scheduled`, `in-frame`,
   and `follow-up` states so repeated host callbacks coalesce and redraw
   requests made during presentation become the next frame.
-  `WindowRenderer::render_frame()` forwards retained cached-layer commands
-  to renderers that implement frame rendering, while its renderer-neutral
-  command cache remains the fallback for simpler backends. Native Skia now owns
-  a renderer-local offscreen surface/image cache for repaint boundaries and
+  `RendererSession::render_frame()` receives a `RenderFrameSubmission` with a
+  `FrameToken` and forwards complete retained-layer declarations to the
+  selected renderer. Renderer sessions own offscreen surface/image caches and
   reports cache hit/miss/update/evict diagnostics. The real-app cached-layer
   benchmark uses Showcase hover/scroll and Markdown Editor text input, scroll,
   and caret-overlay interactions to verify sibling-boundary reuse, state-backed
@@ -472,59 +475,33 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 - `AppRuntime::focus_next` and `AppRuntime::focus_previous` expose explicit
   focus traversal entry points on top of the shared tab-order model.
 
-## State And Binding
+## State Ownership
 
-Inside component builds, display state should be read through `ComponentContext`:
+MoUI has one application state and effect loop:
 
-```moonbit
-@core.Component::new(ctx => {
-  let count = ctx.watch(self.count)
-  @views.text("Count: \{count}")
-})
+```text
+Program<Model, Msg> -> update(Model, Msg) -> (Model, Effect<Msg>)
+                                  ^                 |
+                                  +-- Subscription -+
 ```
 
-Use TEA-first controlled constructors for ordinary app state, for example
-`@views.text_field(model.draft, on_input=DraftChanged)`. Component-local state
-should still be projected into explicit values and typed messages before it
-crosses the `views` public API boundary; event handlers and model methods can
-use `state.get()`, `state.set()`, and `state.update()` inside the component.
-The runtime cancels and replaces build subscriptions on rebuild, so repeated
-builds do not accumulate listeners.
+Business data, navigation routes, form values, documents, and asynchronous
+results live in `Model` and change only through typed `Msg` values handled by
+`update`. `Effect` and `Subscription` are the only app-facing side-effect
+paths. There is no generic `State`, `Binding`, `DerivedState`, component
+context, saveable store, or model setter API.
 
-Component-scoped side effects should be registered with `ctx.run_effect`. The
-returned cleanup callback is invoked when the effect key is no longer registered
-for that component and when the component leaves the element tree:
+Controls may keep interaction transients in typed `ViewStateSlot` values scoped
+to an element identity and runtime lifetime. Hover, pressed, drag, caret,
+selection, IME composition, and ordinary uncontrolled scrolling belong there.
+Slots cannot retain services, renderers, task handles, or cleanup closures.
+When an application must observe or restore scroll/focus, it passes an
+immutable value and a typed callback; programmatic changes use monotonically
+identified `ScrollRequest` and `FocusRequest` values.
 
-```moonbit
-@core.Component::new(ctx => {
-  ctx.run_effect(key="subscription", () => {
-    connect()
-    Some(() => disconnect())
-  })
-  @views.text("Connected")
-})
-```
-
-For simple lifecycle work, `ctx.on_mount(key=..., ...)` and
-`ctx.on_dispose(key=..., ...)` are named wrappers around the same keyed effect
-model.
-
-State that needs to survive rebuilds, resize, and same-root remount can use the
-scoped `save`, `restore`, or `saveable` helpers with a `SaveableCodec[T]`.
-The string, bool, and int helpers remain as convenience wrappers over the same
-codec path. `saveable_*` helpers return `State` values that write back to the
-runtime store and request component rebuilds when changed. Their write-back
-subscriptions are component-lifecycle-scoped like `ctx.watch`, so stale handles
-from older builds stop invalidating the component or overwriting the saveable
-store after rebuild or unmount. The store can be snapshotted/restored through
-`SaveableStateSnapshot` for higher-level state restoration flows.
-
-Environment values flow through `ComponentContext` so components can react to
-platform and accessibility signals such as color scheme, locale, layout
-direction, accessibility contrast, reduced motion, content size category, text
-scale, and scale factor. TEA apps that only need to read those values should use
-`ViewEnvironment`, keeping `ComponentContext` scoped to components and advanced
-state holders.
+`ViewEnvironment` is the immutable read-only environment available to a view.
+Low-level slot contexts remain custom-control APIs in `core` and are not
+re-exported by the app facade.
 
 ## Layout
 
@@ -664,8 +641,8 @@ deltas, maintains stable-ID and node-route indices, and dispatches actions
 directly into runtime state plus typed TEA messages. Semantics reads and
 semantics-only updates do not require paint.
 
-`backend/web` translates committed deltas to ARIA. `backend` translates
-the same runtime reads to `Milky2018/moon_accesskit` updates, and mobile hosts
+`backend/web` translates committed deltas to ARIA. `backend/accesskit` translates
+the same neutral reads to `Milky2018/moon_accesskit` updates, and mobile hosts
 carry `SemanticsNodeId`, generation, and typed actions through the embedding
 channel. Platform adapters do not maintain a second revision, repeat runtime
 validation, or convert accessibility actions into coordinate input. Agent and

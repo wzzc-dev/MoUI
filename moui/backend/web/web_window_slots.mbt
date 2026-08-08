@@ -2,7 +2,6 @@
 priv struct WebWindowPlatformSlot {
   host_id : @host.WindowId
   window : @window_web.Window
-  renderer : @render.WindowRenderer
 }
 
 ///|

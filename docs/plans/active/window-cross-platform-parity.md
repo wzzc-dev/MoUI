@@ -21,9 +21,10 @@
 - [x] Keep root `moon.work` on the published window dependency; the local
   `window/` checkout is not a workspace member by default.
 
-The Windows D3D12 host-surface route is wired through the neutral
-`SurfaceContext` descriptor. `@render_skia.from_env()` controls whether the
-GPU factory is selected (`MOUI_SKIA_RENDERER=gpu`) or whether `auto` tries GPU
+The Windows D3D12 host-surface route is wired through opaque `HostSurface` and
+`NativeSurface` capabilities. `@render_skia.from_env(platform=Windows)` owns
+the renderer-local policy deciding whether the GPU provider is selected
+(`MOUI_SKIA_RENDERER=gpu`) or whether `auto` tries GPU
 before the raster fallback. Interactive resize now reuses the existing HWND
 swap chain and calls `ResizeBuffers` only after the wrapped Skia back buffer is
 released, avoiding the previous second-swap-chain `DXGI_ERROR_INVALID_CALL`

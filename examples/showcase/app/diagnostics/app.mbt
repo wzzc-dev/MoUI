@@ -27,12 +27,6 @@ pub(all) struct ShowcaseModel {
   slider_value : Double
   picker_value : String
   date_value : @views.DateValue
-  detail_scroll_offset : @geometry.Point
-  sidebar_scroll_offset : @geometry.Point
-  detail_scroll : @state.ScrollState
-  sidebar_scroll : @state.ScrollState
-  list_scroll : @state.ScrollState
-  grid_scroll : @state.ScrollState
   counter_count : Int
   todo_items : Array[ShowcaseTodoItem]
   todo_next_id : Int
@@ -88,8 +82,6 @@ pub(all) enum ShowcaseMsg {
   RecordFileDrop(Array[String])
   RecordGesture(String)
   ResizePanel(Double)
-  DetailScrollTo(Double)
-  SidebarScrollTo(Double)
 }
 
 ///|
@@ -149,12 +141,6 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     slider_value: 0.64,
     picker_value: "native",
     date_value: @views.DateValue::new(year=2026, month=5, day=21),
-    detail_scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
-    sidebar_scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
-    detail_scroll: @state.ScrollState::new(),
-    sidebar_scroll: @state.ScrollState::new(),
-    list_scroll: @state.ScrollState::new(),
-    grid_scroll: @state.ScrollState::new(),
     counter_count: 0,
     todo_items: [
       ShowcaseTodoItem::new(id=0, text="Reuse Todo state"),
@@ -260,28 +246,20 @@ pub fn ShowcaseModel::update(
     HideDialog => { ..self, dialog_visible: false }
     ShowSheet => { ..self, dialog_visible: false, sheet_visible: true }
     HideSheet => { ..self, sheet_visible: false }
-    SelectSection(route) =>
-      self.with_route_pushed(route).with_detail_scroll_reset()
+    SelectSection(route) => self.with_route_pushed(route)
     RouteBack =>
-      self
-      .with_route_history(self.route_history.back())
-      .with_detail_scroll_reset()
+      self.with_route_history(self.route_history.back())
     RouteForward =>
-      self
-      .with_route_history(self.route_history.forward())
-      .with_detail_scroll_reset()
+      self.with_route_history(self.route_history.forward())
     OpenRouteLink(route) =>
-      self
-      .with_route_history(
+      self.with_route_history(
         self.route_history.push(
           @views.RouteLocation::parse(route),
           title=showcase_route_title(@views.RouteLocation::parse(route).path),
           source="deep-link",
         ),
       )
-      .with_detail_scroll_reset()
-    HostRouteChanged(event) =>
-      self.with_host_route_event(event).with_detail_scroll_reset()
+    HostRouteChanged(event) => self.with_host_route_event(event)
     TabSelected(route) => { ..self, tab: route }
     ClearFilter => { ..self, filter: "" }
     FilterChanged(value) => { ..self, filter: value }
@@ -382,8 +360,6 @@ pub fn ShowcaseModel::update(
       { ..self, last_drop_label: "Dropped \{paths.length()} file(s)" }
     RecordGesture(label) => { ..self, gesture_label: label }
     ResizePanel(size) => { ..self, slider_value: size / 520.0 }
-    DetailScrollTo(y) => self.with_detail_scroll_to(y)
-    SidebarScrollTo(y) => self.with_sidebar_scroll_to(y)
   }
 }
 
@@ -516,33 +492,6 @@ fn ShowcaseModel::with_route_history(
   route_history : @views.RouteHistoryState,
 ) -> ShowcaseModel {
   { ..self, route_history, selected_section: route_history.current().path }
-}
-
-///|
-fn ShowcaseModel::with_detail_scroll_reset(
-  self : ShowcaseModel,
-) -> ShowcaseModel {
-  self.with_detail_scroll_to(0.0)
-}
-
-///|
-fn ShowcaseModel::with_detail_scroll_to(
-  self : ShowcaseModel,
-  y : Double,
-) -> ShowcaseModel {
-  let offset = @geometry.Point::new(x=0.0, y=max_showcase_double(0.0, y))
-  self.detail_scroll.set_offset(offset)
-  { ..self, detail_scroll_offset: offset }
-}
-
-///|
-fn ShowcaseModel::with_sidebar_scroll_to(
-  self : ShowcaseModel,
-  y : Double,
-) -> ShowcaseModel {
-  let offset = @geometry.Point::new(x=0.0, y~)
-  self.sidebar_scroll.set_offset(offset)
-  { ..self, sidebar_scroll_offset: offset }
 }
 
 ///|

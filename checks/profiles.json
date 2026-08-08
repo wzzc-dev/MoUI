@@ -57,6 +57,13 @@
           ]
         },
         {
+          "name": "release module dependency closures",
+          "argv": [
+            "node",
+            "scripts/validate-release-module-closures.mjs"
+          ]
+        },
+        {
           "name": "generated repository facts",
           "argv": [
             "node",
@@ -97,6 +104,13 @@
           "argv": [
             "node",
             "scripts/validate-backend-common-boundary.mjs"
+          ]
+        },
+        {
+          "name": "runtime state/render ownership",
+          "argv": [
+            "node",
+            "scripts/validate-runtime-state-render-ownership.mjs"
           ]
         },
         {
@@ -299,7 +313,7 @@
           "argv": [
             "moon",
             "test",
-            "moui/backend/common/desktop",
+            "moui/backend/common/services/desktop",
             "--target",
             "native"
           ]
@@ -309,7 +323,7 @@
           "argv": [
             "moon",
             "test",
-            "moui/backend/common/embedded/services",
+            "moui/backend/common/services/embedded",
             "--target",
             "native"
           ]
@@ -319,7 +333,67 @@
           "argv": [
             "moon",
             "test",
-            "moui/backend/common/native",
+            "moui/backend/common/services/native",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "backend lifecycle owner tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui/backend/common/lifecycle",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "backend frame owner tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui/backend/common/frame",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "backend image owner tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui/backend/common/image",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "backend input owner tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui/backend/common/input",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "backend services owner tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui/backend/common/services",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "renderer contract tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui_tests/renderer_contract",
             "--target",
             "native"
           ]
@@ -339,7 +413,7 @@
           "argv": [
             "moon",
             "test",
-            "moui/render/webgpu_adapter",
+            "moui_web_renderer",
             "--target",
             "wasm-gc"
           ]
@@ -513,7 +587,7 @@
           "argv": [
             "moon",
             "test",
-            "moui/render/skia",
+            "moui_skia_renderer",
             "--target",
             "native"
           ]
@@ -523,17 +597,17 @@
           "argv": [
             "moon",
             "test",
-            "moui/render/sun",
+            "moui_sun_renderer",
             "--target",
             "native"
           ]
         },
         {
-          "name": "moui_tester tests",
+          "name": "internal tester harness tests",
           "argv": [
             "moon",
             "test",
-            "moui_tester",
+            "moui_tests/tester",
             "--target",
             "native"
           ]
@@ -780,10 +854,8 @@
           "name": "maintenance baseline full workspace hotspots",
           "argv": [
             "moon",
-            "-C",
-            "tools",
             "run",
-            "moui/validate_maintenance_baseline",
+            "tools/moui/validate_maintenance_baseline",
             "--target",
             "native",
             "--",
@@ -796,7 +868,7 @@
           "argv": [
             "moon",
             "test",
-            "moui/tests/text_conformance/native",
+            "moui_tests/text_conformance/native",
             "--target",
             "native"
           ]
@@ -806,7 +878,7 @@
           "argv": [
             "moon",
             "test",
-            "moui/tests/text_conformance/web",
+            "moui_tests/text_conformance/web",
             "--target",
             "wasm-gc"
           ]

@@ -5,22 +5,22 @@ test "router state parses pushes replaces and pops route locations" {
   )
   inspect(router.current().path, content="/home")
   inspect(router.current().query_value("tab").unwrap_or(""), content="overview")
-  router.push(
+  let router = router.push(
     RouteLocation::new(path="/settings", query=[
       RouteQueryParam::new(key="section", value="display"),
     ]),
   )
   inspect(router.current().to_route(), content="/settings?section=display")
-  router.replace(RouteLocation::new(path="/profile"))
+  let router = router.replace(RouteLocation::new(path="/profile"))
   inspect(router.current().path, content="/profile")
-  assert_true(router.pop())
+  let router = router.pop()
   inspect(router.current().path, content="/home")
 }
 
 ///|
 test "router helpers resolve params snapshots and fallback routes" {
   let router = RouterState::new(initial=RouteLocation::new(path="/home"))
-  router.push(
+  let router = router.push(
     RouteLocation::new(path="/detail", query=[
       RouteQueryParam::new(key="id", value="42"),
       RouteQueryParam::new(key="tab", value="activity"),
@@ -31,9 +31,9 @@ test "router helpers resolve params snapshots and fallback routes" {
   inspect(current.params().length(), content="2")
   let snapshot = router.snapshot()
   inspect(snapshot.routes.length(), content="2")
-  router.replace(RouteLocation::new(path="/other"))
+  let router = router.replace(RouteLocation::new(path="/other"))
   inspect(router.current().path, content="/other")
-  router.restore(snapshot)
+  let router = router.restore(snapshot)
   inspect(router.current().to_route(), content="/detail?id=42&tab=activity")
   let routes = [
     RouteDescriptor::new(id="home", path="/home", title="Home"),
@@ -44,7 +44,7 @@ test "router helpers resolve params snapshots and fallback routes" {
     Some({ id: "detail", title: "Detail", .. }) => ()
     _ => fail("expected detail route")
   }
-  router.replace(RouteLocation::new(path="/unknown"))
+  let router = router.replace(RouteLocation::new(path="/unknown"))
   match router.resolve(routes) {
     Some({ id: "missing", fallback: true, .. }) => ()
     _ => fail("expected fallback route")
@@ -79,8 +79,7 @@ test "route history tracks deep links back forward and router snapshots" {
   inspect(profile.entries.length(), content="2")
   inspect(profile.current_route(), content="/profile")
   assert_false(profile.can_go_forward())
-  let router = RouterState::new(initial=RouteLocation::new(path="/placeholder"))
-  profile.restore_router(router)
+  let router = profile.restore_router()
   inspect(router.current().to_route(), content="/profile")
   let restored = RouteHistoryState::from_snapshot(
     detail.router_snapshot(),

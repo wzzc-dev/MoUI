@@ -65,16 +65,16 @@ fn MarkdownEditorApp::request_settings_save(
   services : @services.AppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
   let settings : MarkdownEditorSettings = {
-    dark_mode: self.dark_mode_enabled.get(),
-    font_family: markdown_editor_font_family_label(self.font_family.get()),
+    dark_mode: self.dark_mode_enabled,
+    font_family: markdown_editor_font_family_label(self.font_family),
     writing_appearance: self.appearance_label(),
-    focus_mode: self.focus_mode_enabled.get(),
-    typewriter_mode: self.typewriter_mode_enabled.get(),
-    zen_mode: self.zen_mode_enabled.get(),
-    source_preview: self.source_preview_visible.get(),
-    outline: self.outline_visible.get(),
-    files: self.file_sidebar_visible.get(),
-    document_info: self.document_info_visible.get(),
+    focus_mode: self.focus_mode_enabled,
+    typewriter_mode: self.typewriter_mode_enabled,
+    zen_mode: self.zen_mode_enabled,
+    source_preview: self.source_preview_visible,
+    outline: self.outline_visible,
+    files: self.file_sidebar_visible,
+    document_info: self.document_info_visible,
   }
   let text = settings.to_json().stringify(indent=2)
   services
@@ -90,17 +90,17 @@ fn MarkdownEditorApp::apply_settings(
   self : MarkdownEditorApp,
   settings : MarkdownEditorSettings,
 ) -> Unit {
-  self.dark_mode_enabled.set(settings.dark_mode)
-  self.font_family.set(
-    markdown_editor_font_family_from_label(settings.font_family),
-  )
-  self.focus_mode_enabled.set(settings.focus_mode)
-  self.typewriter_mode_enabled.set(settings.typewriter_mode)
-  self.zen_mode_enabled.set(settings.zen_mode)
-  self.source_preview_visible.set(settings.source_preview)
-  self.outline_visible.set(settings.outline)
-  self.file_sidebar_visible.set(settings.files)
-  self.document_info_visible.set(settings.document_info)
+  self.dark_mode_enabled = settings.dark_mode
+  self.font_family = 
+    markdown_editor_font_family_from_label(settings.font_family)
+  
+  self.focus_mode_enabled = settings.focus_mode
+  self.typewriter_mode_enabled = settings.typewriter_mode
+  self.zen_mode_enabled = settings.zen_mode
+  self.source_preview_visible = settings.source_preview
+  self.outline_visible = settings.outline
+  self.file_sidebar_visible = settings.files
+  self.document_info_visible = settings.document_info
   match settings.writing_appearance {
     "Warm" => self.set_writing_appearance(WarmAppearance)
     "Wide" => self.set_writing_appearance(WideAppearance)

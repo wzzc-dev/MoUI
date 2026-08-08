@@ -234,7 +234,10 @@ fn code_editor_surface(
       }
     }),
     accepts_tab_input=true,
-    visible_scroll_state=Some(model.editor_scroll),
+    visible_scroll_y=model.editor_scroll.y,
+    on_scroll=Some(y => {
+      EditorScrollChanged(@geometry.Point::new(x=0.0, y~))
+    }),
     visible_viewport_height=viewport_height,
     visible_overscan=160.0,
     selection_caret=model.primary_offset(),
@@ -314,7 +317,8 @@ fn line_number_gutter(
     column(rows, spacing=0.0),
     width=58.0,
     height=viewport_height,
-    state=Some(model.editor_scroll),
+    offset=model.editor_scroll,
+    on_scroll=Some(offset => EditorScrollChanged(offset)),
   )
 }
 
@@ -468,8 +472,8 @@ fn diff_editor_main(
   container(
     row(
       [
-        diff_column("Original", diff, old=true, theme, model.diff_scroll),
-        diff_column("Modified", diff, old=false, theme, model.diff_scroll),
+        diff_column("Original", diff, old=true, theme),
+        diff_column("Modified", diff, old=false, theme),
       ],
       spacing=1.0,
       align=@views.CrossAlign::Stretch,
@@ -485,7 +489,6 @@ fn diff_column(
   diff : CodeDiff,
   old~ : Bool,
   theme : @moui.Theme,
-  scroll : @state.ScrollState,
 ) -> @moui.View[CodeEditorMsg] {
   let rows : Array[@moui.View[CodeEditorMsg]] = [
     container(
@@ -542,7 +545,6 @@ fn diff_column(
     column(rows, spacing=0.0),
     width=470.0,
     height=520.0,
-    state=Some(scroll),
   )
 }
 
@@ -568,7 +570,7 @@ fn completion_overlay_y(model : CodeEditorModel) -> Double {
   )
   let raw = 46.0 +
     (position.line - 1).to_double() * 20.0 -
-    model.editor_scroll.offset().y
+    model.editor_scroll.y
   if raw < 34.0 {
     34.0
   } else {

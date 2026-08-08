@@ -104,7 +104,7 @@ no longer the product default.
 | Linux | Vulkan (Wayland) | `VulkanGpuSurfaceRoute` | Worker-owned source; matching Wayland build/validation pending |
 
 The cross-platform `SurfaceRoute` enum lives in `moui/render` so it can be
-referenced from both native-only `moui/render/skia` and the wasm-gc-compatible
+referenced from both native-only `moui_skia_renderer` and the wasm-gc-compatible
 `moui/render::NativeRendererSelection`. `HostGpuPresentTarget` takes a
 flushed `@skia_native.Surface` and bypasses `read_frame()` on the GPU route.
 These caller-thread bindings remain compatibility/diagnostic integration APIs;
@@ -136,7 +136,7 @@ The shared Phase 2 scaffolding required before any platform can flip
   First-frame state, image-present revisions, and provider present counts move
   only on `Presented`. `Dropped` and `FallbackToRaster` request another frame
   without replacing `AppRuntime`.
-- **Picture-backed cache and platform pixels** (`moui/render/skia`): cached
+- **Picture-backed cache and platform pixels** (`moui_skia_renderer`): cached
   layers are nested immutable pictures, so the same recorded frame can replay
   after terminal raster fallback. Platform-view/WebView pixels are copied into
   the active picture canvas before recording ends; the GPU producer never

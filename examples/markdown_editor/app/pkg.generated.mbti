@@ -19,43 +19,42 @@ pub fn markdown_editor_program_commands() -> Array[@core.ProgramCommand[Markdown
 
 // Types and methods
 pub struct MarkdownEditorApp {
-  document : @core.State[String]
-  document_session : @core.State[@moui_richtext.MarkdownDocumentSession]
-  selection : @core.State[@moui_richtext.MarkdownEditorSelection]
-  link_target : @core.State[String]
-  image_target : @core.State[String]
-  footnote_text : @core.State[String]
-  html_block_text : @core.State[String]
-  target_kind : @core.State[MarkdownEditorTargetKind]
-  block_label : @core.State[String]
-  source_preview_visible : @core.State[Bool]
-  source_mode_enabled : @core.State[Bool]
-  outline_visible : @core.State[Bool]
-  file_sidebar_visible : @core.State[Bool]
-  document_info_visible : @core.State[Bool]
-  focus_mode_enabled : @core.State[Bool]
-  typewriter_mode_enabled : @core.State[Bool]
-  zen_mode_enabled : @core.State[Bool]
-  format_palette_visible : @core.State[Bool]
-  format_palette_query : @core.State[String]
-  more_menu_visible : @core.State[Bool]
-  active_menu : @core.State[String]
-  toasts : @core.State[@feedback.ToastQueue[MarkdownEditorMsg]]
-  autosave_draft : @core.State[String]
-  dark_mode_enabled : @core.State[Bool]
-  font_family : @core.State[MarkdownEditorFontFamily]
-  folded_headings : @core.State[Array[Int]]
-  find_visible : @core.State[Bool]
-  find_query : @core.State[String]
-  find_options : @core.State[MarkdownEditorFindOptions]
-  replace_text : @core.State[String]
-  document_path : @core.State[String]
-  recent_document_paths : @core.State[Array[String]]
-  saved_document : @core.State[String]
-  undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
-  redo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
-  editor_scroll : @core.ScrollState
-  file_tree_scroll : @core.ScrollState
+  mut document : String
+  mut document_session : @moui_richtext.MarkdownDocumentSession
+  mut selection : @moui_richtext.MarkdownEditorSelection
+  mut link_target : String
+  mut image_target : String
+  mut footnote_text : String
+  mut html_block_text : String
+  mut target_kind : MarkdownEditorTargetKind
+  mut block_label : String
+  mut source_preview_visible : Bool
+  mut source_mode_enabled : Bool
+  mut outline_visible : Bool
+  mut file_sidebar_visible : Bool
+  mut document_info_visible : Bool
+  mut focus_mode_enabled : Bool
+  mut typewriter_mode_enabled : Bool
+  mut zen_mode_enabled : Bool
+  mut format_palette_visible : Bool
+  mut format_palette_query : String
+  mut more_menu_visible : Bool
+  mut active_menu : String
+  mut toasts : @feedback.ToastQueue[MarkdownEditorMsg]
+  mut autosave_draft : String
+  mut dark_mode_enabled : Bool
+  mut font_family : MarkdownEditorFontFamily
+  mut folded_headings : Array[Int]
+  mut find_visible : Bool
+  mut find_query : String
+  mut find_options : MarkdownEditorFindOptions
+  mut replace_text : String
+  mut document_path : String
+  mut recent_document_paths : Array[String]
+  mut saved_document : String
+  mut undo_stack : Array[MarkdownEditorHistoryEntry]
+  mut redo_stack : Array[MarkdownEditorHistoryEntry]
+  mut editor_scroll : @core.Point
   // private fields
 }
 pub fn MarkdownEditorApp::new() -> Self
@@ -142,6 +141,7 @@ pub enum MarkdownEditorMsg {
   ToggleHeadingFold(Int)
   CommandClickAt(Int)
   SetSelection(Int, @core.TextRange?)
+  EditorScrollChanged(@core.Point)
   OpenRecentDocument(String)
   JumpToOutline(Int)
   JumpToNextHeading

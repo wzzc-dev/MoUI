@@ -21,7 +21,7 @@ test "markdown editor scroll indicator stays hidden at the top" {
   // the indicator semantics label region). After scrolling, indicator rects
   // appear. We assert the indicator is absent at rest by checking that no
   // 'Editor scroll indicator' semantics region is painted with a FillRect thumb.
-  app.editor_scroll.scroll_to(x=0.0, y=0.0)
+  app.editor_scroll = @geometry.Point::new(x=0.0, y=0.0)
   let rest = app.runtime(width=980.0, height=640.0).draw_commands()
   let has_thumb = rest.any(command => {
     match command {
@@ -37,5 +37,5 @@ test "markdown editor scroll indicator stays hidden at the top" {
   // at offset 0. We keep the test permissive to avoid false failures from
   // unrelated translucent fills.
   ignore(has_thumb)
-  assert_true(app.editor_scroll.offset().y == 0.0)
+  assert_true(app.editor_scroll.y == 0.0)
 }

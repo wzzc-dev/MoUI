@@ -10,7 +10,3 @@ import {
   "wzzc-dev/moui/views/text",
   "wzzc-dev/moui/views/checkbox",
 }
-
-import {
-  "wzzc-dev/moui/runtime",
-} for "wbtest"

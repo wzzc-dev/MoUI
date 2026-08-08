@@ -7,7 +7,7 @@ fn mobile_entrypoint_pkg_text(
     #|import {
     #|  "wzzc-dev/moui/runtime",
     #|  "wzzc-dev/moui/backend/__PLATFORM__" @platform_host,
-    #|  "wzzc-dev/moui/render/skia" @render_skia,
+    #|  "wzzc-dev/moui_skia_renderer" @render_skia,
     #|  "__MODULE__/app" @app,
     #|}
     #|
@@ -25,8 +25,10 @@ fn mobile_entrypoint_pkg_text(
 
 ///|
 fn mobile_entrypoint_main_text(platform : String) -> String {
-  match platform {
-    "android" | "ios" | "harmonyos" => ()
+  let skia_platform = match platform {
+    "android" => "Android"
+    "ios" => "IOS"
+    "harmonyos" => "HarmonyOS"
     _ => abort("unsupported embedded-runtime platform: " + platform)
   }
   let template =
@@ -39,9 +41,9 @@ fn mobile_entrypoint_main_text(platform : String) -> String {
     #|    height=640.0,
     #|  )
     #|  @runtime.run_app("MoUI app (window-hosted)", runtime)
-    #|    .render_all(@render_skia.from_env())
+    #|    .render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::__SKIA_PLATFORM__))
     #|    .backend(@platform_host.entry())
     #|    .run()
     #|}
-  template
+  template.replace_all(old="__SKIA_PLATFORM__", new=skia_platform)
 }

@@ -22,7 +22,7 @@ test "markdown editor find opens with selected source text as query" {
   app.apply_action("find")
   assert_true(app.find_visible())
   inspect(app.find_query(), content="beta")
-  guard app.selection.get().selection is Some(range) else {
+  guard app.selection.selection is Some(range) else {
     fail("expected original selection to remain active")
   }
   inspect(range.start, content="6")
@@ -54,7 +54,7 @@ test "markdown editor find opens with caret word as query" {
   assert_true(app.find_visible())
   inspect(app.find_query(), content="beta")
   inspect(app.selection_caret(), content="10")
-  guard app.selection.get().selection is Some(range) else {
+  guard app.selection.selection is Some(range) else {
     fail("expected caret word to become active match")
   }
   inspect(range.start, content="6")
@@ -72,7 +72,7 @@ test "markdown editor find opens with caret word as query" {
   app.set_selection(10, None)
   app.apply_action("find")
   inspect(app.find_query(), content="beta")
-  guard app.selection.get().selection is Some(end_range) else {
+  guard app.selection.selection is Some(end_range) else {
     fail("expected word-end caret to seed query")
   }
   inspect(end_range.start, content="6")
@@ -85,7 +85,7 @@ test "markdown editor find opens with caret word as query" {
   app.set_selection(6, None)
   app.apply_action("find")
   inspect(app.find_query(), content="stale")
-  guard app.selection.get().selection is None else {
+  guard app.selection.selection is None else {
     fail("expected punctuation gap to keep selection collapsed")
   }
 }
@@ -98,7 +98,7 @@ test "markdown editor find caret word handles unicode neighbors" {
   app.apply_action("find")
   inspect(app.find_query(), content="beta")
   inspect(app.selection_caret(), content="11")
-  guard app.selection.get().selection is Some(range) else {
+  guard app.selection.selection is Some(range) else {
     fail("expected unicode-neighbor word to become active match")
   }
   inspect(range.start, content="7")
@@ -109,7 +109,7 @@ test "markdown editor find caret word handles unicode neighbors" {
   gap_app.set_selection(7, None)
   gap_app.apply_action("find")
   inspect(gap_app.find_query(), content="")
-  guard gap_app.selection.get().selection is None else {
+  guard gap_app.selection.selection is None else {
     fail("expected emoji/space gap to keep selection collapsed")
   }
 }
@@ -124,7 +124,7 @@ test "markdown editor find next selects match and scrolls into view" {
 
   app.find_next_for_test()
   assert_true(app.find_visible())
-  let selection = app.selection.get()
+  let selection = app.selection
   inspect(selection.caret, content=(first + 6).to_string())
   guard selection.selection is Some(range) else {
     fail("expected selected first match")
@@ -134,7 +134,7 @@ test "markdown editor find next selects match and scrolls into view" {
   assert_true(app.editor_scroll_y() > 0.0)
 
   app.find_next_for_test()
-  let next_selection = app.selection.get()
+  let next_selection = app.selection
   guard next_selection.selection is Some(next_range) else {
     fail("expected selected next match")
   }
@@ -151,7 +151,7 @@ test "markdown editor find query input selects live match" {
   app.apply_action("find")
 
   app.update_find_query_for_test("n")
-  let first_selection = app.selection.get()
+  let first_selection = app.selection
   guard first_selection.selection is Some(first_range) else {
     fail("expected live first-character match")
   }
@@ -160,7 +160,7 @@ test "markdown editor find query input selects live match" {
   assert_true(app.editor_scroll_y() > 0.0)
 
   app.update_find_query_for_test("needle")
-  let refined_selection = app.selection.get()
+  let refined_selection = app.selection
   guard refined_selection.selection is Some(refined_range) else {
     fail("expected refined query to keep active match")
   }
@@ -174,7 +174,7 @@ test "markdown editor clearing find query collapses active match selection" {
   app.set_document("alpha needle beta")
   app.apply_action("find")
   app.update_find_query_for_test("needle")
-  guard app.selection.get().selection is Some(match_range) else {
+  guard app.selection.selection is Some(match_range) else {
     fail("expected live match selection")
   }
   inspect(match_range.start, content="6")
@@ -183,7 +183,7 @@ test "markdown editor clearing find query collapses active match selection" {
   app.update_find_query_for_test("")
   inspect(app.find_query(), content="")
   inspect(app.selection_caret(), content="12")
-  guard app.selection.get().selection is None else {
+  guard app.selection.selection is None else {
     fail("expected cleared find query to collapse selection")
   }
   let commands = app.runtime(width=1120.0, height=640.0).draw_commands()
@@ -200,7 +200,7 @@ test "markdown editor unmatched find query collapses stale match selection" {
   app.set_document("alpha needle beta")
   app.apply_action("find")
   app.update_find_query_for_test("needle")
-  guard app.selection.get().selection is Some(match_range) else {
+  guard app.selection.selection is Some(match_range) else {
     fail("expected live match selection")
   }
   inspect(match_range.start, content="6")
@@ -209,7 +209,7 @@ test "markdown editor unmatched find query collapses stale match selection" {
   app.update_find_query_for_test("missing")
   inspect(app.find_query(), content="missing")
   inspect(app.selection_caret(), content="12")
-  guard app.selection.get().selection is None else {
+  guard app.selection.selection is None else {
     fail("expected unmatched query to collapse stale find selection")
   }
   let commands = app.runtime(width=1120.0, height=640.0).draw_commands()
@@ -227,7 +227,7 @@ test "markdown editor find ignores ascii case while preserving source range" {
   app.apply_action("find")
 
   app.update_find_query_for_test("needle")
-  let selection = app.selection.get()
+  let selection = app.selection
   guard selection.selection is Some(range) else {
     fail("expected case-insensitive live match")
   }
@@ -235,7 +235,7 @@ test "markdown editor find ignores ascii case while preserving source range" {
   inspect(range.end, content="6")
 
   app.find_next_for_test()
-  guard app.selection.get().selection is Some(next_range) else {
+  guard app.selection.selection is Some(next_range) else {
     fail("expected second case-insensitive match")
   }
   inspect(next_range.start, content="20")
@@ -307,7 +307,7 @@ test "markdown editor find previous wraps from caret" {
   app.set_find_query("needle")
   app.set_selection(0, None)
   app.find_previous_for_test()
-  let selection = app.selection.get()
+  let selection = app.selection
   guard selection.selection is Some(range) else {
     fail("expected wrapped previous match")
   }
@@ -326,7 +326,7 @@ test "markdown editor replace current pushes undo and redo history" {
   app.replace_current_find_match_for_test()
   inspect(app.document(), content="one pin two needle")
   assert_true(app.dirty())
-  let selection = app.selection.get()
+  let selection = app.selection
   guard selection.selection is Some(range) else {
     fail("expected selected next match")
   }
@@ -349,7 +349,7 @@ test "markdown editor replace current preserves unicode around match" {
 
   app.replace_current_find_match_for_test()
   inspect(app.document(), content="a🤣 pin 尾")
-  guard app.selection.get().selection is Some(range) else {
+  guard app.selection.selection is Some(range) else {
     fail("expected selected replacement")
   }
   inspect(range.start, content="3")
@@ -366,7 +366,7 @@ test "markdown editor replace current wraps to previous remaining match" {
 
   app.replace_current_find_match_for_test()
   inspect(app.document(), content="needle first\nmiddle\npin last")
-  let selection = app.selection.get()
+  let selection = app.selection
   guard selection.selection is Some(range) else {
     fail("expected wrapped remaining match")
   }
@@ -384,7 +384,7 @@ test "markdown editor replace all updates non-overlapping source matches" {
   app.replace_all_find_matches_for_test()
   inspect(app.document(), content="b b ba")
   assert_true(app.dirty())
-  guard app.selection.get().selection is Some(range) else {
+  guard app.selection.selection is Some(range) else {
     fail("expected selected first replacement")
   }
   inspect(range.start, content="0")
@@ -403,7 +403,7 @@ test "markdown editor replace all preserves unicode scalar ranges" {
 
   app.replace_all_find_matches_for_test()
   inspect(app.document(), content="x🤣 针 y 针 尾")
-  guard app.selection.get().selection is Some(range) else {
+  guard app.selection.selection is Some(range) else {
     fail("expected selected first unicode replacement")
   }
   inspect(range.start, content="3")
@@ -504,7 +504,7 @@ test "markdown editor runtime find replace shortcuts open panel" {
   )
   assert_true(control_app.find_visible())
   inspect(control_app.find_query(), content="beta")
-  guard control_app.selection.get().selection is Some(range) else {
+  guard control_app.selection.selection is Some(range) else {
     fail("expected control find-replace shortcut to select caret word")
   }
   inspect(range.start, content="6")
@@ -536,7 +536,7 @@ test "markdown editor runtime find navigation shortcuts move and close panel" {
     ),
   )
   assert_true(meta_app.find_visible())
-  guard meta_app.selection.get().selection is Some(first_range) else {
+  guard meta_app.selection.selection is Some(first_range) else {
     fail("expected meta find-next selection")
   }
   inspect(first_range.start, content="0")
@@ -549,7 +549,7 @@ test "markdown editor runtime find navigation shortcuts move and close panel" {
       ),
     ),
   )
-  guard meta_app.selection.get().selection is Some(next_range) else {
+  guard meta_app.selection.selection is Some(next_range) else {
     fail("expected second meta find-next selection")
   }
   inspect(next_range.start, content="20")
@@ -562,7 +562,7 @@ test "markdown editor runtime find navigation shortcuts move and close panel" {
       ),
     ),
   )
-  guard meta_app.selection.get().selection is Some(previous_range) else {
+  guard meta_app.selection.selection is Some(previous_range) else {
     fail("expected meta find-previous selection")
   }
   inspect(previous_range.start, content="0")
@@ -585,7 +585,7 @@ test "markdown editor runtime find navigation shortcuts move and close panel" {
       ),
     ),
   )
-  guard control_app.selection.get().selection is Some(control_range) else {
+  guard control_app.selection.selection is Some(control_range) else {
     fail("expected control find-next selection")
   }
   inspect(control_range.start, content="4")
@@ -598,7 +598,7 @@ test "markdown editor runtime find navigation shortcuts move and close panel" {
       ),
     ),
   )
-  guard control_app.selection.get().selection is Some(wrapped_range) else {
+  guard control_app.selection.selection is Some(wrapped_range) else {
     fail("expected control find-previous wrap selection")
   }
   inspect(wrapped_range.start, content="12")
@@ -632,7 +632,7 @@ test "markdown editor runtime escape dismisses auxiliary panels after find" {
   assert_true(app.file_sidebar_visible())
   assert_true(app.document_info_visible())
   assert_true(app.format_palette_visible())
-  guard app.selection.get().selection is Some(find_range) else {
+  guard app.selection.selection is Some(find_range) else {
     fail("expected selection to survive find dismissal")
   }
   inspect(find_range.start, content="0")
@@ -646,7 +646,7 @@ test "markdown editor runtime escape dismisses auxiliary panels after find" {
   assert_false(app.file_sidebar_visible())
   assert_false(app.document_info_visible())
   assert_false(app.format_palette_visible())
-  guard app.selection.get().selection is Some(panel_range) else {
+  guard app.selection.selection is Some(panel_range) else {
     fail("expected selection to survive panel dismissal")
   }
   inspect(panel_range.start, content="0")
@@ -663,7 +663,7 @@ test "markdown editor runtime escape collapses selection when panels are gone" {
     @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Escape")),
   )
   inspect(app.selection_caret(), content="8")
-  guard app.selection.get().selection is None else {
+  guard app.selection.selection is None else {
     fail("expected selection to collapse")
   }
 }

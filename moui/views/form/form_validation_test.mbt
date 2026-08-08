@@ -9,8 +9,7 @@ test "form fields validate required values" {
   inspect(invalid.valid, content="false")
   inspect(invalid.errors.length(), content="1")
   inspect(invalid.errors[0].message, content="Name required")
-  name.binding().set("Ada")
-  let valid = validate_form([name, email])
+  let valid = validate_form([name.with_value("Ada"), email])
   inspect(valid.valid, content="true")
   inspect(valid.errors.length(), content="0")
 }
@@ -32,9 +31,10 @@ test "form controller aggregates rules and first invalid field" {
   inspect(summary.errors.length(), content="2")
   inspect(summary.first_invalid_id.unwrap_or(""), content="name")
   inspect(controller.field_error("email"), content="Email must contain @")
-  name.binding().set("Ada")
-  email.binding().set("ada@example.com")
-  let valid = controller.validate()
+  let valid = FormController::new(fields=[
+    name.with_value("Ada"),
+    email.with_value("ada@example.com"),
+  ]).validate()
   inspect(valid.valid, content="true")
   inspect(valid.first_invalid_id is None, content="true")
 }

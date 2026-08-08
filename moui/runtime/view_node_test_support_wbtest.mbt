@@ -112,7 +112,6 @@ fn[Msg] runtime_wb_fixture_view(
     @core.ViewDeclaration::constant()
   },
   children? : () -> Array[@core.View[Msg]] = () => [],
-  build_child? : ((@core.ComponentContext) -> @core.View[Msg])? = None,
   child_constraints? : (@core.Constraints) -> @core.Constraints = constraints => {
     constraints.loosen()
   },
@@ -162,10 +161,6 @@ fn[Msg] runtime_wb_fixture_view(
       flex_weight,
     },
     children=_node => children(),
-    build_child=match build_child {
-      Some(build) => Some((_node, context) => build(context))
-      None => None
-    },
     event=(_node, context) => event(context),
     text_command=(_node, context, intent, paste_text) => {
       text_command(context, intent, paste_text)

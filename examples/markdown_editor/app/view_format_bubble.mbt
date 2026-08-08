@@ -9,11 +9,11 @@ fn MarkdownEditorApp::format_bubble(
   theme : @moui.Theme,
 ) -> @moui.View[MarkdownEditorMsg] {
   // No non-empty selection → no bubble.
-  let has_range = match self.selection.get().selection {
+  let has_range = match self.selection.selection {
     Some(range) => range.start != range.end
     None => false
   }
-  if !has_range || self.zen_mode_enabled.get() {
+  if !has_range || self.zen_mode_enabled {
     @views.empty()
   } else {
     let bubble = @views.container(
@@ -99,7 +99,7 @@ fn markdown_editor_format_bubble_overlay(
     Some(range) => range.start != range.end
     None => false
   }
-  if !has_range || app.zen_mode_enabled.get() || app.source_mode_enabled.get() {
+  if !has_range || app.zen_mode_enabled || app.source_mode_enabled {
     @views.empty()
   } else {
     let bubble = app.format_bubble(theme)

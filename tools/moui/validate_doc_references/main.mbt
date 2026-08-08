@@ -39,8 +39,8 @@ fn usage() -> String {
 fn looks_like_repo_path(token : String) -> Bool {
   let prefixes = [
     "scripts/", "tools/", "moui/", "moui_skia/", "moui_cli/", "moui_theme/", "moui_webview/",
-    "moui_devtools/", "moui_i18n/", "moui_richtext/", "moui_sun/", "moui_tester/",
-    "moui_agent", "examples/", "docs/", "checks/", "smoke/", ".github/", "window/",
+    "moui_devtools/", "moui_i18n/", "moui_richtext/", "moui_sun/", "moui_agent",
+    "examples/", "docs/", "checks/", "smoke/", ".github/", "window/",
   ]
   let mut result = false
   for prefix in prefixes {

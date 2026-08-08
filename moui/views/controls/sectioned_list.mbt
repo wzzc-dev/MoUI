@@ -3,7 +3,6 @@ pub fn[T, Msg] sectioned_list(
   sections : Array[@layout.SectionListSection[T]],
   key : (T) -> String,
   row : (T) -> @core.View[Msg],
-  state? : @core.ScrollState = @core.ScrollState::new(),
   header? : (@layout.SectionListSection[T]) -> @core.View[Msg] = section => {
     @text.text(section.title)
   },
@@ -13,81 +12,30 @@ pub fn[T, Msg] sectioned_list(
   spacing? : Double = 0.0,
   overscan? : Int = 1,
   empty? : @core.View[Msg]? = None,
+  request? : @core.ScrollRequest,
 ) -> @core.View[Msg] {
+  ignore(item_height)
+  ignore(header_height)
+  ignore(overscan)
   let entries = sectioned_list_entries(sections)
   if entries.length() == 0 {
     match empty {
-      Some(view) =>
-        scroll_view(view, state=Some(state), width=0.0, height=viewport_height)
-      None =>
-        scroll_view(
-          @container.empty(),
-          state=Some(state),
-          width=0.0,
-          height=viewport_height,
-        )
+      Some(view) => scroll_view(view, height=viewport_height, request?)
+      None => scroll_view(@container.empty(), height=viewport_height, request?)
     }
   } else {
-    let offset = state.offset().y
-    let limit = offset + viewport_height
-    let overscan = @common.view_max_int(0, overscan)
     let children : Array[@core.View[Msg]] = []
-    let mut cursor = 0.0
-    let mut first_visible = -1
-    let mut last_visible = -1
-    for index, entry in entries {
-      let height = sectioned_entry_height(entry, header_height, item_height)
-      let top = cursor
-      let bottom = top + height
-      if bottom >= offset - overscan.to_double() * item_height &&
-        top <= limit + overscan.to_double() * item_height {
-        if first_visible < 0 {
-          first_visible = index
-        }
-        last_visible = index
-        children.push(
-          sectioned_entry_view(entry, header, row, key).key(
-            sectioned_entry_key(entry, key),
-          ),
-        )
-      }
-      cursor = cursor + height + spacing
-    }
-    let virtual_children : Array[@core.View[Msg]] = []
-    if first_visible > 0 {
-      virtual_children.push(
-        @container.spacer(
-          min_length=sectioned_entries_height(
-            entries, 0, first_visible, header_height, item_height, spacing,
-          ),
-          weight=0.0,
-        ).key("sectioned-list-before"),
-      )
-    }
-    for child in children {
-      virtual_children.push(child)
-    }
-    if last_visible + 1 < entries.length() {
-      virtual_children.push(
-        @container.spacer(
-          min_length=sectioned_entries_height(
-            entries,
-            last_visible + 1,
-            entries.length(),
-            header_height,
-            item_height,
-            spacing,
-          ),
-          weight=0.0,
-        ).key("sectioned-list-after"),
+    for entry in entries {
+      children.push(
+        sectioned_entry_view(entry, header, row, key).key(
+          sectioned_entry_key(entry, key),
+        ),
       )
     }
     scroll_view(
-      @layout.list(virtual_children, spacing~),
-      offset=state.offset(),
-      width=0.0,
+      @layout.list(children, spacing~),
       height=viewport_height,
-      state=Some(state),
+      request?,
     )
   }
 }
@@ -112,19 +60,6 @@ fn[T] sectioned_list_entries(
   entries
 }
 
-///|
-fn[T] sectioned_entry_height(
-  entry : SectionedListEntry[T],
-  header_height : Double,
-  item_height : Double,
-) -> Double {
-  match entry {
-    SectionHeader(_) => header_height
-    SectionItem(_) => item_height
-  }
-}
-
-///|
 fn[T, Msg] sectioned_entry_view(
   entry : SectionedListEntry[T],
   header : (@layout.SectionListSection[T]) -> @core.View[Msg],
@@ -146,25 +81,4 @@ fn[T] sectioned_entry_key(
     SectionHeader(section) => "section-header-" + section.id
     SectionItem(item) => key(item)
   }
-}
-
-///|
-fn[T] sectioned_entries_height(
-  entries : Array[SectionedListEntry[T]],
-  start : Int,
-  end : Int,
-  header_height : Double,
-  item_height : Double,
-  spacing : Double,
-) -> Double {
-  let mut total = 0.0
-  let end = entries.length().min(end)
-  for index in start..<end {
-    total = total +
-      sectioned_entry_height(entries[index], header_height, item_height)
-    if index + 1 < end {
-      total = total + spacing
-    }
-  }
-  total
 }

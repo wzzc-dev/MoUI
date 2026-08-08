@@ -4,13 +4,11 @@ fn showcase_initial_section_code() -> Int = "showcase" "initial_section"
 ///|
 fn main {
   let routes = @services.RouteSource::new()
-  let bindings = @webgpu_adapter.provider_bindings(
-    canvas_id="moonbit-window-web-showcase",
-  )
+  let providers = @webgpu_adapter.from_env()
   let runtime = @showcase.runtime(
     host_summary=@web.web_capability_summary(),
     environment=@web.app_environment(routes~),
-    renderer_providers=@render.renderer_provider_binding_providers(bindings),
+    renderer_providers=providers,
     route_host=Some(
       @showcase.route_host(
         source=routes,
@@ -23,7 +21,7 @@ fn main {
     initial_section_code=showcase_initial_section_code(),
   )
   @runtime.run_app("MoUI Showcase Wasm Host", runtime)
-  .render_all(@webgpu_adapter.from_env())
+  .render_all(providers)
   .backend(
     @web.entry(options=@web.WebAppOptions::new(route_source=Some(routes))),
   )

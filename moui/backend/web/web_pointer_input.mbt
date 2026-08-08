@@ -36,7 +36,7 @@ fn WebApp::dispatch_web_pointer_input(
   match web_pointer_phase(kind) {
     Some(phase) => {
       let scale_factor = self.current_scale_factor(window_id)
-      let position = @window_host.physical_position_to_core(
+      let position = @window_input.physical_position_to_core(
         @dpi.PhysicalPositionF64(x_px, y_px),
         scale_factor~,
       )
@@ -46,27 +46,22 @@ fn WebApp::dispatch_web_pointer_input(
         position~,
         phase~,
         button~,
-        wheel_delta=@window_host.physical_position_to_core(
+        wheel_delta=@window_input.physical_position_to_core(
           @dpi.PhysicalPositionF64(delta_x_px, delta_y_px),
           scale_factor~,
         ),
         modifiers=self.modifiers,
       )
-      match self.coordinator.runtime_slots().lookup(window_id) {
+      match self.lifecycle.runtime_slots().lookup(window_id) {
         Some(slot) => {
           // The browser ABI needs a synchronous consumption result. Keep the
           // shared host driver responsible for redraw scheduling, but bypass
           // its ordinary fire-and-forget event result for this one path.
           let result = slot.driver.runtime.dispatch_pointer_input(pointer)
           slot.driver.request_redraw_if_needed()
-          ignore(
-            self.coordinator.publish_platform_event(
-              window_id,
-              @host.Event::Pointer(pointer),
-            ),
-          )
+          ignore(self.input.publish(window_id, @host.Event::Pointer(pointer)))
           self.drain_async_host_services()
-          self.coordinator.sync_text_input_session()
+          self.sync_text_input_session()
           result.host_flags()
         }
         None => 0
@@ -90,7 +85,7 @@ pub fn web_dispatch_pointer_input(
   match web_active_app.val {
     Some(app) =>
       match
-        app.coordinator.lookup_window(@window_core.WindowId::from_raw(raw_id)) {
+        app.lifecycle.lookup_window(@window_core.WindowId::from_raw(raw_id)) {
         Some(window_id) =>
           app.dispatch_web_pointer_input(
             window_id, kind, x_px, y_px, delta_x_px, delta_y_px, button, modifiers,

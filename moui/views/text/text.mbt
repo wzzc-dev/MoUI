@@ -146,7 +146,7 @@ pub fn[Msg] text_area(
   on_submit? : Msg? = None,
 ) -> @core.View[Msg] {
   text_area_control(
-    value=@core.Binding::new(get=() => value, set=_ => ()),
+    value~,
     on_input=Some(on_input),
     on_submit~,
     placeholder~,

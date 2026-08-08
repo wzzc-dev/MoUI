@@ -235,9 +235,10 @@ fn Model::docs_sidebar(
         ).accessibility_label(message("docs.search_a11y")),
         scroll_view(
           catalog_content,
-          state=Some(self.docs_body_scroll),
           width=content_width,
           height=list_height,
+          offset=self.docs_body_scroll,
+          on_scroll=Some(offset => DocsBodyScrolled(offset)),
           shows_indicator=true,
         ),
       ],
@@ -321,18 +322,19 @@ fn Model::docs_document_panel(
                 corner_radius=8.0,
                 on_link_click=Some(target => OpenDocLink(target)),
                 visible_viewport_height=document_viewport_height,
-                visible_scroll_state=if independent_scroll {
-                  Some(self.docs_scroll)
+                visible_scroll_y=if independent_scroll {
+                  self.docs_scroll.y
                 } else {
-                  None
+                  0.0
                 },
               )
               let body = if independent_scroll {
                 scroll_view(
                   viewer,
-                  state=Some(self.docs_scroll),
                   width=content_width,
                   height=document_viewport_height,
+                  offset=self.docs_scroll,
+                  on_scroll=Some(offset => DocsScrolled(offset)),
                   shows_indicator=true,
                 )
               } else {

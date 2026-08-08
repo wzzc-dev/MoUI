@@ -8,8 +8,8 @@ pub fn scaffold_surface_host(
   logical_width~ : Double,
   logical_height~ : Double,
   scale_factor? : Double = 1.0,
-) -> @window_host.SurfaceState {
-  @window_host.SurfaceState::new(
+) -> @window_input.SurfaceState {
+  @window_input.SurfaceState::new(
     metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=logical_width, height=logical_height),
       scale_factor~,
@@ -20,8 +20,8 @@ pub fn scaffold_surface_host(
 }
 
 ///|
-pub fn scaffold_input_host() -> @window_host.InputState {
-  @window_host.InputState::new(
+pub fn scaffold_input_host() -> @window_input.InputState {
+  @window_input.InputState::new(
     focused=false,
     contract=@host.HostInputContract::new(
       capabilities=@host.HostInputCapabilities::none(),
@@ -191,7 +191,7 @@ fn linux_request_surface_for_content(
   let surface_metrics = linux_surface_metrics_for_content(metrics, decorations)
   ignore(
     window.request_surface_size(
-      @window_host.host_metrics_to_dpi_size(surface_metrics),
+      @window_input.host_metrics_to_dpi_size(surface_metrics),
     ),
   )
 }
@@ -200,7 +200,7 @@ fn linux_request_surface_for_content(
 fn linux_window_surface_metrics(
   window : @window_linux.Window,
 ) -> @core.SurfaceMetrics {
-  @window_host.surface_metrics_from_physical(
+  @window_input.surface_metrics_from_physical(
     window.surface_size(),
     scale_factor=window.scale_factor(),
   )

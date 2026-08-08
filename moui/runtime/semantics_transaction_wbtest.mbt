@@ -106,20 +106,35 @@ fn runtime_pending_scroll_view(
 
 ///|
 test "semantics commit stabilizes pending scroll before publishing bounds" {
-  let visible = @core.State::new(false)
-  let offset = @core.State::new(@core.Point::new(x=0.0, y=0.0))
+  let visible = Ref(false)
+  let offset = Ref(@core.Point::new(x=0.0, y=0.0))
+  let runtime_ref : Ref[RuntimeState?] = Ref(None)
+  let build = () => runtime_pending_scroll_view(visible.val, offset.val)
   let runtime = RuntimeState::new_view(
-    root=runtime_component_view(context => {
-      runtime_pending_scroll_view(context.watch(visible), context.watch(offset))
-    }),
+    root=build(),
     size=@core.Size::new(width=100.0, height=40.0),
-    on_message=Some(next => offset.set(next)),
+    on_message=Some(next => {
+      offset.val = next
+      match runtime_ref.val {
+        Some(state) =>
+          state.request_root_rebuild(reason="test scroll model changed")
+        None => ()
+      }
+    }),
   )
+  runtime_ref.val = Some(runtime)
+  runtime.set_root_builder(() => {
+    adapt_view_for_runtime(build(), next => {
+      offset.val = next
+      runtime.request_root_rebuild(reason="test scroll model changed")
+    })
+  })
   inspect(
     runtime.scroll_to_key("pending-target", @core.ScrollAlignment::Nearest),
     content="false",
   )
-  visible.set(true)
+  visible.val = true
+  runtime.request_root_rebuild(reason="test model changed")
   let snapshot = runtime.cached_semantics()
   let mut target_y = -1.0
   for node in snapshot.nodes() {
@@ -127,6 +142,6 @@ test "semantics commit stabilizes pending scroll before publishing bounds" {
       target_y = node.frame.origin.y
     }
   }
-  inspect(offset.get().y, content="80")
+  inspect(offset.val.y, content="80")
   inspect(target_y, content="20")
 }

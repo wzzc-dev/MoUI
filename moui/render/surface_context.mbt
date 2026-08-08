@@ -45,8 +45,8 @@ pub fn PixelFrame::pixels(self : PixelFrame) -> Bytes {
 }
 
 ///|
-/// A CPU presenter owned by a platform backend. The callback is intentionally
-/// expressed in terms of neutral bytes so it cannot depend on a renderer.
+/// A CPU presenter owned by a platform backend. The callback is expressed in
+/// neutral bytes and does not depend on a renderer module.
 pub struct PresentTarget {
   description : String
   present_fn : (PixelFrame) -> Bool
@@ -71,73 +71,8 @@ pub fn PresentTarget::present(self : PresentTarget, frame : PixelFrame) -> Bool 
 }
 
 ///|
-/// Opaque GPU lifecycle callbacks supplied by a platform backend. Renderer
-/// packages convert their native context/surface values to the opaque handles
-/// at this boundary; backend code never names a concrete renderer.
-pub struct HostGpuSurfaceBridge {
-  descriptor : GpuHostSurfaceDescriptor
-  create_surface_fn : (@core.SurfaceMetrics) -> UInt64?
-  present_fn : (UInt64) -> Bool
-  resize_fn : (@core.SurfaceMetrics) -> Unit
-  dispose_fn : () -> Unit
-}
-
-///|
-pub fn HostGpuSurfaceBridge::new(
-  descriptor~ : GpuHostSurfaceDescriptor,
-  create_surface~ : (@core.SurfaceMetrics) -> UInt64?,
-  present~ : (UInt64) -> Bool,
-  resize? : (@core.SurfaceMetrics) -> Unit = _ => (),
-  dispose? : () -> Unit = () => (),
-) -> HostGpuSurfaceBridge {
-  {
-    descriptor,
-    create_surface_fn: create_surface,
-    present_fn: present,
-    resize_fn: resize,
-    dispose_fn: dispose,
-  }
-}
-
-///|
-pub fn HostGpuSurfaceBridge::descriptor(
-  self : HostGpuSurfaceBridge,
-) -> GpuHostSurfaceDescriptor {
-  self.descriptor
-}
-
-///|
-pub fn HostGpuSurfaceBridge::create_surface(
-  self : HostGpuSurfaceBridge,
-  metrics : @core.SurfaceMetrics,
-) -> UInt64? {
-  (self.create_surface_fn)(metrics)
-}
-
-///|
-pub fn HostGpuSurfaceBridge::present(
-  self : HostGpuSurfaceBridge,
-  surface : UInt64,
-) -> Bool {
-  (self.present_fn)(surface)
-}
-
-///|
-pub fn HostGpuSurfaceBridge::resize(
-  self : HostGpuSurfaceBridge,
-  metrics : @core.SurfaceMetrics,
-) -> Unit {
-  (self.resize_fn)(metrics)
-}
-
-///|
-pub fn HostGpuSurfaceBridge::dispose(self : HostGpuSurfaceBridge) -> Unit {
-  (self.dispose_fn)()
-}
-
-///|
-/// Renderer-neutral image source supplied by a platform backend. It only
-/// reads opaque bytes; format detection and decoding stay in renderer packages.
+/// Renderer-neutral image source supplied by a platform backend. Format
+/// detection and decoding stay in the selected renderer module.
 pub struct HostImageSource {
   read_fn : (String) -> Bytes?
 }
@@ -145,6 +80,11 @@ pub struct HostImageSource {
 ///|
 pub fn HostImageSource::new(read~ : (String) -> Bytes?) -> HostImageSource {
   { read_fn: read }
+}
+
+///|
+pub fn HostImageSource::unavailable() -> HostImageSource {
+  HostImageSource::new(read=_ => None)
 }
 
 ///|
@@ -175,156 +115,250 @@ pub fn RendererImageDecoder::decode(
 }
 
 ///|
+/// Object-safe native-surface operations. Handles have no platform or graphics
+/// API tag in the root contract; the selected renderer interprets them using
+/// its composition-root platform policy.
+pub(open) trait NativeSurfaceCapability {
+  fn surface_handle(Self) -> UInt64
+  fn display_handle(Self) -> UInt64?
+  fn acquire(Self, @core.SurfaceMetrics) -> UInt64?
+  fn present(Self, UInt64) -> Bool
+  fn resize(Self, @core.SurfaceMetrics) -> Unit
+  fn dispose(Self) -> Unit
+}
 
 ///|
-/// All host capabilities a renderer may consume for one window.
-pub struct SurfaceContext {
-  surface : SurfaceDescriptor
+priv struct ClosureNativeSurfaceCapability {
+  surface_handle : UInt64
+  display_handle : UInt64?
+  acquire_fn : (@core.SurfaceMetrics) -> UInt64?
+  present_fn : (UInt64) -> Bool
+  resize_fn : (@core.SurfaceMetrics) -> Unit
+  dispose_fn : () -> Unit
+  mut disposed : Bool
+}
+
+///|
+impl NativeSurfaceCapability for ClosureNativeSurfaceCapability with fn surface_handle(
+  self,
+) {
+  self.surface_handle
+}
+
+///|
+impl NativeSurfaceCapability for ClosureNativeSurfaceCapability with fn display_handle(
+  self,
+) {
+  self.display_handle
+}
+
+///|
+impl NativeSurfaceCapability for ClosureNativeSurfaceCapability with fn acquire(
+  self,
+  metrics,
+) {
+  (self.acquire_fn)(metrics)
+}
+
+///|
+impl NativeSurfaceCapability for ClosureNativeSurfaceCapability with fn present(
+  self,
+  surface,
+) {
+  (self.present_fn)(surface)
+}
+
+///|
+impl NativeSurfaceCapability for ClosureNativeSurfaceCapability with fn resize(
+  self,
+  metrics,
+) {
+  (self.resize_fn)(metrics)
+}
+
+///|
+impl NativeSurfaceCapability for ClosureNativeSurfaceCapability with fn dispose(
+  self,
+) {
+  if !self.disposed {
+    self.disposed = true
+    (self.dispose_fn)()
+  }
+}
+
+///|
+/// Opaque wrapper around native surface operations. Construction rejects zero
+/// surface handles and zero display handles.
+pub struct NativeSurface {
+  capability : &NativeSurfaceCapability
+}
+
+///|
+pub fn NativeSurface::new(
+  surface_handle~ : UInt64,
+  display_handle? : UInt64? = None,
+  acquire? : (@core.SurfaceMetrics) -> UInt64? = _ => None,
+  present? : (UInt64) -> Bool = _ => false,
+  resize? : (@core.SurfaceMetrics) -> Unit = _ => (),
+  dispose? : () -> Unit = () => (),
+) -> NativeSurface? {
+  if surface_handle == 0UL || display_handle == Some(0UL) {
+    return None
+  }
+  let capability = ClosureNativeSurfaceCapability::{
+    surface_handle,
+    display_handle,
+    acquire_fn: acquire,
+    present_fn: present,
+    resize_fn: resize,
+    dispose_fn: dispose,
+    disposed: false,
+  }
+  Some({ capability: capability as &NativeSurfaceCapability })
+}
+
+///|
+pub fn NativeSurface::surface_handle(self : NativeSurface) -> UInt64 {
+  self.capability.surface_handle()
+}
+
+///|
+pub fn NativeSurface::display_handle(self : NativeSurface) -> UInt64? {
+  self.capability.display_handle()
+}
+
+///|
+pub fn NativeSurface::acquire(
+  self : NativeSurface,
+  metrics : @core.SurfaceMetrics,
+) -> UInt64? {
+  self.capability.acquire(metrics)
+}
+
+///|
+pub fn NativeSurface::present(self : NativeSurface, surface : UInt64) -> Bool {
+  self.capability.present(surface)
+}
+
+///|
+pub fn NativeSurface::resize(
+  self : NativeSurface,
+  metrics : @core.SurfaceMetrics,
+) -> Unit {
+  self.capability.resize(metrics)
+}
+
+///|
+pub fn NativeSurface::dispose(self : NativeSurface) -> Unit {
+  self.capability.dispose()
+}
+
+///|
+/// Object-safe capabilities supplied by one platform window.
+pub(open) trait HostSurfaceCapability {
+  fn surface_id(Self) -> String
+  fn metrics(Self) -> @core.SurfaceMetrics
+  fn cpu_present(Self) -> PresentTarget?
+  fn native_surface(Self) -> NativeSurface?
+  fn image_source(Self) -> HostImageSource?
+}
+
+///|
+priv struct ClosureHostSurfaceCapability {
   surface_id : String
   metrics : @core.SurfaceMetrics
   cpu_present : PresentTarget?
-  gpu_surface : HostGpuSurfaceBridge?
+  native_surface : NativeSurface?
   image_source : HostImageSource?
 }
 
 ///|
-pub fn SurfaceContext::new(
-  surface~ : SurfaceDescriptor,
-  surface_id? : String = "",
-  metrics~ : @core.SurfaceMetrics,
-  cpu_present? : PresentTarget? = None,
-  gpu_surface? : HostGpuSurfaceBridge? = None,
-  image_source? : HostImageSource? = None,
-) -> SurfaceContext {
-  { surface, surface_id, metrics, cpu_present, gpu_surface, image_source }
-}
-
-///|
-pub fn SurfaceContext::surface(self : SurfaceContext) -> SurfaceDescriptor {
-  self.surface
-}
-
-///|
-pub fn SurfaceContext::surface_id(self : SurfaceContext) -> String {
+impl HostSurfaceCapability for ClosureHostSurfaceCapability with fn surface_id(
+  self,
+) {
   self.surface_id
 }
 
 ///|
-pub fn SurfaceContext::metrics(self : SurfaceContext) -> @core.SurfaceMetrics {
+impl HostSurfaceCapability for ClosureHostSurfaceCapability with fn metrics(
+  self,
+) {
   self.metrics
 }
 
 ///|
-pub fn SurfaceContext::cpu_present(self : SurfaceContext) -> PresentTarget? {
+impl HostSurfaceCapability for ClosureHostSurfaceCapability with fn cpu_present(
+  self,
+) {
   self.cpu_present
 }
 
 ///|
-pub fn SurfaceContext::gpu_surface(
-  self : SurfaceContext,
-) -> HostGpuSurfaceBridge? {
-  self.gpu_surface
+impl HostSurfaceCapability for ClosureHostSurfaceCapability with fn native_surface(
+  self,
+) {
+  self.native_surface
 }
 
 ///|
-pub fn SurfaceContext::image_source(self : SurfaceContext) -> HostImageSource? {
+impl HostSurfaceCapability for ClosureHostSurfaceCapability with fn image_source(
+  self,
+) {
   self.image_source
 }
 
 ///|
-/// A renderer binding plus the optional host image loader selected with it.
-pub struct RendererBindingPlan {
-  binding : RendererProviderBinding
-  image_loader : ImageLoader?
-  surface : SurfaceDescriptor?
+/// Opaque surface wrapper passed from a platform backend to renderer providers.
+pub struct HostSurface {
+  capability : &HostSurfaceCapability
 }
 
 ///|
-pub fn RendererBindingPlan::new(
-  binding~ : RendererProviderBinding,
-  image_loader? : ImageLoader? = None,
-  surface? : SurfaceDescriptor? = None,
-) -> RendererBindingPlan {
-  { binding, image_loader, surface }
+pub fn HostSurface::new(
+  surface_id? : String = "",
+  metrics~ : @core.SurfaceMetrics,
+  cpu_present? : PresentTarget? = None,
+  native_surface? : NativeSurface? = None,
+  image_source? : HostImageSource? = None,
+) -> HostSurface {
+  let capability = ClosureHostSurfaceCapability::{
+    surface_id,
+    metrics,
+    cpu_present,
+    native_surface,
+    image_source,
+  }
+  { capability: capability as &HostSurfaceCapability }
 }
 
 ///|
-pub fn RendererBindingPlan::binding(
-  self : RendererBindingPlan,
-) -> RendererProviderBinding {
-  self.binding
+pub fn HostSurface::from_capability(
+  capability : &HostSurfaceCapability,
+) -> HostSurface {
+  { capability, }
 }
 
 ///|
-pub fn RendererBindingPlan::image_loader(
-  self : RendererBindingPlan,
-) -> ImageLoader? {
-  self.image_loader
+pub fn HostSurface::surface_id(self : HostSurface) -> String {
+  self.capability.surface_id()
 }
 
 ///|
-pub fn RendererBindingPlan::surface(
-  self : RendererBindingPlan,
-) -> SurfaceDescriptor? {
-  self.surface
+pub fn HostSurface::metrics(self : HostSurface) -> @core.SurfaceMetrics {
+  self.capability.metrics()
 }
 
 ///|
-/// A delayed factory. It is evaluated after a platform window has supplied a
-/// SurfaceContext, so composition roots do not need to know native window
-/// types and backend packages do not need to import renderer packages.
-pub struct RendererFactory {
-  id : String
-  bind_fn : (SurfaceContext) -> RendererBindingPlan
+pub fn HostSurface::cpu_present(self : HostSurface) -> PresentTarget? {
+  self.capability.cpu_present()
 }
 
 ///|
-pub fn RendererFactory::new(
-  id~ : String,
-  bind~ : (SurfaceContext) -> RendererBindingPlan,
-) -> RendererFactory {
-  { id, bind_fn: bind }
+pub fn HostSurface::native_surface(self : HostSurface) -> NativeSurface? {
+  self.capability.native_surface()
 }
 
 ///|
-pub fn RendererFactory::id(self : RendererFactory) -> String {
-  self.id
-}
-
-///|
-pub fn RendererFactory::bind(
-  self : RendererFactory,
-  kit : SurfaceContext,
-) -> RendererBindingPlan {
-  (self.bind_fn)(kit)
-}
-
-///|
-
-///|
-pub struct RendererResolution {
-  renderer : WindowRenderer
-  image_loader : ImageLoader?
-}
-
-///|
-pub fn RendererResolution::new(
-  renderer~ : WindowRenderer,
-  image_loader~ : ImageLoader?,
-) -> RendererResolution {
-  { renderer, image_loader }
-}
-
-///|
-pub fn RendererResolution::renderer(
-  self : RendererResolution,
-) -> WindowRenderer {
-  self.renderer
-}
-
-///|
-pub fn RendererResolution::image_loader(
-  self : RendererResolution,
-) -> ImageLoader? {
-  self.image_loader
+pub fn HostSurface::image_source(self : HostSurface) -> HostImageSource? {
+  self.capability.image_source()
 }

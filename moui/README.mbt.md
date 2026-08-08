@@ -83,18 +83,18 @@ surface, written in MoUI itself.
   source-mapped design-system models, package-local Material/Carbon/Primer/
   Fluent entrypoints, and custom theme builders; core MoUI apps do not need
   it.
-- `moui_skia/` (published as `wzzc-dev/moui_skia@0.1.7`) is the native Skia
-  raster binding workspace; `moui_sun/` (published as
-  `wzzc-dev/moui_sun@0.1.7`) is an experimental native raster alternative.
-  They are depended on by app platform entrypoints, not by `moui` core.
+- `moui_skia/` (`wzzc-dev/moui_skia@0.2.0` in this checkout) is the native
+  Skia binding workspace; `moui_sun/` (`wzzc-dev/moui_sun@0.2.0`) is an
+  experimental native raster stack. Their `moui_{skia,sun}_renderer` modules own the
+  corresponding MoUI renderer implementation; base `moui` depends on neither.
 - `backend/` defines shared host contracts; platform backends normalize
   window and input events into `Event`.
   - `backend/<platform>/` owns only the neutral host surface and lifecycle;
-    composition roots select renderer factories from `render/*`.
+    composition roots select renderer providers from `moui_*_renderer`.
   - Host-core packages do not import concrete renderer implementations.
-- `render/` provides the renderer facade, with native Skia raster, WebGPU
-  adapter, and experimental native WGPU implementations under `render/skia/`,
-  `render/webgpu_adapter/`, and `render/wgpu/`.
+- `render/` provides only the neutral renderer facade and shared algorithms;
+  native Skia, WebGPU/Canvas2D, WGPU, and Sun implementations live in separate
+  `wzzc-dev/moui_*_renderer` publication modules.
 - `examples/*/app/` contains shared app logic, while platform subpackages are
   thin entrypoints. Featured examples: `examples/showcase` (visual catalog,
   Skia mainline + WGPU/Sun diagnostics), `examples/markdown_editor` (WYSIWYG),

@@ -17,9 +17,9 @@ window/<platform>/template / native Activity|UIApp|Ability
         → window/internal/embedded_dispatch physical callback dispatch
         → EventLoop.pump / run_app
         → *EmbeddedRuntimeBackend (moui/backend/{android,ios,harmonyos})
-        → backend/common (neutral lifecycle/surface conversion)
-        → HostedWindowBackend / HostedRuntimeSession
-        → Skia WindowRenderer
+        → backend/common/lifecycle::EmbeddedLifecycle
+        → backend/common/embedded::EmbeddedSession
+        → Skia RendererSession
 ```
 
 The window-hosted route is the only supported embedded runtime backend path.
@@ -33,11 +33,12 @@ platform callback path.
 
 `window/internal/embedded_dispatch` is stateless and depends only on
 `window/core` and `window/dpi`; it converts queued physical commands into
-ordered callbacks. `EmbeddedWindowCoordinator` in MoUI owns lifecycle
-phase, surface generation, current surface, primary-window routing, detach,
-and exit intent. After a callback enters MoUI, `backend/common/embedded` owns session
-capabilities while `FrameCoordinator` owns redraw, completion, image
-repaint, and IME hook ordering.
+ordered callbacks. `common/lifecycle::EmbeddedLifecycle` owns logical phase,
+surface generation, current surface, primary-window routing, detach, and exit
+intent. After a callback enters MoUI, `common/embedded::EmbeddedSession`
+composes that owner with frame, image, input, service, renderer, IME,
+semantics, platform-view, and transport capabilities. It does not own a second
+phase, surface generation, or frame loop.
 
 ## Packages
 
@@ -47,8 +48,9 @@ repaint, and IME hook ordering.
 | iOS embedded runtime backend | `moui/backend/ios/window_hosted.mbt` (`IosEmbeddedRuntimeBackend`) |
 | HarmonyOS embedded runtime backend | `moui/backend/harmonyos/window_hosted.mbt` (`HarmonyOSEmbeddedRuntimeBackend`) |
 | Physical callback dispatch | `window/modules/window/internal/embedded_dispatch` |
-| Logical lifecycle / surface owner | `EmbeddedWindowCoordinator` in `moui/backend/common` |
-| Shared embedded callback services | `moui/backend/common/embedded/services` |
+| Logical lifecycle / surface owner | `EmbeddedLifecycle` in `moui/backend/common/lifecycle` |
+| Shared embedded callback services | `moui/backend/common/services/embedded` |
+| Shared frame/image/input/service owners | `moui/backend/common/{frame,image,input,services}` |
 | Shared MoUI hosted runtime/session | `moui/backend/common/embedded` |
 | Counter entries | `examples/counter/{android,ios,harmonyos}_window_hosted` |
 | mobile status | `checks/platforms/{android,ios,harmonyos}.json` |

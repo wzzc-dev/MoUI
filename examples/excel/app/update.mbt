@@ -141,9 +141,7 @@ pub fn ExcelApp::update_with_services(
     ContextMenuAction(ContextMenuAction::Paste) =>
       self.paste_cells_from_clipboard(services)
     _ => {
-      let new_model = update(self.model.get(), msg)
-      self.model.set(new_model)
-      (self, Effect::none())
+      (self.with_model(update(self.model, msg)), Effect::none())
     }
   }
 }
@@ -153,9 +151,9 @@ pub fn ExcelApp::handle_file_open(
   self : ExcelApp,
   services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  self.set_running("Waiting for file picker...")
+  let next = self.set_running("Waiting for file picker...")
   (
-    self,
+    next,
     services
     .files()
     .open_file(
@@ -173,9 +171,9 @@ pub fn ExcelApp::read_file(
   path : String,
   services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  self.set_running("Reading " + path + "...")
+  let next = self.set_running("Reading " + path + "...")
   (
-    self,
+    next,
     services
     .files()
     .read_bytes(path)
@@ -196,8 +194,7 @@ pub fn ExcelApp::load_workbook_bytes(
         file_name=display_file_name(path),
         status="Loaded " + path,
       )
-      self.model.set(model)
-      (self, Effect::none())
+      (self.with_model(model), Effect::none())
     }
     Err(message) => self.set_status(message)
   }
@@ -208,15 +205,15 @@ pub fn ExcelApp::handle_file_save(
   self : ExcelApp,
   services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let current = self.model.get()
+  let current = self.model
   let default_name = if current.file_name == "Untitled.xlsx" {
     "output.xlsx"
   } else {
     current.file_name
   }
-  self.set_running("Saving...")
+  let next = self.set_running("Saving...")
   (
-    self,
+    next,
     services
     .files()
     .save_file(
@@ -236,12 +233,12 @@ pub fn ExcelApp::write_file(
   path : String,
   services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let current = self.model.get()
+  let current = self.model
   match @excel_xlsx.write_workbook(current.workbook, path) {
     Ok(bytes) => {
-      self.set_running("Writing " + path + "...")
+      let next = self.set_running("Writing " + path + "...")
       (
-        self,
+        next,
         services
         .files()
         .write_bytes(path, bytes)
@@ -257,7 +254,7 @@ fn ExcelApp::copy_cells_to_clipboard(
   self : ExcelApp,
   services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let current = self.model.get()
+  let current = self.model
   let workbook = current.workbook.copy_selected()
   self.write_cells_to_clipboard(workbook, services, status="Copied")
 }
@@ -267,7 +264,7 @@ fn ExcelApp::cut_cells_to_clipboard(
   self : ExcelApp,
   services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let current = self.model.get()
+  let current = self.model
   let workbook = current.workbook.cut_selected()
   self.write_cells_to_clipboard(workbook, services, status="Cut")
 }
@@ -279,19 +276,21 @@ fn ExcelApp::write_cells_to_clipboard(
   services : @services.AppServices,
   status~ : String,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let current = self.model.get()
+  let current = self.model
   if !workbook.has_clipboard() {
-    self.model.set({
-      ..current,
-      workbook,
-      context_menu_visible: false,
-      last_clipboard_from_app: false,
-      status: "Nothing to copy",
-    })
-    return (self, Effect::none())
+    return (
+      self.with_model({
+        ..current,
+        workbook,
+        context_menu_visible: false,
+        last_clipboard_from_app: false,
+        status: "Nothing to copy",
+      }),
+      Effect::none(),
+    )
   }
   let text = workbook.clipboard_tsv()
-  self.model.set({
+  let next = self.with_model({
     ..current,
     workbook,
     context_menu_visible: false,
@@ -300,7 +299,7 @@ fn ExcelApp::write_cells_to_clipboard(
     status,
   })
   (
-    self,
+    next,
     services
     .clipboard()
     .write_text(text)
@@ -313,9 +312,9 @@ fn ExcelApp::paste_cells_from_clipboard(
   self : ExcelApp,
   services : @services.AppServices,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  self.set_running("Reading clipboard...")
+  let next = self.set_running("Reading clipboard...")
   (
-    self,
+    next,
     services
     .clipboard()
     .read_text()
@@ -328,7 +327,7 @@ fn ExcelApp::apply_clipboard_text(
   self : ExcelApp,
   text : String,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let current = self.model.get()
+  let current = self.model
   let use_internal_clipboard = current.last_clipboard_from_app &&
     text == current.last_clipboard_text &&
     current.workbook.has_clipboard()
@@ -337,7 +336,7 @@ fn ExcelApp::apply_clipboard_text(
   } else {
     current.workbook.paste_tsv(text)
   }
-  self.model.set({
+  let next = self.with_model({
     ..current,
     workbook,
     cell_ref_input: workbook.selected_ref(),
@@ -347,7 +346,7 @@ fn ExcelApp::apply_clipboard_text(
     last_clipboard_from_app: use_internal_clipboard,
     status: "Pasted",
   })
-  (self, Effect::none())
+  (next, Effect::none())
 }
 
 ///|
@@ -355,14 +354,14 @@ fn ExcelApp::paste_cells_locally(
   self : ExcelApp,
   reason : String,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let current = self.model.get()
+  let current = self.model
   let status = if reason.is_empty() {
     "Pasted"
   } else {
     "Pasted locally; " + reason
   }
   let workbook = current.workbook.paste_selected()
-  self.model.set({
+  let next = self.with_model({
     ..current,
     workbook,
     cell_ref_input: workbook.selected_ref(),
@@ -370,7 +369,7 @@ fn ExcelApp::paste_cells_locally(
     file_status: ExcelFileStatus::Idle,
     status,
   })
-  (self, Effect::none())
+  (next, Effect::none())
 }
 
 ///|
@@ -426,16 +425,20 @@ pub fn ExcelApp::set_status(
   self : ExcelApp,
   status : String,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
-  let model = self.model.get()
-  self.model.set({ ..model, status, file_status: ExcelFileStatus::Idle })
-  (self, Effect::none())
+  (
+    self.with_model({
+      ..self.model,
+      status,
+      file_status: ExcelFileStatus::Idle,
+    }),
+    Effect::none(),
+  )
 }
 
 ///|
-pub fn ExcelApp::set_running(self : ExcelApp, status : String) -> Unit {
-  let model = self.model.get()
-  self.model.set({
-    ..model,
+pub fn ExcelApp::set_running(self : ExcelApp, status : String) -> ExcelApp {
+  self.with_model({
+    ..self.model,
     status,
     file_status: ExcelFileStatus::Running(status),
   })

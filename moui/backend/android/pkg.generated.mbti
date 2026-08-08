@@ -21,7 +21,7 @@ pub fn android_readiness() -> AndroidBackendReadiness
 
 pub fn android_service_capabilities() -> @backend.HostServiceCapabilities
 
-pub fn android_surface_binding(Array[@render.RendererFactory]) -> AndroidSurfaceBinding
+pub fn android_surface_binding(Array[@render.RendererProvider]) -> AndroidSurfaceBinding
 
 pub fn android_window_hosted_pump_host_sim(AndroidEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
@@ -72,7 +72,7 @@ pub struct AndroidEmbeddedRuntimeBackend {
 }
 pub fn AndroidEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn AndroidEmbeddedRuntimeBackend::has_session(Self) -> Bool
-pub fn AndroidEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererFactory], auto_exit_after_frames? : Int?) -> Self
+pub fn AndroidEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int?) -> Self
 pub fn AndroidEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn AndroidEmbeddedRuntimeBackend::surface_generation(Self) -> Int
 pub impl @wzzc-dev/window/android.ApplicationHandler for AndroidEmbeddedRuntimeBackend
@@ -87,8 +87,7 @@ pub fn AndroidHostAppOptions::with_status_bar_immersive(Self, Bool) -> Self
 pub struct AndroidSurfaceBinding {
   // private fields
 }
-pub fn AndroidSurfaceBinding::has_async_image_loader(Self) -> Bool
-pub fn AndroidSurfaceBinding::new(create_renderer~ : (AndroidSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererResolution?, sync_surface? : (AndroidSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit, image_loader? : @render.ImageLoader?) -> Self
+pub fn AndroidSurfaceBinding::new(create_renderer~ : (AndroidSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?, sync_surface? : (AndroidSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> Self
 
 pub(all) struct AndroidSurfaceHandle {
   raw : UInt64

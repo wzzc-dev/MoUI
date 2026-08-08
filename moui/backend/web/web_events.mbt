@@ -5,7 +5,7 @@ fn window_event_to_host_with_scale(
   modifiers : @core.KeyModifiers,
   scale_factor~ : Double,
 ) -> @host.Event? {
-  @window_host.window_event_to_host_with_modifiers(
+  @window_input.window_event_to_host_with_modifiers(
     event,
     last_pointer,
     modifiers,
@@ -25,7 +25,7 @@ pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match self.coordinator.lookup_window(platform_window_id) {
+  let window_id = match self.lifecycle.lookup_window(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }
@@ -34,43 +34,51 @@ pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
     None => None
   }
   match
-    @window_host.transform_cross_platform_event(
+    @window_input.transform_cross_platform_event(
       event,
       scale_factor=self.current_scale_factor(window_id),
       surface_size~,
     ) {
-    @window_host.TransformedWindowEvent::CloseRequested => {
+    @window_input.TransformedWindowEvent::CloseRequested => {
       self.dispatch_host_event(window_id, @host.Event::CloseRequested)
       self.dispose_window(window_id)
-      if self.coordinator.runtime_slots_empty() {
+      if self.lifecycle.runtime_slots_empty() {
         event_loop.exit()
       }
       return ()
     }
-    @window_host.TransformedWindowEvent::DispatchHostEvent(host_event) => {
+    @window_input.TransformedWindowEvent::DispatchHostEvent(host_event) => {
       match host_event {
         @host.Event::Resized(metrics) =>
-          ignore(self.coordinator.sync_observed_resize(window_id, metrics))
+          ignore(
+            @window_host.sync_observed_resize(
+              self.lifecycle,
+              self.input,
+              self.services,
+              window_id,
+              metrics,
+            ),
+          )
         _ => self.dispatch_host_event(window_id, host_event)
       }
       return ()
     }
-    @window_host.TransformedWindowEvent::WindowRedrawRequired => {
+    @window_input.TransformedWindowEvent::WindowRedrawRequired => {
       self.redraw_window(window_id)
       return ()
     }
-    @window_host.TransformedWindowEvent::PlatformSpecific => ()
+    @window_input.TransformedWindowEvent::PlatformSpecific => ()
   }
   match event {
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = @window_host.normalize_pointer_position(
+      self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @window_host.normalize_pointer_position(
+      self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
@@ -79,21 +87,21 @@ pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
     @window_core.WindowEvent::DragEntered(_, position)
     | @window_core.WindowEvent::DragMoved(position)
     | @window_core.WindowEvent::DragDropped(_, position) => {
-      self.last_pointer = @window_host.normalize_pointer_position(
+      self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::DragLeft(Some(position)) => {
-      self.last_pointer = @window_host.normalize_pointer_position(
+      self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
-      self.modifiers = @window_host.modifiers_to_core(modifiers)
+      self.modifiers = @window_input.modifiers_to_core(modifiers)
     _ => self.dispatch_window_event(window_id, event)
   }
 }
@@ -104,14 +112,15 @@ fn WebApp::dispatch_pointer_or_context_menu(
   window_id : @host.WindowId,
   event : @window_core.WindowEvent,
 ) -> Unit {
-  if @window_host.window_event_is_context_menu_button(event) {
-    if @window_host.window_event_is_context_menu_trigger(event) {
-      match self.coordinator.runtime_slots().lookup(window_id) {
-        Some(slot) => ignore(slot.driver.show_context_menu(self.services))
+  if @window_input.window_event_is_context_menu_button(event) {
+    if @window_input.window_event_is_context_menu_trigger(event) {
+      match self.lifecycle.runtime_slots().lookup(window_id) {
+        Some(slot) =>
+          ignore(slot.driver.show_context_menu(self.services.bridge()))
         None => ()
       }
       self.drain_async_host_services()
-      self.coordinator.sync_text_input_session()
+      self.sync_text_input_session()
     }
   } else {
     self.dispatch_window_event(window_id, event)
@@ -144,7 +153,7 @@ fn web_modifiers_after_window_event(
 ) -> @core.KeyModifiers {
   match event {
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
-      @window_host.modifiers_to_core(modifiers)
+      @window_input.modifiers_to_core(modifiers)
     @window_core.WindowEvent::KeyboardInput(_, key_event, false) =>
       web_modifiers_after_key_event(current, key_event)
     _ => current
@@ -156,7 +165,7 @@ fn web_modifiers_after_key_event(
   current : @core.KeyModifiers,
   event : @window_core.KeyEvent,
 ) -> @core.KeyModifiers {
-  let pressed = @window_host.element_state_pressed(event.state())
+  let pressed = @window_input.element_state_pressed(event.state())
   match event.logical_key() {
     @window_core.Key::Named(@window_core.NamedKey::Shift) =>
       { ..current, shift: pressed }

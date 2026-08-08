@@ -1,0 +1,65 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_web_renderer/canvas2d"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+}
+
+// Values
+pub fn canvas() -> @render.RendererProvider
+
+pub fn canvas2d_apply_image_resource_load_completion(@render.ImageResourceLoadCompletion) -> Bool
+
+pub fn canvas2d_cached_layer_summary() -> String
+
+pub fn canvas2d_create_renderer(canvas_id~ : String, metrics~ : @core.SurfaceMetrics) -> Canvas2DRenderer
+
+pub fn canvas2d_descriptor() -> @render.RendererDescriptor
+
+pub fn canvas2d_dispose(Canvas2DRenderer) -> Unit
+
+pub fn canvas2d_drain_present() -> Array[@render.RenderPresentCompletion]
+
+pub fn canvas2d_image_load_completion(String) -> @render.ImageResourceLoadCompletion
+
+pub fn canvas2d_image_load_completion_from_bytes(String, Bytes, background_io? : Bool) -> @render.ImageResourceLoadCompletion
+
+pub fn canvas2d_image_resource_records() -> Array[@render.ImageResourceRecord]
+
+pub fn canvas2d_preflight() -> @render.RendererBackendInfo
+
+pub fn canvas2d_provider_capabilities(provider_id~ : String, backend~ : @render.RendererBackendKind) -> Array[@render.RendererBackendFeatureCapability]
+
+pub fn canvas2d_render_frame(Canvas2DRenderer, @core.DrawFrame) -> @render.RenderFrameResult
+
+pub fn canvas2d_resize(Canvas2DRenderer, @core.SurfaceMetrics) -> Unit
+
+pub fn create_canvas2d_provider(bind~ : (@render.HostSurface) -> @render.RendererBindResult) -> @render.RendererProvider
+
+pub fn preflight() -> @render.RendererBackendInfo
+
+// Errors
+
+// Types and methods
+pub(all) struct Canvas2DRenderer {
+  canvas_id : String
+  mut logical_width : Double
+  mut logical_height : Double
+  mut scale_factor : Double
+  mut disposed : Bool
+}
+pub fn Canvas2DRenderer::dispose(Self) -> Unit
+pub fn Canvas2DRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
+pub fn Canvas2DRenderer::new(canvas_id~ : String) -> Self
+pub fn Canvas2DRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
+pub fn Canvas2DRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
+pub fn Canvas2DRenderer::resize(Self, @core.SurfaceMetrics) -> Unit
+pub fn Canvas2DRenderer::text_system(Self) -> @core.TextSystem
+pub fn Canvas2DRenderer::to_renderer_session(Self) -> @render.RendererSession
+
+// Type aliases
+pub type Canvas2DError = String
+
+// Traits
+

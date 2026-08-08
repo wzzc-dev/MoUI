@@ -5,15 +5,15 @@ fn MarkdownEditorApp::root(
   viewport_height? : Double = 520.0,
 ) -> @moui.View[MarkdownEditorMsg] {
   let theme = self.chrome_theme()
-  let session = self.document_session.get()
+  let session = self.document_session
   let document = session.source
   let appearance = self.appearance_spec()
   let editor_font = markdown_editor_appearance_font(appearance)
-  let zen = self.zen_mode_enabled.get()
-  let show_source = if zen { false } else { self.source_preview_visible.get() }
-  let show_outline = if zen { false } else { self.outline_visible.get() }
-  let show_files = if zen { false } else { self.file_sidebar_visible.get() }
-  let show_info = if zen { false } else { self.document_info_visible.get() }
+  let zen = self.zen_mode_enabled
+  let show_source = if zen { false } else { self.source_preview_visible }
+  let show_outline = if zen { false } else { self.outline_visible }
+  let show_files = if zen { false } else { self.file_sidebar_visible }
+  let show_info = if zen { false } else { self.document_info_visible }
   let workspace_width = markdown_editor_workspace_width(
     show_source,
     show_outline,
@@ -23,15 +23,15 @@ fn MarkdownEditorApp::root(
     viewport_width~,
   )
   let target_bar = self.target_bar(theme)
-  let selection = self.selection.get()
-  let target_kind = self.target_kind.get()
-  let block_label = self.block_label.get()
-  let scroll_offset = self.editor_scroll.offset()
+  let selection = self.selection
+  let target_kind = self.target_kind
+  let block_label = self.block_label
+  let scroll_offset = self.editor_scroll
   let children : Array[@moui.View[MarkdownEditorMsg]] = []
-  if !zen && self.find_visible.get() {
+  if !zen && self.find_visible {
     children.push(self.find_bar(theme, selection, workspace_width))
   }
-  if !zen && self.format_palette_visible.get() {
+  if !zen && self.format_palette_visible {
     children.push(self.format_palette(theme, workspace_width))
   }
   children.push(
@@ -116,93 +116,51 @@ fn MarkdownEditorApp::root(
 }
 
 ///|
+/// Adapt the host viewport to the editor's fixed chrome and auxiliary panels.
+/// This keeps the app on the immutable Program/ViewEnvironment path without
+/// requiring a component-scoped context.
+fn MarkdownEditorApp::root_with_environment(
+  self : MarkdownEditorApp,
+  view_environment : @core.ViewEnvironment,
+) -> @moui.View[MarkdownEditorMsg] {
+  let viewport = view_environment.viewport_size()
+  let theme = self.chrome_theme()
+  let zen = self.zen_mode_enabled
+  let mut fixed_height = theme.spacing_scale.xl
+  if !zen {
+    fixed_height = fixed_height + 28.0 + 20.0
+    let mut auxiliary_count = 0
+    if self.find_visible {
+      fixed_height = fixed_height + 42.0
+      auxiliary_count = auxiliary_count + 1
+    }
+    if self.format_palette_visible {
+      fixed_height = fixed_height + 240.0
+      auxiliary_count = auxiliary_count + 1
+    }
+    fixed_height = fixed_height +
+      theme.spacing_scale.sm * auxiliary_count.to_double()
+  }
+  let viewport_height = markdown_editor_max_double(
+    320.0,
+    viewport.height - fixed_height,
+  )
+  self.root(
+    viewport_width=viewport.width,
+    viewport_height~,
+  )
+}
+
+///|
 /// Resolve the chrome theme from the dark-mode toggle. The framework ships a
 /// full dark theme (`@views.dark_theme()`), so toggling is a one-liner here;
 /// the editor surface and panels inherit the theme via the environment.
 fn MarkdownEditorApp::chrome_theme(self : MarkdownEditorApp) -> @moui.Theme {
-  if self.dark_mode_enabled.get() {
+  if self.dark_mode_enabled {
     @views.dark_theme()
   } else {
     @views.light_theme()
   }
-}
-
-///|
-fn MarkdownEditorApp::reactive_root(
-  self : MarkdownEditorApp,
-  ctx : @core.ComponentContext,
-) -> @moui.View[MarkdownEditorMsg] {
-  ignore(ctx.watch(self.document))
-  ignore(ctx.watch(self.document_session))
-  ignore(ctx.watch(self.selection))
-  ignore(ctx.watch(self.link_target))
-  ignore(ctx.watch(self.image_target))
-  ignore(ctx.watch(self.footnote_text))
-  ignore(ctx.watch(self.html_block_text))
-  ignore(ctx.watch(self.target_kind))
-  ignore(ctx.watch(self.block_label))
-  ignore(ctx.watch(self.source_preview_visible))
-  ignore(ctx.watch(self.source_mode_enabled))
-  ignore(ctx.watch(self.outline_visible))
-  ignore(ctx.watch(self.file_sidebar_visible))
-  ignore(ctx.watch(self.document_info_visible))
-  ignore(ctx.watch(self.focus_mode_enabled))
-  ignore(ctx.watch(self.typewriter_mode_enabled))
-  ignore(ctx.watch(self.zen_mode_enabled))
-  ignore(ctx.watch(self.format_palette_visible))
-  ignore(ctx.watch(self.format_palette_query))
-  ignore(ctx.watch(self.more_menu_visible))
-  ignore(ctx.watch(self.active_menu))
-  ignore(ctx.watch(self.toasts))
-  ignore(ctx.watch(self.pending_confirm))
-  ignore(ctx.watch(self.dark_mode_enabled))
-  ignore(ctx.watch(self.font_family))
-  ignore(ctx.watch(self.folded_headings))
-  ignore(ctx.watch(self.writing_appearance))
-  ignore(ctx.watch(self.find_visible))
-  ignore(ctx.watch(self.find_query))
-  ignore(ctx.watch(self.find_options))
-  ignore(ctx.watch(self.find_matches))
-  ignore(ctx.watch(self.replace_text))
-  ignore(ctx.watch(self.document_path))
-  ignore(ctx.watch(self.recent_document_paths))
-  ignore(ctx.watch(self.saved_document))
-  ignore(ctx.watch(self.transfer_status))
-  ignore(ctx.watch(self.file_filter_query))
-  ignore(ctx.watch(self.working_directory))
-  ignore(ctx.watch(self.expanded_tree_paths))
-  ignore(ctx.watch(self.directory_tree_items))
-  ignore(ctx.watch(self.file_tree_expanded))
-  ignore(ctx.watch(self.selected_image_offset))
-  ignore(ctx.watch(self.image_centered))
-  // Make the editor viewport fill the window instead of a fixed 520px.
-  // The outer column stacks: chrome (28) + workspace (flex) + spacer (24) +
-  // status bar (20).  The workspace column stacks auxiliary bars (find_bar
-  // 42px, format_palette 240px) above the editor, with sm (8px) spacing
-  // between each pair.  Subtract all fixed heights so the editor never
-  // overflows into the status bar when auxiliary bars are toggled on.
-  let window_height = ctx.viewport_size().height
-  let theme = self.chrome_theme()
-  let zen = self.zen_mode_enabled.get()
-  let mut fixed_height = theme.spacing_scale.xl // bottom spacer (always present)
-  if !zen {
-    fixed_height = fixed_height + 28.0 + 20.0 // chrome + status bar
-    let mut aux_count = 0
-    if self.find_visible.get() {
-      fixed_height = fixed_height + 42.0 // find_bar
-      aux_count = aux_count + 1
-    }
-    if self.format_palette_visible.get() {
-      fixed_height = fixed_height + 240.0 // format_palette
-      aux_count = aux_count + 1
-    }
-    fixed_height = fixed_height + theme.spacing_scale.sm * aux_count.to_double()
-  }
-  let viewport_height = markdown_editor_max_double(
-    320.0,
-    window_height - fixed_height,
-  )
-  self.root(viewport_width=ctx.viewport_size().width, viewport_height~)
 }
 
 ///|
@@ -242,7 +200,7 @@ fn MarkdownEditorApp::chrome(
   theme : @moui.Theme,
 ) -> @moui.View[MarkdownEditorMsg] {
   let title = markdown_editor_document_title(
-    path=self.document_path.get(),
+    path=self.document_path,
     fallback="Untitled",
   )
   let dirty = self.is_dirty()
@@ -268,7 +226,7 @@ fn MarkdownEditorApp::chrome(
   let outline_btn = button(
     "",
     on_click=ToggleOutline,
-    variant=if self.outline_visible.get() {
+    variant=if self.outline_visible {
       @views.ButtonVariant::Tonal
     } else {
       @views.ButtonVariant::Ghost
@@ -312,7 +270,7 @@ fn MarkdownEditorApp::bottom_status_bar(
   selection : MarkdownEditorSelection,
   width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let show_files = self.file_sidebar_visible.get()
+  let show_files = self.file_sidebar_visible
   let tree_button = button(
     "",
     on_click=ToggleFileSidebar,
@@ -329,7 +287,7 @@ fn MarkdownEditorApp::bottom_status_bar(
 
   let save_state = if self.is_dirty() { "Unsaved" } else { "Saved" }
   let transfer = markdown_editor_transfer_status_label(
-    self.transfer_status.get(),
+    self.transfer_status,
   )
   let transfer_suffix = if transfer == "" { "" } else { " / " + transfer }
   let status = save_state +
@@ -368,9 +326,9 @@ fn MarkdownEditorApp::find_bar(
   selection : MarkdownEditorSelection,
   width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let query = self.find_query.get()
-  let matches = self.find_matches.get()
-  let options = self.find_options.get()
+  let query = self.find_query
+  let matches = self.find_matches
+  let options = self.find_options
   frame(
     row(
       [
@@ -391,7 +349,7 @@ fn MarkdownEditorApp::find_bar(
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
         text_field(
-          self.replace_text.get(),
+          self.replace_text,
           on_input=value => UpdateReplaceText(value),
           on_submit=Some(ReplaceFindCurrent),
           placeholder="Replacement",
@@ -467,7 +425,7 @@ fn MarkdownEditorApp::format_palette(
     120.0,
     panel_width - theme.spacing_scale.md * 2.0,
   )
-  let query = self.format_palette_query.get()
+  let query = self.format_palette_query
   let rows : Array[@moui.View[MarkdownEditorMsg]] = []
   for item in markdown_editor_format_palette_filtered_items(query) {
     rows.push(
@@ -747,7 +705,7 @@ fn markdown_editor_format_palette_items() -> Array[
 fn MarkdownEditorApp::source_mode_status_suffix(
   self : MarkdownEditorApp,
 ) -> String {
-  if self.source_mode_enabled.get() {
+  if self.source_mode_enabled {
     " / Source Mode"
   } else {
     ""
@@ -773,13 +731,13 @@ fn MarkdownEditorApp::writing_mode_status_suffix(
   self : MarkdownEditorApp,
 ) -> String {
   let modes : Array[String] = []
-  if self.focus_mode_enabled.get() {
+  if self.focus_mode_enabled {
     modes.push("Focus")
   }
-  if self.typewriter_mode_enabled.get() {
+  if self.typewriter_mode_enabled {
     modes.push("Typewriter")
   }
-  if self.zen_mode_enabled.get() {
+  if self.zen_mode_enabled {
     modes.push("Zen")
   }
   if modes.length() == 0 {

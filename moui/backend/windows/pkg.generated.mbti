@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/windows"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/accesskit",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
 }
@@ -13,7 +14,7 @@ pub fn app_environment() -> @services.AppEnvironment
 
 pub fn entry(options? : WindowsHostAppOptions, smoke_options? : WindowsHostSmokeOptions) -> @runtime.PlatformEntry
 
-pub fn windows_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessibilityBridge
+pub fn windows_accessibility_bridge(@runtime.HostRuntimeDriver) -> @accesskit.AccessKitBridge
 
 pub fn windows_accessibility_bridge_info() -> WindowsAccessibilityBridgeInfo
 
@@ -33,7 +34,7 @@ pub fn windows_timer_source() -> @services.TimerSource
 
 // Types and methods
 pub(all) struct WindowsAccessibilityBridgeInfo {
-  kind : @runtime.NativeAccessibilityBridgeKind
+  kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool

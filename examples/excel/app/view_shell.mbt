@@ -1,6 +1,6 @@
 ///|
 fn ExcelApp::view(self : ExcelApp) -> @moui.View[ExcelMsg] {
-  let model = self.model.get()
+  let model = self.model
   let theme = @views.light_theme()
   let shell = @views.column(
     [

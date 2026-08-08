@@ -39,7 +39,10 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
       EditorSelectionChanged(caret, selection)
     }),
     accepts_tab_input=true,
-    visible_scroll_state=Some(model.editor_scroll),
+    visible_scroll_y=model.editor_scroll.y,
+    on_scroll=Some(y => {
+      EditorScrollChanged(@geometry.Point::new(x=0.0, y~))
+    }),
     visible_viewport_height=editor_height,
     visible_overscan=160.0,
     selection_caret=model.editor.cursors[0].position,
@@ -301,8 +304,9 @@ fn playground_line_number_gutter(
     @views.column(rows, spacing=0.0),
     width~,
     height~,
-    state=Some(model.editor_scroll),
     shows_indicator=false,
+    offset=model.editor_scroll,
+    on_scroll=Some(offset => EditorScrollChanged(offset)),
   )
 }
 

@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_tests/reconciliation_benchmark/native"
+
+// Values
+
+// Errors
+
+// Types and methods
+type BenchCompositeKey derive(Eq, Hash)
+
+type BenchItem
+
+type BenchRunResult
+
+// Type aliases
+
+// Traits
+

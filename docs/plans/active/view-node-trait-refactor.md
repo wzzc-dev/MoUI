@@ -50,7 +50,7 @@
 ## Validation status (2026-07-26)
 
 - Passed: `moui/core` 14/14, `moui/runtime` 58/58, `moui/views` 37/37,
-  `moui/render/skia` 110/110, `moui_richtext` 174/174, and native
+  `moui_skia_renderer` 110/110, `moui_richtext` 174/174, and native
   `moui_webview/views` check.
 - Passed: wasm-gc and wasm workspace checks, wasm-gc `moon info`, API surface
   tests 25/25, harness invariant tests 7/7, API guard, website-docs check,

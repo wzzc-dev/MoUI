@@ -53,44 +53,30 @@ Web、macOS、Windows 和 Linux 应将其原生窗口事件转换为 `Event`，�
 平台本地循环。
 `WindowCommands` 是建立在同一队列之上的更高层命令门面，提供面向应用的打开/聚焦/调整大小/最小化/
 显示/关闭辅助方法，并共享排空到注册表或窗口运行时槽位的逻辑。
-每个应用入口调用 `@runtime.run_app`，提供有序 `RendererFactory` 与一个平台 `entry`，再调用
-`run`。渲染器选项由 factory 捕获，平台选项由 platform entry 捕获。有解析器时，`OpenWindow` 请求把场景解析为新的
-`AppRuntime`，创建另一个平台窗口和中立 `SurfaceContext`，解析 `WindowRenderer`，注册逐窗口
+每个应用入口调用 `@runtime.run_app`，提供有序 `RendererProvider` 与一个平台 `entry`，再调用
+`run`。渲染器选项和 native handle 解释策略由 provider 捕获，平台选项由 platform entry 捕获。有解析器时，`OpenWindow` 请求把场景解析为新的
+`AppRuntime`，创建另一个平台窗口和不透明 `HostSurface`，由首个接受的 provider 绑定 `RendererSession`，注册逐窗口
 `HostRuntimeDriver`，绑定平台 id，然后通过按窗口索引的槽位路由重绘、事件、上下文菜单、服务完成记录、
 IME 同步和释放。没有解析器时，宿主用共享的解析器不可用消息拒绝 `OpenWindow`。
 
-`WindowRenderer` 是原生宿主核心使用的渲染器中立运行时句柄。其稳定构造器核心包含调整大小、
-命令/帧渲染、呈现完成排空、呈现计数诊断和释放。可选行为被分组到
-不透明的 `HostRendererImageCapability`、`HostRendererPlatformViewCapability` 和
-`HostRendererGpuRecoveryCapability` 记录中。当提供方省略某项能力时，现有实例方法保持空操作/默认
-语义，因此宿主不会根据渲染器实现细节分支。共享图片重绘跟踪器消费渲染器中立的图片快照，以便按打开窗口路由
-迟到图片重绘，并暴露已跟踪窗口版本号加上加载中/就绪/失败/已释放状态计数诊断，包括重绘结果中的
-之前/当前计数。宿主核心只依赖 `core`、`runtime`、`backend`、中立 `render` 契约和平台 `window` 包；它们不导入任何具体 renderer。平台 backend 拥有窗口句柄、中立 CPU presenter、GPU 描述符和生命周期/I/O 回调；renderer 包拥有创建、解码、native binding、协商和诊断。
+`RendererSession` 是原生宿主核心使用的渲染器中立 live handle。其稳定构造器核心包含调整大小、
+带 `FrameToken` 的帧提交、事件排空、呈现计数诊断和幂等释放。可选行为由
+`RendererPlatformViewCapability` 与 `RendererGpuRecoveryCapability` 等中立协议表达；宿主不按具体
+renderer 分支。provider rejection 不得保留资源；Bound session 唯一负责接管 renderer/native-surface
+资源的幂等释放。宿主核心只依赖 `core`、`runtime`、`backend`、中立 `render` 契约和平台 `window` 包；
+平台 backend 拥有窗口句柄、中立 CPU presenter、不透明 native surface/display handle 和生命周期/I/O 回调，
+renderer 模块拥有创建、解码、native binding、平台策略、协商和诊断。
 
-`ImageResourceCompletionSource` 是原生异步图片加载器完成结果的宿主层边界。原生提供方/平台加载器通过
-`WindowRenderer::apply_image_resource_load_completion` 发布 `@render.ImageResourceLoadCompletion`
-就绪/失败结果，该方法返回带版本号的 `@render.ImageResourceSnapshot`；宿主通过
-`ImageResourceRepaintTracker` 路由该快照，只为匹配的打开窗口请求重绘，忽略陈旧的较低版本号，
-并丢弃已关闭窗口的完成结果。`AsyncImageLoader` 是该边界的宿主侧调度器适配器：它扫描渲染器快照中的
-加载中记录，启动平台/提供方加载器，对进行中的 `(window, source)` 工作去重，并在迟到或已取消的
-完成回调能应用到渲染器之前对其拦截。`NativeAsyncImageSource` 是宿主拥有的延迟请求源，用于需要
-记录待处理 `(window, source)` 工作并稍后从独立原生回调交付完成结果的平台加载器。它证明宿主边界可以在
-调度返回后接收迟到的完成回调，并且平台运行时工件会把宿主层观察与渲染器能力状态分开记录。
-原生 macOS、Windows 和 Linux 宿主核心会在已呈现图片资源版本号建立基线后调用可选的提供方拥有的
-加载器钩子，然后在释放期间取消进行中的窗口加载。原生 WGPU 提供方包现在提供一个提供方拥有的加载器，
-把渲染器拥有的 PNG/JPEG/BMP 来源解码结果转换为 `ImageResourceLoadCompletion` 负载。原生 Skia
-提供方包现在围绕已解码图片完成结果安装同一提供方拥有的加载器边界，并且提供方创建的 Skia
-渲染器选择加入呈现后异步图片加载，因此第一份已呈现快照可以在宿主把就绪/失败完成结果路由到
-重绘之前包含加载中记录。本地文件提供方 worker 在主线程外读取并解码 Skia 图片，然后通过
-`ImageResourceLoadCompletion` 交付已解码的 RGBA 像素、尺寸、行字节数、`background_io` 和
-`background_decode`。Skia 会把已解码就绪完成结果直接应用到渲染器图片缓存，而 data URI 来源
-通过渲染器解码路径完成。这是渲染器/宿主边界上的提供方完成结果和冒烟日志证据。宿主请求源和调度器
-不会解码图片、修改渲染器缓存，也不位于 `core` 中；
-渲染器/提供方包仍拥有具体加载和生命周期记录。
+图片工作使用 `RendererEvent::ImageLoadRequested` 的 opaque token。renderer session 发出 request，
+`backend/common/image` 只保存可取消的 I/O task，通过 `HostImageSource` 读取字节，并把相同 token 的
+completion 交回 `RendererSession::apply_image_load_completion`。session 返回 `Applied(repaint)`、
+`Stale` 或 `Disposed`；只有 Applied 才请求匹配窗口重绘。格式检测、解码、资源状态、缓存和失败重试
+全部属于 renderer session；backend 不保存 revision、resource snapshot、repaint tracker 或 command cache。
+窗口释放时先取消 image task，再 dispose session，因此迟到 completion 无副作用。
 
 `RendererDescriptor` 和 `RendererSelection` 仍然是渲染器门面报告工具：
 它们描述静态能力身份和匹配，而不是原生宿主运行时装配。`View` 仍然只描述 UI 声明树，
-`Binding[T]` 仍然是 TEA/control/state 双向绑定术语。
+`ControlledValue[T, Msg]` 是 TEA/control 的不可变 value + typed message bridge，不提供 setter。
 
 ## 移动宿主通道
 
@@ -98,23 +84,38 @@ IME 同步和释放。没有解析器时，宿主用共享的解析器不可用�
 `HostServiceCapabilities`、`HostServiceBridge`、request id 和 completion
 契约的唯一所有者。内部实现按宿主模型分为两套必要机制：
 
-- `host_services_desktop` 统一同步桌面路由；macOS、Windows、Linux 只提供
+- `common/services/desktop` 统一同步桌面路由；macOS、Windows、Linux 只提供
   clipboard、URL、dialog、menu、settings 的 native closures，并路由
-  `host_services_native` 的共享 text/binary file 与 directory 实现。
-- `host_services_native` 统一拥有桌面 backend 与 embedded runtime 共用的
-  原生 `@fs` I/O，包括 renderer-neutral 的原始字节 `HostImageSource`。
-- `host_services_embedded` 统一异步 callback queue；clipboard 和 platform
+  `common/services/native` 的共享 text/binary file 与 directory 实现。
+- `common/services/native` 统一拥有桌面 backend 与 embedded runtime 共用的
+  原生 `@fs` service I/O；原始字节 `HostImageSource` 位于 `common/image/native`。
+- `common/services/embedded` 统一异步 callback queue；clipboard 和 platform
   channel 按 FIFO 返回 `Pending(id)`，只允许一次 completion，拒绝重复/迟到
   response，并在 dispose 时取消 outstanding request。桌面专属请求同步返回
   `Unavailable`。
 
 `EmbeddedRuntimeHostBridge` 是私有的 Android/iOS/HarmonyOS 运行时聚合边界，
-也是 `host_services_embedded` 的唯一调用方。它合并 `EmbeddedImeRequest` 更新，
+并组合 `common/services/embedded`。它合并 `EmbeddedImeRequest` 更新，
 传输由运行时提交的完整/增量语义数据（使用 `SemanticsNodeId` 与
 `SemanticsGeneration`），同步 platform-view placement/event，并将 pending
 service request 映射到保持不变的 native wire schema。它的 cursor 只用于抑制
 未变化的传输，不构成第二套 revision 权威；已释放的 bridge 会取消 outstanding
 service 并拒绝迟到响应。
+
+## Window host owners
+
+平台 backend 直接持有窄 owner：`common/lifecycle` 拥有 registry、request、
+runtime slot、平台窗口映射、phase/generation 与 exactly-once close；
+`common/frame` 拥有逐窗口 `RendererSession`、`FrameToken` pending/completion、redraw/resize
+与 IME frame hook；`common/image` 只拥有可取消 I/O task、opaque-token completion、
+callback detach 与 cancellation；`common/input` 拥有 pointer/text/IME session；
+`common/services` 拥有 service facade、async completion 与 bridge 生命周期。
+root `backend/common` 只提供显式接收这些 owner 的无状态 workflow，不再存在总控
+state object。
+
+关闭顺序固定为：阻止 lifecycle 重入；解除 image callback 并取消任务；关闭
+embedded/service channel；dispose renderer session；dispose platform views/native
+host resources；清除 mapping/runtime/registry；完成 close。
 
 `TextInputEvent::ReplaceText` 和 `SetSelection` 保留任意原生 IME 替换和 UTF-16 选区更新。移动请求包含文本、
 选区、组字、插入光标和候选矩形，而不改变桌面 `window_core.ImeRequest` 契约。
@@ -143,7 +144,7 @@ Web 的纯语义提交独立于 redraw 同步。
 `backend`，runtime 的 task lifecycle 会拒绝 stale dispatch。
 Web 后端把该队列接线到浏览器宿主导入项，以及用于剪贴板读取和文件选择器的导出 wasm 完成回调。
 Web、macOS 和 Windows 入口点会在启动时查询该桥，并在第一轮宿主驱动器布局/重绘轮次之前把报告的
-浅色/深色方案安装到 `AppRuntime` 中，因此初始视图构建可以通过 `ComponentContext` 环境读取看到平台配色方案。
+浅色/深色方案安装到 `AppRuntime` 中，因此初始 Program view 构建可以通过 `ViewEnvironment` 看到平台配色方案。
 `ThemeChanged` 窗口事件也会被归一化为 `Event::ThemeChanged`；
 `HostRuntimeDriver` 会把它们应用到运行时环境，而不是把平台特定事件泄漏到应用代码中。
 

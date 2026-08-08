@@ -197,7 +197,8 @@ pub struct CodeWorkspace {
   last_assistant_message_id : String?
   last_thought_message_id : String?
   error : String?
-  scroll_state : @core.ScrollState
+  scroll_offset : @core.Point
+  scroll_request_id : Int
   follow_latest : Bool
 }
 
@@ -266,6 +267,7 @@ pub struct SessionSummary {
 
 pub(all) enum SettingsMsg {
   SelectSection(SettingsSection)
+  Scrolled(@core.Point)
   BackendChanged(AgentBackendKind)
   ApprovalChanged(ApprovalPolicy)
   SandboxChanged(SandboxMode)

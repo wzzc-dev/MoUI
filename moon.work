@@ -1,8 +1,12 @@
 members = [
   "./moui",
+  "./moui_skia_renderer",
+  "./moui_web_renderer",
+  "./moui_wgpu_renderer",
+  "./moui_sun_renderer",
+  "./moui_tests",
   "./moui_i18n",
   "./moui_richtext",
-  "./moui_tester",
   "./moui_webview",
   "./moui_devtools",
   "./moui_agent",

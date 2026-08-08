@@ -1,0 +1,143 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_wgpu_renderer"
+
+import {
+  "Milky2018/wgpu_mbt",
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+}
+
+// Values
+pub fn backend_info() -> @render.RendererBackendInfo
+
+pub fn create_with_host_surface(@core.SurfaceMetrics, HostWgpuSurface) -> WgpuRenderer raise @wgpu_mbt.WgpuError
+
+pub fn create_with_host_surface_and_text_engine(@core.SurfaceMetrics, HostWgpuSurface, text_engine~ : NativeTextEngine) -> WgpuRenderer raise @wgpu_mbt.WgpuError
+
+pub fn native(platform~ : WgpuNativePlatform, text_engine~ : NativeTextEngine) -> @render.RendererProvider
+
+pub fn native_image_load_completion(String) -> @render.ImageResourceLoadCompletion
+
+pub fn native_image_load_completion_from_bytes(String, Bytes, background_io? : Bool) -> @render.ImageResourceLoadCompletion
+
+pub fn native_platform_glyph_key(cache_key~ : String, payload~ : Bytes) -> NativeGlyphKey
+
+pub fn native_platform_text_engine(NativePlatformTextProvider) -> NativeTextEngine
+
+pub fn native_platform_text_engine_with_fallback(NativePlatformTextProvider, fallback~ : NativeTextEngine) -> NativeTextEngine
+
+pub fn native_renderer_smoke(platform_label~ : String, text_engine~ : NativeTextEngine) -> Unit raise @wgpu_mbt.WgpuError
+
+pub fn native_surface_contract() -> @render.WgpuSurfaceContract
+
+pub fn native_text_system() -> @core.TextSystem
+
+pub fn native_text_system_with_engine(NativeTextEngine) -> @core.TextSystem
+
+pub fn renderer_descriptor() -> @render.RendererDescriptor
+
+pub fn wgpu_provider_capabilities(provider_id~ : String, backend~ : @render.RendererBackendKind) -> Array[@render.RendererBackendFeatureCapability]
+
+// Errors
+
+// Types and methods
+pub struct HostWgpuSurface {
+  // private fields
+}
+pub fn HostWgpuSurface::instance(Self) -> @wgpu_mbt.Instance
+pub fn HostWgpuSurface::new(instance~ : @wgpu_mbt.Instance, surface~ : @wgpu_mbt.Surface) -> Self
+pub fn HostWgpuSurface::surface(Self) -> @wgpu_mbt.Surface
+
+pub struct NativeGlyphKey {
+  // private fields
+}
+
+pub struct NativeGlyphPlacement {
+  // private fields
+}
+pub fn NativeGlyphPlacement::key(Self) -> NativeGlyphKey
+pub fn NativeGlyphPlacement::new(key~ : NativeGlyphKey, x~ : Double, y? : Double) -> Self
+pub fn NativeGlyphPlacement::x(Self) -> Double
+pub fn NativeGlyphPlacement::y(Self) -> Double
+
+pub struct NativePlatformTextProvider {
+  // private fields
+}
+pub fn NativePlatformTextProvider::new(id~ : String, measure~ : (@core.TextLayoutInput) -> NativeTextLayout?, layout_run~ : (@core.TextRun, Double) -> NativeTextLayout?, raster_glyph~ : (String, Bytes) -> NativeRasterGlyph?, register_font_data? : (@core.FontFamily, Bytes) -> Unit) -> Self
+
+pub struct NativeRasterGlyph {
+  // private fields
+}
+pub fn NativeRasterGlyph::bearing_x(Self) -> Int
+pub fn NativeRasterGlyph::bearing_y(Self) -> Int
+pub fn NativeRasterGlyph::format(Self) -> NativeRasterGlyphFormat
+pub fn NativeRasterGlyph::height(Self) -> Int
+pub fn NativeRasterGlyph::new(width~ : Int, height~ : Int, bearing_x~ : Int, bearing_y~ : Int, format? : NativeRasterGlyphFormat, pixels~ : Bytes) -> Self
+pub fn NativeRasterGlyph::pixels(Self) -> Bytes
+pub fn NativeRasterGlyph::width(Self) -> Int
+
+pub(all) enum NativeRasterGlyphFormat {
+  AlphaMask
+  ColorRgba
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct NativeRendererSmokeFrame {
+  // private fields
+}
+pub fn NativeRendererSmokeFrame::flip_y(Self) -> Bool
+pub fn NativeRendererSmokeFrame::height(Self) -> Int
+pub fn NativeRendererSmokeFrame::new(width~ : Int, height~ : Int, row_bytes~ : Int, pixels~ : Bytes, flip_y? : Bool) -> Self
+pub fn NativeRendererSmokeFrame::pixels(Self) -> Bytes
+pub fn NativeRendererSmokeFrame::row_bytes(Self) -> Int
+pub fn NativeRendererSmokeFrame::width(Self) -> Int
+
+pub struct NativeTextEngine {
+  // private fields
+}
+pub fn NativeTextEngine::fallback_provider_id(Self) -> String
+pub fn NativeTextEngine::provider_id(Self) -> String
+
+pub(all) enum NativeTextEngineSetting {
+  MoonCosmic
+  PlatformDefault
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct NativeTextLayout {
+  // private fields
+}
+pub fn NativeTextLayout::baseline(Self) -> Double
+pub fn NativeTextLayout::caret_positions(Self) -> Array[Double]
+pub fn NativeTextLayout::glyphs(Self) -> Array[NativeGlyphPlacement]
+pub fn NativeTextLayout::new(size~ : @core.Size, baseline~ : Double, caret_positions? : Array[Double], glyphs? : Array[NativeGlyphPlacement]) -> Self
+pub fn NativeTextLayout::size(Self) -> @core.Size
+
+type RendererHandle
+
+pub(all) enum WgpuNativePlatform {
+  MacOS
+  Windows
+  Linux
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WgpuNativePlatform::label(Self) -> String
+
+pub struct WgpuRenderer {
+  // private fields
+}
+pub fn WgpuRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> Bool
+pub fn WgpuRenderer::backend_info(Self) -> @render.RendererBackendInfo
+pub fn WgpuRenderer::backend_kind(Self) -> @render.RendererBackendKind
+pub fn WgpuRenderer::dispose(Self) -> Unit
+pub fn WgpuRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
+pub fn WgpuRenderer::last_batch_count(Self) -> Int
+pub fn WgpuRenderer::present_count(Self) -> Int
+pub fn WgpuRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
+pub fn WgpuRenderer::resize(Self, @core.SurfaceMetrics) -> Unit
+pub fn WgpuRenderer::text_system(Self) -> @core.TextSystem
+pub fn WgpuRenderer::to_renderer_session(Self, image_source? : @render.HostImageSource, image_decoder? : @render.RendererImageDecoder?, native_surface? : @render.NativeSurface?) -> @render.RendererSession
+pub fn WgpuRenderer::unsupported_command_count(Self) -> Int
+
+// Type aliases
+
+// Traits
+

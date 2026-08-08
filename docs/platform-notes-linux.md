@@ -5,10 +5,10 @@
 normalizes window/input events through the shared `Event` contract, and runs
 the Showcase entrypoints through the same renderer/runtime boundary as macOS
 and Windows. Application entrypoints supply ordered
-`RendererFactory` values for concrete rendering.
+`RendererProvider` values for concrete rendering.
 `backend/linux` exposes the window package's `Window::present_rgba_pixels`
-presenter, raw-byte image I/O, and an opaque Wayland GPU descriptor; Skia and
-WGPU construction stays in `render/skia` and `render/wgpu`.
+presenter, raw-byte image I/O, and opaque native surface/display handles; Skia and
+WGPU construction stays in `moui_skia_renderer` and `moui_wgpu_renderer`.
 
 The Wayland window path requests server-side decorations when the compositor
 exposes `xdg-decoration`. If the compositor falls back to client-side
@@ -68,8 +68,8 @@ Linux runtime requirements are intentionally native:
   When neither portal nor zenity is available, file and folder selection
   silently returns cancelled, and the app prints a diagnostic message to stdout.
 - zlib / pthread / fontconfig system libraries for the final native link.
-  `moui/build.js` injects them through prebuild `link_configs` for
-  `backend/linux`, `render/skia`, and `render/wgpu/fontconfig`. Linux example entrypoints
+  `moui_skia_renderer/build.js` injects them through prebuild `link_configs` for
+  `backend/linux`, `moui_skia_renderer`, and `moui_wgpu_renderer/fontconfig`. Linux example entrypoints
   should not repeat `-lz` or fontconfig stacks; they only need an empty
   `cc-link-flags` override so Moon disables `tcc -run` when required.
 - glib-2.0 development headers and runtime library. `backend/linux`
@@ -112,7 +112,7 @@ be corrupted by cross-host reuse.
 
 ## WGPU Diagnostics
 
-The WGPU diagnostic factory composes the Linux `render/wgpu/fontconfig`
+The WGPU diagnostic factory composes the Linux `moui_wgpu_renderer/fontconfig`
 provider with the shared Moon Cosmic fallback.
 The fontconfig provider includes real fontconfig family resolution, FreeType
 rasterization (loaded via dlopen), HarfBuzz shaping, embedded-font registration,
@@ -125,9 +125,11 @@ the fontconfig provider with Moon Cosmic as its internal fallback.
 ## Skia Renderer
 
 Select the native mainline Skia renderer by importing
-`wzzc-dev/moui/render/skia`, adding `@render_skia.from_env()` to the app
-builder, and capturing `LinuxHostAppOptions` in `@linux.entry`. The factory
-creates `render/skia.SkiaRasterRenderer` and presents the CPU pixel
+`wzzc-dev/moui_skia_renderer`, adding
+`@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Linux)` to the
+app builder, and capturing `LinuxHostAppOptions` in `@linux.entry`. The
+provider binds a `RendererSession` backed by `@render_skia.SkiaRasterRenderer`
+and presents the CPU pixel
 frame through a narrow API exposed by
 `wzzc-dev/window/linux`. That window package owns the Wayland objects and
 provides `Window::present_rgba_pixels`, implemented with reusable `wl_shm`
@@ -144,16 +146,14 @@ after frame rendering. macOS, Windows, and Linux native bridges enforce the
 shared `WebViewNavigationPolicy` before committing a navigation; blocked URLs
 produce a `NavigationFailed` event. Matching-host smoke is still required before
 promoting Linux WebView runtime observation beyond package-level compile coverage.
-The Linux host loop records the renderer image-resource
-revision after each present, routes later observed revision changes through the
-matching Wayland window's `request_redraw`, exposes tracked-window revision
-snapshots for diagnostics, calls the selected factory's neutral
-`AsyncImageLoader` after the presented revision is baselined, and removes
-tracked image revisions plus in-flight image loads when a host window is
-disposed. Linux reads local files into `HostImageSource` bytes; the selected
-renderer owns decode and completion. Package tests cover the host route from a
-loading first-frame image record through completion, repaint request, and
-second presented-frame status recording. The required
+The Linux host loop drains `RendererEvent` image requests, keeps only
+cancellable byte-I/O tasks, and returns token-matched completions to the
+selected session. Linux reads local files into `HostImageSource` bytes; the
+selected renderer owns decode, resource caches, and completion diagnostics.
+Applied completions request redraw for the matching Wayland window, while stale
+or disposed tokens are ignored. Package tests cover the host route from a
+loading first-frame request through completion, repaint request, and second
+presented frame. The required
 async second-frame runtime artifact remains matching-host pending until a
 Wayland run records it from a Skia composition root. Package tests do not prove
 a real Wayland compositor presented Showcase frames;

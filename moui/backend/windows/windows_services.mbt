@@ -36,7 +36,7 @@ pub fn windows_service_bridge(
 
 ///|
 pub fn app_environment() -> @services.AppEnvironment {
-  @window_host.app_environment(
+  @window_services.app_environment(
     bridge=windows_service_bridge(),
     timer=Some(windows_timer_source()),
   )

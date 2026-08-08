@@ -79,8 +79,8 @@ moon test moui/runtime --target native                   # 35 passed
 **渲染器侧证据**：`SunRasterRenderer::update_cached_layer` 与
 `SkiaRasterRenderer` 栅格化 cached layer 时都会执行
 `canvas.translate(0 - spec.frame.origin.x, 0 - spec.frame.origin.y)` 抵消 origin
-（见 `moui/render/sun/renderer_cached_layer.mbt` 与
-`moui/render/skia/renderer_cached_layer.mbt`），所以 pixmap 内容只依赖 block 自身
+（见 `moui_sun_renderer/renderer_cached_layer.mbt` 与
+`moui_skia_renderer/renderer_cached_layer.mbt`），所以 pixmap 内容只依赖 block 自身
 和 `frame.size`，与 `frame.origin` 无关。`frame.origin` 只在 `draw_cached_layer_pixmap`
 贴图阶段（`draw_transformed_quality_pixmap_rect` 用 `frame.origin.x/y` 定位）才被使用。
 

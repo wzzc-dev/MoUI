@@ -78,6 +78,9 @@ test "hello template emits greet app instead of counter" {
       assert_true(!app.contains("Increment"))
       let test_src = test_planned_text(files, "app/app_test.mbt")
       assert_true(test_src.contains("hello greet flips greeted"))
+      let root_mod = test_planned_text(files, "moon.mod")
+      assert_true(root_mod.contains("wzzc-dev/moui_web_renderer@0.2.0"))
+      assert_false(root_mod.contains("wzzc-dev/moui_skia_renderer"))
     }
     Err(message) => fail(message)
   }
@@ -148,7 +151,7 @@ test "default macOS project file plan is exact" {
       #|  "id": "sample_app",
       #|  "title": "Sample App",
       #|  "module": "example/sample_app",
-      #|  "mouiVersion": "0.1.7",
+      #|  "mouiVersion": "0.2.0",
       #|  "platforms": [
       #|    "web",
       #|    "macos"
@@ -157,6 +160,10 @@ test "default macOS project file plan is exact" {
       #|
     ),
   )
+  let root_mod = test_planned_text(files, "moon.mod")
+  assert_true(root_mod.contains("wzzc-dev/moui@0.2.0"))
+  assert_true(root_mod.contains("wzzc-dev/moui_web_renderer@0.2.0"))
+  assert_true(root_mod.contains("wzzc-dev/moui_skia_renderer@0.2.0"))
   let html = test_planned_text(files, "web_wasm/index.html")
   inspect(
     html.contains("../_build/wasm-gc/debug/build/web_wasm/web_wasm.wasm"),
@@ -166,11 +173,15 @@ test "default macOS project file plan is exact" {
   let desktop_pkg = test_planned_text(files, "macos_skia/moon.pkg")
   let desktop_main = test_planned_text(files, "macos_skia/main.mbt")
   assert_true(desktop_pkg.contains("wzzc-dev/moui/backend/macos"))
-  assert_true(desktop_pkg.contains("wzzc-dev/moui/render/skia"))
+  assert_true(desktop_pkg.contains("wzzc-dev/moui_skia_renderer"))
   assert_true(desktop_pkg.contains("wzzc-dev/moui/runtime"))
   assert_false(desktop_pkg.contains("wzzc-dev/moui/backend/macos/"))
   assert_true(desktop_main.contains("@runtime.run_app"))
-  assert_true(desktop_main.contains(".render_all(@render_skia.from_env())"))
+  assert_true(
+    desktop_main.contains(
+      ".render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS))",
+    ),
+  )
   assert_true(desktop_main.contains(".backend(@platform_host.entry())"))
 }
 
@@ -185,6 +196,12 @@ test "mobile config contains window-hosted platform defaults" {
     Err(message) => fail(message)
   }
   let mobile = test_planned_text(files, "moui.mobile.json")
+  let root_mod = test_planned_text(files, "moon.mod")
+  inspect(
+    root_mod.contains("wzzc-dev/moui_skia_renderer@0.2.0"),
+    content="true",
+  )
+  inspect(root_mod.contains("wzzc-dev/moui_web_renderer@0.2.0"), content="true")
   for platform in ["android", "ios", "harmonyos"] {
     let package_text = test_planned_text(
       files,
@@ -199,14 +216,17 @@ test "mobile config contains window-hosted platform defaults" {
       package_text.contains("wzzc-dev/moui/backend/" + platform),
       content="true",
     )
-    inspect(package_text.contains("wzzc-dev/moui/render/skia"), content="true")
+    inspect(
+      package_text.contains("wzzc-dev/moui_skia_renderer"),
+      content="true",
+    )
     inspect(
       package_text.contains("wzzc-dev/moui/backend/" + platform + "/"),
       content="false",
     )
     inspect(main_text.contains("@runtime.run_app"), content="true")
     inspect(
-      main_text.contains(".render_all(@render_skia.from_env())"),
+      main_text.contains(".render_all(@render_skia.from_env(platform="),
       content="true",
     )
     inspect(

@@ -28,12 +28,12 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 - `backend/` 定义共享 host contract。
 - `backend/web/` 是 browser wasm-gc host。
 - `backend/macos/`、`backend/windows/` 和 `backend/linux/` 是 native host core，它们把平台 event 规范化为 `Event`，并通过平台 renderer provider 接收具体渲染器。
-- `render/skia` 拥有 native Skia 主线 factories；`render/wgpu` 保留显式 native WGPU diagnostics，应用将其与一个平台 backend 组合。
+- `moui_skia_renderer` 拥有 native Skia 主线 providers；`moui_wgpu_renderer` 保留显式 native WGPU diagnostics，应用将其与一个平台 backend 组合。
 - `backend/linux/` 是 Wayland host core，runtime-evidence、IME、clipboard、file dialog、directory listing、accessibility 和 async image loading 都通过匹配主机 CI provider 接线。
 - `render/` 拥有 renderer facade 和能力报告。
-- `render/skia/` 实现 native Skia raster renderer facade。
-- `render/wgpu/` 实现实验性 native wgpu renderer。
-- `render/webgpu_adapter/` 将 wasm-gc 应用桥接到 browser WebGPU host import。
+- `moui_skia_renderer/` 实现 native Skia raster renderer facade。
+- `moui_wgpu_renderer/` 实现实验性 native wgpu renderer。
+- `moui_web_renderer/` 将 wasm-gc 应用桥接到 browser WebGPU host import。
 - `examples/*/app/` 包包含共享应用逻辑；平台子包只作为入口点。
 
 ## 工作流 1：Runtime 与公开 API
@@ -123,13 +123,13 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 
 ```sh
 moon test moui/render --target native
-moon test moui/render/skia --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui_skia_renderer --target native
+moon test moui_web_renderer --target wasm-gc
 sh scripts/check.sh --profile full
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
 
-只有在触碰 native WGPU 诊断渲染器时，才运行 `sh scripts/check.sh --profile full` 或 `moon test moui/render/wgpu --target native`。
+只有在触碰 native WGPU 诊断渲染器时，才运行 `sh scripts/check.sh --profile full` 或 `moon test moui_wgpu_renderer --target native`。
 
 ## 工作流 5：平台 Contract
 
@@ -148,7 +148,7 @@ MoUI 将平台后端视为围绕共享 host contract 的 adapter。
 - 保持 URL opening 在活跃 host 上诚实：macOS 使用 `NSWorkspace`，Windows 使用 `ShellExecuteW`，Web 使用调用 `window.open` 且可报告 popup-blocked failure 的 browser host import。
 - 保持 file drag/drop 走共享 host 路径：macOS 和 Windows 转发 native file path，Web 则转发 canvas drop event 中浏览器暴露的 file name。
 - 保持 system theme propagation 走 host-service 路径：native macOS 和 Windows startup 现在会在第一次 layout/redraw pass 前，把查询到的 light/dark scheme 安装进 runtime environment。Web startup 使用浏览器 `prefers-color-scheme` 查询，Web/macOS/Windows theme-change window event 通过 `Event::ThemeChanged` 流动。
-- 保持 window lifecycle state 通过 `WindowRegistry` 流动；活跃入口点分配 primary window record，把当前 runtime/driver 注册为 primary runtime slot，将 platform window id 绑定到 host id，通过该映射路由传入的 platform window event，并从共享 lifecycle 路径同步这些 slot。带 options 的 runner 会 drain `WindowRequestQueue` 中的 focus、close、resize、minimize、show 和 set-primary request。已 drain request completion 通过共享 host helper 记录回队列，让 request outcome 保持可观察。`OpenWindow` request 携带 platform-neutral scene id 和 payload。`WindowSceneResolver` 是该解析步骤的共享 scene-to-`AppRuntime` contract，`WindowRegistry::resolve_open_request` 会将成功解析与 window record 配对。`WindowRuntimeSlot` 用每个 window 的 `HostRuntimeDriver` instance 包裹这些 record，`WindowRuntimeSlots` 管理 lookup、focused/primary slot selection，以及 registry-backed insert/sync/request/lifecycle helper 和 closed-slot cleanup。Web 创建另一个 browser canvas 和 `WebRenderer`；native host 创建另一个 platform window，并向其 renderer provider 请求 renderer-neutral `WindowRenderer`，随后附加 platform-window binding、platform slot 和 per-window driver，再通过 `WindowId` 路由 redraw/event/context-menu/IME/dispose 路径。
+- 保持 window lifecycle state 通过 `WindowRegistry` 流动；活跃入口点分配 primary window record，把当前 runtime/driver 注册为 primary runtime slot，将 platform window id 绑定到 host id，通过该映射路由传入的 platform window event，并从共享 lifecycle 路径同步这些 slot。带 options 的 runner 会 drain `WindowRequestQueue` 中的 focus、close、resize、minimize、show 和 set-primary request。已 drain request completion 通过共享 host helper 记录回队列，让 request outcome 保持可观察。`OpenWindow` request 携带 platform-neutral scene id 和 payload。`WindowSceneResolver` 是该解析步骤的共享 scene-to-`AppRuntime` contract，`WindowRegistry::resolve_open_request` 会将成功解析与 window record 配对。`WindowRuntimeSlot` 用每个 window 的 `HostRuntimeDriver` instance 包裹这些 record，`WindowRuntimeSlots` 管理 lookup、focused/primary slot selection，以及 registry-backed insert/sync/request/lifecycle helper 和 closed-slot cleanup。Web 创建另一个 browser canvas 和 `WebRenderer`；native host 创建另一个 platform window，并向其 renderer provider 请求 renderer-neutral `RendererSession`，随后附加 platform-window binding、platform slot 和 per-window driver，再通过 `WindowId` 路由 redraw/event/context-menu/IME/dispose 路径。
 - 在匹配主机 runtime evidence 和 native font provider support 可用前，通过 Linux 后端 readiness report 保持 Linux readiness 显式。
 
 验证：

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createWebGpuImports } from "../moui/render/webgpu_adapter/runtime.js";
+import { createWebGpuImports } from "../moui_web_renderer/runtime.js";
 
 globalThis.GPUBufferUsage = { VERTEX: 1, COPY_DST: 2 };
 globalThis.GPUTextureUsage = {
@@ -72,6 +72,7 @@ class FakeCanvas {
       fillText(text) {
         this.lastText = `${text ?? ""}`;
       },
+      drawImage() {},
       getImageData(_x, _y, width, height) {
         const data = new Uint8ClampedArray(width * height * 4);
         const color = this.lastText.includes("👩‍💻");
@@ -136,6 +137,7 @@ const fakeContext = {
 const shaderSources = [];
 const uploadedBuffers = [];
 const bindGroupEntryCounts = [];
+const copiedImageSources = [];
 const fakePipeline = {
   getBindGroupLayout() {
     return {};
@@ -179,7 +181,9 @@ const fakeDevice = {
       uploadedBuffers.push(Array.from(data));
     },
     writeTexture() {},
-    copyExternalImageToTexture() {},
+    copyExternalImageToTexture(source) {
+      copiedImageSources.push(source?.source);
+    },
     submit() {},
   },
 };
@@ -198,6 +202,22 @@ globalThis.document = {
   body: new FakeDomElement("body"),
 };
 globalThis.window = { devicePixelRatio: 1 };
+class FakeImage {
+  constructor() {
+    this.complete = false;
+    this.naturalWidth = 32;
+    this.naturalHeight = 18;
+    this.width = 32;
+    this.height = 18;
+  }
+
+  set src(value) {
+    this.value = value;
+    this.complete = true;
+    queueMicrotask(() => this.onload?.());
+  }
+}
+globalThis.Image = FakeImage;
 globalThis.WheelEvent = class {
   constructor(type, options) {
     this.type = type;
@@ -531,6 +551,48 @@ assert(
 assert(
   uploadedBuffers.some(buffer => buffer.some(value => value < -0.5)),
   "text vertices must include the color-glyph RGBA atlas sentinel",
+);
+
+const imageSource = "data:image/png;base64,image-smoke";
+assert(imports.begin_frame(renderer, 100, 60) === 0, "begin image placeholder frame failed");
+assert(
+  imports.draw_image(
+    renderer,
+    stringHandle(imageSource),
+    4,
+    5,
+    32,
+    18,
+    1,
+    0,
+  ) === 0,
+  "draw_image placeholder failed",
+);
+assert(imports.present(renderer) === 0, "present image placeholder frame failed");
+await Promise.resolve();
+await Promise.resolve();
+assert(imports.begin_frame(renderer, 100, 60) === 0, "begin image ready frame failed");
+assert(
+  imports.draw_image(
+    renderer,
+    stringHandle(imageSource),
+    4,
+    5,
+    32,
+    18,
+    1,
+    0,
+  ) === 0,
+  "draw_image ready failed",
+);
+assert(imports.present(renderer) === 0, "present image ready frame failed");
+assert(
+  copiedImageSources.some(source => source instanceof FakeCanvas),
+  "async browser images must upload from the prepared staging canvas",
+);
+assert(
+  observationEvents.some(event => event.name === "image_ready_frame"),
+  "prepared staging canvas must render on the repaint frame",
 );
 
 const textSelectionLayer = canvasHost.children.find(child =>

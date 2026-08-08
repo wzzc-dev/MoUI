@@ -34,11 +34,11 @@ fn[Msg] view_caret_move_result(
 ///|
 fn[Msg] text_semantics_set_text(
   ctx : @core.ViewSemanticsActionContext,
-  value : @core.Binding[String],
+  value : String,
   on_input : ((String) -> Msg)?,
   next : String,
 ) -> @core.ViewSemanticsActionResult[Msg] {
-  let previous = value.get()
+  let previous = value
   if previous == next {
     return @core.ViewSemanticsActionResult::accepted(
       dirty=@core.ViewDirtyHint::ViewClean,
@@ -64,6 +64,5 @@ fn[Msg] text_semantics_set_text(
     text_control=Some(next_control),
     dirty=@core.ViewDirtyHint::ViewBuildDirty,
     messages=text_input_messages(on_input, next),
-    commit=Some(() => value.set(next)),
   )
 }

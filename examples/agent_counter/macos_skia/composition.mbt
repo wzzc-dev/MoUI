@@ -8,7 +8,9 @@ async fn run_agent_counter() -> Unit {
   let host = @agent.RuntimeAgentHost::new(runtime)
   let window_task : async () -> Unit = async fn() -> Unit {
     @runtime.run_app("MoUI Agent Counter", runtime)
-    .render_all(@render_skia.from_env())
+    .render_all(
+      @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS),
+    )
     .backend(@macos_backend.entry())
     .run_async_pump(frame_interval_ms=16)
   }

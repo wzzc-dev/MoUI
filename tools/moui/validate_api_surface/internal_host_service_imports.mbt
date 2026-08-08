@@ -12,7 +12,7 @@ fn allowed_embedded_runtime_internal_imports() -> Array[String] {
 
 ///|
 fn desktop_host_services_internal_package_token() -> String {
-  "wzzc-dev/moui/backend/common/desktop"
+  "wzzc-dev/moui/backend/common/services/desktop"
 }
 
 ///|
@@ -24,7 +24,7 @@ fn allowed_desktop_host_services_internal_imports() -> Array[String] {
 
 ///|
 fn embedded_host_services_internal_package_token() -> String {
-  "wzzc-dev/moui/backend/common/embedded/services"
+  "wzzc-dev/moui/backend/common/services/embedded"
 }
 
 ///|
@@ -34,14 +34,27 @@ fn allowed_embedded_host_services_internal_imports() -> Array[String] {
 
 ///|
 fn native_host_services_internal_package_token() -> String {
-  "wzzc-dev/moui/backend/common/native"
+  "wzzc-dev/moui/backend/common/services/native"
 }
 
 ///|
 fn allowed_native_host_services_internal_imports() -> Array[String] {
   [
-    "moui/backend/common/desktop/moon.pkg", "moui/backend/common/embedded/moon.pkg",
-    "moui/backend/macos/moon.pkg", "moui/backend/windows/moon.pkg", "moui/backend/linux/moon.pkg",
+    "moui/backend/common/services/desktop/moon.pkg", "moui/backend/macos/moon.pkg",
+    "moui/backend/windows/moon.pkg", "moui/backend/linux/moon.pkg",
+  ]
+}
+
+///|
+fn native_image_source_internal_package_token() -> String {
+  "wzzc-dev/moui/backend/common/image/native"
+}
+
+///|
+fn allowed_native_image_source_internal_imports() -> Array[String] {
+  [
+    "moui/backend/common/embedded/moon.pkg", "moui/backend/macos/moon.pkg", "moui/backend/windows/moon.pkg",
+    "moui/backend/linux/moon.pkg",
   ]
 }
 
@@ -139,6 +152,13 @@ fn validate_host_service_internal_imports(
     native_host_services_internal_package_token(),
     "native host services",
     allowed_native_host_services_internal_imports(),
+    failures,
+  )
+  validate_internal_package_imports(
+    repo_root,
+    native_image_source_internal_package_token(),
+    "native image source",
+    allowed_native_image_source_internal_imports(),
     failures,
   )
 }

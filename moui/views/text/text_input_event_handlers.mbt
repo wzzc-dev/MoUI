@@ -1,7 +1,7 @@
 ///|
 fn[Msg] handle_text_field_event(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   on_input~ : ((String) -> Msg)?,
   on_submit~ : Msg?,
   search_bar~ : Bool,
@@ -28,19 +28,18 @@ fn[Msg] handle_text_field_event(
 ///|
 fn[Msg] handle_text_field_pointer(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   on_input~ : ((String) -> Msg)?,
   search_bar~ : Bool,
   on_clear~ : Msg?,
   event : @core.PointerEvent,
 ) -> @core.ViewEventResult[Msg] {
-  let text = value.get()
+  let text = value
   if search_bar && text != "" {
     let clear_frame = searchbar_clear_frame(ctx.frame)
     if event.phase == @core.PointerPhase::Up &&
       clear_frame.contains(event.position) {
       let next_control = text_control_for_text(ctx.text_control, "")
-      value.set("")
       let messages = text_input_messages(on_input, "") +
         option_message(on_clear)
       return @common.view_event_result(
@@ -80,7 +79,7 @@ fn[Msg] handle_text_field_pointer(
 ///|
 fn[Msg] handle_text_field_keyboard(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   on_input~ : ((String) -> Msg)?,
   on_submit~ : Msg?,
   event : @core.KeyboardEvent,
@@ -98,7 +97,7 @@ fn[Msg] handle_text_field_keyboard(
     )
   }
   if @core.is_select_all_shortcut(event) {
-    let next_control = select_text_control(ctx.text_control, value.get())
+    let next_control = select_text_control(ctx.text_control, value)
     return @common.view_event_result(
       changed=true,
       captured=true,
@@ -107,8 +106,7 @@ fn[Msg] handle_text_field_keyboard(
     )
   }
   if @core.is_undo_shortcut(event) {
-    let result = restore_text_history(ctx.text_control, value.get(), undo=true)
-    value.set(result.text)
+    let result = restore_text_history(ctx.text_control, value, undo=true)
     return @common.view_event_result(
       changed=result.changed,
       captured=true,
@@ -118,8 +116,7 @@ fn[Msg] handle_text_field_keyboard(
     )
   }
   if @core.is_redo_shortcut(event) {
-    let result = restore_text_history(ctx.text_control, value.get(), undo=false)
-    value.set(result.text)
+    let result = restore_text_history(ctx.text_control, value, undo=false)
     return @common.view_event_result(
       changed=result.changed,
       captured=true,
@@ -171,7 +168,7 @@ fn[Msg] handle_text_field_keyboard(
   if event.key == "ArrowLeft" {
     return view_caret_move_result(
       ctx,
-      value.get(),
+      value,
       MoveLeft,
       event.modifiers.shift,
     )
@@ -179,7 +176,7 @@ fn[Msg] handle_text_field_keyboard(
   if event.key == "ArrowRight" {
     return view_caret_move_result(
       ctx,
-      value.get(),
+      value,
       MoveRight,
       event.modifiers.shift,
     )
@@ -187,7 +184,7 @@ fn[Msg] handle_text_field_keyboard(
   if event.key == "Home" {
     return view_caret_move_result(
       ctx,
-      value.get(),
+      value,
       MoveStart,
       event.modifiers.shift,
     )
@@ -195,7 +192,7 @@ fn[Msg] handle_text_field_keyboard(
   if event.key == "End" {
     return view_caret_move_result(
       ctx,
-      value.get(),
+      value,
       MoveEnd,
       event.modifiers.shift,
     )

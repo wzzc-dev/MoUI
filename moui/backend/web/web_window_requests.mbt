@@ -3,7 +3,7 @@ fn WebApp::drain_window_requests(
   self : WebApp,
   event_loop : @window_web.ActiveEventLoop,
 ) -> Unit {
-  self.coordinator.drain_window_requests(request => {
+  self.lifecycle.drain_window_requests(request => {
     self.apply_window_request(event_loop, request)
   })
 }
@@ -14,7 +14,10 @@ fn WebApp::apply_window_request(
   event_loop : @window_web.ActiveEventLoop,
   request : @host.WindowRequest,
 ) -> @host.WindowRequestResult {
-  self.coordinator.apply_window_request(
+  @window_host.apply_window_request(
+    self.lifecycle,
+    self.input,
+    self.services,
     request,
     open_window=open_request => self.open_window(event_loop, open_request),
     dispose_window=id => self.dispose_window(id),
@@ -31,7 +34,7 @@ fn WebApp::open_window(
   event_loop : @window_web.ActiveEventLoop,
   request : @host.WindowOpenRequest,
 ) -> @host.WindowRequestResult {
-  match self.coordinator.open_resolution(request) {
+  match self.lifecycle.open_resolution(request) {
     @runtime.WindowOpenResolution::OpenRejected(message) =>
       @host.WindowRequestResult::WindowRejected(message)
     @runtime.WindowOpenResolution::OpenResolved(resolved) =>
@@ -48,7 +51,7 @@ fn WebApp::create_resolved_window(
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
     .with_surface_size(
-      @window_host.host_metrics_to_dpi_size(resolved.record.metrics),
+      @window_input.host_metrics_to_dpi_size(resolved.record.metrics),
     )
   let window : @window_web.Window? = Some(
     event_loop.try_create_window(attributes),
@@ -58,7 +61,7 @@ fn WebApp::create_resolved_window(
   match window {
     Some(window) => self.attach_resolved_window(window, resolved)
     None => {
-      self.coordinator.rollback_window_record(resolved.id)
+      self.lifecycle.rollback_window_record(resolved.id)
       @host.WindowRequestResult::WindowRejected("failed to create Web window")
     }
   }
@@ -76,21 +79,20 @@ fn WebApp::attach_resolved_window(
   )
   match
     resolve_web_renderer(
-      self.renderer_factories,
+      self.renderer_providers,
       window_web_default_canvas_id(window.id().into_raw()),
       metrics,
     ) {
     None => {
       window.drop()
-      self.coordinator.rollback_window_record(resolved.id)
+      self.lifecycle.rollback_window_record(resolved.id)
       @host.WindowRequestResult::WindowRejected("failed to create Web renderer")
     }
     Some(resolution) => {
-      let renderer = resolution.renderer()
-      ignore(self.coordinator.window_registry().resize(resolved.id, metrics))
-      self.coordinator.sync_runtime_slots()
-      let record = match
-        self.coordinator.window_registry().lookup(resolved.id) {
+      let renderer = resolution
+      ignore(self.lifecycle.window_registry().resize(resolved.id, metrics))
+      self.lifecycle.sync_runtime_slots()
+      let record = match self.lifecycle.window_registry().lookup(resolved.id) {
         Some(record) => record
         None => resolved.record
       }
@@ -99,41 +101,47 @@ fn WebApp::attach_resolved_window(
         schedule_redraw=() => (),
       )
       driver.set_redraw_scheduler(() => {
-        self.coordinator.request_redraw_window_if_needed(resolved.id)
+        @window_host.request_redraw_window_if_needed(
+          self.lifecycle,
+          self.images,
+          resolved.id,
+        )
       })
       driver.set_environment(
-        self.services.environment_with_system_theme(driver.environment()),
+        self.services
+        .bridge()
+        .environment_with_system_theme(driver.environment()),
       )
       driver.set_text_system(renderer.text_system())
       ignore(driver.dispatch(@host.Event::Resized(metrics)))
       ignore(
-        self.coordinator.register_runtime_slot(
-          @window_host.WindowRuntimeSlot::from_driver(record~, driver~),
+        self.lifecycle.register_runtime_slot(
+          @window_lifecycle.WindowRuntimeSlot::from_driver(record~, driver~),
         ),
       )
       ignore(
-        self.coordinator.bind_platform_window(
+        self.lifecycle.bind_platform_window(
           platform_id=window.id(),
           window_id=resolved.id,
         ),
       )
       ignore(
-        self.coordinator.attach_surface(
+        @window_host.attach_window_surface(
+          self.lifecycle,
+          self.frames,
+          self.images,
           resolved.id,
           renderer,
           self.web_surface_actions(window, renderer),
-          image_loader=resolution.image_loader(),
         ),
       )
-      ignore(
-        self.platform_slots.insert({ host_id: resolved.id, window, renderer }),
-      )
+      ignore(self.platform_slots.insert({ host_id: resolved.id, window }))
       register_web_semantics_runtime(
         window.id().into_raw(),
         window_web_default_canvas_id(window.id().into_raw()),
         resolved.instance.runtime,
       )
-      self.coordinator.request_platform_redraw(resolved.id)
+      @window_host.request_platform_redraw(self.lifecycle, resolved.id)
       @host.WindowRequestResult::WindowOpened(resolved.id)
     }
   }

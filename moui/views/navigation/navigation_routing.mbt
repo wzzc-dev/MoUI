@@ -50,12 +50,12 @@ priv struct RouteFocusEntry {
 
 ///|
 struct RouteFocusStore {
-  mut entries : Array[RouteFocusEntry]
+  entries : Array[RouteFocusEntry]
 }
 
 ///|
 struct RouterState {
-  navigation : @core.NavigationState
+  routes : Array[String]
 }
 
 ///|
@@ -286,9 +286,8 @@ pub fn RouteHistoryState::router_snapshot(
 ///|
 pub fn RouteHistoryState::restore_router(
   self : RouteHistoryState,
-  router : RouterState,
-) -> Unit {
-  router.restore(self.router_snapshot())
+) -> RouterState {
+  RouterState::from_snapshot(self.router_snapshot())
 }
 
 ///|
@@ -309,9 +308,10 @@ pub fn RouteFocusStore::remember(
   self : RouteFocusStore,
   route~ : String,
   focus_key~ : String,
-) -> Unit {
-  self.entries = self.entries.filter(entry => entry.route != route)
-  self.entries.push(RouteFocusEntry::new(route~, focus_key~))
+) -> RouteFocusStore {
+  let entries = self.entries.filter(entry => entry.route != route)
+  entries.push(RouteFocusEntry::new(route~, focus_key~))
+  { entries, }
 }
 
 ///|
@@ -319,7 +319,7 @@ pub fn RouteFocusStore::remember_location(
   self : RouteFocusStore,
   location : RouteLocation,
   focus_key~ : String,
-) -> Unit {
+) -> RouteFocusStore {
   self.remember(route=location.to_route(), focus_key~)
 }
 
@@ -412,65 +412,75 @@ pub fn RouteLocation::to_route(self : RouteLocation) -> String {
 pub fn RouterState::new(
   initial? : RouteLocation = RouteLocation::new(path="/"),
 ) -> RouterState {
-  { navigation: @core.NavigationState::new(initial=initial.to_route()) }
+  { routes: [initial.to_route()] }
 }
 
 ///|
-pub fn RouterState::current(self : RouterState) -> RouteLocation {
-  RouteLocation::parse(self.navigation.current())
-}
-
-///|
-pub fn RouterState::stack(self : RouterState) -> Array[RouteLocation] {
-  self.navigation.stack().map(route => RouteLocation::parse(route))
-}
-
-///|
-pub fn RouterState::snapshot(self : RouterState) -> RouterSnapshot {
-  RouterSnapshot::new(routes=self.navigation.stack())
-}
-
-///|
-pub fn RouterState::restore(
-  self : RouterState,
-  snapshot : RouterSnapshot,
-) -> Unit {
-  if snapshot.routes.length() == 0 {
-    self.navigation.replace("/")
+pub fn RouterState::from_snapshot(snapshot : RouterSnapshot) -> RouterState {
+  if snapshot.routes.is_empty() {
+    RouterState::new()
   } else {
-    self.navigation.stack_slot.set(snapshot.routes.copy())
+    { routes: snapshot.routes.copy() }
   }
 }
 
 ///|
-pub fn RouterState::push(self : RouterState, location : RouteLocation) -> Unit {
-  self.navigation.push(location.to_route())
+pub fn RouterState::current(self : RouterState) -> RouteLocation {
+  match self.routes.last() {
+    Some(route) => RouteLocation::parse(route)
+    None => RouteLocation::new(path="/")
+  }
+}
+
+///|
+pub fn RouterState::stack(self : RouterState) -> Array[RouteLocation] {
+  self.routes.map(route => RouteLocation::parse(route))
+}
+
+///|
+pub fn RouterState::snapshot(self : RouterState) -> RouterSnapshot {
+  RouterSnapshot::new(routes=self.routes.copy())
+}
+
+///|
+pub fn RouterState::restore(
+  _self : RouterState,
+  snapshot : RouterSnapshot,
+) -> RouterState {
+  RouterState::from_snapshot(snapshot)
+}
+
+///|
+pub fn RouterState::push(
+  self : RouterState,
+  location : RouteLocation,
+) -> RouterState {
+  let routes = self.routes.copy()
+  routes.push(location.to_route())
+  { routes, }
 }
 
 ///|
 pub fn RouterState::replace(
   self : RouterState,
   location : RouteLocation,
-) -> Unit {
-  self.navigation.stack_slot.update(stack => {
-    if stack.length() == 0 {
-      [location.to_route()]
-    } else {
-      let next : Array[String] = []
-      for index, route in stack {
-        if index + 1 < stack.length() {
-          next.push(route)
-        }
-      }
-      next.push(location.to_route())
-      next
-    }
-  })
+) -> RouterState {
+  let routes = if self.routes.is_empty() {
+    []
+  } else {
+    self.routes[0:self.routes.length() - 1].to_owned()
+  }
+  routes.push(location.to_route())
+  { routes, }
 }
 
 ///|
-pub fn RouterState::pop(self : RouterState) -> Bool {
-  self.navigation.pop()
+pub fn RouterState::pop(self : RouterState) -> RouterState {
+  if self.routes.length() <= 1 {
+    self
+  } else {
+    { routes: self.routes[0:self.routes.length() - 1].to_owned() }
+  }
 }
 
 ///|

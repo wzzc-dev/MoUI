@@ -57,6 +57,9 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [release-module-dependency-closures](done/release-module-dependency-closures.md) | Split concrete renderers and integration tests out of the base publication closure |
+| [backend-renderer-lifecycle-convergence](active/backend-renderer-lifecycle-convergence.md) | Split backend-common state owners and collapse renderer binding to provider/session |
+| [runtime-state-render-ownership-convergence](active/runtime-state-render-ownership-convergence.md) | Move accessibility out of runtime, unify app state ownership, and make renderer sessions own render resources |
 | [mo-desktop-example](active/mo-desktop-example.md) | Add a responsive macOS-inspired MoUI desktop simulation with Web and macOS Skia entrypoints |
 | [window-cross-platform-parity](active/window-cross-platform-parity.md) | Align window (Windows/Linux/Web) with macOS reference in MoUI-ready semantics |
 | [view-node-trait-refactor](active/view-node-trait-refactor.md) | Complete the public ViewNode trait migration |
@@ -66,6 +69,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [macos-first-present-visibility](done/macos-first-present-visibility.md) | Reveal Mo Desktop and Mo Workbench only after their first successful macOS presentation |
 | [backend-render-package-convergence](done/backend-render-package-convergence.md) | Replace host/bridge packages with symmetric backend/render protocol and common implementation layers |
 | [platform-adapter-duplication-remediation](done/platform-adapter-duplication-remediation.md) | Eliminate shared platform behavior copies and remove similarity budgets |
 | [moui-support-upstream-workspace](done/moui-support-upstream-workspace.md) | Complete the upstream-layout migration, compatibility release, and published-dependency handoff |

@@ -220,8 +220,8 @@ test "markdown editor runtime enter completes fenced code block" {
 ///|
 test "markdown editor clear redraws placeholder and optional empty source preview" {
   let app = MarkdownEditorApp::new()
-  let runtime = app.runtime(width=980.0, height=640.0)
   app.clear()
+  let mut runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
   let commands = runtime.draw_commands()
   assert_true(
@@ -236,6 +236,7 @@ test "markdown editor clear redraws placeholder and optional empty source previe
     }),
   )
   app.set_source_preview_visible(true)
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
   let source_commands = runtime.draw_commands()
   assert_true(

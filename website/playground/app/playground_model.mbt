@@ -13,6 +13,7 @@ pub(all) enum Msg {
   SetFindQuery(String)
   SetReplaceText(String)
   EditorSelectionChanged(Int, @text.TextRange?)
+  EditorScrollChanged(@geometry.Point)
   ReplaceAll
   FindNext
   Run
@@ -27,7 +28,7 @@ pub(all) enum Msg {
 ///|
 pub(all) struct Model {
   editor : @code_editor.EditorState
-  editor_scroll : @state.ScrollState
+  editor_scroll : @geometry.Point
   moon_pkg : String
   active_file : PlaygroundFile
   find_query : String
@@ -44,7 +45,7 @@ pub fn Model::new() -> Model {
   let source = default_source()
   {
     editor: @code_editor.EditorState::new(source~),
-    editor_scroll: @state.ScrollState::new(),
+    editor_scroll: @geometry.Point::new(x=0.0, y=0.0),
     moon_pkg: default_moon_pkg(),
     active_file: Main,
     find_query: "",
@@ -100,6 +101,7 @@ pub fn update(model : Model, message : Msg) -> Model {
     SetReplaceText(value) => { ..model, replace_text: value }
     EditorSelectionChanged(caret, selection) =>
       { ..model, editor: model.editor.with_selection(caret, selection) }
+    EditorScrollChanged(offset) => { ..model, editor_scroll: offset }
     ReplaceAll => {
       let source = current_source(model)
       let replaced = @code_editor.code_replace_all(

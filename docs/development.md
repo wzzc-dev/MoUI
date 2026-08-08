@@ -55,8 +55,8 @@ node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 
 Android, iOS, and HarmonyOS use the embedded runtime backend route. The matching
 `wzzc-dev/window` template owns native lifecycle, surface creation, and input;
-the MoUI `*_window_hosted` entrypoint composes the program, `render/skia`
-factories, and the platform `entry()` through `@runtime.run_app`.
+the MoUI `*_window_hosted` entrypoint composes the program, `moui_skia_renderer`
+    providers, and the platform `entry()` through `@runtime.run_app`.
 There is no app-specific native export table or second lifecycle bridge.
 
 Use host-sim checks before invoking platform toolchains:
@@ -89,15 +89,17 @@ The default `sh scripts/check.sh --profile daily` path guards dependency shape a
 repo-local `moui_skia` acceptance surface. The Skia binding is part of the main
 checkout at `moui_skia`.
 
-This keeps `wzzc-dev/window` and `wzzc-dev/moui_skia` declared in
-`moui/moon.mod`, keeps `wzzc-dev/moui_theme` as an addon module, and resolves
-local workspace members from `moon.work`. The exact list is generated into
+This keeps `wzzc-dev/window` in the base `moui/moon.mod`, while
+`moui_skia_renderer/moon.mod` declares both `wzzc-dev/moui` and the
+`wzzc-dev/moui_skia` binding. `wzzc-dev/moui_theme` remains an addon module,
+and local workspace members resolve from `moon.work`. The exact list is generated into
 [Repository facts](repository-facts.md#workspace-members).
 
 ```moonbit
 import {
   "wzzc-dev/window@0.5.4-0.1.5",
-  "wzzc-dev/moui_skia@0.1.7",
+  "wzzc-dev/moui@0.2.0",
+  "wzzc-dev/moui_skia@0.2.0",
 }
 ```
 
@@ -345,8 +347,8 @@ scripts/macos-skia-renderer-smoke.sh
 ```
 
 That opt-in check runs both the `moui_skia` native binding smoke and MoUI's
-renderer-level smoke at `moui/tests/skia_renderer_smoke/native`, which renders a
-small `DrawCommand` frame through `render/skia` and verifies presenter pixels.
+renderer-level smoke at `moui_tests/skia_renderer_smoke/native`, which renders a
+small `DrawCommand` frame through `moui_skia_renderer` and verifies presenter pixels.
 The renderer smoke includes bounded `TextRun.frame` text clipping alongside the
 general glyph-run text pixel check.
 The script builds those smoke packages and runs the produced native executables
@@ -427,7 +429,7 @@ scripts/macos-skia-renderer-smoke.sh \
 ```
 
 It temporarily configures `moui_skia/native`,
-`moui/tests/skia_renderer_smoke/native`, `examples/showcase/macos_skia`,
+`moui_tests/skia_renderer_smoke/native`, `examples/showcase/macos_skia`,
 `examples/markdown_editor/macos_skia`, and
 `examples/mo_workbench/macos_skia`, runs the MoUI renderer pixel smoke, builds
 the macOS Skia Showcase entrypoint, and restores all touched `moon.pkg` files
@@ -476,8 +478,8 @@ moon test moui/views --target native
 moon test moui/runtime --target native
 moon test moui/backend --target native
 moon test moui/render --target native
-moon test moui/render/skia --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui_skia_renderer --target native
+moon test moui_web_renderer --target wasm-gc
 moon test moui/backend/web --target wasm-gc
 moon test moui_skia --target native
 ```
@@ -682,18 +684,18 @@ node scripts/validate-package-manifest.mjs \
 Useful focused commands:
 
 ```sh
-moon test moui/render/wgpu --target native
-moon test moui/render/skia --target native
-moon test moui/render/sun --target native
+moon test moui_wgpu_renderer --target native
+moon test moui_skia_renderer --target native
+moon test moui_sun_renderer --target native
 moon test moui_skia --target native
 sh scripts/check.sh --profile theme
 moon test moui_sun/graphics --target native
 moon test moui_sun/text --target native
 moon test moui_sun/renderer --target native
 moon test moui_sun/softbuffer --target native
-moon build moui/tests/skia_renderer_smoke/native --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
-moon test moui/tests/tooling --target native
+moon build moui_tests/skia_renderer_smoke/native --target native
+moon test moui_web_renderer --target wasm-gc
+moon test moui_tests/tooling --target native
 moon test moui/backend/web --target wasm-gc
 node scripts/validate-renderer-provider-manifests.mjs
 sh scripts/check.sh --profile platform
@@ -753,10 +755,10 @@ frontends and tooling:
 - `mizchi/svg` powers `render.import_svg(String) -> SvgImportResult`, lowering
   parsed SVG scene graph nodes into MoUI `DrawCommand` values.
 - `moonbitlang/quickcheck` and `mizchi/pixelmatch` are exercised from
-  `moui/tests/tooling/` for property and pixel-diff coverage.
+  `moui_tests/tooling/` for property and pixel-diff coverage.
 
 The text stack has its own maintenance page because it spans `core`,
-native Skia, diagnostic `render/wgpu` providers, and browser host assets. See
+native Skia, diagnostic `moui_wgpu_renderer` providers, and browser host assets. See
 [Text system](text-system.md) before changing `TextSystem`, native text
 providers, embedded font registration, or Web text measurement.
 

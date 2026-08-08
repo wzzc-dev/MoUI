@@ -31,7 +31,10 @@ fn platform_files_for(
         directory + "/moon.pkg",
         desktop_pkg_text(options.module_name, platform),
       ),
-      text_file(directory + "/main.mbt", desktop_main_text(options.title)),
+      text_file(
+        directory + "/main.mbt",
+        desktop_main_text(options.title, platform),
+      ),
     ])
   }
   if is_mobile_platform(platform) {

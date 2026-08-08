@@ -1,0 +1,22 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
+  "wzzc-dev/moui_wgpu_renderer/text_protocol",
+}
+
+supported_targets = "native"
+
+options(
+  link: {
+    "native": {
+      // Host-specific include flags come from moui_wgpu_renderer/build.js prebuild vars
+      // (MOUI_LINUX_FONTCONFIG_STUB_CC_FLAGS) and link flags from its
+      // link_configs on Linux. Off-Linux hosts compile the no-op stub path.
+      "stub-cc-flags": "${build.MOUI_LINUX_FONTCONFIG_STUB_CC_FLAGS}",
+      "cc-link-flags": "",
+    },
+  },
+  "native-stub": [ "linux_fontconfig_text.c" ],
+  targets: { },
+)

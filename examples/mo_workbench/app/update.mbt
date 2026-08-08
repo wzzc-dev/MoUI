@@ -176,25 +176,33 @@ fn append_thought_chunk(
 }
 
 ///|
-fn CodeWorkspace::scroll_to_latest(self : CodeWorkspace) -> Unit {
-  self.scroll_state.scroll_to(x=0.0, y=1.0e9)
+fn CodeWorkspace::scroll_to_latest(self : CodeWorkspace) -> CodeWorkspace {
+  {
+    ..self,
+    scroll_offset: @geometry.Point::new(x=0.0, y=1.0e9),
+    scroll_request_id: self.scroll_request_id + 1,
+  }
 }
 
 ///|
-fn CodeWorkspace::scroll_to_latest_if_following(self : CodeWorkspace) -> Unit {
+fn CodeWorkspace::scroll_to_latest_if_following(
+  self : CodeWorkspace,
+) -> CodeWorkspace {
   if self.follow_latest {
     self.scroll_to_latest()
+  } else {
+    self
   }
 }
 
 ///|
 fn code_follow_latest_after_scroll(
   current : Bool,
-  delta : @geometry.Point,
+  movement : @geometry.Point,
 ) -> Bool {
-  if delta.y > 0.0 {
+  if movement.y < 0.0 {
     false
-  } else if delta.y < 0.0 {
+  } else if movement.y > 0.0 {
     true
   } else {
     current
@@ -224,7 +232,6 @@ fn CodeWorkspace::apply_agent_event(
       )
       let model = { ..self, messages, last_user_message_id: message_id }
       model.scroll_to_latest_if_following()
-      model
     }
     AssistantMessageChunk(message_id, content) => {
       let messages = append_assistant_chunk(
@@ -235,7 +242,6 @@ fn CodeWorkspace::apply_agent_event(
       )
       let model = { ..self, messages, last_assistant_message_id: message_id }
       model.scroll_to_latest_if_following()
-      model
     }
     ThoughtMessageChunk(message_id, content) => {
       let messages = append_thought_chunk(
@@ -246,7 +252,6 @@ fn CodeWorkspace::apply_agent_event(
       )
       let model = { ..self, messages, last_thought_message_id: message_id }
       model.scroll_to_latest_if_following()
-      model
     }
     SessionModeStateChanged(modes) => {
       let merged_modes = match self.session_modes {
@@ -304,12 +309,10 @@ fn CodeWorkspace::apply_agent_event(
         follow_latest: true,
       }
       model.scroll_to_latest()
-      model
     }
     ProgressNotice(text) => {
       let model = { ..self, progress_notice: Some(text) }
       model.scroll_to_latest_if_following()
-      model
     }
     _ => {
       let (appended, is_terminal, err) = project_agent_event(event)
@@ -330,8 +333,9 @@ fn CodeWorkspace::apply_agent_event(
       // Auto-scroll to bottom on new content.
       if !appended.is_empty() || is_terminal || self.is_streaming {
         model.scroll_to_latest_if_following()
+      } else {
+        model
       }
-      model
     }
   }
 }
@@ -349,13 +353,17 @@ fn CodeWorkspace::update(
     PromptChanged(value) => ({ ..self, prompt: value }, @moui.Effect::none())
     SteerChanged(value) => ({ ..self, steer_text: value }, @moui.Effect::none())
     ClearError => ({ ..self, error: None }, @moui.Effect::none())
-    MessageListScrolled(delta) =>
+    MessageListScrolled(offset) =>
       (
         {
           ..self,
+          scroll_offset: offset,
           follow_latest: code_follow_latest_after_scroll(
             self.follow_latest,
-            delta,
+            @geometry.Point::new(
+              x=offset.x - self.scroll_offset.x,
+              y=offset.y - self.scroll_offset.y,
+            ),
           ),
         },
         @moui.Effect::none(),
@@ -462,7 +470,7 @@ fn CodeWorkspace::update(
           error: None,
           follow_latest: true,
         }
-        model.scroll_to_latest()
+        let model = model.scroll_to_latest()
         (
           model,
           backend.effect([SendTask(task)], event => {
@@ -482,7 +490,7 @@ fn CodeWorkspace::update(
           progress_notice: Some("Sending steering note..."),
           follow_latest: true,
         }
-        model.scroll_to_latest()
+        let model = model.scroll_to_latest()
         (
           model,
           backend.effect([Steer(text)], event => {
@@ -621,12 +629,18 @@ fn SettingsWorkspace::update(
 ) -> (SettingsWorkspace, @moui.Effect[SettingsMsg]) {
   match msg {
     SelectSection(section) => {
-      self.scroll_state.scroll_to(x=0.0, y=0.0)
       (
-        { ..self, active_section: section, save_notice: None },
+        {
+          ..self,
+          active_section: section,
+          scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
+          save_notice: None,
+        },
         @moui.Effect::none(),
       )
     }
+    Scrolled(offset) =>
+      ({ ..self, scroll_offset: offset }, @moui.Effect::none())
     BackendChanged(kind) =>
       ({ ..self, agent_backend: kind, save_notice: None }, @moui.Effect::none())
     ApprovalChanged(policy) =>

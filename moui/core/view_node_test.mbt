@@ -56,6 +56,16 @@ fn downstream_layout_context() -> @core.ViewLayoutContext {
     ),
     child_sizes: [],
     child_flex_weights: [],
+    state: {
+      focused: false,
+      hovered: false,
+      pressed: false,
+      selected: false,
+      checked: false,
+      expanded: false,
+      disabled: false,
+      slots: @core.ViewStateSlots::empty(),
+    },
     text_system: @core.TextSystem::fallback(),
     environment: @core.Environment::neutral(),
     style: @core.ViewStyle::empty(),
@@ -114,36 +124,30 @@ test "ViewNode: typed adapters map messages without replacing the node" {
 
 ///|
 struct SnapshotProbeNode {
-  calls : @core.State[Array[Int]]
+  calls : Ref[Array[Int]]
 }
 
 ///|
 impl @core.ViewNode for SnapshotProbeNode with fn identity(self) {
-  self.calls.update(values => {
-    let next = values.copy()
-    next[0] = next[0] + 1
-    next
-  })
+  let next = self.calls.val.copy()
+  next[0] = next[0] + 1
+  self.calls.val = next
   @core.ViewIdentity::new(kind="snapshot-probe")
 }
 
 ///|
 impl @core.ViewNode for SnapshotProbeNode with fn declaration(self) {
-  self.calls.update(values => {
-    let next = values.copy()
-    next[1] = next[1] + 1
-    next
-  })
+  let next = self.calls.val.copy()
+  next[1] = next[1] + 1
+  self.calls.val = next
   @core.ViewDeclaration::constant()
 }
 
 ///|
 impl @core.ViewNode for SnapshotProbeNode with fn semantics(self) {
-  self.calls.update(values => {
-    let next = values.copy()
-    next[2] = next[2] + 1
-    next
-  })
+  let next = self.calls.val.copy()
+  next[2] = next[2] + 1
+  self.calls.val = next
   @core.ViewSemanticsInfo::new(label="snapshot")
 }
 
@@ -154,23 +158,19 @@ impl @core.ViewNode for SnapshotProbeNode with fn layout(_self, context) {
 
 ///|
 test "View::from_node freezes declarations semantics and static children" {
-  let calls = @core.State::new([0, 0, 0, 0, 0])
+  let calls = Ref([0, 0, 0, 0, 0])
   let view : @core.View[String] = @core.View::from_node(
     SnapshotProbeNode::{ calls, },
     children=node => {
-      node.calls.update(values => {
-        let next = values.copy()
-        next[3] = next[3] + 1
-        next
-      })
+      let next = node.calls.val.copy()
+      next[3] = next[3] + 1
+      node.calls.val = next
       []
     },
     semantics_actions=node => {
-      node.calls.update(values => {
-        let next = values.copy()
-        next[4] = next[4] + 1
-        next
-      })
+      let next = node.calls.val.copy()
+      next[4] = next[4] + 1
+      node.calls.val = next
       [
         @core.ViewSemanticsActionHandler::activate(_context => {
           @core.ViewSemanticsActionResult::message("activate")
@@ -178,7 +178,7 @@ test "View::from_node freezes declarations semantics and static children" {
       ]
     },
   )
-  debug_inspect(calls.get(), content="[1, 1, 1, 1, 1]")
+  debug_inspect(calls.val, content="[1, 1, 1, 1, 1]")
   ignore(view.identity())
   ignore(view.declaration())
   ignore(view.semantics())
@@ -208,7 +208,7 @@ test "View::from_node freezes declarations semantics and static children" {
   )
   inspect(result.accepted, content="true")
   debug_inspect(result.messages, content="[8]")
-  debug_inspect(calls.get(), content="[1, 1, 1, 1, 1]")
+  debug_inspect(calls.val, content="[1, 1, 1, 1, 1]")
 }
 
 ///|

@@ -66,13 +66,17 @@ moui build harmonyos showcase \
 
 `moon update` 会刷新 registry packages，包括 `window` fork package。默认 `sh scripts/check.sh --profile daily` 路径守护 dependency shape 和 repo-local `moui_skia` acceptance surface。Skia binding 是主 checkout 的一部分，位于 `moui_skia`。
 
-这会保持 `wzzc-dev/window` 和 `wzzc-dev/moui_skia` 在 `moui/moon.mod` 中声明，保持 `wzzc-dev/moui_theme` 作为 addon module，并从 `moon.work` 解析 local workspace members。确切列表会生成到
+这会让基础 `moui/moon.mod` 只保留 `wzzc-dev/window`，而
+`moui_skia_renderer/moon.mod` 显式声明 `wzzc-dev/moui` 与
+`wzzc-dev/moui_skia` binding。`wzzc-dev/moui_theme` 仍是 addon module，
+local workspace members 从 `moon.work` 解析。确切列表会生成到
 [Repository facts](../repository-facts.md#workspace-members)。
 
 ```moonbit
 import {
   "wzzc-dev/window@0.5.4-0.1.5",
-  "wzzc-dev/moui_skia@0.1.7",
+  "wzzc-dev/moui@0.2.0",
+  "wzzc-dev/moui_skia@0.2.0",
 }
 ```
 
@@ -169,7 +173,7 @@ Node 保留给 browser/CDP、Web smoke capture、HTTP/GitHub artifact work、npm
 scripts/macos-skia-renderer-smoke.sh
 ```
 
-该 opt-in check 同时运行 `moui_skia` native binding smoke 和 MoUI 的 renderer-level smoke（`moui/tests/skia_renderer_smoke/native`），后者通过 `render/skia` 渲染一个小 `DrawCommand` frame 并验证 presenter pixels。renderer smoke 包括有界 `TextRun.frame` text clipping 和通用 glyph-run text pixel check。
+该 opt-in check 同时运行 `moui_skia` native binding smoke 和 MoUI 的 renderer-level smoke（`moui_tests/skia_renderer_smoke/native`），后者通过 `moui_skia_renderer` 渲染一个小 `DrawCommand` frame 并验证 presenter pixels。renderer smoke 包括有界 `TextRun.frame` text clipping 和通用 glyph-run text pixel check。
 脚本会 build 这些 smoke packages 并直接运行生成的 native executables，使失败通过进程 exit status 传播。
 
 在 macOS 上，如果希望脚本为你解析 Skia 并接线临时 package link flags，请使用专用 helper。默认它使用来自 `moui_skia` 的 pinned JetBrains Skia binary provider：
@@ -218,7 +222,7 @@ scripts/macos-skia-renderer-smoke.sh \
   --work-dir .skia-cache/macos
 ```
 
-它会临时配置 `moui_skia/native`、`moui/tests/skia_renderer_smoke/native`、`examples/showcase/macos_skia`、`examples/markdown_editor/macos_skia` 和
+它会临时配置 `moui_skia/native`、`moui_tests/skia_renderer_smoke/native`、`examples/showcase/macos_skia`、`examples/markdown_editor/macos_skia` 和
 `examples/mo_workbench/macos_skia`，运行 MoUI renderer pixel smoke，构建 macOS Skia Showcase entrypoint，并在退出前恢复所有 touched `moon.pkg` files。
 
 ## 预览循环
@@ -253,8 +257,8 @@ moon test moui/views --target native
 moon test moui/runtime --target native
 moon test moui/backend --target native
 moon test moui/render --target native
-moon test moui/render/skia --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui_skia_renderer --target native
+moon test moui_web_renderer --target wasm-gc
 moon test moui/backend/web --target wasm-gc
 moon test moui_skia --target native
 ```
@@ -401,18 +405,18 @@ node scripts/validate-package-manifest.mjs \
 有用的聚焦命令：
 
 ```sh
-moon test moui/render/wgpu --target native
-moon test moui/render/skia --target native
-moon test moui/render/sun --target native
+moon test moui_wgpu_renderer --target native
+moon test moui_skia_renderer --target native
+moon test moui_sun_renderer --target native
 moon test moui_skia --target native
 sh scripts/check.sh --profile theme
 moon test moui_sun/graphics --target native
 moon test moui_sun/text --target native
 moon test moui_sun/renderer --target native
 moon test moui_sun/softbuffer --target native
-moon build moui/tests/skia_renderer_smoke/native --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
-moon test moui/tests/tooling --target native
+moon build moui_tests/skia_renderer_smoke/native --target native
+moon test moui_web_renderer --target wasm-gc
+moon test moui_tests/tooling --target native
 moon test moui/backend/web --target wasm-gc
 node scripts/validate-renderer-provider-manifests.mjs
 sh scripts/check.sh --profile platform
@@ -453,9 +457,9 @@ MoUI 在使用 Mooncakes frontends 和 tooling 时保持 production runtime boun
   `DrawPath` / `PathSpec` values 转换为 triangle meshes。SVG parsing 仍是 importer frontend 的职责。
 - `mizchi/markdown` 驱动 Markdown Editor 的 package-local parser adapter 和 rich text mapping。app-level editing model 见 [Markdown Editor](../markdown-editor.md)。
 - `mizchi/svg` 驱动 `render.import_svg(String) -> SvgImportResult`，将 parsed SVG scene graph nodes lowering 为 MoUI `DrawCommand` 值。
-- `moonbitlang/quickcheck` 和 `mizchi/pixelmatch` 从 `moui/tests/tooling/` 中使用，用于 property 和 pixel-diff coverage。
+- `moonbitlang/quickcheck` 和 `mizchi/pixelmatch` 从 `moui_tests/tooling/` 中使用，用于 property 和 pixel-diff coverage。
 
-text stack 有自己的维护页面，因为它横跨 `core`、native Skia、diagnostic `render/wgpu` providers 和 browser host assets。更改 `TextSystem`、native text providers、embedded font registration 或 Web text measurement 前见 [Text system](../text-system.md)。
+text stack 有自己的维护页面，因为它横跨 `core`、native Skia、diagnostic `moui_wgpu_renderer` providers 和 browser host assets。更改 `TextSystem`、native text providers、embedded font registration 或 Web text measurement 前见 [Text system](../text-system.md)。
 
 ## Guidance Maintenance
 

@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/common/image"
+
+import {
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/render",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct WindowImageTaskStarter {
+  // private fields
+}
+pub fn WindowImageTaskStarter::immediate() -> Self
+pub fn WindowImageTaskStarter::new(start~ : (@render.RendererImageLoadRequest, (@render.RendererImageLoadCompletion) -> Unit) -> (() -> Unit)?) -> Self
+
+pub struct WindowImageTaskStates {
+  // private fields
+}
+pub fn WindowImageTaskStates::attach(Self, @backend.WindowId, starter? : WindowImageTaskStarter, request_redraw~ : () -> Unit) -> Bool
+pub fn WindowImageTaskStates::count(Self) -> Int
+pub fn WindowImageTaskStates::dispose_window(Self, @backend.WindowId) -> Bool
+pub fn WindowImageTaskStates::lookup(Self, @backend.WindowId) -> WindowImageTasks?
+pub fn WindowImageTaskStates::new() -> Self
+pub fn WindowImageTaskStates::remove(Self, @backend.WindowId) -> WindowImageTasks?
+
+pub struct WindowImageTasks {
+  // private fields
+}
+pub fn WindowImageTasks::cancel(Self) -> Int
+pub fn WindowImageTasks::dispose(Self) -> Unit
+pub fn WindowImageTasks::new(starter? : WindowImageTaskStarter, request_redraw~ : () -> Unit) -> Self
+pub fn WindowImageTasks::pending_count(Self) -> Int
+pub fn WindowImageTasks::schedule(Self, @render.RendererSession, @render.RendererImageLoadRequest) -> Bool
+pub fn WindowImageTasks::take_scheduled_count(Self) -> Int
+
+// Type aliases
+
+// Traits
+

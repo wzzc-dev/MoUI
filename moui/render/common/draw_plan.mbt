@@ -32,9 +32,8 @@ pub(all) enum PlanOp {
   PopOpacity
   PushLayer(@core.LayerSpec)
   PopLayer
-  BeginCachedLayer(@core.CachedLayerSpec)
-  EndCachedLayer(String)
-  DrawCachedLayer(@core.CachedLayerSpec)
+  BeginRetainedLayer(@core.RetainedLayerSpec)
+  EndRetainedLayer(String)
   PushFilter(@core.FilterEffect)
   PopFilter
   DrawPath(@core.PathSpec)
@@ -172,16 +171,14 @@ pub fn lower_draw_commands(commands : Array[@core.DrawCommand]) -> DrawPlan {
         plan_pop_scope(scopes, diagnostics, PlanScopeKind::Layer)
         ops.push(PlanOp::PopLayer)
       }
-      @core.DrawCommand::BeginCachedLayer(spec) => {
+      @core.DrawCommand::BeginRetainedLayer(spec) => {
         scopes.push(PlanScopeKind::Layer)
-        ops.push(PlanOp::BeginCachedLayer(spec))
+        ops.push(PlanOp::BeginRetainedLayer(spec))
       }
-      @core.DrawCommand::EndCachedLayer(key) => {
+      @core.DrawCommand::EndRetainedLayer(key) => {
         plan_pop_scope(scopes, diagnostics, PlanScopeKind::Layer)
-        ops.push(PlanOp::EndCachedLayer(key))
+        ops.push(PlanOp::EndRetainedLayer(key))
       }
-      @core.DrawCommand::DrawCachedLayer(spec) =>
-        ops.push(PlanOp::DrawCachedLayer(spec))
       @core.DrawCommand::PushFilter(filter) => {
         scopes.push(PlanScopeKind::Filter)
         ops.push(PlanOp::PushFilter(filter))

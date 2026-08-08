@@ -12,7 +12,7 @@ using @moui_richtext {
 
 ///|
 fn MarkdownEditorApp::document(self : MarkdownEditorApp) -> String {
-  self.document_session.get().source
+  self.document_session.source
 }
 
 ///|
@@ -45,10 +45,10 @@ fn MarkdownEditorApp::set_document_from_input(
   self : MarkdownEditorApp,
   value : String,
 ) -> Unit {
-  let selection = self.selection.get()
+  let selection = self.selection
   self.apply_editor_transaction(
     MarkdownEditTransaction::from_sources(
-      self.document_session.get().source,
+      self.document_session.source,
       value,
       caret=selection.caret,
       selection=selection.selection,
@@ -72,52 +72,52 @@ fn MarkdownEditorApp::apply_action(
 
 ///|
 fn MarkdownEditorApp::source_preview_visible(self : MarkdownEditorApp) -> Bool {
-  self.source_preview_visible.get()
+  self.source_preview_visible
 }
 
 ///|
 fn MarkdownEditorApp::source_mode_enabled(self : MarkdownEditorApp) -> Bool {
-  self.source_mode_enabled.get()
+  self.source_mode_enabled
 }
 
 ///|
 fn MarkdownEditorApp::outline_visible(self : MarkdownEditorApp) -> Bool {
-  self.outline_visible.get()
+  self.outline_visible
 }
 
 ///|
 fn MarkdownEditorApp::file_sidebar_visible(self : MarkdownEditorApp) -> Bool {
-  self.file_sidebar_visible.get()
+  self.file_sidebar_visible
 }
 
 ///|
 fn MarkdownEditorApp::document_info_visible(self : MarkdownEditorApp) -> Bool {
-  self.document_info_visible.get()
+  self.document_info_visible
 }
 
 ///|
 fn MarkdownEditorApp::focus_mode_enabled(self : MarkdownEditorApp) -> Bool {
-  self.focus_mode_enabled.get()
+  self.focus_mode_enabled
 }
 
 ///|
 fn MarkdownEditorApp::typewriter_mode_enabled(self : MarkdownEditorApp) -> Bool {
-  self.typewriter_mode_enabled.get()
+  self.typewriter_mode_enabled
 }
 
 ///|
 fn MarkdownEditorApp::zen_mode_enabled(self : MarkdownEditorApp) -> Bool {
-  self.zen_mode_enabled.get()
+  self.zen_mode_enabled
 }
 
 ///|
 fn MarkdownEditorApp::format_palette_visible(self : MarkdownEditorApp) -> Bool {
-  self.format_palette_visible.get()
+  self.format_palette_visible
 }
 
 ///|
 fn MarkdownEditorApp::format_palette_query(self : MarkdownEditorApp) -> String {
-  self.format_palette_query.get()
+  self.format_palette_query
 }
 
 ///|
@@ -143,29 +143,103 @@ fn MarkdownEditorApp::editor_page_width_for_test(
 
 ///|
 fn MarkdownEditorApp::find_visible(self : MarkdownEditorApp) -> Bool {
-  self.find_visible.get()
+  self.find_visible
 }
 
 ///|
 fn MarkdownEditorApp::find_query(self : MarkdownEditorApp) -> String {
-  self.find_query.get()
+  self.find_query
 }
 
 ///|
 fn MarkdownEditorApp::find_match_count(self : MarkdownEditorApp) -> Int {
-  self.find_matches.get().length()
+  self.find_matches.length()
 }
 
 ///|
 fn MarkdownEditorApp::replace_text(self : MarkdownEditorApp) -> String {
-  self.replace_text.get()
+  self.replace_text
 }
 
 ///|
 fn MarkdownEditorApp::transfer_status_label_for_test(
   self : MarkdownEditorApp,
 ) -> String {
-  markdown_editor_transfer_status_label(self.transfer_status.get())
+  markdown_editor_transfer_status_label(self.transfer_status)
+}
+
+///|
+fn MarkdownEditorApp::overwrite_from_for_test(
+  self : MarkdownEditorApp,
+  latest : MarkdownEditorApp,
+) -> Unit {
+  self.document = latest.document
+  self.document_session = latest.document_session
+  self.selection = latest.selection
+  self.link_target = latest.link_target
+  self.image_target = latest.image_target
+  self.footnote_text = latest.footnote_text
+  self.html_block_text = latest.html_block_text
+  self.target_kind = latest.target_kind
+  self.block_label = latest.block_label
+  self.source_preview_visible = latest.source_preview_visible
+  self.source_mode_enabled = latest.source_mode_enabled
+  self.outline_visible = latest.outline_visible
+  self.file_sidebar_visible = latest.file_sidebar_visible
+  self.document_info_visible = latest.document_info_visible
+  self.focus_mode_enabled = latest.focus_mode_enabled
+  self.typewriter_mode_enabled = latest.typewriter_mode_enabled
+  self.zen_mode_enabled = latest.zen_mode_enabled
+  self.format_palette_visible = latest.format_palette_visible
+  self.format_palette_query = latest.format_palette_query
+  self.more_menu_visible = latest.more_menu_visible
+  self.active_menu = latest.active_menu
+  self.toasts = latest.toasts
+  self.autosave_draft = latest.autosave_draft
+  self.dark_mode_enabled = latest.dark_mode_enabled
+  self.font_family = latest.font_family
+  self.folded_headings = latest.folded_headings
+  self.pending_confirm = latest.pending_confirm
+  self.writing_appearance = latest.writing_appearance
+  self.find_visible = latest.find_visible
+  self.find_query = latest.find_query
+  self.find_options = latest.find_options
+  self.find_matches = latest.find_matches
+  self.replace_text = latest.replace_text
+  self.document_path = latest.document_path
+  self.recent_document_paths = latest.recent_document_paths
+  self.saved_document = latest.saved_document
+  self.transfer_status = latest.transfer_status
+  self.transfer_generation = latest.transfer_generation
+  self.undo_stack = latest.undo_stack
+  self.redo_stack = latest.redo_stack
+  self.editor_scroll = latest.editor_scroll
+  self.file_filter_query = latest.file_filter_query
+  self.working_directory = latest.working_directory
+  self.expanded_tree_paths = latest.expanded_tree_paths
+  self.directory_tree_items = latest.directory_tree_items
+  self.file_tree_expanded = latest.file_tree_expanded
+  self.selected_image_offset = latest.selected_image_offset
+  self.image_centered = latest.image_centered
+}
+
+///|
+fn MarkdownEditorApp::tracked_program_for_test(
+  self : MarkdownEditorApp,
+  services : @services.AppServices,
+) -> @moui.Program[MarkdownEditorApp, MarkdownEditorMsg] {
+  @moui.Program::new_with_environment(
+    init=() => (self, @moui.Effect::none()),
+    update=(app, message) => {
+      let (next, effect) = app.update_with_services(message, services)
+      self.overwrite_from_for_test(next)
+      (next, effect)
+    },
+    view=(app, view_environment) => {
+      self.overwrite_from_for_test(app)
+      app.root_with_environment(view_environment)
+    },
+  ).with_commands(commands=_ => markdown_editor_program_commands())
 }
 
 ///|
@@ -175,7 +249,7 @@ fn MarkdownEditorApp::dispatch_message_for_test(
   message : MarkdownEditorMsg,
 ) -> Unit {
   let program = self
-    .program(environment=@services.AppEnvironment::new(services~))
+    .tracked_program_for_test(services)
     .with_commands(commands=_ => {
       [
         @moui.ProgramCommand::new(
@@ -256,14 +330,14 @@ fn MarkdownEditorApp::pick_working_directory_for_test(
 
 ///|
 fn MarkdownEditorApp::working_directory(self : MarkdownEditorApp) -> String {
-  self.working_directory.get()
+  self.working_directory
 }
 
 ///|
 fn MarkdownEditorApp::expanded_tree_paths(
   self : MarkdownEditorApp,
 ) -> Array[String] {
-  self.expanded_tree_paths.get()
+  self.expanded_tree_paths
 }
 
 ///|
@@ -271,7 +345,7 @@ fn MarkdownEditorApp::set_find_query(
   self : MarkdownEditorApp,
   query : String,
 ) -> Unit {
-  self.find_query.set(query)
+  self.find_query = query
 }
 
 ///|
@@ -279,7 +353,7 @@ fn MarkdownEditorApp::update_find_query_for_test(
   self : MarkdownEditorApp,
   query : String,
 ) -> Unit {
-  ignore(self.update(UpdateFindQuery(query)))
+  self.update_in_place(UpdateFindQuery(query))
 }
 
 ///|
@@ -287,7 +361,7 @@ fn MarkdownEditorApp::set_replace_text(
   self : MarkdownEditorApp,
   replacement : String,
 ) -> Unit {
-  self.replace_text.set(replacement)
+  self.replace_text = replacement
 }
 
 ///|
@@ -319,7 +393,7 @@ fn MarkdownEditorApp::set_outline_visible(
   self : MarkdownEditorApp,
   visible : Bool,
 ) -> Unit {
-  self.outline_visible.set(visible)
+  self.outline_visible = visible
 }
 
 ///|
@@ -327,7 +401,7 @@ fn MarkdownEditorApp::set_file_sidebar_visible(
   self : MarkdownEditorApp,
   visible : Bool,
 ) -> Unit {
-  self.file_sidebar_visible.set(visible)
+  self.file_sidebar_visible = visible
 }
 
 ///|
@@ -335,7 +409,7 @@ fn MarkdownEditorApp::set_document_info_visible(
   self : MarkdownEditorApp,
   visible : Bool,
 ) -> Unit {
-  self.document_info_visible.set(visible)
+  self.document_info_visible = visible
 }
 
 ///|
@@ -343,7 +417,7 @@ fn MarkdownEditorApp::set_format_palette_visible(
   self : MarkdownEditorApp,
   visible : Bool,
 ) -> Unit {
-  self.format_palette_visible.set(visible)
+  self.format_palette_visible = visible
 }
 
 ///|
@@ -351,7 +425,7 @@ fn MarkdownEditorApp::set_format_palette_query(
   self : MarkdownEditorApp,
   query : String,
 ) -> Unit {
-  self.format_palette_query.set(query)
+  self.format_palette_query = query
 }
 
 ///|
@@ -359,14 +433,14 @@ fn MarkdownEditorApp::set_source_preview_visible(
   self : MarkdownEditorApp,
   visible : Bool,
 ) -> Unit {
-  self.source_preview_visible.set(visible)
+  self.source_preview_visible = visible
 }
 
 ///|
 fn MarkdownEditorApp::document_info_for_test(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorDocumentInfo {
-  markdown_editor_document_info(self.document_session.get().snapshot())
+  markdown_editor_document_info(self.document_session.snapshot())
 }
 
 ///|
@@ -374,7 +448,7 @@ fn MarkdownEditorApp::set_link_target(
   self : MarkdownEditorApp,
   target : String,
 ) -> Unit {
-  self.link_target.set(target)
+  self.link_target = target
 }
 
 ///|
@@ -382,7 +456,7 @@ fn MarkdownEditorApp::set_image_target(
   self : MarkdownEditorApp,
   target : String,
 ) -> Unit {
-  self.image_target.set(target)
+  self.image_target = target
 }
 
 ///|
@@ -390,7 +464,7 @@ fn MarkdownEditorApp::set_footnote_text(
   self : MarkdownEditorApp,
   text : String,
 ) -> Unit {
-  self.footnote_text.set(text)
+  self.footnote_text = text
 }
 
 ///|
@@ -398,66 +472,66 @@ fn MarkdownEditorApp::set_html_block_text(
   self : MarkdownEditorApp,
   text : String,
 ) -> Unit {
-  self.html_block_text.set(text)
+  self.html_block_text = text
 }
 
 ///|
 fn MarkdownEditorApp::link_target(self : MarkdownEditorApp) -> String {
-  self.link_target.get()
+  self.link_target
 }
 
 ///|
 fn MarkdownEditorApp::image_target(self : MarkdownEditorApp) -> String {
-  self.image_target.get()
+  self.image_target
 }
 
 ///|
 fn MarkdownEditorApp::footnote_text(self : MarkdownEditorApp) -> String {
-  self.footnote_text.get()
+  self.footnote_text
 }
 
 ///|
 fn MarkdownEditorApp::html_block_text(self : MarkdownEditorApp) -> String {
-  self.html_block_text.get()
+  self.html_block_text
 }
 
 ///|
 fn MarkdownEditorApp::target_kind(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorTargetKind {
-  self.target_kind.get()
+  self.target_kind
 }
 
 ///|
 fn MarkdownEditorApp::block_label(self : MarkdownEditorApp) -> String {
-  self.block_label.get()
+  self.block_label
 }
 
 ///|
 fn MarkdownEditorApp::selection_caret(self : MarkdownEditorApp) -> Int {
-  self.selection.get().caret
+  self.selection.caret
 }
 
 ///|
 fn MarkdownEditorApp::editor_scroll_y(self : MarkdownEditorApp) -> Double {
-  self.editor_scroll.offset().y
+  self.editor_scroll.y
 }
 
 ///|
 fn MarkdownEditorApp::document_path(self : MarkdownEditorApp) -> String {
-  self.document_path.get()
+  self.document_path
 }
 
 ///|
 fn MarkdownEditorApp::recent_document_paths(
   self : MarkdownEditorApp,
 ) -> Array[String] {
-  self.recent_document_paths.get()
+  self.recent_document_paths
 }
 
 ///|
 fn MarkdownEditorApp::saved_document(self : MarkdownEditorApp) -> String {
-  self.saved_document.get()
+  self.saved_document
 }
 
 ///|
@@ -482,16 +556,16 @@ fn MarkdownEditorApp::save_as_for_test(
 fn MarkdownEditorApp::document_status_label_for_test(
   self : MarkdownEditorApp,
 ) -> String {
-  let snapshot = self.document_session.get().snapshot()
-  let block_label = self.block_label.get()
-  let selection = self.selection.get()
+  let snapshot = self.document_session.snapshot()
+  let block_label = self.block_label
+  let selection = self.selection
   let title = markdown_editor_document_title(
-    path=self.document_path.get(),
+    path=self.document_path,
     fallback=snapshot.active_heading,
   )
   let save_state = if self.is_dirty() { "Unsaved" } else { "Saved" }
   let transfer = markdown_editor_transfer_status_label(
-    self.transfer_status.get(),
+    self.transfer_status,
   )
   let transfer_suffix = if transfer == "" { "" } else { " / " + transfer }
   let mode_suffix = self.writing_mode_status_suffix()
@@ -537,10 +611,16 @@ fn MarkdownEditorApp::runtime_with_services(
   height? : Double = 720.0,
 ) -> @runtime.AppRuntime {
   let runtime = @runtime.new_program_with_dimensions(
-    program=self.program(environment=@services.AppEnvironment::new(services~)),
+    program=self.tracked_program_for_test(services),
     width~,
     height~,
   )
+  runtime.set_event_observer(_event => {
+    ignore(runtime.draw_frame())
+    if !runtime.focused_text_input().focused {
+      ignore(runtime.focus_key("markdown-editor"))
+    }
+  })
   runtime
 }
 
@@ -558,10 +638,10 @@ fn MarkdownEditorApp::editor_content_x(
   inner_x? : Double = 4.0,
 ) -> Double {
   let appearance = self.appearance_spec()
-  let show_files = self.file_sidebar_visible.get()
-  let show_info = self.document_info_visible.get()
-  let show_outline = self.outline_visible.get()
-  let show_source = self.source_preview_visible.get()
+  let show_files = self.file_sidebar_visible
+  let show_info = self.document_info_visible
+  let show_outline = self.outline_visible
+  let show_source = self.source_preview_visible
   let editor_width = markdown_editor_primary_editor_width_for_viewport(
     show_source,
     show_outline,
@@ -606,5 +686,5 @@ fn markdown_to_rich_text(text : String) -> @moui_richtext.RichTextDocument {
 fn MarkdownEditorApp::document_session_parse_count(
   self : MarkdownEditorApp,
 ) -> Int {
-  self.document_session.get().parse_count
+  self.document_session.parse_count
 }

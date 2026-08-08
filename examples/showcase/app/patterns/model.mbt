@@ -16,7 +16,7 @@ pub struct Model {
   data_filter : String
   workflow_step : Int
   notice : String
-  scroll : @state.ScrollState
+  scroll : @geometry.Point
 }
 
 ///|
@@ -34,6 +34,7 @@ pub(all) enum Msg {
   WorkflowBack
   WorkflowNext
   DismissNotice
+  Scrolled(@geometry.Point)
 }
 
 ///|
@@ -59,7 +60,7 @@ pub fn Model::new(route? : String = "welcome") -> Model {
     data_filter: "",
     workflow_step: 0,
     notice: "",
-    scroll: @state.ScrollState::new(),
+    scroll: @geometry.Point::new(x=0.0, y=0.0),
   }
 }
 
@@ -71,10 +72,15 @@ pub fn Model::route(self : Model) -> String {
 ///|
 pub fn Model::open(self : Model, route : String) -> Model {
   let next = normalize_pattern_route(route)
-  if next != self.route {
-    self.scroll.scroll_to(x=0.0, y=0.0)
+  {
+    ..self,
+    route: next,
+    scroll: if next != self.route {
+      @geometry.Point::new(x=0.0, y=0.0)
+    } else {
+      self.scroll
+    },
   }
-  { ..self, route: next }
 }
 
 ///|
@@ -120,6 +126,7 @@ pub fn update(model : Model, message : Msg) -> Model {
     WorkflowBack => { ..model, workflow_step: (model.workflow_step - 1).max(0) }
     WorkflowNext => { ..model, workflow_step: (model.workflow_step + 1).min(2) }
     DismissNotice => { ..model, notice: "" }
+    Scrolled(offset) => { ..model, scroll: offset }
   }
 }
 

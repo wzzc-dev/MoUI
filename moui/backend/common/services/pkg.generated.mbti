@@ -1,0 +1,49 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/common/services"
+
+import {
+  "wzzc-dev/moui/backend",
+}
+
+// Values
+pub fn app_environment(bridge~ : @backend.HostServiceBridge, async_queue? : ServiceAsyncQueue?, timer? : @wzzc-dev/moui/services.TimerSource?, routes? : @wzzc-dev/moui/services.RouteSource?) -> @wzzc-dev/moui/services.AppEnvironment
+
+pub fn app_services(bridge~ : @backend.HostServiceBridge, async_queue? : ServiceAsyncQueue?) -> @wzzc-dev/moui/services.AppServices
+
+// Errors
+
+// Types and methods
+pub struct ServiceAsyncQueue {
+  mut next_value : Int
+  mut pending : Array[@backend.HostPendingServiceRequest]
+  mut in_flight : Array[@backend.HostPendingServiceRequest]
+  mut completed : Array[@backend.HostCompletedServiceResponse]
+  // private fields
+}
+pub fn ServiceAsyncQueue::cancel(Self, @backend.HostServiceRequestId, String) -> Bool
+pub fn ServiceAsyncQueue::cancel_all(Self) -> Int
+pub fn ServiceAsyncQueue::complete(Self, @backend.HostServiceRequestId, @backend.HostServiceResponse) -> Bool
+pub fn ServiceAsyncQueue::completed_count(Self) -> Int
+pub fn ServiceAsyncQueue::drain_completed(Self) -> Array[@backend.HostCompletedServiceResponse]
+pub fn ServiceAsyncQueue::drain_pending(Self) -> Array[@backend.HostPendingServiceRequest]
+pub fn ServiceAsyncQueue::in_flight_count(Self) -> Int
+pub fn ServiceAsyncQueue::new() -> Self
+pub fn ServiceAsyncQueue::on_completed(Self, @backend.HostServiceRequestId, (@backend.HostCompletedServiceResponse) -> Unit) -> Bool
+pub fn ServiceAsyncQueue::outstanding_count(Self) -> Int
+pub fn ServiceAsyncQueue::pending_count(Self) -> Int
+pub fn ServiceAsyncQueue::reject(Self, @backend.HostServiceRequestId, String) -> Bool
+pub fn ServiceAsyncQueue::submit(Self, @backend.HostServiceRequest) -> @backend.HostServiceResponse
+pub fn ServiceAsyncQueue::take_completed(Self, @backend.HostServiceRequestId) -> @backend.HostCompletedServiceResponse?
+
+pub struct WindowServiceState {
+  // private fields
+}
+pub fn WindowServiceState::bridge(Self) -> @backend.HostServiceBridge
+pub fn WindowServiceState::dispose(Self) -> Unit
+pub fn WindowServiceState::is_open(Self) -> Bool
+pub fn WindowServiceState::new(bridge~ : @backend.HostServiceBridge, dispose? : () -> Unit) -> Self
+
+// Type aliases
+
+// Traits
+

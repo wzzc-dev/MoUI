@@ -4,7 +4,6 @@ import {
   "wzzc-dev/moui/views",
   "wzzc-dev/moui",
   "wzzc-dev/moui/geometry",
-  "wzzc-dev/moui/state",
   "wzzc-dev/moui/text",
   "wzzc-dev/moui/graphics",
 }
@@ -12,7 +11,7 @@ import {
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/backend" @host,
-  "wzzc-dev/moui/backend/common" @backend_common,
+  "wzzc-dev/moui/backend/common/services" @backend_common_services,
   "wzzc-dev/moui/runtime",
 } for "wbtest"
 

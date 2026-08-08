@@ -113,6 +113,17 @@ fn validate_project_options(options : ProjectOptions) -> Result[Unit, String] {
 
 ///|
 fn moon_mod_text(options : ProjectOptions) -> String {
+  let renderer_imports : Array[String] = []
+  if options.platforms.contains("web") {
+    renderer_imports.push(
+      "  \"wzzc-dev/moui_web_renderer@" + options.moui_version + "\",",
+    )
+  }
+  if options.platforms.any(platform => platform != "web") {
+    renderer_imports.push(
+      "  \"wzzc-dev/moui_skia_renderer@" + options.moui_version + "\",",
+    )
+  }
   let template =
     #|name = "__MODULE__"
     #|
@@ -120,10 +131,12 @@ fn moon_mod_text(options : ProjectOptions) -> String {
     #|
     #|import {
     #|  "wzzc-dev/moui@__MOUI_VERSION__",
+    #|__RENDERER_IMPORTS__
     #|}
   template
   .replace_all(old="__MODULE__", new=options.module_name)
   .replace_all(old="__MOUI_VERSION__", new=options.moui_version)
+  .replace_all(old="__RENDERER_IMPORTS__", new=renderer_imports.join("\n"))
 }
 
 ///|
@@ -396,7 +409,7 @@ fn web_html_text(title : String) -> String {
     #|  <body>
     #|    <div id="canvas-host" aria-label="MoUI canvas host"></div>
     #|    <script type="module">
-    #|      import { bootMouiWasmGcApp } from "../.mooncakes/wzzc-dev/moui/render/webgpu_adapter/runtime.js";
+    #|      import { bootMouiWasmGcApp } from "../.mooncakes/wzzc-dev/moui_web_renderer/runtime.js";
     #|      bootMouiWasmGcApp({
     #|        wasmUrl: new URL("../_build/wasm-gc/debug/build/web_wasm/web_wasm.wasm", import.meta.url),
     #|        canvasHost: "#canvas-host",
@@ -413,7 +426,7 @@ fn desktop_pkg_text(module_name : String, platform : String) -> String {
     #|import {
     #|  "wzzc-dev/moui/runtime",
     #|  "wzzc-dev/moui/backend/__PLATFORM__" @platform_host,
-    #|  "wzzc-dev/moui/render/skia" @render_skia,
+    #|  "wzzc-dev/moui_skia_renderer" @render_skia,
     #|  "__MODULE__/app" @app,
     #|}
     #|
@@ -431,8 +444,14 @@ fn desktop_pkg_text(module_name : String, platform : String) -> String {
 }
 
 ///|
-fn desktop_main_text(title : String) -> String {
+fn desktop_main_text(title : String, platform : String) -> String {
   let title = moon_string(title)
+  let skia_platform = match platform {
+    "macos" => "MacOS"
+    "windows" => "Windows"
+    "linux" => "Linux"
+    _ => abort("unsupported desktop platform: " + platform)
+  }
   let template =
     #|///|
     #|fn main {
@@ -442,11 +461,13 @@ fn desktop_main_text(title : String) -> String {
     #|    height=480.0,
     #|  )
     #|  @runtime.run_app("__TITLE__", runtime)
-    #|    .render_all(@render_skia.from_env())
+    #|    .render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::__SKIA_PLATFORM__))
     #|    .backend(@platform_host.entry())
     #|    .run()
     #|}
-  template.replace_all(old="__TITLE__", new=title)
+  template
+  .replace_all(old="__TITLE__", new=title)
+  .replace_all(old="__SKIA_PLATFORM__", new=skia_platform)
 }
 
 ///|
@@ -647,7 +668,10 @@ fn build_project_file_plan(
         ),
       )
       files.push(
-        text_file(directory + "/main.mbt", desktop_main_text(options.title)),
+        text_file(
+          directory + "/main.mbt",
+          desktop_main_text(options.title, platform),
+        ),
       )
     }
   }

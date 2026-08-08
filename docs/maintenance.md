@@ -29,7 +29,7 @@ The default daily baseline covers:
 
 - `moui/core` and `moui/views`
 - `moui/backend` and `moui/backend/web`
-- `moui/render`, `moui/render/skia`, and `moui/render/webgpu_adapter`
+- `moui/render`, `moui_skia_renderer`, and `moui_web_renderer`
 - fallback-safe `moui_skia` checks
 - Showcase app/Web wasm-gc validation
 - Markdown Editor app/Web wasm-gc validation
@@ -85,7 +85,7 @@ moon run tools/moui/validate_maintenance_baseline --target native -- --scope ful
 
 The `full` scope keeps the daily budgets and additionally scans addon/tool
 workspace roots such as `moui_richtext`, `moui_skia`, `moui_sun`, `moui_theme`,
-`moui_tester`, `moui_devtools`, `moui_webview`, `moui_agent*`, and `tools`.
+`moui_tests`, `moui_devtools`, `moui_webview`, `moui_agent*`, and `tools`.
 Known large files have explicit full-only temporary budgets so broad validation
 can report hotspots without forcing every 2k-4k line diagnostic/test file into
 the daily baseline or this refactor. Split those files in focused follow-up

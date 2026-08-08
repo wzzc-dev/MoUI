@@ -47,29 +47,30 @@ Web creates the primary window through the same registry/slot path and supports
 resolver-backed `OpenWindow` requests through `WebAppOptions` captured by
 `@web.entry`. Native host cores create platform windows through the same path
 but do not choose concrete renderer families. Application entrypoints supply
-ordered `RendererFactory` values and one platform `PlatformEntry` to
-`@runtime.run_app`. A resolved native window creates a neutral `SurfaceContext`,
-resolves a `WindowRenderer`, then registers a `HostRuntimeDriver`,
+ordered `RendererProvider` values and one platform `PlatformEntry` to
+`@runtime.run_app`. A resolved native window creates an opaque `HostSurface`,
+binds the first accepting provider to a `RendererSession`, then registers a `HostRuntimeDriver`,
 platform binding, and platform slot, and routes redraw, events, context menus,
 host service completions, IME sync, and disposal by `WindowId`. Without a
 scene resolver, hosts reject `OpenWindow` with the shared unavailable-resolver
 response.
 
 Native renderer choice is application composition, not a field on host-core app
-options. Use `render/skia.from_env()` for the native Skia mainline and
-`render/wgpu.native(...)` only for native WGPU experimental diagnostics.
+options. Use `@render_skia.from_env(platform=...)` with the composition root's
+explicit `NativeGpuPlatform` for the native Skia mainline and
+`@render_wgpu.native(...)` only for native WGPU experimental diagnostics.
 Android, iOS, and HarmonyOS use `wzzc-dev/window` as the embedded runtime
 backend's embedder. The template sends `HostCmd` through its `EventLoop` to the
 matching `*EmbeddedRuntimeBackend`, which assembles the MoUI runtime session and
-attaches the `WindowRenderer` resolved from application-supplied factories.
+attaches the `RendererSession` resolved from application-supplied providers.
 `wzzc-dev/window/internal/embedded_dispatch` is stateless physical callback
 dispatch for all three packages; platform `HostCmd` adapters retain only
 native payload decoding and nominal `ApplicationHandler`/`Window` effects.
-`EmbeddedWindowCoordinator` in `moui/backend/common` owns logical
-phase, surface generation, primary window, detach, and application exit.
-`HostedWindowBackend` and `FrameCoordinator` own the shared MoUI session,
-renderer kit, surface recreation, redraw, completion, image repaint, and IME
-hooks.
+`common/lifecycle::EmbeddedLifecycle` owns logical phase, surface generation,
+primary window, detach, and application exit. `EmbeddedSession` composes it
+with the shared frame/image/input/services owners plus renderer, IME,
+semantics, platform-view, and transport capabilities without duplicating
+lifecycle or frame-loop state.
 Lifecycle, surface, and input must not bypass this route. HarmonyOS
 XComponent callbacks are the sole source for surface, pointer, resize, and
 detach. Fallback builds are build-system evidence only; matching-device or
@@ -104,8 +105,8 @@ constructors and platform event conversion.
   navigation emits `WebViewEvent::NavigationRequested`, and the app commits by
   updating the view `url` or sending `WebViewCommand::LoadUrl` through the host
   command queue.
-- The Sun factory forwards offscreen platform-view pixels through the neutral
-  `WindowRenderer` capability. This is renderer composition wiring;
+- The Sun provider forwards offscreen platform-view pixels through the neutral
+  `RendererSession` capability. This is renderer composition wiring;
   matching-host runtime smoke is still required before making a broader
   platform runtime readiness claim.
 - Typed host services are routed through `HostServiceBridge`, with explicit

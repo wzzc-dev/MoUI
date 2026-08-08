@@ -69,8 +69,10 @@ test "shell Host Wire parses generation-checked typed accessibility actions" {
         session_generation: 9,
         response: EmbeddedHostResponse::Accessibility(
           {
-            node_id,
-            generation,
+            target: @core.SemanticsTarget::ByNodeId(node_id),
+            precondition: @runtime.SemanticsGenerationPrecondition::Exact(
+              generation,
+            ),
             action: @core.SemanticsAction::SetText("Luna"),
           }
         ),

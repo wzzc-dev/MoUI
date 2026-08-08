@@ -14,7 +14,7 @@ pub fn[Msg] checkbox(
 ) -> @core.View[Msg] {
   checkbox_control(
     label~,
-    checked=@core.Binding::new(get=() => checked, set=_value => ()),
+    checked=@core.ControlledValue::new(value=checked, changed=on_change),
     theme?,
     font?,
     foreground?,
@@ -23,7 +23,6 @@ pub fn[Msg] checkbox(
     box_shape?,
     check_style?,
     height~,
-    on_change=Some(on_change),
   )
 }
 
@@ -49,7 +48,7 @@ fn resolve_control_double(value : Double?, fallback : Double) -> Double {
 ///|
 pub fn[Msg] checkbox_control(
   label~ : String,
-  checked~ : @core.Binding[Bool],
+  checked~ : @core.ControlledValue[Bool, Msg],
   theme? : @core.Theme,
   font? : @core.FontSpec,
   foreground? : @core.Color,
@@ -58,11 +57,10 @@ pub fn[Msg] checkbox_control(
   box_shape? : @style.ChoiceControlShape,
   check_style? : @style.CheckMarkStyle,
   height? : Double = 32.0,
-  on_change? : ((Bool) -> Msg)? = None,
   kind? : String = "Checkbox",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let checked_snapshot = checked.get()
+  let checked_snapshot = checked.value()
   @core.View::from_node(
     Checkbox::{
       label,
@@ -78,15 +76,14 @@ pub fn[Msg] checkbox_control(
       kind,
       key,
     },
-    event=(node, ctx) => checkbox_event(node, ctx, checked, on_change),
+    event=(node, ctx) => checkbox_event(node, ctx, checked),
     semantics_actions=_node => {
       [
         @core.ViewSemanticsActionHandler::activate(_ctx => {
-          let next = !checked.get()
+          let next = !checked.value()
           @core.ViewSemanticsActionResult::accepted(
             dirty=@core.ViewDirtyHint::ViewBuildDirty,
-            messages=checkbox_messages(on_change, next),
-            commit=Some(() => checked.set(next)),
+            messages=[checked.changed(next)],
           )
         }),
       ]
@@ -252,21 +249,19 @@ impl @core.ViewNode for Checkbox with fn focusable(_self) {
 fn[Msg] checkbox_event(
   _node : Checkbox,
   ctx : @core.ViewEventContext,
-  checked : @core.Binding[Bool],
-  on_change : ((Bool) -> Msg)?,
+  checked : @core.ControlledValue[Bool, Msg],
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
     @core.AppEvent::Pointer(event) =>
       if event.phase == @core.PointerPhase::Up &&
         ctx.frame.contains(event.position) {
-        let next = !checked.get()
-        checked.set(next)
+        let next = !checked.value()
         @common.view_event_result(
           changed=true,
           activated=true,
           captured=true,
           dirty=@core.ViewDirtyHint::ViewBuildDirty,
-          messages=checkbox_messages(on_change, next),
+          messages=[checked.changed(next)],
         )
       } else {
         @core.ViewEventResult::ignored()
@@ -274,14 +269,13 @@ fn[Msg] checkbox_event(
     @core.AppEvent::Keyboard(event) =>
       if event.pressed &&
         (event.key == "Enter" || event.key == "Space" || event.key == " ") {
-        let next = !checked.get()
-        checked.set(next)
+        let next = !checked.value()
         @common.view_event_result(
           changed=true,
           activated=true,
           captured=true,
           dirty=@core.ViewDirtyHint::ViewBuildDirty,
-          messages=checkbox_messages(on_change, next),
+          messages=[checked.changed(next)],
         )
       } else {
         @core.ViewEventResult::ignored()
@@ -290,18 +284,6 @@ fn[Msg] checkbox_event(
   }
 }
 
-///|
-fn[Msg] checkbox_messages(
-  on_change : ((Bool) -> Msg)?,
-  checked : Bool,
-) -> Array[Msg] {
-  match on_change {
-    Some(handler) => [handler(checked)]
-    None => []
-  }
-}
-
-///|
 fn append_checkbox_commands(
   commands : Array[@core.DrawCommand],
   label~ : String,

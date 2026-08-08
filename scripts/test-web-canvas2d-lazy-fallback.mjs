@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createWebGpuImportsAsync } from "../moui/render/webgpu_adapter/runtime.js";
+import { createWebGpuImportsAsync } from "../moui_web_renderer/runtime.js";
 
 const assert = (condition, message) => {
   if (!condition) {

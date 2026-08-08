@@ -1,0 +1,143 @@
+///|
+/// A renderer owner that keeps the raster factory and GPU queue model under one
+/// lifecycle. `Recorded` queue completions are internal handoff signals; only
+/// the window-backed presenter can produce a public `Presented` completion.
+pub struct SkiaHybridRenderer {
+  priv renderer : SkiaRasterRenderer
+  priv worker : @render_common.GpuRenderWorker
+  priv surface_route : SkiaSurfaceRoute
+  priv requested : NativeRendererMode
+  priv mut fallback_to_raster : Bool
+  priv pending_completions : Array[@render.RenderPresentCompletion]
+}
+
+///|
+pub fn create_hybrid_renderer(
+  platform : NativeGpuPlatform,
+  requested : NativeRendererMode,
+  metrics : @core.SurfaceMetrics,
+  target : SkiaPresentTarget,
+  gpu_available~ : Bool,
+  gpu_promoted~ : Bool,
+  gpu_target? : HostGpuPresentTarget? = None,
+  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  async_image_loading? : Bool = false,
+) -> SkiaHybridRenderer raise SkiaRendererError {
+  let surface_route = resolve_surface_route(
+    platform,
+    requested,
+    gpu_available~,
+    gpu_promoted~,
+  )
+  let gpu_target = if surface_route.is_gpu() { gpu_target } else { None }
+  let renderer = create_with_present_target_and_route(
+    metrics,
+    target,
+    surface_route~,
+    gpu_target~,
+    font_resolution~,
+    async_image_loading~,
+  )
+  {
+    renderer,
+    worker: @render_common.GpuRenderWorker::new(),
+    surface_route,
+    requested,
+    fallback_to_raster: false,
+    pending_completions: [],
+  }
+}
+
+///|
+pub fn SkiaHybridRenderer::surface_route(
+  self : SkiaHybridRenderer,
+) -> SkiaSurfaceRoute {
+  self.surface_route
+}
+
+///|
+pub fn SkiaHybridRenderer::requested_mode(
+  self : SkiaHybridRenderer,
+) -> NativeRendererMode {
+  self.requested
+}
+
+///|
+pub fn SkiaHybridRenderer::render_frame(
+  self : SkiaHybridRenderer,
+  submission : @render.RenderFrameSubmission,
+) -> @render.RenderFrameResult {
+  let frame = submission.frame()
+  if self.fallback_to_raster || !self.surface_route.is_gpu() {
+    return self.renderer.render_frame(frame)
+  }
+  let input = @render.RenderFrameInput::new(
+    metrics=self.renderer.metrics(),
+    commands=frame.commands,
+    damage=frame.damage,
+    clear_color=Some(frame.clear_color),
+  )
+  let result = self.worker.submit(input, token=submission.token())
+  self.worker.poll()
+  let completions = self.worker.drain_present_completions()
+  if completions.any(c => {
+      c.status() is @render.RenderPresentStatus::FallbackToRaster
+    }) {
+    self.fallback_to_raster = true
+    self.pending_completions.append(
+      completions.filter(c => {
+        c.status() is @render.RenderPresentStatus::FallbackToRaster
+      }),
+    )
+    return @render.RenderFrameResult::new(presented=false, queued=false)
+  }
+  let mut recorded_completion : @render.RenderPresentCompletion? = None
+  for completion in completions {
+    if completion.status() is @render.RenderPresentStatus::Recorded {
+      recorded_completion = Some(completion)
+      break
+    }
+  }
+  match recorded_completion {
+    Some(recorded) => {
+      let presented = self.renderer.render_frame(frame)
+      if presented.presented {
+        self.pending_completions.push(
+          @render.RenderPresentCompletion::new(
+            token=recorded.token(),
+            submitted_at_ms=recorded.submitted_at_ms(),
+            completed_at_ms=recorded.completed_at_ms(),
+            presented_at_ms=recorded.completed_at_ms(),
+            status=@render.RenderPresentStatus::Presented,
+            gpu_context_generation=recorded.gpu_context_generation(),
+          ),
+        )
+      }
+      presented
+    }
+    None => result
+  }
+}
+
+///|
+pub fn SkiaHybridRenderer::drain_present_completions(
+  self : SkiaHybridRenderer,
+) -> Array[@render.RenderPresentCompletion] {
+  let completions = self.pending_completions.copy()
+  self.pending_completions.clear()
+  completions
+}
+
+///|
+pub fn SkiaHybridRenderer::fallback_to_raster(
+  self : SkiaHybridRenderer,
+) -> Bool {
+  self.fallback_to_raster
+}
+
+///|
+pub fn SkiaRasterRenderer::metrics(
+  self : SkiaRasterRenderer,
+) -> @core.SurfaceMetrics {
+  self.metrics
+}

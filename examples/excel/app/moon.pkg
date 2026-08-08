@@ -9,15 +9,14 @@ import {
   "wzzc-dev/moui",
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/graphics",
-  "wzzc-dev/moui/state",
 }
 
 import {
   "wzzc-dev/moui/backend" @host,
-  "wzzc-dev/moui/backend/common" @backend_common,
+  "wzzc-dev/moui/backend/common/services" @backend_common_services,
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/core",
-} for "test"
+} for "wbtest"
 
 supported_targets = "native"
 

@@ -23,92 +23,35 @@ pub fn render_present_completions_have_presented(Array[RenderPresentCompletion])
 
 pub fn render_present_completions_have_terminal(Array[RenderPresentCompletion]) -> Bool
 
-pub fn renderer_provider_binding_providers(Array[RendererProviderBinding]) -> Array[RendererProvider]
-
 pub fn size_dim_to_uint(Double) -> UInt
 
 // Errors
 
 // Types and methods
-pub(all) struct BoundSurface {
-  kind : RendererPresentationModel
-  route : SurfaceRoute
-  metrics : @core.SurfaceMetrics
-}
-pub fn BoundSurface::kind(Self) -> RendererPresentationModel
-pub fn BoundSurface::metrics(Self) -> @core.SurfaceMetrics
-pub fn BoundSurface::new(kind~ : RendererPresentationModel, route~ : SurfaceRoute, metrics~ : @core.SurfaceMetrics) -> Self
-pub fn BoundSurface::route(Self) -> SurfaceRoute
-
-pub enum GpuHostSurfaceDescriptor {
-  MetalLayer(UInt64)
-  D3D12Hwnd(UInt64)
-  AndroidVulkanWindow(UInt64)
-  WaylandVulkanSurface(UInt64, UInt64)
-  EglNativeWindow(UInt64)
+pub struct FrameToken {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
-pub fn GpuHostSurfaceDescriptor::android_vulkan_window(UInt64) -> Self?
-pub fn GpuHostSurfaceDescriptor::d3d12_hwnd(UInt64) -> Self?
-pub fn GpuHostSurfaceDescriptor::egl_native_window(UInt64) -> Self?
-pub fn GpuHostSurfaceDescriptor::metal_layer(UInt64) -> Self?
-pub fn GpuHostSurfaceDescriptor::wayland_vulkan_surface(UInt64, UInt64) -> Self?
-
-pub struct HostGpuSurfaceBridge {
-  descriptor : GpuHostSurfaceDescriptor
-  create_surface_fn : (@core.SurfaceMetrics) -> UInt64?
-  present_fn : (UInt64) -> Bool
-  resize_fn : (@core.SurfaceMetrics) -> Unit
-  dispose_fn : () -> Unit
-}
-pub fn HostGpuSurfaceBridge::create_surface(Self, @core.SurfaceMetrics) -> UInt64?
-pub fn HostGpuSurfaceBridge::descriptor(Self) -> GpuHostSurfaceDescriptor
-pub fn HostGpuSurfaceBridge::dispose(Self) -> Unit
-pub fn HostGpuSurfaceBridge::new(descriptor~ : GpuHostSurfaceDescriptor, create_surface~ : (@core.SurfaceMetrics) -> UInt64?, present~ : (UInt64) -> Bool, resize? : (@core.SurfaceMetrics) -> Unit, dispose? : () -> Unit) -> Self
-pub fn HostGpuSurfaceBridge::present(Self, UInt64) -> Bool
-pub fn HostGpuSurfaceBridge::resize(Self, @core.SurfaceMetrics) -> Unit
+pub fn FrameToken::new(surface_generation~ : Int, sequence~ : Int) -> Self
+pub fn FrameToken::sequence(Self) -> Int
+pub fn FrameToken::surface_generation(Self) -> Int
 
 pub struct HostImageSource {
   read_fn : (String) -> Bytes?
 }
 pub fn HostImageSource::new(read~ : (String) -> Bytes?) -> Self
 pub fn HostImageSource::read(Self, String) -> Bytes?
+pub fn HostImageSource::unavailable() -> Self
 
-pub struct HostRendererGpuRecoveryCapability {
-  // private fields
+pub struct HostSurface {
+  capability : &HostSurfaceCapability
 }
-pub fn HostRendererGpuRecoveryCapability::new(inject_context_loss? : () -> Unit, gpu_recovery_count? : () -> Int, gpu_fallback_active? : () -> Bool) -> Self
-
-pub struct HostRendererImageCapability {
-  // private fields
-}
-pub fn HostRendererImageCapability::new(image_resources? : () -> Array[ImageResourceRecord], image_resource_snapshot? : (() -> ImageResourceSnapshot)?, apply_image_resource_load_completion? : ((ImageResourceLoadCompletion) -> ImageResourceSnapshot)?, set_image_resource_change_callback? : (((ImageResourceSnapshot) -> Unit)?) -> Unit) -> Self
-
-pub struct HostRendererPlatformViewCapability {
-  // private fields
-}
-pub fn HostRendererPlatformViewCapability::new(draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit) -> Self
-
-pub(all) struct ImageLoadScheduleResult {
-  window_id : RenderWindowId
-  snapshot_revision : Int
-  loading_count : Int
-  scheduled_count : Int
-  already_in_flight_count : Int
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ImageLoadScheduleResult::already_in_flight_count(Self) -> Int
-pub fn ImageLoadScheduleResult::loading_count(Self) -> Int
-pub fn ImageLoadScheduleResult::new(window_id~ : RenderWindowId, snapshot_revision~ : Int, loading_count~ : Int, scheduled_count~ : Int, already_in_flight_count~ : Int) -> Self
-pub fn ImageLoadScheduleResult::scheduled_count(Self) -> Int
-pub fn ImageLoadScheduleResult::snapshot_revision(Self) -> Int
-pub fn ImageLoadScheduleResult::window_id(Self) -> RenderWindowId
-
-pub struct ImageLoader {
-  // private fields
-}
-pub fn ImageLoader::cancel_all(Self) -> Int
-pub fn ImageLoader::cancel_window(Self, RenderWindowId) -> Int
-pub fn ImageLoader::new(schedule~ : (RenderWindowId, WindowRenderer, (RenderWindowId, WindowRenderer, ImageResourceLoadCompletion) -> Unit) -> ImageLoadScheduleResult, cancel_window~ : (RenderWindowId) -> Int, cancel_all~ : () -> Int) -> Self
-pub fn ImageLoader::schedule_loading_resources(Self, RenderWindowId, WindowRenderer, complete~ : (RenderWindowId, WindowRenderer, ImageResourceLoadCompletion) -> Unit) -> ImageLoadScheduleResult
+pub fn HostSurface::cpu_present(Self) -> PresentTarget?
+pub fn HostSurface::from_capability(&HostSurfaceCapability) -> Self
+pub fn HostSurface::image_source(Self) -> HostImageSource?
+pub fn HostSurface::metrics(Self) -> @core.SurfaceMetrics
+pub fn HostSurface::native_surface(Self) -> NativeSurface?
+pub fn HostSurface::new(surface_id? : String, metrics~ : @core.SurfaceMetrics, cpu_present? : PresentTarget?, native_surface? : NativeSurface?, image_source? : HostImageSource?) -> Self
+pub fn HostSurface::surface_id(Self) -> String
 
 pub(all) struct ImageResourceLoadCompletion {
   source : String
@@ -143,20 +86,23 @@ pub fn ImageResourceRecord::failed(String, diagnostic~ : String) -> Self
 pub fn ImageResourceRecord::loading(String) -> Self
 pub fn ImageResourceRecord::ready(String, width~ : Int, height~ : Int) -> Self
 
-pub(all) struct ImageResourceSnapshot {
-  revision : Int
-  records : Array[ImageResourceRecord]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ImageResourceSnapshot::empty() -> Self
-pub fn ImageResourceSnapshot::from_records(Array[ImageResourceRecord]) -> Self
-pub fn ImageResourceSnapshot::new(revision~ : Int, records~ : Array[ImageResourceRecord]) -> Self
-
 pub(all) enum ImageResourceStatus {
   ImageLoading
   ImageReady
   ImageFailed
   ImageDisposed
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct NativeSurface {
+  capability : &NativeSurfaceCapability
+}
+pub fn NativeSurface::acquire(Self, @core.SurfaceMetrics) -> UInt64?
+pub fn NativeSurface::display_handle(Self) -> UInt64?
+pub fn NativeSurface::dispose(Self) -> Unit
+pub fn NativeSurface::new(surface_handle~ : UInt64, display_handle? : UInt64?, acquire? : (@core.SurfaceMetrics) -> UInt64?, present? : (UInt64) -> Bool, resize? : (@core.SurfaceMetrics) -> Unit, dispose? : () -> Unit) -> Self?
+pub fn NativeSurface::present(Self, UInt64) -> Bool
+pub fn NativeSurface::resize(Self, @core.SurfaceMetrics) -> Unit
+pub fn NativeSurface::surface_handle(Self) -> UInt64
 
 pub(all) struct PixelFrame {
   width : Int
@@ -208,9 +154,8 @@ pub(all) struct RenderFrameInput {
   commands : Array[@core.DrawCommand]
   damage : @core.DamageRegion
   clear_color : @core.Color?
-  cache_epoch : Int
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RenderFrameInput::new(metrics~ : @core.SurfaceMetrics, commands~ : Array[@core.DrawCommand], damage? : @core.DamageRegion, clear_color? : @core.Color?, cache_epoch? : Int) -> Self
+pub fn RenderFrameInput::new(metrics~ : @core.SurfaceMetrics, commands~ : Array[@core.DrawCommand], damage? : @core.DamageRegion, clear_color? : @core.Color?) -> Self
 
 pub(all) struct RenderFrameResult {
   presented : Bool
@@ -219,14 +164,18 @@ pub(all) struct RenderFrameResult {
   cache_miss_count : Int
   cache_update_count : Int
   cache_evict_count : Int
-  missing_layer_keys : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RenderFrameResult::new(presented? : Bool, queued? : Bool, cache_hit_count? : Int, cache_miss_count? : Int, cache_update_count? : Int, cache_evict_count? : Int, missing_layer_keys? : Array[String]) -> Self
+pub fn RenderFrameResult::new(presented? : Bool, queued? : Bool, cache_hit_count? : Int, cache_miss_count? : Int, cache_update_count? : Int, cache_evict_count? : Int) -> Self
+
+pub struct RenderFrameSubmission {
+  // private fields
+}
+pub fn RenderFrameSubmission::frame(Self) -> @core.DrawFrame
+pub fn RenderFrameSubmission::new(token~ : FrameToken, frame~ : @core.DrawFrame) -> Self
+pub fn RenderFrameSubmission::token(Self) -> FrameToken
 
 pub(all) struct RenderPresentCompletion {
-  frame_sequence : Int
-  surface_generation : Int
-  image_resource_revision : Int64
+  token : FrameToken
   submitted_at_ms : Double
   completed_at_ms : Double
   presented_at_ms : Double
@@ -234,14 +183,12 @@ pub(all) struct RenderPresentCompletion {
   gpu_context_generation : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderPresentCompletion::completed_at_ms(Self) -> Double
-pub fn RenderPresentCompletion::frame_sequence(Self) -> Int
 pub fn RenderPresentCompletion::gpu_context_generation(Self) -> Int
-pub fn RenderPresentCompletion::image_resource_revision(Self) -> Int64
-pub fn RenderPresentCompletion::new(frame_sequence~ : Int, surface_generation~ : Int, image_resource_revision~ : Int64, submitted_at_ms~ : Double, completed_at_ms~ : Double, presented_at_ms~ : Double, status~ : RenderPresentStatus, gpu_context_generation~ : Int) -> Self
+pub fn RenderPresentCompletion::new(token~ : FrameToken, submitted_at_ms~ : Double, completed_at_ms~ : Double, presented_at_ms~ : Double, status~ : RenderPresentStatus, gpu_context_generation~ : Int) -> Self
 pub fn RenderPresentCompletion::presented_at_ms(Self) -> Double
 pub fn RenderPresentCompletion::status(Self) -> RenderPresentStatus
 pub fn RenderPresentCompletion::submitted_at_ms(Self) -> Double
-pub fn RenderPresentCompletion::surface_generation(Self) -> Int
+pub fn RenderPresentCompletion::token(Self) -> FrameToken
 
 pub(all) enum RenderPresentStatus {
   Recorded
@@ -286,15 +233,10 @@ pub fn RendererBackendKind::family(Self) -> RendererFamily
 pub fn RendererBackendKind::label(Self) -> String
 pub fn RendererBackendKind::short_label(Self) -> String
 
-pub struct RendererBindingPlan {
-  binding : RendererProviderBinding
-  image_loader : ImageLoader?
-  surface : SurfaceDescriptor?
+pub(all) enum RendererBindResult {
+  Bound(RendererSession)
+  Rejected(String)
 }
-pub fn RendererBindingPlan::binding(Self) -> RendererProviderBinding
-pub fn RendererBindingPlan::image_loader(Self) -> ImageLoader?
-pub fn RendererBindingPlan::new(binding~ : RendererProviderBinding, image_loader? : ImageLoader?, surface? : SurfaceDescriptor?) -> Self
-pub fn RendererBindingPlan::surface(Self) -> SurfaceDescriptor?
 
 pub(all) enum RendererCapabilityStatus {
   Supported
@@ -344,13 +286,10 @@ pub(all) struct RendererDescriptor {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererDescriptor::new(backend~ : RendererBackendKind, family~ : RendererFamily, presentation~ : RendererPresentationModel, supported_targets~ : Array[RendererTarget], capabilities~ : Array[RendererBackendFeatureCapability], description? : String) -> Self
 
-pub struct RendererFactory {
-  id : String
-  bind_fn : (SurfaceContext) -> RendererBindingPlan
+pub(all) enum RendererEvent {
+  PresentCompleted(RenderPresentCompletion)
+  ImageLoadRequested(RendererImageLoadRequest)
 }
-pub fn RendererFactory::bind(Self, SurfaceContext) -> RendererBindingPlan
-pub fn RendererFactory::id(Self) -> String
-pub fn RendererFactory::new(id~ : String, bind~ : (SurfaceContext) -> RendererBindingPlan) -> Self
 
 pub(all) enum RendererFamily {
   Wgpu
@@ -402,18 +341,51 @@ pub(all) enum RendererFeatureStatus {
 pub fn RendererFeatureStatus::label(Self) -> String
 pub fn RendererFeatureStatus::needs_follow_up(Self) -> Bool
 
+pub struct RendererGpuRecoveryCapability {
+  // private fields
+}
+pub fn RendererGpuRecoveryCapability::new(inject_context_loss? : () -> Unit, gpu_recovery_count? : () -> Int, gpu_fallback_active? : () -> Bool) -> Self
+
+pub(all) enum RendererImageCompletionResult {
+  Applied(Bool)
+  Stale
+  Disposed
+} derive(Eq, ToJson, @debug.Debug)
+
 pub struct RendererImageDecoder {
   decode_fn : (String, Bytes?) -> ImageResourceLoadCompletion
 }
 pub fn RendererImageDecoder::decode(Self, String, Bytes?) -> ImageResourceLoadCompletion
 pub fn RendererImageDecoder::new(decode~ : (String, Bytes?) -> ImageResourceLoadCompletion) -> Self
 
-pub(all) struct RendererInstance {
-  render_frame : (@core.DrawFrame) -> RenderFrameResult
-  recover : (String) -> RecoveryResult
-  dispose : () -> Unit
+pub struct RendererImageDiagnostics {
+  // private fields
 }
-pub fn RendererInstance::from_host_window_renderer(WindowRenderer) -> Self
+pub fn RendererImageDiagnostics::pending_request_count(Self) -> Int
+pub fn RendererImageDiagnostics::records(Self) -> Array[ImageResourceRecord]
+
+pub struct RendererImageLoadCompletion {
+  // private fields
+}
+pub fn RendererImageLoadCompletion::new(token~ : RendererImageLoadToken, result~ : ImageResourceLoadCompletion) -> Self
+pub fn RendererImageLoadCompletion::result(Self) -> ImageResourceLoadCompletion
+pub fn RendererImageLoadCompletion::token(Self) -> RendererImageLoadToken
+
+pub struct RendererImageLoadRequest {
+  // private fields
+}
+pub fn RendererImageLoadRequest::load(Self) -> RendererImageLoadCompletion
+pub fn RendererImageLoadRequest::source(Self) -> String
+pub fn RendererImageLoadRequest::token(Self) -> RendererImageLoadToken
+
+pub struct RendererImageLoadToken {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct RendererPlatformViewCapability {
+  // private fields
+}
+pub fn RendererPlatformViewCapability::new(draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit) -> Self
 
 pub(all) enum RendererPresentationModel {
   HostGpuSurface
@@ -427,25 +399,13 @@ pub(all) struct RendererProvider {
   id : String
   descriptor : RendererDescriptor
   capabilities : () -> Array[RendererBackendFeatureCapability]
-  negotiate : (SurfaceDescriptor) -> SurfaceNegotiationResult
-  create : (@core.SurfaceMetrics, BoundSurface) -> RendererInstance
+  bind : (HostSurface) -> RendererBindResult
 }
+pub fn RendererProvider::bind_surface(Self, HostSurface) -> RendererBindResult
+pub fn RendererProvider::capability_report(Self) -> Array[RendererBackendFeatureCapability]
+pub fn RendererProvider::descriptor(Self) -> RendererDescriptor
 pub fn RendererProvider::id(Self) -> String
-
-pub(all) struct RendererProviderBinding {
-  provider : RendererProvider
-  create_host_renderer : (@core.SurfaceMetrics, BoundSurface) -> WindowRenderer
-}
-pub fn RendererProviderBinding::new(provider~ : RendererProvider, create_host_renderer~ : (@core.SurfaceMetrics, BoundSurface) -> WindowRenderer) -> Self
-pub fn RendererProviderBinding::provider(Self) -> RendererProvider
-
-pub struct RendererResolution {
-  renderer : WindowRenderer
-  image_loader : ImageLoader?
-}
-pub fn RendererResolution::image_loader(Self) -> ImageLoader?
-pub fn RendererResolution::new(renderer~ : WindowRenderer, image_loader~ : ImageLoader?) -> Self
-pub fn RendererResolution::renderer(Self) -> WindowRenderer
+pub fn RendererProvider::new(id~ : String, descriptor~ : RendererDescriptor, capabilities~ : () -> Array[RendererBackendFeatureCapability], bind~ : (HostSurface) -> RendererBindResult) -> Self
 
 pub(all) enum RendererSelection {
   Default
@@ -456,50 +416,30 @@ pub fn RendererSelection::matches_backend(Self, RendererBackendKind) -> Bool
 pub fn RendererSelection::native_default() -> Self
 pub fn RendererSelection::web_default() -> Self
 
+pub struct RendererSession {
+  // private fields
+}
+pub fn RendererSession::apply_image_load_completion(Self, RendererImageLoadCompletion) -> RendererImageCompletionResult
+pub fn RendererSession::dispose(Self) -> Unit
+pub fn RendererSession::drain_events(Self) -> Array[RendererEvent]
+pub fn RendererSession::draw_platform_view_pixels(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
+pub fn RendererSession::gpu_fallback_active(Self) -> Bool
+pub fn RendererSession::gpu_recovery_count(Self) -> Int
+pub fn RendererSession::image_diagnostics(Self) -> RendererImageDiagnostics
+pub fn RendererSession::inject_context_loss(Self) -> Unit
+pub fn RendererSession::new(resize~ : (@core.SurfaceMetrics) -> Unit, render_frame~ : (RenderFrameSubmission) -> RenderFrameResult, drain_events? : (() -> Array[RendererEvent])?, text_system~ : () -> @core.TextSystem, present_count? : () -> Int, recover? : (String) -> RecoveryResult, dispose? : () -> Unit, image_records? : () -> Array[ImageResourceRecord], apply_image_load_completion? : (ImageResourceLoadCompletion) -> Bool, image_source? : HostImageSource, image_decoder? : RendererImageDecoder?, native_surface? : NativeSurface?, platform_view? : RendererPlatformViewCapability, gpu_recovery? : RendererGpuRecoveryCapability) -> Self
+pub fn RendererSession::present_count(Self) -> Int
+pub fn RendererSession::recover(Self, String) -> RecoveryResult
+pub fn RendererSession::render_frame(Self, RenderFrameSubmission) -> RenderFrameResult
+pub fn RendererSession::resize(Self, @core.SurfaceMetrics) -> Unit
+pub fn RendererSession::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
+pub fn RendererSession::text_system(Self) -> @core.TextSystem
+
 pub(all) enum RendererTarget {
   Native
   WasmGc
   Web
 } derive(Eq, ToJson, @debug.Debug)
-
-pub struct SurfaceContext {
-  surface : SurfaceDescriptor
-  surface_id : String
-  metrics : @core.SurfaceMetrics
-  cpu_present : PresentTarget?
-  gpu_surface : HostGpuSurfaceBridge?
-  image_source : HostImageSource?
-}
-pub fn SurfaceContext::cpu_present(Self) -> PresentTarget?
-pub fn SurfaceContext::gpu_surface(Self) -> HostGpuSurfaceBridge?
-pub fn SurfaceContext::image_source(Self) -> HostImageSource?
-pub fn SurfaceContext::metrics(Self) -> @core.SurfaceMetrics
-pub fn SurfaceContext::new(surface~ : SurfaceDescriptor, surface_id? : String, metrics~ : @core.SurfaceMetrics, cpu_present? : PresentTarget?, gpu_surface? : HostGpuSurfaceBridge?, image_source? : HostImageSource?) -> Self
-pub fn SurfaceContext::surface(Self) -> SurfaceDescriptor
-pub fn SurfaceContext::surface_id(Self) -> String
-
-pub(all) enum SurfaceDescriptor {
-  CpuRaster(Double, Double, Double)
-  GpuSurface(GpuHostSurfaceDescriptor, Double, Double, Double)
-}
-pub fn SurfaceDescriptor::cpu_raster(width~ : Double, height~ : Double, scale_factor~ : Double) -> Self
-pub fn SurfaceDescriptor::gpu_surface(handle~ : GpuHostSurfaceDescriptor, width~ : Double, height~ : Double, scale_factor~ : Double) -> Self
-
-pub(all) enum SurfaceNegotiationResult {
-  SurfaceAccepted(BoundSurface)
-  SurfaceRejected(String)
-}
-
-pub(all) enum SurfaceRoute {
-  RasterSurfaceRoute
-  MetalGpuSurfaceRoute
-  VulkanGpuSurfaceRoute
-  EglGpuSurfaceRoute
-  Direct3DGpuSurfaceRoute
-} derive(Eq, ToJson, @debug.Debug)
-pub fn SurfaceRoute::is_gpu(Self) -> Bool
-pub fn SurfaceRoute::is_implemented(Self) -> Bool
-pub fn SurfaceRoute::label(Self) -> String
 
 pub(all) struct WgpuSurfaceContract {
   source : WgpuSurfaceSourceKind
@@ -514,28 +454,23 @@ pub(all) enum WgpuSurfaceSourceKind {
   WebCanvasSurface
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct WindowRenderer {
-  // private fields
-}
-pub fn WindowRenderer::apply_image_resource_load_completion(Self, ImageResourceLoadCompletion) -> ImageResourceSnapshot
-pub fn WindowRenderer::dispose(Self) -> Unit
-pub fn WindowRenderer::drain_present_completions(Self) -> Array[RenderPresentCompletion]
-pub fn WindowRenderer::draw_platform_view_pixels(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
-pub fn WindowRenderer::gpu_fallback_active(Self) -> Bool
-pub fn WindowRenderer::gpu_recovery_count(Self) -> Int
-pub fn WindowRenderer::image_resource_snapshot(Self) -> ImageResourceSnapshot
-pub fn WindowRenderer::image_resources(Self) -> Array[ImageResourceRecord]
-pub fn WindowRenderer::inject_context_loss(Self) -> Unit
-pub fn WindowRenderer::new(resize~ : (@core.SurfaceMetrics) -> Unit, render~ : (Array[@core.DrawCommand]) -> Unit, render_frame? : ((@core.DrawFrame) -> RenderFrameResult)?, drain_present_completions? : (() -> Array[RenderPresentCompletion])?, text_system~ : () -> @core.TextSystem, present_count? : () -> Int, dispose? : () -> Unit, image? : HostRendererImageCapability, platform_view? : HostRendererPlatformViewCapability, gpu_recovery? : HostRendererGpuRecoveryCapability) -> Self
-pub fn WindowRenderer::present_count(Self) -> Int
-pub fn WindowRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
-pub fn WindowRenderer::render_frame(Self, @core.DrawFrame) -> RenderFrameResult
-pub fn WindowRenderer::resize(Self, @core.SurfaceMetrics) -> Unit
-pub fn WindowRenderer::set_image_resource_change_callback(Self, ((ImageResourceSnapshot) -> Unit)?) -> Unit
-pub fn WindowRenderer::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
-pub fn WindowRenderer::text_system(Self) -> @core.TextSystem
-
 // Type aliases
 
 // Traits
+pub(open) trait HostSurfaceCapability {
+  fn surface_id(Self) -> String
+  fn metrics(Self) -> @core.SurfaceMetrics
+  fn cpu_present(Self) -> PresentTarget?
+  fn native_surface(Self) -> NativeSurface?
+  fn image_source(Self) -> HostImageSource?
+}
+
+pub(open) trait NativeSurfaceCapability {
+  fn surface_handle(Self) -> UInt64
+  fn display_handle(Self) -> UInt64?
+  fn acquire(Self, @core.SurfaceMetrics) -> UInt64?
+  fn present(Self, UInt64) -> Bool
+  fn resize(Self, @core.SurfaceMetrics) -> Unit
+  fn dispose(Self) -> Unit
+}
 

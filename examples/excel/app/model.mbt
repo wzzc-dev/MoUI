@@ -3,7 +3,7 @@ using @moui {type Effect}
 
 ///|
 pub(all) struct ExcelApp {
-  model : @state.State[ExcelModel]
+  model : ExcelModel
 }
 
 ///|
@@ -143,7 +143,13 @@ pub let cell_gap : Double = 1.0
 
 ///|
 pub fn ExcelApp::new() -> ExcelApp {
-  { model: @state.State::new(ExcelModel::new()) }
+  { model: ExcelModel::new() }
+}
+
+///|
+pub fn ExcelApp::with_model(self : ExcelApp, model : ExcelModel) -> ExcelApp {
+  ignore(self)
+  { model, }
 }
 
 ///|

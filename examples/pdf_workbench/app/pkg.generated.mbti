@@ -95,8 +95,8 @@ pub struct PdfWorkbenchModel {
   raster_status : PdfWorkbenchRasterStatus
   raster_page : PdfWorkbenchRasterPage?
   raster_cache : Array[PdfWorkbenchRasterPage]
-  sidebar_scroll : @core.ScrollState
-  inspector_scroll : @core.ScrollState
+  sidebar_scroll : @core.Point
+  inspector_scroll : @core.Point
   preview_scroll_offset : @core.Point
   reader_fullscreen : Bool
   query : String
@@ -138,6 +138,8 @@ pub enum PdfWorkbenchMsg {
   AnnotationTextChanged(String)
   AddAnnotationForCurrentPage
   PreviewScrolled(@core.Point)
+  SidebarScrolled(@core.Point)
+  InspectorScrolled(@core.Point)
   ToggleReaderFullscreen
   ZoomIn
   ZoomOut

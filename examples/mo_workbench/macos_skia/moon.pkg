@@ -2,7 +2,7 @@ import {
   "moonbitlang/async",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/macos" @macos_host,
-  "wzzc-dev/moui/render/skia" @render_skia,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
   "examples/mo_workbench/app",
   "examples/mo_workbench/acp_native_transport" @acp_transport,
   "examples/mo_workbench/openseek_native_transport" @openseek_transport,

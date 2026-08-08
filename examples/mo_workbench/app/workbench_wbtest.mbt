@@ -80,21 +80,8 @@ test "code chat message list uses explicit scroll viewport" {
   guard shorter.children().get(0) is Some(shorter_scroll) else {
     fail("expected shorter scroll child")
   }
-  guard scroll.build_child() is Some(build_scroll) else {
-    fail("expected scroll component")
-  }
-  guard shorter_scroll.build_child() is Some(build_shorter_scroll) else {
-    fail("expected shorter scroll component")
-  }
-  let viewport = @geometry.Size::new(width=640.0, height=520.0)
-  let inner_scroll = build_scroll(
-    workbench_component_test_context(viewport~, theme~),
-  )
-  let inner_shorter_scroll = build_shorter_scroll(
-    workbench_component_test_context(viewport~, theme~),
-  )
   inspect(
-    inner_scroll.declaration() == inner_shorter_scroll.declaration(),
+    scroll.declaration() == shorter_scroll.declaration(),
     content="false",
   )
 }
@@ -119,23 +106,6 @@ test "code composer prompt grows from two lines with content" {
     code_message_list_height(model.code, model.settings, theme, 640.0, 520.0),
     content="true",
   )
-}
-
-///|
-fn workbench_component_test_context(
-  viewport~ : @geometry.Size,
-  theme~ : @moui.Theme,
-) -> @core.ComponentContext {
-  @core.ComponentContext::from_runtime({
-    request_component_rebuild: () => (),
-    scope_saveable_key: key => "workbench-test:\{key}",
-    viewport_size: viewport,
-    saveable_state: @core.SaveableStateStore::new(),
-    subscriptions: [],
-    effects: [],
-    old_effects: [],
-    environment: @core.Environment::neutral().with_theme(theme),
-  })
 }
 
 ///|
@@ -262,7 +232,7 @@ test "submit prompt appends user message and starts streaming" {
   // Prompt is cleared and streaming flag is set.
   inspect(model.code.prompt, content="")
   assert_true(model.code.is_streaming)
-  inspect(model.code.scroll_state.offset().y > 0.0, content="true")
+  inspect(model.code.scroll_offset.y > 0.0, content="true")
 }
 
 ///|
@@ -274,9 +244,9 @@ test "streaming progress notice scrolls to latest placeholder" {
       ..model.code,
       messages: [ChatMessage::User("hello")],
       is_streaming: true,
+      scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
     },
   }
-  model.code.scroll_state.scroll_to(x=0.0, y=0.0)
   let (model, _effect) = model.update(
     WorkbenchMsg::CodeMsg(
       CodeMsg::ReceiveAgentEvent(ProgressNotice("thinking...")),
@@ -287,7 +257,7 @@ test "streaming progress notice scrolls to latest placeholder" {
     fail("expected progress notice")
   }
   inspect(text, content="thinking...")
-  inspect(model.code.scroll_state.offset().y > 0.0, content="true")
+  inspect(model.code.scroll_offset.y > 0.0, content="true")
 }
 
 ///|
@@ -300,9 +270,9 @@ test "manual upward message scroll pauses auto-follow" {
       messages: [ChatMessage::User("hello")],
       is_streaming: true,
       follow_latest: true,
+      scroll_offset: @geometry.Point::new(x=0.0, y=120.0),
     },
   }
-  model.code.scroll_state.scroll_to(x=0.0, y=120.0)
   let (model, _effect) = model.update(
     WorkbenchMsg::CodeMsg(
       CodeMsg::MessageListScrolled(@geometry.Point::new(x=0.0, y=40.0)),
@@ -314,7 +284,7 @@ test "manual upward message scroll pauses auto-follow" {
       CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("a1"), "reply")),
     ),
   )
-  inspect(model.code.scroll_state.offset().y, content="120")
+  inspect(model.code.scroll_offset.y, content="40")
 }
 
 ///|
@@ -327,12 +297,12 @@ test "manual downward message scroll resumes auto-follow" {
       messages: [ChatMessage::User("hello")],
       is_streaming: true,
       follow_latest: false,
+      scroll_offset: @geometry.Point::new(x=0.0, y=120.0),
     },
   }
-  model.code.scroll_state.scroll_to(x=0.0, y=120.0)
   let (model, _effect) = model.update(
     WorkbenchMsg::CodeMsg(
-      CodeMsg::MessageListScrolled(@geometry.Point::new(x=0.0, y=-40.0)),
+      CodeMsg::MessageListScrolled(@geometry.Point::new(x=0.0, y=160.0)),
     ),
   )
   inspect(model.code.follow_latest, content="true")
@@ -341,7 +311,7 @@ test "manual downward message scroll resumes auto-follow" {
       CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("a1"), "reply")),
     ),
   )
-  inspect(model.code.scroll_state.offset().y > 1.0e8, content="true")
+  inspect(model.code.scroll_offset.y > 1.0e8, content="true")
 }
 
 ///|

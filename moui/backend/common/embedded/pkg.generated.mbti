@@ -3,10 +3,8 @@ package "wzzc-dev/moui/backend/common/embedded"
 
 import {
   "moonbitlang/core/debug",
-  "moonbitlang/core/ref",
   "wzzc-dev/moui/backend",
-  "wzzc-dev/moui/backend/common",
-  "wzzc-dev/moui/backend/common/embedded/services",
+  "wzzc-dev/moui/backend/common/lifecycle",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/window/dpi",
@@ -21,7 +19,7 @@ pub fn embedded_host_response_request_id(EmbeddedHostResponse) -> Int?
 
 pub fn embedded_text_input_response(Int, String, Int, Int) -> EmbeddedHostResponse?
 
-pub fn mobile_host_surface_binding(Array[@render.RendererFactory], presenter_description~ : String, cpu_present~ : (UInt64, @render.PixelFrame) -> Bool, gpu_descriptor~ : (UInt64) -> @render.GpuHostSurfaceDescriptor?, sync? : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> HostSurfaceBinding
+pub fn mobile_host_surface_binding(Array[@render.RendererProvider], presenter_description~ : String, cpu_present~ : (UInt64, @render.PixelFrame) -> Bool, native_surface~ : (UInt64) -> @render.NativeSurface?, sync? : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> HostSurfaceBinding
 
 // Errors
 
@@ -30,7 +28,7 @@ pub(all) enum EmbeddedHostResponse {
   TextInput(@wzzc-dev/moui/core.TextInputEvent)
   Command(@wzzc-dev/moui/core.CommandIntent)
   Clipboard(@backend.HostServiceRequestId, @backend.HostServiceResponse)
-  Accessibility(@runtime.NativeAccessibilityActionRequest)
+  Accessibility(@runtime.PerformSemanticsActionRequest)
   PlatformView(Int, String, String, @wzzc-dev/moui/core.PlatformViewEvent)
   PlatformChannel(@backend.HostServiceRequestId, @backend.PlatformChannelResponse)
 } derive(Eq, ToJson, @debug.Debug)
@@ -76,11 +74,10 @@ pub(all) struct EmbeddedPlatformViewSnapshot {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct EmbeddedRuntimeBackendCore {
-  frame : @common.FrameCoordinator
   // private fields
 }
 pub fn EmbeddedRuntimeBackendCore::advance_time(Self, Double) -> Unit
-pub fn EmbeddedRuntimeBackendCore::attach_surface(Self, renderer~ : @render.WindowRenderer, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, surface_generation~ : Int, image_loader? : @render.ImageLoader?) -> Bool
+pub fn EmbeddedRuntimeBackendCore::attach_surface(Self, renderer~ : @render.RendererSession, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, surface_generation~ : Int) -> Bool
 pub fn EmbeddedRuntimeBackendCore::detach_surface(Self) -> Bool
 pub fn EmbeddedRuntimeBackendCore::dispatch(Self, @backend.Event) -> @backend.EventResult
 pub fn EmbeddedRuntimeBackendCore::dispatch_host_response(Self, EmbeddedHostResponse) -> Bool
@@ -93,7 +90,7 @@ pub fn EmbeddedRuntimeBackendCore::drain_host_updates(Self) -> Array[EmbeddedHos
 pub fn EmbeddedRuntimeBackendCore::drain_host_updates_json(Self) -> String
 pub fn EmbeddedRuntimeBackendCore::host_service_bridge(Self) -> @backend.HostServiceBridge
 pub fn EmbeddedRuntimeBackendCore::metrics(Self) -> @wzzc-dev/moui/core.SurfaceMetrics
-pub fn EmbeddedRuntimeBackendCore::new(runtime~ : @runtime.AppRuntime, renderer~ : @render.WindowRenderer, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, surface_generation~ : Int, image_loader? : @render.ImageLoader?, frame? : @common.FrameCoordinator?) -> Self
+pub fn EmbeddedRuntimeBackendCore::new(runtime~ : @runtime.AppRuntime, renderer~ : @render.RendererSession, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, surface_generation~ : Int) -> Self
 pub fn EmbeddedRuntimeBackendCore::present_count(Self) -> Int
 pub fn EmbeddedRuntimeBackendCore::redraw_requested(Self) -> Bool
 pub fn EmbeddedRuntimeBackendCore::render_frame(Self) -> @render.RenderFrameResult
@@ -105,7 +102,7 @@ pub fn EmbeddedRuntimeBackendCore::surface_epoch(Self) -> Int
 pub fn EmbeddedRuntimeBackendCore::take_redraw_requested(Self) -> Bool
 
 pub struct EmbeddedRuntimeHostBridge {
-  services : @services.EmbeddedHostServices
+  services : @wzzc-dev/moui/backend/common/services/embedded.EmbeddedHostServices
   session_generation : Int
   mut updates : Array[EmbeddedHostUpdate]
   mut ime_revision : Int
@@ -123,7 +120,7 @@ pub fn EmbeddedRuntimeHostBridge::drain_update_envelope(Self) -> EmbeddedHostUpd
 pub fn EmbeddedRuntimeHostBridge::drain_update_envelope_json(Self) -> String
 pub fn EmbeddedRuntimeHostBridge::drain_updates(Self) -> Array[EmbeddedHostUpdate]
 pub fn EmbeddedRuntimeHostBridge::drain_updates_json(Self) -> String
-pub fn EmbeddedRuntimeHostBridge::flush_updates_to_shell(Self, @services.HostSessionTransport) -> Int
+pub fn EmbeddedRuntimeHostBridge::flush_updates_to_shell(Self, @wzzc-dev/moui/backend/common/services/embedded.HostSessionTransport) -> Int
 pub fn EmbeddedRuntimeHostBridge::new(session_generation? : Int) -> Self
 pub fn EmbeddedRuntimeHostBridge::push_diagnostic(Self, String) -> Bool
 pub fn EmbeddedRuntimeHostBridge::service_bridge(Self) -> @backend.HostServiceBridge
@@ -158,11 +155,10 @@ pub(all) struct EmbeddedSemanticsUpdate {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct HostSurfaceBinding {
-  create_renderer : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererResolution?
+  create_renderer : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?
   sync : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit
-  image_loader : @render.ImageLoader?
 }
-pub fn HostSurfaceBinding::new(create_renderer~ : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererResolution?, sync~ : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit, image_loader? : @render.ImageLoader?) -> Self
+pub fn HostSurfaceBinding::new(create_renderer~ : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?, sync~ : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> Self
 
 pub struct HostedRuntimeSession {
   mut raw_handle : UInt64
@@ -170,7 +166,7 @@ pub struct HostedRuntimeSession {
 }
 pub fn HostedRuntimeSession::advance_time(Self, Double) -> Unit
 pub fn HostedRuntimeSession::attach(Self, raw_handle~ : UInt64, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, binding~ : HostSurfaceBinding, surface_generation~ : Int) -> Bool
-pub fn HostedRuntimeSession::create(runtime~ : @runtime.AppRuntime, raw_handle~ : UInt64, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, binding~ : HostSurfaceBinding, surface_generation~ : Int, frame? : @common.FrameCoordinator?) -> Self?
+pub fn HostedRuntimeSession::create(runtime~ : @runtime.AppRuntime, raw_handle~ : UInt64, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, binding~ : HostSurfaceBinding, surface_generation~ : Int) -> Self?
 pub fn HostedRuntimeSession::detach(Self) -> Bool
 pub fn HostedRuntimeSession::dispatch(Self, @backend.Event) -> @backend.EventResult
 pub fn HostedRuntimeSession::dispatch_host_response(Self, EmbeddedHostResponse) -> Bool
@@ -210,8 +206,7 @@ pub struct HostedWindowBackend {
   mut window : HostedWindow?
   mut runtime : @runtime.AppRuntime?
   mut session : HostedRuntimeSession?
-  host : @common.EmbeddedWindowCoordinator
-  redraw_target : @ref.Ref[(() -> Unit)?]
+  lifecycle : @lifecycle.EmbeddedLifecycle
   mut last_pointer : @wzzc-dev/moui/core.Point
   modifiers : @wzzc-dev/moui/core.KeyModifiers
   mut frames_presented : Int

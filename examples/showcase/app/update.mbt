@@ -32,6 +32,10 @@ fn ShowcaseModel::update_with_environment(
       ({ ..self, nav_query: query }, @moui.Effect::none())
     ShowMobileCatalog =>
       ({ ..self, mobile_showing_detail: false }, @moui.Effect::none())
+    SidebarScrolled(offset) =>
+      ({ ..self, sidebar_scroll: offset }, @moui.Effect::none())
+    DetailScrolled(offset) =>
+      ({ ..self, detail_scroll: offset }, @moui.Effect::none())
     RouteBack => {
       let history = self.route_history.back()
       let next = self
@@ -154,8 +158,10 @@ fn ShowcaseModel::navigate(
     )
   }
   // Keep sidebar scroll; reset detail when opening a different story.
-  if self.current_route_string() != formatted {
-    self.detail_scroll.scroll_to(x=0.0, y=0.0)
+  let detail_scroll = if self.current_route_string() != formatted {
+    @geometry.Point::new(x=0.0, y=0.0)
+  } else {
+    self.detail_scroll
   }
   let next = {
     ..self,
@@ -163,6 +169,7 @@ fn ShowcaseModel::navigate(
     route_id: parsed.id,
     route_history: history,
     mobile_showing_detail: true,
+    detail_scroll,
   }.apply_route_to_children(parsed)
   let command = if push {
     if self.route_history.current_route() == formatted {

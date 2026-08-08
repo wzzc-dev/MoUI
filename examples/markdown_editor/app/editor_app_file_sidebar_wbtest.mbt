@@ -101,7 +101,9 @@ test "markdown editor file sidebar renders optional directory tree" {
       }
     },
   )
-  app.pick_working_directory_for_test(@backend_common.app_services(bridge~))
+  app.pick_working_directory_for_test(
+    @backend_common_services.app_services(bridge~),
+  )
   let expanded = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
     expanded.any(command => {
@@ -190,7 +192,7 @@ test "markdown editor file tree lazily expands subdirectories" {
       }
     },
   )
-  let services = @backend_common.app_services(bridge~)
+  let services = @backend_common_services.app_services(bridge~)
   app.pick_working_directory_for_test(services)
   inspect(listed_paths.length(), content="1")
   inspect(listed_paths[0], content="/tmp/project")
@@ -283,7 +285,7 @@ test "markdown editor file tree refresh reloads picked folder" {
       }
     },
   )
-  let services = @backend_common.app_services(bridge~)
+  let services = @backend_common_services.app_services(bridge~)
   app.pick_working_directory_for_test(services)
   let initial = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
@@ -354,11 +356,11 @@ test "markdown editor file sidebar filters tree and recent files" {
       }
     },
   )
-  let services = @backend_common.app_services(bridge~)
+  let services = @backend_common_services.app_services(bridge~)
   app.pick_working_directory_for_test(services)
   app.dispatch_message_for_test(services, SelectTreePath("/tmp/project/notes"))
 
-  ignore(app.update(UpdateFileFilterQuery("daily")))
+  app.update_in_place(UpdateFileFilterQuery("daily"))
   let filtered = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
     filtered.any(command => {
@@ -377,7 +379,7 @@ test "markdown editor file sidebar filters tree and recent files" {
   inspect(filtered_recent.length(), content="1")
   inspect(filtered_recent[0], content="/tmp/project/notes/daily.md")
 
-  ignore(app.update(UpdateFileFilterQuery("missing")))
+  app.update_in_place(UpdateFileFilterQuery("missing"))
   let missing = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
     missing.any(command => {
@@ -391,7 +393,7 @@ test "markdown editor file sidebar filters tree and recent files" {
     }),
   )
 
-  ignore(app.update(UpdateFileFilterQuery("")))
+  app.update_in_place(UpdateFileFilterQuery(""))
   let cleared = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
     cleared.any(command => {
@@ -408,12 +410,12 @@ test "markdown editor file sidebar filters tree and recent files" {
 ///|
 test "markdown editor tree toggle preserves expansion order" {
   let app = MarkdownEditorApp::new()
-  ignore(app.update(ToggleTreePath("b")))
-  ignore(app.update(ToggleTreePath("a")))
+  app.update_in_place(ToggleTreePath("b"))
+  app.update_in_place(ToggleTreePath("a"))
   inspect(app.expanded_tree_paths().length(), content="2")
   inspect(app.expanded_tree_paths()[0], content="b")
   inspect(app.expanded_tree_paths()[1], content="a")
-  ignore(app.update(ToggleTreePath("a")))
+  app.update_in_place(ToggleTreePath("a"))
   inspect(app.expanded_tree_paths().length(), content="1")
   inspect(app.expanded_tree_paths()[0], content="b")
 }
@@ -423,7 +425,7 @@ test "markdown editor tree toggle preserves expansion order" {
 ///|
 test "markdown editor file tree starts expanded" {
   let app = MarkdownEditorApp::new()
-  inspect(@debug.to_string(app.file_tree_expanded.get()), content="true")
+  inspect(@debug.to_string(app.file_tree_expanded), content="true")
 }
 
 //|
@@ -431,8 +433,8 @@ test "markdown editor file tree starts expanded" {
 ///|
 test "markdown editor toggle file tree fold hides tree" {
   let app = MarkdownEditorApp::new()
-  ignore(app.update(ToggleFileTree))
-  inspect(@debug.to_string(app.file_tree_expanded.get()), content="false")
-  ignore(app.update(ToggleFileTree))
-  inspect(@debug.to_string(app.file_tree_expanded.get()), content="true")
+  app.update_in_place(ToggleFileTree)
+  inspect(@debug.to_string(app.file_tree_expanded), content="false")
+  app.update_in_place(ToggleFileTree)
+  inspect(@debug.to_string(app.file_tree_expanded), content="true")
 }

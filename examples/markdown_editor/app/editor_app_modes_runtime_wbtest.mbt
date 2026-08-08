@@ -119,7 +119,7 @@ test "markdown editor quick format can toggle source mode" {
   let app = MarkdownEditorApp::new()
   app.apply_action("format-palette")
   app.set_format_palette_query("source mode")
-  ignore(app.update(ApplyFirstFormatPaletteAction))
+  app.update_in_place(ApplyFirstFormatPaletteAction)
   assert_true(app.source_mode_enabled())
   assert_false(app.format_palette_visible())
 }
@@ -263,7 +263,7 @@ test "markdown editor runtime quick format row applies command" {
 test "markdown editor set document from input anchors scroll position" {
   let app = MarkdownEditorApp::new()
   app.edit_document("# Long\n\nParagraph text\n\nMore text\n\nEnd")
-  app.editor_scroll.scroll_to(x=0.0, y=50.0)
+  app.editor_scroll = @geometry.Point::new(x=0.0, y=50.0)
   let before = app.editor_scroll_y()
   app.set_document_from_input(
     "# Long\n\nParagraph text updated\n\nMore text\n\nEnd",
@@ -277,7 +277,7 @@ test "markdown editor quick format submit applies first filtered command" {
   app.clear()
   app.apply_action("format-palette")
   app.set_format_palette_query("heading 2")
-  ignore(app.update(ApplyFirstFormatPaletteAction))
+  app.update_in_place(ApplyFirstFormatPaletteAction)
   inspect(app.document(), content="## Section")
   assert_false(app.format_palette_visible())
 }
@@ -300,7 +300,7 @@ test "markdown editor quick format can insert table of contents" {
   app.set_document("# Title\n\n## Section")
   app.apply_action("format-palette")
   app.set_format_palette_query("contents")
-  ignore(app.update(ApplyFirstFormatPaletteAction))
+  app.update_in_place(ApplyFirstFormatPaletteAction)
   inspect(
     app.document(),
     content="## Contents\n- [Title](#title)\n  - [Section](#section)\n\n# Title\n\n## Section",
@@ -355,7 +355,7 @@ test "markdown editor front matter command selects existing metadata" {
   app.set_document("---\ntitle: Existing\n---\n\n# Draft")
   app.apply_action("front-matter")
   inspect(app.document(), content="---\ntitle: Existing\n---\n\n# Draft")
-  guard app.selection.get().selection is Some(range) else {
+  guard app.selection.selection is Some(range) else {
     fail("expected existing front matter content selection")
   }
   inspect(range.start, content="4")
@@ -369,7 +369,7 @@ test "markdown editor quick format can insert yaml front matter" {
   app.set_document("# Draft")
   app.apply_action("format-palette")
   app.set_format_palette_query("front matter")
-  ignore(app.update(ApplyFirstFormatPaletteAction))
+  app.update_in_place(ApplyFirstFormatPaletteAction)
   assert_true(app.document().has_prefix("---\ntitle: Untitled"))
   assert_false(app.format_palette_visible())
 }
@@ -410,15 +410,15 @@ test "markdown editor image center wraps image in center tags" {
   let app = MarkdownEditorApp::new()
   app.set_document("Before\n\n![photo](img.png)\n\nAfter")
   let offset = app.document().find("![photo]").unwrap_or(0)
-  app.selected_image_offset.set(Some(offset))
-  ignore(app.update(ToggleImageCenter))
+  app.selected_image_offset = Some(offset)
+  app.update_in_place(ToggleImageCenter)
   let doc = app.document()
   assert_true(doc.contains("<center>"))
   assert_true(doc.contains("</center>"))
   assert_true(doc.contains("![photo](img.png)"))
   assert_true(doc.has_prefix("Before"))
   assert_true(doc.has_suffix("After"))
-  ignore(app.update(ToggleImageCenter))
+  app.update_in_place(ToggleImageCenter)
   assert_false(app.document().contains("<center>"))
 }
 

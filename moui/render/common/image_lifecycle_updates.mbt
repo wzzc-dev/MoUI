@@ -2,7 +2,7 @@
 pub fn ImageResourceLifecycle::mark_loading(
   self : ImageResourceLifecycle,
   source : String,
-) -> @render.ImageResourceRecord {
+) -> Bool {
   self.store_record(@render.ImageResourceRecord::loading(source))
 }
 
@@ -12,7 +12,7 @@ pub fn ImageResourceLifecycle::mark_ready(
   source : String,
   width~ : Int,
   height~ : Int,
-) -> @render.ImageResourceRecord {
+) -> Bool {
   self.store_record(@render.ImageResourceRecord::ready(source, width~, height~))
 }
 
@@ -21,7 +21,7 @@ pub fn ImageResourceLifecycle::mark_failed(
   self : ImageResourceLifecycle,
   source : String,
   diagnostic~ : String,
-) -> @render.ImageResourceRecord {
+) -> Bool {
   self.store_record(@render.ImageResourceRecord::failed(source, diagnostic~))
 }
 
@@ -29,7 +29,7 @@ pub fn ImageResourceLifecycle::mark_failed(
 pub fn ImageResourceLifecycle::dispose(
   self : ImageResourceLifecycle,
   source : String,
-) -> @render.ImageResourceRecord {
+) -> Bool {
   self.store_record(@render.ImageResourceRecord::disposed(source))
 }
 
@@ -37,19 +37,20 @@ pub fn ImageResourceLifecycle::dispose(
 fn ImageResourceLifecycle::store_record(
   self : ImageResourceLifecycle,
   record : @render.ImageResourceRecord,
-) -> @render.ImageResourceRecord {
+) -> Bool {
   match self.records.get(record.source) {
     Some(existing) =>
       if existing != record {
-        self.revision = self.revision + 1
         self.records[record.source] = record
+        true
+      } else {
+        false
       }
     None => {
-      self.revision = self.revision + 1
       self.records[record.source] = record
+      true
     }
   }
-  record
 }
 
 ///|
@@ -66,8 +67,5 @@ pub fn ImageResourceLifecycle::evict_disposed(
     }
   }
   self.records = kept
-  if removed > 0 {
-    self.revision = self.revision + 1
-  }
   removed
 }

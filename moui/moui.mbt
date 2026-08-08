@@ -29,4 +29,13 @@ pub using @core {type Environment}
 pub using @core {type ViewEnvironment}
 
 ///|
+pub using @core {type ControlledValue}
+
+///|
+pub using @core {type ScrollRequest}
+
+///|
+pub using @core {type FocusRequest}
+
+///|
 pub using @core {type SemanticId}

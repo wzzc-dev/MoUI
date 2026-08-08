@@ -50,7 +50,7 @@ fn core_control_fns() -> Array[String] {
 
 ///|
 fn desktop_skia_providers() -> Array[String] {
-  ["moui/render/skia/binding_factory.mbt"]
+  ["moui_skia_renderer/binding_factory.mbt"]
 }
 
 ///|
@@ -669,12 +669,12 @@ fn check_r3_provider_text(path : String, text : String?) -> HarnessFinding {
         rule: "R3",
         ok: false,
         path,
-        hint: "missing render/skia binding factory. See docs/invariants.md#R3",
+        hint: "missing moui_skia_renderer binding factory. See docs/invariants.md#R3",
       }
     Some(body) => {
       let has_env = body.contains("MOUI_SKIA_RENDERER")
       let has_parse = body.contains("NativeRendererMode::parse") &&
-        body.contains("pub fn from_env()") &&
+        body.contains("pub fn from_env(") &&
         body.contains("pub fn raster(") &&
         body.contains("pub fn gpu(")
       if !has_env || !has_parse {
@@ -682,7 +682,7 @@ fn check_r3_provider_text(path : String, text : String?) -> HarnessFinding {
           rule: "R3",
           ok: false,
           path,
-          hint: "render/skia must own MOUI_SKIA_RENDERER selection and expose raster/gpu/from_env factories. See docs/invariants.md#R3",
+          hint: "moui_skia_renderer must own MOUI_SKIA_RENDERER selection and expose raster/gpu/from_env providers with an explicit platform policy. See docs/invariants.md#R3",
         }
       } else {
         { rule: "R3", ok: true, path, hint: "" }
@@ -736,7 +736,10 @@ fn check_r3_mobile_pkg(path : String, text : String?) -> HarnessFinding {
       }
     Some(body) => {
       let has_backend = body.contains("wzzc-dev/moui/backend/")
-      let has_renderer = body.contains("wzzc-dev/moui/render/")
+      let has_renderer = body.contains("wzzc-dev/moui_skia_renderer") ||
+        body.contains("wzzc-dev/moui_sun_renderer") ||
+        body.contains("wzzc-dev/moui_web_renderer") ||
+        body.contains("wzzc-dev/moui_wgpu_renderer")
       let ok = has_backend && has_renderer
       {
         rule: "R3",

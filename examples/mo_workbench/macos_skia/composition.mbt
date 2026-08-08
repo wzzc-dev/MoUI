@@ -59,7 +59,9 @@ async fn run_workbench() -> Unit {
       )
       let window_task : async () -> Unit = async fn() {
         @runtime.run_app("Mo Workbench", runtime)
-        .render_all(@render_skia.from_env())
+        .render_all(
+          @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS),
+        )
         .backend(@macos_host.entry(options=app_options))
         .run_async_pump()
       }
@@ -88,7 +90,11 @@ async fn run_workbench() -> Unit {
           )
           let window_task : async () -> Unit = async fn() {
             @runtime.run_app("Mo Workbench", runtime)
-            .render_all(@render_skia.from_env())
+            .render_all(
+              @render_skia.from_env(
+                platform=@render_skia.NativeGpuPlatform::MacOS,
+              ),
+            )
             .backend(@macos_host.entry(options=app_options))
             .run_async_pump()
           }
@@ -118,7 +124,11 @@ async fn run_workbench() -> Unit {
             height=680.0,
           )
           @runtime.run_app("Mo Workbench", runtime)
-          .render_all(@render_skia.from_env())
+          .render_all(
+            @render_skia.from_env(
+              platform=@render_skia.NativeGpuPlatform::MacOS,
+            ),
+          )
           .backend(@macos_host.entry(options=app_options))
           .run_async_pump() catch {
             err => println("App exited with error: \{err}")

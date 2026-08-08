@@ -1,7 +1,7 @@
 ///|
 fn MarkdownEditorApp::clear_history(self : MarkdownEditorApp) -> Unit {
-  self.undo_stack.set([])
-  self.redo_stack.set([])
+  self.undo_stack = []
+  self.redo_stack = []
 }
 
 ///|
@@ -10,14 +10,14 @@ fn MarkdownEditorApp::replace_document_source(
   source : String,
   reason? : MarkdownEditReason = ReplaceEdit,
 ) -> Unit {
-  let previous = self.document_session.get()
+  let previous = self.document_session
   let transaction = MarkdownEditTransaction::replace_all(
     previous.source,
     source,
     reason~,
   )
-  self.document_session.set(previous.apply(transaction))
-  self.document.set(source)
+  self.document_session = previous.apply(transaction)
+  self.document = source
   self.refresh_find_matches_if_visible()
 }
 
@@ -26,17 +26,17 @@ fn MarkdownEditorApp::apply_editor_transaction(
   self : MarkdownEditorApp,
   transaction : MarkdownEditTransaction,
 ) -> Unit {
-  let anchor = self.editor_scroll.offset()
-  let session = self.document_session.get()
+  let anchor = self.editor_scroll
+  let session = self.document_session
   let next = session.apply(transaction)
-  self.document_session.set(next)
-  self.document.set(next.source)
+  self.document_session = next
+  self.document = next.source
   self.refresh_find_matches_if_visible()
-  self.selection.set({
+  self.selection = {
     caret: transaction.caret,
     selection: transaction.selection,
-  })
-  self.editor_scroll.scroll_to(x=anchor.x, y=anchor.y)
+  }
+  self.editor_scroll = anchor
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
 }
@@ -58,21 +58,20 @@ fn MarkdownEditorApp::apply_command_to_selection(
     return
   }
   self.push_undo(before)
-  self.redo_stack.set([])
-  self.document_session.set(
+  self.redo_stack = []
+  self.document_session = 
     self.document_session
-    .get()
     .apply(
       MarkdownEditTransaction::from_edit_result(
         before.source,
         result,
         reason=CommandEdit,
       ),
-    ),
-  )
-  self.document.set(result.source)
+    )
+  
+  self.document = result.source
   self.refresh_find_matches_if_visible()
-  self.selection.set({ caret: result.caret, selection: result.selection })
+  self.selection = { caret: result.caret, selection: result.selection }
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
 }
@@ -89,17 +88,16 @@ fn MarkdownEditorApp::apply_text_transform(
     return
   }
   self.push_undo(before)
-  self.redo_stack.set([])
-  self.document_session.set(
+  self.redo_stack = []
+  self.document_session = 
     self.document_session
-    .get()
     .apply(
       MarkdownEditTransaction::from_input_transform(before.source, transform),
-    ),
-  )
-  self.document.set(transform.text)
+    )
+  
+  self.document = transform.text
   self.refresh_find_matches_if_visible()
-  self.selection.set({ caret: transform.caret, selection: transform.selection })
+  self.selection = { caret: transform.caret, selection: transform.selection }
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
 }
@@ -109,11 +107,11 @@ fn MarkdownEditorApp::shift_current_lines(
   self : MarkdownEditorApp,
   indent~ : Bool,
 ) -> Unit {
-  let selection = self.selection.get()
+  let selection = self.selection
   if indent {
     self.apply_text_transform(
       markdown_editor_indent_lines(
-        self.document.get(),
+        self.document,
         selection.caret,
         selection.selection,
       ),
@@ -121,7 +119,7 @@ fn MarkdownEditorApp::shift_current_lines(
   } else {
     match
       markdown_editor_outdent_lines(
-        self.document.get(),
+        self.document,
         selection.caret,
         selection.selection,
       ) {
@@ -133,10 +131,10 @@ fn MarkdownEditorApp::shift_current_lines(
 
 ///|
 fn MarkdownEditorApp::insert_hard_break(self : MarkdownEditorApp) -> Unit {
-  let selection = self.selection.get()
+  let selection = self.selection
   match
     markdown_editor_insert_hard_break(
-      self.document.get(),
+      self.document,
       selection.caret,
       selection.selection,
     ) {
@@ -161,29 +159,29 @@ fn MarkdownEditorApp::set_selection(
   caret : Int,
   selection : @text.TextRange?,
 ) -> Unit {
-  self.selection.set({ caret, selection })
+  self.selection = { caret, selection }
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
 }
 
 ///|
 fn MarkdownEditorApp::apply_link_target(self : MarkdownEditorApp) -> Unit {
-  self.apply_command_to_selection(SetLinkTarget(self.link_target.get()))
+  self.apply_command_to_selection(SetLinkTarget(self.link_target))
 }
 
 ///|
 fn MarkdownEditorApp::apply_image_target(self : MarkdownEditorApp) -> Unit {
-  self.apply_command_to_selection(SetImageTarget(self.image_target.get()))
+  self.apply_command_to_selection(SetImageTarget(self.image_target))
 }
 
 ///|
 fn MarkdownEditorApp::apply_footnote_text(self : MarkdownEditorApp) -> Unit {
-  self.apply_command_to_selection(SetFootnoteText(self.footnote_text.get()))
+  self.apply_command_to_selection(SetFootnoteText(self.footnote_text))
 }
 
 ///|
 fn MarkdownEditorApp::apply_html_block_text(self : MarkdownEditorApp) -> Unit {
-  self.apply_command_to_selection(SetHtmlBlockText(self.html_block_text.get()))
+  self.apply_command_to_selection(SetHtmlBlockText(self.html_block_text))
 }
 
 ///|
@@ -201,7 +199,7 @@ fn MarkdownEditorApp::apply_first_format_palette_action(
   self : MarkdownEditorApp,
 ) -> Unit {
   let items = markdown_editor_format_palette_filtered_items(
-    self.format_palette_query.get(),
+    self.format_palette_query,
   )
   if items.length() > 0 {
     self.apply_format_palette_action(items[0].action)
@@ -253,55 +251,55 @@ fn MarkdownEditorApp::apply_named_editor_action(
     self.set_writing_appearance(WideAppearance)
     true
   } else if action == "find" {
-    ignore(self.update(ToggleFind))
+    self.update_in_place(ToggleFind)
     true
   } else if action == "new-document" {
     self.new_document()
     true
   } else if action == "open-document" {
-    ignore(self.update(OpenDocument))
+    self.update_in_place(OpenDocument)
     true
   } else if action == "save" {
-    ignore(self.update(SaveDocument))
+    self.update_in_place(SaveDocument)
     true
   } else if action == "save-as" {
-    ignore(self.update(SaveDocumentAs))
+    self.update_in_place(SaveDocumentAs)
     true
   } else if action == "undo" {
-    ignore(self.update(Undo))
+    self.update_in_place(Undo)
     true
   } else if action == "redo" {
-    ignore(self.update(Redo))
+    self.update_in_place(Redo)
     true
   } else if action == "clipboard-import" {
-    ignore(self.update(ImportFromClipboard))
+    self.update_in_place(ImportFromClipboard)
     true
   } else if action == "clipboard-export" {
-    ignore(self.update(ExportToClipboard))
+    self.update_in_place(ExportToClipboard)
     true
   } else if action == "html-export" {
-    ignore(self.update(ExportHtmlToClipboard))
+    self.update_in_place(ExportHtmlToClipboard)
     true
   } else if action == "toggle-task" {
-    ignore(self.update(ToggleCurrentTask))
+    self.update_in_place(ToggleCurrentTask)
     true
   } else if action == "indent-lines" {
-    ignore(self.update(IndentLines))
+    self.update_in_place(IndentLines)
     true
   } else if action == "outdent-lines" {
-    ignore(self.update(OutdentLines))
+    self.update_in_place(OutdentLines)
     true
   } else if action == "open-target" {
-    ignore(self.update(OpenTarget))
+    self.update_in_place(OpenTarget)
     true
   } else if action == "next-heading" {
-    ignore(self.update(JumpToNextHeading))
+    self.update_in_place(JumpToNextHeading)
     true
   } else if action == "previous-heading" {
-    ignore(self.update(JumpToPreviousHeading))
+    self.update_in_place(JumpToPreviousHeading)
     true
   } else if action == "image-center" {
-    ignore(self.update(ToggleImageCenter))
+    self.update_in_place(ToggleImageCenter)
     true
   } else {
     match markdown_editor_command_from_action(action) {
@@ -319,8 +317,8 @@ fn MarkdownEditorApp::history_entry(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorHistoryEntry {
   {
-    source: self.document_session.get().source,
-    selection: self.selection.get(),
+    source: self.document_session.source,
+    selection: self.selection,
   }
 }
 
@@ -329,9 +327,9 @@ fn MarkdownEditorApp::push_undo(
   self : MarkdownEditorApp,
   entry : MarkdownEditorHistoryEntry,
 ) -> Unit {
-  let stack = self.undo_stack.get()
+  let stack = self.undo_stack
   stack.push(entry)
-  self.undo_stack.set(stack)
+  self.undo_stack = stack
 }
 
 ///|
@@ -339,9 +337,9 @@ fn MarkdownEditorApp::push_redo(
   self : MarkdownEditorApp,
   entry : MarkdownEditorHistoryEntry,
 ) -> Unit {
-  let stack = self.redo_stack.get()
+  let stack = self.redo_stack
   stack.push(entry)
-  self.redo_stack.set(stack)
+  self.redo_stack = stack
 }
 
 ///|
@@ -349,21 +347,21 @@ fn MarkdownEditorApp::restore_history(
   self : MarkdownEditorApp,
   undo~ : Bool,
 ) -> Bool {
-  let stack = if undo { self.undo_stack.get() } else { self.redo_stack.get() }
+  let stack = if undo { self.undo_stack } else { self.redo_stack }
   if stack.length() == 0 {
     return false
   }
   let entry = stack[stack.length() - 1]
   ignore(stack.pop())
   if undo {
-    self.undo_stack.set(stack)
+    self.undo_stack = stack
     self.push_redo(self.history_entry())
   } else {
-    self.redo_stack.set(stack)
+    self.redo_stack = stack
     self.push_undo(self.history_entry())
   }
   self.replace_document_source(entry.source, reason=ReplaceEdit)
-  self.selection.set(entry.selection)
+  self.selection = entry.selection
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
   true
@@ -374,24 +372,23 @@ fn MarkdownEditorApp::toggle_task_at(
   self : MarkdownEditorApp,
   content_offset : Int,
 ) -> Unit {
-  match markdown_editor_toggle_task_at(self.document.get(), content_offset) {
+  match markdown_editor_toggle_task_at(self.document, content_offset) {
     Some(result) => {
       self.push_undo(self.history_entry())
-      self.redo_stack.set([])
-      self.document_session.set(
+      self.redo_stack = []
+      self.document_session = 
         self.document_session
-        .get()
         .apply(
           MarkdownEditTransaction::from_edit_result(
-            self.document.get(),
+            self.document,
             result,
             reason=ToggleTaskEdit,
           ),
-        ),
-      )
-      self.document.set(result.source)
+        )
+      
+      self.document = result.source
       self.refresh_find_matches_if_visible()
-      self.selection.set({ caret: result.caret, selection: result.selection })
+      self.selection = { caret: result.caret, selection: result.selection }
       self.sync_target_inputs()
       self.maybe_center_typewriter_selection()
     }
@@ -403,26 +400,25 @@ fn MarkdownEditorApp::toggle_task_at(
 fn MarkdownEditorApp::toggle_current_task(self : MarkdownEditorApp) -> Unit {
   match
     markdown_editor_toggle_current_task(
-      self.document.get(),
-      self.selection.get(),
+      self.document,
+      self.selection,
     ) {
     Some(result) => {
       self.push_undo(self.history_entry())
-      self.redo_stack.set([])
-      self.document_session.set(
+      self.redo_stack = []
+      self.document_session = 
         self.document_session
-        .get()
         .apply(
           MarkdownEditTransaction::from_edit_result(
-            self.document.get(),
+            self.document,
             result,
             reason=ToggleTaskEdit,
           ),
-        ),
-      )
-      self.document.set(result.source)
+        )
+      
+      self.document = result.source
       self.refresh_find_matches_if_visible()
-      self.selection.set({ caret: result.caret, selection: result.selection })
+      self.selection = { caret: result.caret, selection: result.selection }
       self.sync_target_inputs()
       self.maybe_center_typewriter_selection()
     }

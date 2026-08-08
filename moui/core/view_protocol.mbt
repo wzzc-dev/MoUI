@@ -9,6 +9,7 @@ pub(all) struct ViewLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
   child_flex_weights : Array[Double]
+  state : ViewStateContext
   text_system : TextSystem
   environment : Environment
   style : ViewStyle
@@ -339,14 +340,13 @@ pub struct View[Msg] {
 ///
 /// The node supplies layout, paint, semantics, focus, and reconciliation
 /// behavior through `ViewNode`. Optional adapters attach typed children,
-/// component building, events, and text commands without erasing `Msg` from the
+/// events, and text commands without erasing `Msg` from the
 /// public view. Identity, declaration, semantics metadata, and static children
 /// are sampled exactly once here. `View::map` maps only typed adapters and
 /// preserves those frozen snapshots.
 pub fn[Node : ViewNode, Msg] View::from_node(
   node : Node,
   children? : (Node) -> Array[View[Msg]] = _node => [],
-  build_child? : ((Node, ComponentContext) -> View[Msg])? = None,
   event? : (Node, ViewEventContext) -> ViewEventResult[Msg] = (_node, _context) => {
     ViewEventResult::ignored()
   },
@@ -374,10 +374,6 @@ pub fn[Node : ViewNode, Msg] View::from_node(
       focusable=focusable_snapshot,
       semantics_action_handlers~,
       children=children_snapshot,
-      build_child=match build_child {
-        Some(build) => Some(context => build(node, context))
-        None => None
-      },
       event=context => event(node, context),
       text_command=(context, intent, paste_text) => {
         text_command(node, context, intent, paste_text)
@@ -399,13 +395,6 @@ pub fn[Msg] View::declaration(self : View[Msg]) -> ViewDeclaration {
 ///|
 pub fn[Msg] View::children(self : View[Msg]) -> Array[View[Msg]] {
   self.adapter.children()
-}
-
-///|
-pub fn[Msg] View::build_child(
-  self : View[Msg],
-) -> ((ComponentContext) -> View[Msg])? {
-  self.adapter.build_child()
 }
 
 ///|

@@ -11,7 +11,7 @@ pub fn entry(
   @runtime.PlatformEntry::new(
     id="macos",
     launch=request => {
-      let binding = macos_surface_binding(request.renderer_factories())
+      let binding = macos_surface_binding(request.renderer_providers())
       launch_macos_app(
         request.title(),
         request.runtime(),
@@ -22,7 +22,7 @@ pub fn entry(
       )
     },
     launch_async=Some(async fn(request, frame_interval_ms) {
-      let binding = macos_surface_binding(request.renderer_factories())
+      let binding = macos_surface_binding(request.renderer_providers())
       launch_macos_app_async_pump(
         request.title(),
         request.runtime(),
@@ -37,9 +37,9 @@ pub fn entry(
 
 ///|
 fn macos_surface_binding(
-  factories : Array[@render.RendererFactory],
+  providers : Array[@render.RendererProvider],
 ) -> MacosSurfaceBinding {
-  let image_source = @host_services_native.filesystem_image_source()
+  let image_source = @host_image_native.filesystem_image_source()
   MacosSurfaceBinding::new(
     create_renderer=(window, metrics) => {
       match macos_native_view_handle(window) {
@@ -65,40 +65,27 @@ fn macos_surface_binding(
             renderer_metrics.physical_size.height.ceil().to_int(),
             renderer_metrics.scale_factor,
           )
-          let gpu_surface = match
-            @render.GpuHostSurfaceDescriptor::metal_layer(layer) {
-            Some(descriptor) =>
-              Some(
-                @render.HostGpuSurfaceBridge::new(
-                  descriptor~,
-                  create_surface=_ => None,
-                  present=_ => true,
-                  resize=next_metrics => {
-                    ignore(
-                      macos_surface_layer_from_view(
-                        raw_view,
-                        next_metrics.physical_size.width.ceil().to_int(),
-                        next_metrics.physical_size.height.ceil().to_int(),
-                        next_metrics.scale_factor,
-                      ),
-                    )
-                  },
+          let native_surface = @render.NativeSurface::new(
+            surface_handle=layer,
+            present=_ => true,
+            resize=next_metrics => {
+              ignore(
+                macos_surface_layer_from_view(
+                  raw_view,
+                  next_metrics.physical_size.width.ceil().to_int(),
+                  next_metrics.physical_size.height.ceil().to_int(),
+                  next_metrics.scale_factor,
                 ),
               )
-            None => None
-          }
-          let kit = @render.SurfaceContext::new(
-            surface=@render.SurfaceDescriptor::cpu_raster(
-              width=renderer_metrics.logical_size.width,
-              height=renderer_metrics.logical_size.height,
-              scale_factor=renderer_metrics.scale_factor,
-            ),
+            },
+          )
+          let surface = @render.HostSurface::new(
             metrics=renderer_metrics,
             cpu_present=Some(host_present),
-            gpu_surface~,
+            native_surface~,
             image_source=Some(image_source),
           )
-          @render_common.resolve_renderer(factories, kit)
+          @render_common.resolve_renderer(providers, surface)
         }
         None => None
       }
@@ -127,7 +114,7 @@ fn launch_macos_app(
   binding~ : MacosSurfaceBinding,
   options? : MacosHostAppOptions = MacosHostAppOptions::new(),
   smoke_options? : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
-  window_requests? : @host.WindowRequests = @window_host.WindowRequestQueue::new().requests(),
+  window_requests? : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
 ) -> Unit {
   let (event_loop, app) = create_macos_app(
     title,
@@ -153,7 +140,7 @@ async fn launch_macos_app_async_pump(
   runtime : @runtime.AppRuntime,
   binding~ : MacosSurfaceBinding,
   options? : MacosHostAppOptions = MacosHostAppOptions::new(),
-  window_requests? : @host.WindowRequests = @window_host.WindowRequestQueue::new().requests(),
+  window_requests? : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
   frame_interval_ms? : Int = 8,
 ) -> Unit {
   let (event_loop, app) = create_macos_app(
@@ -191,17 +178,21 @@ fn create_macos_app(
     title,
     runtime,
     driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
-    coordinator: @window_host.WindowCoordinator::new(
-      window_requests~,
+    lifecycle: @window_lifecycle.WindowLifecycle::new(
+      requests=window_requests,
       scene_resolver=options.scene_resolver,
-      services~,
+    ),
+    frames: @window_frame.WindowFrameStates::new(),
+    images: @window_image.WindowImageTaskStates::new(),
+    input: @window_input.WindowInputState::new(
       event_sources=options.event_sources,
     ),
     surface_binding: binding,
-    services,
-    platform_slots: @window_host.WindowSlotMap::new(),
+    services: @window_services.WindowServiceState::new(bridge=services),
+    platform_slots: @window_lifecycle.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,
+    show_after_first_present: options.show_after_first_present,
     platform_attributes: options.platform_attributes,
     on_ready: options.on_ready,
     min_window_size: options.min_window_size,

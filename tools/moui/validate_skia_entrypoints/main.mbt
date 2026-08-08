@@ -9,7 +9,7 @@ fn usage() -> String {
   let text =
     #|Usage: tools/moui/validate_skia_entrypoints [root]
     #|
-    #|Checks that native Skia renderer selection stays in render/skia.
+    #|Checks that native Skia provider selection stays in moui_skia_renderer.
     #|Composition roots are discovered and validated from
     #|checks/platform-matrix.json by validate-harness-invariants.
   text
@@ -56,25 +56,34 @@ fn require_token(
 }
 
 ///|
-fn validate_renderer_policy(repo_root : String) -> Array[String] {
-  let path = "moui/render/skia/binding_factory.mbt"
-  let source = match
-    @tools.read_required_text(
-      @tools.resolve_path(repo_root, path),
-      "Skia renderer factory",
-    ) {
-    Ok(value) => value
-    Err(message) => return [message]
-  }
+fn validate_renderer_policy_source(
+  source : String,
+  path : String,
+) -> Array[String] {
   let failures : Array[String] = []
   for
     token in [
-      "pub fn raster(", "pub fn gpu(", "pub fn from_env()", "MOUI_SKIA_RENDERER",
-      "NativeRendererMode::parse", "[gpu(), raster()]",
+      "pub fn raster(", "pub fn gpu(", "pub fn from_env(", "platform~ : NativeGpuPlatform",
+      "MOUI_SKIA_RENDERER", "NativeRendererMode::parse", "providers_for_mode(platform, mode)",
+      "[gpu(platform~), raster()]",
     ] {
     require_token(source, token, path, failures)
   }
   failures
+}
+
+///|
+fn validate_renderer_policy(repo_root : String) -> Array[String] {
+  let path = "moui_skia_renderer/binding_factory.mbt"
+  let source = match
+    @tools.read_required_text(
+      @tools.resolve_path(repo_root, path),
+      "Skia renderer provider policy",
+    ) {
+    Ok(value) => value
+    Err(message) => return [message]
+  }
+  validate_renderer_policy_source(source, path)
 }
 
 ///|

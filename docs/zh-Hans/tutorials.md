@@ -32,7 +32,7 @@
 
 1. 在修改 measurement、shaping、glyph rasterization、embedded font registration 或 startup text-engine 选项前，先阅读 `docs/text-system.md`。
 2. 保持 `core` 仅限于中立的 `TextSystem` contract 和确定性 fallback。
-3. 将原生 provider 工作放在相关 `render/wgpu/*` 包下，并让 Web 文本修改与 `backend/web` 对齐。
+3. 将原生 provider 工作放在相关 `moui_wgpu_renderer/*` 包下，并让 Web 文本修改与 `backend/web` 对齐。
 4. 为被修改的边界添加聚焦 core、renderer、backend 或 provider 测试。
 5. 当行为或维护规则变化时，更新 `docs/text-system.md`、`docs/renderer-capability-report.md` 和 guidance 文件。
 
@@ -42,7 +42,7 @@
 2. 更新 `render/capabilities.mbt` 中的 renderer fallback planning。
 3. 更新 native/Web renderer 行为，或报告计划中的 fallback。
 4. 更新 `docs/renderer-capability-report.md`。
-5. 运行 `moon test moui/render --target native`、`moon test moui/render/wgpu --target native` 和 `moon test moui/render/webgpu_adapter --target wasm-gc`。
+5. 运行 `moon test moui/render --target native`、`moon test moui_wgpu_renderer --target native` 和 `moon test moui_web_renderer --target wasm-gc`。
 
 ## 添加 Showcase 入口
 

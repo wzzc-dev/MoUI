@@ -323,7 +323,6 @@ fn PdfWorkbenchModel::apply_pdf_bytes(
         None => document.selected_page
       }
       let loaded_document = { ..document, selected_page, }
-      self.reset_panel_scrolls()
       {
         ..self,
         document: Some(loaded_document),
@@ -336,6 +335,8 @@ fn PdfWorkbenchModel::apply_pdf_bytes(
         raster_cache: [],
         raster_status: RasterIdle,
         preview_scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
+        sidebar_scroll: @geometry.Point::new(x=0.0, y=0.0),
+        inspector_scroll: @geometry.Point::new(x=0.0, y=0.0),
         query: "",
         status: Ready,
         last_event: "Loaded " +

@@ -33,31 +33,29 @@ pub fn HostedWindow::new(
 /// Platform packages adapt their typed surface handles to this shape with
 /// raw (`UInt64`) handles.
 pub struct HostSurfaceBinding {
-  create_renderer : (UInt64, @core.SurfaceMetrics) -> @render.RendererResolution?
+  create_renderer : (UInt64, @core.SurfaceMetrics) -> @render.RendererSession?
   sync : (UInt64, @core.SurfaceMetrics) -> Unit
-  image_loader : @render.ImageLoader?
 }
 
 ///|
 pub fn HostSurfaceBinding::new(
-  create_renderer~ : (UInt64, @core.SurfaceMetrics) -> @render.RendererResolution?,
+  create_renderer~ : (UInt64, @core.SurfaceMetrics) -> @render.RendererSession?,
   sync~ : (UInt64, @core.SurfaceMetrics) -> Unit,
-  image_loader? : @render.ImageLoader? = None,
 ) -> HostSurfaceBinding {
-  { create_renderer, sync, image_loader }
+  { create_renderer, sync }
 }
 
 ///|
-/// Assemble the renderer kit shared by Android, iOS, and HarmonyOS. Platform
-/// packages provide only their native presenter and GPU descriptor wiring.
+/// Assemble the renderer-neutral host surface shared by Android, iOS, and
+/// HarmonyOS. Platform packages provide only presenter and opaque handles.
 pub fn mobile_host_surface_binding(
-  factories : Array[@render.RendererFactory],
+  providers : Array[@render.RendererProvider],
   presenter_description~ : String,
   cpu_present~ : (UInt64, @render.PixelFrame) -> Bool,
-  gpu_descriptor~ : (UInt64) -> @render.GpuHostSurfaceDescriptor?,
+  native_surface~ : (UInt64) -> @render.NativeSurface?,
   sync? : (UInt64, @core.SurfaceMetrics) -> Unit = (_raw, _metrics) => (),
 ) -> HostSurfaceBinding {
-  let image_source = @host_services_native.filesystem_image_source()
+  let image_source = @host_image_native.filesystem_image_source()
   HostSurfaceBinding::new(
     create_renderer=(raw_handle, metrics) => {
       let renderer_metrics = @core.SurfaceMetrics::new(
@@ -69,28 +67,12 @@ pub fn mobile_host_surface_binding(
         description=presenter_description,
         present=frame => cpu_present(raw_handle, frame),
       )
-      let gpu_surface = match gpu_descriptor(raw_handle) {
-        Some(descriptor) =>
-          Some(
-            @render.HostGpuSurfaceBridge::new(
-              descriptor~,
-              create_surface=_ => None,
-              present=_ => true,
-            ),
-          )
-        None => None
-      }
       @render_common.resolve_renderer(
-        factories,
-        @render.SurfaceContext::new(
-          surface=@render.SurfaceDescriptor::cpu_raster(
-            width=renderer_metrics.logical_size.width,
-            height=renderer_metrics.logical_size.height,
-            scale_factor=renderer_metrics.scale_factor,
-          ),
+        providers,
+        @render.HostSurface::new(
           metrics=renderer_metrics,
           cpu_present=Some(present),
-          gpu_surface~,
+          native_surface=native_surface(raw_handle),
           image_source=Some(image_source),
         ),
       )
@@ -121,18 +103,15 @@ pub fn HostedRuntimeSession::create(
   metrics~ : @core.SurfaceMetrics,
   binding~ : HostSurfaceBinding,
   surface_generation~ : Int,
-  frame? : @window_host.FrameCoordinator? = None,
 ) -> HostedRuntimeSession? {
   match (binding.create_renderer)(raw_handle, metrics) {
     Some(resolution) => {
-      let renderer = resolution.renderer()
+      let renderer = resolution
       let core = EmbeddedRuntimeBackendCore::new(
         runtime~,
         renderer~,
-        image_loader=preferred_image_loader(resolution.image_loader(), binding),
         metrics~,
         surface_generation~,
-        frame~,
       )
       (binding.sync)(raw_handle, metrics)
       Some({ raw_handle, core })
@@ -151,15 +130,11 @@ pub fn HostedRuntimeSession::attach(
 ) -> Bool {
   match (binding.create_renderer)(raw_handle, metrics) {
     Some(resolution) => {
-      let renderer = resolution.renderer()
+      let renderer = resolution
       if self.core.attach_surface(
           renderer~,
           metrics~,
           surface_generation~,
-          image_loader=preferred_image_loader(
-            resolution.image_loader(),
-            binding,
-          ),
         ) {
         self.raw_handle = raw_handle
         (binding.sync)(raw_handle, metrics)
@@ -169,17 +144,6 @@ pub fn HostedRuntimeSession::attach(
       }
     }
     None => false
-  }
-}
-
-///|
-fn preferred_image_loader(
-  resolved : @render.ImageLoader?,
-  binding : HostSurfaceBinding,
-) -> @render.ImageLoader? {
-  match resolved {
-    Some(loader) => Some(loader)
-    None => binding.image_loader
   }
 }
 
@@ -350,8 +314,7 @@ pub struct HostedWindowBackend {
   mut window : HostedWindow?
   mut runtime : @runtime.AppRuntime?
   mut session : HostedRuntimeSession?
-  host : @window_host.EmbeddedWindowCoordinator
-  redraw_target : Ref[(() -> Unit)?]
+  lifecycle : @window_lifecycle.EmbeddedLifecycle
   mut last_pointer : @core.Point
   modifiers : @core.KeyModifiers
   mut frames_presented : Int
@@ -366,15 +329,6 @@ pub fn HostedWindowBackend::new(
   ime_sync? : ((@runtime.AppRuntime?) -> Unit)? = None,
   auto_exit_after_frames? : Int? = None,
 ) -> HostedWindowBackend {
-  let redraw_target : Ref[(() -> Unit)?] = Ref(None)
-  let host = @window_host.EmbeddedWindowCoordinator::new(
-    hooks=@window_host.WindowFrameHooks::new(request_redraw=() => {
-      match redraw_target.val {
-        Some(request_redraw) => request_redraw()
-        None => ()
-      }
-    }),
-  )
   {
     title,
     runtime_factory,
@@ -383,8 +337,7 @@ pub fn HostedWindowBackend::new(
     window: None,
     runtime: None,
     session: None,
-    host,
-    redraw_target,
+    lifecycle: @window_lifecycle.EmbeddedLifecycle::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     frames_presented: 0,
@@ -406,7 +359,7 @@ pub fn HostedWindowBackend::frames_presented(self : HostedWindowBackend) -> Int 
 pub fn HostedWindowBackend::surface_generation(
   self : HostedWindowBackend,
 ) -> Int {
-  self.host.surface_generation()
+  self.lifecycle.surface_generation()
 }
 
 ///|
@@ -454,7 +407,7 @@ pub fn HostedWindowBackend::attach_session(
   window : HostedWindow,
   raw_handle~ : UInt64,
 ) -> Bool {
-  let metrics = @window_host.make_surface_metrics(
+  let metrics = @window_input.make_surface_metrics(
     (window.inner_size)(),
     scale_factor=(window.scale_factor)(),
   )
@@ -470,9 +423,8 @@ pub fn HostedWindowBackend::attach_session(
     }
   }
   let binding = (self.surface_binding_factory)()
-  self.redraw_target.val = Some(window.request_redraw)
-  ignore(self.host.attach_surface(raw_handle, metrics))
-  let surface_generation = self.host.surface_generation()
+  ignore(self.lifecycle.attach_surface(raw_handle, metrics))
+  let surface_generation = self.lifecycle.surface_generation()
   let attached = match self.session {
     Some(session) =>
       if session.attach(raw_handle~, metrics~, binding~, surface_generation~) {
@@ -488,7 +440,6 @@ pub fn HostedWindowBackend::attach_session(
           metrics~,
           binding~,
           surface_generation~,
-          frame=Some(self.host.frame()),
         ) {
         Some(session) => {
           self.session = Some(session)
@@ -501,8 +452,7 @@ pub fn HostedWindowBackend::attach_session(
     self.window = Some(window)
     (window.request_redraw)()
   } else {
-    self.redraw_target.val = None
-    ignore(self.host.detach_surface())
+    ignore(self.lifecycle.detach_surface())
     (window.drop)()
   }
   attached
@@ -519,8 +469,7 @@ pub fn HostedWindowBackend::detach_session(self : HostedWindowBackend) -> Unit {
     None => ()
   }
   self.window = None
-  self.redraw_target.val = None
-  ignore(self.host.detach_surface())
+  ignore(self.lifecycle.detach_surface())
 }
 
 ///|
@@ -533,13 +482,13 @@ pub fn HostedWindowBackend::destroy_surfaces(
 ///|
 pub fn HostedWindowBackend::suspended(self : HostedWindowBackend) -> Unit {
   self.destroy_surfaces()
-  ignore(self.host.suspended())
+  ignore(self.lifecycle.suspended())
 }
 
 ///|
 /// Forward the physical host's resumed callback to the MoUI logical owner.
 pub fn HostedWindowBackend::resumed(self : HostedWindowBackend) -> Unit {
-  ignore(self.host.resumed())
+  ignore(self.lifecycle.resumed())
 }
 
 ///|
@@ -560,7 +509,7 @@ pub fn HostedWindowBackend::dispatch_host_event(
     @host.Event::Resized(metrics) =>
       match self.session {
         Some(session) => {
-          ignore(self.host.resize_surface(metrics))
+          ignore(self.lifecycle.resize_surface(metrics))
           ignore(session.resize(metrics))
         }
         None => ()
@@ -600,7 +549,7 @@ pub fn HostedWindowBackend::dispatch_window_event(
     None => 1.0
   }
   match
-    @window_host.window_event_to_host_with_modifiers(
+    @window_input.window_event_to_host_with_modifiers(
       event,
       self.last_pointer,
       self.modifiers,
@@ -625,26 +574,26 @@ pub fn HostedWindowBackend::handle_window_event(
     None => (1.0, None)
   }
   match
-    @window_host.transform_cross_platform_event(
+    @window_input.transform_cross_platform_event(
       event,
       scale_factor~,
       surface_size~,
     ) {
-    @window_host.TransformedWindowEvent::CloseRequested => {
+    @window_input.TransformedWindowEvent::CloseRequested => {
       self.dispatch_host_event(@host.Event::CloseRequested)
       self.destroy_surfaces()
-      ignore(self.host.request_exit(0))
+      ignore(self.lifecycle.request_exit(0))
       exit()
     }
-    @window_host.TransformedWindowEvent::DispatchHostEvent(host_event) =>
+    @window_input.TransformedWindowEvent::DispatchHostEvent(host_event) =>
       self.dispatch_host_event(host_event)
-    @window_host.TransformedWindowEvent::WindowRedrawRequired => {
+    @window_input.TransformedWindowEvent::WindowRedrawRequired => {
       self.dispatch_host_event(@host.Event::RedrawRequested)
       match self.auto_exit_after_frames {
         Some(limit) =>
           if self.frames_presented >= limit {
             self.destroy_surfaces()
-            ignore(self.host.request_exit(0))
+            ignore(self.lifecycle.request_exit(0))
             exit()
           }
         None => ()

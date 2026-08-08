@@ -36,23 +36,19 @@ test "harmonyos runtime session renders through supplied surface binding" {
     create_renderer=(_surface, _metrics) => {
       create_count.val = create_count.val + 1
       Some(
-        @render.RendererResolution::new(
-          renderer=@render.WindowRenderer::new(
-            resize=_ => resize_count.val = resize_count.val + 1,
-            render=_ => (),
-            render_frame=Some(_frame => {
-              render_count.val = render_count.val + 1
-              @render.RenderFrameResult::new(presented=true)
-            }),
-            drain_present_completions=Some(() => {
-              completion_drain_count.val = completion_drain_count.val + 1
-              []
-            }),
-            text_system=() => @core.TextSystem::fallback(),
-            present_count=() => render_count.val,
-            dispose=() => dispose_count.val = dispose_count.val + 1,
-          ),
-          image_loader=None,
+        @render.RendererSession::new(
+          resize=_ => resize_count.val = resize_count.val + 1,
+          render_frame=_frame => {
+            render_count.val = render_count.val + 1
+            @render.RenderFrameResult::new(presented=true)
+          },
+          drain_events=Some(() => {
+            completion_drain_count.val = completion_drain_count.val + 1
+            []
+          }),
+          text_system=() => @core.TextSystem::fallback(),
+          present_count=() => render_count.val,
+          dispose=() => dispose_count.val = dispose_count.val + 1,
         ),
       )
     },

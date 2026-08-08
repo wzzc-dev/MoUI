@@ -237,7 +237,7 @@ Forbidden after the split:
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/render` (any)
 - concrete platform backends (`backend/<platform>`)
-- concrete renderer providers (`moui_skia`, `render/skia`, `render/wgpu`, …)
+- concrete renderer providers (`moui_skia`, `moui_skia_renderer`, `moui_wgpu_renderer`, …)
 
 ### Options Considered
 

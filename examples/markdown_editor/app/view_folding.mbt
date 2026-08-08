@@ -7,7 +7,7 @@ fn MarkdownEditorApp::toggle_heading_fold(
   self : MarkdownEditorApp,
   source_start : Int,
 ) -> Unit {
-  let folded = self.folded_headings.get()
+  let folded = self.folded_headings
   let next : Array[Int] = []
   let mut found = false
   for offset in folded {
@@ -20,7 +20,7 @@ fn MarkdownEditorApp::toggle_heading_fold(
   if !found {
     next.push(source_start)
   }
-  self.folded_headings.set(next)
+  self.folded_headings = next
 }
 
 ///|
@@ -29,7 +29,7 @@ fn MarkdownEditorApp::heading_is_folded(
   self : MarkdownEditorApp,
   source_start : Int,
 ) -> Bool {
-  self.folded_headings.get().contains(source_start)
+  self.folded_headings.contains(source_start)
 }
 
 ///|

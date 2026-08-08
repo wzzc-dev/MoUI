@@ -342,7 +342,8 @@ pub struct CodeWorkspace {
   last_assistant_message_id : String?
   last_thought_message_id : String?
   error : String?
-  scroll_state : @state.ScrollState
+  scroll_offset : @geometry.Point
+  scroll_request_id : Int
   follow_latest : Bool
 }
 
@@ -367,7 +368,8 @@ fn CodeWorkspace::new() -> CodeWorkspace {
     last_assistant_message_id: None,
     last_thought_message_id: None,
     error: None,
-    scroll_state: @state.ScrollState::new(),
+    scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
+    scroll_request_id: 0,
     follow_latest: true,
   }
 }
@@ -393,7 +395,7 @@ pub struct SettingsWorkspace {
   acp_process_cwd : String
   font_size : Int
   active_section : SettingsSection
-  priv scroll_state : @state.ScrollState
+  priv scroll_offset : @geometry.Point
   save_notice : String?
   env_source : String
   /// True while a `v1/models` auto-detect request is in flight.
@@ -428,7 +430,7 @@ fn SettingsWorkspace::new() -> SettingsWorkspace {
     acp_process_cwd: "",
     font_size: 14,
     active_section: SettingsSection::Api,
-    scroll_state: @state.ScrollState::new(),
+    scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
     save_notice: None,
     env_source: ".mo_workbench/settings.json.example",
     detect_busy: false,
@@ -574,6 +576,7 @@ pub(all) enum CodeMsg {
 /// Settings workspace messages (form interactions).
 pub(all) enum SettingsMsg {
   SelectSection(SettingsSection)
+  Scrolled(@geometry.Point)
   BackendChanged(AgentBackendKind)
   ApprovalChanged(ApprovalPolicy)
   SandboxChanged(SandboxMode)

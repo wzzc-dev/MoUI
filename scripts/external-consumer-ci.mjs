@@ -18,15 +18,11 @@ import { spawnSync } from "node:child_process";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureRoot = join(repoRoot, "checks/external-consumer");
-const mouiVersion = "0.1.7";
-const packagedModules = [
-  { directory: "moui", packageName: "moui", version: mouiVersion },
-  { directory: "moui_skia", packageName: "moui_skia", version: mouiVersion },
-  { directory: "moui_sun", packageName: "moui_sun", version: mouiVersion },
-];
+const registryBaseVersion = "0.1.7";
+const headVersion = "0.2.0";
 
 const usage = [
-  "Usage: node scripts/external-consumer-ci.mjs --source registry|package",
+  "Usage: node scripts/external-consumer-ci.mjs --source registry|package --profile base|skia|web",
   "",
   "Validates an app copied outside the MoUI checkout. Package mode stages the",
   "current package closure in an isolated MoonBit workspace.",
@@ -34,10 +30,14 @@ const usage = [
 
 const parseArgs = argv => {
   let source = "";
+  let profile = "base";
   for (let index = 0; index < argv.length;) {
     const arg = argv[index];
     if (arg === "--source") {
       source = argv[index + 1] || "";
+      index += 2;
+    } else if (arg === "--profile") {
+      profile = argv[index + 1] || "";
       index += 2;
     } else if (arg === "--help" || arg === "-h") {
       console.log(usage);
@@ -49,7 +49,96 @@ const parseArgs = argv => {
   if (source !== "registry" && source !== "package") {
     throw new Error("--source must be registry or package");
   }
-  return { source };
+  if (!["base", "skia", "web"].includes(profile)) {
+    throw new Error("--profile must be base, skia, or web");
+  }
+  if (source === "registry" && profile !== "base") {
+    throw new Error("registry mode currently supports only the stable base profile");
+  }
+  return { source, profile };
+};
+
+const profilePackageNames = profile => {
+  if (profile === "skia") return ["moui", "moui_skia", "moui_skia_renderer"];
+  if (profile === "web") return ["moui", "moui_web_renderer"];
+  return ["moui"];
+};
+
+const packageSpecs = (profile, source) => {
+  const version = source === "registry" ? registryBaseVersion : headVersion;
+  return profilePackageNames(profile).map(packageName => ({
+    directory: packageName,
+    packageName,
+    version,
+  }));
+};
+
+const profilePackageImport = (profile, version) => {
+  if (profile === "skia") {
+    return [
+      `  "wzzc-dev/moui@${version}",`,
+      `  "wzzc-dev/moui_skia_renderer@${version}",`,
+    ];
+  }
+  if (profile === "web") {
+    return [
+      `  "wzzc-dev/moui@${version}",`,
+      `  "wzzc-dev/moui_web_renderer@${version}",`,
+    ];
+  }
+  return [`  "wzzc-dev/moui@${version}",`];
+};
+
+const writeConsumerManifest = (consumerRoot, profile, version) => {
+  writeFileSync(
+    join(consumerRoot, "moon.mod"),
+    [
+      'name = "moui-external/consumer"',
+      "",
+      'version = "0.0.1"',
+      "",
+      "import {",
+      ...profilePackageImport(profile, version),
+      "}",
+      "",
+    ].join("\n"),
+  );
+};
+
+const assertPackageTreeClosure = (tree, profile) => {
+  const forbiddenByProfile = {
+    base: [
+      "wzzc-dev/moui_skia_renderer", "wzzc-dev/moui_sun_renderer",
+      "wzzc-dev/moui_web_renderer", "wzzc-dev/moui_wgpu_renderer",
+      "wzzc-dev/moui_skia", "wzzc-dev/moui_sun",
+      "Milky2018/wgpu_mbt", "Milky2018/moon_cosmic", "Milky2018/moon_swash",
+      "mizchi/image", "moonbitlang/quickcheck", "mizchi/pixelmatch",
+    ],
+    skia: [
+      "wzzc-dev/moui_web_renderer", "wzzc-dev/moui_wgpu_renderer",
+      "wzzc-dev/moui_sun_renderer", "wzzc-dev/moui_sun", "Milky2018/wgpu_mbt",
+      "Milky2018/moon_cosmic", "Milky2018/moon_swash", "mizchi/image",
+    ],
+    web: [
+      "wzzc-dev/moui_skia_renderer", "wzzc-dev/moui_wgpu_renderer",
+      "wzzc-dev/moui_sun_renderer", "wzzc-dev/moui_skia", "wzzc-dev/moui_sun",
+      "Milky2018/wgpu_mbt", "Milky2018/moon_cosmic", "Milky2018/moon_swash",
+      "mizchi/image",
+    ],
+  };
+  const required = profile === "base"
+    ? []
+    : ["wzzc-dev/moui_" + profile + "_renderer@" + headVersion];
+  for (const token of required) {
+    if (!tree.includes(token)) {
+      throw new Error(profile + " package tree is missing " + token);
+    }
+  }
+  for (const token of forbiddenByProfile[profile]) {
+    if (tree.includes(token)) {
+      throw new Error(profile + " package tree contains forbidden token: " + token);
+    }
+  }
 };
 
 const run = (command, args, { cwd, capture = false } = {}) => {
@@ -76,10 +165,10 @@ const isInside = (root, candidate) => {
     (path !== ".." && !path.startsWith(".." + sep) && !isAbsolute(path));
 };
 
-const findResolvedPackage = (consumerRoot, packageName) => {
+const findResolvedPackage = (consumerRoot, packageName, version) => {
   const candidates = [
     join(consumerRoot, ".mooncakes/wzzc-dev", packageName),
-    join(consumerRoot, ".mooncakes/wzzc-dev", packageName, mouiVersion),
+    join(consumerRoot, ".mooncakes/wzzc-dev", packageName, version),
   ];
   for (const candidate of candidates) {
     if (existsSync(candidate)) return realpathSync(candidate);
@@ -116,9 +205,20 @@ const temporaryRoot = mkdtempSync(join(tmpdir(), "moui-external-consumer-"));
 const consumerRoot = join(temporaryRoot, "consumer");
 const stagedPackagesRoot = join(temporaryRoot, "packages");
 const packageSha256s = [];
+const expectedVersion = options.source === "registry"
+  ? registryBaseVersion
+  : headVersion;
+const packagedModules = packageSpecs(options.profile, options.source);
 
 try {
-  cpSync(fixtureRoot, consumerRoot, { recursive: true });
+  mkdirSync(consumerRoot, { recursive: true });
+  const profileFixture = options.profile === "base"
+    ? fixtureRoot
+    : join(fixtureRoot, "profiles", options.profile);
+  cpSync(join(profileFixture, "app"), join(consumerRoot, "app"), {
+    recursive: true,
+  });
+  writeConsumerManifest(consumerRoot, options.profile, expectedVersion);
 
   if (options.source === "registry") {
     run("moon", ["update"], { cwd: consumerRoot });
@@ -159,22 +259,49 @@ try {
 
   const tree = run("moon", ["tree"], { cwd: consumerRoot, capture: true });
   process.stdout.write(tree);
-  if (!tree.includes("wzzc-dev/moui@" + mouiVersion)) {
+  if (!tree.includes("wzzc-dev/moui@" + expectedVersion)) {
     throw new Error(
-      "moon tree does not contain wzzc-dev/moui@" + mouiVersion,
+      "moon tree does not contain wzzc-dev/moui@" + expectedVersion,
     );
   }
   if (tree.includes(repoRoot)) {
     throw new Error("moon tree resolved monorepo source from " + repoRoot);
   }
+  if (options.source === "package") {
+    assertPackageTreeClosure(tree, options.profile);
+  }
 
-  run("moon", ["check", "--target", "native"], { cwd: consumerRoot });
-  run("moon", ["check", "--target", "wasm-gc"], { cwd: consumerRoot });
-  run("moon", ["test", "app", "--target", "native"], { cwd: consumerRoot });
+  if (options.profile === "web") {
+    run("moon", ["check", "app", "--target", "wasm-gc"], { cwd: consumerRoot });
+  } else {
+    run("moon", ["check", "app", "--target", "native"], { cwd: consumerRoot });
+  }
+  if (options.profile === "base") {
+    run("moon", ["check", "app", "--target", "wasm-gc"], { cwd: consumerRoot });
+    run("moon", ["test", "app", "--target", "native"], { cwd: consumerRoot });
+  }
+
+  if (options.source === "package") {
+    const forbiddenBaseArchivePrefixes = [
+      "render/skia", "render/sun", "render/wgpu", "render/webgpu_adapter",
+      "render/canvas2d", "tests",
+    ];
+    const archiveList = run(
+      "moon",
+      ["-C", "moui", "package", "--list"],
+      { cwd: repoRoot, capture: true },
+    );
+    const archivePaths = archiveList.split(/\r?\n/).map(line => line.trim());
+    for (const prefix of forbiddenBaseArchivePrefixes) {
+      if (archivePaths.some(path => path === prefix || path.startsWith(prefix + "/"))) {
+        throw new Error("base archive contains forbidden path: " + prefix);
+      }
+    }
+  }
 
   const resolvedMoui = options.source === "package"
     ? realpathSync(join(stagedPackagesRoot, "moui"))
-    : findResolvedPackage(consumerRoot, "moui");
+    : findResolvedPackage(consumerRoot, "moui", expectedVersion);
   if (isInside(repoRoot, resolvedMoui)) {
     throw new Error(
       "external consumer resolved MoUI from monorepo source: " + resolvedMoui,
@@ -184,9 +311,9 @@ try {
     join(resolvedMoui, "moon.mod"),
     "utf8",
   );
-  if (!resolvedManifest.includes('version = "' + mouiVersion + '"')) {
+  if (!resolvedManifest.includes('version = "' + expectedVersion + '"')) {
     throw new Error(
-      "resolved MoUI manifest is not version " + mouiVersion,
+      "resolved MoUI manifest is not version " + expectedVersion,
     );
   }
   if (options.source === "package") {
@@ -211,6 +338,7 @@ try {
   }
   console.log(
     "[external-consumer] source=" + options.source +
+      " profile=" + options.profile +
       " resolved=" + resolvedMoui + " monorepoSource=false" +
       (packageSha256s.length ? " packageSha256s=" + packageSha256s.join(",") : ""),
   );

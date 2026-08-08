@@ -14,7 +14,7 @@ implementation status.
 | **L2** | Runtime behavior on real renderer/platform | Every PR and push-to-main (`moui-renderer-real-skia-ci.yml`) | Matching-host real Skia |
 | **L3** | Cross-platform consistency | `feature-proof-summary.yml` after `ci.yml` completes | All L2 platforms passed |
 
-Framework rendering code (`moui/render/skia/`, `moui/views/`) depends on real
+Framework rendering code (`moui_skia_renderer/`, `moui/views/`) depends on real
 Skia linking provided by `moui_skia`. Any framework change can affect real
 rendering behavior, so L2 real Skia smoke runs on every PR.
 
@@ -85,14 +85,14 @@ Product policy now defaults `auto` to GPU on all native Skia platforms
 `contextLoss`, `rasterFallback`) remain the quality evidence bar rather than
 the product-default gate.
 
-| Platform | Backend | Surface route | Phase 1 source | Phase 2 promotion |
+| Platform | Backend | Skia renderer-local route | Phase 1 source | Phase 2 promotion |
 | --- | --- | --- | --- | --- |
-| iOS | Metal | `MetalGpuSurfaceRoute` | worker-owned source; simulator GPU build/first frame | pending physical-device manifest |
-| macOS | Metal | `MetalGpuSurfaceRoute` | worker-owned context/picture replay/present; local first-frame smoke | matching-host claim recorded 2026-07-14 |
-| Android | Vulkan / GLES | `VulkanGpuSurfaceRoute` / `EglGpuSurfaceRoute` | worker-owned source; minSdk 23 GPU APK build | pending Vulkan and GLES device manifests |
-| HarmonyOS | EGL/GLES | `EglGpuSurfaceRoute` | worker-owned source; native/HAP build | pending signed-device manifest |
-| Windows | Direct3D 12 | `Direct3DGpuSurfaceRoute` | worker-owned source; MSVC validation pending | pending matching-device manifest |
-| Linux | Vulkan (Wayland) | `VulkanGpuSurfaceRoute` | worker-owned source; Wayland build/validation pending | pending matching-device manifest |
+| iOS | Metal | `SkiaSurfaceRoute::MetalGpuSurfaceRoute` | worker-owned source; simulator GPU build/first frame | pending physical-device manifest |
+| macOS | Metal | `SkiaSurfaceRoute::MetalGpuSurfaceRoute` | worker-owned context/picture replay/present; local first-frame smoke | matching-host claim recorded 2026-07-14 |
+| Android | Vulkan / GLES | `SkiaSurfaceRoute::VulkanGpuSurfaceRoute` / `SkiaSurfaceRoute::EglGpuSurfaceRoute` | worker-owned source; minSdk 23 GPU APK build | pending Vulkan and GLES device manifests |
+| HarmonyOS | EGL/GLES | `SkiaSurfaceRoute::EglGpuSurfaceRoute` | worker-owned source; native/HAP build | pending signed-device manifest |
+| Windows | Direct3D 12 | `SkiaSurfaceRoute::Direct3DGpuSurfaceRoute` | worker-owned source; MSVC validation pending | pending matching-device manifest |
+| Linux | Vulkan (Wayland) | `SkiaSurfaceRoute::VulkanGpuSurfaceRoute` | worker-owned source; Wayland build/validation pending | pending matching-device manifest |
 | Web | WebGPU | browser canvas | device-loss/fallback source path | pending Chrome WebGPU manifest |
 
 The Phase 2 promotion gate scaffolding has L1 package-test proof:

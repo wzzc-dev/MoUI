@@ -1,125 +1,8 @@
 ///|
-test "native accessibility bridge maps flat runtime semantics nodes" {
-  let child_id = @core.SemanticsNodeId::new(2UL)
-  let child = @core.SemanticsNode::{
-    node_id: child_id,
-    semantic_id: @core.SemanticId::parse("document.save"),
-    role: @core.SemanticsRole::Heading,
-    level: Some(2),
-    url: "https://example.test/save",
-    label: "Save",
-    value: "",
-    description: "Save current document",
-    state: @core.SemanticsState::default(),
-    actions: [
-      @core.SemanticsActionKind::Focus,
-      @core.SemanticsActionKind::Activate,
-    ],
-    focus_order: Some(0),
-    frame: @core.Rect::new(x=8.0, y=8.0, width=80.0, height=32.0),
-    children: [],
-  }
-  let root = @core.SemanticsNode::{
-    node_id: @core.SemanticsNodeId::new(1UL),
-    semantic_id: None,
-    role: @core.SemanticsRole::Group,
-    level: None,
-    url: "",
-    label: "Root",
-    value: "",
-    description: "",
-    state: @core.SemanticsState::default(),
-    actions: [],
-    focus_order: None,
-    frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
-    children: [child_id],
-  }
-  let root_node = @runtime.accesskit_node_from_semantics(root)
-  let child_node = @runtime.accesskit_node_from_semantics(child)
-  assert_true(
-    @runtime.accesskit_node_id_for_semantics(child_id) ==
-    @accesskit.NodeId::from_u64(2UL),
-  )
-  let root_children = root_node.children()
-  assert_eq(root_children.length(), 1)
-  assert_true(root_children[0] == @accesskit.NodeId::from_u64(2UL))
-  inspect(child_node.role(), content="Heading")
-  assert_true(child_node.level() == Some(2))
-  assert_true(child_node.url() == Some("https://example.test/save"))
-  match child_node.label() {
-    Some(label) => inspect(label, content="Save")
-    None => fail("expected child accessibility label")
-  }
-  match child_node.description() {
-    Some(description) => inspect(description, content="Save current document")
-    None => fail("expected child accessibility description")
-  }
-  assert_true(child_node.supports_action(@accesskit.Action::Click))
-}
-
-///|
-test "native accessibility bridge forwards generation checked typed actions" {
-  let invoked = Ref(0)
-  let node_id = @core.SemanticsNodeId::new(42UL)
-  let generation = @core.SemanticsGeneration::new(7UL)
-  let bridge = @runtime.NativeAccessibilityBridge::new(
-    kind=@runtime.NativeAccessibilityBridgeKind::TestBridge,
-    perform=request => {
-      if request.node_id == node_id &&
-        request.generation == generation &&
-        request.action == @core.SemanticsAction::SetText("Luna") {
-        invoked.val = invoked.val + 1
-        @runtime.NativeAccessibilityActionResult::Handled({
-          before: generation,
-          after: @core.SemanticsGeneration::new(8UL),
-          pending_work: false,
-        })
-      } else {
-        @runtime.NativeAccessibilityActionResult::Rejected(
-          @runtime.SemanticsActionDispatchError::TargetNotFound(
-            @core.SemanticsTarget::ByNodeId(request.node_id),
-          ),
-        )
-      }
-    },
-  )
-  match
-    bridge.perform_action(
-      @runtime.NativeAccessibilityActionRequest::new(
-        node_id~,
-        generation~,
-        action=@core.SemanticsAction::SetText("Luna"),
-      ),
-    ) {
-    @runtime.NativeAccessibilityActionResult::Handled(receipt) =>
-      assert_true(receipt.after == @core.SemanticsGeneration::new(8UL))
-    _ => fail("expected handled action")
-  }
-  inspect(invoked.val, content="1")
-  match
-    bridge.perform_action(
-      @runtime.NativeAccessibilityActionRequest::new(
-        node_id=@core.SemanticsNodeId::new(7UL),
-        generation~,
-        action=@core.SemanticsAction::Submit,
-      ),
-    ) {
-    @runtime.NativeAccessibilityActionResult::Rejected(
-      @runtime.SemanticsActionDispatchError::TargetNotFound(
-        @core.SemanticsTarget::ByNodeId(id)
-      )
-    ) => assert_true(id == @core.SemanticsNodeId::new(7UL))
-    _ => fail("expected missing element result")
-  }
-}
-
-///|
 test "present completion helpers distinguish terminal outcomes" {
   let completion = status => {
     @render.RenderPresentCompletion::new(
-      frame_sequence=1,
-      surface_generation=1,
-      image_resource_revision=0L,
+      token=@render.FrameToken::new(surface_generation=1, sequence=1),
       submitted_at_ms=1.0,
       completed_at_ms=2.0,
       presented_at_ms=if status is @render.RenderPresentStatus::Presented {
@@ -174,9 +57,11 @@ test "host driver dispatches resize and deduplicates redraw requests" {
 ///|
 test "host driver coalesces dirty redraw while previous redraw is pending" {
   let scheduled = Ref(0)
-  let text = @core.State::new("")
-  let runtime = host_test_runtime(
-    root=host_test_text_field(text, width=240.0, height=40.0),
+  let text = Ref("")
+  let runtime = host_test_text_field_runtime(
+    value=text,
+    width=240.0,
+    height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
@@ -196,14 +81,14 @@ test "host driver coalesces dirty redraw while previous redraw is pending" {
   let pending = driver.dispatch(
     Event::TextInput(@core.TextInputEvent::InsertText("a")),
   )
-  inspect(text.get(), content="a")
+  inspect(text.val, content="a")
   inspect(pending.redraw_requested, content="true")
   inspect(scheduled.val, content="1")
   driver.begin_redraw()
   ignore(
     driver.dispatch(Event::TextInput(@core.TextInputEvent::InsertText("b"))),
   )
-  inspect(text.get(), content="ab")
+  inspect(text.val, content="ab")
   inspect(scheduled.val, content="1")
   driver.finish_redraw()
   inspect(scheduled.val, content="2")
@@ -214,14 +99,14 @@ test "host renderer capability records preserve optional callback behavior" {
   let platform_draws = Ref(0)
   let platform_callbacks = Ref(0)
   let context_losses = Ref(0)
-  let renderer = @render.WindowRenderer::new(
+  let renderer = @render.RendererSession::new(
     resize=_ => (),
-    render=_ => (),
+    render_frame=_ => @render.RenderFrameResult::new(presented=true),
     text_system=() => @core.TextSystem::fallback(),
-    image=@render.HostRendererImageCapability::new(image_resources=() => {
+    image_records=() => {
       [@render.ImageResourceRecord::loading("pending.png")]
-    }),
-    platform_view=@render.HostRendererPlatformViewCapability::new(
+    },
+    platform_view=@render.RendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         _pixels,
         _src_width,
@@ -244,14 +129,13 @@ test "host renderer capability records preserve optional callback behavior" {
         }
       },
     ),
-    gpu_recovery=@render.HostRendererGpuRecoveryCapability::new(
+    gpu_recovery=@render.RendererGpuRecoveryCapability::new(
       inject_context_loss=() => context_losses.val = context_losses.val + 1,
       gpu_recovery_count=() => 3,
       gpu_fallback_active=() => true,
     ),
   )
-  inspect(renderer.image_resources().length(), content="1")
-  inspect(renderer.image_resource_snapshot().records.length(), content="1")
+  inspect(renderer.image_diagnostics().records().length(), content="1")
   renderer.draw_platform_view_pixels(b"", 0, 0, 0, 0.0, 0.0, 0.0, 0.0)
   renderer.set_platform_view_draw_fn(
     Some(() => platform_draws.val = platform_draws.val + 1),
@@ -267,11 +151,12 @@ test "host renderer capability records preserve optional callback behavior" {
 ///|
 test "host renderer absent capabilities keep no-op defaults" {
   let platform_draws = Ref(0)
-  let renderer = @render.WindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
-    @core.TextSystem::fallback()
-  })
-  inspect(renderer.image_resources().length(), content="0")
-  inspect(renderer.image_resource_snapshot().records.length(), content="0")
+  let renderer = @render.RendererSession::new(
+    resize=_ => (),
+    render_frame=_ => @render.RenderFrameResult::new(presented=true),
+    text_system=() => @core.TextSystem::fallback(),
+  )
+  inspect(renderer.image_diagnostics().records().length(), content="0")
   renderer.draw_platform_view_pixels(b"", 0, 0, 0, 0.0, 0.0, 0.0, 0.0)
   renderer.set_platform_view_draw_fn(
     Some(() => platform_draws.val = platform_draws.val + 1),

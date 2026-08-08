@@ -47,8 +47,8 @@ pub fn canvas_surface_host(
   logical_width~ : Double,
   logical_height~ : Double,
   scale_factor? : Double = 1.0,
-) -> @window_host.SurfaceState {
-  @window_host.SurfaceState::new(
+) -> @window_input.SurfaceState {
+  @window_input.SurfaceState::new(
     metrics=canvas_metrics(logical_width~, logical_height~, scale_factor~),
     owns_surface=false,
     can_reconfigure=true,
@@ -56,8 +56,8 @@ pub fn canvas_surface_host(
 }
 
 ///|
-pub fn canvas_input_host() -> @window_host.InputState {
-  @window_host.InputState::new(
+pub fn canvas_input_host() -> @window_input.InputState {
+  @window_input.InputState::new(
     focused=false,
     contract=@host.HostInputContract::new(
       capabilities=@host.HostInputCapabilities::new(
@@ -107,7 +107,7 @@ pub fn web_capability_summary(
 
 ///|
 fn async_dispatch(
-  async_queue : @window_host.ServiceAsyncQueue?,
+  async_queue : @window_services.ServiceAsyncQueue?,
   request : @host.HostServiceRequest,
   unavailable_msg : String,
 ) -> @host.HostServiceResponse {
@@ -132,7 +132,7 @@ pub fn web_service_bridge(
       @host.HostServiceRequest::Settings(request).unavailable_message(),
     )
   },
-  async_queue? : @window_host.ServiceAsyncQueue? = None,
+  async_queue? : @window_services.ServiceAsyncQueue? = None,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -264,7 +264,7 @@ pub fn web_app_services(
   system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> @services.AppServices {
   let async_queue = web_async_host_service_queue()
-  @window_host.app_services(
+  @window_services.app_services(
     bridge=web_service_bridge(
       system_theme~,
       open_url=dispatch_web_open_url,

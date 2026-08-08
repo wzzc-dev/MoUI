@@ -123,8 +123,7 @@ pub(all) struct CodeEditorModel {
   language_id : String
   mode : CodeEditorMode
   active_panel : CodeEditorSidePanel?
-  editor_scroll : @core.ScrollState
-  diff_scroll : @core.ScrollState
+  editor_scroll : @core.Point
   find_visible : Bool
   completion_visible : Bool
   cursors : Array[CodeCursor]
@@ -149,6 +148,7 @@ pub(all) enum CodeEditorMsg {
   SourceChanged(String)
   InsertText(String)
   SelectionChanged(Int, @core.TextRange?)
+  EditorScrollChanged(@core.Point)
   SetFindQuery(String)
   SetReplaceText(String)
   FindNext

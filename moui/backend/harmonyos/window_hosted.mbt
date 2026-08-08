@@ -12,13 +12,13 @@ pub struct HarmonyOSEmbeddedRuntimeBackend {
 pub fn HarmonyOSEmbeddedRuntimeBackend::new(
   title? : String = "MoUI",
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
-  renderer_factories~ : Array[@render.RendererFactory],
+  renderer_providers~ : Array[@render.RendererProvider],
   auto_exit_after_frames? : Int? = None,
 ) -> HarmonyOSEmbeddedRuntimeBackend {
   new_harmonyos_embedded_runtime(
     title~,
     runtime_factory~,
-    surface_binding_factory=() => harmonyos_surface_binding(renderer_factories),
+    surface_binding_factory=() => harmonyos_surface_binding(renderer_providers),
     auto_exit_after_frames~,
   )
 }
@@ -31,7 +31,7 @@ pub fn entry(auto_exit_after_frames? : Int? = None) -> @runtime.PlatformEntry {
     let app = HarmonyOSEmbeddedRuntimeBackend::new(
       title=request.title(),
       runtime_factory=_metrics => runtime,
-      renderer_factories=request.renderer_factories(),
+      renderer_providers=request.renderer_providers(),
       auto_exit_after_frames~,
     )
     let event_loop = @window_harmonyos.EventLoop::new()

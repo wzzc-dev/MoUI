@@ -41,11 +41,11 @@ pub struct Model {
   mobile_menu_open : Bool
   docs_drawer_open : Bool
   compact_hero_tab : String
-  home_scroll : @core.ScrollState
-  docs_body_scroll : @core.ScrollState
-  docs_scroll : @core.ScrollState
-  showcase_grid_scroll : @core.ScrollState
-  tutorial_scroll : @core.ScrollState
+  home_scroll : @core.Point
+  docs_body_scroll : @core.Point
+  docs_scroll : @core.Point
+  showcase_grid_scroll : @core.Point
+  tutorial_scroll : @core.Point
   route_history : @navigation.RouteHistoryState
   pending_anchor : String?
   copied_text : String?
@@ -78,6 +78,11 @@ pub enum Msg {
   ToggleDocsDrawer
   CloseDocsDrawer
   SelectCompactHeroTab(String)
+  HomeScrolled(@core.Point)
+  DocsBodyScrolled(@core.Point)
+  DocsScrolled(@core.Point)
+  ShowcaseGridScrolled(@core.Point)
+  TutorialScrolled(@core.Point)
   HostRouteChanged(@services.RouteEvent)
   HostCatalogCompleted(Int, @services.ServiceTaskResult[String])
   HostDocsCompleted(Int, String, @services.ServiceTaskResult[String])

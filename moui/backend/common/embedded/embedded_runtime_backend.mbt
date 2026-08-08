@@ -16,37 +16,24 @@ fn next_embedded_runtime_generation() -> Int {
 pub struct EmbeddedRuntimeBackendCore {
   priv runtime : @runtime.AppRuntime
   priv driver : @runtime.HostRuntimeDriver
-  priv mut renderer : @render.WindowRenderer?
   priv transport : @host_services_embedded.HostSessionTransport
   priv mut host_bridge : EmbeddedRuntimeHostBridge?
-  frame : @window_host.FrameCoordinator
+  priv mut frame : @window_frame.WindowFrameState?
+  priv mut image : @window_image.WindowImageTasks?
   priv mut metrics : @core.SurfaceMetrics
   priv mut disposed : Bool
-  priv mut async_image_ready_logged : Bool
-  priv mut async_image_failed_logged : Bool
 }
 
 ///|
 pub fn EmbeddedRuntimeBackendCore::new(
   runtime~ : @runtime.AppRuntime,
-  renderer~ : @render.WindowRenderer,
+  renderer~ : @render.RendererSession,
   metrics~ : @core.SurfaceMetrics,
   surface_generation~ : Int,
-  image_loader? : @render.ImageLoader? = None,
-  frame? : @window_host.FrameCoordinator? = None,
 ) -> EmbeddedRuntimeBackendCore {
   let transport = @host_services_embedded.HostSessionTransport::new(
     initial_generation=next_embedded_runtime_generation(),
   )
-  let frame = match frame {
-    Some(frame) => frame
-    None =>
-      @window_host.FrameCoordinator::new(
-        hooks=@window_host.WindowFrameHooks::new(request_redraw=() => {
-          transport.request_frame()
-        }),
-      )
-  }
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     transport.request_frame()
   })
@@ -54,17 +41,15 @@ pub fn EmbeddedRuntimeBackendCore::new(
   let core : EmbeddedRuntimeBackendCore = {
     runtime,
     driver,
-    renderer: None,
     transport,
     host_bridge: None,
-    frame,
+    frame: None,
+    image: None,
     metrics,
     disposed: false,
-    async_image_ready_logged: false,
-    async_image_failed_logged: false,
   }
   ignore(
-    core.attach_surface(renderer~, metrics~, surface_generation~, image_loader~),
+    core.attach_surface(renderer~, metrics~, surface_generation~),
   )
   core
 }
@@ -94,7 +79,7 @@ pub fn EmbeddedRuntimeBackendCore::disposed(
 pub fn EmbeddedRuntimeBackendCore::surface_attached(
   self : EmbeddedRuntimeBackendCore,
 ) -> Bool {
-  !self.disposed && self.renderer is Some(_)
+  !self.disposed && self.frame is Some(_)
 }
 
 ///|
@@ -118,10 +103,9 @@ pub fn EmbeddedRuntimeBackendCore::surface_epoch(
 ///|
 pub fn EmbeddedRuntimeBackendCore::attach_surface(
   self : EmbeddedRuntimeBackendCore,
-  renderer~ : @render.WindowRenderer,
+  renderer~ : @render.RendererSession,
   metrics~ : @core.SurfaceMetrics,
   surface_generation~ : Int,
-  image_loader? : @render.ImageLoader? = None,
 ) -> Bool {
   if self.disposed {
     renderer.dispose()
@@ -135,16 +119,20 @@ pub fn EmbeddedRuntimeBackendCore::attach_surface(
   let host_bridge = EmbeddedRuntimeHostBridge::new(
     session_generation=self.transport.session_generation(),
   )
-  self.renderer = Some(renderer)
-  self.host_bridge = Some(host_bridge)
-  self.frame.attach_image_resources(
-    @render.RenderWindowId::new(1),
-    renderer,
-    image_loader,
+  let frame = @window_frame.WindowFrameState::new(
+    renderer~,
+    surface_generation~,
+    hooks=@window_frame.WindowFrameHooks::new(request_redraw=() => {
+      self.transport.request_frame()
+    }),
   )
+  let image = @window_image.WindowImageTasks::new(
+    request_redraw=() => self.transport.request_frame(),
+  )
+  self.frame = Some(frame)
+  self.image = Some(image)
+  self.host_bridge = Some(host_bridge)
   self.metrics = metrics
-  self.async_image_ready_logged = false
-  self.async_image_failed_logged = false
   self.driver.set_text_system(renderer.text_system())
   ignore(self.driver.dispatch(@host.Event::Resized(metrics)))
   self.transport.request_frame()
@@ -155,10 +143,20 @@ pub fn EmbeddedRuntimeBackendCore::attach_surface(
 pub fn EmbeddedRuntimeBackendCore::detach_surface(
   self : EmbeddedRuntimeBackendCore,
 ) -> Bool {
-  if self.disposed || self.renderer is None {
+  if self.disposed || self.frame is None {
     return false
   }
-  match self.host_bridge {
+  let frame = self.frame
+  let image = self.image
+  let host_bridge = self.host_bridge
+  self.frame = None
+  self.image = None
+  self.host_bridge = None
+  match image {
+    Some(owner) => owner.dispose()
+    None => ()
+  }
+  match host_bridge {
     Some(channel) =>
       channel.dispose(
         driver=self.driver,
@@ -166,15 +164,10 @@ pub fn EmbeddedRuntimeBackendCore::detach_surface(
       )
     None => ()
   }
-  self.frame.dispose_image_resources()
-  match self.renderer {
-    Some(renderer) => renderer.dispose()
+  match frame {
+    Some(owner) => owner.dispose()
     None => ()
   }
-  self.renderer = None
-  self.host_bridge = None
-  self.async_image_ready_logged = false
-  self.async_image_failed_logged = false
   ignore(self.transport.detach())
   self.driver.set_text_system(@core.TextSystem::fallback())
   true
@@ -210,8 +203,9 @@ pub fn EmbeddedRuntimeBackendCore::resize(
   self : EmbeddedRuntimeBackendCore,
   metrics : @core.SurfaceMetrics,
 ) -> @host.EventResult {
-  match (self.renderer, self.host_bridge) {
-    (Some(renderer), Some(channel)) if !self.disposed => {
+  match (self.frame, self.host_bridge) {
+    (Some(frame), Some(channel)) if !self.disposed => {
+      let renderer = frame.renderer()
       self.metrics = metrics
       renderer.resize(
         @core.SurfaceMetrics::new(
@@ -232,84 +226,43 @@ pub fn EmbeddedRuntimeBackendCore::resize(
 pub fn EmbeddedRuntimeBackendCore::render_frame(
   self : EmbeddedRuntimeBackendCore,
 ) -> @render.RenderFrameResult {
-  guard (self.renderer, self.host_bridge) is (Some(renderer), Some(host_bridge)) &&
+  guard (self.frame, self.image, self.host_bridge)
+    is (Some(frame_state), Some(image_state), Some(host_bridge)) &&
     !self.disposed else {
     return @render.RenderFrameResult::new()
   }
-  let prior_completions = if self.frame.pending() {
-    renderer.drain_present_completions()
-  } else {
-    []
-  }
-  let prior_presented = @render.render_present_completions_have_presented(
-    prior_completions,
-  )
-  let prior_terminal = @render.render_present_completions_have_terminal(
-    prior_completions,
-  )
-  if self.frame.pending() {
-    ignore(self.frame.finish_presented(true, prior_terminal, prior_presented))
-    if self.frame.pending() {
-      return @render.RenderFrameResult::new(queued=true)
-    }
+  let renderer = frame_state.renderer()
+  if frame_state.pending() {
+    let prior_completions = drain_embedded_renderer_events(renderer, image_state)
+    let prior_presented = frame_state.accept_present_completions(prior_completions)
     if prior_presented {
-      ignore(
-        self.frame.finish_image_frame(renderer.present_count(), presented=true),
-      )
       let state = self.driver.event_result()
       if !state.needs_redraw && !state.redraw_requested {
         return @render.RenderFrameResult::new(presented=true)
       }
     }
-  }
-  if !self.frame.prepare_frame() {
-    return @render.RenderFrameResult::new(queued=true)
+    return @render.RenderFrameResult::new(
+      presented=prior_presented,
+      queued=frame_state.pending(),
+    )
   }
   self.driver.begin_redraw()
-  let frame = self.driver.draw_frame()
-  ignore(host_bridge.sync_platform_views(frame.platform_views))
-  let result = renderer.render_frame(frame)
-  let completions = renderer.drain_present_completions()
-  let completion_presented = @render.render_present_completions_have_presented(
-    completions,
-  )
-  let completion_terminal = @render.render_present_completions_have_terminal(
-    completions,
-  )
-  let presented = completion_presented ||
-    (completions.is_empty() && result.presented)
-  ignore(
-    self.frame.finish_presented(result.queued, completion_terminal, presented),
-  )
-  self.driver.apply_render_frame_result(result)
+  let draw_frame = self.driver.draw_frame()
+  guard frame_state.prepare_submission(draw_frame) is Some(submission) else {
+    self.driver.finish_redraw()
+    return @render.RenderFrameResult::new(queued=true)
+  }
+  ignore(host_bridge.sync_platform_views(draw_frame.platform_views))
+  let result = renderer.render_frame(submission)
+  let completions = drain_embedded_renderer_events(renderer, image_state)
+  ignore(frame_state.finish_submission(result, completions))
   self.driver.finish_redraw()
-  let image = self.frame.finish_image_frame(
-    renderer.present_count(),
-    presented~,
-  )
-  if image.scheduled_count > 0 {
+  let scheduled_count = image_state.take_scheduled_count()
+  if scheduled_count > 0 {
     self.transport.request_frame()
     ignore(
       host_bridge.push_diagnostic(
-        "moui-window service async-image phase=loading scheduled=\{image.scheduled_count} present=\{image.present_count}",
-      ),
-    )
-  }
-  if image.ready_count > 0 &&
-    image.present_count > 1 &&
-    !self.async_image_ready_logged {
-    self.async_image_ready_logged = true
-    ignore(
-      host_bridge.push_diagnostic(
-        "moui-window service async-image phase=ready ready=\{image.ready_count} present=\{image.present_count}",
-      ),
-    )
-  }
-  if image.failed_count > 0 && !self.async_image_failed_logged {
-    self.async_image_failed_logged = true
-    ignore(
-      host_bridge.push_diagnostic(
-        "moui-window service async-image phase=failed failed=\{image.failed_count} present=\{image.present_count}",
+        "moui-window service async-image phase=loading scheduled=\{scheduled_count} present=\{renderer.present_count()}",
       ),
     )
   }
@@ -317,6 +270,23 @@ pub fn EmbeddedRuntimeBackendCore::render_frame(
   ignore(host_bridge.flush_updates_to_shell(self.transport))
   ignore(self.transport.finish_frame())
   result
+}
+
+///|
+fn drain_embedded_renderer_events(
+  renderer : @render.RendererSession,
+  image_tasks : @window_image.WindowImageTasks,
+) -> Array[@render.RenderPresentCompletion] {
+  let completions : Array[@render.RenderPresentCompletion] = []
+  for event in renderer.drain_events() {
+    match event {
+      @render.RendererEvent::PresentCompleted(completion) =>
+        completions.push(completion)
+      @render.RendererEvent::ImageLoadRequested(request) =>
+        ignore(image_tasks.schedule(renderer, request))
+    }
+  }
+  completions
 }
 
 ///|
@@ -460,8 +430,8 @@ pub fn EmbeddedRuntimeBackendCore::take_redraw_requested(
 pub fn EmbeddedRuntimeBackendCore::present_count(
   self : EmbeddedRuntimeBackendCore,
 ) -> Int {
-  match self.renderer {
-    Some(renderer) if !self.disposed => renderer.present_count()
+  match self.frame {
+    Some(frame) if !self.disposed => frame.renderer().present_count()
     _ => 0
   }
 }

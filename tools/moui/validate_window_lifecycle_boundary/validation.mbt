@@ -71,35 +71,33 @@ fn validate_deleted_packages(root : String, failures : Array[String]) -> Unit {
 ///|
 fn validate_window_common(root : String, failures : Array[String]) -> Unit {
   let common = "moui/backend/common"
-  match read_text(root, common + "/window_lifecycle_core.mbt") {
+  match read_text(root, common + "/lifecycle/window_lifecycle_core.mbt") {
     Some(text) if text.contains("WindowLifecycleCore") &&
       text.contains("begin_close") &&
       text.contains("finish_close") &&
       text.contains("rollback") => ()
     _ => failures.push(common + " must define the private WindowLifecycleCore")
   }
-  match read_text(root, common + "/window_frame_coordinator.mbt") {
-    Some(text) if text.contains("FrameCoordinator") &&
+  match read_text(root, common + "/frame/window_frame_state.mbt") {
+    Some(text) if text.contains("WindowFrameState") &&
       text.contains("finish_presented") &&
-      text.contains("finish_image_frame") => ()
-    _ => failures.push(common + " must define FrameCoordinator")
+      text.contains("dispose") => ()
+    _ => failures.push(common + "/frame must define WindowFrameState")
   }
-  match read_text(root, common + "/embedded_window_host_coordinator.mbt") {
-    Some(text) if text.contains("EmbeddedWindowCoordinator") &&
+  match read_text(root, common + "/lifecycle/embedded_lifecycle.mbt") {
+    Some(text) if text.contains("EmbeddedLifecycle") &&
       text.contains("mut generation") &&
       text.contains("mut primary_window") &&
       text.contains("mut exit_intent") => ()
-    _ => failures.push(common + " must define EmbeddedWindowCoordinator")
+    _ => failures.push(common + "/lifecycle must define EmbeddedLifecycle")
   }
-  match read_text(root, common + "/window_host_coordinator.mbt") {
-    Some(text) if text.contains("priv window_requests") &&
-      text.contains("priv platform_windows") &&
-      text.contains("register_runtime_slot") &&
-      text.contains("bind_platform_window") &&
-      text.contains("rollback_window_record") => ()
-    _ => failures.push(common + " coordinator state/effect APIs are incomplete")
+  match read_text(root, common + "/window_host_workflows.mbt") {
+    Some(text) if text.contains("pub fn attach_window_surface") &&
+      text.contains("pub fn dispose_window") &&
+      !text.contains("struct WindowCoordinator") => ()
+    _ => failures.push(common + " must expose stateless window-host workflows")
   }
-  match read_text(root, common + "/window_slot.mbt") {
+  match read_text(root, common + "/lifecycle/window_slot.mbt") {
     Some(text) if !text.contains("platform_id :") &&
       !text.contains("lookup_platform") => ()
     _ =>
@@ -166,8 +164,8 @@ fn validate_platform_entries(root : String, failures : Array[String]) -> Unit {
     for entry in entries {
       if entry.has_suffix(".mbt") {
         match read_text(root, "moui/runtime/" + entry) {
-          Some(text) if text.contains("WindowCoordinator") ||
-            text.contains("EmbeddedWindowCoordinator") ||
+          Some(text) if text.contains("WindowLifecycle") ||
+            text.contains("EmbeddedLifecycle") ||
             text.contains("WindowSurfaceActions") =>
             failures.push(
               "moui/runtime/" + entry + " retains backend/common ownership",
@@ -182,12 +180,11 @@ fn validate_platform_entries(root : String, failures : Array[String]) -> Unit {
 ///|
 fn validate_embedded_session(root : String, failures : Array[String]) -> Unit {
   let package_path = "moui/backend/common/embedded"
-  match read_text(root, package_path + "/hosted_window_backend.mbt") {
-    Some(text) if text.contains("frame=Some(self.host.frame())") => ()
+  match read_text(root, package_path + "/embedded_runtime_backend.mbt") {
+    Some(text) if text.contains("@window_frame.WindowFrameState::new") &&
+      text.contains("@window_image.WindowImageState::new") => ()
     _ =>
-      failures.push(
-        "embedded hosted sessions must reuse the common frame coordinator",
-      )
+      failures.push("embedded sessions must compose the frame and image owners")
   }
   match read_text(root, package_path + "/embedded_runtime_backend.mbt") {
     Some(text) if text.contains(
@@ -200,7 +197,7 @@ fn validate_embedded_session(root : String, failures : Array[String]) -> Unit {
   }
   match
     read_text(
-      root, "moui/backend/common/embedded/services/session_transport.mbt",
+      root, "moui/backend/common/services/embedded/session_transport.mbt",
     ) {
     Some(text) if text.contains("HostSession::attach(") &&
       text.contains("surface_epoch~ : Int") &&
@@ -216,8 +213,9 @@ fn validate_embedded_session(root : String, failures : Array[String]) -> Unit {
     for entry in entries {
       if entry.has_suffix(".mbt") {
         match read_text(root, package_path + "/" + entry) {
-          Some(text) if text.contains("EmbeddedImageCoordinator") =>
-            failures.push(package_path + " retains a second image coordinator")
+          Some(text) if text.contains("struct EmbeddedImageCoordinator") ||
+            text.contains("struct EmbeddedFrameCoordinator") =>
+            failures.push(package_path + " retains duplicate frame/image state")
           _ => ()
         }
       }

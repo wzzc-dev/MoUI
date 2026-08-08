@@ -2,11 +2,15 @@
   "schemaVersion": 1,
   "roots": [
     "moui",
+    "moui_skia_renderer",
+    "moui_web_renderer",
+    "moui_wgpu_renderer",
+    "moui_sun_renderer",
+    "moui_tests",
     "moui_i18n",
     "moui_cli",
     "moui_richtext",
     "moui_devtools",
-    "moui_tester",
     "moui_agent",
     "moui_agent_mcp",
     "moui_webview",
@@ -79,7 +83,7 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1958,
+      "maxLines": 1944,
       "reason": "Existing API validator with explicit declaration and semantic contract audits."
     },
     {
@@ -88,8 +92,8 @@
       "reason": "Existing path model and algorithms."
     },
     {
-      "path": "moui/tests/skia_renderer_smoke/native/main.mbt",
-      "maxLines": 1887,
+      "path": "moui_tests/skia_renderer_smoke/native/main.mbt",
+      "maxLines": 1873,
       "reason": "Existing end-to-end renderer smoke harness."
     },
     {
@@ -103,7 +107,7 @@
       "reason": "Existing spreadsheet domain implementation."
     },
     {
-      "path": "moui/render/sun/renderer_test.mbt",
+      "path": "moui_sun_renderer/renderer_test.mbt",
       "maxLines": 1787,
       "reason": "Existing Sun renderer integration test."
     },
@@ -128,7 +132,7 @@
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
-      "path": "moui/render/wgpu/native_renderer.mbt",
+      "path": "moui_wgpu_renderer/native_renderer.mbt",
       "maxLines": 1574,
       "reason": "Existing diagnostic WGPU renderer implementation."
     },
@@ -173,7 +177,7 @@
       "reason": "Existing workbench integration test with declaration invalidation coverage."
     },
     {
-      "path": "moui/render/skia/skia_renderer_text_wbtest.mbt",
+      "path": "moui_skia_renderer/skia_renderer_text_wbtest.mbt",
       "maxLines": 1379,
       "reason": "Existing Skia text integration test."
     },
@@ -218,7 +222,7 @@
       "reason": "Existing comprehensive text parser test."
     },
     {
-      "path": "moui/render/wgpu/native_smoke.mbt",
+      "path": "moui_wgpu_renderer/native_smoke.mbt",
       "maxLines": 1250,
       "reason": "Existing native WGPU diagnostic smoke."
     },
@@ -267,7 +271,7 @@
   ],
   "generated": [
     {
-      "path": "moui/render/skia/skia_grapheme_break_unicode_17_wbtest.mbt",
+      "path": "moui_skia_renderer/skia_grapheme_break_unicode_17_wbtest.mbt",
       "maxLines": 3929,
       "generator": "scripts/generate-grapheme-break-fixtures.mjs",
       "checkCommand": "node scripts/generate-grapheme-break-fixtures.mjs --check",

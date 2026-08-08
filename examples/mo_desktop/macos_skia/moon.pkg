@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui/render/skia" @render_skia,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui/runtime",
   "examples/mo_desktop/app" @mo_desktop_app,

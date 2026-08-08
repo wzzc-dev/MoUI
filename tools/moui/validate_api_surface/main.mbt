@@ -101,7 +101,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 fn root_app_shape_tokens() -> Array[String] {
   [
     "View", "Program", "ProgramCommand", "Effect", "Subscription", "Theme", "Environment",
-    "ViewEnvironment", "SemanticId",
+    "ViewEnvironment", "SemanticId", "ControlledValue", "ScrollRequest", "FocusRequest",
   ]
 }
 
@@ -147,7 +147,6 @@ fn sugar_text_tokens() -> Array[String] {
 /// Types forwarded by the `moui/state` domain sugar package.
 fn sugar_state_tokens() -> Array[String] {
   [
-    "State", "Binding", "DerivedState", "ScrollState", "FocusState", "NavigationState",
     "ColorScheme", "LayoutDirection", "FocusScope", "FocusScopeItem",
   ]
 }
@@ -211,12 +210,11 @@ fn views_facade_host_alias_tokens() -> Array[String] {
 fn views_facade_required_tokens() -> Array[String] {
   let tokens = [
     "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(", "pub fn[Msg] column(", "pub using @style {type ButtonStyle}",
-    "type FormFieldState", "pub using @navigation {type RouteLocation}", "pub using @navigation {type RouteHistoryState}",
-    "type RouteFocusStore", "type RouterState", "pub fn resolve_route(", "pub using @style {type DatePickerMode}",
+    "pub fn[Msg] checkbox_control(", "pub fn[Msg] navigation_stack_selected(", "pub using @style {type DatePickerMode}",
     "pub fn default_theme()", "pub fn light_theme()", "pub fn dark_theme()", "pub fn[Msg] text(",
     "pub fn[Msg] empty()", "pub fn[Msg] spacer(", "pub fn[Msg] picker(", "pub fn picker_item(",
     "pub fn[Msg] datepicker(", "pub fn[Msg] custom_layout(", "pub fn[Msg] custom_children_layout(",
-    "pub fn[Msg] component(",
+    "pub fn[Msg] row(",
   ]
   for type_name in views_facade_core_alias_tokens() {
     tokens.push("pub using @core {type \{type_name}}")
@@ -229,13 +227,13 @@ fn views_facade_required_tokens() -> Array[String] {
 
 ///|
 fn package_budgets() -> Array[PackageBudget] {
-  [
+  let budgets = [
     {
       label: "root facade (app-loop sugar)",
       path: "moui/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui\"",
       max_lines: 40,
-      max_pub_lines: 9,
+      max_pub_lines: 12,
       max_pub_all_lines: 0,
       required_tokens: root_facade_required_tokens(),
       forbidden_tokens: sugar_cross_domain_forbidden_tokens(
@@ -292,8 +290,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "state sugar",
       path: "moui/state/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/state\"",
-      max_lines: 40,
-      max_pub_lines: 10,
+      max_lines: 28,
+      max_pub_lines: 5,
       max_pub_all_lines: 0,
       required_tokens: sugar_required_tokens(sugar_state_tokens()),
       forbidden_tokens: sugar_cross_domain_forbidden_tokens(
@@ -336,8 +334,8 @@ fn package_budgets() -> Array[PackageBudget] {
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
       // SurfaceMetrics is the single backend/render-neutral surface DTO.
-      max_lines: 2114,
-      max_pub_lines: 625,
+      max_lines: 2050,
+      max_pub_lines: 550,
       max_pub_all_lines: 178,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -357,7 +355,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "ViewStateContext::without_slot",
       ],
       forbidden_tokens: [
-        "\"wzzc-dev/moui_theme", "\"wzzc-dev/moui/render/skia\"", "SkiaRasterRenderer",
+        "\"wzzc-dev/moui_theme", "\"wzzc-dev/moui_skia_renderer\"", "SkiaRasterRenderer",
         "VirtualNode", "View::virtual_node", "View::view_node", "View::virtual_node_ops",
         "View::view_node_ops", "View::ops", "View::custom", "View::node(", "pub struct ViewNode",
         "pub(all) struct ViewNode", "ViewNode::new", "type ViewNode[", "View::empty(",
@@ -402,9 +400,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 1393,
-      max_pub_lines: 555,
-      max_pub_all_lines: 39,
+      max_lines: 630,
+      max_pub_lines: 310,
+      max_pub_all_lines: 0,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
         "pub using @core {type Color}", "pub using @core {type ColorScheme}", "pub using @core {type Point}",
@@ -435,65 +433,51 @@ fn package_budgets() -> Array[PackageBudget] {
         "pub struct HostServiceBridge", "pub struct PlatformViewPlugin",
       ],
       forbidden_tokens: [
-        "\"wzzc-dev/moui/render/skia\"", "\"wzzc-dev/moui/render/wgpu\"", "SkiaRasterRenderer",
+        "\"wzzc-dev/moui_skia_renderer\"", "\"wzzc-dev/moui_wgpu_renderer\"", "SkiaRasterRenderer",
         "WindowRegistry", "WindowRequestQueue", "ServiceAsyncQueue", "Coordinator",
-      ],
-    },
-    {
-      label: "backend common",
-      path: "moui/backend/common/pkg.generated.mbti",
-      package_token: "package \"wzzc-dev/moui/backend/common\"",
-      max_lines: 480,
-      max_pub_lines: 255,
-      max_pub_all_lines: 15,
-      required_tokens: [
-        "pub fn app_services", "pub fn app_environment", "pub(all) struct TextInputSession",
-        "pub struct ServiceAsyncQueue", "pub struct WindowRegistry", "pub struct WindowCoordinator",
-        "pub struct FrameCoordinator",
-      ],
-      forbidden_tokens: [
-        "\"wzzc-dev/moui/render/skia\"", "\"wzzc-dev/moui/render/wgpu\"", "SkiaRasterRenderer",
       ],
     },
     {
       label: "render protocols",
       path: "moui/render/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render\"",
-      // SurfaceContext and renderer factories erase concrete
-      // renderer/platform types at the composition boundary.
-      max_lines: 550,
-      max_pub_lines: 185,
-      max_pub_all_lines: 38,
+      // HostSurface erases native handle meaning; RendererProvider binds one
+      // per-window RendererSession at the composition boundary.
+      max_lines: 500,
+      max_pub_lines: 150,
+      max_pub_all_lines: 31,
       required_tokens: [
-        "RendererBackendKind", "RendererDescriptor", "RendererProviderBinding", "WindowRenderer",
-        "SurfaceContext", "RendererFactory", "RendererResolution", "ImageLoader",
-        "RenderFrameResult",
+        "RendererBackendKind", "RendererDescriptor", "RendererProvider", "RendererBindResult",
+        "RendererSession", "HostSurface", "NativeSurface", "FrameToken",
+        "RenderFrameSubmission", "RendererEvent", "RenderFrameResult",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer", "RendererProviderRegistry",
         "ImageResourceLifecycle", "AsyncImageLoader", "ImageResourceRepaintTracker",
+        "RendererFactory", "RendererProviderBinding", "WindowRenderer", "SurfaceDescriptor",
+        "SurfaceRoute", "Metal", "HWND", "Wayland", "Vulkan", "EGL", "D3D",
       ],
     },
     {
       label: "render common",
       path: "moui/render/common/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render/common\"",
-      max_lines: 475,
-      max_pub_lines: 250,
-      max_pub_all_lines: 25,
+      max_lines: 350,
+      max_pub_lines: 110,
+      max_pub_all_lines: 12,
       required_tokens: [
-        "pub struct ImageResourceLifecycle", "pub struct AsyncImageLoader", "pub struct ImageResourceRepaintTracker",
-        "pub struct RendererProviderRegistry", "pub fn resolve_renderer", "pub fn window_renderer_with_cached_layer_fallback",
+        "pub struct ImageResourceLifecycle", "pub fn resolve_renderer",
+        "pub fn renderer_feature_capability", "pub struct GpuRenderWorker",
       ],
       forbidden_tokens: ["\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer"],
     },
     {
       label: "skia renderer",
-      path: "moui/render/skia/pkg.generated.mbti",
-      package_token: "package \"wzzc-dev/moui/render/skia\"",
-      max_lines: 232,
-      max_pub_lines: 122,
-      max_pub_all_lines: 6,
+      path: "moui_skia_renderer/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui_skia_renderer\"",
+      max_lines: 235,
+      max_pub_lines: 121,
+      max_pub_all_lines: 7,
       required_tokens: [
         "SkiaRasterRenderer", "skia_available", "skia_image_load_completion",
       ],
@@ -501,8 +485,8 @@ fn package_budgets() -> Array[PackageBudget] {
     },
     {
       label: "sun renderer",
-      path: "moui/render/sun/pkg.generated.mbti",
-      package_token: "package \"wzzc-dev/moui/render/sun\"",
+      path: "moui_sun_renderer/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui_sun_renderer\"",
       max_lines: 242,
       max_pub_lines: 144,
       max_pub_all_lines: 1,
@@ -515,8 +499,8 @@ fn package_budgets() -> Array[PackageBudget] {
     },
     {
       label: "webgpu adapter",
-      path: "moui/render/webgpu_adapter/pkg.generated.mbti",
-      package_token: "package \"wzzc-dev/moui/render/webgpu_adapter\"",
+      path: "moui_web_renderer/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui_web_renderer\"",
       max_lines: 160,
       max_pub_lines: 69,
       max_pub_all_lines: 2,
@@ -529,11 +513,11 @@ fn package_budgets() -> Array[PackageBudget] {
     },
     {
       label: "native wgpu renderer",
-      path: "moui/render/wgpu/pkg.generated.mbti",
-      package_token: "package \"wzzc-dev/moui/render/wgpu\"",
+      path: "moui_wgpu_renderer/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui_wgpu_renderer\"",
       max_lines: 150,
       max_pub_lines: 66,
-      max_pub_all_lines: 2,
+      max_pub_all_lines: 3,
       required_tokens: [
         "NativeTextEngine", "HostWgpuSurface", "NativeTextLayout",
       ],
@@ -541,8 +525,8 @@ fn package_budgets() -> Array[PackageBudget] {
     },
     {
       label: "native text protocol",
-      path: "moui/render/wgpu/text_protocol/pkg.generated.mbti",
-      package_token: "package \"wzzc-dev/moui/render/wgpu/text_protocol\"",
+      path: "moui_wgpu_renderer/text_protocol/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui_wgpu_renderer/text_protocol\"",
       max_lines: 60,
       max_pub_lines: 23,
       max_pub_all_lines: 0,
@@ -555,6 +539,8 @@ fn package_budgets() -> Array[PackageBudget] {
       ],
     },
   ]
+  budgets.append(backend_common_package_budgets())
+  budgets
 }
 
 ///|
@@ -1060,8 +1046,7 @@ fn moon_pkg_has_default_import(text : String, package_token : String) -> Bool {
 ///|
 fn core_control_consumer_roots() -> Array[String] {
   [
-    "benchmarks", "examples", "moui/backend", "moui/tests", "moui_devtools", "moui_tester",
-    "website",
+    "benchmarks", "examples", "moui/backend", "moui_tests", "moui_devtools", "website",
   ]
 }
 

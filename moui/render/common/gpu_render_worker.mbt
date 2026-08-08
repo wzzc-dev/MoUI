@@ -12,9 +12,7 @@ pub(all) enum GpuRenderWorkerState {
 
 ///|
 pub(all) struct GpuRenderWorkerFrame {
-  sequence : Int
-  surface_generation : Int
-  image_resource_revision : Int64
+  token : @render.FrameToken
   submitted_at_ms : Double
   input : @render.RenderFrameInput
 } derive(Debug)
@@ -133,7 +131,7 @@ pub fn GpuRenderWorker::fail_next_context_recovery(
 pub fn GpuRenderWorker::submit(
   self : GpuRenderWorker,
   input : @render.RenderFrameInput,
-  image_resource_revision? : Int64 = 0L,
+  token? : @render.FrameToken,
   submitted_at_ms? : Double = 0.0,
 ) -> @render.RenderFrameResult {
   if self.state is GpuRenderWorkerState::Shutdown ||
@@ -141,10 +139,14 @@ pub fn GpuRenderWorker::submit(
     self.dropped = self.dropped + 1
     return @render.RenderFrameResult::new(presented=false, queued=false)
   }
+  let resolved_token = token.unwrap_or(
+    @render.FrameToken::new(
+      surface_generation=self.surface_generation,
+      sequence=self.next_sequence,
+    ),
+  )
   let frame = {
-    sequence: self.next_sequence,
-    surface_generation: self.surface_generation,
-    image_resource_revision,
+    token: resolved_token,
     submitted_at_ms,
     input: { ..input, commands: input.commands.copy() },
   }
@@ -208,9 +210,10 @@ fn GpuRenderWorker::recover_if_needed(self : GpuRenderWorker) -> Unit {
           self.state = GpuRenderWorkerState::FallbackToRaster
           self.completions.push(
             @render.RenderPresentCompletion::new(
-              frame_sequence=0,
-              surface_generation=self.surface_generation,
-              image_resource_revision=0L,
+              token=@render.FrameToken::new(
+                surface_generation=self.surface_generation,
+                sequence=0,
+              ),
               submitted_at_ms=0.0,
               completed_at_ms=0.0,
               presented_at_ms=0.0,
@@ -256,7 +259,7 @@ pub fn GpuRenderWorker::poll(
     match self.pending {
       Some(frame) => {
         self.pending = None
-        if frame.surface_generation != self.surface_generation {
+        if frame.token.surface_generation() != self.surface_generation {
           self.rejected_generation = self.rejected_generation + 1
           self.dropped = self.dropped + 1
         } else {
@@ -273,9 +276,7 @@ pub fn GpuRenderWorker::poll(
       self.completed = self.completed + 1
       self.completions.push(
         @render.RenderPresentCompletion::new(
-          frame_sequence=frame.sequence,
-          surface_generation=frame.surface_generation,
-          image_resource_revision=frame.image_resource_revision,
+          token=frame.token,
           submitted_at_ms=frame.submitted_at_ms,
           completed_at_ms~,
           presented_at_ms=0.0,

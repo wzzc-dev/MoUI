@@ -48,23 +48,3 @@ pub fn ImageResourceRecord::disposed(source : String) -> ImageResourceRecord {
     diagnostic: "",
   }
 }
-
-///|
-pub fn ImageResourceSnapshot::new(
-  revision~ : Int,
-  records~ : Array[ImageResourceRecord],
-) -> ImageResourceSnapshot {
-  { revision, records }
-}
-
-///|
-pub fn ImageResourceSnapshot::empty() -> ImageResourceSnapshot {
-  { revision: 0, records: [] }
-}
-
-///|
-pub fn ImageResourceSnapshot::from_records(
-  records : Array[ImageResourceRecord],
-) -> ImageResourceSnapshot {
-  { revision: 0, records }
-}

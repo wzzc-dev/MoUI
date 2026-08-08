@@ -27,7 +27,7 @@ pub fn harmonyos_readiness() -> HarmonyOSBackendReadiness
 
 pub fn harmonyos_service_capabilities() -> @backend.HostServiceCapabilities
 
-pub fn harmonyos_surface_binding(Array[@render.RendererFactory]) -> HarmonyOSSurfaceBinding
+pub fn harmonyos_surface_binding(Array[@render.RendererProvider]) -> HarmonyOSSurfaceBinding
 
 pub fn harmonyos_window_hosted_pump_host_sim(HarmonyOSEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
@@ -72,7 +72,7 @@ pub struct HarmonyOSEmbeddedRuntimeBackend {
 }
 pub fn HarmonyOSEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn HarmonyOSEmbeddedRuntimeBackend::has_session(Self) -> Bool
-pub fn HarmonyOSEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_factories~ : Array[@render.RendererFactory], auto_exit_after_frames? : Int?) -> Self
+pub fn HarmonyOSEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int?) -> Self
 pub fn HarmonyOSEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn HarmonyOSEmbeddedRuntimeBackend::surface_generation(Self) -> Int
 pub impl @wzzc-dev/window/harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend
@@ -80,8 +80,7 @@ pub impl @wzzc-dev/window/harmonyos.ApplicationHandler for HarmonyOSEmbeddedRunt
 pub struct HarmonyOSSurfaceBinding {
   // private fields
 }
-pub fn HarmonyOSSurfaceBinding::has_async_image_loader(Self) -> Bool
-pub fn HarmonyOSSurfaceBinding::new(create_renderer~ : (HarmonyOSSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererResolution?, sync_surface? : (HarmonyOSSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit, image_loader? : @render.ImageLoader?) -> Self
+pub fn HarmonyOSSurfaceBinding::new(create_renderer~ : (HarmonyOSSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?, sync_surface? : (HarmonyOSSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> Self
 
 pub(all) struct HarmonyOSSurfaceHandle {
   raw : UInt64

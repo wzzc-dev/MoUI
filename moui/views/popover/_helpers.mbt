@@ -2,47 +2,25 @@
 // with other view sub-packages (row/column/stack live in @style).
 
 ///|
-fn[Msg] component(
-  build : (@core.ComponentContext) -> @core.View[Msg],
-) -> @core.View[Msg] {
-  @controls.component_host(build)
-}
-
-///|
 fn[Msg] scroll_view(
   child : @core.View[Msg],
-  offset? : @core.Point = @core.Point::new(x=0.0, y=0.0),
+  offset? : @core.Point,
   width? : Double,
   height? : Double,
-  state? : @core.ScrollState? = None,
   on_scroll? : ((@core.Point) -> Msg)? = None,
+  request? : @core.ScrollRequest,
   shows_indicator? : Bool = false,
 ) -> @core.View[Msg] {
   let viewport = match (width, height) {
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  match state {
-    Some(scroll_state) =>
-      component(context => {
-        let current_offset = context.watch_scroll(scroll_state)
-        @controls.scroll_container(
-          child~,
-          offset=current_offset,
-          viewport~,
-          state=Some(scroll_state),
-          on_scroll~,
-          shows_indicator~,
-        )
-      })
-    None =>
-      @controls.scroll_container(
-        child~,
-        offset~,
-        viewport~,
-        state=None,
-        on_scroll~,
-        shows_indicator~,
-      )
-  }
+  @controls.scroll_container(
+    child~,
+    offset?,
+    viewport~,
+    on_scroll~,
+    request?,
+    shows_indicator~,
+  )
 }

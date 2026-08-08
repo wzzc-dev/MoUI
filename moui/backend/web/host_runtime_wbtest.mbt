@@ -134,7 +134,7 @@ test "web tracks modifiers from keyboard input events" {
   )
   inspect(with_control.control, content="true")
 
-  let copy_event = @window_host.window_event_to_host_with_modifiers(
+  let copy_event = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::KeyboardInput(
       None,
       @window_core.KeyEvent::KeyEvent(

@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/common/services/native"
+
+import {
+  "wzzc-dev/moui/backend",
+}
+
+// Values
+pub fn dispatch_binary_file(@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse
+
+pub fn dispatch_list_directory(String) -> @backend.HostServiceResponse
+
+pub fn dispatch_text_file(@backend.HostTextFileRequest) -> @backend.HostServiceResponse
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

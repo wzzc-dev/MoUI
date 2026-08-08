@@ -9,7 +9,7 @@
 - **Date**: 2026-07-12
 - **Status**: Accepted
 - **Deciders**: Agent-assisted (Trae AI, GLM-5.2)
-- **Related**: `moui/render/skia/renderer.mbt`, `moui/render/skia/renderer_cached_layer.mbt`, `moui/core/damage.mbt`, `docs/architecture.md`
+- **Related**: `moui_skia_renderer/renderer.mbt`, `moui_skia_renderer/renderer_cached_layer.mbt`, `moui/core/damage.mbt`, `docs/architecture.md`
 - **Amended by**: ADR 0009, which adds the missing full-command damage clip
   invariant and makes `DrawFrame.clear_color` authoritative.
 
@@ -241,10 +241,10 @@ Make the renderer consume `DrawFrame.damage` instead of ignoring it.
   "完整 + 自动回退 FullSurface" (complete solution with auto-fallback to
   FullSurface for scope commands).
 - **Validation**:
-  - `moon check moui/render/skia --target native` — 0 errors, 0 warnings
-  - `moon test moui/render/skia --target native` — 104/104 tests pass
+  - `moon check moui_skia_renderer --target native` — 0 errors, 0 warnings
+  - `moon test moui_skia_renderer --target native` — 104/104 tests pass
     (99 existing + 5 new damage wbtests)
-  - `moon run moui/tests/skia_cached_layer_benchmark/native --target native`
+  - `moon run moui_tests/skia_cached_layer_benchmark/native --target native`
     — cache_hit/miss counts unchanged
   - `moon run benchmarks/app_cached_layer/native --target native` — benchmark
     counts unchanged across 5 scenarios
@@ -274,11 +274,11 @@ Make the renderer consume `DrawFrame.damage` instead of ignoring it.
 ### References
 
 - **Plan file**: `.trae/documents/skia-layer-cache-and-damage-region-optimization.md`
-- **Renderer struct**: `moui/render/skia/renderer.mbt` (lines 51–73)
-- **Layer cache operations**: `moui/render/skia/renderer_cached_layer.mbt`
+- **Renderer struct**: `moui_skia_renderer/renderer.mbt` (lines 51–73)
+- **Layer cache operations**: `moui_skia_renderer/renderer_cached_layer.mbt`
 - **Damage region types**: `moui/core/damage.mbt`
-- **Damage wbtests**: `moui/render/skia/skia_renderer_damage_wbtest.mbt`
-- **Frame cache wbtests**: `moui/render/skia/skia_renderer_frame_cache_wbtest.mbt`
+- **Damage wbtests**: `moui_skia_renderer/skia_renderer_damage_wbtest.mbt`
+- **Frame cache wbtests**: `moui_skia_renderer/skia_renderer_frame_cache_wbtest.mbt`
   (updated for Map iteration access)
 - **Framework comparison**: Flutter `RasterCache`
   (https://api.flutter.dev/flutter/painting/RasterCache-class.html)
@@ -291,7 +291,7 @@ Make the renderer consume `DrawFrame.damage` instead of ignoring it.
 - **Status**: Accepted
 - **Deciders**: Agent-assisted (Codex, GPT-5)
 - **Related**: ADR 0007, `moui/core/damage.mbt`, `moui/runtime/runtime_state.mbt`,
-  `moui/render/skia/renderer.mbt`
+  `moui_skia_renderer/renderer.mbt`
 
 ### Context
 
@@ -449,9 +449,9 @@ Replace the closed matrix with a composable provider architecture.
    `CapabilityRequest`, `SurfaceNegotiation` are neutral value types in
    `moui/render` (the render-surface contract also used by ADR 0018).
 
-2. **Concrete renderers are providers in `moui/render/*`.** `render/skia`
-   implements the Skia provider; `render/wgpu` + `render/webgpu_adapter`
-   implement the WGPU provider; `render/canvas2d` and `render/sun` implement
+2. **Concrete renderers are providers in `moui/render/*`.** `moui_skia_renderer`
+   implements the Skia provider; `moui_wgpu_renderer` + `moui_web_renderer`
+   implement the WGPU provider; `moui_web_renderer/canvas2d` and `moui_sun_renderer` implement
    theirs. Each provider owns its capability reporting, surface negotiation,
    completion, and recovery. **No central enum, no central matrix, no
    runtime central switch on renderer identity.**
@@ -518,7 +518,7 @@ branch on renderer identity, so ADR 0018's host-import baseline holds.
 - `moui/render/renderer.mbt` facade becomes a thin `RendererProvider` registry
   helper (or moves to runtime composition root).
 - Runtime host-driver's renderer switch becomes provider negotiation.
-- New contract tests: `render/skia` and `render/wgpu` pass the same
+- New contract tests: `moui_skia_renderer` and `moui_wgpu_renderer` pass the same
   `RendererProvider` contract suite; capability/completion/recovery semantics
   are tested against the neutral contract, not against concrete types.
 - A new test renderer/provider adds a package + a registration line; no edits
@@ -562,8 +562,8 @@ The open-extension validator is enforcing this ownership boundary.
 - `moui/render/native_gpu_selection.mbt`,
   `moui/render/capabilities_backend_matrix.mbt`,
   `moui/render/renderer.mbt`
-- `moui/render/skia`, `moui/render/wgpu`, `moui/render/webgpu_adapter`,
-  `moui/render/canvas2d`, `moui/render/sun`
+- `moui_skia_renderer`, `moui_wgpu_renderer`, `moui_web_renderer`,
+  `moui_web_renderer/canvas2d`, `moui_sun_renderer`
 - ADR 0006, ADR 0007, ADR 0009, ADR 0018
 
 ---
@@ -658,7 +658,7 @@ ADR 0019（2026-07-28）用可组合的 provider 架构替换了「中央矩阵�
    - **M2** `RendererProviderBinding::from_provider`（通用 host binding 派生，替换 skia 专有 `create_*_host_binding`，让 sun/wgpu/canvas2d/webgpu 零改动获得协商能力——归队 ADR 0019 的前提）。
    - **M3** options 整体透传（删除 `<Platform><Renderer>AppOptions` 逐字段镜像，从根上消除 19 处字段丢失；入口侧实测 0 个包必须改）。
    - **M4** `SurfaceMetrics::normalized()` + 平台基座一次性 metrics 转换（删除 12 份 `renderer_metrics_from_host`）。
-   - **M5** `--renderer` / `MOUI_SKIA_RENDERER` 收敛到 `moui/render/skia`（native-only，零新增依赖）；并按 Plan D §3.5.1 把 `native_gpu_selection.mbt` 按职责一分为二（契约载荷留 `moui/render`，策略矩阵下沉 skia）。
+   - **M5** `--renderer` / `MOUI_SKIA_RENDERER` 收敛到 `moui_skia_renderer`（native-only，零新增依赖）；并按 Plan D §3.5.1 把 `native_gpu_selection.mbt` 按职责一分为二（契约载荷留 `moui/render`，策略矩阵下沉 skia）。
 
 3. **web / wechat 违例修复纳入方案**（Plan D §4）：wechat 基座中性化渲染器类型（成本极低，优先）；web 拆出 `backend/web/webgpu` 绑定包，与 `backend/wechat/canvas` 对称。
 
@@ -689,7 +689,7 @@ ADR 0019（2026-07-28）用可组合的 provider 架构替换了「中央矩阵�
 - **迁移需五个独立可回滚阶段**，跨 `validation-hygiene-cleanup` 计划排序，存在协同依赖（Phase 1 不得抢改 `checks/profiles.json`）。
 - **一处校验器放宽已撤销**：原 M5 草稿曾提议把 R3 校验器 `has_env` 放宽为「含 `desktop_surface_route` 调用」，但 B5 边界约束表明 `MOUI_SKIA_RENDERER` 读取点须留在各平台 skia provider（R3 `has_env` 硬依赖），故 R3 校验器**不放宽**；provider 调用 `resolve_surface_route` 满足 `has_parse` 的 OR 分支，R3 自然通过。
 - **R-2 认知风险长期存在**：任何「减少绑定包数量」的后续提议都会撞上 MoonBit 链接期约束（Plan D §5.1），已记录为长期约束。
-- **R-4**：Phase 2/5 让 sun/wgpu 首次真正出现在能力上报时，须用 `validate-renderer-provider-manifests.mjs` 实测确认 manifest 不报增长（其 ID 在 `render/sun/provider.mbt:18`、`render/wgpu/provider.mbt:17` 已声明，属「已声明未启用」非新增）。
+- **R-4**：Phase 2/5 让 sun/wgpu 首次真正出现在能力上报时，须用 `validate-renderer-provider-manifests.mjs` 实测确认 manifest 不报增长（其 ID 在 `moui_sun_renderer/provider.mbt:18`、`moui_wgpu_renderer/provider.mbt:17` 已声明，属「已声明未启用」非新增）。
 - **本补充条款不解决**：`run_*` 入口数量精简、`typealias` 可用性验证、embedded runtime `W=UInt64` 类型收紧、Platform Bridge 行为收敛——列为 Plan D §7.2 未决项，待拍板。
 
 ### 验收判据（gate）

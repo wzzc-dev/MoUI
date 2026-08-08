@@ -1,0 +1,59 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/accesskit"
+
+import {
+  "Milky2018/moon_accesskit",
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+}
+
+// Values
+pub fn accesskit_action_from_semantics(@core.SemanticsActionKind) -> @moon_accesskit.Action
+
+pub fn accesskit_node_from_semantics(@core.SemanticsNode) -> @moon_accesskit.Node
+
+pub fn accesskit_node_id_for_semantics(@core.SemanticsNodeId) -> @moon_accesskit.NodeId
+
+pub fn accesskit_rect_from_core(@core.Rect) -> @moon_accesskit.Rect
+
+pub fn accesskit_role_from_semantics(@core.SemanticsRole) -> @moon_accesskit.Role
+
+pub fn accesskit_semantics_action_request(node_id~ : @core.SemanticsNodeId, generation~ : @core.SemanticsGeneration, action~ : @core.SemanticsAction) -> @runtime.PerformSemanticsActionRequest
+
+pub fn accesskit_update_from_semantics_read(@runtime.SemanticsRead) -> AccessKitUpdate?
+
+// Errors
+
+// Types and methods
+pub(all) enum AccessKitActionResult {
+  Handled(@runtime.SemanticsActionReceipt)
+  Rejected(@runtime.SemanticsActionDispatchError)
+  BridgeUnavailable(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct AccessKitBridge {
+  diagnostic_name : String
+  available : Bool
+  publish : (@runtime.SemanticsRead) -> AccessKitUpdate?
+  perform : (@runtime.PerformSemanticsActionRequest) -> AccessKitActionResult
+}
+pub fn AccessKitBridge::driver(diagnostic_name? : String, driver~ : @runtime.HostRuntimeDriver) -> Self
+pub fn AccessKitBridge::new(diagnostic_name? : String, available? : Bool, publish? : (@runtime.SemanticsRead) -> AccessKitUpdate?, perform? : (@runtime.PerformSemanticsActionRequest) -> AccessKitActionResult) -> Self
+pub fn AccessKitBridge::perform_action(Self, @runtime.PerformSemanticsActionRequest) -> AccessKitActionResult
+pub fn AccessKitBridge::publish_semantics(Self, @runtime.SemanticsRead) -> AccessKitUpdate?
+pub fn AccessKitBridge::unavailable(diagnostic_name? : String, reason? : String) -> Self
+
+pub struct AccessKitUpdate {
+  generation : @core.SemanticsGeneration
+  tree_update : @moon_accesskit.TreeUpdate
+  removed : Array[@core.SemanticsNodeId]
+}
+pub fn AccessKitUpdate::generation(Self) -> @core.SemanticsGeneration
+pub fn AccessKitUpdate::removed(Self) -> Array[@core.SemanticsNodeId]
+pub fn AccessKitUpdate::tree_update(Self) -> @moon_accesskit.TreeUpdate
+
+// Type aliases
+
+// Traits
+

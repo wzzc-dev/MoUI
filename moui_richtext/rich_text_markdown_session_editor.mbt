@@ -1,15 +1,4 @@
 ///|
-fn markdown_session_current_scroll_y(
-  visible_scroll_y : Double,
-  visible_scroll_state : @core.ScrollState?,
-) -> Double {
-  match visible_scroll_state {
-    Some(state) => state.offset().y
-    None => visible_scroll_y
-  }
-}
-
-///|
 fn markdown_session_clamped_scroll_y(
   session : MarkdownDocumentSession,
   font : @core.FontSpec,
@@ -54,14 +43,13 @@ fn markdown_session_visible_window(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
   content_width? : Double = 0.0,
 ) -> MarkdownDocumentRichTextWindow {
   let scroll_y = markdown_session_clamped_scroll_y(
     session,
     font,
     source_mode~,
-    markdown_session_current_scroll_y(visible_scroll_y, visible_scroll_state),
+    visible_scroll_y,
     visible_viewport_height,
     content_width~,
   )
@@ -126,7 +114,6 @@ fn markdown_session_editor_paint(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewPaintPlan {
   let commands : Array[@core.DrawCommand] = []
   let overlay_commands : Array[@core.DrawCommand] = []
@@ -174,7 +161,6 @@ fn markdown_session_editor_paint(
       visible_scroll_y~,
       visible_viewport_height~,
       visible_overscan~,
-      visible_scroll_state~,
       content_width=content.size.width,
     )
     let window_content = window.content_rect(content)
@@ -235,11 +221,11 @@ fn[Msg] markdown_session_editor_event(
   on_command_click~ : ((Int) -> Msg)?,
   accepts_tab_input~ : Bool,
   visible_scroll_y~ : Double,
+  on_scroll~ : ((Double) -> Msg)?,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewEventResult[Msg] {
-  let value = @core.Binding::new(get=() => session.source, set=_next => ())
+  let value = session.source
   let on_input_edit = markdown_session_on_input_edit(session, on_transaction)
   match ctx.event {
     @core.AppEvent::Pointer(event) =>
@@ -256,9 +242,9 @@ fn[Msg] markdown_session_editor_event(
         on_command_click~,
         event~,
         visible_scroll_y~,
+        on_scroll~,
         visible_viewport_height~,
         visible_overscan~,
-        visible_scroll_state~,
       )
     @core.AppEvent::Keyboard(event) => {
       // ArrowUp/ArrowDown 需要用 visible_window 的 document 来正确计算
@@ -276,7 +262,6 @@ fn[Msg] markdown_session_editor_event(
           visible_scroll_y~,
           visible_viewport_height~,
           visible_overscan~,
-          visible_scroll_state~,
           content_width=rich_text_editor_content_rect(ctx.frame).size.width,
         )
         let content = window.content_rect(
@@ -343,9 +328,9 @@ fn[Msg] markdown_session_pointer_event(
   on_command_click~ : ((Int) -> Msg)?,
   event~ : @core.PointerEvent,
   visible_scroll_y~ : Double,
+  on_scroll~ : ((Double) -> Msg)?,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewEventResult[Msg] {
   let inside = ctx.frame.contains(event.position)
   let content_width = rich_text_editor_content_rect(ctx.frame).size.width
@@ -355,8 +340,9 @@ fn[Msg] markdown_session_pointer_event(
       font,
       source_mode~,
       event~,
+      visible_scroll_y~,
+      on_scroll~,
       visible_viewport_height~,
-      visible_scroll_state~,
       content_width~,
     )
   }
@@ -374,7 +360,6 @@ fn[Msg] markdown_session_pointer_event(
           visible_scroll_y~,
           visible_viewport_height~,
           visible_overscan~,
-          visible_scroll_state~,
           content_width~,
         )
         let content = window.content_rect(
@@ -458,7 +443,6 @@ fn[Msg] markdown_session_pointer_event(
             visible_scroll_y~,
             visible_viewport_height~,
             visible_overscan~,
-            visible_scroll_state~,
             content_width~,
           )
           let content = window.content_rect(
@@ -527,12 +511,13 @@ fn[Msg] markdown_session_scroll_event(
   font : @core.FontSpec,
   source_mode~ : Bool,
   event~ : @core.PointerEvent,
+  visible_scroll_y~ : Double,
+  on_scroll~ : ((Double) -> Msg)?,
   visible_viewport_height~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
   content_width? : Double = 0.0,
 ) -> @core.ViewEventResult[Msg] {
-  match visible_scroll_state {
-    Some(state) => {
+  match on_scroll {
+    Some(handler) => {
       let viewport_height = if visible_viewport_height > 0.0 {
         visible_viewport_height
       } else {
@@ -545,16 +530,16 @@ fn[Msg] markdown_session_scroll_event(
         ) +
         96.0
       let max_scroll = max_double(0.0, content_height - viewport_height)
-      let current = state.offset()
       let next_y = min_double(
-        max_double(0.0, current.y - event.wheel_delta.y),
+        max_double(0.0, visible_scroll_y - event.wheel_delta.y),
         max_scroll,
       )
-      state.scroll_to(x=0.0, y=next_y)
       view_event_result(
-        changed=next_y != current.y,
+        changed=next_y != visible_scroll_y,
+        activated=next_y != visible_scroll_y,
         captured=true,
         dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        messages=if next_y != visible_scroll_y { [handler(next_y)] } else { [] },
       )
     }
     None => @core.ViewEventResult::ignored()
@@ -575,7 +560,6 @@ fn markdown_session_input_state(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
   text_system~ : @core.TextSystem,
 ) -> @core.TextInputState {
   let control = {
@@ -622,7 +606,6 @@ fn markdown_session_input_state(
     visible_scroll_y~,
     visible_viewport_height~,
     visible_overscan~,
-    visible_scroll_state~,
     content_width=rich_text_editor_content_rect(frame).size.width,
   )
   let base_content = rich_text_editor_content_rect(frame)
@@ -690,7 +673,7 @@ fn[Msg] markdown_session_editor_command(
   intent : @core.CommandIntent,
   paste_text~ : String?,
 ) -> @core.ViewTextCommandResult[Msg] {
-  let value = @core.Binding::new(get=() => session.source, set=_next => ())
+  let value = session.source
   let on_input_edit = markdown_session_on_input_edit(session, on_transaction)
   let format_selection = match intent {
     @core.CommandIntent::Copy | @core.CommandIntent::Cut =>

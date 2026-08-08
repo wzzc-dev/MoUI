@@ -44,5 +44,8 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0023 | [Sun CPU raster is an experimental renderer](0023-sun-experimental-renderer.md) | 2026-08-02 | Accepted |
 | 0024 | [Unified MoUI window-host lifecycle owner](0024-unified-window-host-lifecycle.md) | 2026-08-05 | Accepted |
 | 0025 | [Backend and render package convergence](0025-backend-render-package-convergence.md) | 2026-08-05 | Accepted |
+| 0026 | [Release module dependency closures](0026-release-module-dependency-closures.md) | 2026-08-07 | Accepted |
+| 0027 | [Backend ownership and renderer lifecycle convergence](0027-backend-renderer-lifecycle-convergence.md) | 2026-08-07 | Accepted |
+| 0028 | [Runtime neutrality, state ownership, and render resources](0028-runtime-state-render-ownership-convergence.md) | 2026-08-07 | Accepted |
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

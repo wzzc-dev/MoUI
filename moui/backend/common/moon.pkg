@@ -1,12 +1,13 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/services",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend" @backend_host,
+  "wzzc-dev/moui/backend/common/lifecycle" @window_lifecycle,
+  "wzzc-dev/moui/backend/common/frame" @window_frame,
+  "wzzc-dev/moui/backend/common/image" @window_image,
+  "wzzc-dev/moui/backend/common/input" @window_input,
+  "wzzc-dev/moui/backend/common/services" @window_services,
   "wzzc-dev/moui/render",
-  "wzzc-dev/moui/render/common" @render_common,
-  "wzzc-dev/window/core" @window_core,
-  "wzzc-dev/window/dpi",
 }
 
 import {

@@ -15,8 +15,6 @@ pub fn animated_point(from~ : Point, to~ : Point, progress~ : Double, easing? : 
 
 pub fn animated_value(from~ : Double, to~ : Double, progress~ : Double, easing? : Easing, reduced_motion? : Bool) -> Double
 
-pub fn cancel_component_effects(Array[ComponentEffect], reason? : ComponentEffectCancelReason) -> Unit
-
 pub fn clamp_int(Int, Int, Int) -> Int
 
 pub fn composition_cursor_offset(TextControlStateContext, String) -> Int
@@ -175,14 +173,6 @@ pub(all) struct BackgroundModifier {
 }
 pub fn[Msg] BackgroundModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
-pub struct Binding[T] {
-  // private fields
-}
-pub fn[T] Binding::get(Self[T]) -> T
-pub fn[T] Binding::new(get~ : () -> T, set~ : (T) -> Unit) -> Self[T]
-pub fn[T] Binding::set(Self[T], T) -> Unit
-pub fn[T] Binding::update(Self[T], (T) -> T raise?) -> Unit raise?
-
 pub(all) enum BlendMode {
   SourceOver
   Multiply
@@ -213,14 +203,6 @@ pub fn Brush::linear_gradient(start~ : Point, end~ : Point, start_color~ : Color
 pub fn Brush::multiply_alpha(Self, Double) -> Self
 pub fn Brush::radial_gradient(center~ : Point, radius~ : Double, center_color~ : Color, edge_color~ : Color) -> Self
 pub fn Brush::solid(Color) -> Self
-
-pub(all) struct CachedLayerSpec {
-  key : String
-  frame : Rect
-  content_revision : Int
-  scale_factor : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn CachedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
 
 pub(all) struct ChildLayoutInfo {
   size : Size
@@ -324,70 +306,6 @@ pub(all) enum CommandIntent {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CommandIntent::display_label(Self) -> String
 
-pub struct ComponentContext {
-  // private fields
-}
-pub fn ComponentContext::accessibility_contrast(Self) -> AccessibilityContrast
-pub fn[T] ComponentContext::binding(Self, State[T]) -> Binding[T]
-pub fn ComponentContext::color_scheme(Self) -> ColorScheme
-pub fn ComponentContext::content_size_category(Self) -> ContentSizeCategory
-pub fn ComponentContext::enabled(Self) -> Bool
-pub fn ComponentContext::environment(Self) -> Environment
-pub fn ComponentContext::from_runtime(ComponentRuntimeContextInput) -> Self
-pub fn ComponentContext::layout_direction(Self) -> LayoutDirection
-pub fn ComponentContext::locale(Self) -> String
-pub fn ComponentContext::on_dispose(Self, key~ : String, () -> Unit) -> Unit
-pub fn ComponentContext::on_mount(Self, key~ : String, () -> Unit) -> Unit
-pub fn ComponentContext::on_unmount(Self, key~ : String, () -> Unit) -> Unit
-pub fn ComponentContext::on_unmount_with_reason(Self, key~ : String, (ComponentEffectCancelReason) -> Unit) -> Unit
-pub fn ComponentContext::on_update(Self, key~ : String, deps~ : Array[String], () -> (() -> Unit)?) -> Unit
-pub fn ComponentContext::on_update_with_reason(Self, key~ : String, deps~ : Array[String], () -> ((ComponentEffectCancelReason) -> Unit)?) -> Unit
-pub fn ComponentContext::reduced_motion(Self) -> Bool
-pub fn[T] ComponentContext::restore(Self, key~ : String, SaveableCodec[T]) -> T?
-pub fn ComponentContext::restore_bool(Self, key~ : String) -> Bool?
-pub fn ComponentContext::restore_int(Self, key~ : String) -> Int?
-pub fn ComponentContext::restore_string(Self, key~ : String) -> String?
-pub fn ComponentContext::run_effect(Self, key~ : String, () -> (() -> Unit)?) -> Unit
-pub fn ComponentContext::run_effect_with_reason(Self, key~ : String, () -> ((ComponentEffectCancelReason) -> Unit)?) -> Unit
-pub fn[T] ComponentContext::save(Self, key~ : String, T, SaveableCodec[T]) -> Unit
-pub fn ComponentContext::save_bool(Self, key~ : String, Bool) -> Unit
-pub fn ComponentContext::save_int(Self, key~ : String, Int) -> Unit
-pub fn ComponentContext::save_string(Self, key~ : String, String) -> Unit
-pub fn[T] ComponentContext::saveable(Self, key~ : String, T, SaveableCodec[T]) -> State[T]
-pub fn ComponentContext::saveable_bool(Self, key~ : String, Bool) -> State[Bool]
-pub fn ComponentContext::saveable_int(Self, key~ : String, Int) -> State[Int]
-pub fn ComponentContext::saveable_string(Self, key~ : String, String) -> State[String]
-pub fn ComponentContext::scale_factor(Self) -> Double
-pub fn ComponentContext::text_scale(Self) -> Double
-pub fn ComponentContext::theme(Self) -> Theme
-pub fn ComponentContext::view_environment(Self) -> ViewEnvironment
-pub fn ComponentContext::viewport_size(Self) -> Size
-pub fn[T] ComponentContext::watch(Self, State[T]) -> T
-pub fn[T] ComponentContext::watch_derived(Self, DerivedState[T]) -> T
-pub fn ComponentContext::watch_focus(Self, FocusState) -> String?
-pub fn ComponentContext::watch_navigation(Self, NavigationState) -> Array[String]
-pub fn ComponentContext::watch_scroll(Self, ScrollState) -> Point
-
-type ComponentEffect
-pub fn ComponentEffect::finish_reuse(Array[Self], reason? : ComponentEffectCancelReason, cancel_reused? : Bool) -> Unit
-
-pub(all) enum ComponentEffectCancelReason {
-  EffectKeyChanged
-  EffectUnmounted
-  EffectRuntimeDestroyed
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct ComponentRuntimeContextInput {
-  request_component_rebuild : () -> Unit
-  scope_saveable_key : (String) -> String
-  viewport_size : Size
-  saveable_state : SaveableStateStore
-  subscriptions : Array[StateSubscription]
-  effects : Array[ComponentEffect]
-  old_effects : Array[ComponentEffect]
-  environment : Environment
-}
-
 type CompositionUpdate derive(Eq, ToJson, @debug.Debug)
 pub fn CompositionUpdate::cursor(Self) -> TextRange?
 pub fn CompositionUpdate::new(text~ : String, cursor? : TextRange?) -> Self
@@ -414,6 +332,13 @@ pub(all) enum ContentSizeCategory {
   Accessibility
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ContentSizeCategory::text_scale(Self) -> Double
+
+pub struct ControlledValue[T, Msg] {
+  // private fields
+}
+pub fn[T, Msg] ControlledValue::changed(Self[T, Msg], T) -> Msg
+pub fn[T, Msg] ControlledValue::new(value~ : T, changed~ : (T) -> Msg) -> Self[T, Msg]
+pub fn[T, Msg] ControlledValue::value(Self[T, Msg]) -> T
 
 pub(all) struct CornerRadiusModifier {
   radius : Double
@@ -508,15 +433,6 @@ pub fn DeclarationKey::string(String) -> Self
 pub fn DeclarationKey::uint(UInt) -> Self
 pub fn DeclarationKey::uint64(UInt64) -> Self
 
-pub struct DerivedState[T] {
-  // private fields
-}
-pub fn[A, B, T] DerivedState::combine(State[A], State[B], (A, B) -> T) -> Self[T]
-pub fn[T, U] DerivedState::from_state(State[T], (T) -> U) -> Self[U]
-pub fn[T] DerivedState::get(Self[T]) -> T
-pub fn[T] DerivedState::new(get~ : () -> T, subscribe~ : (() -> Unit) -> Array[StateSubscription]) -> Self[T]
-pub fn[T] DerivedState::subscribe(Self[T], () -> Unit) -> Array[StateSubscription]
-
 pub(all) struct DisabledModifier {
   disabled : Bool
 }
@@ -576,9 +492,8 @@ pub(all) enum DrawCommand {
   PopOpacity
   PushLayer(LayerSpec)
   PopLayer
-  BeginCachedLayer(CachedLayerSpec)
-  EndCachedLayer(String)
-  DrawCachedLayer(CachedLayerSpec)
+  BeginRetainedLayer(RetainedLayerSpec)
+  EndRetainedLayer(String)
   PushFilter(FilterEffect)
   PopFilter
   DrawPath(PathSpec)
@@ -591,9 +506,8 @@ pub(all) struct DrawFrame {
   platform_views : Array[PlatformViewPlacement]
   damage : DamageRegion
   clear_color : Color
-  cache_epoch : Int
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DrawFrame::new(commands~ : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement], damage~ : DamageRegion, clear_color? : Color, cache_epoch? : Int) -> Self
+pub fn DrawFrame::new(commands~ : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement], damage~ : DamageRegion, clear_color? : Color) -> Self
 
 pub(all) enum Easing {
   Linear
@@ -672,6 +586,12 @@ pub(all) struct FlexibleModifier {
 }
 pub fn[Msg] FlexibleModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
+pub(all) struct FocusRequest {
+  id : Int
+  key : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FocusRequest::new(id~ : Int, key~ : String) -> Self
+
 type FocusScope derive(Eq)
 pub fn FocusScope::command_target(Self, CommandIntent) -> String?
 pub fn FocusScope::first_focusable(Self) -> String?
@@ -684,15 +604,6 @@ pub fn FocusScope::traverse(Self, FocusTraversalDirection) -> String?
 
 type FocusScopeItem derive(Eq)
 pub fn FocusScopeItem::new(id~ : String, enabled? : Bool, focusable? : Bool) -> Self
-
-pub struct FocusState {
-  key_slot : State[String?]
-}
-pub fn FocusState::binding(Self) -> Binding[String?]
-pub fn FocusState::clear(Self) -> Unit
-pub fn FocusState::focus(Self, String) -> Unit
-pub fn FocusState::focused_key(Self) -> String?
-pub fn FocusState::new(key? : String?) -> Self
 
 pub(all) struct FocusTrapModifier {
   trap : Bool
@@ -920,17 +831,6 @@ pub(all) struct MotionScale {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MotionScale::default() -> Self
 
-pub struct NavigationState {
-  stack_slot : State[Array[String]]
-}
-pub fn NavigationState::binding(Self) -> Binding[Array[String]]
-pub fn NavigationState::current(Self) -> String
-pub fn NavigationState::new(initial? : String) -> Self
-pub fn NavigationState::pop(Self) -> Bool
-pub fn NavigationState::push(Self, String) -> Unit
-pub fn NavigationState::replace(Self, String) -> Unit
-pub fn NavigationState::stack(Self) -> Array[String]
-
 pub(all) struct OffsetModifier {
   dx : Double
   dy : Double
@@ -1117,35 +1017,19 @@ pub(all) struct RepaintBoundaryModifier {
 }
 pub fn[Msg] RepaintBoundaryModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
+pub(all) struct RetainedLayerSpec {
+  key : String
+  frame : Rect
+  content_revision : Int
+  scale_factor : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RetainedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
+
 pub(all) struct RoundedRect {
   rect : Rect
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RoundedRect::new(rect~ : Rect, radius? : Double) -> Self
-
-type SaveableCodec[T]
-pub fn SaveableCodec::bool() -> Self[Bool]
-pub fn[T] SaveableCodec::decode_value(Self[T], String) -> T?
-pub fn[T] SaveableCodec::encode_value(Self[T], T) -> String
-pub fn SaveableCodec::int() -> Self[Int]
-pub fn[T] SaveableCodec::new(encode~ : (T) -> String, decode~ : (String) -> T?) -> Self[T]
-pub fn SaveableCodec::string() -> Self[String]
-
-type SaveableStateSnapshot derive(Eq, ToJson, @debug.Debug)
-
-type SaveableStateStore
-pub fn[T] SaveableStateStore::get(Self, String, SaveableCodec[T]) -> T?
-pub fn SaveableStateStore::get_bool(Self, String) -> Bool?
-pub fn SaveableStateStore::get_int(Self, String) -> Int?
-pub fn SaveableStateStore::get_string(Self, String) -> String?
-pub fn SaveableStateStore::new() -> Self
-pub fn SaveableStateStore::remove(Self, String) -> Unit
-pub fn SaveableStateStore::restore(Self, SaveableStateSnapshot) -> Unit
-pub fn[T] SaveableStateStore::set(Self, String, T, SaveableCodec[T]) -> Unit
-pub fn SaveableStateStore::set_bool(Self, String, Bool) -> Unit
-pub fn SaveableStateStore::set_int(Self, String, Int) -> Unit
-pub fn SaveableStateStore::set_string(Self, String, String) -> Unit
-pub fn SaveableStateStore::snapshot(Self) -> SaveableStateSnapshot
 
 pub(all) struct ScaleModifier {
   sx : Double
@@ -1160,21 +1044,11 @@ pub(all) enum ScrollAlignment {
   Nearest
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct ScrollState {
-  offset_slot : State[Point]
-  smooth_target : State[Point?]
-  smooth_start : State[Point?]
-  smooth_start_time_ms : State[Double?]
-  smooth_duration_ms : State[Double?]
-}
-pub fn ScrollState::binding(Self) -> Binding[Point]
-pub fn ScrollState::is_smooth_scrolling(Self) -> Bool
-pub fn ScrollState::new(offset? : Point) -> Self
-pub fn ScrollState::offset(Self) -> Point
-pub fn ScrollState::scroll_to(Self, x~ : Double, y~ : Double) -> Unit
-pub fn ScrollState::set_offset(Self, Point) -> Unit
-pub fn ScrollState::smooth_scroll_to(Self, x~ : Double, y~ : Double, duration_ms? : Double) -> Unit
-pub fn ScrollState::tick(Self, Double) -> Unit
+pub(all) struct ScrollRequest {
+  id : Int
+  offset : Point
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ScrollRequest::new(id~ : Int, offset~ : Point) -> Self
 
 pub struct SemanticId {
   // private fields
@@ -1422,28 +1296,6 @@ pub(all) struct SpacingScale {
   xl : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SpacingScale::default() -> Self
-
-pub struct State[T] {
-  // private fields
-}
-pub fn[T] State::binding(Self[T]) -> Binding[T]
-pub fn[T, U] State::derived(Self[T], (T) -> U) -> DerivedState[U]
-pub fn[T] State::get(Self[T]) -> T
-pub fn[T] State::new(T) -> Self[T]
-pub fn[T] State::set(Self[T], T) -> Unit
-pub fn[T] State::subscribe(Self[T], () -> Unit) -> StateSubscription
-pub fn[T] State::update(Self[T], (T) -> T raise?) -> Unit raise?
-pub fn[T] State::version(Self[T]) -> Int
-
-type StateListener
-
-type StateSlot[T]
-
-pub struct StateSubscription {
-  // private fields
-}
-pub fn StateSubscription::cancel(Self) -> Unit
-pub fn StateSubscription::is_active(Self) -> Bool
 
 pub struct Subscription[Msg] {
   // private fields
@@ -1788,7 +1640,6 @@ pub fn[Msg] View::aspect_ratio(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::background(Self[Msg], Color) -> Self[Msg]
 pub fn[Msg] View::background_brush(Self[Msg], Brush) -> Self[Msg]
 pub fn[Msg] View::border(Self[Msg], BorderStyle) -> Self[Msg]
-pub fn[Msg] View::build_child(Self[Msg]) -> ((ComponentContext) -> Self[Msg])?
 pub fn[Msg] View::caption(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::child_constraints(Self[Msg], Constraints) -> Constraints
 pub fn[Msg] View::child_environment(Self[Msg], Environment) -> Environment
@@ -1810,7 +1661,7 @@ pub fn[Msg] View::focusable(Self[Msg], focusable? : Bool) -> Self[Msg]
 pub fn[Msg] View::font(Self[Msg], FontSpec) -> Self[Msg]
 pub fn[Msg] View::foreground(Self[Msg], Color) -> Self[Msg]
 pub fn[Msg] View::frame(Self[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> Self[Msg]
-pub fn[Node : ViewNode, Msg] View::from_node(Node, children? : (Node) -> Array[Self[Msg]], build_child? : ((Node, ComponentContext) -> Self[Msg])?, event? : (Node, ViewEventContext) -> ViewEventResult[Msg], text_command? : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg], semantics_actions? : (Node) -> Array[ViewSemanticsActionHandler[Msg]]) -> Self[Msg]
+pub fn[Node : ViewNode, Msg] View::from_node(Node, children? : (Node) -> Array[Self[Msg]], event? : (Node, ViewEventContext) -> ViewEventResult[Msg], text_command? : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg], semantics_actions? : (Node) -> Array[ViewSemanticsActionHandler[Msg]]) -> Self[Msg]
 pub fn[Msg] View::hide_semantics(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::identity(Self[Msg]) -> ViewIdentity
 pub fn[Msg] View::intrinsic_height(Self[Msg]) -> Self[Msg]
@@ -1883,7 +1734,10 @@ pub(all) enum ViewDirtyHint {
   ViewBuildDirty
 } derive(Eq, @debug.Debug)
 
-type ViewEnvironment
+pub struct ViewEnvironment {
+  viewport_size : Size
+  environment : Environment
+}
 pub fn ViewEnvironment::environment(Self) -> Environment
 pub fn ViewEnvironment::new(viewport_size~ : Size, environment~ : Environment) -> Self
 pub fn ViewEnvironment::viewport_size(Self) -> Size
@@ -1924,6 +1778,7 @@ pub(all) struct ViewLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
   child_flex_weights : Array[Double]
+  state : ViewStateContext
   text_system : TextSystem
   environment : Environment
   style : ViewStyle

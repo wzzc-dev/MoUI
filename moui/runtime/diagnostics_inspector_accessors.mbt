@@ -538,20 +538,6 @@ pub fn RuntimeDirtyStateSummary::damage_full_reason(
 }
 
 ///|
-pub fn RuntimeDirtyStateSummary::cache_epoch(
-  self : RuntimeDirtyStateSummary,
-) -> Int {
-  self.cache_epoch
-}
-
-///|
-pub fn RuntimeDirtyStateSummary::cached_layer_count(
-  self : RuntimeDirtyStateSummary,
-) -> Int {
-  self.cached_layer_count
-}
-
-///|
 pub fn ViewInspectorSummary::element_id(self : ViewInspectorSummary) -> Int {
   self.element_id
 }
@@ -598,13 +584,6 @@ pub fn ViewTreeInspectorSnapshot::node_count(
   self : ViewTreeInspectorSnapshot,
 ) -> Int {
   self.node_count
-}
-
-///|
-pub fn ViewTreeInspectorSnapshot::component_count(
-  self : ViewTreeInspectorSnapshot,
-) -> Int {
-  self.component_count
 }
 
 ///|

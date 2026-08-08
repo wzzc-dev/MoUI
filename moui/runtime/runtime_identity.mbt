@@ -35,7 +35,7 @@ priv struct DirtyFlags {
 ///|
 fn DirtyFlags::all() -> DirtyFlags {
   {
-    // Mount eagerly materializes component children, so no build work remains.
+    // Mount eagerly materializes declared children, so no build work remains.
     needs_build: false,
     needs_layout: true,
     needs_paint: true,
@@ -47,15 +47,6 @@ fn DirtyFlags::all() -> DirtyFlags {
     descendant_semantics: false,
     descendant_platform: false,
   }
-}
-
-///|
-fn DirtyFlags::mark_build(self : DirtyFlags) -> Unit {
-  self.needs_build = true
-  self.needs_layout = true
-  self.needs_paint = true
-  self.needs_semantics = true
-  self.needs_platform = true
 }
 
 ///|
@@ -84,11 +75,6 @@ fn DirtyFlags::mark_semantics(self : DirtyFlags) -> Unit {
 ///|
 fn DirtyFlags::mark_platform(self : DirtyFlags) -> Unit {
   self.needs_platform = true
-}
-
-///|
-fn DirtyFlags::mark_build_descendant(self : DirtyFlags) -> Unit {
-  self.descendant_build = true
 }
 
 ///|

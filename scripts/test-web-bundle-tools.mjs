@@ -33,7 +33,7 @@ assert(manifest.assets.some(asset => asset.name === "assets/readme.txt" && asset
 assert(manifest.groupTotals.assets.rawBytes > 0, "asset group total should include fixture bytes");
 assert(manifest.totals.rawBytes >= manifest.groupTotals.app.rawBytes + manifest.groupTotals.runtime.rawBytes, "bundle total should include app and runtime groups");
 
-const html = `import { bootMouiWasmGcApp } from "../../../moui/render/webgpu_adapter/runtime.js";
+const html = `import { bootMouiWasmGcApp } from "../../../moui_web_renderer/runtime.js";
 bootMouiWasmGcApp({
   wasmUrl: new URL(
     "../../../_build/wasm-gc/debug/build/examples/counter/web_wasm/web_wasm.wasm",
@@ -45,12 +45,12 @@ assert(rewritten.includes('from "./runtime.js"'), "packaged index should import 
 assert(rewritten.includes('"./web_wasm.wasm"'), "packaged index should reference local wasm");
 assert(!rewritten.includes("_build/wasm-gc"), "packaged index should not reference build tree");
 
-const runtimeSource = readFileSync("moui/render/webgpu_adapter/runtime.js", "utf8");
+const runtimeSource = readFileSync("moui_web_renderer/runtime.js", "utf8");
 assert(!runtimeSource.includes('from "./canvas2d_runtime.js"'), "runtime.js should not statically import Canvas2D fallback");
 assert(runtimeSource.includes('await import("./canvas2d_runtime.js")'), "runtime.js should dynamically import Canvas2D fallback");
 const packagedRuntime = rewriteRuntimeForPackage(runtimeSource);
 assert(packagedRuntime.includes('from "./browser_runtime.js"'), "packaged runtime should import local browser_runtime.js");
-assert(!packagedRuntime.includes("../../backend/web/browser_runtime.js"), "packaged runtime should not reference the source tree");
+assert(!packagedRuntime.includes("../moui/backend/web/browser_runtime.js"), "packaged runtime should not reference the source tree");
 
 const tmp = mkdtempSync(join(tmpdir(), "moui-web-bundle-tools-"));
 writeFileSync(join(tmp, "manifest.json"), JSON.stringify(manifest, null, 2));

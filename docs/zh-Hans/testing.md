@@ -10,7 +10,7 @@ MoUI 默认使用有界验证。主线包括包测试、Web `wasm-gc` 构建、�
 sh scripts/check.sh --profile daily
 ```
 
-该脚本运行本地依赖 guard、guidance consistency、maintenance baseline ratchets、API surface checks、renderer provider 和 native Skia entrypoint 静态检查、生成的 repository facts 和 source-file policy、smoke gate catalog validation、`moon check`、生成的 public-interface drift detection、core 包测试、Web wasm-gc 包测试、native Skia 主线包测试、`moui_tester` harness tests、`moui_devtools` snapshot/debug tests、Showcase 和 Markdown Editor app tests，以及 Web builds。
+该脚本运行本地依赖 guard、guidance consistency、maintenance baseline ratchets、API surface checks、renderer provider 和 native Skia entrypoint 静态检查、生成的 repository facts 和 source-file policy、smoke gate catalog validation、`moon check`、生成的 public-interface drift detection、core 包测试、Web wasm-gc 包测试、native Skia 主线包测试、内部 `moui_tests/tester` harness tests、`moui_devtools` snapshot/debug tests、Showcase 和 Markdown Editor app tests，以及 Web builds。
 
 每日门禁来源于 `checks/profiles.json`，可用 `node scripts/check.mjs --profile daily --list` 检查。应与目录保持同步的代表性 command token 包括：
 
@@ -40,13 +40,13 @@ node scripts/check-generated-interfaces.mjs
 moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/render --target native
-moon test moui/render/skia --target native
-moon test moui/render/sun --target native
+moon test moui_skia_renderer --target native
+moon test moui_sun_renderer --target native
 moon test moui/backend --target native
-moon test moui_tester --target native
+moon test moui_tests/tester --target native
 moon test moui_devtools --target native
 moon test moui_skia --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui_web_renderer --target wasm-gc
 moon test moui/backend/web --target wasm-gc
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
@@ -61,11 +61,13 @@ Native WGPU 是诊断路线。修改该路线，或需要 full-workspace hotspot
 
 generated-interface 步骤会快照每个被跟踪的 `pkg.generated.mbti`，运行一次 workspace-wide `moon info`，并且只在生成产生新差异时失败。这让检查在 dirty working tree 中仍然有用，同时干净 CI checkout 仍会拒绝未提交的 public-interface drift。
 
-`external-consumer.yml` workflow 会把 `checks/external-consumer` 复制到 checkout 外部，并在 Linux/macOS/Windows 矩阵上分别针对 registry 中的 `wzzc-dev/moui@0.1.7` 和当前 `moon package` archive 运行。它的 `moon tree` 与解析后的 `.mooncakes` 路径检查必须报告 `monorepoSource=false`：
+`external-consumer.yml` workflow 会把选定的 base、Skia 或 Web fixture 复制到 checkout 外部。0.2 发布前，registry mode 继续验证稳定版 `wzzc-dev/moui@0.1.7` 的 base profile；package mode 验证 0.2 head 的 base-only、Skia 与 Web archives。package-mode `moon tree` 还会拒绝 concrete renderer 与诊断/测试依赖进入基础闭包。所有解析后的 `.mooncakes` 路径都必须报告 `monorepoSource=false`：
 
 ```sh
-node scripts/external-consumer-ci.mjs --source registry
-node scripts/external-consumer-ci.mjs --source package
+node scripts/external-consumer-ci.mjs --source registry --profile base
+node scripts/external-consumer-ci.mjs --source package --profile base
+node scripts/external-consumer-ci.mjs --source package --profile skia
+node scripts/external-consumer-ci.mjs --source package --profile web
 ```
 
 ## 聚焦
@@ -91,17 +93,17 @@ moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/runtime --target native
 moon test moui/render --target native
-moon test moui/render/skia --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui_skia_renderer --target native
+moon test moui_web_renderer --target wasm-gc
 moon test moui/backend --target native
 moon test moui/backend/android --target native
-moon test moui/render/skia --target native
+moon test moui_skia_renderer --target native
 moon test moui/backend/ios --target native
-moon test moui/render/skia --target native
+moon test moui_skia_renderer --target native
 moon test moui/backend/harmonyos --target native
-moon test moui/render/skia --target native
+moon test moui_skia_renderer --target native
 moon test moui/backend/web --target wasm-gc
-moon test moui_tester --target native
+moon test moui_tests/tester --target native
 moon test moui_devtools --target native
 moon test moui_skia --target native
 moon test examples/counter/app --target native
@@ -124,7 +126,7 @@ MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_window_
 sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
-仅对 native WGPU 诊断路线使用 `moon test moui/render/wgpu --target native`。交接前使用 `moon fmt`。公开 API 变更后运行 `moon info` 并审查 `pkg.generated.mbti` diff。
+仅对 native WGPU 诊断路线使用 `moon test moui_wgpu_renderer --target native`。交接前使用 `moon fmt`。公开 API 变更后运行 `moon info` 并审查 `pkg.generated.mbti` diff。
 
 当拆分超大的实现或测试文件、减少源码级 `pub(all)`、收缩根 facade，或修改 MoonBit-backed validator wrapper script 时，请运行 maintenance baseline guard，并在同一变更中下调相关预算。MoonBit-backed JS validator 应保持为 `scripts/lib/moonbit-tool-runner.mjs` 上的薄兼容 shim；避免在那里重新引入本地 process runner、直接 filesystem parsing 或 hard-coded native `_build` executable path。
 
@@ -202,14 +204,13 @@ Android、iOS 和 HarmonyOS 都将公开 `HostCmd` 立即解码为
 `wzzc-dev/window/internal/embedded_dispatch` 的物理 dispatch command。该包只维护
 native FIFO 与当前 raw surface 投影，并按序触发 `ApplicationHandler` callback；逻辑
 lifecycle phase、surface generation、primary window、detach 和 exit intent 唯一归
-`moui/backend/common` 中的 `EmbeddedWindowCoordinator`。进入 MoUI 后，
-`HostedWindowBackend` 复用同一个 `FrameCoordinator`，而
-`moui/backend/common/embedded` 只保留 session、renderer、IME、semantics、
-platform views 与 transport 能力。
+`moui/backend/common/lifecycle` 中的 `EmbeddedLifecycle`。进入 MoUI 后，
+`EmbeddedSession` 组合 `frame`、`image`、`input`、`services` owner 与 renderer、
+IME、semantics、platform views、transport 能力，不复制 phase 或 frame loop。
 中立 `HostService*` 合约仍唯一位于 `moui/backend`；原生文件服务位于
-`host_services_native`，桌面同步实现位于 `host_services_desktop`，移动端
-`Pending(id)` callback queue 位于 `host_services_embedded`，且三端 backend 只能
-通过 `embedded_runtime` 使用它。
+`common/services/native`，桌面同步实现位于 `common/services/desktop`，移动端
+`Pending(id)` callback queue 位于 `common/services/embedded`，filesystem image
+source 位于 `common/image/native`。
 更改嵌入运行时 template、entrypoint、dispatch 或 backend 后，运行可移植的 host-sim gate：
 
 ```sh

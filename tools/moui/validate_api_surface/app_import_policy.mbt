@@ -1,8 +1,8 @@
 ///|
 fn runtime_consumer_roots() -> Array[String] {
   [
-    "benchmarks", "examples", "moui/backend", "moui/tests", "moui/views", "moui_devtools",
-    "moui_tester", "website",
+    "benchmarks", "examples", "moui/backend", "moui_tests", "moui/views", "moui_devtools",
+    "website",
   ]
 }
 

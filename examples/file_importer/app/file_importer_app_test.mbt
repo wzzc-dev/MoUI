@@ -46,7 +46,7 @@ test "file importer handles immediate host file selection" {
 
 ///|
 test "file importer handles mocked pending completion" {
-  let queue = @backend_common.ServiceAsyncQueue::new()
+  let queue = @backend_common_services.ServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
   let update = FileImporterModel::new().update_with_services(
     BrowseRequested,
@@ -58,13 +58,13 @@ test "file importer handles mocked pending completion" {
   inspect(summary.descriptors()[0].key(), content="file:open")
   inspect(summary.descriptors()[0].kind(), content="service")
   inspect(summary.descriptors()[0].label(), content="Open file")
-  let model = @state.State::new(update.model)
+  let model = Ref(update.model)
   match update.effect {
     @moui.Effect::Task(_descriptor, start) =>
-      ignore(start(message => model.set(model.get().update(message))))
+      ignore(start(message => model.val = model.val.update(message)))
     _ => fail("expected typed file dialog task")
   }
-  assert_true(model.get().status is FileImporterStatus::Requesting)
+  assert_true(model.val.status is FileImporterStatus::Requesting)
   inspect(queue.pending_count(), content="1")
   let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
@@ -78,13 +78,13 @@ test "file importer handles mocked pending completion" {
     Some(_) => fail("expected registered completion to be consumed")
     None => ()
   }
-  inspect(model.get().files[0].path, content="/tmp/later.txt")
-  inspect(model.get().last_event, content="Imported 1 file(s) from Dialog")
+  inspect(model.val.files[0].path, content="/tmp/later.txt")
+  inspect(model.val.last_event, content="Imported 1 file(s) from Dialog")
 }
 
 ///|
 test "file importer runtime receives async file dialog completion" {
-  let queue = @backend_common.ServiceAsyncQueue::new()
+  let queue = @backend_common_services.ServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
   let runtime = test_runtime(
     FileImporterModel::new().program(
@@ -110,7 +110,7 @@ test "file importer runtime receives async file dialog completion" {
 
 ///|
 test "file importer runtime receives async file dialog rejection" {
-  let queue = @backend_common.ServiceAsyncQueue::new()
+  let queue = @backend_common_services.ServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
   let runtime = test_runtime(
     FileImporterModel::new().program(
@@ -161,7 +161,7 @@ test "file importer composes as effect-capable child program" {
 
 ///|
 test "file importer child effect maps pending completion into parent" {
-  let queue = @backend_common.ServiceAsyncQueue::new()
+  let queue = @backend_common_services.ServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
   let runtime = ParentImporterModel::new().runtime_with_services(
     services,
@@ -230,12 +230,12 @@ fn host_services_for_file_dialog(
       }
     },
   )
-  @backend_common.app_services(bridge~)
+  @backend_common_services.app_services(bridge~)
 }
 
 ///|
 fn async_file_dialog_services(
-  queue : @backend_common.ServiceAsyncQueue,
+  queue : @backend_common_services.ServiceAsyncQueue,
 ) -> @services.AppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(file_dialogs=true),
@@ -246,7 +246,7 @@ fn async_file_dialog_services(
       }
     },
   )
-  @backend_common.app_services(bridge~, async_queue=Some(queue))
+  @backend_common_services.app_services(bridge~, async_queue=Some(queue))
 }
 
 ///|
@@ -320,23 +320,23 @@ fn test_runtime(
 
 ///|
 fn run_file_importer_effect(update : FileImporterUpdate) -> FileImporterModel {
-  let model = @state.State::new(update.model)
-  let dispatch = message => model.set(model.get().update(message))
+  let model = Ref(update.model)
+  let dispatch = message => model.val = model.val.update(message)
   match update.effect {
     @moui.Effect::NoEffect => ()
     @moui.Effect::Batch(effects) =>
       for effect in effects {
         let next = run_file_importer_effect(
-          FileImporterUpdate::new(model.get(), effect~),
+          FileImporterUpdate::new(model.val, effect~),
         )
-        model.set(next)
+        model.val = next
       }
     @moui.Effect::Send(message) => dispatch(message)
     @moui.Effect::Dispatch(run) => run(dispatch)
     @moui.Effect::Run(_descriptor, run) => run(dispatch)
     @moui.Effect::Task(_descriptor, start) => ignore(start(dispatch))
   }
-  model.get()
+  model.val
 }
 
 ///|

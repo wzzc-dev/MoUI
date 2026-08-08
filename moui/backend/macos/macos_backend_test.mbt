@@ -3,7 +3,7 @@ test "macos backend is native renderer ready" {
   let info = backend_info()
   assert_true(info.host_info.backend == @host.HostBackendKind::Native)
   inspect(info.renderer_available, content="true")
-  inspect(info.accessibility.kind.label(), content="appkit")
+  inspect(info.accessibility.kind, content="appkit")
   inspect(info.accessibility.semantics_bridge_available, content="true")
 }
 
@@ -48,16 +48,20 @@ test "macos accessibility bridge dispatches semantics actions" {
     }
   }
   let target = target.unwrap()
-  let bridge = macos_accessibility_bridge(runtime)
+  let driver = @runtime.HostRuntimeDriver::new(
+    runtime~,
+    schedule_redraw=() => (),
+  )
+  let bridge = macos_accessibility_bridge(driver)
   match
     bridge.perform_action(
-      @runtime.NativeAccessibilityActionRequest::new(
+      @accesskit_bridge.accesskit_semantics_action_request(
         node_id=target.node_id,
         generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @runtime.NativeAccessibilityActionResult::Handled(receipt) =>
+    @accesskit_bridge.AccessKitActionResult::Handled(receipt) =>
       assert_true(receipt.before == snapshot.generation())
     _ => fail("expected handled AppKit accessibility action")
   }
@@ -237,7 +241,7 @@ test "macos service bridge reports cancelled or disabled menu selections" {
 
 ///|
 test "macos backend converts resize event to host metrics" {
-  let event = @window_host.window_event_to_host_with_modifiers(
+  let event = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::SurfaceResized(
       @dpi.PhysicalSize::PhysicalSize(20, 40),
     ),
@@ -268,7 +272,7 @@ test "macos resize metrics update runtime driver logical size" {
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
-  let event = @window_host.window_event_to_host_with_modifiers(
+  let event = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::SurfaceResized(
       @dpi.PhysicalSize::PhysicalSize(1440, 900),
     ),
@@ -287,7 +291,7 @@ test "macos resize metrics update runtime driver logical size" {
 
 ///|
 test "macos backend converts pointer movement and left button" {
-  let moved = @window_host.window_event_to_core(
+  let moved = @window_input.window_event_to_core(
     @window_core.WindowEvent::PointerMoved(
       None,
       @dpi.PhysicalPositionF64::PhysicalPositionF64(3.0, 4.0),
@@ -303,7 +307,7 @@ test "macos backend converts pointer movement and left button" {
     }
     _ => fail("expected pointer move")
   }
-  let down = @window_host.window_event_to_core(
+  let down = @window_input.window_event_to_core(
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
@@ -324,7 +328,7 @@ test "macos backend converts pointer movement and left button" {
 
 ///|
 test "macos backend converts scaled pointer coordinates to logical host points" {
-  let moved = @window_host.window_event_to_host_with_modifiers(
+  let moved = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::PointerMoved(
       None,
       @dpi.PhysicalPositionF64::PhysicalPositionF64(120.0, 80.0),
@@ -341,7 +345,7 @@ test "macos backend converts scaled pointer coordinates to logical host points" 
     ) => assert_true(position == @core.Point::new(x=60.0, y=40.0))
     _ => fail("expected scaled pointer move")
   }
-  let down = @window_host.window_event_to_host_with_modifiers(
+  let down = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
@@ -364,7 +368,7 @@ test "macos backend converts scaled pointer coordinates to logical host points" 
 
 ///|
 test "macos backend converts file drag drop to logical host event" {
-  let drop = @window_host.window_event_to_host_with_modifiers(
+  let drop = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::DragDropped(
       ["/tmp/moui.md"],
       @dpi.PhysicalPositionF64::PhysicalPositionF64(120.0, 80.0),
@@ -389,7 +393,7 @@ test "macos backend converts file drag drop to logical host event" {
 
 ///|
 test "macos backend converts wheel and focus into host input contract" {
-  let wheel = @window_host.window_event_to_host_with_modifiers(
+  let wheel = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::MouseWheel(
       None,
       @window_core.MouseScrollDelta::PixelDelta(
@@ -413,7 +417,7 @@ test "macos backend converts wheel and focus into host input contract" {
     ) => ()
     _ => fail("expected scaled wheel event")
   }
-  let blur = @window_host.window_event_to_host_with_modifiers(
+  let blur = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::Focused(false),
     @core.Point::new(x=7.0, y=9.0),
     @core.KeyModifiers::none(),
@@ -428,7 +432,7 @@ test "macos backend converts wheel and focus into host input contract" {
 
 ///|
 test "macos backend converts close event" {
-  let event = @window_host.window_event_to_core(
+  let event = @window_input.window_event_to_core(
     @window_core.WindowEvent::CloseRequested,
     @core.Point::new(x=0.0, y=0.0),
   )
@@ -451,7 +455,7 @@ test "macos backend converts keyboard input event" {
     Some("A"),
   )
   let event = match
-    @window_host.window_event_to_host_with_modifiers(
+    @window_input.window_event_to_host_with_modifiers(
       @window_core.WindowEvent::KeyboardInput(None, key_event, false),
       @core.Point::new(x=0.0, y=0.0),
       @core.KeyModifiers::new(shift=true),
@@ -474,7 +478,7 @@ test "macos backend converts keyboard input event" {
 
 ///|
 test "macos backend keeps ime composition separate at host layer" {
-  let preedit = @window_host.window_event_to_host(
+  let preedit = @window_input.window_event_to_host(
     @window_core.WindowEvent::Ime(
       @window_core.Ime::Preedit(
         "ni",
@@ -497,7 +501,7 @@ test "macos backend keeps ime composition separate at host layer" {
     event if event == expected_preedit => ()
     _ => fail("expected composition update")
   }
-  let event = @window_host.window_event_to_host(
+  let event = @window_input.window_event_to_host(
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("x")),
     @core.Point::new(x=0.0, y=0.0),
   )

@@ -4,7 +4,8 @@ package "wzzc-dev/moui/backend/linux"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend",
-  "wzzc-dev/moui/backend/common",
+  "wzzc-dev/moui/backend/accesskit",
+  "wzzc-dev/moui/backend/common/input",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
 }
@@ -18,7 +19,7 @@ pub fn capability_matrix() -> LinuxBackendCapabilities
 
 pub fn entry(options? : LinuxHostAppOptions, smoke_options? : LinuxHostSmokeOptions) -> @runtime.PlatformEntry
 
-pub fn linux_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessibilityBridge
+pub fn linux_accessibility_bridge(@runtime.HostRuntimeDriver) -> @accesskit.AccessKitBridge
 
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
 
@@ -40,11 +41,11 @@ pub fn linux_timer_source() -> @services.TimerSource
 
 pub fn readiness() -> LinuxBackendReadiness
 
-pub fn scaffold_input_host() -> @common.InputState
+pub fn scaffold_input_host() -> @input.InputState
 
 pub fn scaffold_service_bridge() -> @backend.HostServiceBridge
 
-pub fn scaffold_surface_host(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @common.SurfaceState
+pub fn scaffold_surface_host(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @input.SurfaceState
 
 pub fn service_capabilities() -> @backend.HostServiceCapabilities
 
@@ -56,8 +57,8 @@ pub struct LinuxATSPIBinding {
 }
 pub fn LinuxATSPIBinding::diagnostics(Self) -> LinuxATSPIBindingDiagnostics
 pub fn LinuxATSPIBinding::dispose(Self) -> LinuxATSPIBindingDiagnostics
-pub fn LinuxATSPIBinding::new(dispatch~ : (@runtime.NativeAccessibilityActionRequest) -> @runtime.NativeAccessibilityActionResult) -> Self
-pub fn LinuxATSPIBinding::perform_action(Self, @runtime.NativeAccessibilityActionRequest) -> @runtime.NativeAccessibilityActionResult
+pub fn LinuxATSPIBinding::new(dispatch~ : (@runtime.PerformSemanticsActionRequest) -> @accesskit.AccessKitActionResult) -> Self
+pub fn LinuxATSPIBinding::perform_action(Self, @runtime.PerformSemanticsActionRequest) -> @accesskit.AccessKitActionResult
 pub fn LinuxATSPIBinding::publish_semantics(Self, @runtime.SemanticsRead) -> LinuxATSPIBindingDiagnostics
 
 pub(all) struct LinuxATSPIBindingDiagnostics {
@@ -68,7 +69,7 @@ pub(all) struct LinuxATSPIBindingDiagnostics {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct LinuxAccessibilityBridgeInfo {
-  kind : @runtime.NativeAccessibilityBridgeKind
+  kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool

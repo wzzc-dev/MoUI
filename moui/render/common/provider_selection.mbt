@@ -1,20 +1,4 @@
 ///|
-/// Select the first binding that accepts a surface in registration order.
-pub fn select_renderer_provider_binding(
-  bindings : Array[@render.RendererProviderBinding],
-  surface : @render.SurfaceDescriptor,
-) -> (@render.RendererProviderBinding, @render.BoundSurface)? {
-  for binding in bindings {
-    match (binding.provider().negotiate)(surface) {
-      @render.SurfaceNegotiationResult::SurfaceAccepted(bound) =>
-        return Some((binding, bound))
-      @render.SurfaceNegotiationResult::SurfaceRejected(_) => ()
-    }
-  }
-  None
-}
-
-///|
 pub struct RendererProviderRegistry {
   priv providers : Array[@render.RendererProvider]
 }
@@ -60,43 +44,25 @@ pub fn RendererProviderRegistry::lookup(
 }
 
 ///|
-pub fn RendererProviderRegistry::select(
-  self : RendererProviderRegistry,
-  surface : @render.SurfaceDescriptor,
-) -> (@render.RendererProvider, @render.BoundSurface)? {
-  for provider in self.providers {
-    match (provider.negotiate)(surface) {
-      @render.SurfaceNegotiationResult::SurfaceAccepted(bound) =>
-        return Some((provider, bound))
-      @render.SurfaceNegotiationResult::SurfaceRejected(_) => ()
+/// Bind providers in registration order and return the first live session.
+/// Rejected providers are required to leave no persistent resources behind.
+pub fn resolve_renderer(
+  providers : Array[@render.RendererProvider],
+  surface : @render.HostSurface,
+) -> @render.RendererSession? {
+  for provider in providers {
+    match provider.bind_surface(surface) {
+      @render.RendererBindResult::Bound(session) => return Some(session)
+      @render.RendererBindResult::Rejected(_) => ()
     }
   }
   None
 }
 
 ///|
-/// Bind and negotiate delayed factories in registration order.
-pub fn resolve_renderer(
-  factories : Array[@render.RendererFactory],
-  context : @render.SurfaceContext,
-) -> @render.RendererResolution? {
-  for factory in factories {
-    let plan = factory.bind(context)
-    let binding = plan.binding()
-    let surface = match plan.surface() {
-      Some(surface) => surface
-      None => context.surface()
-    }
-    match (binding.provider().negotiate)(surface) {
-      @render.SurfaceNegotiationResult::SurfaceAccepted(bound) =>
-        return Some(
-          @render.RendererResolution::new(
-            renderer=(binding.create_host_renderer)(context.metrics(), bound),
-            image_loader=plan.image_loader(),
-          ),
-        )
-      @render.SurfaceNegotiationResult::SurfaceRejected(_) => ()
-    }
-  }
-  None
+pub fn RendererProviderRegistry::bind(
+  self : RendererProviderRegistry,
+  surface : @render.HostSurface,
+) -> @render.RendererSession? {
+  resolve_renderer(self.providers, surface)
 }

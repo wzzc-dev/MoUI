@@ -103,7 +103,7 @@ const collectHttpChecks = async () => {
     );
     await checkHttp(target.wasmPath, `${target.name} wasm`, httpChecks, httpFailures);
   }
-  await checkHttp("moui/render/webgpu_adapter/runtime.js", "web runtime.js", httpChecks, httpFailures);
+  await checkHttp("moui_web_renderer/runtime.js", "web runtime.js", httpChecks, httpFailures);
   await checkHttp(
     "moui/backend/web/browser_runtime.js",
     "browser_runtime.js",
