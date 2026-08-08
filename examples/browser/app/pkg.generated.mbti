@@ -1,0 +1,42 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/browser/app"
+
+import {
+  "examples/browser/engine",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub let default_html : String
+
+pub fn program() -> @core.Program[Model, Msg]
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  address : String
+  status : String
+  commands : Array[@core.DrawCommand]
+  links : Array[@engine.LinkRegion]
+  js : @engine.JsEngine
+  console_logs : Array[String]
+  script_errors : Int
+  renders : Int
+}
+pub fn Model::new(address? : String) -> Self
+
+pub(all) enum Msg {
+  AddressChanged(String)
+  LoadAddress
+  CanvasDrag(@core.DragGestureEvent)
+}
+
+// Type aliases
+
+// Traits
+

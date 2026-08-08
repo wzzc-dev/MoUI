@@ -1,0 +1,37 @@
+import {
+  "wzzc-dev/moui/core" @core,
+  "moonbitlang/core/encoding/base64" @base64,
+  "moonbitlang/core/encoding/utf8" @utf8,
+  "moonbitlang/core/json" @json,
+  "moonbitlang/core/string" @string,
+  "dowdiness/js_engine" @js_engine,
+  "mizchi/crater-renderer" @crater,
+  "mizchi/crater-layout/inline" @layout_inline,
+  "mizchi/crater-painter/paint/model" @paint_model,
+  "mizchi/crater-dom/html" @html,
+  "mizchi/css/values" @values,
+  "moonbitlang/async/http" @async_http,
+  "moonbitlang/async/io" @async_io,
+  "examples/browser/engine/translate",
+}
+
+import {
+  // async test driver 需要根包(仅测试构建)
+  "moonbitlang/async",
+} for "test"
+
+// @async_http/@async_io 仅被 native-only 的 net.mbt 使用,
+// wasm/js 目标会报 unused_package,统一抑制该警告。
+warnings = "-unused_package"
+
+options(
+  "native-stub": [
+    "net_bridge.c",
+  ],
+  targets: {
+    "net_bridge.mbt": [ "native", "llvm" ],
+    "net_bridge_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "net.mbt": [ "native", "llvm" ],
+    "net_test.mbt": [ "native", "llvm" ],
+  },
+)

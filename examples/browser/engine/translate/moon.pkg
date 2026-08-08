@@ -1,0 +1,9 @@
+import {
+  "wzzc-dev/moui/core" @core,
+  "mizchi/crater-painter/paint/model" @paint_model,
+  "mizchi/crater-painter/paint/build" @paint_build,
+  "mizchi/css/values" @values,
+}
+import {
+  "mizchi/crater-renderer" @crater,
+} for "test"
