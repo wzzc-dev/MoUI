@@ -697,7 +697,7 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
   cat > "$text_emoji_pkg" <<EOF
 import {
   "wzzc-dev/moui_skia/native" @skia_native,
-  "wzzc-dev/moui/backend/common" @window_host,
+  "wzzc-dev/moui/backend/common/input" @window_input,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui_skia_renderer" @skia_renderer,
