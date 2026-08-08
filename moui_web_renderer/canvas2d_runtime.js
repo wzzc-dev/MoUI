@@ -178,7 +178,7 @@ export function createCanvas2dImports(options = {}) {
       filter.appendChild(fe);
       svg.appendChild(filter);
       (document.body ?? document.documentElement).appendChild(svg);
-      entry = { fe };
+      entry = { fe, svg };
       colorMatrixFilters.set(rendererHandle, entry);
     }
     const values = parseDoubleList(matrixValues);
@@ -775,6 +775,12 @@ export function createCanvas2dImports(options = {}) {
         transform: identityTransform(),
         clip: null,
       }];
+      // A previous frame may have ended with unbalanced layer/filter scopes
+      // (host bugs or adapter edge cases). Reset the scope stack and restore
+      // the surface context so an unmatched push cannot leak into this frame
+      // (with accumulate-transform semantics a stale matrix would compound).
+      renderer.layerStack = [];
+      renderer.ctx = renderer.surface?.ctx;
       renderer.moonbitWidth = Math.max(1, Number(width) || 1);
       renderer.moonbitHeight = Math.max(1, Number(height) || 1);
       renderer.width = renderer.moonbitWidth;
@@ -1036,7 +1042,6 @@ export function createCanvas2dImports(options = {}) {
         // triangle edge (va->vb) and place the third vertex's color at its
         // projection onto that edge, so adjacent triangles blend
         // continuously instead of flat-filling with a single average color.
-        const alpha = (a0 + a1 + a2) / 3;
         const edges = [
           { ax: x0, ay: y0, bx: x1, by: y1, cx: x2, cy: y2, ca: a0, cr: r0, cg: g0, cb: b0, aa: a1, ar: r1, ag: g1, ab: b1, ba: a2, br: r2, bg: g2, bb: b2 },
           { ax: x1, ay: y1, bx: x2, by: y2, cx: x0, cy: y0, ca: a1, cr: r1, cg: g1, cb: b1, aa: a2, ar: r2, ag: g2, ab: b2, ba: a0, br: r0, bg: g0, bb: b0 },
@@ -1068,7 +1073,9 @@ export function createCanvas2dImports(options = {}) {
         gradient.addColorStop(t, cssColor({ r: best.cr, g: best.cg, b: best.cb, a: best.ca }));
         gradient.addColorStop(1, cssColor({ r: best.br, g: best.bg, b: best.bb, a: best.ba }));
         ctx.fillStyle = gradient;
-        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+        // Vertex alpha already lives in the gradient stops; applying it again
+        // through globalAlpha would square it (a² vs the host's a).
+        ctx.globalAlpha = 1;
         ctx.fill();
         ctx.restore();
       }
@@ -1313,6 +1320,10 @@ export function createCanvas2dImports(options = {}) {
       if (!renderer) return invalidResource();
       const ctx = rendererCtx(renderer);
       const shaderName = stringValue(name);
+      // Consume the uniforms string handle before any early return so a
+      // zero-size effect cannot leak the handle.
+      const parsedUniforms = parseDoubleList(stringValue(uniforms));
+      const effectAmount = parsedUniforms[0] ?? 8;
       const rect = {
         x: scx(renderer, Number(x) || 0),
         y: scy(renderer, Number(y) || 0),
@@ -1322,8 +1333,6 @@ export function createCanvas2dImports(options = {}) {
       if (rect.width <= 0 || rect.height <= 0) return ok();
       const c0 = cssColor({ r: r0, g: g0, b: b0, a: a0 });
       const c1 = cssColor({ r: r1, g: g1, b: b1, a: a1 });
-      const parsedUniforms = parseDoubleList(stringValue(uniforms));
-      const effectAmount = parsedUniforms[0] ?? 8;
       switch (shaderName) {
         case "checker":
           {
@@ -1367,14 +1376,21 @@ export function createCanvas2dImports(options = {}) {
           break;
         case "vignette":
           {
-            // Mirror the WebGPU shader: fade = 1 - smoothstep(0.25, max(amount, 0.8), length(centered)).
+            // Mirror the WebGPU shader:
+            //   fade = 1 - smoothstep(0.25, max(amount, 0.8), length(centered))
+            //   out  = vec4f(c0.rgb * fade, c0.a)
+            // The color dims toward black while alpha stays at c0.a (the
+            // gradient must not become transparent, or the backdrop shows
+            // through on the fallback).
             const cx = rect.x + rect.width / 2;
             const cy = rect.y + rect.height / 2;
-            const radius = Math.max(rect.width, rect.height) * Math.max(0.8, Number(effectAmount) || 0.8) * 0.5;
-            const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(radius, 1));
+            const inner = 0.25;
+            const outer = Math.max(0.8, Number(effectAmount) || 0.8);
+            const maxRadius = Math.hypot(rect.width, rect.height) * 0.5;
+            const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(maxRadius, 1));
             gradient.addColorStop(0, c0);
-            gradient.addColorStop(0.25, c0);
-            gradient.addColorStop(1, cssColor({ r: 0, g: 0, b: 0, a: 0 }));
+            gradient.addColorStop(inner / outer, c0);
+            gradient.addColorStop(1, cssColor({ r: 0, g: 0, b: 0, a: Number(a0) || 1 }));
             ctx.fillStyle = gradient;
             ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
           }
@@ -1398,6 +1414,13 @@ export function createCanvas2dImports(options = {}) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return;
       disposeTextSelectionLayer(renderer.textSelection);
+      // Remove the per-renderer SVG color-matrix filter node so repeated
+      // create/dispose cycles do not leak DOM nodes.
+      const matrixEntry = colorMatrixFilters.get(rendererHandle);
+      if (matrixEntry) {
+        matrixEntry.svg?.remove?.();
+        colorMatrixFilters.delete(rendererHandle);
+      }
       renderer.images.clear();
       renderer.loadedImages.clear();
       renderer.failedImages.clear();
