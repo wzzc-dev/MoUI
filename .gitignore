@@ -40,3 +40,4 @@ deliverables/*
 reasonix.toml
 *.obj
 tmp/*
+examples/mo_workbench/macos_skia/.mo_workbench/settings.json
