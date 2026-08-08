@@ -146,6 +146,50 @@ export function createCanvas2dImports(options = {}) {
     .map(part => Number(part.trim()))
     .filter(v => Number.isFinite(v));
 
+  // Canvas2D has no built-in color-matrix filter. Reuse one hidden inline SVG
+  // feColorMatrix per renderer and return a CSS `url(#...)` filter reference.
+  // The values are the Skia-compatible 5x4 row-major 20 doubles.
+  const colorMatrixFilters = new Map();
+  const colorMatrixFilter = (rendererHandle, matrixValues) => {
+    const svgId = `moui-color-matrix-${rendererHandle}`;
+    const filterId = `${svgId}-filter`;
+    let entry = colorMatrixFilters.get(rendererHandle);
+    if (!entry) {
+      const svg = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "svg",
+      );
+      svg.id = svgId;
+      svg.setAttribute("width", "0");
+      svg.setAttribute("height", "0");
+      svg.setAttribute("aria-hidden", "true");
+      svg.style.position = "absolute";
+      const filter = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "filter",
+      );
+      filter.id = filterId;
+      filter.setAttribute("color-interpolation-filters", "sRGB");
+      const fe = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "feColorMatrix",
+      );
+      fe.setAttribute("type", "matrix");
+      filter.appendChild(fe);
+      svg.appendChild(filter);
+      (document.body ?? document.documentElement).appendChild(svg);
+      entry = { fe };
+      colorMatrixFilters.set(rendererHandle, entry);
+    }
+    const values = parseDoubleList(matrixValues);
+    const padded = [];
+    for (let i = 0; i < 20; i += 1) {
+      padded.push(i < values.length ? values[i] : i % 5 === 4 ? 0 : i % 6 === 0 ? 1 : 0);
+    }
+    entry.fe.setAttribute("values", padded.join(" "));
+    return `url(#${filterId})`;
+  };
+
   // ---- Renderer state helpers ----
 
   const rendererCtx = renderer => renderer.ctx;
@@ -799,7 +843,11 @@ export function createCanvas2dImports(options = {}) {
       renderer.layerStack.push({
         ctx,
         filter: {
-          kind: Number(filterKind) || 0,
+          // Mirror the WebGPU host's normalizeFilter: payload kinds are
+          // Blur=0, Saturate=1, Brightness=2, Contrast=3, ColorMatrix=4;
+          // render kinds are blur=1, saturate=2, brightness=3, contrast=4,
+          // color-matrix=5.
+          kind: (Number(filterKind) || 0) + 1,
           amount: Number(amount) || 0,
           matrixValues: stringValue(matrixValues),
         },
@@ -823,11 +871,17 @@ export function createCanvas2dImports(options = {}) {
       if (kind === 1) {
         mainCtx.filter = `blur(${Math.max(0, amount)}px)`;
       } else if (kind === 2) {
-        mainCtx.filter = `grayscale(${Math.min(1, Math.max(0, amount))})`;
+        // Saturate: CSS `saturate()` keeps the original hue at amount=1,
+        // matching the WebGPU shader's mix(luma, rgb, amount).
+        mainCtx.filter = `saturate(${Math.max(0, amount)})`;
       } else if (kind === 3) {
         mainCtx.filter = `brightness(${Math.max(0, amount)})`;
       } else if (kind === 4) {
         mainCtx.filter = `contrast(${Math.max(0, amount)})`;
+      } else if (kind === 5) {
+        // Color-matrix (5x4 row-major, Skia-compatible 20 values) via an
+        // inline SVG feColorMatrix; Canvas2D has no direct matrix filter.
+        mainCtx.filter = colorMatrixFilter(rendererHandle, filter.matrixValues);
       }
       mainCtx.drawImage(offCanvas, 0, 0);
       mainCtx.restore();
