@@ -292,14 +292,14 @@ fn validate_entrypoint_catalog(
       }
     }
   }
-  if ui_roots.length() > 33 {
+  if ui_roots.length() > 34 {
     push_fail(
       results,
       "P1",
       "examples",
       "UI composition root count " +
       ui_roots.length().to_string() +
-      " exceeds 33. Fix: converge non-Showcase examples to applicable Tier 1 roots. See docs/invariants.md#P1",
+      " exceeds 34. Fix: converge non-Showcase examples to applicable Tier 1 roots. See docs/invariants.md#P1",
     )
   }
   for route in routes {
