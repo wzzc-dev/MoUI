@@ -129,9 +129,19 @@ pub fn[Msg] FlexibleModifier::to_any_modifier(
     identity_kind: "Flexible",
     flex_weight: self.weight,
     layout: fn(ctx) {
+      // Weighted children claim no main-axis base (the flex engine grants
+      // slack by weight), but their cross-axis size still comes from the
+      // content and the placement pass must hand the granted frame down to
+      // the child. Returning a 0x0 child frame here collapsed every
+      // `expanded`/`flexible` subtree (playground blank-editor bug).
+      let child_size = match ctx.child_sizes {
+        [s, ..] => s
+        [] => Size::new(width=0.0, height=0.0)
+      }
+      let s = ctx.constraints.constrain(child_size)
       ViewLayoutResult::new(
-        size=ctx.constraints.constrain(Size::new(width=0.0, height=0.0)),
-        child_frames=[Rect::new(x=0.0, y=0.0, width=0.0, height=0.0)],
+        size=s,
+        child_frames=[Rect::new(x=0.0, y=0.0, width=s.width, height=s.height)],
       )
     },
   }
