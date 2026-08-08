@@ -235,9 +235,7 @@ fn code_editor_surface(
     }),
     accepts_tab_input=true,
     visible_scroll_y=model.editor_scroll.y,
-    on_scroll=Some(y => {
-      EditorScrollChanged(@geometry.Point::new(x=0.0, y~))
-    }),
+    on_scroll=Some(y => EditorScrollChanged(@geometry.Point::new(x=0.0, y~))),
     visible_viewport_height=viewport_height,
     visible_overscan=160.0,
     selection_caret=model.primary_offset(),
@@ -541,11 +539,7 @@ fn diff_column(
       ),
     )
   }
-  scroll_view(
-    column(rows, spacing=0.0),
-    width=470.0,
-    height=520.0,
-  )
+  scroll_view(column(rows, spacing=0.0), width=470.0, height=520.0)
 }
 
 ///|

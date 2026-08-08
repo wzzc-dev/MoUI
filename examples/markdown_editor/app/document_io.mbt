@@ -186,13 +186,11 @@ fn MarkdownEditorApp::apply_directory_listing(
           markdown_editor_root_tree_item(path, next_children),
         ]
       } else {
-        self.directory_tree_items = 
-          markdown_editor_replace_tree_item_children(
-            self.directory_tree_items,
-            path,
-            next_children,
-          )
-        
+        self.directory_tree_items = markdown_editor_replace_tree_item_children(
+          self.directory_tree_items,
+          path,
+          next_children,
+        )
       }
       let current = self.expanded_tree_paths
       if !markdown_editor_string_array_contains(current, path) {
@@ -202,13 +200,11 @@ fn MarkdownEditorApp::apply_directory_listing(
       }
     }
     Failure(error) =>
-      self.transfer_status = 
-        TransferUnavailable("directory listing unavailable: " + error.message)
-      
+      self.transfer_status = TransferUnavailable(
+        "directory listing unavailable: " + error.message,
+      )
     Cancelled =>
-      self.transfer_status = 
-        TransferUnavailable("directory listing cancelled")
-      
+      self.transfer_status = TransferUnavailable("directory listing cancelled")
   }
 }
 
@@ -631,11 +627,10 @@ fn MarkdownEditorApp::request_open_target(
   let target = match self.open_target_value() {
     Some(target) => target
     None => {
-      self.transfer_status = 
-        TransferUnavailable(
-          "open target requires an active link or image target",
-        )
-      
+      self.transfer_status = TransferUnavailable(
+        "open target requires an active link or image target",
+      )
+
       return @moui.Effect::none()
     }
   }
@@ -663,11 +658,7 @@ fn MarkdownEditorApp::open_target_value(self : MarkdownEditorApp) -> String? {
     }
     _ => ()
   }
-  match
-    markdown_editor_selected_link_target(
-      self.document,
-      self.selection,
-    ) {
+  match markdown_editor_selected_link_target(self.document, self.selection) {
     Some(target) =>
       if target.trim().to_owned() == "" {
         None
@@ -676,10 +667,7 @@ fn MarkdownEditorApp::open_target_value(self : MarkdownEditorApp) -> String? {
       }
     None =>
       match
-        markdown_editor_selected_image_target(
-          self.document,
-          self.selection,
-        ) {
+        markdown_editor_selected_image_target(self.document, self.selection) {
         Some(target) =>
           if target.trim().to_owned() == "" {
             None
@@ -763,20 +751,22 @@ fn MarkdownEditorApp::apply_service_completion(
           self.document_path = path
           self.mark_document_saved()
           self.record_recent_document_path(path)
-          self.transfer_status = 
-            if save_as {
-              TransferSavedAs(path)
-            } else {
-              TransferSaved(path)
-            }
-          
+          self.transfer_status = if save_as {
+            TransferSavedAs(path)
+          } else {
+            TransferSaved(path)
+          }
         }
         Failure(error) =>
           self.transfer_status = TransferUnavailable(error.message)
         Cancelled =>
-          self.transfer_status = 
-            TransferCancelled(if save_as { FileSaveAs } else { FileSave })
-          
+          self.transfer_status = TransferCancelled(
+            if save_as {
+              FileSaveAs
+            } else {
+              FileSave
+            },
+          )
       }
       @moui.Effect::none()
     }
@@ -791,8 +781,7 @@ fn MarkdownEditorApp::apply_service_completion(
         }
         Failure(error) =>
           self.transfer_status = TransferUnavailable(error.message)
-        Cancelled =>
-          self.transfer_status = TransferCancelled(ClipboardImport)
+        Cancelled => self.transfer_status = TransferCancelled(ClipboardImport)
       }
       @moui.Effect::none()
     }
@@ -802,25 +791,21 @@ fn MarkdownEditorApp::apply_service_completion(
       }
       match result {
         Success(_) =>
-          self.transfer_status = 
-            if html {
-              TransferHtmlCopied
-            } else {
-              TransferCopied
-            }
-          
+          self.transfer_status = if html {
+            TransferHtmlCopied
+          } else {
+            TransferCopied
+          }
         Failure(error) =>
           self.transfer_status = TransferUnavailable(error.message)
         Cancelled =>
-          self.transfer_status = 
-            TransferCancelled(
-              if html {
-                ClipboardHtmlExport
-              } else {
-                ClipboardExport
-              },
-            )
-          
+          self.transfer_status = TransferCancelled(
+            if html {
+              ClipboardHtmlExport
+            } else {
+              ClipboardExport
+            },
+          )
       }
       @moui.Effect::none()
     }

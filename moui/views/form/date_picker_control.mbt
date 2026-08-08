@@ -598,9 +598,7 @@ fn[Msg] handle_datepicker_keyboard(
     @common.view_event_result(
       changed=true,
       captured=true,
-      state=Some(
-        datepicker_state(state, expanded=!state.expanded, selected),
-      ),
+      state=Some(datepicker_state(state, expanded=!state.expanded, selected)),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   } else {

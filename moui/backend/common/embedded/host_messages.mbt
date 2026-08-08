@@ -172,13 +172,11 @@ pub fn embedded_accessibility_response(
   generation : @core.SemanticsGeneration,
   action : @core.SemanticsAction,
 ) -> EmbeddedHostResponse {
-  EmbeddedHostResponse::Accessibility(
-    {
-      target: @core.SemanticsTarget::ByNodeId(node_id),
-      action,
-      precondition: @runtime.SemanticsGenerationPrecondition::Exact(generation),
-    },
-  )
+  EmbeddedHostResponse::Accessibility({
+    target: @core.SemanticsTarget::ByNodeId(node_id),
+    action,
+    precondition: @runtime.SemanticsGenerationPrecondition::Exact(generation),
+  })
 }
 
 ///|

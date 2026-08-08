@@ -680,11 +680,7 @@ test "runtime scrolls nearest scroll view to keyed descendant" {
     align=@views.CrossAlign::Start,
   )
   let runtime = AppRuntime::new_view(
-    root=@views.scroll_view(
-      content,
-      width=100.0,
-      height=100.0,
-    ),
+    root=@views.scroll_view(content, width=100.0, height=100.0),
     size=@core.Size::new(width=100.0, height=100.0),
   )
   assert_true(

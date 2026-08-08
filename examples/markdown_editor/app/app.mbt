@@ -382,57 +382,56 @@ fn MarkdownEditorApp::update_in_place(
   match message {
     NewDocument =>
       if self.is_dirty() && self.pending_confirm is None {
-        self.pending_confirm = 
-          Some({ title: "Unsaved changes", deferred: NewDocument })
-        
+        self.pending_confirm = Some({
+          title: "Unsaved changes",
+          deferred: NewDocument,
+        })
       } else {
         self.new_document()
       }
     SaveDocument =>
       if self.document_path == "" {
-        self.transfer_status = 
-          TransferUnavailable(
-            "save requires host file dialog services for unnamed documents",
-          )
-        
+        self.transfer_status = TransferUnavailable(
+          "save requires host file dialog services for unnamed documents",
+        )
       } else {
-        self.transfer_status = 
-          TransferUnavailable("save requires host text file services")
-        
+        self.transfer_status = TransferUnavailable(
+          "save requires host text file services",
+        )
       }
     SaveDocumentAs =>
-      self.transfer_status = 
-        TransferUnavailable("save as requires host file dialog services")
-      
+      self.transfer_status = TransferUnavailable(
+        "save as requires host file dialog services",
+      )
     OpenDocument =>
       if self.is_dirty() && self.pending_confirm is None {
-        self.pending_confirm = 
-          Some({ title: "Unsaved changes", deferred: OpenDocument })
-        
+        self.pending_confirm = Some({
+          title: "Unsaved changes",
+          deferred: OpenDocument,
+        })
       } else {
-        self.transfer_status = 
-          TransferUnavailable("open requires host file dialog services")
-        
+        self.transfer_status = TransferUnavailable(
+          "open requires host file dialog services",
+        )
       }
     ImportFromClipboard =>
-      self.transfer_status = 
-        TransferUnavailable("clipboard import requires host services")
-      
+      self.transfer_status = TransferUnavailable(
+        "clipboard import requires host services",
+      )
     ExportToClipboard =>
-      self.transfer_status = 
-        TransferUnavailable("clipboard export requires host services")
-      
+      self.transfer_status = TransferUnavailable(
+        "clipboard export requires host services",
+      )
     ExportHtmlToClipboard =>
-      self.transfer_status = 
-        TransferUnavailable("html export requires host services")
-      
+      self.transfer_status = TransferUnavailable(
+        "html export requires host services",
+      )
     ServiceCompleted(_) => ()
     Undo => ignore(self.undo())
     Redo => ignore(self.redo())
     ToggleOutline => self.toggle_outline()
     ToggleFileSidebar => self.toggle_file_sidebar()
-    ToggleFileTree =>
-      self.file_tree_expanded = !self.file_tree_expanded
+    ToggleFileTree => self.file_tree_expanded = !self.file_tree_expanded
     ToggleDocumentInfo => self.toggle_document_info()
     ToggleFind => self.toggle_find()
     ToggleFocusMode => self.toggle_focus_mode()
@@ -466,9 +465,9 @@ fn MarkdownEditorApp::update_in_place(
     UpdateHtmlBlockText(value) => self.html_block_text = value
     ApplyLinkTarget => self.apply_link_target()
     OpenTarget =>
-      self.transfer_status = 
-        TransferUnavailable("open target requires host services")
-      
+      self.transfer_status = TransferUnavailable(
+        "open target requires host services",
+      )
     ApplyImageTarget => self.apply_image_target()
     ApplyFootnoteText => self.apply_footnote_text()
     ApplyHtmlBlockText => self.apply_html_block_text()
@@ -482,19 +481,17 @@ fn MarkdownEditorApp::update_in_place(
     SetSelection(caret, selection) => self.set_selection(caret, selection)
     EditorScrollChanged(offset) => self.editor_scroll = offset
     OpenRecentDocument(path) =>
-      self.transfer_status = 
-        TransferUnavailable(
-          "opening " +
-          markdown_editor_file_name(path) +
-          " requires host text file services",
-        )
-      
+      self.transfer_status = TransferUnavailable(
+        "opening " +
+        markdown_editor_file_name(path) +
+        " requires host text file services",
+      )
     PickWorkingDirectory => ()
     RefreshFileTree =>
       if self.working_directory == "" {
-        self.transfer_status = 
-          TransferUnavailable("refresh requires a picked working folder")
-        
+        self.transfer_status = TransferUnavailable(
+          "refresh requires a picked working folder",
+        )
       }
     UpdateFileFilterQuery(value) => self.file_filter_query = value
     SelectTreePath(_) => ()
@@ -533,9 +530,11 @@ fn MarkdownEditorApp::update_with_services(
     SaveDocumentAs => (self, self.request_file_save_as(services))
     OpenDocument =>
       if self.is_dirty() && self.pending_confirm is None {
-        self.pending_confirm = 
-          Some({ title: "Unsaved changes", deferred: OpenDocument })
-        
+        self.pending_confirm = Some({
+          title: "Unsaved changes",
+          deferred: OpenDocument,
+        })
+
         (self, @moui.Effect::none())
       } else {
         (self, self.request_file_open(services))
@@ -562,9 +561,10 @@ fn MarkdownEditorApp::update_with_services(
     RefreshFileTree => {
       let path = self.working_directory
       if path == "" {
-        self.transfer_status = 
-          TransferUnavailable("refresh requires a picked working folder")
-        
+        self.transfer_status = TransferUnavailable(
+          "refresh requires a picked working folder",
+        )
+
         (self, @moui.Effect::none())
       } else {
         (self, self.request_directory_listing(path, services))

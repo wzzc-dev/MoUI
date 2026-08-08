@@ -628,7 +628,7 @@ fn SettingsWorkspace::update(
   msg : SettingsMsg,
 ) -> (SettingsWorkspace, @moui.Effect[SettingsMsg]) {
   match msg {
-    SelectSection(section) => {
+    SelectSection(section) =>
       (
         {
           ..self,
@@ -638,7 +638,6 @@ fn SettingsWorkspace::update(
         },
         @moui.Effect::none(),
       )
-    }
     Scrolled(offset) =>
       ({ ..self, scroll_offset: offset }, @moui.Effect::none())
     BackendChanged(kind) =>

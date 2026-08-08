@@ -315,18 +315,15 @@ fn LinuxNativeHostBackend::redraw_window(
             }
           }
           let result = renderer.render_frame(
-            @render.RenderFrameSubmission::new(
-              token=submission.token(),
-              frame={
-                ..frame,
-                commands,
-                damage: if platform_slot.extra.active {
-                  @core.DamageRegion::full("linux client decorations")
-                } else {
-                  frame.damage
-                },
+            @render.RenderFrameSubmission::new(token=submission.token(), frame={
+              ..frame,
+              commands,
+              damage: if platform_slot.extra.active {
+                @core.DamageRegion::full("linux client decorations")
+              } else {
+                frame.damage
               },
-            ),
+            }),
           )
           if has_platform_views {
             renderer.set_platform_view_draw_fn(None)

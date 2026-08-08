@@ -247,10 +247,8 @@ pub fn ShowcaseModel::update(
     ShowSheet => { ..self, dialog_visible: false, sheet_visible: true }
     HideSheet => { ..self, sheet_visible: false }
     SelectSection(route) => self.with_route_pushed(route)
-    RouteBack =>
-      self.with_route_history(self.route_history.back())
-    RouteForward =>
-      self.with_route_history(self.route_history.forward())
+    RouteBack => self.with_route_history(self.route_history.back())
+    RouteForward => self.with_route_history(self.route_history.forward())
     OpenRouteLink(route) =>
       self.with_route_history(
         self.route_history.push(

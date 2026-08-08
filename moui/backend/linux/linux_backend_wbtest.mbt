@@ -77,9 +77,7 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
       })
     } else {
       @accesskit_bridge.AccessKitActionResult::Rejected(
-        @runtime.SemanticsActionDispatchError::TargetNotFound(
-          request.target,
-        ),
+        @runtime.SemanticsActionDispatchError::TargetNotFound(request.target),
       )
     }
   })

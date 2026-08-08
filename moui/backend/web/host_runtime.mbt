@@ -237,8 +237,9 @@ fn WebApp::redraw_window(self : WebApp, window_id : @host.WindowId) -> Unit {
       self.images,
       self.input,
       window_id,
-      render=(renderer, _runtime_slot, submission) =>
-        renderer.render_frame(submission),
+      render=(renderer, _runtime_slot, submission) => {
+        renderer.render_frame(submission)
+      },
     ),
   )
 }

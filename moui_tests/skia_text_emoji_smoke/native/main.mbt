@@ -320,10 +320,11 @@ fn smoke_text_field_runtime(
   let runtime = @runtime.new_program_with_dimensions(
     program=@core.Program::simple(
       init=value,
-      update=(_current, message) =>
+      update=(_current, message) => {
         match message {
           Changed(next) => next
-        },
+        }
+      },
       view=smoke_text_field_view,
     ),
     width=176.0,
@@ -513,8 +514,7 @@ fn ime_candidate_anchor_observation_available(
   text_system : @core.TextSystem,
 ) -> Bool {
   let runtime = smoke_text_field_runtime(
-    "A\u{1F469}\u{200D}\u{1F4BB}B",
-    text_system,
+    "A\u{1F469}\u{200D}\u{1F4BB}B", text_system,
   )
   focus_smoke_text_field(runtime)
   runtime.dispatch_event(

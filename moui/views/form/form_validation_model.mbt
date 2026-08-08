@@ -59,7 +59,7 @@ pub fn FormFieldState::with_value(
   self : FormFieldState,
   value : String,
 ) -> FormFieldState {
-  { ..self, value }
+  { ..self, value, }
 }
 
 ///|

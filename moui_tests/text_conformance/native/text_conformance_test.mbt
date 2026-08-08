@@ -123,9 +123,7 @@ fn assert_diagnostic_native_text_matrix(
 }
 
 ///|
-fn diagnostic_native_text_field_view(
-  value : String,
-) -> @core.View[String] {
+fn diagnostic_native_text_field_view(value : String) -> @core.View[String] {
   let black = @core.Color::black()
   let white_brush = @core.Brush::solid(@core.Color::white())
   let state_style = @views.new_control_state_style(
@@ -155,11 +153,9 @@ fn diagnostic_native_text_field_view(
 ///|
 fn diagnostic_native_text_field_runtime() -> @runtime.AppRuntime {
   @runtime.AppRuntime::new_program(
-    program=@core.Program::simple(
-      init="",
-      update=(_model, next) => next,
-      view=value => diagnostic_native_text_field_view(value),
-    ),
+    program=@core.Program::simple(init="", update=(_model, next) => next, view=value => {
+      diagnostic_native_text_field_view(value)
+    }),
     size=@core.Size::new(width=220.0, height=80.0),
   )
 }

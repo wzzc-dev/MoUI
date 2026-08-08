@@ -269,11 +269,9 @@ pub fn AccessKitBridge::unavailable(
   diagnostic_name? : String = "accesskit",
   reason? : String = "accessibility bridge is unavailable",
 ) -> AccessKitBridge {
-  AccessKitBridge::new(
-    diagnostic_name~,
-    available=false,
-    perform=_request => AccessKitActionResult::BridgeUnavailable(reason),
-  )
+  AccessKitBridge::new(diagnostic_name~, available=false, perform=_request => {
+    AccessKitActionResult::BridgeUnavailable(reason)
+  })
 }
 
 ///|

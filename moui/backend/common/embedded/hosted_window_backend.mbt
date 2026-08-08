@@ -131,11 +131,7 @@ pub fn HostedRuntimeSession::attach(
   match (binding.create_renderer)(raw_handle, metrics) {
     Some(resolution) => {
       let renderer = resolution
-      if self.core.attach_surface(
-          renderer~,
-          metrics~,
-          surface_generation~,
-        ) {
+      if self.core.attach_surface(renderer~, metrics~, surface_generation~) {
         self.raw_handle = raw_handle
         (binding.sync)(raw_handle, metrics)
         true
