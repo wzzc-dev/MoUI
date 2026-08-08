@@ -1,13 +1,13 @@
 import {
-  "wzzc-dev/moui" @moui,
-  "wzzc-dev/moui/views" @views,
-  "wzzc-dev/moui/core" @core,
-  "wzzc-dev/moui/services" @services,
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
   "examples/browser/engine" @moui_crater,
 }
 
 import {
-  "wzzc-dev/moui/runtime" @runtime,
+  "wzzc-dev/moui/runtime",
 } for "test"
 
 supported_targets = "+native+wasm-gc"

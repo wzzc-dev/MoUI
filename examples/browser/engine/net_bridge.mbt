@@ -44,7 +44,10 @@ extern "C" fn fetch_slot_clear(id : Int) -> Unit = "moui_fetch_slot_clear"
 ///|
 /// 并行抓取一批 URL(页面外链脚本/样式表)。
 /// 返回与 `urls` 一一对应的结果;槽分配失败或超时的 URL 按失败处理。
-pub fn fetch_resources(urls : Array[String], proxy : String?) -> Array[FetchedResource] {
+pub fn fetch_resources(
+  urls : Array[String],
+  proxy : String?,
+) -> Array[FetchedResource] {
   let ids : Array[Int] = []
   for url in urls {
     let cmd = build_curl_command(url, proxy)
@@ -68,7 +71,12 @@ pub fn fetch_resources(urls : Array[String], proxy : String?) -> Array[FetchedRe
       let len = fetch_slot_len(id)
       let buf = Bytes::make(len + 1, 0)
       let n = fetch_slot_take(id, buf, buf.length())
-      out.push({ ok: true, body: @utf8.decode(buf.view(start=0, end=n)) catch { _ => "" } })
+      out.push({
+        ok: true,
+        body: @utf8.decode(buf.view(start=0, end=n)) catch {
+          _ => ""
+        },
+      })
     } else {
       out.push({ ok: false, body: "" })
     }

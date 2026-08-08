@@ -9,21 +9,66 @@ import {
 // Values
 pub fn decode_data_url(String) -> String?
 
+pub fn extract_script_entries(String) -> Array[ScriptEntry]
+
 pub fn extract_scripts(String) -> Array[String]
+
+pub fn extract_stylesheets(String) -> Array[String]
+
+pub async fn fetch_page(String, proxy? : String?) -> PageLoad raise NetError
+
+pub fn fetch_resources(Array[String], String?) -> Array[FetchedResource]
+
+pub fn poll_fetch() -> FetchOutcome?
 
 pub fn render_html(String, Double, Double) -> Array[@core.DrawCommand]
 
 pub fn render_html_document(String, Double, Double) -> RenderResult
 
+pub fn render_html_with_js(JsEngine, String, String) -> (String, ScriptRunResult)
+
+pub fn render_page_with_resources(JsEngine, String, String, String?) -> (String, ScriptRunResult)
+
+pub fn resolve_location(String, String) -> String
+
+pub fn resolve_url(String, String) -> String
+
+pub fn split_url(String) -> (String, String)
+
+pub fn start_fetch(String, String?) -> Bool
+
+pub fn wait_fetch(Int) -> FetchOutcome?
+
 // Errors
+pub suberror NetError {
+  InvalidUrl(String)
+  Network(String)
+  Redirect(String)
+}
+pub impl Show for NetError
 
 // Types and methods
+pub enum FetchOutcome {
+  Fetched(html~ : String)
+  FetchFailed(message~ : String)
+}
+
+pub struct FetchedResource {
+  ok : Bool
+  body : String
+}
+
 pub struct JsEngine {
   engine : @js_engine.Engine
 }
+pub fn JsEngine::dispatch_ready(Self) -> Unit
 pub fn JsEngine::drain_output(Self) -> Array[String]
+pub fn JsEngine::dump_dom_html(Self) -> String?
 pub fn JsEngine::new() -> Self
+pub fn JsEngine::pump_events(Self) -> Unit
+pub fn JsEngine::reset_dom(Self, String) -> Unit
 pub fn JsEngine::run_scripts(Self, Array[String]) -> ScriptRunResult
+pub fn JsEngine::take_dynamic_scripts(Self) -> Array[String]
 
 pub struct LinkRegion {
   x : Double
@@ -33,9 +78,21 @@ pub struct LinkRegion {
   href : String
 }
 
+pub struct PageLoad {
+  url : String
+  status : Int
+  html : String
+}
+
 pub struct RenderResult {
   commands : Array[@core.DrawCommand]
   links : Array[LinkRegion]
+}
+
+pub struct ScriptEntry {
+  inline : Bool
+  src : String
+  body : String
 }
 
 pub struct ScriptRunResult {
