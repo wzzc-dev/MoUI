@@ -380,6 +380,42 @@ font behavior; diagnostic conformance covers measurement and caret invariants
 for representative emoji samples but does not make browser rasterization or
 provider shaping deterministic.
 
+## Canvas2D Fallback Parity Notes
+
+The browser Canvas2D fallback (`canvas2d_runtime.js`) shares the same
+MoonBit adapter and `webgpu` import ABI as the WebGPU host. The following
+parity fixes keep its behavior aligned with the WebGPU host:
+
+- **Transform**: `PushTransform` accumulates via `ctx.transform` (multiply)
+  and conjugates the logical-space matrix with the logical→physical scale
+  (S·T·S⁻¹), matching the WebGPU host's `multiplyTransform` for nested
+  scopes.
+- **Filter effects**: saturate uses CSS `saturate(amount)` (identity at
+  amount=1, matching the WebGPU shader's `mix(luma, rgb, amount)`);
+  color-matrix renders through a shared hidden inline SVG `feColorMatrix`
+  with the Skia-compatible 5×4 row-major 20 values; filter payload kinds
+  are offset by +1 at push time exactly like the WebGPU `normalizeFilter`.
+- **Image placement**: `ScaleDown` (natural size centered when it fits,
+  else contain), `FitWidth`, and `FitHeight` (axis-locked fill with crop or
+  letterbox) now match the WebGPU host; previously they fell through to
+  Contain.
+- **Path mesh**: per-triangle vertex colors are approximated with a linear
+  gradient along the triangle's longest edge with the third vertex's color
+  at its projection, so gradient paths blend continuously instead of
+  flat-filling with a single average color.
+- **Text selection**: the selectable-text DOM overlay (transparent spans in
+  a `.moui-text-selection-layer` div) is now provided by the fallback too,
+  with a renderer-side logical transform/clip state stack feeding the same
+  geometry and clip-path computation as the WebGPU host.
+- **Shader effects**: `checker` renders the alternating-cell pattern and
+  `uniforms[0]` drives the checker scale and vignette fade radius,
+  matching the WebGPU host's `effectAmount`.
+
+Remaining fallback approximations: shadow uses native `shadowBlur` with
+`spread` folded into the radius, blur uses the browser's CSS `blur()`,
+rounded clips are composited as layer masks, and path mesh gradients are
+linear-edge approximations rather than per-vertex barycentric shading.
+
 ## Update Rule
 
 When improving image, clip, opacity, transform, or any other draw command
