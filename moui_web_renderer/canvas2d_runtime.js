@@ -781,6 +781,22 @@ export function createCanvas2dImports(options = {}) {
       // (with accumulate-transform semantics a stale matrix would compound).
       renderer.layerStack = [];
       renderer.ctx = renderer.surface?.ctx;
+      const surfaceCtx = renderer.surface?.ctx;
+      if (surfaceCtx && renderer.ctx === surfaceCtx) {
+        // push_transform/push_clip/push_opacity save onto the surface ctx
+        // without swapping it, so their stale state (matrix, clip, alpha,
+        // filter, shadow) would leak into this frame too. Reset it to a
+        // clean identity state.
+        surfaceCtx.setTransform(1, 0, 0, 1, 0, 0);
+        surfaceCtx.globalAlpha = 1;
+        surfaceCtx.filter = "none";
+        surfaceCtx.shadowBlur = 0;
+        surfaceCtx.shadowOffsetX = 0;
+        surfaceCtx.shadowOffsetY = 0;
+        surfaceCtx.lineWidth = 1;
+        surfaceCtx.textAlign = "start";
+        surfaceCtx.textBaseline = "alphabetic";
+      }
       renderer.moonbitWidth = Math.max(1, Number(width) || 1);
       renderer.moonbitHeight = Math.max(1, Number(height) || 1);
       renderer.width = renderer.moonbitWidth;
@@ -1386,8 +1402,16 @@ export function createCanvas2dImports(options = {}) {
             const cy = rect.y + rect.height / 2;
             const inner = 0.25;
             const outer = Math.max(0.8, Number(effectAmount) || 0.8);
+            // The shader measures d = length(centered) in [-1,1]² space, where
+            // d = 2 * dist / side for a square rect and reaches black at
+            // d = outer. Scale the gradient radius by outer / sqrt(2) so the
+            // canvas stop t = dist / radius lands on d/outer: t=1 (black) at
+            // d=outer and the inner/outer stop at d=0.25, matching the WGSL
+            // smoothstep endpoints for square rects (a circular gradient is
+            // the Canvas2D approximation for non-square rects).
             const maxRadius = Math.hypot(rect.width, rect.height) * 0.5;
-            const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(maxRadius, 1));
+            const radius = (maxRadius * outer) / Math.SQRT2;
+            const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(radius, 1));
             gradient.addColorStop(0, c0);
             gradient.addColorStop(inner / outer, c0);
             gradient.addColorStop(1, cssColor({ r: 0, g: 0, b: 0, a: Number(a0) || 1 }));
