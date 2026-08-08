@@ -1322,10 +1322,32 @@ export function createCanvas2dImports(options = {}) {
       if (rect.width <= 0 || rect.height <= 0) return ok();
       const c0 = cssColor({ r: r0, g: g0, b: b0, a: a0 });
       const c1 = cssColor({ r: r1, g: g1, b: b1, a: a1 });
+      const parsedUniforms = parseDoubleList(stringValue(uniforms));
+      const effectAmount = parsedUniforms[0] ?? 8;
       switch (shaderName) {
         case "checker":
-          ctx.fillStyle = c0;
-          ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+          {
+            // Mirror the WebGPU shader: local (0..1) x scale, alternating
+            // c0/c1 cells (scale = uniforms[0], min 8).
+            const cells = Math.max(8, Math.round(Number(effectAmount) || 8));
+            const cellW = rect.width / cells;
+            const cellH = rect.height / cells;
+            ctx.fillStyle = c0;
+            ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+            ctx.fillStyle = c1;
+            for (let row = 0; row < cells; row += 1) {
+              for (let col = 0; col < cells; col += 1) {
+                if (((col + row) & 1) === 1) {
+                  ctx.fillRect(
+                    rect.x + col * cellW,
+                    rect.y + row * cellH,
+                    Math.ceil(cellW),
+                    Math.ceil(cellH),
+                  );
+                }
+              }
+            }
+          }
           break;
         case "solid":
           ctx.fillStyle = c0;
@@ -1345,12 +1367,14 @@ export function createCanvas2dImports(options = {}) {
           break;
         case "vignette":
           {
+            // Mirror the WebGPU shader: fade = 1 - smoothstep(0.25, max(amount, 0.8), length(centered)).
             const cx = rect.x + rect.width / 2;
             const cy = rect.y + rect.height / 2;
-            const radius = Math.max(rect.width, rect.height) * 0.7;
-            const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+            const radius = Math.max(rect.width, rect.height) * Math.max(0.8, Number(effectAmount) || 0.8) * 0.5;
+            const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(radius, 1));
             gradient.addColorStop(0, c0);
-            gradient.addColorStop(1, c1);
+            gradient.addColorStop(0.25, c0);
+            gradient.addColorStop(1, cssColor({ r: 0, g: 0, b: 0, a: 0 }));
             ctx.fillStyle = gradient;
             ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
           }
