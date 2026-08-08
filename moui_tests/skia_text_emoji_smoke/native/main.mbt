@@ -576,7 +576,18 @@ fn ime_composition_visual_observation_available(
   match renderer.last_frame() {
     Some(frame) => {
       let text_rows = rect_dark_rows(frame, input.frame)
-      let cursor_pixels = rect_blue_pixels(frame, input.caret_rect)
+      // caret_rect is the caret anchor (character-boundary position); the
+      // painted caret is centered on it by shifting left by the caret width
+      // (see text_editing_visual_cursor_rect). Scan a window around the
+      // anchor so the painted caret pixels are counted.
+      let caret_rect = input.caret_rect
+      let visual_rect = @core.Rect::new(
+        x=caret_rect.origin.x - 2.0,
+        y=caret_rect.origin.y,
+        width=caret_rect.size.width + 4.0,
+        height=caret_rect.size.height,
+      )
+      let cursor_pixels = rect_blue_pixels(frame, visual_rect)
       println(
         "MoUI Skia text/emoji smoke composition text=\{composition} cursor=\{composition_cursor.start}..\{composition_cursor.end} dark_rows=\{text_rows} cursor_pixels=\{cursor_pixels}",
       )
