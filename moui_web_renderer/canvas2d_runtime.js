@@ -161,7 +161,14 @@ export function createCanvas2dImports(options = {}) {
   const saveAndSetTransform = (renderer, a, b, c, d, tx, ty) => {
     const ctx = rendererCtx(renderer);
     ctx.save();
-    ctx.setTransform(a, b, c, d, tx, ty);
+    // Accumulate (multiply) instead of replacing the current matrix so nested
+    // PushTransform scopes compose exactly like the WebGPU host's
+    // multiplyTransform. Coordinates arrive in physical pixels (already scaled
+    // by scx/scy), so the incoming logical-space matrix is conjugated with the
+    // logical→physical scale (S·T·S⁻¹).
+    const sx = getRendererScaleX(renderer);
+    const sy = getRendererScaleY(renderer);
+    ctx.transform(a, (Number(b) * sx) / sy, (Number(c) * sy) / sx, d, tx, ty);
   };
 
   const saveAndSetOpacity = (renderer, opacity) => {
@@ -685,12 +692,15 @@ export function createCanvas2dImports(options = {}) {
       if (!renderer) return invalidResource();
       const sx = getRendererScaleX(renderer);
       const sy = getRendererScaleY(renderer);
-      // The transform matrix operates in MoonBit logical space.
-      // Canvas2D uses physical pixel space.
-      // We multiply the matrix components and scale the translation.
+      // The transform matrix operates in MoonBit logical space; Canvas2D uses
+      // physical pixel space, so scale the translation and conjugate the
+      // off-diagonal entries (S·T·S⁻¹). ctx.transform accumulates, matching
+      // the WebGPU host's multiplyTransform semantics for nested scopes.
       saveAndSetTransform(renderer,
-        Number(a), Number(b),
-        Number(c), Number(d),
+        Number(a),
+        (Number(b) * sx) / sy,
+        (Number(c) * sy) / sx,
+        Number(d),
         scx(renderer, tx), scy(renderer, ty)
       );
       return ok();
