@@ -71,7 +71,7 @@ test "shell Host Wire parses generation-checked typed accessibility actions" {
           {
             target: @core.SemanticsTarget::ByNodeId(node_id),
             precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-              generation,
+              generation
             ),
             action: @core.SemanticsAction::SetText("Luna"),
           }

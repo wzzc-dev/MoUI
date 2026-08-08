@@ -83,7 +83,7 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1944,
+      "maxLines": 1941,
       "reason": "Existing API validator with explicit declaration and semantic contract audits."
     },
     {
@@ -93,7 +93,7 @@
     },
     {
       "path": "moui_tests/skia_renderer_smoke/native/main.mbt",
-      "maxLines": 1873,
+      "maxLines": 1815,
       "reason": "Existing end-to-end renderer smoke harness."
     },
     {
@@ -108,7 +108,7 @@
     },
     {
       "path": "moui_sun_renderer/renderer_test.mbt",
-      "maxLines": 1787,
+      "maxLines": 1728,
       "reason": "Existing Sun renderer integration test."
     },
     {
@@ -143,7 +143,7 @@
     },
     {
       "path": "moui_skia/native/skia_stub_text_font.cpp",
-      "maxLines": 1524,
+      "maxLines": 1530,
       "reason": "Existing native text and font bridge implementation."
     },
     {
@@ -173,7 +173,7 @@
     },
     {
       "path": "examples/mo_workbench/app/workbench_wbtest.mbt",
-      "maxLines": 1437,
+      "maxLines": 1404,
       "reason": "Existing workbench integration test with declaration invalidation coverage."
     },
     {
@@ -213,7 +213,7 @@
     },
     {
       "path": "moui/runtime/view_runtime_test.mbt",
-      "maxLines": 1435,
+      "maxLines": 1375,
       "reason": "Existing runtime virtual-view integration regression suite after typed semantics migration."
     },
     {
@@ -223,7 +223,7 @@
     },
     {
       "path": "moui_wgpu_renderer/native_smoke.mbt",
-      "maxLines": 1250,
+      "maxLines": 1248,
       "reason": "Existing native WGPU diagnostic smoke."
     },
     {

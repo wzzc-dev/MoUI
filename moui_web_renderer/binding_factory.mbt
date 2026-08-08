@@ -65,7 +65,8 @@ pub fn WebGpuWasmRenderer::to_renderer_session(
     recover=_reason => @render.RecoveryResult::RecoverySucceeded,
     dispose=() => self.dispose(),
     image_records=() => self.image_resources(),
-    apply_image_load_completion=completion =>
-      self.apply_image_resource_load_completion(completion),
+    apply_image_load_completion=completion => {
+      self.apply_image_resource_load_completion(completion)
+    },
   )
 }

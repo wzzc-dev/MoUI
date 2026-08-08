@@ -18,11 +18,8 @@ fn WebGpuLayerCommandCache::expand_frame_commands(
   while index < commands.length() {
     match commands[index] {
       @core.DrawCommand::BeginRetainedLayer(spec) =>
-        match webgpu_find_retained_layer_end(
-            commands,
-            start=index + 1,
-            spec.key,
-          ) {
+        match
+          webgpu_find_retained_layer_end(commands, start=index + 1, spec.key) {
           Some(layer_end) =>
             match self.lookup(spec) {
               Some(cached) => {

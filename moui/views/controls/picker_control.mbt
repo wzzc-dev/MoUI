@@ -171,12 +171,7 @@ fn[Msg] picker_event(
         max_height=node.max_height,
       )
     @core.AppEvent::Keyboard(event) =>
-      handle_picker_keyboard(
-        ctx.state,
-        event,
-        items=node.items,
-        selected~,
-      )
+      handle_picker_keyboard(ctx.state, event, items=node.items, selected~)
     _ => @core.ViewEventResult::ignored()
   }
 }
@@ -338,7 +333,7 @@ fn[Msg] handle_picker_pointer(
   if state.expanded {
     if event.phase == @core.PointerPhase::Up && inside_popup {
       match picker_item_id_at_position(items, popup_frame, event.position) {
-        Some(id) => {
+        Some(id) =>
           @common.view_event_result(
             changed=true,
             activated=true,
@@ -348,7 +343,6 @@ fn[Msg] handle_picker_pointer(
             dirty=@core.ViewDirtyHint::ViewBuildDirty,
             messages=[selected.changed(id)],
           )
-        }
         None =>
           @common.view_event_result(
             changed=true,
@@ -416,7 +410,7 @@ fn[Msg] handle_picker_keyboard(
   } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
     if state.expanded {
       match picker_selected_id_or_first(items, selected.value()) {
-        Some(id) => {
+        Some(id) =>
           @common.view_event_result(
             changed=true,
             activated=true,
@@ -425,7 +419,6 @@ fn[Msg] handle_picker_keyboard(
             dirty=@core.ViewDirtyHint::ViewBuildDirty,
             messages=[selected.changed(id)],
           )
-        }
         None =>
           @common.view_event_result(
             changed=true,
@@ -447,6 +440,7 @@ fn[Msg] handle_picker_keyboard(
   }
 }
 
+///|
 fn picker_selected_label(
   items : Array[PickerOption],
   selected_id : String,

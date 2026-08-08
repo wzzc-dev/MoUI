@@ -37,7 +37,9 @@ fn contract_session(
   },
   drain? : () -> Array[@render.RendererEvent] = () => [],
   image_records? : () -> Array[@render.ImageResourceRecord] = () => [],
-  apply_image_load_completion? : (@render.ImageResourceLoadCompletion) -> Bool = _ => false,
+  apply_image_load_completion? : (@render.ImageResourceLoadCompletion) -> Bool = _ => {
+    false
+  },
   image_source? : @render.HostImageSource = @render.HostImageSource::unavailable(),
   image_decoder? : @render.RendererImageDecoder? = None,
   native_surface? : @render.NativeSurface? = None,
@@ -200,18 +202,18 @@ test "renderer session owns recovery image completion and present completion" {
   guard image_request is Some(request) else { fail("expected image request") }
   let completion = request.load()
   assert_true(
-    session.apply_image_load_completion(completion) is
-      @render.RendererImageCompletionResult::Applied(true),
+    session.apply_image_load_completion(completion)
+    is @render.RendererImageCompletionResult::Applied(true),
   )
   assert_true(
-    session.apply_image_load_completion(completion) is
-      @render.RendererImageCompletionResult::Stale,
+    session.apply_image_load_completion(completion)
+    is @render.RendererImageCompletionResult::Stale,
   )
   assert_eq(applied, ["image.png"])
   session.dispose()
   assert_true(
-    session.apply_image_load_completion(completion) is
-      @render.RendererImageCompletionResult::Disposed,
+    session.apply_image_load_completion(completion)
+    is @render.RendererImageCompletionResult::Disposed,
   )
 }
 

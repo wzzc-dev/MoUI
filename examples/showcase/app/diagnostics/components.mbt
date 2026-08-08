@@ -96,14 +96,7 @@ fn ShowcaseModel::section_panel(
   eyebrow? : String = "",
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
-  section_panel(
-    theme,
-    title,
-    summary,
-    body,
-    metrics~,
-    eyebrow~,
-  )
+  section_panel(theme, title, summary, body, metrics~, eyebrow~)
 }
 
 ///|

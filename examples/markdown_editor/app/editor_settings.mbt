@@ -91,9 +91,10 @@ fn MarkdownEditorApp::apply_settings(
   settings : MarkdownEditorSettings,
 ) -> Unit {
   self.dark_mode_enabled = settings.dark_mode
-  self.font_family = 
-    markdown_editor_font_family_from_label(settings.font_family)
-  
+  self.font_family = markdown_editor_font_family_from_label(
+    settings.font_family,
+  )
+
   self.focus_mode_enabled = settings.focus_mode
   self.typewriter_mode_enabled = settings.typewriter_mode
   self.zen_mode_enabled = settings.zen_mode

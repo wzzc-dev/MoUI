@@ -5,6 +5,7 @@ pub fn preflight() -> @render.RendererBackendInfo {
 }
 
 ///|
+#skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_preflight_reports_ready" {
   let info = preflight()
   assert_eq(info.backend, @render.RendererBackendKind::Canvas2DWasm)
@@ -15,6 +16,7 @@ test "canvas2d_preflight_reports_ready" {
 }
 
 ///|
+#skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_descriptor_has_correct_family" {
   let descriptor = canvas2d_descriptor()
   assert_eq(descriptor.backend, @render.RendererBackendKind::Canvas2DWasm)

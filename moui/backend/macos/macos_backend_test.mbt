@@ -48,10 +48,9 @@ test "macos accessibility bridge dispatches semantics actions" {
     }
   }
   let target = target.unwrap()
-  let driver = @runtime.HostRuntimeDriver::new(
-    runtime~,
-    schedule_redraw=() => (),
-  )
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let bridge = macos_accessibility_bridge(driver)
   match
     bridge.perform_action(

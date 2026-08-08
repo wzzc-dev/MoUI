@@ -166,36 +166,16 @@ fn[Msg] handle_text_field_keyboard(
     }
   }
   if event.key == "ArrowLeft" {
-    return view_caret_move_result(
-      ctx,
-      value,
-      MoveLeft,
-      event.modifiers.shift,
-    )
+    return view_caret_move_result(ctx, value, MoveLeft, event.modifiers.shift)
   }
   if event.key == "ArrowRight" {
-    return view_caret_move_result(
-      ctx,
-      value,
-      MoveRight,
-      event.modifiers.shift,
-    )
+    return view_caret_move_result(ctx, value, MoveRight, event.modifiers.shift)
   }
   if event.key == "Home" {
-    return view_caret_move_result(
-      ctx,
-      value,
-      MoveStart,
-      event.modifiers.shift,
-    )
+    return view_caret_move_result(ctx, value, MoveStart, event.modifiers.shift)
   }
   if event.key == "End" {
-    return view_caret_move_result(
-      ctx,
-      value,
-      MoveEnd,
-      event.modifiers.shift,
-    )
+    return view_caret_move_result(ctx, value, MoveEnd, event.modifiers.shift)
   }
   match event.text {
     Some(text) =>

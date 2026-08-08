@@ -110,17 +110,11 @@ fn MarkdownEditorApp::toggle_find(self : MarkdownEditorApp) -> Unit {
 fn MarkdownEditorApp::open_find(self : MarkdownEditorApp) -> Unit {
   self.find_visible = true
   match
-    markdown_editor_find_query_from_selection(
-      self.document,
-      self.selection,
-    ) {
+    markdown_editor_find_query_from_selection(self.document, self.selection) {
     Some(query) => self.find_query = query
     None =>
       match
-        markdown_editor_find_seed_from_caret_word(
-          self.document,
-          self.selection,
-        ) {
+        markdown_editor_find_seed_from_caret_word(self.document, self.selection) {
         Some(seed) => {
           self.find_query = seed.query
           self.select_find_match(seed.range)
@@ -397,10 +391,7 @@ fn MarkdownEditorApp::update_find_query(
     }
     return
   }
-  let index = markdown_editor_find_live_update_index(
-    matches,
-    self.selection,
-  )
+  let index = markdown_editor_find_live_update_index(matches, self.selection)
   if index >= 0 {
     self.select_find_match(matches[index])
   }

@@ -59,16 +59,14 @@ fn MarkdownEditorApp::apply_command_to_selection(
   }
   self.push_undo(before)
   self.redo_stack = []
-  self.document_session = 
-    self.document_session
-    .apply(
-      MarkdownEditTransaction::from_edit_result(
-        before.source,
-        result,
-        reason=CommandEdit,
-      ),
-    )
-  
+  self.document_session = self.document_session.apply(
+    MarkdownEditTransaction::from_edit_result(
+      before.source,
+      result,
+      reason=CommandEdit,
+    ),
+  )
+
   self.document = result.source
   self.refresh_find_matches_if_visible()
   self.selection = { caret: result.caret, selection: result.selection }
@@ -89,12 +87,10 @@ fn MarkdownEditorApp::apply_text_transform(
   }
   self.push_undo(before)
   self.redo_stack = []
-  self.document_session = 
-    self.document_session
-    .apply(
-      MarkdownEditTransaction::from_input_transform(before.source, transform),
-    )
-  
+  self.document_session = self.document_session.apply(
+    MarkdownEditTransaction::from_input_transform(before.source, transform),
+  )
+
   self.document = transform.text
   self.refresh_find_matches_if_visible()
   self.selection = { caret: transform.caret, selection: transform.selection }
@@ -316,10 +312,7 @@ fn MarkdownEditorApp::apply_named_editor_action(
 fn MarkdownEditorApp::history_entry(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorHistoryEntry {
-  {
-    source: self.document_session.source,
-    selection: self.selection,
-  }
+  { source: self.document_session.source, selection: self.selection }
 }
 
 ///|
@@ -376,16 +369,14 @@ fn MarkdownEditorApp::toggle_task_at(
     Some(result) => {
       self.push_undo(self.history_entry())
       self.redo_stack = []
-      self.document_session = 
-        self.document_session
-        .apply(
-          MarkdownEditTransaction::from_edit_result(
-            self.document,
-            result,
-            reason=ToggleTaskEdit,
-          ),
-        )
-      
+      self.document_session = self.document_session.apply(
+        MarkdownEditTransaction::from_edit_result(
+          self.document,
+          result,
+          reason=ToggleTaskEdit,
+        ),
+      )
+
       self.document = result.source
       self.refresh_find_matches_if_visible()
       self.selection = { caret: result.caret, selection: result.selection }
@@ -398,24 +389,18 @@ fn MarkdownEditorApp::toggle_task_at(
 
 ///|
 fn MarkdownEditorApp::toggle_current_task(self : MarkdownEditorApp) -> Unit {
-  match
-    markdown_editor_toggle_current_task(
-      self.document,
-      self.selection,
-    ) {
+  match markdown_editor_toggle_current_task(self.document, self.selection) {
     Some(result) => {
       self.push_undo(self.history_entry())
       self.redo_stack = []
-      self.document_session = 
-        self.document_session
-        .apply(
-          MarkdownEditTransaction::from_edit_result(
-            self.document,
-            result,
-            reason=ToggleTaskEdit,
-          ),
-        )
-      
+      self.document_session = self.document_session.apply(
+        MarkdownEditTransaction::from_edit_result(
+          self.document,
+          result,
+          reason=ToggleTaskEdit,
+        ),
+      )
+
       self.document = result.source
       self.refresh_find_matches_if_visible()
       self.selection = { caret: result.caret, selection: result.selection }

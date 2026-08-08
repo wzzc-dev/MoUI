@@ -103,9 +103,7 @@ test "host renderer capability records preserve optional callback behavior" {
     resize=_ => (),
     render_frame=_ => @render.RenderFrameResult::new(presented=true),
     text_system=() => @core.TextSystem::fallback(),
-    image_records=() => {
-      [@render.ImageResourceRecord::loading("pending.png")]
-    },
+    image_records=() => [@render.ImageResourceRecord::loading("pending.png")],
     platform_view=@render.RendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         _pixels,

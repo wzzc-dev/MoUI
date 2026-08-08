@@ -129,7 +129,7 @@ fn Model::update(self : Model, message : Msg) -> Model {
       { ..self, copied_text: None }
     CopyText(value) => { ..self, copied_text: Some(value) }
     OpenHome => { ..self.with_route("home"), copied_text: None }
-    OpenHomeAt(offset_y) => {
+    OpenHomeAt(offset_y) =>
       {
         ..self.with_route("home"),
         home_scroll: @geometry.Point::new(
@@ -138,7 +138,6 @@ fn Model::update(self : Model, message : Msg) -> Model {
         ),
         copied_text: None,
       }
-    }
     OpenHomeAnchor(anchor) =>
       { ..self.with_route("home?anchor=" + anchor), copied_text: None }
     OpenTutorial => { ..self.with_route("tutorial"), copied_text: None }

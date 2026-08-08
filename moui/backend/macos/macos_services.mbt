@@ -109,10 +109,7 @@ pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
 pub fn macos_accessibility_bridge(
   driver : @runtime.HostRuntimeDriver,
 ) -> @accesskit_bridge.AccessKitBridge {
-  @accesskit_bridge.AccessKitBridge::driver(
-    diagnostic_name="appkit",
-    driver~,
-  )
+  @accesskit_bridge.AccessKitBridge::driver(diagnostic_name="appkit", driver~)
 }
 
 ///|

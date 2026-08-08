@@ -1261,8 +1261,9 @@ fn run_async_image_second_frame_smoke() -> Unit {
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
     image_records=() => renderer.image_resources(),
-    apply_image_load_completion=completion =>
-      renderer.apply_image_resource_load_completion(completion),
+    apply_image_load_completion=completion => {
+      renderer.apply_image_resource_load_completion(completion)
+    },
     image_decoder=Some(
       @render.RendererImageDecoder::new(decode=(source, _bytes) => {
         @skia_renderer.skia_image_load_completion(source)
@@ -1270,9 +1271,9 @@ fn run_async_image_second_frame_smoke() -> Unit {
     ),
   )
   let redraws = Ref(0)
-  let tasks = @window_image.WindowImageTasks::new(
-    request_redraw=() => redraws.val = redraws.val + 1,
-  )
+  let tasks = @window_image.WindowImageTasks::new(request_redraw=() => {
+    redraws.val = redraws.val + 1
+  })
   let mut request_count = 0
   for event in host_renderer.drain_events() {
     match event {
@@ -1413,8 +1414,9 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
     image_records=() => renderer.image_resources(),
-    apply_image_load_completion=completion =>
-      renderer.apply_image_resource_load_completion(completion),
+    apply_image_load_completion=completion => {
+      renderer.apply_image_resource_load_completion(completion)
+    },
     image_decoder=Some(
       @render.RendererImageDecoder::new(decode=(source, _bytes) => {
         @skia_renderer.skia_image_load_completion(source)
