@@ -309,7 +309,12 @@ test "pdf workbench side panels scroll while reader stays expanded" {
       diagnostic: "fake raster",
     }),
   }
-  let runtime = model.runtime(width=1280.0, height=620.0)
+  let latest = Ref(model)
+  let runtime = model.tracked_test_runtime(
+    latest,
+    width=1280.0,
+    height=620.0,
+  )
   guard pdf_workbench_text_frame(runtime.draw_commands(), "Pages")
     is Some(sidebar_frame) else {
     fail("expected sidebar frame")
@@ -322,9 +327,9 @@ test "pdf workbench side panels scroll while reader stays expanded" {
     fail("expected reader image before side scroll")
   }
   pdf_workbench_scroll_at(runtime, sidebar_frame, dy=-220.0)
-  assert_true(model.sidebar_scroll.y > 0.0)
+  assert_true(latest.val.sidebar_scroll.y > 0.0)
   pdf_workbench_scroll_at(runtime, inspector_frame, dy=-220.0)
-  assert_true(model.inspector_scroll.y > 0.0)
+  assert_true(latest.val.inspector_scroll.y > 0.0)
   guard pdf_workbench_image_frame(runtime.draw_commands()) is Some(after_image) else {
     fail("expected reader image after side scroll")
   }
