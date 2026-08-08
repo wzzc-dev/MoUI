@@ -219,6 +219,32 @@ test "pdf workbench narrow viewport prioritizes reader canvas" {
   assert_true(narrow_image.size.width > 600.0)
 }
 
+
+///|
+/// Runtime that records the latest model value into `latest` on every
+/// update/view pass, so tests can observe scroll offsets and other model
+/// state that is now carried by messages instead of mutable references.
+fn PdfWorkbenchModel::tracked_test_runtime(
+  self : PdfWorkbenchModel,
+  latest : Ref[PdfWorkbenchModel],
+  width~ : Double,
+  height~ : Double,
+) -> @runtime.AppRuntime {
+  let program = @moui.Program::new_with_environment(
+    init=() => (self, @moui.Effect::none()),
+    update=(model, message) => {
+      let next = model.update(message)
+      latest.val = next
+      (next, @moui.Effect::none())
+    },
+    view=(model, env) => {
+      latest.val = model
+      model.view_with_environment(env)
+    },
+  )
+  pdf_workbench_test_runtime(program, width~, height~)
+}
+
 ///|
 test "pdf workbench narrow viewport keeps compact edit controls usable" {
   let bytes = pdf_workbench_minimum_pdf_bytes()
