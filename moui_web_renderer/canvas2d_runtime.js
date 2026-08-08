@@ -734,13 +734,52 @@ export function createCanvas2dImports(options = {}) {
         const r0 = values[i + 7];
         const g0 = values[i + 8];
         const b0 = values[i + 9];
-        ctx.fillStyle = cssColor({ r: r0, g: g0, b: b0, a: (a0 + a1 + a2) / 3 });
+        const r1 = values[i + stride + 7];
+        const g1 = values[i + stride + 8];
+        const b1 = values[i + stride + 9];
+        const r2 = values[i + stride * 2 + 7];
+        const g2 = values[i + stride * 2 + 8];
+        const b2 = values[i + stride * 2 + 9];
+        // Canvas2D has no per-vertex shader interpolation. Approximate the
+        // WebGPU path mesh gradient with a linear gradient along the longest
+        // triangle edge (va->vb) and place the third vertex's color at its
+        // projection onto that edge, so adjacent triangles blend
+        // continuously instead of flat-filling with a single average color.
+        const alpha = (a0 + a1 + a2) / 3;
+        const edges = [
+          { ax: x0, ay: y0, bx: x1, by: y1, cx: x2, cy: y2, ca: a0, cr: r0, cg: g0, cb: b0, aa: a1, ar: r1, ag: g1, ab: b1, ba: a2, br: r2, bg: g2, bb: b2 },
+          { ax: x1, ay: y1, bx: x2, by: y2, cx: x0, cy: y0, ca: a1, cr: r1, cg: g1, cb: b1, aa: a2, ar: r2, ag: g2, ab: b2, ba: a0, br: r0, bg: g0, bb: b0 },
+          { ax: x2, ay: y2, bx: x0, by: y0, cx: x1, cy: y1, ca: a2, cr: r2, cg: g2, cb: b2, aa: a0, ar: r0, ag: g0, ab: b0, ba: a1, br: r1, bg: g1, bb: b1 },
+        ];
+        let best = edges[0];
+        let bestLen = -1;
+        for (const e of edges) {
+          const len = (e.bx - e.ax) * (e.bx - e.ax) + (e.by - e.ay) * (e.by - e.ay);
+          if (len > bestLen) {
+            bestLen = len;
+            best = e;
+          }
+        }
+        const dx = best.bx - best.ax;
+        const dy = best.by - best.ay;
+        const t = bestLen > 0
+          ? Math.max(0, Math.min(1, ((best.cx - best.ax) * dx + (best.cy - best.ay) * dy) / bestLen))
+          : 0.5;
+        ctx.save();
         ctx.beginPath();
         ctx.moveTo(x0, y0);
         ctx.lineTo(x1, y1);
         ctx.lineTo(x2, y2);
         ctx.closePath();
+        ctx.clip();
+        const gradient = ctx.createLinearGradient(best.ax, best.ay, best.bx, best.by);
+        gradient.addColorStop(0, cssColor({ r: best.ar, g: best.ag, b: best.ab, a: best.aa }));
+        gradient.addColorStop(t, cssColor({ r: best.cr, g: best.cg, b: best.cb, a: best.ca }));
+        gradient.addColorStop(1, cssColor({ r: best.br, g: best.bg, b: best.bb, a: best.ba }));
+        ctx.fillStyle = gradient;
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
         ctx.fill();
+        ctx.restore();
       }
       return ok();
     },
