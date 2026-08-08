@@ -19,7 +19,10 @@ pub fn wait_fetch(_timeout_ms : Int) -> FetchOutcome? {
 
 ///|
 /// 批量抓取占位:全部按失败处理(与 urls 1:1)。
-pub fn fetch_resources(urls : Array[String], _proxy : String?) -> Array[FetchedResource] {
+pub fn fetch_resources(
+  urls : Array[String],
+  _proxy : String?,
+) -> Array[FetchedResource] {
   let out : Array[FetchedResource] = []
   for _ in urls {
     out.push({ ok: false, body: "" })

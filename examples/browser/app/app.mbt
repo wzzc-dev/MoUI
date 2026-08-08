@@ -28,24 +28,11 @@ pub let default_proxy : String? = Some("http://127.0.0.1:7897")
 /// 网络加载期间显示的内置页面。
 fn loading_html(url : String) -> String {
   [
-    "<!DOCTYPE html>",
-    "<html>",
-    "<head>",
-    "<style>",
-    "  body { font-family: sans-serif; margin: 0; padding: 16px; background: #f2f4f7; }",
-    "  .card {",
-    "    background: white; border-radius: 8px; padding: 12px;",
-    "    margin: 10px 0; border: 1px solid #dadce0;",
-    "  }",
-    "</style>",
-    "</head>",
-    "<body>",
-    "  <h1 style='color:#1a73e8'>加载中…</h1>",
-    "  <div class='card'><b>",
-    url,
-    "</b><p>正在通过网络获取页面。首次加载可能需要几秒。</p></div>",
-    "</body>",
-    "</html>",
+    "<!DOCTYPE html>", "<html>", "<head>", "<style>", "  body { font-family: sans-serif; margin: 0; padding: 16px; background: #f2f4f7; }",
+    "  .card {", "    background: white; border-radius: 8px; padding: 12px;", "    margin: 10px 0; border: 1px solid #dadce0;",
+    "  }", "</style>", "</head>", "<body>", "  <h1 style='color:#1a73e8'>加载中…</h1>",
+    "  <div class='card'><b>", url, "</b><p>正在通过网络获取页面。首次加载可能需要几秒。</p></div>",
+    "</body>", "</html>",
   ].join("\n")
 }
 
@@ -53,25 +40,10 @@ fn loading_html(url : String) -> String {
 /// 网络加载失败时显示的内置页面。
 fn error_html(url : String, message : String) -> String {
   [
-    "<!DOCTYPE html>",
-    "<html>",
-    "<head>",
-    "<style>",
-    "  body { font-family: sans-serif; margin: 0; padding: 16px; background: #f2f4f7; }",
-    "  .card {",
-    "    background: white; border-radius: 8px; padding: 12px;",
-    "    margin: 10px 0; border: 1px solid #dadce0;",
-    "  }",
-    "</style>",
-    "</head>",
-    "<body>",
-    "  <h1 style='color:#d93025'>加载失败</h1>",
-    "  <div class='card'><b>",
-    url,
-    "</b><p>",
-    message,
-    "</p></div>",
-    "</body>",
+    "<!DOCTYPE html>", "<html>", "<head>", "<style>", "  body { font-family: sans-serif; margin: 0; padding: 16px; background: #f2f4f7; }",
+    "  .card {", "    background: white; border-radius: 8px; padding: 12px;", "    margin: 10px 0; border: 1px solid #dadce0;",
+    "  }", "</style>", "</head>", "<body>", "  <h1 style='color:#d93025'>加载失败</h1>",
+    "  <div class='card'><b>", url, "</b><p>", message, "</p></div>", "</body>",
     "</html>",
   ].join("\n")
 }
@@ -100,7 +72,10 @@ pub(all) enum Msg {
 }
 
 ///|
-pub fn Model::new(address? : String = default_url, proxy? : String? = default_proxy) -> Model {
+pub fn Model::new(
+  address? : String = default_url,
+  proxy? : String? = default_proxy,
+) -> Model {
   {
     address,
     status: "ready",
@@ -124,7 +99,8 @@ pub fn update(model : Model, message : Msg) -> (Model, @moui.Effect[Msg]) {
     PollNetwork => model.poll_network()
     CanvasDrag(event) =>
       match event.phase {
-        @core.DragGesturePhase::Ended => model.handle_canvas_click(event.position)
+        @core.DragGesturePhase::Ended =>
+          model.handle_canvas_click(event.position)
         _ => (model, @moui.Effect::none())
       }
   }
@@ -136,7 +112,11 @@ pub fn update(model : Model, message : Msg) -> (Model, @moui.Effect[Msg]) {
 /// pure-MoonBit JS engine with the DOM bridge shim (`document`/`window`
 /// basics): scripts build a shadow DOM which is serialized back to HTML
 /// before crater rendering.
-fn Model::render_source(self : Model, source : String, origin : String) -> Model {
+fn Model::render_source(
+  self : Model,
+  source : String,
+  origin : String,
+) -> Model {
   let (html, run) = @moui_crater.render_page_with_resources(
     self.js,
     source,
@@ -144,17 +124,18 @@ fn Model::render_source(self : Model, source : String, origin : String) -> Model
     self.proxy,
   )
   let result = @moui_crater.render_html_document(
-    html,
-    content_width,
-    content_height,
+    html, content_width, content_height,
   )
   let scripts = @moui_crater.extract_scripts(source)
   let logs = self.console_logs
   for line in run.outputs {
     logs.push(line)
   }
-  let mut status = "rendered " + result.commands.length().to_string() + " cmds, " +
-    result.links.length().to_string() + " links"
+  let mut status = "rendered " +
+    result.commands.length().to_string() +
+    " cmds, " +
+    result.links.length().to_string() +
+    " links"
   if scripts.length() > 0 {
     status = status + ", ran " + scripts.length().to_string() + " scripts"
   }
@@ -201,16 +182,16 @@ fn Model::poll_network(self : Model) -> (Model, @moui.Effect[Msg]) {
   match @moui_crater.poll_fetch() {
     Some(@moui_crater.FetchOutcome::Fetched(html~)) =>
       (
-        {
-          ..self.render_source(html, self.pending_url),
-          loading: false,
-        },
+        { ..self.render_source(html, self.pending_url), loading: false },
         @moui.Effect::none(),
       )
     Some(@moui_crater.FetchOutcome::FetchFailed(message~)) =>
       (
         {
-          ..self.render_source(error_html(self.pending_url, message), self.pending_url),
+          ..self.render_source(
+            error_html(self.pending_url, message),
+            self.pending_url,
+          ),
           loading: false,
           status: "load failed: " + self.pending_url + " (" + message + ")",
         },
@@ -221,15 +202,21 @@ fn Model::poll_network(self : Model) -> (Model, @moui.Effect[Msg]) {
 }
 
 ///|
-fn Model::handle_canvas_click(self : Model, position : @core.Point) -> (Model, @moui.Effect[Msg]) {
+fn Model::handle_canvas_click(
+  self : Model,
+  position : @core.Point,
+) -> (Model, @moui.Effect[Msg]) {
   match self.link_at(position) {
     Some(href) => self.navigate(href)
     None =>
       (
         {
           ..self,
-          status: "clicked at (" + position.x.to_string() + ", " +
-          position.y.to_string() + ")",
+          status: "clicked at (" +
+          position.x.to_string() +
+          ", " +
+          position.y.to_string() +
+          ")",
         },
         @moui.Effect::none(),
       )
@@ -239,8 +226,10 @@ fn Model::handle_canvas_click(self : Model, position : @core.Point) -> (Model, @
 ///|
 fn Model::link_at(self : Model, position : @core.Point) -> String? {
   for link in self.links {
-    if position.x >= link.x && position.x <= link.x + link.width &&
-      position.y >= link.y && position.y <= link.y + link.height {
+    if position.x >= link.x &&
+      position.x <= link.x + link.width &&
+      position.y >= link.y &&
+      position.y <= link.y + link.height {
       return Some(link.href)
     }
   }
@@ -264,13 +253,12 @@ pub fn program(
   environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[Model, Msg] {
   @moui.Program::new(
-    init=() => {
-      // 启动即导航默认页;init 同步渲染加载页,网络在后台线程进行
-      Model::new(proxy=proxy).navigate(initial_url)
-    },
+    init=(
+    // 启动即导航默认页;init 同步渲染加载页,网络在后台线程进行
+    ) => Model::new(proxy~).navigate(initial_url),
     update=(model, message) => update(model, message),
     view~,
-    subscriptions=model =>
+    subscriptions=model => {
       if model.loading {
         match environment.timer() {
           Some(source) =>
@@ -284,7 +272,8 @@ pub fn program(
         }
       } else {
         @moui.Subscription::none()
-      },
+      }
+    },
   )
 }
 
@@ -292,13 +281,11 @@ pub fn program(
 pub fn view(model : Model) -> @moui.View[Msg] {
   let theme = @views.default_theme()
   column(
-    [
-      header(model, theme),
-      toolbar(model),
-      expanded(content_surface(model)),
-    ],
+    [header(model, theme), toolbar(model), expanded(content_surface(model))],
     spacing=12.0,
-  ).padding(16.0).background(theme.palette.background)
+  )
+  .padding(16.0)
+  .background(theme.palette.background)
 }
 
 ///|
@@ -309,13 +296,15 @@ fn header(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
         column(
           [
             text("MoUI Browser").font(theme.typography.title),
-            text(model.status).font(theme.typography.caption)
+            text(model.status)
+            .font(theme.typography.caption)
             .foreground(theme.palette.muted),
             if model.console_logs.length() > 0 {
               text(
                 "console: " +
                 model.console_logs[model.console_logs.length() - 1],
-              ).font(theme.typography.caption)
+              )
+              .font(theme.typography.caption)
               .foreground(theme.palette.muted)
             } else {
               text("").font(theme.typography.caption)
@@ -344,7 +333,11 @@ fn toolbar(model : Model) -> @moui.View[Msg] {
           width=640.0,
           height=34.0,
         ),
-        button("Go", on_click=LoadAddress, variant=@views.ButtonVariant::Primary),
+        button(
+          "Go",
+          on_click=LoadAddress,
+          variant=@views.ButtonVariant::Primary,
+        ),
       ],
       spacing=8.0,
       align=@views.CrossAlign::Center,
@@ -367,7 +360,9 @@ fn content_surface(model : Model) -> @moui.View[Msg] {
         { width: content_width, height: content_height }
       },
       draw=fn(ctx : @views.PaintContext, _frame : @core.Rect) -> Unit {
-        ctx.commands.push(@core.DrawCommand::Clear({r: 1.0, g: 1.0, b: 1.0, a: 1.0}))
+        ctx.commands.push(
+          @core.DrawCommand::Clear({ r: 1.0, g: 1.0, b: 1.0, a: 1.0 }),
+        )
         for command in model.commands {
           ctx.commands.push(command)
         }

@@ -563,9 +563,7 @@ fn MarkdownEditorApp::document_status_label_for_test(
     fallback=snapshot.active_heading,
   )
   let save_state = if self.is_dirty() { "Unsaved" } else { "Saved" }
-  let transfer = markdown_editor_transfer_status_label(
-    self.transfer_status,
-  )
+  let transfer = markdown_editor_transfer_status_label(self.transfer_status)
   let transfer_suffix = if transfer == "" { "" } else { " / " + transfer }
   let mode_suffix = self.writing_mode_status_suffix()
   let look_suffix = self.appearance_status_suffix()

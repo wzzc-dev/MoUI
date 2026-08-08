@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/services" @services,
+  "wzzc-dev/moui/services",
   "examples/browser/app",
 }
 

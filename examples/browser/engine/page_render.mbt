@@ -18,7 +18,9 @@ pub fn render_html_with_js(
       // 无内联样式/脚本的包装;页面自带 <head> 内容(如内联 CSS)在此丢失,
       // 属已知限制(影子 DOM 只承载 body)
       (
-        "<!DOCTYPE html><html><head></head><body>" + body_html + "</body></html>",
+        "<!DOCTYPE html><html><head></head><body>" +
+        body_html +
+        "</body></html>",
         run,
       )
     _ => (source, run)
@@ -135,7 +137,9 @@ pub fn render_page_with_resources(
       (
         "<!DOCTYPE html><html><head>" +
         style_html.to_string() +
-        "</head><body>" + body_html + "</body></html>",
+        "</head><body>" +
+        body_html +
+        "</body></html>",
         run,
       )
     _ => {
@@ -155,8 +159,7 @@ pub fn render_page_with_resources(
 fn inject_styles(source : String, style_html : String) -> String {
   let head_end = source.find("</head>")
   match head_end {
-    Some(i) =>
-      source[:i].to_owned() + style_html + source[i:].to_owned()
+    Some(i) => source[:i].to_owned() + style_html + source[i:].to_owned()
     None => "<head>" + style_html + "</head>" + source
   }
 }

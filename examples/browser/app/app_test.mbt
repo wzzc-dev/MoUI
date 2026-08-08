@@ -91,7 +91,9 @@ test "navigated data-url page runs its scripts" {
   let model = next(
     Model::new(proxy=None),
     Msg::AddressChanged(
-      "<a href='" + href + "' style='display:block;width:100px;height:20px'>go</a>",
+      "<a href='" +
+      href +
+      "' style='display:block;width:100px;height:20px'>go</a>",
     ),
   )
   let rendered = next(model, Msg::LoadAddress)
@@ -115,9 +117,7 @@ test "navigated data-url page runs its scripts" {
 test "page scripts run on load and logs land in model" {
   let model = next(
     Model::new(proxy=None),
-    Msg::AddressChanged(
-      "<script>console.log('hello js')</script><h1>t</h1>",
-    ),
+    Msg::AddressChanged("<script>console.log('hello js')</script><h1>t</h1>"),
   )
   let rendered = next(model, Msg::LoadAddress)
   inspect(rendered.script_errors, content="0")
@@ -130,16 +130,15 @@ test "page scripts run on load and logs land in model" {
 test "script errors are reported in status" {
   let model = next(
     Model::new(proxy=None),
-    Msg::AddressChanged(
-      "<script>throw new Error('x')</script><h1>t</h1>",
-    ),
+    Msg::AddressChanged("<script>throw new Error('x')</script><h1>t</h1>"),
   )
   let rendered = next(model, Msg::LoadAddress)
   inspect(rendered.script_errors, content="1")
   inspect(rendered.status.contains("1 script errors"), content="true")
 }
 
-///| init 即渲染加载页:首帧必须含内容区绘制(body 背景矩形),而非仅 UI 文字
+///|
+/// init 即渲染加载页:首帧必须含内容区绘制(body 背景矩形),而非仅 UI 文字
 test "program init renders the loading page into the first frame" {
   let runtime = @runtime.new_program_with_dimensions(
     program=program(
@@ -179,12 +178,15 @@ test "page script builds DOM via document API and renders it" {
   let rendered = next(model, Msg::LoadAddress)
   inspect(rendered.script_errors, content="0")
   // JS 生成的 div 应出现在绘制命令里(带背景填充)
-  let has_js_box = rendered.commands.iter().any(fn(c) {
-    match c {
-      @core.DrawCommand::FillRect(rect, _) => rect.size.width > 150.0 && rect.size.height > 40.0
-      _ => false
-    }
-  })
+  let has_js_box = rendered.commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        @core.DrawCommand::FillRect(rect, _) =>
+          rect.size.width > 150.0 && rect.size.height > 40.0
+        _ => false
+      }
+    })
   inspect(has_js_box, content="true")
   inspect(rendered.status.contains("ran 1 scripts"), content="true")
 }

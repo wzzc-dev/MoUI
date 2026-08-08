@@ -58,14 +58,18 @@ fn inject_anchor_ids(html : String) -> (String, Array[String?]) {
   let mut n = 0
   while i < len {
     // Skip HTML comments.
-    if i + 3 < len && html[i] == '<' && html[i + 1] == '!' && html[i + 2] == '-' &&
+    if i + 3 < len &&
+      html[i] == '<' &&
+      html[i + 1] == '!' &&
+      html[i + 2] == '-' &&
       html[i + 3] == '-' {
       let mut j = i + 4
-      while j + 2 < len && !(html[j] == '-' && html[j + 1] == '-' && html[j + 2] == '>') {
+      while j + 2 < len &&
+            !(html[j] == '-' && html[j + 1] == '-' && html[j + 2] == '>') {
         j = j + 1
       }
       let end = if j + 2 < len { j + 3 } else { len }
-      buf.write_string(html.unsafe_substring(start=i, end=end))
+      buf.write_string(html.unsafe_substring(start=i, end~))
       i = end
       continue
     }
@@ -75,14 +79,16 @@ fn inject_anchor_ids(html : String) -> (String, Array[String?]) {
       while j + 8 < len {
         let c = html[j]
         let c2 = html[j + 1]
-        if (c == '<' || c == '/') && (c2 == 's' || c2 == 'S') &&
+        if (c == '<' || c == '/') &&
+          (c2 == 's' || c2 == 'S') &&
           (html[j + 2] == 'c' || html[j + 2] == 'C') &&
           (html[j + 3] == 'r' || html[j + 3] == 'R') &&
           (html[j + 4] == 'i' || html[j + 4] == 'I') &&
           (html[j + 5] == 'p' || html[j + 5] == 'P') &&
           (html[j + 6] == 't' || html[j + 6] == 'T') {
           let after = html[j + 7]
-          if c == '/' && (after == ' ' || after == '\t' || after == '\n' || after == '>') {
+          if c == '/' &&
+            (after == ' ' || after == '\t' || after == '\n' || after == '>') {
             break
           }
         }
@@ -93,19 +99,21 @@ fn inject_anchor_ids(html : String) -> (String, Array[String?]) {
         end = end + 1
       }
       end = if end < len { end + 1 } else { len }
-      buf.write_string(html.unsafe_substring(start=i, end=end))
+      buf.write_string(html.unsafe_substring(start=i, end~))
       i = end
       continue
     }
-    if html[i] == '<' && i + 1 < len && (html[i + 1] == 'a' || html[i + 1] == 'A') {
+    if html[i] == '<' &&
+      i + 1 < len &&
+      (html[i + 1] == 'a' || html[i + 1] == 'A') {
       let j = i + 2
-      let next = if j < len {
-        html[j]
-      } else {
-        ' '
-      }
-      let is_tag = next == ' ' || next == '\t' || next == '\n' || next == '\r' ||
-        next == '>' || next == '/'
+      let next = if j < len { html[j] } else { ' ' }
+      let is_tag = next == ' ' ||
+        next == '\t' ||
+        next == '\n' ||
+        next == '\r' ||
+        next == '>' ||
+        next == '/'
       if is_tag {
         // Quote-aware scan to the tag end; capture href in the same pass.
         let mut k = j
@@ -121,7 +129,8 @@ fn inject_anchor_ids(html : String) -> (String, Array[String?]) {
             quote = c
           } else if c == '>' {
             break
-          } else if k + 4 < len && (c == 'h' || c == 'H') &&
+          } else if k + 4 < len &&
+            (c == 'h' || c == 'H') &&
             (html[k + 1] == 'r' || html[k + 1] == 'R') &&
             (html[k + 2] == 'e' || html[k + 2] == 'E') &&
             (html[k + 3] == 'f' || html[k + 3] == 'F') &&
@@ -156,7 +165,8 @@ fn inject_anchor_ids(html : String) -> (String, Array[String?]) {
   (buf.to_string(), hrefs)
 }
 
-///| True when `i` points at a `<script` start tag (followed by whitespace, '>' or '/').
+///|
+/// True when `i` points at a `<script` start tag (followed by whitespace, '>' or '/').
 fn is_script_start(html : String, i : Int) -> Bool {
   if i + 7 >= html.length() || html[i] != '<' {
     return false
@@ -170,7 +180,11 @@ fn is_script_start(html : String, i : Int) -> Bool {
     return false
   }
   let after = html[i + 7]
-  after == ' ' || after == '\t' || after == '\n' || after == '\r' || after == '>'
+  after == ' ' ||
+  after == '\t' ||
+  after == '\n' ||
+  after == '\r' ||
+  after == '>'
 }
 
 ///|
@@ -183,7 +197,7 @@ fn collect_anchor_links(
 ) -> Array[LinkRegion] {
   let out : Array[LinkRegion] = []
   fn visit(node : @paint_model.PaintNode, ox : Double, oy : Double) -> Unit {
-    if !(node.paint.should_render()) {
+    if !node.paint.should_render() {
       return
     }
     if node.tag == "a" && node.width > 0.0 && node.height > 0.0 {
@@ -211,18 +225,18 @@ fn collect_anchor_links(
   out
 }
 
-///| Parse the synthetic anchor id suffix, e.g. "a#__crater_lnk_3" -> 3.
+///|
+/// Parse the synthetic anchor id suffix, e.g. "a#__crater_lnk_3" -> 3.
 fn anchor_index(id : String) -> Int? {
   let marker = "__crater_lnk_"
   match id.find(marker) {
     None => None
     Some(i) => {
-      let suffix = id.unsafe_substring(start=i + marker.length(), end=id.length())
-      let parsed = try {
-        Some(@string.parse_int(suffix))
-      } catch {
-        _ => None
-      }
+      let suffix = id.unsafe_substring(
+        start=i + marker.length(),
+        end=id.length(),
+      )
+      let parsed = Some(@string.parse_int(suffix)) catch { _ => None }
       parsed
     }
   }

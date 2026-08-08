@@ -10,9 +10,9 @@ test "extract scripts skips external src" {
 ///|
 test "js engine executes scripts and captures console" {
   let engine = JsEngine::new()
-  let result = engine.run_scripts(
-    ["console.log(1 + 2)", "var x = 40; console.log(x + 2)"],
-  )
+  let result = engine.run_scripts([
+    "console.log(1 + 2)", "var x = 40; console.log(x + 2)",
+  ])
   inspect(result.outputs.length(), content="2")
   inspect(result.outputs[0], content="3")
   inspect(result.outputs[1], content="42")
@@ -22,9 +22,9 @@ test "js engine executes scripts and captures console" {
 ///|
 test "script errors are captured non-fatally" {
   let engine = JsEngine::new()
-  let result = engine.run_scripts(
-    ["throw new Error('boom')", "console.log('after')"],
-  )
+  let result = engine.run_scripts([
+    "throw new Error('boom')", "console.log('after')",
+  ])
   inspect(result.errors.length(), content="1")
   inspect(result.outputs.length(), content="1")
   inspect(result.outputs[0], content="after")

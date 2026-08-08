@@ -3,10 +3,11 @@ package "examples/browser"
 
 import {
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
 }
 
 // Values
-pub fn runtime() -> @runtime.AppRuntime
+pub fn runtime(environment? : @services.AppEnvironment) -> @runtime.AppRuntime
 
 // Errors
 
