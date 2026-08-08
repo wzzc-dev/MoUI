@@ -284,7 +284,7 @@ fn initialize_result() -> Json {
     {
       "protocolVersion": mcp_protocol_version,
       "capabilities": { "tools": Json::empty_object() },
-      "serverInfo": { "name": "moui-agent", "version": "0.2.0" },
+      "serverInfo": { "name": "moui-agent", "version": "0.1.9" },
     } : Json)
 }
 

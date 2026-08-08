@@ -1,13 +1,13 @@
 name = "wzzc-dev/moui_wgpu_renderer"
 
-version = "0.2.0"
+version = "0.1.9"
 
 preferred_target = "native"
 
 supported_targets = "native"
 
 import {
-  "wzzc-dev/moui@0.2.0",
+  "wzzc-dev/moui@0.1.9",
   "Milky2018/moon_cosmic@0.3.3",
   "Milky2018/moon_swash@0.1.10",
   "Milky2018/wgpu_mbt@0.14.8",

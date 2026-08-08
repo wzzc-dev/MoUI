@@ -1,5 +1,5 @@
 ///|
-let default_moui_dependency_version : String = "0.2.0"
+let default_moui_dependency_version : String = "0.1.9"
 
 ///|
 priv struct PlannedFile {
