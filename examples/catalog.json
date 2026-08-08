@@ -17,6 +17,7 @@
     {"id": "mo_desktop", "path": "examples/mo_desktop", "title": "Mo Desktop", "featured": true},
     {"id": "mo_workbench", "path": "examples/mo_workbench", "title": "Mo Workbench", "featured": true},
     {"id": "code_editor", "path": "examples/code_editor", "title": "Code Editor", "featured": false},
+    {"id": "browser", "path": "examples/browser", "title": "Browser", "featured": false},
     {"id": "webview_demo", "path": "examples/webview_demo", "title": "WebView Demo", "featured": false},
     {"id": "excel", "path": "examples/excel", "title": "Excel Viewer", "featured": true},
     {"id": "terminal", "path": "examples/terminal", "title": "Terminal", "featured": true}

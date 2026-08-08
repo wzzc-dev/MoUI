@@ -219,7 +219,6 @@ test "pdf workbench narrow viewport prioritizes reader canvas" {
   assert_true(narrow_image.size.width > 600.0)
 }
 
-
 ///|
 /// Runtime that records the latest model value into `latest` on every
 /// update/view pass, so tests can observe scroll offsets and other model
@@ -336,11 +335,7 @@ test "pdf workbench side panels scroll while reader stays expanded" {
     }),
   }
   let latest = Ref(model)
-  let runtime = model.tracked_test_runtime(
-    latest,
-    width=1280.0,
-    height=620.0,
-  )
+  let runtime = model.tracked_test_runtime(latest, width=1280.0, height=620.0)
   guard pdf_workbench_text_frame(runtime.draw_commands(), "Pages")
     is Some(sidebar_frame) else {
     fail("expected sidebar frame")
