@@ -17,9 +17,9 @@ window/<platform>/template / 原生 Activity|UIApp|Ability
         → window/internal/embedded_dispatch physical callback dispatch
         → EventLoop.pump / run_app
         → *EmbeddedRuntimeBackend (moui/backend/{android,ios,harmonyos})
-        → backend/common（中立 lifecycle/surface 转换）
-        → HostedWindowBackend / HostedRuntimeSession
-        → Skia WindowRenderer
+        → backend/common/lifecycle::EmbeddedLifecycle
+        → backend/common/embedded::EmbeddedSession
+        → Skia RendererSession
 ```
 
 window-hosted 是唯一受支持的嵌入运行时后端路径。不要在 `HostCmd` 和
@@ -27,10 +27,11 @@ window-hosted 是唯一受支持的嵌入运行时后端路径。不要在 `Host
 
 `window/internal/embedded_dispatch` 只依赖 `window/core` 与 `window/dpi`，负责把
 物理 HostCmd 按顺序转换为 callback。MoUI 的
-`EmbeddedWindowCoordinator` 统一拥有 lifecycle phase、surface generation、
+`common/lifecycle::EmbeddedLifecycle` 统一拥有 lifecycle phase、surface generation、
 当前 surface、primary-window routing、detach 与 exit intent；进入 MoUI 后，
-`embedded_runtime` 提供 session 能力，`FrameCoordinator` 统一拥有 redraw、
-completion、image repaint 与 IME hook 时序。
+`common/embedded::EmbeddedSession` 组合 frame/image/input/services owner 与
+renderer、IME、semantics、platform-view、transport 能力，不拥有第二套 phase、
+surface generation 或 frame loop。
 
 ## 包
 
@@ -40,8 +41,9 @@ completion、image repaint 与 IME hook 时序。
 | iOS 嵌入运行时后端 | `moui/backend/ios/window_hosted.mbt`（`IosEmbeddedRuntimeBackend`） |
 | HarmonyOS 嵌入运行时后端 | `moui/backend/harmonyos/window_hosted.mbt`（`HarmonyOSEmbeddedRuntimeBackend`） |
 | 物理 callback dispatch | `window/modules/window/internal/embedded_dispatch` |
-| MoUI 逻辑 lifecycle/surface owner | `moui/backend/common` 中的 `EmbeddedWindowCoordinator` |
-| 共享 embedded callback services | `moui/backend/common/embedded/services` |
+| MoUI 逻辑 lifecycle/surface owner | `moui/backend/common/lifecycle` 中的 `EmbeddedLifecycle` |
+| 共享 embedded callback services | `moui/backend/common/services/embedded` |
+| 共享 frame/image/input/services owner | `moui/backend/common/{frame,image,input,services}` |
 | 共享 MoUI hosted runtime | `moui/backend/common/embedded` |
 | Counter 入口 | `examples/counter/{android,ios,harmonyos}_window_hosted` |
 | 移动端状态 | `checks/platforms/{android,ios,harmonyos}.json` |

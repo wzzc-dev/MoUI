@@ -3,7 +3,7 @@
 pub struct AppLaunchRequest {
   title : String
   runtime : AppRuntime
-  renderer_factories : Array[@render.RendererFactory]
+  renderer_providers : Array[@render.RendererProvider]
   window_requests : @backend_host.WindowRequests
 }
 
@@ -18,10 +18,10 @@ pub fn AppLaunchRequest::runtime(self : AppLaunchRequest) -> AppRuntime {
 }
 
 ///|
-pub fn AppLaunchRequest::renderer_factories(
+pub fn AppLaunchRequest::renderer_providers(
   self : AppLaunchRequest,
-) -> Array[@render.RendererFactory] {
-  self.renderer_factories.copy()
+) -> Array[@render.RendererProvider] {
+  self.renderer_providers.copy()
 }
 
 ///|
@@ -78,7 +78,7 @@ pub async fn PlatformEntry::launch_async_pump(
 pub struct AppBuilder {
   title : String
   runtime : AppRuntime
-  renderer_factories : Array[@render.RendererFactory]
+  renderer_providers : Array[@render.RendererProvider]
   backend : PlatformEntry?
   window_requests : @backend_host.WindowRequests
 }
@@ -88,7 +88,7 @@ pub fn run_app(title : String, runtime : AppRuntime) -> AppBuilder {
   {
     title,
     runtime,
-    renderer_factories: [],
+    renderer_providers: [],
     backend: None,
     window_requests: @backend_host.WindowRequests::unavailable(),
   }
@@ -97,23 +97,23 @@ pub fn run_app(title : String, runtime : AppRuntime) -> AppBuilder {
 ///|
 pub fn AppBuilder::render(
   self : AppBuilder,
-  factory : @render.RendererFactory,
+  provider : @render.RendererProvider,
 ) -> AppBuilder {
-  let factories = self.renderer_factories.copy()
-  factories.push(factory)
-  { ..self, renderer_factories: factories }
+  let providers = self.renderer_providers.copy()
+  providers.push(provider)
+  { ..self, renderer_providers: providers }
 }
 
 ///|
 pub fn AppBuilder::render_all(
   self : AppBuilder,
-  factories : Array[@render.RendererFactory],
+  providers : Array[@render.RendererProvider],
 ) -> AppBuilder {
-  let next = self.renderer_factories.copy()
-  for factory in factories {
-    next.push(factory)
+  let next = self.renderer_providers.copy()
+  for provider in providers {
+    next.push(provider)
   }
-  { ..self, renderer_factories: next }
+  { ..self, renderer_providers: next }
 }
 
 ///|
@@ -134,8 +134,8 @@ pub fn AppBuilder::window_requests(
 
 ///|
 pub fn AppBuilder::run(self : AppBuilder) -> Unit {
-  if self.renderer_factories.is_empty() {
-    abort("runtime.run_app: at least one renderer factory is required")
+  if self.renderer_providers.is_empty() {
+    abort("runtime.run_app: at least one renderer provider is required")
   }
   let backend = match self.backend {
     Some(backend) => backend
@@ -144,7 +144,7 @@ pub fn AppBuilder::run(self : AppBuilder) -> Unit {
   backend.launch({
     title: self.title,
     runtime: self.runtime,
-    renderer_factories: self.renderer_factories,
+    renderer_providers: self.renderer_providers,
     window_requests: self.window_requests,
   })
 }
@@ -156,8 +156,8 @@ pub async fn AppBuilder::run_async_pump(
   self : AppBuilder,
   frame_interval_ms? : Int = 8,
 ) -> Unit {
-  if self.renderer_factories.is_empty() {
-    abort("runtime.run_app: at least one renderer factory is required")
+  if self.renderer_providers.is_empty() {
+    abort("runtime.run_app: at least one renderer provider is required")
   }
   let backend = match self.backend {
     Some(backend) => backend
@@ -167,7 +167,7 @@ pub async fn AppBuilder::run_async_pump(
     {
       title: self.title,
       runtime: self.runtime,
-      renderer_factories: self.renderer_factories,
+      renderer_providers: self.renderer_providers,
       window_requests: self.window_requests,
     },
     frame_interval_ms,

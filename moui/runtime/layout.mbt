@@ -56,6 +56,7 @@ fn ElementNode::measure_with_text_system(
     constraints,
     child_sizes: children.map(child => child.size),
     child_flex_weights: children.map(child => child.flex_weight),
+    state: self.control.view_state,
     text_system,
     environment,
     style,
@@ -130,6 +131,7 @@ fn ElementNode::place_measured_with_text_system(
     constraints: Constraints::tight(frame.size),
     child_sizes: self.children.map(child => child.intrinsic_size()),
     child_flex_weights: measured.children.map(child => child.flex_weight),
+    state: self.control.view_state,
     text_system,
     environment,
     style,
@@ -175,6 +177,7 @@ fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
       child_flex_weights: self.children.map(child => {
         child.view_node.flex_weight()
       }),
+      state: self.control.view_state,
       text_system: TextSystem::fallback(),
       environment: Environment::neutral(),
       style: ViewStyle::empty(),

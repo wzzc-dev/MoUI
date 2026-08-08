@@ -280,7 +280,7 @@ test "markdown editor quick format can toggle document info" {
   let app = MarkdownEditorApp::new()
   app.apply_action("format-palette")
   app.set_format_palette_query("document info")
-  ignore(app.update(ApplyFirstFormatPaletteAction))
+  app.update_in_place(ApplyFirstFormatPaletteAction)
   assert_true(app.document_info_visible())
   assert_false(app.format_palette_visible())
 }
@@ -290,7 +290,7 @@ test "markdown editor quick format can request html export" {
   let app = MarkdownEditorApp::new()
   app.apply_action("format-palette")
   app.set_format_palette_query("export html")
-  ignore(app.update(ApplyFirstFormatPaletteAction))
+  app.update_in_place(ApplyFirstFormatPaletteAction)
   assert_false(app.format_palette_visible())
   assert_true(
     app

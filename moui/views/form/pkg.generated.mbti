@@ -80,9 +80,10 @@ pub(all) enum FormFieldLayout {
 pub fn FormFieldLayout::to_string(Self) -> String
 
 type FormFieldState
-pub fn FormFieldState::binding(Self) -> @core.Binding[String]
 pub fn FormFieldState::new(name~ : String, initial? : String, label? : String, validator? : (String) -> String?, rules? : Array[FormValidationRule]) -> Self
 pub fn FormFieldState::validate(Self) -> FormFieldError?
+pub fn FormFieldState::value(Self) -> String
+pub fn FormFieldState::with_value(Self, String) -> Self
 
 pub(all) enum FormFieldStatus {
   Normal

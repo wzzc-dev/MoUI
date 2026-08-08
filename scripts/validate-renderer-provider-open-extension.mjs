@@ -8,13 +8,12 @@
  *
  * 1. No renderer identity branching exists in moui/core, moui/backend,
  *    or moui/runtime (non-composition-root) packages.
- * 2. Each renderer package (moui/render/skia, moui/render/wgpu, etc.)
- *    exports a create_*_provider function matching the RendererProvider
- *    contract.
+ * 2. Each renderer package exports its public RendererProvider constructors.
  * 3. Provider capability reporting is registration-driven; removed static
  *    backend-matrix APIs may not remain in production code.
  * 4. No direct native selector remains anywhere in the repository.
- * 5. RendererProviderBinding remains the production composition contract.
+ * 5. RendererProvider and RendererSession remain the only production
+ *    provider/session composition contract.
  *
  * Current mode: **enforce** — exits with error 1 on violations.
  *
@@ -63,10 +62,10 @@ function walkMbtFiles(dir, relativeTo = REPO_ROOT) {
 // RendererBackendKind in branching logic.
 // ---------------------------------------------------------------------------
 const SELECTION_ALLOWLIST_PREFIXES = [
-  "moui/render/skia",
-  "moui/render/wgpu",
-  "moui/render/sun",
-  "moui/render/canvas2d",
+  "moui_skia_renderer",
+  "moui_wgpu_renderer",
+  "moui_sun_renderer",
+  "moui_web_renderer/canvas2d",
   "moui/render",
 ];
 
@@ -91,6 +90,7 @@ function checkIdentityBranching() {
     const files = walkMbtFiles(dir);
     for (const file of files) {
       const relPath = relative(REPO_ROOT, file);
+      if (/(?:_test|_wbtest)\.mbt$/.test(relPath)) continue;
       const isAllowed =
         SELECTION_ALLOWLIST_PREFIXES.some((p) => relPath.startsWith(p)) ||
         SELECTION_ALLOWLIST_EXACT.some((a) => relPath === a);
@@ -116,19 +116,22 @@ function checkIdentityBranching() {
 }
 
 // ---------------------------------------------------------------------------
-// Check 2: Each renderer package exports create_*_provider
+// Check 2: Each renderer package exports its provider constructors
 // ---------------------------------------------------------------------------
 function checkProviderFactoryExports() {
   const violations = [];
   const rendererPackages = [
     {
-      dir: "moui/render/skia",
-      expected: ["create_skia_raster_provider", "create_skia_hybrid_provider"],
+      dir: "moui_skia_renderer",
+      expected: ["pub fn raster(", "pub fn gpu(", "pub fn from_env("],
     },
-    { dir: "moui/render/wgpu", expected: ["create_wgpu_provider"] },
-    { dir: "moui/render/sun", expected: ["create_sun_provider"] },
-    { dir: "moui/render/canvas2d", expected: ["create_canvas2d_provider"] },
-    { dir: "moui/render/webgpu_adapter", expected: ["create_webgpu_provider"] },
+    { dir: "moui_wgpu_renderer", expected: ["pub fn native("] },
+    { dir: "moui_sun_renderer", expected: ["pub fn raster("] },
+    { dir: "moui_web_renderer/canvas2d", expected: ["pub fn canvas("] },
+    {
+      dir: "moui_web_renderer",
+      expected: ["pub fn webgpu(", "pub fn canvas2d_fallback("],
+    },
   ];
 
   for (const pkg of rendererPackages) {
@@ -139,7 +142,7 @@ function checkProviderFactoryExports() {
 
     for (const factoryName of pkg.expected) {
       if (!allContent.includes(factoryName)) {
-        violations.push(`  ${pkg.dir}: missing pub fn ${factoryName}`);
+        violations.push(`  ${pkg.dir}: missing provider constructor ${factoryName}`);
       }
     }
   }
@@ -190,7 +193,7 @@ function checkPlatformSkiaProviderMigration() {
 }
 
 // ---------------------------------------------------------------------------
-// Check 5: Binding contract remains the composition path
+// Check 5: Provider/session contract remains the composition path
 // ---------------------------------------------------------------------------
 function checkBindingContract() {
   const providerContract = join(REPO_ROOT, "moui/render/provider_contract.mbt");
@@ -198,14 +201,18 @@ function checkBindingContract() {
     REPO_ROOT,
     "moui/render/common/provider_selection.mbt",
   );
-  const contractContent = readFileSync(providerContract, "utf-8");
+  const sessionContract = join(REPO_ROOT, "moui/render/renderer_session.mbt");
+  const contractContent =
+    readFileSync(providerContract, "utf-8") +
+    "\n" +
+    readFileSync(sessionContract, "utf-8");
   const selectionContent = readFileSync(providerSelection, "utf-8");
   const contractRequired = [
-    "pub(all) struct RendererProviderBinding",
-    "pub fn renderer_provider_binding_providers",
+    "pub(all) struct RendererProvider",
+    "pub(all) enum RendererBindResult",
+    "pub struct RendererSession",
   ];
   const selectionRequired = [
-    "pub fn select_renderer_provider_binding",
     "pub struct RendererProviderRegistry",
     "pub fn resolve_renderer",
   ];
@@ -278,12 +285,12 @@ function main() {
   }
 
   if (bindingViolations.length > 0) {
-    console.log("## [5] RendererProviderBinding contract:");
+    console.log("## [5] RendererProvider/RendererSession contract:");
     for (const v of bindingViolations) console.log(v);
     console.log();
     hasViolations = true;
   } else {
-    console.log("✅ RendererProviderBinding composition contract is present");
+    console.log("✅ RendererProvider/RendererSession composition contract is present");
     console.log();
   }
 

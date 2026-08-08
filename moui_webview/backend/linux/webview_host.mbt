@@ -214,7 +214,7 @@ fn linux_webview_platform_frame(
 /// Draw webview contents using renderer's draw_platform_view_pixels method
 pub fn draw_linux_webview_to_renderer(
   window : @window_linux.Window,
-  renderer : @render.WindowRenderer,
+  renderer : @render.RendererSession,
   frame : @core.DrawFrame,
   content_offset_y? : Double = 0.0,
 ) -> Unit {

@@ -14,7 +14,7 @@ MoUI 保持窄而明确的默认维护基线，让框架可以持续增长，而
 
 - `moui/core` 和 `moui/views`
 - `moui/backend` 和 `moui/backend/web`
-- `moui/render`、`moui/render/skia` 和 `moui/render/webgpu_adapter`
+- `moui/render`、`moui_skia_renderer` 和 `moui_web_renderer`
 - fallback 安全的 `moui_skia` 检查
 - Showcase 应用/Web wasm-gc 验证
 - Markdown Editor 应用/Web wasm-gc 验证
@@ -44,7 +44,7 @@ API surface guard 独立于这条维护基线。它跟踪生成的公开 API 大
 moon run tools/moui/validate_maintenance_baseline --target native -- --scope full
 ```
 
-`full` scope 保留每日预算，并额外扫描 addon/tool 工作区根，例如 `moui_richtext`、`moui_skia`、`moui_sun`、`moui_theme`、`moui_tester`、`moui_devtools`、`moui_webview`、`moui_agent*` 和 `tools`。已知大型文件拥有显式的 full-only 临时预算，这样广域验证可以报告热点，而不会强迫每个 2k-4k 行的诊断/测试文件进入每日基线或本次重构。请在聚焦后续变更中拆分这些文件，并在每次拆分落地时下调它们的 full-only 预算。
+`full` scope 保留每日预算，并额外扫描 addon/tool 工作区根，例如 `moui_richtext`、`moui_skia`、`moui_sun`、`moui_theme`、`moui_tests`、`moui_devtools`、`moui_webview`、`moui_agent*` 和 `tools`。已知大型文件拥有显式的 full-only 临时预算，这样广域验证可以报告热点，而不会强迫每个 2k-4k 行的诊断/测试文件进入每日基线或本次重构。请在聚焦后续变更中拆分这些文件，并在每次拆分落地时下调它们的 full-only 预算。
 
 ## 诊断路线
 

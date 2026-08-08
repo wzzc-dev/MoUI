@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/macos"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/accesskit",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
   "wzzc-dev/window/dpi",
@@ -18,7 +19,7 @@ pub fn backend_info() -> MacosBackendInfo
 
 pub fn entry(options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions) -> @runtime.PlatformEntry
 
-pub fn macos_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessibilityBridge
+pub fn macos_accessibility_bridge(@runtime.HostRuntimeDriver) -> @accesskit.AccessKitBridge
 
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo
 
@@ -44,7 +45,7 @@ pub fn macos_wall_clock() -> @runtime.HostWallClock
 
 // Types and methods
 pub(all) struct MacosAccessibilityBridgeInfo {
-  kind : @runtime.NativeAccessibilityBridgeKind
+  kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
@@ -61,7 +62,7 @@ pub(all) struct MacosBackendInfo {
 pub struct MacosHostAppOptions {
   // private fields
 }
-pub fn MacosHostAppOptions::new(scene_resolver? : @runtime.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
+pub fn MacosHostAppOptions::new(scene_resolver? : @runtime.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, show_after_first_present? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
 pub fn MacosHostAppOptions::platform_view_plugins(Self) -> Array[@backend.PlatformViewPlugin]
 
 pub struct MacosHostSmokeOptions {

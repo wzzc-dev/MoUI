@@ -20,7 +20,7 @@ test "pdf workbench opens via binary host service" {
       }
     },
   )
-  let services = @backend_common.app_services(bridge~)
+  let services = @backend_common_services.app_services(bridge~)
   let update = PdfWorkbenchModel::new().update_with_services(
     OpenRequested,
     services,
@@ -83,7 +83,7 @@ test "pdf workbench runtime open click rebuilds loaded preview" {
       }
     },
   )
-  let services = @backend_common.app_services(bridge~)
+  let services = @backend_common_services.app_services(bridge~)
   let runtime = PdfWorkbenchModel::new().runtime_with_services(
     services,
     width=1120.0,
@@ -322,9 +322,9 @@ test "pdf workbench side panels scroll while reader stays expanded" {
     fail("expected reader image before side scroll")
   }
   pdf_workbench_scroll_at(runtime, sidebar_frame, dy=-220.0)
-  assert_true(model.sidebar_scroll.offset().y > 0.0)
+  assert_true(model.sidebar_scroll.y > 0.0)
   pdf_workbench_scroll_at(runtime, inspector_frame, dy=-220.0)
-  assert_true(model.inspector_scroll.offset().y > 0.0)
+  assert_true(model.inspector_scroll.y > 0.0)
   guard pdf_workbench_image_frame(runtime.draw_commands()) is Some(after_image) else {
     fail("expected reader image after side scroll")
   }

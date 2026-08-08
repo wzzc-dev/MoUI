@@ -1,5 +1,3 @@
-const fs = require("fs");
-const path = require("path");
 const { spawnSync } = require("child_process");
 
 function readJsonFromStdin() {
@@ -21,46 +19,6 @@ function configEnvValue(config, key) {
   );
 }
 
-function truthy(value) {
-  return /^(1|true|yes|on)$/i.test(String(value || "").trim());
-}
-
-function falsy(value) {
-  return /^(0|false|no|off)$/i.test(String(value || "").trim());
-}
-
-function targetKind(config) {
-  return (
-    config?.build?.target?.kind ||
-    config?.build_info?.target?.kind ||
-    config?.target?.kind ||
-    config?.target?.backend ||
-    config?.env?.MOON_TARGET ||
-    ""
-  );
-}
-
-function androidHostLinkFlags(config) {
-  return configEnvValue(config, "MOUI_SKIA_PLATFORM") === "android"
-    ? androidBackendHostFlags
-    : "";
-}
-
-function shouldConfigureSkia(config) {
-  const kind = targetKind(config);
-  if (kind && ["wasm", "wasm32", "wasmgc", "wasm-gc", "js"].includes(kind)) {
-    return false;
-  }
-  if (truthy(configEnvValue(config, "MOUI_SKIA_DISABLE_PREBUILD_SKIA"))) {
-    return false;
-  }
-  const enabled = configEnvValue(config, "MOUI_SKIA_ENABLE_PREBUILD_SKIA");
-  if (enabled && falsy(enabled)) {
-    return false;
-  }
-  return true;
-}
-
 function runPkgConfig(packages, flag) {
   const result = spawnSync("pkg-config", [flag, ...packages], {
     encoding: "utf8",
@@ -78,86 +36,16 @@ function linuxGlibFlags(config) {
   if (explicitStub || explicitLink) {
     return { stubCcFlags: explicitStub, linkFlags: explicitLink };
   }
-  // glib-2.0 is a core Linux backend dependency: linux_timer_host.c drives
-  // TimerSource subscriptions via the GLib main loop. On non-Linux hosts
-  // pkg-config will not find glib-2.0 and both flags resolve to "", which is
-  // fine because the C stub body is guarded by `#ifdef __linux__`.
   return {
     stubCcFlags: runPkgConfig(["glib-2.0"], "--cflags"),
     linkFlags: runPkgConfig(["glib-2.0"], "--libs"),
   };
 }
 
-function mouiSkiaPrebuildVars(config) {
-  const script = path.resolve(__dirname, "..", "moui_skia", "build.js");
-  if (!fs.existsSync(script)) {
-    return {};
-  }
-  const result = spawnSync(process.execPath, [script], {
-    cwd: path.dirname(script),
-    encoding: "utf8",
-    input: JSON.stringify(config || {}),
-    stdio: ["pipe", "pipe", "pipe"],
-  });
-  if (result.error) {
-    throw new Error(`failed to run moui_skia prebuild: ${result.error.message}`);
-  }
-  if (result.status !== 0) {
-    throw new Error(
-      `moui_skia prebuild exited with ${result.status}\n${result.stderr}`,
-    );
-  }
-  try {
-    return JSON.parse(result.stdout).vars || {};
-  } catch (error) {
-    throw new Error(`failed to parse moui_skia prebuild output: ${error.message}`);
-  }
-}
-
-function skiaStubCcFlags(config, prebuildVars) {
-  if (!shouldConfigureSkia(config)) {
-    return "";
-  }
-  const explicit = configEnvValue(config, "MOUI_SKIA_STUB_CC_FLAGS");
-  if (explicit) {
-    return explicit;
-  }
-  return prebuildVars.MOUI_SKIA_STUB_CC_FLAGS || "";
-}
-
-function skiaCcLinkFlags(config, prebuildVars) {
-  const explicit = configEnvValue(config, "MOUI_SKIA_CC_LINK_FLAGS");
-  if (explicit) {
-    return explicit;
-  }
-  if (!shouldConfigureSkia(config)) {
-    return "";
-  }
-  return prebuildVars.MOUI_SKIA_CC_LINK_FLAGS || "";
-}
-
-// Final is-main links do not reliably inherit library package `cc-link-flags`.
-// Expose host/renderer system libraries via prebuild link_configs (same pattern
-// as window/* and moui_skia/native) so example entrypoints can stay free of
-// platform boilerplate and only use an empty cc-link-flags override when the
-// Moon toolchain would otherwise pick tcc -run.
 const macosBackendHostFlags =
   "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreGraphics -framework CoreFoundation -lz -lobjc";
 const linuxBackendHostFlags = "-lz";
 const androidBackendHostFlags = "-landroid -llog";
-const linuxFontconfigLinkFlags = "-lfontconfig -lharfbuzz -lfreetype -lz";
-
-function linuxFontconfigCflags() {
-  // FreeType/fontconfig/HarfBuzz headers live outside the default include
-  // search path (e.g. /usr/include/freetype2), so expose pkg-config cflags the
-  // same way glib does. Only emitted on Linux hosts; the C stub no-ops off
-  // Linux, and pkg-config may not resolve these packages elsewhere.
-  if (process.platform !== "linux") {
-    return "";
-  }
-  return runPkgConfig(["fontconfig", "freetype2", "harfbuzz"], "--cflags");
-}
-const windowsDirectWriteLinkFlags = "-lz";
 
 function appendLinkFlags(base, extra) {
   if (!extra) return base || "";
@@ -166,77 +54,36 @@ function appendLinkFlags(base, extra) {
 }
 
 function pushLinkConfig(configs, packageName, linkFlags) {
-  if (!packageName || !linkFlags) {
-    return;
+  if (packageName && linkFlags) {
+    configs.push({ package: packageName, link_flags: linkFlags });
   }
-  configs.push({
-    package: packageName,
-    link_flags: linkFlags,
-  });
-}
-
-function macosLinkConfigs() {
-  if (process.platform !== "darwin") {
-    return [];
-  }
-  const configs = [];
-  pushLinkConfig(configs, "wzzc-dev/moui/backend/macos", macosBackendHostFlags);
-  return configs;
-}
-
-function linuxLinkConfigs(linuxGlib) {
-  // Always emit the static host flags. glib libs are optional on non-Linux
-  // hosts (pkg-config empty) but must be merged into backend/linux when present.
-  const configs = [];
-  pushLinkConfig(
-    configs,
-    "wzzc-dev/moui/backend/linux",
-    appendLinkFlags(linuxBackendHostFlags, linuxGlib.linkFlags),
-  );
-  // fontconfig/FreeType are Linux-only; the C stub already no-ops off Linux, so
-  // avoid requiring -lfontconfig when compiling/tests run on macOS/Windows.
-  if (process.platform === "linux") {
-    pushLinkConfig(
-      configs,
-      "wzzc-dev/moui/render/wgpu/fontconfig",
-      linuxFontconfigLinkFlags,
-    );
-  }
-  return configs;
-}
-
-function windowsLinkConfigs(skiaCcLink) {
-  const configs = [];
-  pushLinkConfig(configs, "wzzc-dev/moui/render/skia", skiaCcLink);
-  pushLinkConfig(
-    configs,
-    "wzzc-dev/moui/render/wgpu/directwrite",
-    windowsDirectWriteLinkFlags,
-  );
-  return configs;
 }
 
 function main() {
   const config = readJsonFromStdin();
   const linuxGlib = linuxGlibFlags(config);
-  const linuxFontconfigCflagsValue = linuxFontconfigCflags();
-  const skiaVars = shouldConfigureSkia(config) ? mouiSkiaPrebuildVars(config) : {};
-  const skiaStub = skiaStubCcFlags(config, skiaVars);
-  const skiaCcLink = skiaCcLinkFlags(config, skiaVars);
-  const linkConfigs = [
-    ...macosLinkConfigs(),
-    ...linuxLinkConfigs(linuxGlib),
-    ...windowsLinkConfigs(skiaCcLink),
-  ];
+  const linkConfigs = [];
+  if (process.platform === "darwin") {
+    pushLinkConfig(
+      linkConfigs,
+      "wzzc-dev/moui/backend/macos",
+      macosBackendHostFlags,
+    );
+  }
+  pushLinkConfig(
+    linkConfigs,
+    "wzzc-dev/moui/backend/linux",
+    appendLinkFlags(linuxBackendHostFlags, linuxGlib.linkFlags),
+  );
   console.log(
     JSON.stringify({
       vars: {
         MOUI_LINUX_GLIB_STUB_CC_FLAGS: linuxGlib.stubCcFlags,
         MOUI_LINUX_GLIB_CC_LINK_FLAGS: linuxGlib.linkFlags,
-        MOUI_LINUX_FONTCONFIG_STUB_CC_FLAGS: linuxFontconfigCflagsValue,
-        MOUI_SKIA_STUB_CC_FLAGS: skiaStub,
-        MOUI_SKIA_CC_LINK_FLAGS: skiaCcLink,
-        MOUI_ANDROID_HOST_LINK_FLAGS: androidHostLinkFlags(config),
+        MOUI_ANDROID_HOST_LINK_FLAGS:
+          configEnvValue(config, "MOUI_SKIA_PLATFORM") === "android"
+            ? androidBackendHostFlags
+            : "",
         MOUI_MACOS_BACKEND_HOST_LINK_FLAGS: macosBackendHostFlags,
         MOUI_LINUX_BACKEND_HOST_LINK_FLAGS: appendLinkFlags(
           linuxBackendHostFlags,

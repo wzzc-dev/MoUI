@@ -92,67 +92,51 @@ platform-local loop.
 app-facing open/focus/resize/minimize/show/close helpers and shared draining
 into a registry or window runtime slots.
 Every application entrypoint calls `@runtime.run_app`, supplies ordered
-`RendererFactory` values, supplies one platform `entry`, and calls
-`run`. Renderer-specific options are captured by renderer factories; platform-
+`RendererProvider` values, supplies one platform `entry`, and calls
+`run`. Renderer-specific options and native-handle policy are captured by
+renderer providers; platform-
 specific options are captured by the platform entry. With a resolver, `OpenWindow`
 requests resolve a scene into a new `AppRuntime`, create another platform
-window, create a neutral `SurfaceContext`, resolve a `WindowRenderer`, register a per-window
+window, create an opaque `HostSurface`, bind the first accepting provider to a
+`RendererSession`, register a per-window
 `HostRuntimeDriver`, bind the platform id, and then route redraw, events,
 context menus, service completions, IME sync, and disposal through
 window-indexed slots. Without a resolver, hosts reject `OpenWindow` with the
 shared unavailable-resolver message.
 
-`WindowRenderer` is the renderer-neutral runtime handle used by native host
-cores. Its stable constructor core contains resize, command/frame rendering,
+`RendererSession` is the renderer-neutral live handle used by native host
+cores. Its stable constructor core contains resize, frame rendering,
 present-completion drain, text-system access, present-count diagnostics, and
-disposal. Optional behavior is grouped into opaque
-`HostRendererImageCapability`, `HostRendererPlatformViewCapability`, and
-`HostRendererGpuRecoveryCapability` records. Existing instance methods keep
-no-op/default semantics when a provider omits a capability, so hosts do not
-branch on renderer implementation details. The shared image repaint tracker
-consumes renderer-neutral image snapshots to route
-late-image redraws per open window and expose tracked-window revision plus
-loading/ready/failed/disposed status-count diagnostics, including
-previous/current counts on repaint results. Host cores depend on `core`,
+disposal. Image decoding, resource status, cache, and retained-layer residency
+belong exclusively to the session. Host cores depend on `core`,
 `runtime`, `backend`, the neutral `render` contract, and the platform
-`window` package. They do not import `render/wgpu`, `render/skia`, `wgpu_mbt`,
+`window` package. They do not import `moui_wgpu_renderer`, `moui_skia_renderer`, `wgpu_mbt`,
 `moui_skia`, or another concrete renderer. Platform backends own native window
-handles, neutral CPU presenters, GPU descriptors, and lifecycle/I/O callbacks.
+handles, neutral CPU presenters, opaque native surface/display handles, and
+lifecycle/I/O callbacks.
 `render/common` owns provider negotiation and shared algorithms; renderer
-subpackages own decode, native bindings, and renderer diagnostics.
+modules own decode, native bindings, platform route policy, and renderer
+diagnostics. Rejection leaves no persistent resources; a bound session is the
+sole owner of accepted renderer/native-surface resources and disposes them
+idempotently.
 
-`@render_common.ImageResourceCompletionSource` is the shared boundary for native async
-image loader completions. Native provider/platform loaders publish
-`@render.ImageResourceLoadCompletion` ready/failed results through
-`WindowRenderer::apply_image_resource_load_completion`, which returns a revisioned
-`@render.ImageResourceSnapshot`; the host routes that snapshot through
-`@render_common.ImageResourceRepaintTracker`, requests redraw only for matching open
-windows, ignores stale lower revisions, and discards closed-window completions.
-`@render_common.AsyncImageLoader` owns in-flight state and is erased behind the
-root `@render.ImageLoader` protocol before a backend stores it. It
-scans renderer snapshots for loading records, starts the selected factory's loader,
-deduplicates in-flight `(window, source)` work, and gates late or cancelled
-completion callbacks before they can apply to a renderer. `@render_common.NativeAsyncImageSource`
-is the host-owned deferred request source for platform loaders that need to
-record pending `(window, source)` work and deliver a completion later from an
-independent native callback. It proves the host boundary can receive late
-completion callbacks after scheduling returns, and platform runtime artifacts
-record host-level observation separately from renderer capability status. The native macOS,
-Windows, and Linux host cores call the optional factory-owned loader hook after
-the presented image-resource revision has been baselined, then cancel in-flight
-window loads during disposal. Platform backends expose `HostImageSource`, which
-reads only raw bytes. Each renderer factory supplies a `RendererImageDecoder`
-that owns format detection, decode, and `ImageResourceLoadCompletion` creation.
-The first presented snapshot can contain loading records before the host routes
-ready/failed completions into a repaint. Skia, Sun, and WGPU apply ready
-completions to their own caches. The host source and scheduler do not decode
-images, mutate renderer caches, or live in `core`; renderer packages own
-concrete decode, loading, and lifecycle records.
+Renderer image work is event-driven. A session emits an opaque
+`RendererImageLoadRequest` with a source and token through `RendererEvent`.
+`backend/common/image` stores only cancellable I/O tasks, reads bytes from
+`HostImageSource`, and sends an `ImageResourceLoadCompletion` with the same
+token back to `RendererSession::apply_image_load_completion`. The session
+returns whether the completion was applied; stale, duplicate, or disposed
+tokens are inert and only an applied change requests redraw. Platform backends
+never store renderer resource status or revisions. Each renderer provider
+supplies a `RendererImageDecoder` that owns format detection, decode, and
+resource cache updates. The host source and scheduler do not decode images,
+mutate renderer caches, or live in `core`.
 
 `RendererDescriptor` and `RendererSelection` remain renderer facade reporting tools:
 they describe static capability identity and matching, not native host runtime
 assembly. `View` still describes UI declaration trees only, and
-`Binding[T]` remains the TEA/control/state two-way binding term.
+`ControlledValue[T, Msg]` is the immutable TEA/control value bridge; it has no
+setter path into an application model.
 
 ## Shell Embedding Bridge
 
@@ -161,19 +145,20 @@ assembly. `View` still describes UI declaration trees only, and
 and completion contracts. The internal implementations are deliberately
 asymmetric where the hosts are asymmetric:
 
-- `backend/common/desktop` owns the synchronous desktop router. macOS, Windows,
+- `backend/common/services/desktop` owns the synchronous desktop router. macOS, Windows,
   and Linux provide native clipboard, URL, dialog, menu, and settings closures;
   the package routes shared text/binary file and directory implementations from
-  `backend/common/native`.
-- `backend/common/native` owns native `@fs` I/O shared by desktop and embedded
-  backends, including the renderer-neutral raw-byte `HostImageSource`.
-- `backend/common/embedded/services` owns the callback queue. Clipboard and platform
+  `backend/common/services/native`.
+- `backend/common/services/native` owns native `@fs` service I/O shared by
+  desktop and embedded backends. `backend/common/image/native` owns the
+  renderer-neutral raw-byte `HostImageSource`.
+- `backend/common/services/embedded` owns the callback queue. Clipboard and platform
   channel requests return `Pending(id)` in FIFO order, complete at most once,
   reject duplicate/late responses, and are cancelled during dispose. Other
   desktop-only requests return `Unavailable` synchronously.
 
 `EmbeddedRuntimeHostBridge` is the private Android/iOS/HarmonyOS runtime
-aggregation boundary and the sole consumer of `backend/common/embedded/services`. It
+aggregation boundary and composes `backend/common/services/embedded`. It
 coalesces `EmbeddedImeRequest` updates, transports runtime-owned full/delta
 semantics commits with `SemanticsNodeId` and `SemanticsGeneration`, synchronizes
 platform-view placements/events, and maps pending service requests to the
@@ -181,27 +166,30 @@ unchanged native wire schema. Its cursor suppresses unchanged transport without
 becoming a second revision authority. A disposed bridge cancels outstanding
 services and rejects late responses.
 
-## Window Host Coordinator
+## Window Host Owners
 
-`WindowCoordinator` (`moui/backend/common`) is the shared owner of desktop/Web host
-window state: window records, runtime slots, platform-window maps,
-surface attachments, redraw/IME/close coordination, and host event dispatch
-into runtime slots. Native backends (macOS/Windows/Linux) and the Web backend
-keep only platform-private window creation, raw native decoding, surface
-ownership, and IME sink specifics out of it. Android/iOS/HarmonyOS use the
-parallel `EmbeddedWindowCoordinator`; both adapters share
-`FrameCoordinator`.
+Platform backends hold narrow owners directly instead of delegating all state
+to an aggregate coordinator:
 
-Platforms contribute a `WindowSurfaceActions` per native window at attach time
-(`focus`, `request_resize`, `sync_observed_resize`,
-`set_minimized`, `set_visible`, `request_redraw`, `request_ime_update`, `drop`,
-`native_view_handle`, `dispose_platform_views`); the coordinator owns when each
-action runs. Both resize actions return applied content metrics; the coordinator
-updates registry/runtime state, dispatches resize, and schedules redraw. Its
-`run_window_redraw` owns completion, pending-frame, image, IME, and follow-up
-redraw state. `apply_window_request` takes `open_window`/`dispose_window`/`exit`
-hooks so web can wrap native open failure, platform-view disposal, and async
-service queue teardown.
+- `common/lifecycle` owns records, runtime slots, requests, platform-window
+  maps, logical phase/surface generation, re-entry blocking, exit intent, and
+  exactly-once close;
+- `common/frame` owns each live `RendererSession`, pending/present completion,
+  redraw/resize, and IME frame hooks;
+- `common/image` owns cancellable loader tasks, tokenized completion delivery,
+  callback detach, and cancellation. It does not store renderer resource
+  status, cache residency, repaint revisions, or a backend repaint tracker;
+- `common/input` owns neutral conversion and pointer/text/IME session state;
+- `common/services` owns the service facade, async completion, and bridge
+  lifetime.
+
+Platforms contribute `WindowSurfaceActions` for native operations. Root
+`backend/common` exposes stateless workflows that take the relevant owners and
+actions explicitly; it retains no window state and is not another aggregate
+coordinator. Close order is fixed: block lifecycle re-entry; detach image
+callbacks and cancel work; close embedded and service channels; dispose the
+renderer session; dispose platform views/native host resources; clear
+mappings/runtime/registry; finish close.
 
 Embedded-runtime backends share `moui/backend/common/embedded`
 (`HostedWindowBackend`, `HostedWindow` projection closures, `HostedRuntimeSession`).
@@ -209,14 +197,12 @@ Android/iOS/HarmonyOS `window_hosted.mbt` are thin shells (platform window
 creation, surface handles, six `ApplicationHandler` slots, host simulation
 pump, IME sink injection) around that shared shell. Their `HostCmd` values are
 decoded by the stateless `wzzc-dev/window/internal/embedded_dispatch` adapter.
-MoUI's `EmbeddedWindowCoordinator` uniquely owns lifecycle phase, surface
-generation, primary-window routing, detach, and exit intent. `HostedWindowBackend`
-owns session/renderer capabilities and `FrameCoordinator` owns redraw,
-completion, image repaint, and IME hook ordering after the callback enters
-MoUI. Web reuses the coordinator
-directly: `WebApp` holds one coordinator and `web_surface_actions` builds the
-`WindowSurfaceActions` projection; browser DOM routing stays in
-`moui/backend/web`.
+`common/lifecycle::EmbeddedLifecycle` uniquely owns logical phase, surface
+generation, primary-window routing, detach, and exit intent. `EmbeddedSession`
+composes it with frame/image/input/services owners plus renderer, IME,
+semantics, platform-view, and transport capabilities; it does not own another
+phase or frame loop. Web stores the narrow owners directly and uses the same
+stateless workflows; browser DOM routing stays in `moui/backend/web`.
 
 `TextInputEvent::ReplaceText` and `SetSelection` preserve arbitrary native IME
 replacement and UTF-16 selection updates. Mobile requests include text,
@@ -263,7 +249,7 @@ completion callbacks for clipboard reads and file pickers.
 Web, macOS, and Windows entrypoints query that bridge at startup and install
 the reported light/dark scheme into `AppRuntime` before the first host driver
 layout/redraw pass, so initial view builds see the platform color scheme through
-`ComponentContext` environment reads.
+`ViewEnvironment` reads during the initial Program view build.
 `ThemeChanged` window events are also normalized into `Event::ThemeChanged`;
 `HostRuntimeDriver` applies them to runtime environment instead of leaking a
 platform-specific event into app code.

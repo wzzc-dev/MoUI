@@ -13,9 +13,9 @@ import { brotliCompressSync, gzipSync } from "node:zlib";
 import { repoRoot, runCommand } from "./lib/moonbit-tool-runner.mjs";
 
 export const runtimeAssetPaths = [
-  "moui/render/webgpu_adapter/runtime.js",
+  "moui_web_renderer/runtime.js",
   "moui/backend/web/browser_runtime.js",
-  "moui/render/webgpu_adapter/canvas2d_runtime.js",
+  "moui_web_renderer/canvas2d_runtime.js",
 ];
 
 export function usageAndExit(message, usage) {
@@ -259,7 +259,7 @@ export function writeCompressedSiblings(filePath) {
 
 export function rewriteIndexForPackage(indexHtml, wasmFileName) {
   let rewritten = indexHtml.replace(
-    /from\s+["'][^"']*moui\/render\/webgpu_adapter\/runtime\.js["']/,
+    /from\s+["'][^"']*moui_web_renderer\/runtime\.js["']/,
     'from "./runtime.js"',
   );
   rewritten = rewritten.replace(
@@ -271,7 +271,7 @@ export function rewriteIndexForPackage(indexHtml, wasmFileName) {
 
 export function rewriteRuntimeForPackage(runtimeSource) {
   return runtimeSource.replace(
-    /from\s+["']\.\.\/\.\.\/backend\/web\/browser_runtime\.js["']/,
+    /from\s+["']\.\.\/moui\/backend\/web\/browser_runtime\.js["']/,
     'from "./browser_runtime.js"',
   );
 }

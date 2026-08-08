@@ -93,18 +93,16 @@ test "component gallery platform routes show session runtime" {
 }
 
 ///|
-test "component gallery selecting component preserves sidebar scroll" {
-  let model = ComponentGalleryModel::new(active_platform=PlatformId::MacOS)
-  model.sidebar_scroll.scroll_to(x=0.0, y=260.0)
-  model.content_scroll.scroll_to(x=0.0, y=420.0)
-  model.page_scroll.scroll_to(x=0.0, y=180.0)
+test "component gallery selecting component resets controlled page scroll" {
+  let model = {
+    ..ComponentGalleryModel::new(active_platform=PlatformId::MacOS),
+    page_scroll: @geometry.Point::new(x=0.0, y=180.0),
+  }
   let selected = update(model, SelectItem("slider"))
   assert_true(
     selected.active_item == @components.ComponentGalleryItemId::Slider,
   )
-  assert_true(selected.sidebar_scroll.offset().y == 260.0)
-  assert_true(selected.content_scroll.offset().y == 0.0)
-  assert_true(selected.page_scroll.offset().y == 0.0)
+  assert_true(selected.page_scroll.y == 0.0)
 }
 
 ///|

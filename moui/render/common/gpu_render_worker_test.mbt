@@ -15,7 +15,7 @@ test "gpu worker latest wins and completion polling" {
   worker.poll(completed_at_ms=3.0)
   let completions = worker.drain_present_completions()
   assert_eq(completions.length(), 1)
-  assert_eq(completions[0].frame_sequence(), 2)
+  assert_eq(completions[0].token().sequence(), 2)
   assert_true(completions[0].status() is @render.RenderPresentStatus::Recorded)
   assert_eq(completions[0].presented_at_ms(), 0.0)
   assert_eq(worker.diagnostics().replaced_pending, 1)

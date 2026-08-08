@@ -1,11 +1,9 @@
 ///|
 test "direct pointer input reports scroll consumption at boundaries" {
-  let state = @core.ScrollState::new()
   let root : @core.View[Unit] = @views.scroll_view(
     runtime_test_rect(width=20.0, height=200.0, color=@core.Color::blue()),
     width=20.0,
     height=40.0,
-    state=Some(state),
   )
   let runtime = AppRuntime::new_view(
     root~,
@@ -22,7 +20,15 @@ test "direct pointer input reports scroll consumption at boundaries" {
   if consumed.host_flags() != 1 {
     fail("expected a moved scroll view to consume the wheel")
   }
-  state.scroll_to(x=0.0, y=160.0)
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=5.0, y=5.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@core.Point::new(x=0.0, y=-1000.0),
+      ),
+    ),
+  )
   let edge = runtime.dispatch_pointer_input(
     @core.PointerEvent::new(
       position=@core.Point::new(x=5.0, y=5.0),
@@ -37,12 +43,10 @@ test "direct pointer input reports scroll consumption at boundaries" {
 
 ///|
 test "direct pointer input drags a scroll view" {
-  let state = @core.ScrollState::new()
   let root : @core.View[Unit] = @views.scroll_view(
     runtime_test_rect(width=20.0, height=200.0, color=@core.Color::blue()),
     width=20.0,
     height=40.0,
-    state=Some(state),
   )
   let runtime = AppRuntime::new_view(
     root~,
@@ -67,7 +71,7 @@ test "direct pointer input drags a scroll view" {
   if move_result.host_flags() != 1 {
     fail("expected a scroll drag to be handled")
   }
-  assert_true(state.offset() == @core.Point::new(x=0.0, y=20.0))
+  assert_true(runtime.layout().children[0].frame.origin.y == -20.0)
   let up = runtime.dispatch_pointer_input(
     @core.PointerEvent::new(
       position=@core.Point::new(x=5.0, y=10.0),
@@ -81,7 +85,6 @@ test "direct pointer input drags a scroll view" {
 
 ///|
 test "direct pointer input drags a scroll view from a child control" {
-  let state = @core.ScrollState::new()
   let received : Array[String] = []
   let root : @core.View[String] = @views.scroll_view(
     @views.column(
@@ -93,7 +96,6 @@ test "direct pointer input drags a scroll view from a child control" {
     ),
     width=20.0,
     height=40.0,
-    state=Some(state),
   )
   let runtime = AppRuntime::new_view(
     root~,
@@ -117,7 +119,7 @@ test "direct pointer input drags a scroll view from a child control" {
       ),
     ),
   )
-  assert_true(state.offset().y > 0.0)
+  assert_true(runtime.layout().children[0].frame.origin.y < 0.0)
   ignore(
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
@@ -131,7 +133,6 @@ test "direct pointer input drags a scroll view from a child control" {
 
 ///|
 test "direct pointer input keeps a child click within scroll drag slop" {
-  let state = @core.ScrollState::new()
   let received : Array[String] = []
   let root : @core.View[String] = @views.scroll_view(
     @views.column(
@@ -143,7 +144,6 @@ test "direct pointer input keeps a child click within scroll drag slop" {
     ),
     width=20.0,
     height=40.0,
-    state=Some(state),
   )
   let runtime = AppRuntime::new_view(
     root~,
@@ -166,7 +166,7 @@ test "direct pointer input keeps a child click within scroll drag slop" {
       ),
     ),
   )
-  assert_true(state.offset() == @core.Point::new(x=0.0, y=0.0))
+  assert_true(runtime.layout().children[0].frame.origin.y == 0.0)
   ignore(
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(

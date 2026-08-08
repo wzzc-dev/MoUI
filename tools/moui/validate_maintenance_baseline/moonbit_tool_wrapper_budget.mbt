@@ -18,11 +18,16 @@ fn moonbit_tool_wrapper_budgets() -> Array[WrapperBudget] {
     { path: "scripts/validate-maintenance-baseline.mjs", max_lines: 12 },
     { path: "scripts/validate-package-manifest.mjs", max_lines: 28 },
     { path: "scripts/validate-renderer-provider-manifests.mjs", max_lines: 12 },
+    { path: "scripts/validate-release-module-closures.mjs", max_lines: 12 },
     {
       path: "scripts/validate-renderer-capability-consistency.mjs",
       max_lines: 12,
     },
     { path: "scripts/validate-backend-common-boundary.mjs", max_lines: 12 },
+    {
+      path: "scripts/validate-runtime-state-render-ownership.mjs",
+      max_lines: 12,
+    },
     { path: "scripts/validate-platform-matrix.mjs", max_lines: 8 },
     { path: "scripts/validate-skia-entrypoints.mjs", max_lines: 16 },
     { path: "scripts/validate-web-runtime-handoff-manifest.mjs", max_lines: 28 },

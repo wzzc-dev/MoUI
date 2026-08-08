@@ -2,8 +2,9 @@
 test "markdown editor runtime block editing shortcuts update document" {
   let app = MarkdownEditorApp::new()
   app.set_document("Alpha\n\nBeta\n\nGamma")
-  let runtime = app.runtime(width=980.0, height=640.0)
   app.set_selection(8, None)
+  inspect(app.document(), content="Alpha\n\nBeta\n\nGamma")
+  let mut runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -15,6 +16,7 @@ test "markdown editor runtime block editing shortcuts update document" {
   inspect(app.document(), content="Alpha\n\nBeta\n\nBeta\n\nGamma")
   app.set_document("Alpha\n\nBeta\n\nGamma")
   app.set_selection(8, None)
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -25,6 +27,7 @@ test "markdown editor runtime block editing shortcuts update document" {
   )
   inspect(app.document(), content="Beta\n\nAlpha\n\nGamma")
   app.set_selection(2, None)
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -40,8 +43,8 @@ test "markdown editor runtime block editing shortcuts update document" {
 test "markdown editor runtime block keyboard shortcuts transform caret and selection" {
   let app = MarkdownEditorApp::new()
   app.set_document("Intro\nTitle\nFirst\nSecond")
-  let runtime = app.runtime(width=980.0, height=640.0)
   app.set_selection(8, None)
+  let mut runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -52,6 +55,7 @@ test "markdown editor runtime block keyboard shortcuts transform caret and selec
   )
   inspect(app.document(), content="Intro\n## Title\nFirst\nSecond")
   app.set_selection(9, None)
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -62,6 +66,7 @@ test "markdown editor runtime block keyboard shortcuts transform caret and selec
   )
   inspect(app.document(), content="Intro\n###### Title\nFirst\nSecond")
   app.set_selection(30, Some(@core.TextRange::new(start=19, end=31)))
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -77,8 +82,8 @@ test "markdown editor runtime block keyboard shortcuts transform caret and selec
 test "markdown editor runtime ctrl code block shortcut toggles current line" {
   let app = MarkdownEditorApp::new()
   app.set_document("Intro\nlet x = 1\nTail")
-  let runtime = app.runtime(width=980.0, height=640.0)
   app.set_selection(8, None)
+  let mut runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -89,6 +94,7 @@ test "markdown editor runtime ctrl code block shortcut toggles current line" {
   )
   inspect(app.document(), content="Intro\n```\nlet x = 1\n```\nTail")
   app.set_selection(12, None)
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -104,8 +110,8 @@ test "markdown editor runtime ctrl code block shortcut toggles current line" {
 test "markdown editor runtime ctrl heading shortcuts transform caret" {
   let app = MarkdownEditorApp::new()
   app.set_document("Intro\nTitle")
-  let runtime = app.runtime(width=980.0, height=640.0)
   app.set_selection(8, None)
+  let mut runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -116,6 +122,7 @@ test "markdown editor runtime ctrl heading shortcuts transform caret" {
   )
   inspect(app.document(), content="Intro\n# Title")
   app.set_selection(8, None)
+  runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -330,7 +337,7 @@ test "markdown editor indent and outdent actions preserve history" {
   app.set_selection(17, Some(@core.TextRange::new(start=6, end=17)))
   app.apply_action("indent-lines")
   inspect(app.document(), content="Intro\n  - one\n  - two\nTail")
-  guard app.selection.get().selection is Some(indented_selection) else {
+  guard app.selection.selection is Some(indented_selection) else {
     fail("expected indented line selection")
   }
   inspect(indented_selection.start, content="6")

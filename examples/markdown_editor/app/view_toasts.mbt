@@ -3,7 +3,7 @@
 /// the timer fires roughly every second, we expire by the queue's own TTL
 /// semantics rather than tracking wall-clock precisely.
 fn MarkdownEditorApp::expire_toasts(self : MarkdownEditorApp) -> Unit {
-  let queue = self.toasts.get()
+  let queue = self.toasts
   // `ToastQueue::expire` filters out items past their ttl using created_at_ms;
   // when created_at_ms is 0 (our case) items live until manually removed. We
   // therefore decrement each visible toast's lifetime by one tick and drop the
@@ -22,7 +22,7 @@ fn MarkdownEditorApp::expire_toasts(self : MarkdownEditorApp) -> Unit {
       remaining.push(item)
     }
   }
-  self.toasts.set(@views.ToastQueue::new(items=remaining))
+  self.toasts = @views.ToastQueue::new(items=remaining)
 }
 
 ///|
@@ -34,8 +34,8 @@ fn MarkdownEditorApp::maybe_autosave(self : MarkdownEditorApp) -> Unit {
   // Autosave only writes to an existing path; without host services (e.g. in
   // tests) we fall back to keeping an in-memory draft so a crash can still be
   // recovered from the next launch.
-  let draft = self.document.get()
-  self.autosave_draft.set(draft)
+  let draft = self.document
+  self.autosave_draft = draft
 }
 
 ///|
@@ -48,17 +48,17 @@ fn MarkdownEditorApp::resolve_pending_confirm(
   self : MarkdownEditorApp,
   resolution : MarkdownEditorConfirmResolution,
 ) -> Unit {
-  match self.pending_confirm.get() {
+  match self.pending_confirm {
     Some(request) => {
-      self.pending_confirm.set(None)
+      self.pending_confirm = None
       match resolution {
         ConfirmCancel => ()
         ConfirmDiscard | ConfirmSave => {
           // Treat the current document as saved so the deferred action runs
           // without re-entering the guard. The user has explicitly chosen to
           // proceed past the unsaved-changes prompt.
-          self.saved_document.set(self.document.get())
-          let _ = self.update(request.deferred)
+          self.saved_document = self.document
+          self.update_in_place(request.deferred)
         }
       }
     }
@@ -73,7 +73,7 @@ fn MarkdownEditorApp::toast_layer(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let items = self.toasts.get().to_stack_items()
+  let items = self.toasts.to_stack_items()
   if items.length() == 0 {
     @views.empty()
   } else {
@@ -88,7 +88,7 @@ fn MarkdownEditorApp::confirm_dialog(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
 ) -> @moui.View[MarkdownEditorMsg] {
-  match self.pending_confirm.get() {
+  match self.pending_confirm {
     Some(request) =>
       @views.container(
         @views.column(

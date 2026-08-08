@@ -1,26 +1,23 @@
 ///|
 /// MoUI renderer facade. Core value types (`RendererBackendKind`,
 /// `@core.SurfaceMetrics`, `RenderFrameResult`, …) are defined in this
-/// file. The package also owns the renderer-surface bridge types
-/// (`SurfaceRoute`, `ImageResourceRecord`, …), capability reporting
-/// (`RendererFeature`, `RendererFeatureCapability`, …), and the
-/// **RendererProvider plugin system** (ADR 0019) in `provider_contract.mbt`.
+/// file. The package also owns opaque host-surface capabilities, image/frame
+/// DTOs, capability reporting, and the provider/session plugin system (ADR
+/// 0027) in `provider_contract.mbt` and `renderer_session.mbt`.
 ///
 /// ## RendererProvider plugin system
 ///
 /// See `provider_contract.mbt` for:
-/// - `RendererProvider` — contract type for a renderer family
-/// - `RendererInstance` — live instance returned by a provider
-/// - `RendererProviderBinding` — the
-///   production composition path from negotiated provider to host lifecycle
-/// - `SurfaceDescriptor` / `BoundSurface` — surface negotiation types
+/// - `RendererProvider` — static registration and delayed surface binding
+/// - `RendererSession` — complete per-window live renderer lifecycle
+/// - `HostSurface` — opaque platform capability wrapper
 ///
 /// Provider selection and registries live in `moui/render/common`. Concrete
 /// providers live in sub-packages:
-/// - `moui/render/skia` — `create_skia_raster_provider`, `create_skia_hybrid_provider`
-/// - `moui/render/wgpu` — `create_wgpu_provider`
-/// - `moui/render/sun` — `create_sun_provider`
-/// - `moui/render/canvas2d` — `create_canvas2d_provider`
+/// - `moui_skia_renderer`
+/// - `moui_wgpu_renderer`
+/// - `moui_sun_renderer`
+/// - `moui_web_renderer` and `moui_web_renderer/canvas2d`
 pub(all) enum RendererBackendKind {
   NativeWgpu
   WebGpuWasm
@@ -106,7 +103,6 @@ pub(all) struct RenderFrameInput {
   commands : Array[@core.DrawCommand]
   damage : @core.DamageRegion
   clear_color : @core.Color?
-  cache_epoch : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -117,7 +113,6 @@ pub(all) struct RenderFrameResult {
   cache_miss_count : Int
   cache_update_count : Int
   cache_evict_count : Int
-  missing_layer_keys : Array[String]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -131,13 +126,10 @@ pub(all) enum RenderPresentStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// Renderer-worker completion metadata. The timestamps are host monotonic
-/// milliseconds; `image_resource_revision` lets host repaint tracking avoid
-/// marking a newer image revision as presented than the one used by the frame.
+/// Renderer-worker completion metadata. The frame token is the only identity
+/// used by backend frame owners to accept or reject an asynchronous result.
 pub(all) struct RenderPresentCompletion {
-  frame_sequence : Int
-  surface_generation : Int
-  image_resource_revision : Int64
+  token : FrameToken
   submitted_at_ms : Double
   completed_at_ms : Double
   presented_at_ms : Double
@@ -280,9 +272,8 @@ pub fn RenderFrameInput::new(
     "legacy render frame input",
   ),
   clear_color? : @core.Color? = None,
-  cache_epoch? : Int = 0,
 ) -> RenderFrameInput {
-  { metrics, commands, damage, clear_color, cache_epoch }
+  { metrics, commands, damage, clear_color }
 }
 
 ///|
@@ -293,7 +284,6 @@ pub fn RenderFrameResult::new(
   cache_miss_count? : Int = 0,
   cache_update_count? : Int = 0,
   cache_evict_count? : Int = 0,
-  missing_layer_keys? : Array[String] = [],
 ) -> RenderFrameResult {
   {
     presented,
@@ -302,15 +292,12 @@ pub fn RenderFrameResult::new(
     cache_miss_count,
     cache_update_count,
     cache_evict_count,
-    missing_layer_keys,
   }
 }
 
 ///|
 pub fn RenderPresentCompletion::new(
-  frame_sequence~ : Int,
-  surface_generation~ : Int,
-  image_resource_revision~ : Int64,
+  token~ : FrameToken,
   submitted_at_ms~ : Double,
   completed_at_ms~ : Double,
   presented_at_ms~ : Double,
@@ -318,9 +305,7 @@ pub fn RenderPresentCompletion::new(
   gpu_context_generation~ : Int,
 ) -> RenderPresentCompletion {
   {
-    frame_sequence,
-    surface_generation,
-    image_resource_revision,
+    token,
     submitted_at_ms,
     completed_at_ms,
     presented_at_ms,
@@ -330,24 +315,10 @@ pub fn RenderPresentCompletion::new(
 }
 
 ///|
-pub fn RenderPresentCompletion::frame_sequence(
+pub fn RenderPresentCompletion::token(
   self : RenderPresentCompletion,
-) -> Int {
-  self.frame_sequence
-}
-
-///|
-pub fn RenderPresentCompletion::surface_generation(
-  self : RenderPresentCompletion,
-) -> Int {
-  self.surface_generation
-}
-
-///|
-pub fn RenderPresentCompletion::image_resource_revision(
-  self : RenderPresentCompletion,
-) -> Int64 {
-  self.image_resource_revision
+) -> FrameToken {
+  self.token
 }
 
 ///|
@@ -494,9 +465,8 @@ pub fn collect_rect_batches(
       | @core.DrawCommand::PopOpacity
       | @core.DrawCommand::PushLayer(_)
       | @core.DrawCommand::PopLayer
-      | @core.DrawCommand::BeginCachedLayer(_)
-      | @core.DrawCommand::EndCachedLayer(_)
-      | @core.DrawCommand::DrawCachedLayer(_)
+      | @core.DrawCommand::BeginRetainedLayer(_)
+      | @core.DrawCommand::EndRetainedLayer(_)
       | @core.DrawCommand::PushFilter(_)
       | @core.DrawCommand::PopFilter
       | @core.DrawCommand::DrawPath(_)

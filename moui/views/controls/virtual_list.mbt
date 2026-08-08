@@ -3,17 +3,18 @@ pub fn[T, Msg] lazy_list(
   items : Array[T],
   key : (T) -> String,
   row : (T) -> @core.View[Msg],
-  state? : @core.ScrollState = @core.ScrollState::new(),
   item_height? : Double = 44.0,
   viewport_height? : Double = 240.0,
   spacing? : Double = 0.0,
+  request? : @core.ScrollRequest,
 ) -> @core.View[Msg] {
-  component(ctx => {
-    let offset = ctx.watch_scroll(state).y
-    lazy_list_window(
-      items, key, row, state, item_height, viewport_height, spacing, offset,
-    )
-  })
+  ignore(item_height)
+  let children = items.map(item => row(item).key(key(item)))
+  scroll_view(
+    @layout.list(children, spacing~),
+    height=viewport_height,
+    request?,
+  )
 }
 
 ///|
@@ -21,51 +22,52 @@ pub fn[T, Msg] virtual_list(
   items : Array[T],
   key : (T) -> String,
   row : (T) -> @core.View[Msg],
-  state? : @core.ScrollState = @core.ScrollState::new(),
   item_height? : Double = 44.0,
   viewport_height? : Double = 240.0,
   spacing? : Double = 0.0,
   overscan? : Int = 1,
   empty? : @core.View[Msg]? = None,
+  request? : @core.ScrollRequest,
 ) -> @core.View[Msg] {
+  ignore(overscan)
   if items.length() == 0 {
     match empty {
-      Some(view) =>
-        scroll_view(view, state=Some(state), width=0.0, height=viewport_height)
+      Some(view) => scroll_view(view, height=viewport_height, request?)
       None =>
         lazy_list(
           items,
           key,
           row,
-          state~,
           item_height~,
           viewport_height~,
           spacing~,
+          request?,
         )
     }
   } else {
-    component(ctx => {
-      let offset = ctx.watch_scroll(state).y
-      virtual_list_window(
-        items, key, row, state, item_height, viewport_height, spacing, overscan,
-        offset,
-      )
-    })
+    lazy_list(
+      items,
+      key,
+      row,
+      item_height~,
+      viewport_height~,
+      spacing~,
+      request?,
+    )
   }
 }
 
 ///|
 pub fn scroll_to_index(
-  state : @core.ScrollState,
+  request_id~ : Int,
   index~ : Int,
   item_height? : Double = 44.0,
   spacing? : Double = 0.0,
-) -> @layout.ScrollToIndexIntent {
+) -> @core.ScrollRequest {
   let index = @common.view_max_int(0, index)
   let offset = @core.Point::new(
-    x=state.offset().x,
+    x=0.0,
     y=index.to_double() * (item_height + spacing),
   )
-  state.set_offset(offset)
-  { index, offset }
+  @core.ScrollRequest::new(id=request_id, offset~)
 }

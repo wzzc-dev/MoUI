@@ -20,43 +20,21 @@ pub fn[Msg] markdown_viewer(
   visible_scroll_y? : Double = 0.0,
   visible_viewport_height? : Double = 0.0,
   visible_overscan? : Double = 320.0,
-  visible_scroll_state? : @core.ScrollState? = None,
   key? : String? = None,
 ) -> @core.View[Msg] {
-  match visible_scroll_state {
-    Some(state) =>
-      rich_text_component("MarkdownViewerComponent", key, context => {
-        markdown_viewer_snapshot(
-          source~,
-          size~,
-          font~,
-          foreground~,
-          background~,
-          corner_radius~,
-          on_link_click~,
-          visible_scroll_y=context.watch_scroll(state).y,
-          visible_viewport_height~,
-          visible_overscan~,
-          visible_scroll_state=Some(state),
-          key~,
-        )
-      })
-    None =>
-      markdown_viewer_snapshot(
-        source~,
-        size~,
-        font~,
-        foreground~,
-        background~,
-        corner_radius~,
-        on_link_click~,
-        visible_scroll_y~,
-        visible_viewport_height~,
-        visible_overscan~,
-        visible_scroll_state=None,
-        key~,
-      )
-  }
+  markdown_viewer_snapshot(
+    source~,
+    size~,
+    font~,
+    foreground~,
+    background~,
+    corner_radius~,
+    on_link_click~,
+    visible_scroll_y~,
+    visible_viewport_height~,
+    visible_overscan~,
+    key~,
+  )
 }
 
 ///|
@@ -71,7 +49,6 @@ fn[Msg] markdown_viewer_snapshot(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
   key~ : String?,
 ) -> @core.View[Msg] {
   @core.View::from_node(
@@ -96,46 +73,7 @@ fn[Msg] markdown_viewer_snapshot(
         visible_scroll_y~,
         visible_viewport_height=node.visible_viewport_height,
         visible_overscan=node.visible_overscan,
-        visible_scroll_state~,
       )
-    },
-    semantics_actions=_node => {
-      match visible_scroll_state {
-        Some(state) =>
-          [
-            @core.ViewSemanticsActionHandler::scroll((_ctx, direction) => {
-              let offset = state.offset()
-              let step = if visible_viewport_height > 0.0 {
-                visible_viewport_height * 0.8
-              } else {
-                80.0
-              }
-              let next = match direction {
-                @core.SemanticsScrollDirection::Forward
-                | @core.SemanticsScrollDirection::Down =>
-                  @core.Point::new(x=offset.x, y=offset.y + step)
-                @core.SemanticsScrollDirection::Backward
-                | @core.SemanticsScrollDirection::Up =>
-                  @core.Point::new(
-                    x=offset.x,
-                    y=max_double(0.0, offset.y - step),
-                  )
-                @core.SemanticsScrollDirection::Left =>
-                  @core.Point::new(
-                    x=max_double(0.0, offset.x - step),
-                    y=offset.y,
-                  )
-                @core.SemanticsScrollDirection::Right =>
-                  @core.Point::new(x=offset.x + step, y=offset.y)
-              }
-              @core.ViewSemanticsActionResult::accepted(
-                dirty=@core.ViewDirtyHint::ViewBuildDirty,
-                commit=Some(() => state.set_offset(next)),
-              )
-            }),
-          ]
-        None => []
-      }
     },
   )
 }
@@ -212,7 +150,6 @@ impl @core.ViewNode for MarkdownViewerNode with fn paint(self, ctx) {
     self.visible_scroll_y,
     self.visible_viewport_height,
     self.visible_overscan,
-    None,
     cache,
   )
 }
@@ -235,7 +172,6 @@ fn[Msg] markdown_viewer_event(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewEventResult[Msg] {
   match on_link_click {
     Some(handler) =>
@@ -252,7 +188,6 @@ fn[Msg] markdown_viewer_event(
                 visible_scroll_y,
                 visible_viewport_height,
                 visible_overscan,
-                visible_scroll_state,
               ) {
               Some(offset) =>
                 match markdown_editor_link_context_at_caret(source, offset) {

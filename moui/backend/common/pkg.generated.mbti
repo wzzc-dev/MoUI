@@ -2,469 +2,52 @@
 package "wzzc-dev/moui/backend/common"
 
 import {
-  "moonbitlang/core/debug",
   "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/common/frame",
+  "wzzc-dev/moui/backend/common/image",
+  "wzzc-dev/moui/backend/common/input",
+  "wzzc-dev/moui/backend/common/lifecycle",
+  "wzzc-dev/moui/backend/common/services",
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
-  "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/services",
-  "wzzc-dev/window/dpi",
 }
 
 // Values
-pub fn app_environment(bridge~ : @backend.HostServiceBridge, async_queue? : ServiceAsyncQueue?, timer? : @services.TimerSource?, routes? : @services.RouteSource?) -> @services.AppEnvironment
+pub fn apply_platform_window_request(@lifecycle.WindowLifecycle, @backend.WindowId, @backend.WindowRequest, (@lifecycle.WindowSurfaceActions) -> Unit) -> @backend.WindowRequestResult
 
-pub fn app_services(bridge~ : @backend.HostServiceBridge, async_queue? : ServiceAsyncQueue?) -> @services.AppServices
+pub fn apply_window_request(@lifecycle.WindowLifecycle, @input.WindowInputState, @services.WindowServiceState, @backend.WindowRequest, open_window~ : (@backend.WindowOpenRequest) -> @backend.WindowRequestResult, dispose_window? : (@backend.WindowId) -> Unit, exit~ : () -> Unit) -> @backend.WindowRequestResult
 
-pub fn core_size_to_window_surface_size(@wzzc-dev/moui/core.Size) -> @dpi.Size
+pub fn attach_window_surface(@lifecycle.WindowLifecycle, @frame.WindowFrameStates, @image.WindowImageTaskStates, @backend.WindowId, @render.RendererSession, @lifecycle.WindowSurfaceActions, image_task_starter? : @image.WindowImageTaskStarter) -> Bool
 
-pub fn drain_to_runtime_slots(WindowCommands, WindowRegistry, WindowRuntimeSlots) -> Array[@backend.WindowRequestCompletion]
+pub fn dispatch_host_event(@lifecycle.WindowLifecycle, @input.WindowInputState, @services.WindowServiceState, @backend.WindowId, @backend.Event, adjust~ : (@backend.Event) -> @backend.Event?) -> Unit
 
-pub fn element_state_pressed(@wzzc-dev/window/core.ElementState) -> Bool
-
-pub fn element_state_to_pointer_phase(@wzzc-dev/window/core.ElementState) -> @wzzc-dev/moui/core.PointerPhase
-
-pub fn host_metrics_to_dpi_size(@wzzc-dev/moui/core.SurfaceMetrics) -> @dpi.Size
-
-pub fn key_event_name(@wzzc-dev/window/core.KeyEvent) -> String
-
-pub fn key_event_text(@wzzc-dev/window/core.KeyEvent) -> String?
-
-pub fn keyboard_event_to_core(@wzzc-dev/window/core.KeyEvent, @wzzc-dev/moui/core.KeyModifiers) -> @wzzc-dev/moui/core.KeyboardEvent
-
-pub fn make_surface_metrics(@dpi.PhysicalSize, scale_factor~ : Double) -> @wzzc-dev/moui/core.SurfaceMetrics
-
-pub fn modifiers_to_core(@wzzc-dev/window/core.Modifiers) -> @wzzc-dev/moui/core.KeyModifiers
-
-pub fn mouse_button_to_core(@wzzc-dev/window/core.MouseButton) -> Int?
-
-pub fn mouse_scroll_delta_to_host(@wzzc-dev/window/core.MouseScrollDelta, scale_factor? : Double) -> @backend.HostScrollDelta
-
-pub fn named_key_name(@wzzc-dev/window/core.NamedKey) -> String
-
-pub fn normalize_pointer_position(@dpi.PhysicalPositionF64, scale_factor~ : Double) -> @wzzc-dev/moui/core.Point
-
-pub fn physical_position_to_core(@dpi.PhysicalPositionF64, scale_factor? : Double) -> @wzzc-dev/moui/core.Point
-
-pub fn physical_size_to_core(@dpi.PhysicalSize) -> @wzzc-dev/moui/core.Size
+pub fn dispose_window(@lifecycle.WindowLifecycle, @frame.WindowFrameStates, @image.WindowImageTaskStates, @services.WindowServiceState, @backend.WindowId) -> Unit
 
 pub fn platform_view_plugins_next_deadline(Array[@backend.PlatformViewPlugin]) -> Int64?
 
-pub fn resolve_open_request(WindowRegistry, @backend.WindowOpenRequest, @runtime.WindowSceneResolver) -> @runtime.WindowOpenResolution
+pub fn request_platform_redraw(@lifecycle.WindowLifecycle, @backend.WindowId) -> Unit
 
-pub fn runtime_slot_needs_redraw(WindowRuntimeSlot) -> Bool
+pub fn request_redraw(@lifecycle.WindowLifecycle, @image.WindowImageTaskStates) -> Unit
 
-pub fn surface_metrics_from_physical(@dpi.PhysicalSize, scale_factor? : Double) -> @wzzc-dev/moui/core.SurfaceMetrics
+pub fn request_redraw_window_if_needed(@lifecycle.WindowLifecycle, @image.WindowImageTaskStates, @backend.WindowId) -> Unit
 
-pub fn text_input_ime_request_data(@wzzc-dev/moui/core.TextInputState) -> @wzzc-dev/window/core.ImeRequestData
+pub fn run_window_redraw(@lifecycle.WindowLifecycle, @frame.WindowFrameStates, @image.WindowImageTaskStates, @input.WindowInputState, @backend.WindowId, render~ : (@render.RendererSession, @lifecycle.WindowRuntimeSlot, @render.RenderFrameSubmission) -> @render.RenderFrameResult, finish_presented? : (@lifecycle.WindowRuntimeSlot) -> Bool) -> Bool
 
-pub fn text_input_ime_request_diagnostics(@wzzc-dev/moui/core.TextInputState) -> TextInputImeRequestDiagnostics
+pub fn runtime_slot_needs_redraw(@lifecycle.WindowRuntimeSlot) -> Bool
+
+pub fn sync_observed_resize(@lifecycle.WindowLifecycle, @input.WindowInputState, @services.WindowServiceState, @backend.WindowId, @core.SurfaceMetrics) -> @core.SurfaceMetrics?
+
+pub fn sync_text_input_session(@lifecycle.WindowLifecycle, @input.WindowInputState) -> Unit
 
 pub fn to_host_id(@render.RenderWindowId) -> @backend.WindowId
 
 pub fn to_render_id(@backend.WindowId) -> @render.RenderWindowId
 
-pub fn to_render_metrics(@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics
-
-pub fn touch_phase_to_host(@wzzc-dev/window/core.TouchPhase) -> @backend.HostScrollPhase
-
-pub fn transform_cross_platform_event(@wzzc-dev/window/core.WindowEvent, scale_factor~ : Double, surface_size? : @dpi.PhysicalSize?) -> TransformedWindowEvent
-
-pub fn window_event_is_context_menu_button(@wzzc-dev/window/core.WindowEvent) -> Bool
-
-pub fn window_event_is_context_menu_trigger(@wzzc-dev/window/core.WindowEvent) -> Bool
-
-pub fn window_event_to_core(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
-
-pub fn window_event_to_host(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @backend.Event?
-
-pub fn window_event_to_host_with_modifiers(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.KeyModifiers, scale_factor? : Double, blur_to_cancel? : Bool) -> @backend.Event?
-
-pub fn window_theme_to_color_scheme(@wzzc-dev/window/core.Theme) -> @wzzc-dev/moui/core.ColorScheme
+pub fn to_render_metrics(@core.SurfaceMetrics) -> @core.SurfaceMetrics
 
 // Errors
 
 // Types and methods
-type CoordinatedSurface
-
-pub enum EmbeddedHostLifecyclePhase {
-  Idle
-  Resumed
-  SurfaceAttached
-  Exited
-} derive(Eq, @debug.Debug)
-
-pub struct EmbeddedHostSurface {
-  handle : UInt64
-  metrics : @wzzc-dev/moui/core.SurfaceMetrics
-  generation : Int
-} derive(Eq, @debug.Debug)
-
-pub struct EmbeddedWindowCoordinator {
-  mut phase : EmbeddedHostLifecyclePhase
-  mut generation : Int
-  mut surface : EmbeddedHostSurface?
-  mut primary_window : @backend.WindowId?
-  mut exit_intent : Int?
-  frame : FrameCoordinator
-}
-pub fn EmbeddedWindowCoordinator::attach_surface(Self, UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> Array[EmbeddedWindowHostAction]
-pub fn EmbeddedWindowCoordinator::detach_surface(Self) -> Array[EmbeddedWindowHostAction]
-pub fn EmbeddedWindowCoordinator::exit_intent(Self) -> Int?
-pub fn EmbeddedWindowCoordinator::frame(Self) -> FrameCoordinator
-pub fn EmbeddedWindowCoordinator::new(hooks? : WindowFrameHooks) -> Self
-pub fn EmbeddedWindowCoordinator::phase(Self) -> EmbeddedHostLifecyclePhase
-pub fn EmbeddedWindowCoordinator::primary_window(Self) -> @backend.WindowId?
-pub fn EmbeddedWindowCoordinator::register_window(Self, @backend.WindowId) -> Unit
-pub fn EmbeddedWindowCoordinator::request_exit(Self, Int) -> EmbeddedWindowHostAction
-pub fn EmbeddedWindowCoordinator::resize_surface(Self, @wzzc-dev/moui/core.SurfaceMetrics) -> EmbeddedWindowHostAction?
-pub fn EmbeddedWindowCoordinator::resumed(Self) -> Array[EmbeddedWindowHostAction]
-pub fn EmbeddedWindowCoordinator::surface(Self) -> EmbeddedHostSurface?
-pub fn EmbeddedWindowCoordinator::surface_generation(Self) -> Int
-pub fn EmbeddedWindowCoordinator::suspended(Self) -> Array[EmbeddedWindowHostAction]
-pub fn EmbeddedWindowCoordinator::unregister_window(Self, @backend.WindowId) -> Unit
-
-pub enum EmbeddedWindowHostAction {
-  Resumed
-  CanCreateSurfaces
-  SurfaceAttached(EmbeddedHostSurface)
-  SurfaceDetached(Int)
-  DestroySurfaces
-  Suspended
-  Exit(Int)
-} derive(Eq, @debug.Debug)
-
-pub struct FrameCoordinator {
-  hooks : WindowFrameHooks
-  mut pending : Bool
-  mut presented_frames : Int
-  // private fields
-}
-pub fn FrameCoordinator::attach_image_resources(Self, @render.RenderWindowId, @render.WindowRenderer, @render.ImageLoader?) -> Unit
-pub fn FrameCoordinator::bind_image_resource_changes(Self) -> Unit
-pub fn FrameCoordinator::cancel_image_resources(Self) -> Int
-pub fn FrameCoordinator::dispose_image_resources(Self) -> Unit
-pub fn FrameCoordinator::finish_image_frame(Self, Int, presented? : Bool) -> WindowFrameImageObservation
-pub fn FrameCoordinator::finish_presented(Self, Bool, Bool, Bool) -> Bool
-pub fn FrameCoordinator::new(hooks? : WindowFrameHooks) -> Self
-pub fn FrameCoordinator::pending(Self) -> Bool
-pub fn FrameCoordinator::prepare_frame(Self) -> Bool
-pub fn FrameCoordinator::presented_count(Self) -> Int
-pub fn FrameCoordinator::request_image_redraw_if_changed(Self) -> Bool
-pub fn FrameCoordinator::request_redraw(Self) -> Unit
-pub fn FrameCoordinator::sync_ime(Self) -> Unit
-
-pub(all) struct InputState {
-  mut focused : Bool
-  mut modifiers : @wzzc-dev/moui/core.KeyModifiers
-  contract : @backend.HostInputContract
-}
-pub fn InputState::blur(Self) -> Unit
-pub fn InputState::capabilities(Self) -> @backend.HostInputCapabilities
-pub fn InputState::coordinate_policy(Self) -> @backend.HostCoordinatePolicy
-pub fn InputState::focus(Self) -> Unit
-pub fn InputState::focus_event(Self, focused~ : Bool, pointer_cancel_position? : @wzzc-dev/moui/core.Point?) -> @backend.Event?
-pub fn InputState::insert_text(Self, String) -> @backend.Event?
-pub fn InputState::keyboard_event(Self, key~ : String, text? : String?, pressed? : Bool, repeat? : Bool) -> @backend.Event?
-pub fn InputState::new(focused? : Bool, modifiers? : @wzzc-dev/moui/core.KeyModifiers, contract? : @backend.HostInputContract) -> Self
-pub fn InputState::set_modifiers(Self, @wzzc-dev/moui/core.KeyModifiers) -> Unit
-pub fn InputState::text_event(Self, @wzzc-dev/moui/core.TextInputEvent) -> @backend.Event?
-
-pub(all) enum PlatformSurfaceLifecycle {
-  Detached
-  Attached(@wzzc-dev/moui/core.SurfaceMetrics)
-} derive(Eq, @debug.Debug)
-pub fn PlatformSurfaceLifecycle::attach(@wzzc-dev/moui/core.SurfaceMetrics) -> Self
-pub fn PlatformSurfaceLifecycle::detach(Self) -> Self
-pub fn PlatformSurfaceLifecycle::metrics(Self) -> @wzzc-dev/moui/core.SurfaceMetrics?
-
-pub(all) struct PlatformWindowBinding {
-  platform_id : @wzzc-dev/window/core.WindowId
-  host_id : @backend.WindowId
-} derive(Eq, @debug.Debug)
-
-pub struct PlatformWindowMap {
-  mut bindings : Array[PlatformWindowBinding]
-}
-pub fn PlatformWindowMap::bind(Self, platform_id~ : @wzzc-dev/window/core.WindowId, host_id~ : @backend.WindowId) -> Bool
-pub fn PlatformWindowMap::count(Self) -> Int
-pub fn PlatformWindowMap::is_empty(Self) -> Bool
-pub fn PlatformWindowMap::lookup_host(Self, @wzzc-dev/window/core.WindowId) -> @backend.WindowId?
-pub fn PlatformWindowMap::lookup_platform(Self, @backend.WindowId) -> @wzzc-dev/window/core.WindowId?
-pub fn PlatformWindowMap::new() -> Self
-pub fn PlatformWindowMap::remove_host(Self, @backend.WindowId) -> @wzzc-dev/window/core.WindowId?
-pub fn PlatformWindowMap::remove_platform(Self, @wzzc-dev/window/core.WindowId) -> @backend.WindowId?
-
-pub struct ServiceAsyncQueue {
-  mut next_value : Int
-  mut pending : Array[@backend.HostPendingServiceRequest]
-  mut in_flight : Array[@backend.HostPendingServiceRequest]
-  mut completed : Array[@backend.HostCompletedServiceResponse]
-  // private fields
-}
-pub fn ServiceAsyncQueue::cancel(Self, @backend.HostServiceRequestId, String) -> Bool
-pub fn ServiceAsyncQueue::cancel_all(Self) -> Int
-pub fn ServiceAsyncQueue::complete(Self, @backend.HostServiceRequestId, @backend.HostServiceResponse) -> Bool
-pub fn ServiceAsyncQueue::completed_count(Self) -> Int
-pub fn ServiceAsyncQueue::drain_completed(Self) -> Array[@backend.HostCompletedServiceResponse]
-pub fn ServiceAsyncQueue::drain_pending(Self) -> Array[@backend.HostPendingServiceRequest]
-pub fn ServiceAsyncQueue::in_flight_count(Self) -> Int
-pub fn ServiceAsyncQueue::new() -> Self
-pub fn ServiceAsyncQueue::on_completed(Self, @backend.HostServiceRequestId, (@backend.HostCompletedServiceResponse) -> Unit) -> Bool
-pub fn ServiceAsyncQueue::outstanding_count(Self) -> Int
-pub fn ServiceAsyncQueue::pending_count(Self) -> Int
-pub fn ServiceAsyncQueue::reject(Self, @backend.HostServiceRequestId, String) -> Bool
-pub fn ServiceAsyncQueue::submit(Self, @backend.HostServiceRequest) -> @backend.HostServiceResponse
-pub fn ServiceAsyncQueue::take_completed(Self, @backend.HostServiceRequestId) -> @backend.HostCompletedServiceResponse?
-
-pub(all) struct SurfaceState {
-  mut metrics : @wzzc-dev/moui/core.SurfaceMetrics
-  owns_surface : Bool
-  can_reconfigure : Bool
-}
-pub fn SurfaceState::logical_size(Self) -> @wzzc-dev/moui/core.Size
-pub fn SurfaceState::new(metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, owns_surface? : Bool, can_reconfigure? : Bool) -> Self
-pub fn SurfaceState::resize(Self, @wzzc-dev/moui/core.SurfaceMetrics) -> @backend.Event
-
-pub(all) struct TextInputImeRequestDiagnostics {
-  focused : Bool
-  text_length : Int
-  text_utf8_length : Int
-  cursor : Int
-  anchor : Int
-  cursor_utf8 : Int
-  anchor_utf8 : Int
-  cursor_is_grapheme_boundary : Bool
-  anchor_is_grapheme_boundary : Bool
-  candidate_anchor : @wzzc-dev/moui/core.Rect
-  has_surrounding_text : Bool
-  surrounding_text_utf8_length : Int
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct TextInputSession {
-  mut enabled : Bool
-  mut last_request : @wzzc-dev/window/core.ImeRequestData?
-  mut last_capabilities : @wzzc-dev/window/core.ImeCapabilities?
-  mut last_diagnostics : TextInputImeRequestDiagnostics?
-}
-pub fn TextInputSession::last_diagnostics(Self) -> TextInputImeRequestDiagnostics?
-pub fn TextInputSession::new() -> Self
-pub fn TextInputSession::sync(Self, @wzzc-dev/moui/core.TextInputState) -> TextInputSessionAction
-
-pub(all) enum TextInputSessionAction {
-  NoImeChange
-  EnableIme(@wzzc-dev/window/core.ImeRequest)
-  UpdateIme(@wzzc-dev/window/core.ImeRequest)
-  DisableIme(@wzzc-dev/window/core.ImeRequest)
-} derive(Eq, @debug.Debug)
-
-pub(all) enum TransformedWindowEvent {
-  DispatchHostEvent(@backend.Event)
-  WindowRedrawRequired
-  CloseRequested
-  PlatformSpecific
-}
-
-pub struct WindowActions {
-  queue : WindowRequestQueue
-}
-pub fn WindowActions::close(Self, @backend.WindowId) -> Unit
-pub fn WindowActions::focus(Self, @backend.WindowId) -> Unit
-pub fn WindowActions::minimize(Self, @backend.WindowId) -> Unit
-pub fn WindowActions::new(queue? : WindowRequestQueue) -> Self
-pub fn WindowActions::open(Self, title~ : String, scene? : @backend.WindowScene, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, primary? : Bool) -> Unit
-pub fn WindowActions::queue(Self) -> WindowRequestQueue
-pub fn WindowActions::resize(Self, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit
-pub fn WindowActions::set_primary(Self, @backend.WindowId) -> Unit
-pub fn WindowActions::show(Self, @backend.WindowId) -> Unit
-pub fn WindowActions::unavailable() -> Self
-
-pub struct WindowCommands {
-  queue : WindowRequestQueue
-}
-pub fn WindowCommands::close(Self, @backend.WindowId) -> Unit
-pub fn WindowCommands::completed_count(Self) -> Int
-pub fn WindowCommands::drain(Self) -> Array[@backend.WindowRequest]
-pub fn WindowCommands::drain_completed(Self) -> Array[@backend.WindowRequestCompletion]
-pub fn WindowCommands::drain_to_registry(Self, WindowRegistry) -> Array[@backend.WindowRequestCompletion]
-pub fn WindowCommands::drain_with_handler(Self, (@backend.WindowRequest) -> @backend.WindowRequestResult) -> Array[@backend.WindowRequestCompletion]
-pub fn WindowCommands::focus(Self, @backend.WindowId) -> Unit
-pub fn WindowCommands::is_empty(Self) -> Bool
-pub fn WindowCommands::minimize(Self, @backend.WindowId) -> Unit
-pub fn WindowCommands::new(queue? : WindowRequestQueue) -> Self
-pub fn WindowCommands::open(Self, title~ : String, scene? : @backend.WindowScene, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, primary? : Bool) -> Unit
-pub fn WindowCommands::open_window(Self, @backend.WindowOpenRequest) -> Unit
-pub fn WindowCommands::pending_count(Self) -> Int
-pub fn WindowCommands::queue(Self) -> WindowRequestQueue
-pub fn WindowCommands::record_result(Self, @backend.WindowRequest, @backend.WindowRequestResult) -> Unit
-pub fn WindowCommands::resize(Self, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit
-pub fn WindowCommands::set_primary(Self, @backend.WindowId) -> Unit
-pub fn WindowCommands::show(Self, @backend.WindowId) -> Unit
-
-pub struct WindowCoordinator {
-  // private fields
-}
-pub fn WindowCoordinator::active_runtime_slot(Self) -> WindowRuntimeSlot?
-pub fn WindowCoordinator::apply_platform_window_request(Self, @backend.WindowId, @backend.WindowRequest, (WindowSurfaceActions) -> Unit) -> @backend.WindowRequestResult
-pub fn WindowCoordinator::apply_window_request(Self, @backend.WindowRequest, open_window~ : (@backend.WindowOpenRequest) -> @backend.WindowRequestResult, dispose_window? : (@backend.WindowId) -> Unit, exit~ : () -> Unit) -> @backend.WindowRequestResult
-pub fn WindowCoordinator::attach_surface(Self, @backend.WindowId, @render.WindowRenderer, WindowSurfaceActions, image_loader? : @render.ImageLoader?) -> Bool
-pub fn WindowCoordinator::bind_platform_window(Self, platform_id~ : @wzzc-dev/window/core.WindowId, window_id~ : @backend.WindowId) -> Bool
-pub fn WindowCoordinator::bind_renderer_image_resource_changes(Self, @backend.WindowId) -> Unit
-pub fn WindowCoordinator::cancel_image_resource_loads(Self, @backend.WindowId) -> Int
-pub fn WindowCoordinator::detach_surface(Self, @backend.WindowId) -> WindowSurfaceActions?
-pub fn WindowCoordinator::dispatch_host_event(Self, @backend.WindowId, @backend.Event, adjust~ : (@backend.Event) -> @backend.Event?) -> Unit
-pub fn WindowCoordinator::dispose_window(Self, @backend.WindowId) -> Unit
-pub fn WindowCoordinator::drain_window_requests(Self, (@backend.WindowRequest) -> @backend.WindowRequestResult) -> Unit
-pub fn WindowCoordinator::exit_intent(Self) -> Int?
-pub fn WindowCoordinator::lookup_window(Self, @wzzc-dev/window/core.WindowId) -> @backend.WindowId?
-pub fn WindowCoordinator::new(window_requests~ : @backend.WindowRequests, scene_resolver~ : @runtime.WindowSceneResolver, services~ : @backend.HostServiceBridge, event_sources~ : @runtime.HostPlatformEventSources?) -> Self
-pub fn WindowCoordinator::open_resolution(Self, @backend.WindowOpenRequest) -> @runtime.WindowOpenResolution
-pub fn WindowCoordinator::publish_platform_event(Self, @backend.WindowId, @backend.Event) -> @runtime.HostPlatformEventPublishResult?
-pub fn WindowCoordinator::register_primary_runtime_slot(Self, @backend.WindowId, @runtime.HostRuntimeDriver) -> Unit
-pub fn WindowCoordinator::register_runtime_slot(Self, WindowRuntimeSlot) -> Bool
-pub fn WindowCoordinator::request_exit(Self, Int) -> Unit
-pub fn WindowCoordinator::request_image_resource_redraw_if_changed(Self, @backend.WindowId) -> Bool
-pub fn WindowCoordinator::request_platform_redraw(Self, @backend.WindowId) -> Unit
-pub fn WindowCoordinator::request_redraw(Self) -> Unit
-pub fn WindowCoordinator::request_redraw_window_if_needed(Self, @backend.WindowId) -> Unit
-pub fn WindowCoordinator::rollback_window_record(Self, @backend.WindowId) -> Unit
-pub fn WindowCoordinator::run_window_redraw(Self, @backend.WindowId, render~ : (@render.WindowRenderer, WindowRuntimeSlot, @wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult, finish_presented? : (WindowRuntimeSlot) -> Bool) -> Bool
-pub fn WindowCoordinator::runtime_slot_lookup(Self, @backend.WindowId) -> WindowRuntimeSlot?
-pub fn WindowCoordinator::runtime_slots(Self) -> WindowRuntimeSlots
-pub fn WindowCoordinator::runtime_slots_empty(Self) -> Bool
-pub fn WindowCoordinator::schedule_image_resource_loads(Self, @backend.WindowId, @render.WindowRenderer, @wzzc-dev/moui/render/common.ImageResourceCompletionSource) -> @render.ImageLoadScheduleResult?
-pub fn WindowCoordinator::services(Self) -> @backend.HostServiceBridge
-pub fn WindowCoordinator::surface_actions(Self, @backend.WindowId) -> WindowSurfaceActions?
-pub fn WindowCoordinator::surface_frame_pending(Self, @backend.WindowId) -> Bool
-pub fn WindowCoordinator::surface_generation(Self) -> Int
-pub fn WindowCoordinator::surface_renderer(Self, @backend.WindowId) -> @render.WindowRenderer?
-pub fn WindowCoordinator::sync_observed_resize(Self, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics?
-pub fn WindowCoordinator::sync_runtime_slot(Self, @backend.WindowId) -> Unit
-pub fn WindowCoordinator::sync_runtime_slots(Self) -> Unit
-pub fn WindowCoordinator::sync_text_input_session(Self) -> Unit
-pub fn WindowCoordinator::text_input_diagnostics(Self) -> TextInputImeRequestDiagnostics?
-pub fn WindowCoordinator::unbind_platform_window(Self, @backend.WindowId) -> @wzzc-dev/window/core.WindowId?
-pub fn WindowCoordinator::window_registry(Self) -> WindowRegistry
-
-pub struct WindowFrameHooks {
-  prepare_frame : () -> Unit
-  finish_presented : (Bool) -> Unit
-  request_redraw : () -> Unit
-  sync_ime : () -> Unit
-}
-pub fn WindowFrameHooks::new(prepare_frame? : () -> Unit, finish_presented? : (Bool) -> Unit, request_redraw? : () -> Unit, sync_ime? : () -> Unit) -> Self
-
-pub struct WindowFrameImageObservation {
-  present_count : Int
-  loading_count : Int
-  ready_count : Int
-  failed_count : Int
-  scheduled_count : Int
-}
-
-pub struct WindowRegistry {
-  mut next_value : Int
-  mut records : Array[@backend.WindowRecord]
-}
-pub fn WindowRegistry::apply_host_event(Self, @backend.WindowId, @backend.Event) -> Bool
-pub fn WindowRegistry::apply_request(Self, @backend.WindowRequest) -> @backend.WindowRequestResult
-pub fn WindowRegistry::close(Self, @backend.WindowId) -> Bool
-pub fn WindowRegistry::focus(Self, @backend.WindowId) -> Bool
-pub fn WindowRegistry::focused_window(Self) -> @backend.WindowRecord?
-pub fn WindowRegistry::lookup(Self, @backend.WindowId) -> @backend.WindowRecord?
-pub fn WindowRegistry::minimize(Self, @backend.WindowId) -> Bool
-pub fn WindowRegistry::new() -> Self
-pub fn WindowRegistry::open(Self, title~ : String, scene? : @backend.WindowScene, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, primary? : Bool) -> @backend.WindowId
-pub fn WindowRegistry::open_window_count(Self) -> Int
-pub fn WindowRegistry::open_windows(Self) -> Array[@backend.WindowRecord]
-pub fn WindowRegistry::primary_window(Self) -> @backend.WindowRecord?
-pub fn WindowRegistry::remove_closed(Self) -> Int
-pub fn WindowRegistry::request_close(Self, @backend.WindowId) -> Bool
-pub fn WindowRegistry::resize(Self, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> Bool
-pub fn WindowRegistry::set_primary(Self, @backend.WindowId) -> Bool
-pub fn WindowRegistry::show(Self, @backend.WindowId) -> Bool
-
-pub struct WindowRequestQueue {
-  mut requests : Array[@backend.WindowRequest]
-  mut completed : Array[@backend.WindowRequestCompletion]
-  // private fields
-}
-pub fn WindowRequestQueue::close_window(Self, @backend.WindowId) -> Unit
-pub fn WindowRequestQueue::completed_count(Self) -> Int
-pub fn WindowRequestQueue::drain(Self) -> Array[@backend.WindowRequest]
-pub fn WindowRequestQueue::drain_completed(Self) -> Array[@backend.WindowRequestCompletion]
-pub fn WindowRequestQueue::drain_with_handler(Self, (@backend.WindowRequest) -> @backend.WindowRequestResult) -> Array[@backend.WindowRequestCompletion]
-pub fn WindowRequestQueue::focus_window(Self, @backend.WindowId) -> Unit
-pub fn WindowRequestQueue::is_empty(Self) -> Bool
-pub fn WindowRequestQueue::minimize_window(Self, @backend.WindowId) -> Unit
-pub fn WindowRequestQueue::new() -> Self
-pub fn WindowRequestQueue::open_window(Self, title~ : String, scene? : @backend.WindowScene, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, primary? : Bool) -> Unit
-pub fn WindowRequestQueue::pending_count(Self) -> Int
-pub fn WindowRequestQueue::push(Self, @backend.WindowRequest) -> Unit
-pub fn WindowRequestQueue::record_result(Self, @backend.WindowRequest, @backend.WindowRequestResult) -> Unit
-pub fn WindowRequestQueue::requests(Self) -> @backend.WindowRequests
-pub fn WindowRequestQueue::resize_window(Self, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit
-pub fn WindowRequestQueue::set_primary_window(Self, @backend.WindowId) -> Unit
-pub fn WindowRequestQueue::show_window(Self, @backend.WindowId) -> Unit
-pub fn WindowRequestQueue::subscribe_completed(Self, (@backend.WindowRequestCompletion) -> Unit) -> () -> Unit
-
-pub(all) struct WindowRuntimeSlot {
-  id : @backend.WindowId
-  record : @backend.WindowRecord
-  driver : @runtime.HostRuntimeDriver
-}
-pub fn WindowRuntimeSlot::from_driver(record~ : @backend.WindowRecord, driver~ : @runtime.HostRuntimeDriver) -> Self
-pub fn WindowRuntimeSlot::from_resolved_open(@runtime.WindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
-pub fn WindowRuntimeSlot::new(record~ : @backend.WindowRecord, runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
-
-pub struct WindowRuntimeSlots {
-  mut slots : Array[WindowRuntimeSlot]
-}
-pub fn WindowRuntimeSlots::apply_host_event(Self, WindowRegistry, @backend.WindowId, @backend.Event) -> Bool
-pub fn WindowRuntimeSlots::apply_request(Self, WindowRegistry, @backend.WindowRequest) -> @backend.WindowRequestResult
-pub fn WindowRuntimeSlots::count(Self) -> Int
-pub fn WindowRuntimeSlots::focused_slot(Self) -> WindowRuntimeSlot?
-pub fn WindowRuntimeSlots::insert(Self, WindowRuntimeSlot) -> Bool
-pub fn WindowRuntimeSlots::insert_from_registry(Self, WindowRegistry, @backend.WindowId, driver~ : @runtime.HostRuntimeDriver) -> Bool
-pub fn WindowRuntimeSlots::is_empty(Self) -> Bool
-pub fn WindowRuntimeSlots::lookup(Self, @backend.WindowId) -> WindowRuntimeSlot?
-pub fn WindowRuntimeSlots::new() -> Self
-pub fn WindowRuntimeSlots::open_slots(Self) -> Array[WindowRuntimeSlot]
-pub fn WindowRuntimeSlots::primary_slot(Self) -> WindowRuntimeSlot?
-pub fn WindowRuntimeSlots::remove(Self, @backend.WindowId) -> WindowRuntimeSlot?
-pub fn WindowRuntimeSlots::remove_closed(Self) -> Int
-pub fn WindowRuntimeSlots::sync_from_registry(Self, WindowRegistry, @backend.WindowId) -> Bool
-pub fn WindowRuntimeSlots::sync_open_from_registry(Self, WindowRegistry) -> Int
-pub fn WindowRuntimeSlots::sync_record(Self, @backend.WindowRecord) -> Bool
-
-pub struct WindowSlot[W, X] {
-  host_id : @backend.WindowId
-  window : W
-  mut extra : X
-}
-pub fn[W, X] WindowSlot::new(host_id~ : @backend.WindowId, window~ : W, extra~ : X) -> Self[W, X]
-pub fn[W, X] WindowSlot::set_extra(Self[W, X], extra~ : X) -> Unit
-
-pub struct WindowSlotMap[W, X] {
-  mut slots : Array[WindowSlot[W, X]]
-}
-pub fn[W, X] WindowSlotMap::insert(Self[W, X], WindowSlot[W, X]) -> Bool
-pub fn[W, X] WindowSlotMap::lookup_host(Self[W, X], @backend.WindowId) -> WindowSlot[W, X]?
-pub fn[W, X] WindowSlotMap::new() -> Self[W, X]
-pub fn[W, X] WindowSlotMap::remove_host(Self[W, X], @backend.WindowId) -> WindowSlot[W, X]?
-
-pub struct WindowSurfaceActions {
-  focus : () -> Unit
-  request_resize : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics
-  sync_observed_resize : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics
-  set_minimized : (Bool) -> Unit
-  set_visible : (Bool) -> Unit
-  request_redraw : () -> Unit
-  request_ime_update : (TextInputSessionAction) -> Unit
-  drop : () -> Unit
-  native_view_handle : () -> UInt64?
-  dispose_platform_views : () -> Unit
-}
-pub fn WindowSurfaceActions::new(focus~ : () -> Unit, request_resize~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics, sync_observed_resize~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics, set_minimized~ : (Bool) -> Unit, set_visible~ : (Bool) -> Unit, request_redraw~ : () -> Unit, request_ime_update~ : (TextInputSessionAction) -> Unit, drop~ : () -> Unit, native_view_handle~ : () -> UInt64?, dispose_platform_views~ : () -> Unit) -> Self
 
 // Type aliases
 

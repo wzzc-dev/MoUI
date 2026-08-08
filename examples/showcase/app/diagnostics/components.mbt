@@ -7,7 +7,6 @@ fn section_panel(
   metrics~ : ShowcaseMetrics,
   eyebrow? : String = "",
   scroll_offset? : @geometry.Point = @geometry.Point::new(x=0.0, y=0.0),
-  scroll_state? : @state.ScrollState? = None,
   on_scroll? : ((@geometry.Point) -> ShowcaseMsg)? = None,
 ) -> @moui.View[ShowcaseMsg] {
   let header_extra = if eyebrow == "" {
@@ -26,7 +25,6 @@ fn section_panel(
         offset=scroll_offset,
         width=metrics.body_width,
         height=scroll_height,
-        state=scroll_state,
         on_scroll=Some(handler),
       )
     None =>
@@ -35,7 +33,6 @@ fn section_panel(
         offset=scroll_offset,
         width=metrics.body_width,
         height=scroll_height,
-        state=scroll_state,
       )
   }
   let header_bg = match theme.scheme {
@@ -98,10 +95,7 @@ fn ShowcaseModel::section_panel(
   metrics~ : ShowcaseMetrics,
   eyebrow? : String = "",
 ) -> @moui.View[ShowcaseMsg] {
-  let offset = @geometry.Point::new(
-    x=0.0,
-    y=max_showcase_double(0.0, self.detail_scroll.offset().y),
-  )
+  ignore(self)
   section_panel(
     theme,
     title,
@@ -109,8 +103,6 @@ fn ShowcaseModel::section_panel(
     body,
     metrics~,
     eyebrow~,
-    scroll_offset=offset,
-    scroll_state=Some(self.detail_scroll),
   )
 }
 

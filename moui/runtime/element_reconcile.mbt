@@ -78,23 +78,6 @@ fn mount_runtime_view_node_for_runtime(
   let id = ElementId::new(next_id)
   let mut next = next_id + 1
   let children : Array[ElementNode] = []
-  let mut component_subscriptions : Array[StateSubscription] = []
-  let mut component_effects : Array[ComponentEffect] = []
-  match (spec.has_build_child(), runtime) {
-    (true, Some(runtime)) => {
-      let built = build_component_child(spec, runtime, id, [], [])
-      component_subscriptions = built.subscriptions
-      component_effects = built.effects
-      let mounted = mount_runtime_view_node_for_runtime(
-        built.child_view_node,
-        Some(runtime),
-        next,
-      )
-      children.push(mounted.node)
-      next = mounted.next_id
-    }
-    _ => ()
-  }
   for child_view_node in spec.children() {
     let mounted = mount_runtime_view_node_for_runtime(
       child_view_node, runtime, next,
@@ -111,10 +94,6 @@ fn mount_runtime_view_node_for_runtime(
       children,
       dirty: DirtyFlags::all(),
       control: ElementControlState::new(),
-      component: ElementComponentState::new(
-        subscriptions=component_subscriptions,
-        effects=component_effects,
-      ),
       layout_cache: ElementLayoutCache::empty(),
       render_cache: ElementRenderCache::empty(),
       semantics_cache: ElementSemanticsCache::empty(),
@@ -131,11 +110,7 @@ fn reconcile_element_for_runtime(
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ReconcileResult {
-  let current_builds_child = old.view_node.has_build_child()
-  let next_builds_child = next_view_node.has_build_child()
-  if !runtime_view_nodes_have_same_identity(old.view_node, next_view_node) ||
-    current_builds_child != next_builds_child {
-    old.cancel_component_tree_subscriptions()
+  if !runtime_view_nodes_have_same_identity(old.view_node, next_view_node) {
     let mounted = mount_runtime_view_node_for_runtime(
       next_view_node, runtime, next_id,
     )
@@ -151,28 +126,12 @@ fn reconcile_element_for_runtime(
     )
     old.view_node = next_view_node
     old.key = runtime_view_node_identity_key(old.view_node)
-    if next_builds_child {
-      // A component adapter is an opaque declaration producer. Replacing it
-      // must run the newly captured build closure even when all four output
-      // declaration channels are constant; the rebuilt child is then
-      // reconciled normally to determine downstream invalidation.
-      old.dirty.mark_build_only()
-    }
-    let children_result = if old.view_node.has_build_child() {
-      {
-        children: old.children,
-        next_id,
-        dirty_kind: ReconcileDirtyKind::clean(),
-        structure_changed: false,
-      }
-    } else {
-      reconcile_children_for_runtime(
-        old.children,
-        old.view_node,
-        runtime,
-        next_id,
-      )
-    }
+    let children_result = reconcile_children_for_runtime(
+      old.children,
+      old.view_node,
+      runtime,
+      next_id,
+    )
     old.children = children_result.children
     let effective_own_dirty = if children_result.structure_changed {
       own_dirty.combine(ReconcileDirtyKind::layout())
@@ -242,10 +201,9 @@ fn reconcile_children_for_runtime(
       }
     }
   }
-  for index, old_child in old_children {
+  for index, _old_child in old_children {
     if !used[index] {
       structure_changed = true
-      old_child.cancel_component_tree_subscriptions()
       dirty = dirty.combine(ReconcileDirtyKind::layout())
     }
   }

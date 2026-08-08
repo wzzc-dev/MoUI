@@ -97,7 +97,7 @@ pub fn backend_info() -> MacosBackendInfo {
 ///|
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
   {
-    kind: @runtime.NativeAccessibilityBridgeKind::AppKit,
+    kind: "appkit",
     semantics_bridge_available: true,
     native_accessibility_bridge_available: false,
     action_dispatch_available: true,
@@ -107,11 +107,11 @@ pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
 
 ///|
 pub fn macos_accessibility_bridge(
-  runtime : @runtime.AppRuntime,
-) -> @runtime.NativeAccessibilityBridge {
-  @runtime.NativeAccessibilityBridge::runtime(
-    kind=@runtime.NativeAccessibilityBridgeKind::AppKit,
-    runtime~,
+  driver : @runtime.HostRuntimeDriver,
+) -> @accesskit_bridge.AccessKitBridge {
+  @accesskit_bridge.AccessKitBridge::driver(
+    diagnostic_name="appkit",
+    driver~,
   )
 }
 
@@ -237,7 +237,7 @@ fn dispatch_macos_settings(
 
 ///|
 pub fn app_environment() -> @services.AppEnvironment {
-  @window_host.app_environment(
+  @window_services.app_environment(
     bridge=macos_service_bridge(),
     timer=Some(macos_timer_source()),
   )

@@ -6,7 +6,8 @@ compile and host-sim tests pass, but no development/demonstration usability or
 product commitment is made without matching-simulator/device evidence. `wzzc-dev/window/ios` owns UIKit lifecycle, surface, and
 input callbacks; `moui/backend/ios` assembles the MoUI runtime session and
 exposes the neutral UIKit/Metal presenter surface. The entrypoint supplies
-`moui/render/skia` factories; the backend has no Skia dependency.
+`moui_skia_renderer` providers with an explicit iOS platform policy; the
+backend has no Skia dependency.
 
 ## Entry Points
 

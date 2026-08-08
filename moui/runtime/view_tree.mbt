@@ -32,7 +32,6 @@ priv trait RuntimeViewNode {
   fn identity(Self) -> @core.ViewIdentity
   fn declaration(Self) -> @core.ViewDeclaration
   fn children(Self) -> Array[&RuntimeViewNode]
-  fn build_child(Self, @core.ComponentContext) -> &RuntimeViewNode?
   fn child_constraints(Self, Constraints) -> Constraints
   fn child_environment(Self, Environment) -> Environment
   fn child_style(Self, ViewStyle) -> ViewStyle
@@ -53,7 +52,6 @@ priv trait RuntimeViewNode {
   ) -> RuntimeSemanticsActionOutcome
   fn focusable(Self) -> Bool
   fn flex_weight(Self) -> Double
-  fn has_build_child(Self) -> Bool
 }
 
 ///|
@@ -83,17 +81,6 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn declaration(self) 
 ///|
 impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn children(self) {
   self.view.children().map(child => runtime_view_node(child, self.emit))
-}
-
-///|
-impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn build_child(
-  self,
-  context,
-) {
-  match self.view.build_child() {
-    Some(build) => Some(runtime_view_node(build(context), self.emit))
-    None => None
-  }
 }
 
 ///|
@@ -222,13 +209,6 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn focusable(self) {
 ///|
 impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn flex_weight(self) {
   self.view.flex_weight()
-}
-
-///|
-impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn has_build_child(
-  self,
-) {
-  self.view.build_child() is Some(_)
 }
 
 ///|

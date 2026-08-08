@@ -107,7 +107,7 @@ fn guidance_include_rules() -> Array[TextRule] {
     },
     {
       path: "docs/testing.md",
-      token: "moon test moui/render/sun --target native",
+      token: "moon test moui_sun_renderer --target native",
     },
     {
       path: "docs/testing.md",

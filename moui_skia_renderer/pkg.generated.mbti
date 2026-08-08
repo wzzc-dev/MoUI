@@ -1,0 +1,234 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_skia_renderer"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui_skia/native",
+}
+
+// Values
+pub fn backend_info() -> @render.RendererBackendInfo
+
+pub fn create_hybrid_renderer(NativeGpuPlatform, NativeRendererMode, @core.SurfaceMetrics, SkiaPresentTarget, gpu_available~ : Bool, gpu_promoted~ : Bool, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool) -> SkiaHybridRenderer raise SkiaRendererError
+
+pub fn create_with_present_target(@core.SurfaceMetrics, SkiaPresentTarget, font_resolution? : SkiaFontResolution, async_image_loading? : Bool) -> SkiaRasterRenderer raise SkiaRendererError
+
+pub fn create_with_present_target_and_route(@core.SurfaceMetrics, SkiaPresentTarget, surface_route? : SkiaSurfaceRoute, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool) -> SkiaRasterRenderer raise SkiaRendererError
+
+pub fn from_env(platform~ : NativeGpuPlatform) -> Array[@render.RendererProvider]
+
+pub fn gpu(platform~ : NativeGpuPlatform, font_resolution? : SkiaFontResolution) -> @render.RendererProvider
+
+pub fn raster(font_resolution? : SkiaFontResolution) -> @render.RendererProvider
+
+pub fn renderer_descriptor() -> @render.RendererDescriptor
+
+pub fn[P : NativePlatformSurface] resolve_surface_route(P, NativeRendererMode, gpu_available~ : Bool, gpu_promoted~ : Bool) -> SkiaSurfaceRoute
+
+pub fn skia_available() -> Bool
+
+pub fn skia_emoji_font_fallback_diagnostic(text? : String, font? : @core.FontSpec, font_resolution? : SkiaFontResolution) -> SkiaEmojiFontFallbackDiagnostic?
+
+pub fn skia_gpu_metal_preflight_summary() -> String
+
+pub fn skia_gpu_native_descriptor() -> @render.RendererDescriptor
+
+pub fn skia_image_load_completion(String) -> @render.ImageResourceLoadCompletion
+
+pub fn skia_image_load_completion_from_bytes(String, Bytes, background_io? : Bool, background_decode? : Bool) -> @render.ImageResourceLoadCompletion
+
+pub fn skia_provider_capabilities(provider_id~ : String, backend~ : @render.RendererBackendKind) -> Array[@render.RendererBackendFeatureCapability]
+
+pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor
+
+pub fn skia_text_selection_geometry_diagnostic(String, selection? : @core.TextRange?, font? : @core.FontSpec, max_width? : Double, font_resolution? : SkiaFontResolution) -> SkiaTextSelectionGeometryDiagnostic?
+
+pub fn skia_text_system(resolution? : SkiaFontResolution) -> @core.TextSystem
+
+pub fn skia_text_visual_order_diagnostic(String, font? : @core.FontSpec, font_resolution? : SkiaFontResolution) -> SkiaTextVisualOrderDiagnostic?
+
+// Errors
+pub(all) suberror SkiaRendererError {
+  SkiaUnavailable
+  SurfaceUnavailable
+  CanvasUnavailable
+  ReadPixelsUnavailable
+  GpuContextUnavailable(String)
+  PresentFailed(String)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SkiaRendererError::message(Self) -> String
+
+// Types and methods
+pub(all) struct HostGpuPresentOutcome {
+  // private fields
+}
+pub fn HostGpuPresentOutcome::new(succeeded~ : Bool, next_surface? : @native.Surface?) -> Self
+pub fn HostGpuPresentOutcome::next_surface(Self) -> @native.Surface?
+pub fn HostGpuPresentOutcome::succeeded(Self) -> Bool
+
+pub struct HostGpuPresentTarget {
+  // private fields
+}
+pub fn HostGpuPresentTarget::description(Self) -> String
+pub fn HostGpuPresentTarget::new(description~ : String, create_window_surface~ : (@native.GpuContext?, @core.SurfaceMetrics) -> @native.Surface?, present_gpu~ : (@native.GpuContext?, @native.Surface) -> HostGpuPresentOutcome) -> Self
+
+pub(all) enum NativeGpuPlatform {
+  MacOS
+  Windows
+  Linux
+  Android
+  IOS
+  HarmonyOS
+} derive(Eq, ToJson, @debug.Debug)
+pub impl NativePlatformSurface for NativeGpuPlatform
+
+pub(all) enum NativeRendererMode {
+  Auto
+  SkiaGpu
+  SkiaRaster
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeRendererMode::label(Self) -> String
+pub fn NativeRendererMode::parse(String) -> Self?
+
+pub struct SkiaEmojiFontFallbackDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SkiaEmojiFontFallbackDiagnostic::cluster_count(Self) -> Int
+pub fn SkiaEmojiFontFallbackDiagnostic::deterministic_color_emoji_ready(Self) -> Bool
+pub fn SkiaEmojiFontFallbackDiagnostic::emoji_fallback_attempted(Self) -> Bool
+pub fn SkiaEmojiFontFallbackDiagnostic::emoji_hint(Self) -> Bool
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_character(Self) -> Int
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_language_tag_count(Self) -> Int
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_language_tags(Self) -> Array[String]
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_request_language_count(Self) -> Int
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_request_ready(Self) -> Bool
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_script_tag(Self) -> String
+pub fn SkiaEmojiFontFallbackDiagnostic::font_family(Self) -> String
+pub fn SkiaEmojiFontFallbackDiagnostic::font_source(Self) -> String
+pub fn SkiaEmojiFontFallbackDiagnostic::glyph_count(Self) -> Int
+pub fn SkiaEmojiFontFallbackDiagnostic::glyph_format(Self) -> String
+pub fn SkiaEmojiFontFallbackDiagnostic::glyph_height(Self) -> Int
+pub fn SkiaEmojiFontFallbackDiagnostic::glyph_key(Self) -> String
+pub fn SkiaEmojiFontFallbackDiagnostic::glyph_width(Self) -> Int
+pub fn SkiaEmojiFontFallbackDiagnostic::missing_glyph_recovery_ready(Self) -> Bool
+pub fn SkiaEmojiFontFallbackDiagnostic::resolved_font_name(Self) -> String
+pub fn SkiaEmojiFontFallbackDiagnostic::resolved_missing_glyph_count(Self) -> Int
+pub fn SkiaEmojiFontFallbackDiagnostic::shaper(Self) -> String
+pub fn SkiaEmojiFontFallbackDiagnostic::text(Self) -> String
+pub fn SkiaEmojiFontFallbackDiagnostic::text_system_id(Self) -> String
+
+pub(all) enum SkiaFontResolution {
+  SystemFontMgr
+  EmptyTypeface
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct SkiaHybridRenderer {
+  // private fields
+}
+pub fn SkiaHybridRenderer::drain_present_completions(Self) -> Array[@render.RenderPresentCompletion]
+pub fn SkiaHybridRenderer::fallback_to_raster(Self) -> Bool
+pub fn SkiaHybridRenderer::render_frame(Self, @render.RenderFrameSubmission) -> @render.RenderFrameResult
+pub fn SkiaHybridRenderer::requested_mode(Self) -> NativeRendererMode
+pub fn SkiaHybridRenderer::surface_route(Self) -> SkiaSurfaceRoute
+
+pub struct SkiaPixelFrame {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn SkiaPixelFrame::height(Self) -> Int
+pub fn SkiaPixelFrame::pixels(Self) -> Bytes
+pub fn SkiaPixelFrame::row_bytes(Self) -> Int
+pub fn SkiaPixelFrame::scale_factor(Self) -> Double
+pub fn SkiaPixelFrame::width(Self) -> Int
+
+pub(all) enum SkiaPresentKind {
+  CpuPixelFrame
+  HostGpuSurface
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct SkiaPresentTarget {
+  // private fields
+}
+pub fn SkiaPresentTarget::new(description~ : String, present~ : (SkiaPixelFrame) -> Bool) -> Self
+
+pub struct SkiaRasterRenderer {
+  // private fields
+}
+pub fn SkiaRasterRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> Bool
+pub fn SkiaRasterRenderer::backend_info(Self) -> @render.RendererBackendInfo
+pub fn SkiaRasterRenderer::backend_kind(Self) -> @render.RendererBackendKind
+pub fn SkiaRasterRenderer::dispose(Self) -> Unit
+pub fn SkiaRasterRenderer::draw_platform_view_pixels(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
+pub fn SkiaRasterRenderer::gpu_target(Self) -> HostGpuPresentTarget?
+pub fn SkiaRasterRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
+pub fn SkiaRasterRenderer::last_frame(Self) -> SkiaPixelFrame?
+pub fn SkiaRasterRenderer::metrics(Self) -> @core.SurfaceMetrics
+pub fn SkiaRasterRenderer::present_count(Self) -> Int
+pub fn SkiaRasterRenderer::record_frame_picture(Self, @core.DrawFrame) -> @native.Picture?
+pub fn SkiaRasterRenderer::render(Self, Array[@core.DrawCommand]) -> Unit raise SkiaRendererError
+pub fn SkiaRasterRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
+pub fn SkiaRasterRenderer::resize(Self, @core.SurfaceMetrics) -> Unit raise SkiaRendererError
+pub fn SkiaRasterRenderer::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
+pub fn SkiaRasterRenderer::surface_diagnostic_summary(Self) -> String
+pub fn SkiaRasterRenderer::surface_is_gpu(Self) -> Bool
+pub fn SkiaRasterRenderer::surface_route(Self) -> SkiaSurfaceRoute
+pub fn SkiaRasterRenderer::target_kind(Self) -> SkiaPresentKind
+pub fn SkiaRasterRenderer::text_system(Self) -> @core.TextSystem
+pub fn SkiaRasterRenderer::to_renderer_session(Self, image_source? : @render.HostImageSource, image_decoder? : @render.RendererImageDecoder?, native_surface? : @render.NativeSurface?) -> @render.RendererSession
+pub fn SkiaRasterRenderer::unsupported_command_count(Self) -> Int
+pub fn SkiaRasterRenderer::unsupported_command_diagnostics(Self) -> Array[SkiaUnsupportedCommandDiagnostic]
+
+pub(all) enum SkiaSurfaceRoute {
+  RasterSurfaceRoute
+  MetalGpuSurfaceRoute
+  VulkanGpuSurfaceRoute
+  EglGpuSurfaceRoute
+  Direct3DGpuSurfaceRoute
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SkiaSurfaceRoute::is_gpu(Self) -> Bool
+pub fn SkiaSurfaceRoute::is_implemented(Self) -> Bool
+pub fn SkiaSurfaceRoute::label(Self) -> String
+
+pub struct SkiaTextSelectionGeometryDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SkiaTextSelectionGeometryDiagnostic::bidi_visual_order_observed(Self) -> Bool
+pub fn SkiaTextSelectionGeometryDiagnostic::hit_test_inside(Self) -> Bool
+pub fn SkiaTextSelectionGeometryDiagnostic::hit_test_line_index(Self) -> Int
+pub fn SkiaTextSelectionGeometryDiagnostic::hit_test_offset(Self) -> Int
+pub fn SkiaTextSelectionGeometryDiagnostic::line_count(Self) -> Int
+pub fn SkiaTextSelectionGeometryDiagnostic::selected_line_count(Self) -> Int
+pub fn SkiaTextSelectionGeometryDiagnostic::selection_range(Self) -> @core.TextRange
+pub fn SkiaTextSelectionGeometryDiagnostic::selection_rect_count(Self) -> Int
+pub fn SkiaTextSelectionGeometryDiagnostic::text(Self) -> String
+pub fn SkiaTextSelectionGeometryDiagnostic::visual_order_differs(Self) -> Bool
+pub fn SkiaTextSelectionGeometryDiagnostic::visual_segment_count(Self) -> Int
+
+pub struct SkiaTextVisualOrderDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SkiaTextVisualOrderDiagnostic::glyph_count(Self) -> Int
+pub fn SkiaTextVisualOrderDiagnostic::logical_cluster_count(Self) -> Int
+pub fn SkiaTextVisualOrderDiagnostic::logical_text(Self) -> String
+pub fn SkiaTextVisualOrderDiagnostic::segment_count(Self) -> Int
+pub fn SkiaTextVisualOrderDiagnostic::visual_cluster_count(Self) -> Int
+pub fn SkiaTextVisualOrderDiagnostic::visual_order_differs(Self) -> Bool
+pub fn SkiaTextVisualOrderDiagnostic::visual_text(Self) -> String
+pub fn SkiaTextVisualOrderDiagnostic::width(Self) -> Double
+
+pub struct SkiaUnsupportedCommandDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SkiaUnsupportedCommandDiagnostic::command(Self) -> String
+pub fn SkiaUnsupportedCommandDiagnostic::reason(Self) -> String
+
+// Type aliases
+
+// Traits
+pub(open) trait NativePlatformSurface {
+  fn surface_route(Self) -> SkiaSurfaceRoute
+  fn gpu_promoted(Self) -> Bool
+  fn platform_label(Self) -> String
+}
+

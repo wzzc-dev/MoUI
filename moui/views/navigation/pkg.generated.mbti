@@ -32,8 +32,6 @@ pub fn[Msg] menu_item(id~ : String, label~ : String, message~ : Msg, enabled? : 
 
 pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> NavigationDestination[Msg]
 
-pub fn[Msg] navigation_stack(@core.NavigationState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
-
 pub fn[Msg] navigation_stack_selected(String, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] resizable_split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], primary_width~ : Double, detail_width? : Double, height? : Double, min_primary_width? : Double, max_primary_width? : Double, spacing? : Double, handle_width? : Double, theme? : @core.Theme, on_drag~ : (Double) -> Msg) -> @core.View[Msg]
@@ -93,8 +91,8 @@ type RouteFocusStore
 pub fn RouteFocusStore::focus_key(Self, String) -> String?
 pub fn RouteFocusStore::focus_key_for_location(Self, RouteLocation) -> String?
 pub fn RouteFocusStore::new() -> Self
-pub fn RouteFocusStore::remember(Self, route~ : String, focus_key~ : String) -> Unit
-pub fn RouteFocusStore::remember_location(Self, RouteLocation, focus_key~ : String) -> Unit
+pub fn RouteFocusStore::remember(Self, route~ : String, focus_key~ : String) -> Self
+pub fn RouteFocusStore::remember_location(Self, RouteLocation, focus_key~ : String) -> Self
 
 pub struct RouteHistoryEntry {
   route : String
@@ -126,7 +124,7 @@ pub fn RouteHistoryState::from_snapshot(RouterSnapshot, title? : String, source?
 pub fn RouteHistoryState::new(initial? : RouteLocation, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::push(Self, RouteLocation, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::replace(Self, RouteLocation, title? : String, source? : String) -> Self
-pub fn RouteHistoryState::restore_router(Self, RouterState) -> Unit
+pub fn RouteHistoryState::restore_router(Self) -> RouterState
 pub fn RouteHistoryState::router_snapshot(Self) -> RouterSnapshot
 
 pub struct RouteLocation {
@@ -166,12 +164,13 @@ pub fn RouterSnapshot::routes(Self) -> Array[String]
 
 type RouterState
 pub fn RouterState::current(Self) -> RouteLocation
+pub fn RouterState::from_snapshot(RouterSnapshot) -> Self
 pub fn RouterState::new(initial? : RouteLocation) -> Self
-pub fn RouterState::pop(Self) -> Bool
-pub fn RouterState::push(Self, RouteLocation) -> Unit
-pub fn RouterState::replace(Self, RouteLocation) -> Unit
+pub fn RouterState::pop(Self) -> Self
+pub fn RouterState::push(Self, RouteLocation) -> Self
+pub fn RouterState::replace(Self, RouteLocation) -> Self
 pub fn RouterState::resolve(Self, Array[RouteDescriptor]) -> RouteDescriptor?
-pub fn RouterState::restore(Self, RouterSnapshot) -> Unit
+pub fn RouterState::restore(Self, RouterSnapshot) -> Self
 pub fn RouterState::snapshot(Self) -> RouterSnapshot
 pub fn RouterState::stack(Self) -> Array[RouteLocation]
 

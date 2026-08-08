@@ -40,19 +40,13 @@ pub fn codepoint_is_rtl_script(Int) -> Bool
 
 pub fn env_flag(String) -> Bool
 
-pub fn image_loader(@render.RendererImageDecoder, @render.HostImageSource?) -> @render.ImageLoader
+pub fn host_surface_metrics_error(@render.HostSurface) -> String?
 
 pub fn image_placement(@core.Rect, @core.Size, @core.ImageFit) -> ImagePlacement
 
 pub fn import_svg(String) -> SvgImportResult
 
 pub fn lower_draw_commands(Array[@core.DrawCommand]) -> DrawPlan
-
-pub fn negotiate_cpu_raster_surface(@render.SurfaceDescriptor, label~ : String, id~ : String, presentation_model~ : @render.RendererPresentationModel) -> @render.SurfaceNegotiationResult
-
-pub fn negotiate_gpu_surface(@render.SurfaceDescriptor, label~ : String, id~ : String, route_for~ : (@render.GpuHostSurfaceDescriptor) -> @render.SurfaceRoute) -> @render.SurfaceNegotiationResult
-
-pub fn new_provider_instance(render_frame~ : (@core.DrawFrame) -> @render.RenderFrameResult, recover~ : (String) -> @render.RecoveryResult, dispose~ : () -> Unit) -> @render.RendererInstance
 
 pub fn plan_renderer_command_fallbacks(Array[@core.DrawCommand]) -> @render.RendererCommandPlan
 
@@ -76,11 +70,9 @@ pub fn renderer_provider_capabilities(provider_id~ : String, backend~ : @render.
 
 pub fn representative_fallback_codepoint(String, skip_joiners? : Bool) -> Int
 
-pub fn resolve_renderer(Array[@render.RendererFactory], @render.SurfaceContext) -> @render.RendererResolution?
+pub fn resolve_renderer(Array[@render.RendererProvider], @render.HostSurface) -> @render.RendererSession?
 
 pub fn resolve_shader_effect(@core.ShaderEffectSpec) -> ShaderRegistryResult
-
-pub fn select_renderer_provider_binding(Array[@render.RendererProviderBinding], @render.SurfaceDescriptor) -> (@render.RendererProviderBinding, @render.BoundSurface)?
 
 pub fn tessellate_path(@core.PathSpec) -> PathMesh
 
@@ -96,31 +88,9 @@ pub fn text_segment_class(String) -> Int
 
 pub fn text_string_arrays_equal(Array[String], Array[String]) -> Bool
 
-pub fn window_renderer_with_cached_layer_fallback(resize~ : (@core.SurfaceMetrics) -> Unit, render~ : (Array[@core.DrawCommand]) -> Unit, drain_present_completions? : (() -> Array[@render.RenderPresentCompletion])?, text_system~ : () -> @core.TextSystem, present_count? : () -> Int, dispose? : () -> Unit, image? : @render.HostRendererImageCapability, platform_view? : @render.HostRendererPlatformViewCapability, gpu_recovery? : @render.HostRendererGpuRecoveryCapability) -> @render.WindowRenderer
-
 // Errors
 
 // Types and methods
-pub struct AsyncImageLoader {
-  // private fields
-}
-pub fn AsyncImageLoader::as_loader(Self) -> @render.ImageLoader
-pub fn AsyncImageLoader::cancel_all(Self) -> Int
-pub fn AsyncImageLoader::cancel_window(Self, @render.RenderWindowId) -> Int
-pub fn AsyncImageLoader::diagnostics(Self) -> AsyncImageLoaderDiagnostics
-pub fn AsyncImageLoader::new(start_load~ : (@render.RenderWindowId, String, (@render.ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?) -> Self
-pub fn AsyncImageLoader::new_with_drain(start_load~ : (@render.RenderWindowId, String, (@render.ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?, drain~ : () -> Unit) -> Self
-pub fn AsyncImageLoader::schedule_loading_resources(Self, @render.RenderWindowId, @render.WindowRenderer, ImageResourceCompletionSource) -> @render.ImageLoadScheduleResult
-
-pub struct AsyncImageLoaderDiagnostics {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn AsyncImageLoaderDiagnostics::already_in_flight_count(Self) -> Int
-pub fn AsyncImageLoaderDiagnostics::cancelled_count(Self) -> Int
-pub fn AsyncImageLoaderDiagnostics::completed_count(Self) -> Int
-pub fn AsyncImageLoaderDiagnostics::in_flight_count(Self) -> Int
-pub fn AsyncImageLoaderDiagnostics::scheduled_count(Self) -> Int
-
 pub(all) struct DrawPlan {
   ops : Array[PlanOp]
   diagnostics : Array[DrawPlanDiagnostic]
@@ -160,7 +130,7 @@ pub fn GpuRenderWorker::gpu_context_generation(Self) -> Int
 pub fn GpuRenderWorker::new(surface_generation? : Int, worker_thread_id? : Int) -> Self
 pub fn GpuRenderWorker::poll(Self, completed_at_ms? : Double) -> Unit
 pub fn GpuRenderWorker::state(Self) -> GpuRenderWorkerState
-pub fn GpuRenderWorker::submit(Self, @render.RenderFrameInput, image_resource_revision? : Int64, submitted_at_ms? : Double) -> @render.RenderFrameResult
+pub fn GpuRenderWorker::submit(Self, @render.RenderFrameInput, token? : @render.FrameToken, submitted_at_ms? : Double) -> @render.RenderFrameResult
 pub fn GpuRenderWorker::submit_control(Self, @render.RendererControlMessage) -> Int
 pub fn GpuRenderWorker::surface_generation(Self) -> Int
 
@@ -185,9 +155,7 @@ pub(all) struct GpuRenderWorkerDiagnostics {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct GpuRenderWorkerFrame {
-  sequence : Int
-  surface_generation : Int
-  image_resource_revision : Int64
+  token : @render.FrameToken
   submitted_at_ms : Double
   input : @render.RenderFrameInput
 } derive(@debug.Debug)
@@ -213,127 +181,18 @@ pub struct ImagePlacement {
   visible : Double
 }
 
-pub struct ImageResourceCompletionSource {
-  // private fields
-}
-pub fn ImageResourceCompletionSource::complete(Self, @render.RenderWindowId, @render.WindowRenderer, @render.ImageResourceLoadCompletion) -> ImageResourceRepaintResult
-pub fn ImageResourceCompletionSource::diagnostics(Self) -> ImageResourceCompletionSourceDiagnostics
-pub fn ImageResourceCompletionSource::new(tracker~ : ImageResourceRepaintTracker, window_open~ : (@render.RenderWindowId) -> Bool, request_redraw~ : (@render.RenderWindowId) -> Unit) -> Self
-pub fn ImageResourceCompletionSource::publish(Self, @render.RenderWindowId, @render.ImageResourceSnapshot) -> ImageResourceRepaintResult
-
-pub struct ImageResourceCompletionSourceDiagnostics {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ImageResourceCompletionSourceDiagnostics::discarded_closed_count(Self) -> Int
-pub fn ImageResourceCompletionSourceDiagnostics::publish_count(Self) -> Int
-pub fn ImageResourceCompletionSourceDiagnostics::recorded_count(Self) -> Int
-pub fn ImageResourceCompletionSourceDiagnostics::redraw_requested_count(Self) -> Int
-pub fn ImageResourceCompletionSourceDiagnostics::tracked_window_count(Self) -> Int
-pub fn ImageResourceCompletionSourceDiagnostics::unchanged_count(Self) -> Int
-
 pub struct ImageResourceLifecycle {
   // private fields
 } derive(Eq, @debug.Debug)
-pub fn ImageResourceLifecycle::apply_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
-pub fn ImageResourceLifecycle::changed_since(Self, Int) -> Bool
-pub fn ImageResourceLifecycle::dispose(Self, String) -> @render.ImageResourceRecord
+pub fn ImageResourceLifecycle::apply_load_completion(Self, @render.ImageResourceLoadCompletion) -> Bool
+pub fn ImageResourceLifecycle::dispose(Self, String) -> Bool
 pub fn ImageResourceLifecycle::evict_disposed(Self) -> Int
 pub fn ImageResourceLifecycle::lookup(Self, String) -> @render.ImageResourceRecord?
-pub fn ImageResourceLifecycle::mark_failed(Self, String, diagnostic~ : String) -> @render.ImageResourceRecord
-pub fn ImageResourceLifecycle::mark_loading(Self, String) -> @render.ImageResourceRecord
-pub fn ImageResourceLifecycle::mark_ready(Self, String, width~ : Int, height~ : Int) -> @render.ImageResourceRecord
+pub fn ImageResourceLifecycle::mark_failed(Self, String, diagnostic~ : String) -> Bool
+pub fn ImageResourceLifecycle::mark_loading(Self, String) -> Bool
+pub fn ImageResourceLifecycle::mark_ready(Self, String, width~ : Int, height~ : Int) -> Bool
 pub fn ImageResourceLifecycle::new() -> Self
-pub fn ImageResourceLifecycle::revision(Self) -> Int
 pub fn ImageResourceLifecycle::snapshot(Self) -> Array[@render.ImageResourceRecord]
-pub fn ImageResourceLifecycle::snapshot_with_revision(Self) -> @render.ImageResourceSnapshot
-
-pub struct ImageResourceRepaintResult {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ImageResourceRepaintResult::current_revision(Self) -> Int
-pub fn ImageResourceRepaintResult::current_status_counts(Self) -> ImageResourceStatusCounts
-pub fn ImageResourceRepaintResult::previous_revision(Self) -> Int
-pub fn ImageResourceRepaintResult::previous_status_counts(Self) -> ImageResourceStatusCounts
-pub fn ImageResourceRepaintResult::status(Self) -> ImageResourceRepaintStatus
-pub fn ImageResourceRepaintResult::window_id(Self) -> @render.RenderWindowId
-
-pub struct ImageResourceRepaintSnapshot {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ImageResourceRepaintSnapshot::tracked_window_count(Self) -> Int
-pub fn ImageResourceRepaintSnapshot::tracked_windows(Self) -> Array[ImageResourceTrackedWindow]
-
-pub(all) enum ImageResourceRepaintStatus {
-  ImageRepaintRecorded
-  ImageRepaintUnchanged
-  ImageRepaintRequested
-  ImageRepaintDiscardedClosed
-} derive(Eq, ToJson, @debug.Debug)
-
-pub struct ImageResourceRepaintTracker {
-  // private fields
-}
-pub fn ImageResourceRepaintTracker::new() -> Self
-pub fn ImageResourceRepaintTracker::record_presented(Self, @render.RenderWindowId, @render.WindowRenderer) -> ImageResourceRepaintResult
-pub fn ImageResourceRepaintTracker::remove_window(Self, @render.RenderWindowId) -> Bool
-pub fn ImageResourceRepaintTracker::request_redraw_for_snapshot_if_changed(Self, @render.RenderWindowId, @render.ImageResourceSnapshot, window_open~ : Bool, request_redraw~ : (@render.RenderWindowId) -> Unit) -> ImageResourceRepaintResult
-pub fn ImageResourceRepaintTracker::request_redraw_if_changed(Self, @render.RenderWindowId, @render.WindowRenderer, window_open~ : Bool, request_redraw~ : (@render.RenderWindowId) -> Unit) -> ImageResourceRepaintResult
-pub fn ImageResourceRepaintTracker::revision_for(Self, @render.RenderWindowId) -> Int?
-pub fn ImageResourceRepaintTracker::snapshot(Self) -> ImageResourceRepaintSnapshot
-pub fn ImageResourceRepaintTracker::tracked_count(Self) -> Int
-
-pub struct ImageResourceStatusCounts {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ImageResourceStatusCounts::disposed_count(Self) -> Int
-pub fn ImageResourceStatusCounts::failed_count(Self) -> Int
-pub fn ImageResourceStatusCounts::loading_count(Self) -> Int
-pub fn ImageResourceStatusCounts::ready_count(Self) -> Int
-pub fn ImageResourceStatusCounts::record_count(Self) -> Int
-
-pub struct ImageResourceTrackedWindow {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ImageResourceTrackedWindow::revision(Self) -> Int
-pub fn ImageResourceTrackedWindow::status_counts(Self) -> ImageResourceStatusCounts
-pub fn ImageResourceTrackedWindow::window_id(Self) -> @render.RenderWindowId
-
-pub struct NativeAsyncImageCompletionResult {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn NativeAsyncImageCompletionResult::source(Self) -> String
-pub fn NativeAsyncImageCompletionResult::status(Self) -> NativeAsyncImageCompletionStatus
-pub fn NativeAsyncImageCompletionResult::window_id(Self) -> @render.RenderWindowId
-
-pub(all) enum NativeAsyncImageCompletionStatus {
-  NativeAsyncImageCompletionDelivered
-  NativeAsyncImageCompletionMissing
-} derive(Eq, ToJson, @debug.Debug)
-
-pub struct NativeAsyncImageLoadRequest {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn NativeAsyncImageLoadRequest::source(Self) -> String
-pub fn NativeAsyncImageLoadRequest::window_id(Self) -> @render.RenderWindowId
-
-pub struct NativeAsyncImageSource {
-  // private fields
-}
-pub fn NativeAsyncImageSource::complete(Self, @render.RenderWindowId, @render.ImageResourceLoadCompletion) -> NativeAsyncImageCompletionResult
-pub fn NativeAsyncImageSource::diagnostics(Self) -> NativeAsyncImageSourceDiagnostics
-pub fn NativeAsyncImageSource::loader(Self) -> AsyncImageLoader
-pub fn NativeAsyncImageSource::loader_with_drain(Self, spawn~ : (@render.RenderWindowId, String) -> Unit, drain~ : () -> Unit) -> AsyncImageLoader
-pub fn NativeAsyncImageSource::new() -> Self
-pub fn NativeAsyncImageSource::pending_requests(Self) -> Array[NativeAsyncImageLoadRequest]
-
-pub struct NativeAsyncImageSourceDiagnostics {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn NativeAsyncImageSourceDiagnostics::cancelled_count(Self) -> Int
-pub fn NativeAsyncImageSourceDiagnostics::completed_count(Self) -> Int
-pub fn NativeAsyncImageSourceDiagnostics::missing_completion_count(Self) -> Int
-pub fn NativeAsyncImageSourceDiagnostics::pending_count(Self) -> Int
-pub fn NativeAsyncImageSourceDiagnostics::requested_count(Self) -> Int
 
 pub struct PathMesh {
   // private fields
@@ -367,9 +226,8 @@ pub(all) enum PlanOp {
   PopOpacity
   PushLayer(@core.LayerSpec)
   PopLayer
-  BeginCachedLayer(@core.CachedLayerSpec)
-  EndCachedLayer(String)
-  DrawCachedLayer(@core.CachedLayerSpec)
+  BeginRetainedLayer(@core.RetainedLayerSpec)
+  EndRetainedLayer(String)
   PushFilter(@core.FilterEffect)
   PopFilter
   DrawPath(@core.PathSpec)
@@ -434,12 +292,12 @@ pub fn RenderFramePacket::new(sequence~ : Int, surface_generation~ : Int, @rende
 pub struct RendererProviderRegistry {
   // private fields
 }
+pub fn RendererProviderRegistry::bind(Self, @render.HostSurface) -> @render.RendererSession?
 pub fn RendererProviderRegistry::from_providers(Array[@render.RendererProvider]) -> Self
 pub fn RendererProviderRegistry::lookup(Self, String) -> @render.RendererProvider?
 pub fn RendererProviderRegistry::new() -> Self
 pub fn RendererProviderRegistry::providers(Self) -> Array[@render.RendererProvider]
 pub fn RendererProviderRegistry::register(Self, @render.RendererProvider) -> Unit
-pub fn RendererProviderRegistry::select(Self, @render.SurfaceDescriptor) -> (@render.RendererProvider, @render.BoundSurface)?
 
 pub struct ShaderRegistryResult {
   // private fields

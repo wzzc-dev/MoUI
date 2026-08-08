@@ -131,14 +131,14 @@ test "lower_draw_commands reports unpopped scopes" {
 ///|
 test "lower_draw_commands accepts balanced cached layer scopes" {
   let plan = lower_draw_commands([
-    @core.DrawCommand::BeginCachedLayer(
-      @core.CachedLayerSpec::new(
+    @core.DrawCommand::BeginRetainedLayer(
+      @core.RetainedLayerSpec::new(
         key="k",
         frame=@core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0),
         content_revision=1,
       ),
     ),
-    @core.DrawCommand::EndCachedLayer("k"),
+    @core.DrawCommand::EndRetainedLayer("k"),
   ])
   assert_eq(plan.diagnostics.length(), 0)
 }

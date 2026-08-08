@@ -147,7 +147,7 @@ pub fn backend_info() -> LinuxBackendInfo {
 ///|
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo {
   {
-    kind: @runtime.NativeAccessibilityBridgeKind::ATSPI,
+    kind: "at-spi",
     semantics_bridge_available: true,
     native_accessibility_bridge_available: true,
     action_dispatch_available: true,
@@ -157,20 +157,20 @@ pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo {
 
 ///|
 pub fn linux_accessibility_bridge(
-  runtime : @runtime.AppRuntime,
-) -> @runtime.NativeAccessibilityBridge {
-  let runtime_bridge = @runtime.NativeAccessibilityBridge::runtime(
-    kind=@runtime.NativeAccessibilityBridgeKind::ATSPI,
-    runtime~,
+  driver : @runtime.HostRuntimeDriver,
+) -> @accesskit_bridge.AccessKitBridge {
+  let runtime_bridge = @accesskit_bridge.AccessKitBridge::driver(
+    diagnostic_name="at-spi",
+    driver~,
   )
   let binding = LinuxATSPIBinding::new(dispatch=request => {
     runtime_bridge.perform_action(request)
   })
-  @runtime.NativeAccessibilityBridge::new(
-    kind=@runtime.NativeAccessibilityBridgeKind::ATSPI,
+  @accesskit_bridge.AccessKitBridge::new(
+    diagnostic_name="at-spi",
     publish=read => {
       ignore(binding.publish_semantics(read))
-      @runtime.accesskit_update_from_semantics_read(read)
+      @accesskit_bridge.accesskit_update_from_semantics_read(read)
     },
     perform=request => binding.perform_action(request),
   )
@@ -254,7 +254,7 @@ fn dispatch_linux_settings(
 
 ///|
 pub fn app_environment() -> @services.AppEnvironment {
-  @window_host.app_environment(
+  @window_services.app_environment(
     bridge=linux_service_bridge(),
     timer=Some(linux_timer_source()),
   )

@@ -89,7 +89,7 @@ pub using @layout {type SectionListSection, type ScrollToIndexIntent}
 
 ///|
 /// Layout/scroll helper entrypoints implemented in `controls/` (they compose
-/// `@controls` primitives such as `scroll_container` / `component_host`).
+/// `@controls` primitives such as `scroll_container`).
 pub using @controls {
   expanded,
   flexible,
@@ -100,7 +100,6 @@ pub using @controls {
   intrinsic_width,
   intrinsic_height,
   custom_children_layout,
-  component,
   scroll_view,
   responsive_grid,
   lazy_grid,
@@ -268,7 +267,6 @@ pub using @navigation {
   master_detail,
   menu_item,
   navigation_destination,
-  navigation_stack,
   navigation_stack_selected,
   resizable_split_view,
   resolve_route,

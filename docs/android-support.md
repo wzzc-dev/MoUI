@@ -6,8 +6,9 @@ compile and host-sim tests pass, but no development/demonstration usability or
 product commitment is made without matching-device evidence. `wzzc-dev/window/android` owns the Android lifecycle,
 surface, and input queue; `moui/backend/android` converts those callbacks into
 the MoUI runtime session, exposes neutral CPU/GPU surface capabilities, and
-owns the platform presenter. The entrypoint supplies `moui/render/skia`
-factories; the backend has no Skia dependency.
+owns the platform presenter. The entrypoint supplies `moui_skia_renderer`
+providers with an explicit Android platform policy; the backend has no Skia
+dependency.
 
 ## Entry Points
 

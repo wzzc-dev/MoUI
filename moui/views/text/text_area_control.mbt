@@ -1,6 +1,6 @@
 ///|
 fn[Msg] text_area_control(
-  value~ : @core.Binding[String],
+  value~ : String,
   placeholder~ : String,
   size~ : @core.Size,
   theme? : @core.Theme,
@@ -12,7 +12,7 @@ fn[Msg] text_area_control(
   line_height? : Double = 28.0,
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let value_snapshot = value.get()
+  let value_snapshot = value
   @core.View::from_node(
     TextArea::{
       value: value_snapshot,
@@ -54,7 +54,7 @@ fn[Msg] text_area_control(
 fn[Msg] text_area_event(
   node : TextArea,
   ctx : @core.ViewEventContext,
-  value : @core.Binding[String],
+  value : String,
   on_input : ((String) -> Msg)?,
   on_submit : Msg?,
 ) -> @core.ViewEventResult[Msg] {
@@ -76,7 +76,7 @@ fn[Msg] text_area_event(
 ///|
 fn[Msg] handle_text_area_event(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   on_input~ : ((String) -> Msg)?,
   on_submit~ : Msg?,
   font~ : @core.FontSpec,
@@ -104,7 +104,7 @@ fn[Msg] handle_text_area_event(
 ///|
 fn[Msg] handle_text_area_keyboard(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   on_input~ : ((String) -> Msg)?,
   on_submit~ : Msg?,
   font~ : @core.FontSpec,
@@ -133,7 +133,7 @@ fn[Msg] handle_text_area_keyboard(
     )
   }
   if @core.is_select_all_shortcut(event) {
-    let next_control = select_text_control(ctx.text_control, value.get())
+    let next_control = select_text_control(ctx.text_control, value)
     return @common.view_event_result(
       changed=true,
       captured=true,
@@ -142,8 +142,7 @@ fn[Msg] handle_text_area_keyboard(
     )
   }
   if @core.is_undo_shortcut(event) {
-    let result = restore_text_history(ctx.text_control, value.get(), undo=true)
-    value.set(result.text)
+    let result = restore_text_history(ctx.text_control, value, undo=true)
     return @common.view_event_result(
       changed=result.changed,
       captured=true,
@@ -153,8 +152,7 @@ fn[Msg] handle_text_area_keyboard(
     )
   }
   if @core.is_redo_shortcut(event) {
-    let result = restore_text_history(ctx.text_control, value.get(), undo=false)
-    value.set(result.text)
+    let result = restore_text_history(ctx.text_control, value, undo=false)
     return @common.view_event_result(
       changed=result.changed,
       captured=true,
@@ -206,7 +204,7 @@ fn[Msg] handle_text_area_keyboard(
   if event.key == "ArrowUp" {
     return text_area_vertical_caret_move(
       ctx,
-      value.get(),
+      value,
       font~,
       line_height~,
       up=true,
@@ -216,7 +214,7 @@ fn[Msg] handle_text_area_keyboard(
   if event.key == "ArrowDown" {
     return text_area_vertical_caret_move(
       ctx,
-      value.get(),
+      value,
       font~,
       line_height~,
       up=false,
@@ -226,7 +224,7 @@ fn[Msg] handle_text_area_keyboard(
   if event.key == "ArrowLeft" {
     return view_caret_move_result(
       ctx,
-      value.get(),
+      value,
       TextCaretDirection::MoveLeft,
       event.modifiers.shift,
     )
@@ -234,7 +232,7 @@ fn[Msg] handle_text_area_keyboard(
   if event.key == "ArrowRight" {
     return view_caret_move_result(
       ctx,
-      value.get(),
+      value,
       TextCaretDirection::MoveRight,
       event.modifiers.shift,
     )
@@ -242,7 +240,7 @@ fn[Msg] handle_text_area_keyboard(
   if event.key == "Home" {
     return view_caret_move_result(
       ctx,
-      value.get(),
+      value,
       TextCaretDirection::MoveStart,
       event.modifiers.shift,
     )
@@ -250,7 +248,7 @@ fn[Msg] handle_text_area_keyboard(
   if event.key == "End" {
     return view_caret_move_result(
       ctx,
-      value.get(),
+      value,
       TextCaretDirection::MoveEnd,
       event.modifiers.shift,
     )
@@ -350,11 +348,11 @@ fn[Msg] text_area_vertical_caret_move(
 ///|
 fn[Msg] handle_text_area_pointer(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   font~ : @core.FontSpec,
   event : @core.PointerEvent,
 ) -> @core.ViewEventResult[Msg] {
-  let text = value.get()
+  let text = value
   let text_frame = text_area_text_frame(ctx.frame)
   let display_text = text_with_composition(
     text,

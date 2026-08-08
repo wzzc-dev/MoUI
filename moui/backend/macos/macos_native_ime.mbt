@@ -35,8 +35,8 @@ fn MacosNativeHostBackend::record_native_ime_runtime_smoke(
   match
     (
       self.platform_slots.lookup_host(window_id),
-      self.coordinator.runtime_slots().lookup(window_id),
-      self.coordinator.surface_renderer(window_id),
+      self.lifecycle.runtime_slots().lookup(window_id),
+      self.frames.renderer(window_id),
     ) {
     (Some(platform_slot), Some(runtime_slot), Some(renderer)) => {
       if renderer.present_count() == 0 {
@@ -87,8 +87,8 @@ fn MacosNativeHostBackend::record_native_ime_runtime_smoke(
 fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
   self : MacosNativeHostBackend,
   window_id : @host.WindowId,
-  platform_slot : @window_host.WindowSlot[@window_macos.Window, Unit],
-  runtime_slot : @window_host.WindowRuntimeSlot,
+  platform_slot : @window_lifecycle.WindowSlot[@window_macos.Window, Unit],
+  runtime_slot : @window_lifecycle.WindowRuntimeSlot,
   title~ : String,
   prefix~ : String,
 ) -> Bool {
@@ -120,7 +120,7 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
     ),
   )
   ignore(self.present_native_ime_smoke_frame(window_id, runtime_slot))
-  self.coordinator.sync_text_input_session()
+  self.sync_text_input_session()
   let initial_input = runtime_slot.driver.focused_text_input()
   let candidate_anchor_ok = self.native_ime_request_matches_window(
       platform_slot,
@@ -228,11 +228,11 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
 fn MacosNativeHostBackend::record_native_ime_composition_smoke(
   self : MacosNativeHostBackend,
   window_id : @host.WindowId,
-  platform_slot : @window_host.WindowSlot[@window_macos.Window, Unit],
-  runtime_slot : @window_host.WindowRuntimeSlot,
+  platform_slot : @window_lifecycle.WindowSlot[@window_macos.Window, Unit],
+  runtime_slot : @window_lifecycle.WindowRuntimeSlot,
   prefix~ : String,
 ) -> Bool {
-  self.coordinator.sync_text_input_session()
+  self.sync_text_input_session()
   let composition_input = runtime_slot.driver.focused_text_input()
   let composition_frame_presented = self.present_native_ime_smoke_frame(
     window_id, runtime_slot,
@@ -283,12 +283,12 @@ fn MacosNativeHostBackend::record_native_ime_composition_smoke(
 fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
   self : MacosNativeHostBackend,
   window_id : @host.WindowId,
-  platform_slot : @window_host.WindowSlot[@window_macos.Window, Unit],
-  runtime_slot : @window_host.WindowRuntimeSlot,
+  platform_slot : @window_lifecycle.WindowSlot[@window_macos.Window, Unit],
+  runtime_slot : @window_lifecycle.WindowRuntimeSlot,
   title~ : String,
   prefix~ : String,
 ) -> Bool {
-  self.coordinator.sync_text_input_session()
+  self.sync_text_input_session()
   let after_commit_input = runtime_slot.driver.focused_text_input()
   if after_commit_input.text == self.native_ime_runtime_smoke_before_commit_text {
     return self.retry_or_fail_native_ime_runtime_smoke(
@@ -299,7 +299,7 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
     window_id,
     @window_core.WindowEvent::Ime(@window_core.Ime::DeleteSurrounding(1, 0)),
   )
-  self.coordinator.sync_text_input_session()
+  self.sync_text_input_session()
   let after_delete_input = runtime_slot.driver.focused_text_input()
   let commit_delete_ok = after_delete_input.text != after_commit_input.text
   if commit_delete_ok {
@@ -334,7 +334,7 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
       ),
     ),
   )
-  self.coordinator.sync_text_input_session()
+  self.sync_text_input_session()
   let after_scroll_input = runtime_slot.driver.focused_text_input()
   let scroll_anchor_ok = self.native_ime_request_matches_window(
     platform_slot,
@@ -361,16 +361,16 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
   } else {
     println(prefix + " MoUI native IME runtime failed scale-dpr-anchor=false")
   }
-  let metrics = @window_host.surface_metrics_from_physical(
+  let metrics = @window_input.surface_metrics_from_physical(
     platform_slot.window.surface_size(),
     scale_factor=platform_slot.window.scale_factor(),
   )
   ignore(runtime_slot.driver.dispatch(@host.Event::Resized(metrics)))
-  match self.coordinator.surface_renderer(window_id) {
+  match self.frames.renderer(window_id) {
     Some(renderer) => renderer.resize(@window_host.to_render_metrics(metrics))
     None => ()
   }
-  self.coordinator.sync_text_input_session()
+  self.sync_text_input_session()
   let after_resize_input = runtime_slot.driver.focused_text_input()
   let resize_anchor_ok = self.native_ime_request_matches_window(
     platform_slot,
@@ -433,7 +433,7 @@ fn MacosNativeHostBackend::fail_native_ime_runtime_smoke(
 
 ///|
 fn native_ime_content_view_handle(
-  platform_slot : @window_host.WindowSlot[@window_macos.Window, Unit],
+  platform_slot : @window_lifecycle.WindowSlot[@window_macos.Window, Unit],
   prefix~ : String,
 ) -> UInt64? {
   Some(platform_slot.window.content_view_handle()) catch {
@@ -492,10 +492,10 @@ fn macos_native_ime_focus_point(title : String) -> @core.Point {
 ///|
 fn MacosNativeHostBackend::native_ime_request_matches_window(
   self : MacosNativeHostBackend,
-  platform_slot : @window_host.WindowSlot[@window_macos.Window, Unit],
+  platform_slot : @window_lifecycle.WindowSlot[@window_macos.Window, Unit],
   expected_text~ : String,
 ) -> Bool {
-  match self.coordinator.text_input_diagnostics() {
+  match self.input.last_diagnostics() {
     Some(diagnostics) => {
       let position : @dpi.Position = @dpi.LogicalPosition::LogicalPosition(
         diagnostics.candidate_anchor.origin.x,
@@ -562,7 +562,7 @@ fn macos_native_ime_expected_cursor_size(
 ///|
 fn MacosNativeHostBackend::native_ime_runtime_diagnostics(
   self : MacosNativeHostBackend,
-  platform_slot : @window_host.WindowSlot[@window_macos.Window, Unit],
+  platform_slot : @window_lifecycle.WindowSlot[@window_macos.Window, Unit],
   input : @core.TextInputState,
 ) -> String {
   let window_has_ime = platform_slot.window.ime_capabilities() is Some(_)
@@ -570,7 +570,7 @@ fn MacosNativeHostBackend::native_ime_runtime_diagnostics(
     Some(text) => text.text().length()
     None => -1
   }
-  match self.coordinator.text_input_diagnostics() {
+  match self.input.last_diagnostics() {
     Some(diagnostics) =>
       "focused=\{input.focused} text-length=\{input.text.length()} caret=\{input.caret} caret-height=\{input.caret_rect.size.height} ime-focused=\{diagnostics.focused} ime-surrounding=\{diagnostics.has_surrounding_text} ime-cursor-boundary=\{diagnostics.cursor_is_grapheme_boundary} ime-anchor-boundary=\{diagnostics.anchor_is_grapheme_boundary} window-ime=\{window_has_ime} window-surrounding-length=\{window_surrounding}"
     None =>
@@ -582,21 +582,18 @@ fn MacosNativeHostBackend::native_ime_runtime_diagnostics(
 fn MacosNativeHostBackend::present_native_ime_smoke_frame(
   self : MacosNativeHostBackend,
   window_id : @host.WindowId,
-  runtime_slot : @window_host.WindowRuntimeSlot,
+  runtime_slot : @window_lifecycle.WindowRuntimeSlot,
 ) -> Bool {
   match
     (
       self.platform_slots.lookup_host(window_id),
-      self.coordinator.surface_renderer(window_id),
+      self.frames.renderer(window_id),
     ) {
     (Some(platform_slot), Some(renderer)) => {
       let before = renderer.present_count()
-      platform_slot.window.pre_present_notify()
-      runtime_slot.driver.begin_redraw()
-      let result = renderer.render_frame(runtime_slot.driver.draw_frame())
-      runtime_slot.driver.apply_render_frame_result(result)
-      runtime_slot.driver.finish_redraw()
-      self.coordinator.sync_text_input_session()
+      ignore(platform_slot)
+      ignore(runtime_slot)
+      ignore(self.redraw_window(window_id))
       renderer.present_count() > before
     }
     _ => false

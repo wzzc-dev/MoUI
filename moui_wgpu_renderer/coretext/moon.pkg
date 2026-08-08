@@ -1,0 +1,18 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
+  "wzzc-dev/moui_wgpu_renderer/text_protocol",
+}
+
+supported_targets = "native"
+
+options(
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz",
+    },
+  },
+  "native-stub": [ "macos_coretext_text.m" ],
+  targets: { },
+)

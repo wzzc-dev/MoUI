@@ -29,14 +29,14 @@ Windows/Linux 平台状态，也不会提升全局 Skia 字体排印或 native p
 | 裁剪 | supported | supported | supported | supported | Skia rectangular、rounded 和 path clip scopes 有代表性的真实 native smoke 覆盖。Sun CPU raster 通过 `moui_sun` clip state 应用变换后的 rectangular clip bounds，并以 inverse-transform rounded masking 验证 2x rectangular/rounded clip 像素。 |
 | 变换 | supported | partial | partial | supported | WGPU/Web 将 affine transforms 折叠进 planned vertices 和 scope state。Skia 将 MoUI affine fields 映射到 Skia matrix members，并有 translated、scaled-and-clipped、layer-masked opacity 和 filter-scoped 像素 smoke 覆盖。Sun CPU raster 现在会在 layer、rounded-clip 和 filter offscreen scopes 之间保留 transform/clip state。 |
 | 透明度 | supported | supported | supported | supported | Skia save-layer opacity 有 blended pixel smoke 覆盖。 |
-| 图层合成 | supported | supported | supported | supported | Skia 通过 renderer-local pixel tests 和真实 native renderer smoke 验证 `save_layer` opacity、rectangular masks、rounded masks、blend-mode layers 以及 nested layer/filter composition。Sun CPU raster 现在通过 renderer-local tests 验证 `LayerSpec` opacity、rectangular masks、rounded masks、blend-mode layer compositing、transform-scoped layer rendering、2x layer/mask pixels、cached-layer surrounding opacity、physical-size refresh、same-size moved-frame cache reuse，以及 `SunRasterRenderer::cached_layer_diagnostic()` live-entry 加 hit/miss/update/evict summaries 和 churn-without-hit admission skip 覆盖。保留式 redraw 路径现在添加 `BeginCachedLayer`/`DrawCachedLayer` frame commands，native Skia 通过 renderer-local offscreen surface/image cache 消费这些命令，为 repaint boundaries 提供 hit/miss/update/evict diagnostics，并为 large 或 churn-heavy layers 提供 admission policy。real-app cached-layer benchmark 覆盖 Showcase hover/scroll 和 Markdown Editor text input、scroll、caret-overlay 场景，显示 sibling-boundary cache reuse、rich-text block cache reuse，以及避免 body layer updates 的 editing-overlay frames。剩余 full-damage 情况，例如 broad dirty regions 或 unavailable dirty bounds，仍会在 diagnostics 中可见。对于没有 renderer-local caches 的后端，host-side command-cache replay 仍是 fallback；OS-level partial present 仍是单独观察项。 |
+| 图层合成 | supported | supported | supported | supported | 每帧通过 `BeginRetainedLayer(spec)`/完整 payload/`EndRetainedLayer(key)` 声明 retained layer。Skia、Sun、WGPU 和 Web 的 renderer session 自己决定 hit、update、residency 与 eviction；runtime 和 backend 不保存 cache epoch/residency，也不提供 host command-cache fallback。 |
 | 混合模式 | supported | supported | supported | supported | Skia 将所有 MoUI blend modes 映射到 Skia paint blend modes，并通过 renderer-local 像素验证 multiply；multiply/screen/overlay/darken/lighten 输出像素也由真实 native renderer smoke 覆盖。 |
 | 滤镜效果 | supported | supported | supported | supported | Skia 通过 renderer-local tests 验证 saturation 和 identity-normalized color matrix filters；blur、saturation、brightness、contrast 和 color matrix filters 也由真实 native renderer smoke 覆盖。Sun CPU raster 在 offscreen canvases 继承父级 transform/clip state 后验证 transformed filter scopes。 |
 | 路径/向量 | supported | supported | supported | supported | Skia 将 `PathSpec` 重放为 native paths，并有 renderer-local solid/gradient pixel tests，以及对 solid/gradient fill 和 stroke output 的真实 native smoke 覆盖，另含 quadratic 与 cubic curve verbs。WGPU/Web 共享 MoonBit tessellator，保留 path brush payloads，并通过 visual shader 提交 radial path vertices，而不是把 radial brushes 压平成单个 sampled color。 |
 | 着色器效果 | supported | supported | supported | supported | Skia procedural solid、checker、linear-gradient-debug 和 vignette effects 有 renderer-local pixel tests 以及真实 native renderer 像素 smoke 覆盖；unknown names 仍使用 fallback paths。Sun CPU raster 现在会在 unknown shader name 回退到 spec fallback brush 时记录相同的 unsupported-command diagnostic shape。 |
-| 文本 shaping | supported | supported | supported | supported | Skia 映射 `FontSpec` family、weight 和 style，在常规 family matching 之前用 representative emoji/non-ASCII coverage characters 加 inferred BCP47 script language tags 构造 `FontFallbackRequest` values，将 mixed-script text 拆成 grapheme-safe fallback segments 以便 per-run `FontMgr` resolution，返回 Skia font-metric baseline/height，并在链接 SkShaper 时返回 shaped-run cluster carets，否则返回 measured prefix carets，通过共享 UAX-style `TextGraphemeBoundaries` scanner 稳定 cluster interiors，暴露 `TextSystem::layout_paragraph()` line metrics、paragraph caret rectangles、selection rectangles 和 hit-test geometry，在可用时通过 native SkParagraph 路由 paragraph layout，在 system `FontMgr` 路径上为 emoji-hint text 重试 emoji-family fonts，并可在链接后绘制可选 SkShaper shaped glyph runs。Sun raster 在 `moui_sun/text` 之上暴露 renderer-backed `TextSystem`，其 requested-family-first fallback chain resolution 覆盖已注册 faces；renderer-local tests 覆盖 mixed Latin-plus-emoji measurement、有覆盖绘制时没有 missing fallback diagnostic、TextRun frame clipping 和 paragraph metadata。共享 scanner 使用生成的 Unicode 17.0 property predicates，`moui/core` 运行 curated 和 full vendored Unicode 17.0 default grapheme fixtures，`moui/render/skia` 通过 `skia_grapheme_cluster_texts` 运行同一 fixture。真实 Skia smoke 通过 `--run-text-emoji-smoke` 在 macOS/Linux/Windows 上获得 bidi Arabic 和 mixed-direction visual-order markers，以及 paragraph wrapping、selection rectangles、hit testing、grapheme editing 和 IME candidate/composition markers。 |
+| 文本 shaping | supported | supported | supported | supported | Skia 映射 `FontSpec` family、weight 和 style，在常规 family matching 之前用 representative emoji/non-ASCII coverage characters 加 inferred BCP47 script language tags 构造 `FontFallbackRequest` values，将 mixed-script text 拆成 grapheme-safe fallback segments 以便 per-run `FontMgr` resolution，返回 Skia font-metric baseline/height，并在链接 SkShaper 时返回 shaped-run cluster carets，否则返回 measured prefix carets，通过共享 UAX-style `TextGraphemeBoundaries` scanner 稳定 cluster interiors，暴露 `TextSystem::layout_paragraph()` line metrics、paragraph caret rectangles、selection rectangles 和 hit-test geometry，在可用时通过 native SkParagraph 路由 paragraph layout，在 system `FontMgr` 路径上为 emoji-hint text 重试 emoji-family fonts，并可在链接后绘制可选 SkShaper shaped glyph runs。Sun raster 在 `moui_sun/text` 之上暴露 renderer-backed `TextSystem`，其 requested-family-first fallback chain resolution 覆盖已注册 faces；renderer-local tests 覆盖 mixed Latin-plus-emoji measurement、有覆盖绘制时没有 missing fallback diagnostic、TextRun frame clipping 和 paragraph metadata。共享 scanner 使用生成的 Unicode 17.0 property predicates，`moui/core` 运行 curated 和 full vendored Unicode 17.0 default grapheme fixtures，`moui_skia_renderer` 通过 `skia_grapheme_cluster_texts` 运行同一 fixture。真实 Skia smoke 通过 `--run-text-emoji-smoke` 在 macOS/Linux/Windows 上获得 bidi Arabic 和 mixed-direction visual-order markers，以及 paragraph wrapping、selection rectangles、hit testing、grapheme editing 和 IME candidate/composition markers。 |
 | Emoji 文本 | supported | supported | supported | supported | Skia 检测 representative single-codepoint、variation-selector、keycap、emoji-modifier、ZWJ、regional-indicator、emoji tag-sequence、Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples 和 Hangul Jamo grapheme cluster samples，在 system `FontMgr` `FontFallbackRequest` matching 中优先使用 emoji coverage characters 和 inferred language tags，稳定 representative cluster interior carets，在 default-font fallback 之前重试 platform emoji font candidates，并通过 `Typeface::has_color_glyphs` 和 glyph format metadata 报告 deterministic color emoji readiness。Sun raster 在 requested-family-first fallback chain 之上使用 `moui_sun/text FontFallbackPlan`，因此可在 Latin primary face 之后选择已注册 emoji coverage；renderer-local tests 覆盖 mixed Latin-plus-emoji measurement 和 covered draw diagnostics。text/emoji smoke 记录 high-saturation glyph/raster observation 以及 font/glyph metadata，其 non-empty source/script/fallback-request-character-aware glyph key 与已记录的 source、text-system、shaper、script、fallback language tag payload、language-count、fallback request character 和 format metadata 匹配，并通过 `--run-text-emoji-smoke` 在 macOS/Linux/Windows 上获得 keycap、regional-indicator 和 skin-tone-modifier fallback diagnostic markers。 |
-| 异步图像 | supported | supported | supported | supported | 共享层提供 renderer-neutral lifecycle records、ImageResourceLoadCompletion 与 monotonic revision snapshots。平台 backend 通过 HostImageSource 只读取原始字节；已选 RendererFactory 提供 renderer-owned RendererImageDecoder，Skia、Sun 和 WGPU 各自负责格式检测、解码、cache update 与 ready/failed completion。AsyncImageLoader 负责 in-flight 去重与 cancellation，ImageResourceRepaintTracker 按窗口路由 revision 变化。Package tests 覆盖 completion/repaint sequencing，真实 renderer 与 matching-host smoke 单独记录。 |
+| 异步图像 | supported | supported | supported | supported | renderer session 发出带 opaque token 的 `RendererImageLoadRequest`；backend image owner 只调度/取消字节 I/O，并以相同 token 回传 completion。session 返回 Applied/Stale/Disposed，只有 Applied 请求窗口重绘；Skia、Sun、WGPU 和 Web 各自拥有 decode、resource/cache 状态。 |
 
 ## 渲染器描述符
 
@@ -58,14 +58,14 @@ Windows/Linux 平台状态，也不会提升全局 Skia 字体排印或 native p
 [功能状态仪表板](../feature-status-dashboard.md)。
 
 `RendererDescriptor` 描述静态渲染器能力身份。Native host runtime assembly
-由应用拥有的 renderer factories 处理：`render/skia.from_env()` 在 `auto` 下
-注册 GPU 后再注册 raster，`render/wgpu.native(...)` 选择 diagnostic route，
-`render/sun.raster()` 选择 CPU raster route。`RendererSelection` helper 对按 families
+由应用拥有的 renderer providers 处理：`@render_skia.from_env(platform=...)` 在 `auto` 下
+注册 GPU 后再注册 raster，`@render_wgpu.native(...)` 选择 diagnostic route，
+`@render_sun.raster()` 选择 CPU raster route。`RendererSelection` helper 对按 families
 或 backend ids 匹配的 reports 和 tests 仍然有用，但它不是 native host-core
 option 或 provider contract。Web 继续使用 WebGPU wasm backend。
 
 Skia binding 有明确的 Metal、D3D12、Vulkan 和 EGL/GLES window-surface
-source paths，而 `render/skia` 会报告 route preflight diagnostics。macOS real
+source paths，而 `moui_skia_renderer` 会报告 route preflight diagnostics。macOS real
 Skia helper 可以添加 `--run-gpu-smoke`，这要求 renderer smoke log 包含
 `MoUI Skia GPU Metal renderer smoke passed route=metal-gpu
 surface_gpu=true present_count=1 pixel-markers`；该 marker 证明显式 GPU route
@@ -120,11 +120,11 @@ Cosmic 会在可用时加载 platform emoji fallback font candidates，保留 co
 其中包含 representative variation-selector、combining-mark、emoji modifier、keycap、
 ZWJ、regional-indicator、tag-sequence、prepend-mark、script-mark 和 Hangul Jamo
 cluster interior caret stabilization，以及对同一组 representative boundaries 的基本
-left/right caret movement；`render/wgpu` 拥有 provider validation 和 atlas upload，
-包括拒绝不能覆盖输入文本的 non-empty run-layout caret arrays；`render/wgpu/cosmic_text`
+left/right caret movement；`moui_wgpu_renderer` 拥有 provider validation 和 atlas upload，
+包括拒绝不能覆盖输入文本的 non-empty run-layout caret arrays；`moui_wgpu_renderer/cosmic_text`
 拥有 native Cosmic provider，macOS 组合 CoreText-backed platform text engine 与 Cosmic
 fallback 以进行 measurement 和 glyph rasterization，native platform providers 共享
-`render/wgpu/text_protocol`，用于 UTF-32 input encoding、携带 size、weight、style
+`moui_wgpu_renderer/text_protocol`，用于 UTF-32 input encoding、携带 size、weight、style
 和 structured family stack 的 versioned `FontSpec` payloads、private versioned
 measurement payload parsing、用于 shaped glyph placements 且带 platform-private raster
 payloads 的 generic run-layout envelope、shared alpha-mask/RGBA raster glyph parser，
@@ -140,7 +140,7 @@ Cosmic fallback。当 Noto Color Emoji 可用时，Linux provider 可以为显�
 runs 发出 native FreeType RGBA glyphs，但 general measurement、shaping 和 non-emoji
 raster data 仍会回退到 Cosmic，直到完整 fontconfig/HarfBuzz 路径实现。Web 注入
 Canvas-backed text system，使用与 text drawing 相同的 CSS `system-ui` family stack。
-Fallback composition 在 backend/provider boundary 上是显式的；`render/wgpu` package
+Fallback composition 在 backend/provider boundary 上是显式的；`moui_wgpu_renderer` package
 验证 provider responses，但不依赖 Cosmic provider package。Diagnostic text conformance
 覆盖 single-codepoint、variation-selector 和 ZWJ samples 的 deterministic emoji
 measurement 与 caret invariants，也覆盖 representative combining-mark、emoji modifier、
@@ -152,24 +152,13 @@ emoji codepoint resolution。Bidi reordering、paragraph line breaking、determi
 color emoji、native emoji fallback 和 provider shaping evidence 由 text/emoji proof
 matrix 表示，而不是 renderer capability blockers。
 跨 package 文本边界记录在 [文本系统](../text-system.md) 中。Native image support
-从 app model 的角度看是 synchronous。`WgpuRenderer::image_resources()` 仍暴露
-renderer-local image resource records，`WgpuRenderer::image_resource_snapshot()`
-添加 native WGPU providers 通过 `WindowRenderer::image_resource_snapshot()` 转发
-diagnostics 时使用的 monotonic revision/change signal。Planned image commands 标记为
-loading，直到 native cache 可以解析它们；成功的 synchronous decode/cache upload 会用
-dimensions 将 records 标记为 ready，failed decodes 会用 diagnostic 将 records 标记为
-failed。共享 host `ImageResourceRepaintTracker` 为每个 window 记录 last presented
-revision，将该 revision 视为 high-water mark，使 stale lower revision snapshots 不能回滚
-status diagnostics 或触发 redraw；当观察到 newer revision 时，只向匹配的 open window
-路由 repaint requests；暴露 tracked window revisions 和 lifecycle status counts 的
-diagnostic snapshot；在每个 repaint result 上报告 previous/current lifecycle status counts；
-并在从 tracked repaint table 移除 closed window 的同时丢弃 closed-window image changes。
-`ImageResourceLoadCompletion` 是 native async loaders 的 renderer-neutral ready/failed
-payload，`WindowRenderer::apply_image_resource_load_completion` 是 host facade port，
-让 renderer/provider packages 可以在返回 revisioned snapshot 前应用该 payload。
-ImageResourceCompletionSource 为 native factory/platform loader 提供 host-layer snapshot 路由边界；它不解码图片、不修改 renderer cache，也不证明 matching-host loader/runtime behavior。AsyncImageLoader 扫描 loading records、去重 in-flight source loads，并在 cancellation 后忽略 late completion。NativeAsyncImageSource 记录 pending native window/source requests，并允许 platform callback 稍后通过同一 scheduler 与 repaint route 交付 ImageResourceLoadCompletion。
-
-平台 backend 现在只创建读取原始字节的 HostImageSource。已选 RendererFactory 提供 renderer-owned RendererImageDecoder；Skia、Sun 与 WGPU 各自完成格式检测、解码、cache update 和 ready/failed completion。Native host core 在每个 presented revision 建立基线后调用已选 factory 的中立 loader，并在 window dispose 时取消 in-flight work。Package tests 覆盖 completion/repaint sequencing；matching-host runtime smoke 保持独立。
+在 session 边界上异步完成：renderer session 发出带 opaque token 的 image request，
+backend `WindowImageTasks` 只读取 `HostImageSource` 原始字节并回传同一 token。
+`RendererSession::apply_image_load_completion` 只接受当前 token，返回 Applied、Stale
+或 Disposed；只有 Applied 才请求重绘。WGPU、Skia、Sun 和 Web 的 decode、resource
+status、cache update 与 failure retry 都属于各自 renderer session；backend 不保存
+revision snapshot、repaint tracker 或 command cache。窗口 dispose 时取消 pending I/O，
+迟到 completion 无副作用。
 
 Sun renderer-local tests 也覆盖 JPEG data URI/local-file decode、
 `ImageFit::Contain` letterboxing、`ImageFit::Cover` source crops、
@@ -184,15 +173,12 @@ sampling、`ImageFit::ScaleDown` natural-size-or-contain placement，以及
 
 ## 当前 Skia 光栅说明
 
-`render/skia` 是一个只面向 native 的渲染器 package，位于可编辑的
+`moui_skia_renderer` 是一个只面向 native 的渲染器 package，位于可编辑的
 `wzzc-dev/moui_skia` checkout 之上。它暴露 `SkiaRasterRenderer`、`SkiaPixelFrame`、
 `SkiaPresentTarget`、`SkiaFontResolution`、`SkiaUnsupportedCommandDiagnostic`、
 `renderer_descriptor()`、backend info、fallback-safe availability checks、basic
-Skia-backed text system、image resource records 以及由 native Skia providers 通过
-`WindowRenderer` 转发的 revisioned snapshots、可选 renderer-local image-resource
-change callback（发布 revisioned snapshots）、该 callback setter 到 native host
-baseline-guarded redraw scheduling 的 provider forwarding、cached-image disposal
-diagnostics，以及带 command/reason payloads 的 structured unsupported-command diagnostics。
+Skia-backed text system、renderer-local image resources、tokenized completion diagnostics，
+以及带 command/reason payloads 的 structured unsupported-command diagnostics。
 `unsupported_command_count()` accessor 仍是 count summary，而
 `unsupported_command_diagnostics()` 返回 per-frame command/reason list。Unmatched、
 mismatched 和 frame-end unclosed canvas scopes 会被当作 unsupported diagnostics，在
@@ -241,12 +227,8 @@ SkShaper availability，同时要求 `unsupported_command_count == 0`。聚焦�
 white-box tests 还覆盖 radial-gradient rounded brush 和 path brush pixels，以及 unmatched
 pops、mismatched pops、unclosed scopes、unknown shader fallback 和 per-frame diagnostic reset
 的 structured unsupported-command diagnostics。Native Skia provider packages 通过
-`WindowRenderer` 暴露同一组 renderer image-resource records 和 revisioned snapshots，
-因此 host diagnostics 可以在不导入 `render/skia` 的情况下检查 loading、ready、failed 和
-disposed image resources；macOS、Windows 和 Linux hosts 使用共享 image repaint tracker
-来 baseline presented Skia revisions、路由 per-window repaint requests、暴露 tracked-window
-revision/status-count snapshots、在 repaint results 上报告 previous/current status counts，
-并丢弃 closed-window image changes；renderer tests 覆盖 JPEG/BMP data URI 和 local-file
+`RendererSession` 暴露 renderer-local image diagnostics；host 不检查或镜像 resource status。
+Applied token completion 路由匹配窗口重绘，stale/disposed token 无副作用；renderer tests 覆盖 JPEG/BMP data URI 和 local-file
 decode、contain/cover/stretch/scale-down/fit-width/fit-height source/destination placement、
 immutable failed-cache reuse，以及 missing file 出现后的 local-file retry。
 Skia renderer text support 现在已针对当前 renderer contract 达到 release-ready。Basic text

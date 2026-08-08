@@ -3,19 +3,23 @@
 /// the neutral host renderer selected from application-supplied factories.
 priv struct WechatState {
   mut driver : @runtime.HostRuntimeDriver?
-  mut surface : @render.WindowRenderer?
-  mut renderer_factories : Array[@render.RendererFactory]
+  mut surface : @render.RendererSession?
+  mut renderer_providers : Array[@render.RendererProvider]
   mut surface_id : String
   mut needs_render : Bool
+  mut surface_generation : Int
+  mut next_sequence : Int
 }
 
 ///|
 let state : WechatState = {
   driver: None,
   surface: None,
-  renderer_factories: [],
+  renderer_providers: [],
   surface_id: "",
   needs_render: false,
+  surface_generation: 0,
+  next_sequence: 1,
 }
 
 ///|
@@ -39,14 +43,14 @@ pub fn WechatAppOptions::new(
 ///|
 pub fn entry(options : WechatAppOptions) -> @runtime.PlatformEntry {
   @runtime.PlatformEntry::new(id="wechat", launch=request => {
-    run_app_internal(request.runtime(), request.renderer_factories(), options)
+    run_app_internal(request.runtime(), request.renderer_providers(), options)
   })
 }
 
 ///|
 fn run_app_internal(
   runtime : @runtime.AppRuntime,
-  renderer_factories : Array[@render.RendererFactory],
+  renderer_providers : Array[@render.RendererProvider],
   options : WechatAppOptions,
 ) -> Unit {
   state.driver = Some(
@@ -54,7 +58,7 @@ fn run_app_internal(
       state.needs_render = true
     }),
   )
-  state.renderer_factories = renderer_factories
+  state.renderer_providers = renderer_providers
   state.surface_id = options.canvas_id
   state.attach_surface(
     options.logical_width,
@@ -79,28 +83,25 @@ fn WechatState::attach_surface(
     ),
     scale_factor~,
   )
-  let kit = @render.SurfaceContext::new(
-    surface=@render.SurfaceDescriptor::cpu_raster(
-      width=logical_width,
-      height=logical_height,
-      scale_factor~,
-    ),
+  let host_surface = @render.HostSurface::new(
     surface_id=self.surface_id,
     metrics~,
   )
-  match @render_common.resolve_renderer(self.renderer_factories, kit) {
+  match @render_common.resolve_renderer(self.renderer_providers, host_surface) {
     Some(resolution) => {
       match self.surface {
         Some(surface) => surface.dispose()
         None => ()
       }
-      let surface = resolution.renderer()
+      let surface = resolution
       self.surface = Some(surface)
       match self.driver {
         Some(driver) => driver.set_text_system(surface.text_system())
         None => ()
       }
       self.needs_render = true
+      self.surface_generation = self.surface_generation + 1
+      self.next_sequence = 1
     }
     None => abort("wechat backend: no renderer accepts the host canvas surface")
   }
@@ -171,8 +172,16 @@ pub fn wechat_render_frame() -> Unit {
   match (state.driver, state.surface) {
     (Some(driver), Some(surface)) => {
       driver.begin_redraw()
-      let result = surface.render_frame(driver.draw_frame())
-      driver.apply_render_frame_result(result)
+      let draw_frame = driver.draw_frame()
+      let token = @render.FrameToken::new(
+        surface_generation=state.surface_generation,
+        sequence=state.next_sequence,
+      )
+      state.next_sequence = state.next_sequence + 1
+      let result = surface.render_frame(
+        @render.RenderFrameSubmission::new(token~, frame=draw_frame),
+      )
+      ignore(result)
       driver.finish_redraw()
     }
     _ => ()

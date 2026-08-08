@@ -2,7 +2,7 @@ import {
   "moonbitlang/core/env",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/macos" @macos_host,
-  "wzzc-dev/moui/render/skia" @render_skia,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
   "examples/pdf_workbench/app",
   "examples/pdf_workbench/pdflite_service_native_transport" @pdflite_transport,
   "examples/pdf_workbench/pdfium_adapter",

@@ -34,7 +34,7 @@ pub(all) struct LinuxBackendReadiness {
 
 ///|
 pub(all) struct LinuxAccessibilityBridgeInfo {
-  kind : @runtime.NativeAccessibilityBridgeKind
+  kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
@@ -57,7 +57,7 @@ pub struct LinuxHostSmokeOptions {
 
 ///|
 priv struct LinuxSurfaceBinding {
-  create_renderer : (@window_linux.Window, @core.SurfaceMetrics) -> @render.RendererResolution?
+  create_renderer : (@window_linux.Window, @core.SurfaceMetrics) -> @render.RendererSession?
   sync_surface : (@window_linux.Window, @core.SurfaceMetrics) -> Unit
 }
 
@@ -70,16 +70,19 @@ pub(all) struct LinuxClientDecorationState {
 ///|
 /// Native host backend: owns the Linux host runtime, native windows, and
 /// event-loop integration rather than attaching a runtime to an embedder.
-/// Platform-neutral window coordination (registry, runtime slots, requests,
-/// image resources, IME) lives in `coordinator` (@window_host.WindowCoordinator).
+/// Shared lifecycle, frame, image, input, and service state is held through
+/// its matching backend/common owner.
 struct LinuxNativeHostBackend {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
-  coordinator : @window_host.WindowCoordinator
+  lifecycle : @window_lifecycle.WindowLifecycle
+  frames : @window_frame.WindowFrameStates
+  images : @window_image.WindowImageTaskStates
+  input : @window_input.WindowInputState
   surface_binding : LinuxSurfaceBinding
-  services : @host.HostServiceBridge
-  platform_slots : @window_host.WindowSlotMap[
+  services : @window_services.WindowServiceState
+  platform_slots : @window_lifecycle.WindowSlotMap[
     @window_linux.Window,
     LinuxClientDecorationState,
   ]
@@ -117,7 +120,7 @@ pub fn LinuxHostSmokeOptions::new(
 
 ///|
 fn LinuxSurfaceBinding::new(
-  create_renderer~ : (@window_linux.Window, @core.SurfaceMetrics) -> @render.RendererResolution?,
+  create_renderer~ : (@window_linux.Window, @core.SurfaceMetrics) -> @render.RendererSession?,
   sync_surface? : (@window_linux.Window, @core.SurfaceMetrics) -> Unit = (
     _window,
     _metrics,

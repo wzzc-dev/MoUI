@@ -436,10 +436,8 @@ pub fn EmbeddedRuntimeHostBridge::dispatch_response(
       self.complete_service_response(id, result, driver)
     EmbeddedHostResponse::Accessibility(request) =>
       match driver.perform_semantics_action(request) {
-        @runtime.NativeAccessibilityActionResult::Handled(_) => true
-        @runtime.NativeAccessibilityActionResult::Rejected(_)
-        | @runtime.NativeAccessibilityActionResult::BridgeUnavailable(_) =>
-          false
+        Ok(_) => true
+        Err(_) => false
       }
     EmbeddedHostResponse::PlatformView(revision, kind, id, event) =>
       self.dispatch_platform_view_response(revision, kind, id, event, driver)

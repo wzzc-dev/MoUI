@@ -44,8 +44,9 @@ dispatch. Ordinary controls are TEA-first controlled views: app code passes the
 current value plus `on_input`,
 `on_change`, or `on_select`, then updates the model from the emitted message.
 Controls that require complex local state, such as rich text editing or
-virtualized resources, keep that state explicit through bindings, cells, or
-dedicated integration callbacks.
+virtualized resources, keep it in typed runtime slots owned by the control.
+They receive controlled values and emit typed messages; they do not receive a
+setter or a mutable application-state holder.
 
 Runtime-owned, node-scoped state remains compatible with TEA because it is not
 application model state. Hover, focus, pressed state, caret/selection, and
@@ -71,11 +72,9 @@ attach typed children/events/text commands with `@core.View::from_node(...)`.
 They should not add `@core.View::primitive_*_view` constructors or runtime
 lowering table entries.
 
-Stateful controls can use localized `@views.component` adapters with
-`ComponentContext` when they must subscribe to framework cells or bridge complex
-control state, but shared app packages should default to `Program::simple`
-factories and let platform entrypoints create `AppRuntime` values through
-`moui/runtime`. Effect-capable apps should use `Program::new` when
+Shared app packages should use `Program::simple` factories and let platform
+entrypoints create `AppRuntime` values through `moui/runtime`. Effect-capable
+apps should use `Program::new` when
 `update` returns follow-up work: `Effect::send` re-enters the typed message loop
 directly, and `Effect::dispatch` gives an effect runner the typed message
 dispatcher for app-owned host-service bridges or other callbacks without making

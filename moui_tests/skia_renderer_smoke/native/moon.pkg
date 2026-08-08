@@ -1,0 +1,19 @@
+import {
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "wzzc-dev/moui_skia/native" @skia_native,
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/backend/common/image" @window_image,
+  "wzzc-dev/moui_skia_renderer" @skia_renderer,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { "main.mbt": [ "native" ] },
+)

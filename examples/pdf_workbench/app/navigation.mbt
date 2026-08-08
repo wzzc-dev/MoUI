@@ -96,12 +96,6 @@ fn PdfWorkbenchModel::toggle_reader_fullscreen(
 }
 
 ///|
-fn PdfWorkbenchModel::reset_panel_scrolls(self : PdfWorkbenchModel) -> Unit {
-  self.sidebar_scroll.scroll_to(x=0.0, y=0.0)
-  self.inspector_scroll.scroll_to(x=0.0, y=0.0)
-}
-
-///|
 fn PdfWorkbenchModel::select_next_search_result(
   self : PdfWorkbenchModel,
 ) -> PdfWorkbenchModel {

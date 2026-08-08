@@ -14,7 +14,7 @@ pub fn[Msg] datepicker(
   // Style is resolved ambient-ly inside date_picker_control so the picker
   // tracks dark-mode / palette changes without the caller rebuilding the tree.
   date_picker_control(
-    selected=@core.Binding::new(get=() => selected, set=_value => ()),
+    selected~,
     mode=datepicker_mode_to_view_mode(mode),
     placeholder~,
     theme?,

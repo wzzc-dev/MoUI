@@ -60,16 +60,13 @@ fn restore_text_history(
 ///|
 fn[Msg] view_text_input_result(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   on_input~ : ((String) -> Msg)?,
   event : @core.TextInputEvent,
   record_history~ : Bool,
 ) -> @core.ViewEventResult[Msg] {
-  let text = value.get()
+  let text = value
   let result = apply_text_input(ctx.text_control, text, event, record_history~)
-  if result.changed {
-    value.set(result.text)
-  }
   @common.view_event_result(
     changed=result.changed,
     captured=result.changed,
@@ -246,12 +243,12 @@ fn apply_text_edit(
 ///|
 fn[Msg] handle_text_field_command(
   ctx : @core.ViewEventContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   on_input~ : ((String) -> Msg)?,
   intent : @core.CommandIntent,
   paste_text~ : String?,
 ) -> @core.ViewTextCommandResult[Msg] {
-  let text = value.get()
+  let text = value
   match intent {
     @core.CommandIntent::Copy =>
       @core.ViewTextCommandResult::new(
@@ -269,9 +266,6 @@ fn[Msg] handle_text_field_command(
             @core.TextInputEvent::DeleteRange(selection),
             record_history=true,
           )
-          if result.changed {
-            value.set(result.text)
-          }
           @core.ViewTextCommandResult::new(
             result=@core.TextCommandResult::handled(
               changed=result.changed,
@@ -300,9 +294,6 @@ fn[Msg] handle_text_field_command(
             @core.TextInputEvent::InsertText(value_to_paste),
             record_history=true,
           )
-          if result.changed {
-            value.set(result.text)
-          }
           @core.ViewTextCommandResult::new(
             result=@core.TextCommandResult::handled(changed=result.changed),
             text_control=Some(result.control),
@@ -320,9 +311,6 @@ fn[Msg] handle_text_field_command(
       }
     @core.CommandIntent::Undo => {
       let result = restore_text_history(ctx.text_control, text, undo=true)
-      if result.changed {
-        value.set(result.text)
-      }
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
         text_control=Some(result.control),
@@ -335,9 +323,6 @@ fn[Msg] handle_text_field_command(
     }
     @core.CommandIntent::Redo => {
       let result = restore_text_history(ctx.text_control, text, undo=false)
-      if result.changed {
-        value.set(result.text)
-      }
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
         text_control=Some(result.control),

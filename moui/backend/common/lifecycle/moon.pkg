@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend" @backend_host,
+  "wzzc-dev/moui/backend/common/input" @window_input,
+  "wzzc-dev/window/core" @window_core,
+}
+
+import {
+  "wzzc-dev/moui/views",
+} for "test"
+
+supported_targets = "+native+wasm-gc+wasm"

@@ -81,8 +81,6 @@ pub struct RuntimeDirtyStateSummary {
   priv damage_kind : String
   priv damage_rect_count : Int
   priv damage_full_reason : String
-  priv cache_epoch : Int
-  priv cached_layer_count : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -100,7 +98,6 @@ pub struct ViewInspectorSummary {
 pub struct ViewTreeInspectorSnapshot {
   priv root_kind : String
   priv node_count : Int
-  priv component_count : Int
   priv control_count : Int
   priv modified_count : Int
   priv dirty_build_count : Int

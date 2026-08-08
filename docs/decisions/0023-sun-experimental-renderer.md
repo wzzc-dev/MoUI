@@ -3,7 +3,7 @@
 - **Date**: 2026-08-02
 - **Status**: Accepted
 - **Deciders**: Agent-assisted (deepseek-v4-flash); positioning decided by repo owner
-- **Related**: ADR 0007 (renderer and Skia, sections on provider open-extension); ADR 0019 (renderer provider plugin); invariants R1/R2; `moui/render/sun/provider.mbt`; `moui_sun/` package
+- **Related**: ADR 0007 (renderer and Skia, sections on provider open-extension); ADR 0019 (renderer provider plugin); invariants R1/R2; `moui_sun_renderer/provider.mbt`; `moui_sun/` package
 
 ## Context
 
@@ -13,7 +13,7 @@ Native Skia renderer:
 - `moui_sun/` (81K lines) — a pure-MoonBit CPU raster stack: graphics canvas,
   TTF parser/shaper/layout/rasterizer, render pipeline, and a softbuffer
   native surface layer.
-- `moui/render/sun/` (3.5K lines) — the `sun-raster` `RendererProvider` that
+- `moui_sun_renderer/` (3.5K lines) — the `sun-raster` `RendererProvider` that
   adapts `moui_sun` into the ADR 0019 provider plugin system. It only accepts
   `CpuRaster` surfaces and presents `CpuPixelFrame`s.
 
@@ -50,7 +50,7 @@ Forces:
 
 ## Decision
 
-Position `moui_sun` + `moui/render/sun` as **an experimental renderer**, on
+Position `moui_sun` + `moui_sun_renderer` as **an experimental renderer**, on
 the same product class as native WGPU but with an even lower commitment:
 
 1. **No product commitment.** Sun is not part of the product `auto` renderer
@@ -118,7 +118,7 @@ open to either promotion (with RFC) or eventual removal (reusing this ADR).
 
 - **Session context**: architecture review of MoUI (completeness,
   maintainability, extensibility, long-term maintenance, engineering
-  quality), followed by a deep dive into `moui_sun` / `render/sun` and a
+  quality), followed by a deep dive into `moui_sun` / `moui_sun_renderer` and a
   decision on its positioning.
 - **Agent model**: deepseek-v4-flash (Buffy/Freebuff).
 - **Key prompt or instruction**: "sun 定位为实验性渲染" — the repo owner
@@ -131,7 +131,7 @@ open to either promotion (with RFC) or eventual removal (reusing this ADR).
 ## References
 
 - `moui_sun/moon.mod` ("Experimental MoonBit-native CPU raster stack")
-- `moui/render/sun/provider.mbt` (`create_sun_provider`, id `sun-raster`)
+- `moui_sun_renderer/provider.mbt` (`create_sun_provider`, id `sun-raster`)
 - `moui/backend/{macos,linux,windows}/sun/*_sun_provider.mbt`
 - `examples/showcase/{macos,linux,windows}_sun/main.mbt`
 - `docs/decisions/0007-renderer-and-skia.md`

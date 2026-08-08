@@ -6,8 +6,8 @@ fn MarkdownEditorApp::target_bar(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let kind = self.target_kind.get()
-  let block_label = self.block_label.get()
+  let kind = self.target_kind
+  let block_label = self.block_label
   let block_badge = text("Block: " + block_label, width=132.0, height=34.0)
     .font(theme.typography.caption)
     .foreground(theme.palette.muted)
@@ -20,7 +20,7 @@ fn MarkdownEditorApp::target_bar(
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
           text_field(
-            self.link_target.get(),
+            self.link_target,
             on_input=value => UpdateLinkTarget(value),
             on_submit=Some(ApplyLinkTarget),
             placeholder="https://example.com",
@@ -48,7 +48,7 @@ fn MarkdownEditorApp::target_bar(
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
           text_field(
-            self.image_target.get(),
+            self.image_target,
             on_input=value => UpdateImageTarget(value),
             on_submit=Some(ApplyImageTarget),
             placeholder="assets/image.png",
@@ -76,7 +76,7 @@ fn MarkdownEditorApp::target_bar(
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
           text_field(
-            self.footnote_text.get(),
+            self.footnote_text,
             on_input=value => UpdateFootnoteText(value),
             on_submit=Some(ApplyFootnoteText),
             placeholder="Footnote text",
@@ -103,7 +103,7 @@ fn MarkdownEditorApp::target_bar(
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
           text_field(
-            self.html_block_text.get(),
+            self.html_block_text,
             on_input=value => UpdateHtmlBlockText(value),
             on_submit=Some(ApplyHtmlBlockText),
             placeholder="<div>HTML</div>",
@@ -442,11 +442,10 @@ fn MarkdownEditorApp::appearance_spec(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorAppearanceSpec {
   let base = self.writing_appearance
-    .get()
-    .spec(dark=self.dark_mode_enabled.get())
+    .spec(dark=self.dark_mode_enabled)
   {
     ..base,
-    font_family: markdown_editor_font_family_stack(self.font_family.get()),
+    font_family: markdown_editor_font_family_stack(self.font_family),
   }
 }
 
@@ -701,11 +700,11 @@ fn markdown_editor_source_inspector_width() -> Double {
 /// is scrolled — rather than a proportional thumb. It fades out at the top so
 /// the page edge stays clean when unscrolled.
 fn markdown_editor_scroll_indicator(
-  scroll : @state.ScrollState,
+  scroll : @geometry.Point,
   viewport_height~ : Double,
   theme : @moui.Theme,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let offset_y = scroll.offset().y
+  let offset_y = scroll.y
   // Hide entirely while at the top (no content scrolled past).
   if offset_y <= 0.0 {
     @views.empty()
@@ -841,7 +840,7 @@ fn editor_source_layout(
     appearance,
     viewport_width~,
   )
-  let source_mode = app.source_mode_enabled.get()
+  let source_mode = app.source_mode_enabled
   let content_height = markdown_editor_max_double(
     viewport_height,
     session.estimated_content_height(
@@ -895,16 +894,18 @@ fn editor_source_layout(
     cursor_color=editor_style.cursor_color(),
     corner_radius=theme.radius_scale.md,
     source_mode~,
-    focus_mode=app.focus_mode_enabled.get(),
-    base_dir=markdown_editor_document_base_dir(app.document_path.get()),
+    focus_mode=app.focus_mode_enabled,
+    base_dir=markdown_editor_document_base_dir(app.document_path),
     on_selection_change=Some(on_selection_change),
     on_prefix_click=Some(on_prefix_click),
     on_command_click=Some(offset => CommandClickAt(offset)),
     accepts_tab_input=true,
     visible_scroll_y=normalized_offset.y,
+    on_scroll=Some(y => {
+      EditorScrollChanged(@geometry.Point::new(x=0.0, y~))
+    }),
     visible_viewport_height=viewport_height,
     visible_overscan=markdown_editor_visible_overscan(viewport_height),
-    visible_scroll_state=Some(app.editor_scroll),
   ).key("markdown-editor")
   let editor = editor_page(editor_control, theme, appearance).on_file_drop((
     paths,
@@ -915,7 +916,7 @@ fn editor_source_layout(
       _ => DismissAuxiliaryPanels
     }
   })
-  let editor_view = if !show_source && !app.source_mode_enabled.get() {
+  let editor_view = if !show_source && !app.source_mode_enabled {
     floating_target_palette(
       editor, target_bar, session, selection, target_kind, editor_font, theme, normalized_offset,
       editor_width, viewport_height,

@@ -8,7 +8,6 @@ import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
   "wzzc-dev/moui/render",
-  "Milky2018/moon_accesskit" @accesskit,
 } for "test"
 
 import {

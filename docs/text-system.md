@@ -122,36 +122,36 @@ smoothness still require the matching-host smoke evidence described below.
 
 ## Native WGPU
 
-`render/wgpu` owns the native provider protocol, provider response validation,
+`moui_wgpu_renderer` owns the native provider protocol, provider response validation,
 fallback composition, glyph atlas upload, and renderer-side cache keys. It does
 not depend on the standalone Cosmic provider package.
 
 Provider packages are intentionally separate:
 
-- `render/wgpu/cosmic_text/`: Moon Cosmic provider used directly by examples
+- `moui_wgpu_renderer/cosmic_text/`: Moon Cosmic provider used directly by examples
   that select `MoonCosmic`, and as the fallback provider for platform defaults.
-- `render/wgpu/coretext/`: macOS CoreText/CoreGraphics provider. macOS defaults
+- `moui_wgpu_renderer/coretext/`: macOS CoreText/CoreGraphics provider. macOS defaults
   to this provider composed with Cosmic fallback.
-- `render/wgpu/directwrite/`: Windows DirectWrite scaffold. Windows defaults to
+- `moui_wgpu_renderer/directwrite/`: Windows DirectWrite scaffold. Windows defaults to
   this scaffold composed with Cosmic fallback until the real DirectWrite engine
   returns platform layout and raster data.
-- `render/wgpu/fontconfig/`: Linux fontconfig/FreeType provider boundary.
+- `moui_wgpu_renderer/fontconfig/`: Linux fontconfig/FreeType provider boundary.
   Linux defaults to this provider composed with Cosmic fallback. The provider
   can return native color-emoji glyphs from Noto Color Emoji for explicit emoji
   family runs when FreeType and the font are available; broader shaping,
   measurement, and non-emoji raster data still fall back to Cosmic until the
   full fontconfig/HarfBuzz path is implemented.
-- `render/wgpu/text_protocol/`: shared native-stub payload protocol for UTF-32
+- `moui_wgpu_renderer/text_protocol/`: shared native-stub payload protocol for UTF-32
   input, versioned `FontSpec` encoding, measure/run/raster envelopes, and
   embedded-font registration payloads.
 
-Native WGPU text-engine selection belongs to the WGPU renderer factory, not to
+Native WGPU text-engine selection belongs to the WGPU renderer provider, not to
 the platform host core. Entrypoints call
 `@wgpu_renderer.native(text_engine=@wgpu_<platform>.<engine>())` and combine it
 with the platform `entry()`. Each canonical WGPU route composes its platform
 text provider with Cosmic as an internal fallback; provider-specific duplicate
 composition roots are not part of the platform matrix. Showcase Skia routes
-select `render/skia` factories, not WGPU text-provider variants. By default,
+select `moui_skia_renderer` providers, not WGPU text-provider variants. By default,
 Skia basic text
 measurement and drawing
 resolve the MoUI `FontSpec` family stack, weight, and style through `moui_skia`
@@ -378,7 +378,7 @@ The text maturity preflight marks bidi reordering and paragraph line breaking re
 
 Core now exposes `TextGraphemeBoundaries` as the single UAX-style cluster-boundary contract used by fallback caret stabilization, left/right caret movement, selection/range normalization, surrounding delete ranges, composition cursor offsets, rich text hit testing, raw UTF-8 offset conversion, and `nearest_boundary_utf8_offset` conversion for later IME handoff. This keeps deterministic text-field, selection, and IME-anchor geometry on one path.
 
-The repo now has an offline `GraphemeBreakTest.txt`-style fixture and generator guard (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples plus a vendored Unicode 17.0 default grapheme break fixture generated from `moui/core/unicode/testdata/GraphemeBreakTest-17.0.0.txt`. `moon test moui/core --target native` runs the curated fixture, full boundary fixture, and a full editing fixture that checks `is_boundary`, floor/ceil/nearest boundary snapping, collapsed and expanded range normalization, surrounding delete ranges, raw boundary-to-UTF-8 offset conversion, and every-index `nearest_boundary_utf8_offset` snapping across every Unicode 17 sample. A separate full layout fixture checks fallback paragraph caret rectangles, collapsed selection rectangles, and hit-test offsets snap to the same Unicode 17 boundaries. `moui/render/skia` also generates a Skia white-box fixture from the same file so `moon test moui/render/skia --target native` verifies `skia_grapheme_cluster_texts` against the Unicode 17 default break samples and checks every-index `nearest_boundary_utf8_offset` snapping against the Skia-produced cluster boundaries.
+The repo now has an offline `GraphemeBreakTest.txt`-style fixture and generator guard (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples plus a vendored Unicode 17.0 default grapheme break fixture generated from `moui/core/unicode/testdata/GraphemeBreakTest-17.0.0.txt`. `moon test moui/core --target native` runs the curated fixture, full boundary fixture, and a full editing fixture that checks `is_boundary`, floor/ceil/nearest boundary snapping, collapsed and expanded range normalization, surrounding delete ranges, raw boundary-to-UTF-8 offset conversion, and every-index `nearest_boundary_utf8_offset` snapping across every Unicode 17 sample. A separate full layout fixture checks fallback paragraph caret rectangles, collapsed selection rectangles, and hit-test offsets snap to the same Unicode 17 boundaries. `moui_skia_renderer` also generates a Skia white-box fixture from the same file so `moon test moui_skia_renderer --target native` verifies `skia_grapheme_cluster_texts` against the Unicode 17 default break samples and checks every-index `nearest_boundary_utf8_offset` snapping against the Skia-produced cluster boundaries.
 
 The full Unicode fixtures use distinct generated helper/test names and are checked with the commands documented in the original fixture generation section (see the file history for the exact generator invocations).
 
@@ -421,9 +421,9 @@ Text changes that affect renderer feature status must update `render/capabilitie
 Text conformance is split into two layers:
 
 - Stable tests run inside normal package checks and cover `core`,
-  `render/wgpu`, `render/wgpu/cosmic_text`, `render/webgpu_adapter`, and
+  `moui_wgpu_renderer`, `moui_wgpu_renderer/cosmic_text`, `moui_web_renderer`, and
   `backend/web`.
-- Diagnostic matrix tests live under `moui/tests/text_conformance/` and are opt-in.
+- Diagnostic matrix tests live under `moui_tests/text_conformance/` and are opt-in.
   They compare core fallback, Cosmic, platform-default composed fallback,
   malformed-provider fallback, and Web text systems where the current host can
   actually exercise them. Strict failures stay limited to contract invariants;
@@ -434,12 +434,12 @@ Focused checks for text-system work:
 
 ```sh
 sh scripts/check.sh --profile full
-moon test moui/tests/text_conformance/native --target native
+moon test moui_tests/text_conformance/native --target native
 moon test moui/core --target native
-moon test moui/render/wgpu --target native
-moon test moui/render/wgpu/cosmic_text --target native
-moon test moui/render/skia --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui_wgpu_renderer --target native
+moon test moui_wgpu_renderer/cosmic_text --target native
+moon test moui_skia_renderer --target native
+moon test moui_web_renderer --target wasm-gc
 moon test moui/backend/web --target wasm-gc
 ```
 

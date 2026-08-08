@@ -27,8 +27,8 @@ fn view_return_rules() -> Array[ViewReturnRule] {
       return_token: "-> @core.View[Msg]",
     },
     {
-      name: "navigation_stack",
-      signature_prefix: "pub fn[Msg] navigation_stack(",
+      name: "navigation_stack_selected",
+      signature_prefix: "pub fn[Msg] navigation_stack_selected(",
       return_token: "-> @core.View[Msg]",
     },
     {
@@ -49,11 +49,6 @@ fn view_return_rules() -> Array[ViewReturnRule] {
     {
       name: "custom_children_layout",
       signature_prefix: "pub fn[Msg] custom_children_layout(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "component",
-      signature_prefix: "pub fn[Msg] component(",
       return_token: "-> @core.View[Msg]",
     },
     {

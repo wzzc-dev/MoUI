@@ -25,24 +25,34 @@ test "rich text run frame leaves right ink bleed" {
 }
 
 ///|
-test "rich text editor wheel event updates shared scroll state" {
-  let state = @core.ScrollState::new()
+test "rich text editor wheel event emits a controlled scroll message" {
   let source = rich_text_scroll_test_source()
   let font = @core.FontSpec::new(size=14.0)
-  let runtime = @runtime.AppRuntime::new_view(
-    root=controlled_rich_text_editor(
-      value=source,
-      on_input=_ => (),
-      placeholder="",
-      size=@core.Size::new(width=320.0, height=80.0),
-      format=rich_text_scroll_test_document,
-      font~,
-      foreground=@core.Color::black(),
-      placeholder_color=@core.Color::black(),
-      background=@core.Brush::solid(@core.Color::white()),
-      cursor_color=@core.Color::black(),
-      visible_viewport_height=80.0,
-      visible_scroll_state=Some(state),
+  let observed = Ref(0.0)
+  let runtime = @runtime.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=0.0,
+      update=(_model, next) => {
+        observed.val = next
+        next
+      },
+      view=scroll_y => {
+        controlled_rich_text_editor(
+          value=source,
+          on_input=_ => scroll_y,
+          placeholder="",
+          size=@core.Size::new(width=320.0, height=80.0),
+          format=rich_text_scroll_test_document,
+          font~,
+          foreground=@core.Color::black(),
+          placeholder_color=@core.Color::black(),
+          background=@core.Brush::solid(@core.Color::white()),
+          cursor_color=@core.Color::black(),
+          visible_scroll_y=scroll_y,
+          on_scroll=Some(next => next),
+          visible_viewport_height=80.0,
+        )
+      },
     ),
     size=@core.Size::new(width=320.0, height=80.0),
   )
@@ -56,7 +66,7 @@ test "rich text editor wheel event updates shared scroll state" {
       ),
     ),
   )
-  assert_true(state.offset().y > 0.0)
+  assert_true(observed.val > 0.0)
 }
 
 ///|

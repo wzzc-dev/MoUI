@@ -21,7 +21,7 @@ function usage() {
 Runs the PDF Workbench native Skia real-raster smoke for the current host. The
 smoke validates the native PDFium adapter, then builds the matching native Skia
 entrypoint. It does not launch the ordinary app entrypoint with an auto-exit
-flag; app runtime smoke belongs in moui_tester.
+flag; app runtime smoke belongs in the unpublished moui_tests module.
 
 Options:
   --pdf PATH       PDF to open on startup.

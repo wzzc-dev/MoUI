@@ -272,7 +272,8 @@ fn shell_sidebar(
         ),
         width=rail_width,
         height=list_height,
-        state=Some(model.sidebar_scroll),
+        offset=model.sidebar_scroll,
+        on_scroll=Some(offset => SidebarScrolled(offset)),
         shows_indicator=true,
       ),
     ],
@@ -339,7 +340,8 @@ fn shell_detail(
     ),
     width~,
     height~,
-    state=Some(model.detail_scroll),
+    offset=model.detail_scroll,
+    on_scroll=Some(offset => DetailScrolled(offset)),
     shows_indicator=true,
   ).frame(width~, height~)
 }
@@ -382,7 +384,8 @@ fn mobile_catalog_list(
         ),
         width~,
         height=list_height,
-        state=Some(model.sidebar_scroll),
+        offset=model.sidebar_scroll,
+        on_scroll=Some(offset => SidebarScrolled(offset)),
         shows_indicator=true,
       ),
     ],
@@ -423,7 +426,8 @@ fn mobile_detail(
     ),
     width~,
     height~,
-    state=Some(model.detail_scroll),
+    offset=model.detail_scroll,
+    on_scroll=Some(offset => DetailScrolled(offset)),
     shows_indicator=true,
   ).frame(width~, height~)
 }

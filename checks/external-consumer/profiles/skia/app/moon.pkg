@@ -1,0 +1,7 @@
+import {
+  "wzzc-dev/moui" @moui,
+  "wzzc-dev/moui/views" @views,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+}
+
+supported_targets = "+native"

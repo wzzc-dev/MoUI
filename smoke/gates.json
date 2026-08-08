@@ -89,7 +89,7 @@
         "markers": [
           "MoUI Skia renderer smoke passed",
           "MoUI Skia async image second-frame smoke passed",
-          "Verified moui_tester first-frame smoke marker.",
+          "Verified moui_tests first-frame smoke marker.",
           "MoUI macOS Skia renderer smoke passed."
         ]
       },

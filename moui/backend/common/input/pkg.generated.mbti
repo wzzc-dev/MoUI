@@ -1,0 +1,150 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/common/input"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/window/dpi",
+}
+
+// Values
+pub fn core_size_to_window_surface_size(@wzzc-dev/moui/core.Size) -> @dpi.Size
+
+pub fn element_state_pressed(@wzzc-dev/window/core.ElementState) -> Bool
+
+pub fn element_state_to_pointer_phase(@wzzc-dev/window/core.ElementState) -> @wzzc-dev/moui/core.PointerPhase
+
+pub fn host_metrics_to_dpi_size(@wzzc-dev/moui/core.SurfaceMetrics) -> @dpi.Size
+
+pub fn key_event_name(@wzzc-dev/window/core.KeyEvent) -> String
+
+pub fn key_event_text(@wzzc-dev/window/core.KeyEvent) -> String?
+
+pub fn keyboard_event_to_core(@wzzc-dev/window/core.KeyEvent, @wzzc-dev/moui/core.KeyModifiers) -> @wzzc-dev/moui/core.KeyboardEvent
+
+pub fn make_surface_metrics(@dpi.PhysicalSize, scale_factor~ : Double) -> @wzzc-dev/moui/core.SurfaceMetrics
+
+pub fn modifiers_to_core(@wzzc-dev/window/core.Modifiers) -> @wzzc-dev/moui/core.KeyModifiers
+
+pub fn mouse_button_to_core(@wzzc-dev/window/core.MouseButton) -> Int?
+
+pub fn mouse_scroll_delta_to_host(@wzzc-dev/window/core.MouseScrollDelta, scale_factor? : Double) -> @backend.HostScrollDelta
+
+pub fn named_key_name(@wzzc-dev/window/core.NamedKey) -> String
+
+pub fn normalize_pointer_position(@dpi.PhysicalPositionF64, scale_factor~ : Double) -> @wzzc-dev/moui/core.Point
+
+pub fn physical_position_to_core(@dpi.PhysicalPositionF64, scale_factor? : Double) -> @wzzc-dev/moui/core.Point
+
+pub fn physical_size_to_core(@dpi.PhysicalSize) -> @wzzc-dev/moui/core.Size
+
+pub fn surface_metrics_from_physical(@dpi.PhysicalSize, scale_factor? : Double) -> @wzzc-dev/moui/core.SurfaceMetrics
+
+pub fn text_input_ime_request_data(@wzzc-dev/moui/core.TextInputState) -> @wzzc-dev/window/core.ImeRequestData
+
+pub fn text_input_ime_request_diagnostics(@wzzc-dev/moui/core.TextInputState) -> TextInputImeRequestDiagnostics
+
+pub fn touch_phase_to_host(@wzzc-dev/window/core.TouchPhase) -> @backend.HostScrollPhase
+
+pub fn transform_cross_platform_event(@wzzc-dev/window/core.WindowEvent, scale_factor~ : Double, surface_size? : @dpi.PhysicalSize?) -> TransformedWindowEvent
+
+pub fn window_event_is_context_menu_button(@wzzc-dev/window/core.WindowEvent) -> Bool
+
+pub fn window_event_is_context_menu_trigger(@wzzc-dev/window/core.WindowEvent) -> Bool
+
+pub fn window_event_to_core(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
+
+pub fn window_event_to_host(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @backend.Event?
+
+pub fn window_event_to_host_with_modifiers(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.KeyModifiers, scale_factor? : Double, blur_to_cancel? : Bool) -> @backend.Event?
+
+pub fn window_theme_to_color_scheme(@wzzc-dev/window/core.Theme) -> @wzzc-dev/moui/core.ColorScheme
+
+// Errors
+
+// Types and methods
+pub(all) struct InputState {
+  mut focused : Bool
+  mut modifiers : @wzzc-dev/moui/core.KeyModifiers
+  contract : @backend.HostInputContract
+}
+pub fn InputState::blur(Self) -> Unit
+pub fn InputState::capabilities(Self) -> @backend.HostInputCapabilities
+pub fn InputState::coordinate_policy(Self) -> @backend.HostCoordinatePolicy
+pub fn InputState::focus(Self) -> Unit
+pub fn InputState::focus_event(Self, focused~ : Bool, pointer_cancel_position? : @wzzc-dev/moui/core.Point?) -> @backend.Event?
+pub fn InputState::insert_text(Self, String) -> @backend.Event?
+pub fn InputState::keyboard_event(Self, key~ : String, text? : String?, pressed? : Bool, repeat? : Bool) -> @backend.Event?
+pub fn InputState::new(focused? : Bool, modifiers? : @wzzc-dev/moui/core.KeyModifiers, contract? : @backend.HostInputContract) -> Self
+pub fn InputState::set_modifiers(Self, @wzzc-dev/moui/core.KeyModifiers) -> Unit
+pub fn InputState::text_event(Self, @wzzc-dev/moui/core.TextInputEvent) -> @backend.Event?
+
+pub(all) enum PlatformSurfaceLifecycle {
+  Detached
+  Attached(@wzzc-dev/moui/core.SurfaceMetrics)
+} derive(Eq, @debug.Debug)
+pub fn PlatformSurfaceLifecycle::attach(@wzzc-dev/moui/core.SurfaceMetrics) -> Self
+pub fn PlatformSurfaceLifecycle::detach(Self) -> Self
+pub fn PlatformSurfaceLifecycle::metrics(Self) -> @wzzc-dev/moui/core.SurfaceMetrics?
+
+pub(all) struct SurfaceState {
+  mut metrics : @wzzc-dev/moui/core.SurfaceMetrics
+  owns_surface : Bool
+  can_reconfigure : Bool
+}
+pub fn SurfaceState::logical_size(Self) -> @wzzc-dev/moui/core.Size
+pub fn SurfaceState::new(metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, owns_surface? : Bool, can_reconfigure? : Bool) -> Self
+pub fn SurfaceState::resize(Self, @wzzc-dev/moui/core.SurfaceMetrics) -> @backend.Event
+
+pub(all) struct TextInputImeRequestDiagnostics {
+  focused : Bool
+  text_length : Int
+  text_utf8_length : Int
+  cursor : Int
+  anchor : Int
+  cursor_utf8 : Int
+  anchor_utf8 : Int
+  cursor_is_grapheme_boundary : Bool
+  anchor_is_grapheme_boundary : Bool
+  candidate_anchor : @wzzc-dev/moui/core.Rect
+  has_surrounding_text : Bool
+  surrounding_text_utf8_length : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextInputSession {
+  mut enabled : Bool
+  mut last_request : @wzzc-dev/window/core.ImeRequestData?
+  mut last_capabilities : @wzzc-dev/window/core.ImeCapabilities?
+  mut last_diagnostics : TextInputImeRequestDiagnostics?
+}
+pub fn TextInputSession::last_diagnostics(Self) -> TextInputImeRequestDiagnostics?
+pub fn TextInputSession::new() -> Self
+pub fn TextInputSession::sync(Self, @wzzc-dev/moui/core.TextInputState) -> TextInputSessionAction
+
+pub(all) enum TextInputSessionAction {
+  NoImeChange
+  EnableIme(@wzzc-dev/window/core.ImeRequest)
+  UpdateIme(@wzzc-dev/window/core.ImeRequest)
+  DisableIme(@wzzc-dev/window/core.ImeRequest)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum TransformedWindowEvent {
+  DispatchHostEvent(@backend.Event)
+  WindowRedrawRequired
+  CloseRequested
+  PlatformSpecific
+}
+
+pub struct WindowInputState {
+  // private fields
+}
+pub fn WindowInputState::last_diagnostics(Self) -> TextInputImeRequestDiagnostics?
+pub fn WindowInputState::new(event_sources? : @runtime.HostPlatformEventSources?) -> Self
+pub fn WindowInputState::publish(Self, @backend.WindowId, @backend.Event) -> @runtime.HostPlatformEventPublishResult?
+pub fn WindowInputState::sync(Self, @wzzc-dev/moui/core.TextInputState) -> TextInputSessionAction
+
+// Type aliases
+
+// Traits
+

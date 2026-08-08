@@ -6,7 +6,9 @@ fn main {
     height=@excel_app.shell_height,
   )
   @runtime.run_app("Excel", runtime)
-  .render_all(@render_skia.from_env())
+  .render_all(
+    @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS),
+  )
   .backend(@macos_host.entry())
   .run()
 }

@@ -62,31 +62,29 @@ pub(all) struct AndroidBackendInfo {
 
 ///|
 pub struct AndroidSurfaceBinding {
-  priv create_renderer : (AndroidSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererResolution?
+  priv create_renderer : (AndroidSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererSession?
   priv sync_surface : (AndroidSurfaceHandle, @core.SurfaceMetrics) -> Unit
-  priv image_loader : @render.ImageLoader?
 }
 
 ///|
 pub fn AndroidSurfaceBinding::new(
-  create_renderer~ : (AndroidSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererResolution?,
+  create_renderer~ : (AndroidSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererSession?,
   sync_surface? : (AndroidSurfaceHandle, @core.SurfaceMetrics) -> Unit = (
     _surface,
     _metrics,
   ) => (),
-  image_loader? : @render.ImageLoader? = None,
 ) -> AndroidSurfaceBinding {
-  { create_renderer, sync_surface, image_loader }
+  { create_renderer, sync_surface }
 }
 
 ///|
 /// Bind renderer factories to an Android window-hosted surface without
 /// exposing the native window type outside this package.
 pub fn android_surface_binding(
-  factories : Array[@render.RendererFactory],
+  providers : Array[@render.RendererProvider],
 ) -> AndroidSurfaceBinding {
   let shared = @embedded_runtime.mobile_host_surface_binding(
-    factories,
+    providers,
     presenter_description="Android host CPU presenter",
     cpu_present=(raw_handle, frame) => {
       android_present_pixels_to_surface(
@@ -99,8 +97,8 @@ pub fn android_surface_binding(
       ) !=
       0
     },
-    gpu_descriptor=raw_handle => {
-      @render.GpuHostSurfaceDescriptor::android_vulkan_window(raw_handle)
+    native_surface=raw_handle => {
+      @render.NativeSurface::new(surface_handle=raw_handle, present=_ => true)
     },
   )
   AndroidSurfaceBinding::new(
@@ -108,7 +106,6 @@ pub fn android_surface_binding(
       (shared.create_renderer)(_surface.raw(), metrics)
     },
     sync_surface=(surface, metrics) => (shared.sync)(surface.raw(), metrics),
-    image_loader=shared.image_loader,
   )
 }
 
@@ -117,7 +114,7 @@ fn AndroidSurfaceBinding::create(
   self : AndroidSurfaceBinding,
   surface : AndroidSurfaceHandle,
   metrics : @core.SurfaceMetrics,
-) -> @render.RendererResolution? {
+) -> @render.RendererSession? {
   (self.create_renderer)(surface, metrics)
 }
 
@@ -131,13 +128,6 @@ fn AndroidSurfaceBinding::sync(
 }
 
 ///|
-pub fn AndroidSurfaceBinding::has_async_image_loader(
-  self : AndroidSurfaceBinding,
-) -> Bool {
-  self.image_loader is Some(_)
-}
-
-///|
 pub fn host_surface_binding_from_android(
   binding : AndroidSurfaceBinding,
 ) -> @embedded_runtime.HostSurfaceBinding {
@@ -148,7 +138,6 @@ pub fn host_surface_binding_from_android(
     sync=fn(raw, metrics) {
       binding.sync(AndroidSurfaceHandle::new(raw~), metrics)
     },
-    image_loader=binding.image_loader,
   )
 }
 

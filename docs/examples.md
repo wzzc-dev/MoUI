@@ -599,7 +599,7 @@ fetches.
 ## macOS Native
 
 macOS examples use the shared app package plus `backend/macos` and an explicit
-renderer package. The recommended `_skia` entrypoints import `render/skia` and
+renderer package. The recommended `_skia` entrypoints import `moui_skia_renderer` and
 compose it with `@macos.entry()` through `@runtime.run_app`:
 
 ```sh
@@ -646,8 +646,8 @@ to override the environment for that invocation. HarmonyOS is stricter:
 explicit `skia-raster`.
 
 For a fuller local smoke, pass `--run-showcase-smoke`. The helper builds
-Showcase and then runs the `moui_tester` first-frame smoke. Add
-`--run-markdown-smoke` to build Markdown Editor and run the same tester-owned
+Showcase and then runs the unpublished `moui_tests` first-frame smoke. Add
+`--run-markdown-smoke` to build Markdown Editor and run the same internal
 first-frame marker:
 
 ```sh
@@ -686,7 +686,7 @@ inspected without parsing `Info.plist`.
 
 Windows native examples use the MSVC toolchain and vcpkg `zlib:x64-windows`.
 The recommended `_skia` entrypoints import `backend/windows` plus
-`render/skia` and compose them explicitly through `@runtime.run_app`.
+`moui_skia_renderer` and compose them explicitly through `@runtime.run_app`.
 Showcase `windows_wgpu` remains the canonical native WGPU diagnostic; the build/package helpers download and bundle `wgpu_native.dll`
 only for those WGPU packages.
 
@@ -729,7 +729,7 @@ through `run.cmd`.
 ## Linux Native
 
 Linux examples use the `wzzc-dev/window@0.5.4-0.1.5` Wayland host core. The
-recommended native entrypoints compose `backend/linux` with `render/skia` and
+recommended native entrypoints compose `backend/linux` with `moui_skia_renderer` and
 present Skia CPU pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
 host with a Wayland compositor and real Skia link flags:
 

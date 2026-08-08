@@ -91,7 +91,7 @@ test "website selects Simplified Chinese route and catalog" {
   )
   let runtime = test_runtime(
     Model::new().program_with_services(
-      @backend_common.app_services(bridge~),
+      @backend_common_services.app_services(bridge~),
       route_host=Some(route_host),
     ),
     width=1180.0,
@@ -128,7 +128,7 @@ test "website Get Started navigates and GitHub opens repository URL" {
     },
   )
   let runtime = Model::new().test_runtime_with_services(
-    @backend_common.app_services(bridge~),
+    @backend_common_services.app_services(bridge~),
     width=1180.0,
     height=760.0,
   )
@@ -176,7 +176,8 @@ test "website showcases lazy grid renders visible screenshots only" {
 ///|
 test "website showcases scroll their virtual grid without a duplicate page heading" {
   let model = Model::new().update(OpenShowcases)
-  let runtime = model.test_runtime(width=1180.0, height=760.0)
+  let latest = Ref(model)
+  let runtime = model.tracked_test_runtime(latest, width=1180.0, height=760.0)
   let commands = runtime.draw_commands()
   assert_true(exact_text_count(commands, "Showcases") == 1)
   assert_true(has_text(commands, "MoUI screenshot gallery"))
@@ -200,7 +201,7 @@ test "website showcases scroll their virtual grid without a duplicate page headi
     ),
   )
   assert_true(result.host_flags() == 1)
-  assert_true(model.showcase_grid_scroll.offset().y > 0.0)
+  assert_true(latest.val.showcase_grid_scroll.y > 0.0)
   assert_true(
     has_image_source(
       runtime.draw_commands(),
@@ -211,11 +212,13 @@ test "website showcases scroll their virtual grid without a duplicate page headi
 
 ///|
 test "website resets showcase grid scroll when returning to the route" {
-  let model = Model::new().update(OpenShowcases)
-  model.showcase_grid_scroll.scroll_to(x=0.0, y=180.0)
-  assert_true(model.showcase_grid_scroll.offset().y == 180.0)
+  let model = {
+    ..Model::new().update(OpenShowcases),
+    showcase_grid_scroll: @geometry.Point::new(x=0.0, y=180.0),
+  }
+  assert_true(model.showcase_grid_scroll.y == 180.0)
   let revisited = model.update(OpenHome).update(OpenShowcases)
-  assert_true(revisited.showcase_grid_scroll.offset().y == 0.0)
+  assert_true(revisited.showcase_grid_scroll.y == 0.0)
 }
 
 ///|
@@ -273,7 +276,7 @@ test "website docs portal loads runtime markdown through host text service" {
     },
   )
   let runtime = Model::new().test_runtime_with_services(
-    @backend_common.app_services(bridge~),
+    @backend_common_services.app_services(bridge~),
     width=1180.0,
     height=760.0,
   )
@@ -319,7 +322,8 @@ test "website desktop docs keeps navigation fixed while markdown scrolls" {
       ),
     ),
   }
-  let runtime = model.test_runtime(width=1180.0, height=760.0)
+  let latest = Ref(model)
+  let runtime = model.tracked_test_runtime(latest, width=1180.0, height=760.0)
   guard text_frame(runtime.draw_commands(), "MoUI README") is Some(nav_before) else {
     fail("expected docs navigation item")
   }
@@ -332,7 +336,7 @@ test "website desktop docs keeps navigation fixed while markdown scrolls" {
       ),
     ),
   )
-  assert_true(model.docs_scroll.offset().y > 0.0)
+  assert_true(latest.val.docs_scroll.y > 0.0)
   guard text_frame(runtime.draw_commands(), "MoUI README") is Some(nav_after) else {
     fail("expected fixed docs navigation item after scroll")
   }
@@ -352,7 +356,8 @@ test "website desktop docs sidebar scrolls independently" {
       ),
     ),
   }
-  let runtime = model.test_runtime(width=1180.0, height=760.0)
+  let latest = Ref(model)
+  let runtime = model.tracked_test_runtime(latest, width=1180.0, height=760.0)
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
@@ -362,8 +367,8 @@ test "website desktop docs sidebar scrolls independently" {
       ),
     ),
   )
-  assert_true(model.docs_body_scroll.offset().y > 0.0)
-  inspect(model.docs_scroll.offset().y, content="0")
+  assert_true(latest.val.docs_body_scroll.y > 0.0)
+  inspect(latest.val.docs_scroll.y, content="0")
 }
 
 ///|
@@ -372,12 +377,12 @@ test "website selecting another document resets only document scroll" {
     ..Model::new(),
     page: WebsiteDocs,
     selected_doc_slug: "moui-readme",
+    docs_body_scroll: @geometry.Point::new(x=0.0, y=180.0),
+    docs_scroll: @geometry.Point::new(x=0.0, y=900.0),
   }
-  model.docs_body_scroll.scroll_to(x=0.0, y=180.0)
-  model.docs_scroll.scroll_to(x=0.0, y=900.0)
   let next = model.update(SelectDoc("development"))
-  inspect(next.docs_scroll.offset().y, content="0")
-  inspect(next.docs_body_scroll.offset().y, content="180")
+  inspect(next.docs_scroll.y, content="0")
+  inspect(next.docs_body_scroll.y, content="180")
 }
 
 ///|
@@ -400,7 +405,8 @@ test "website compact docs renders and scrolls markdown" {
       ),
     ),
   }
-  let runtime = model.test_runtime(width=390.0, height=844.0)
+  let latest = Ref(model)
+  let runtime = model.tracked_test_runtime(latest, width=390.0, height=844.0)
   let before = runtime.draw_commands()
   assert_true(has_text(before, "Compact Runtime Docs"))
   assert_true(has_text(before, "Compact Section 0"))
@@ -414,7 +420,7 @@ test "website compact docs renders and scrolls markdown" {
       ),
     ),
   )
-  assert_true(model.docs_scroll.offset().y > 0.0)
+  assert_true(latest.val.docs_scroll.y > 0.0)
 }
 
 ///|
@@ -550,8 +556,10 @@ test "website shows visible main scrollbar and moves thumb" {
   guard website_scrollbar_thumb_frame(initial, size) is Some(before) else {
     fail("expected visible website scrollbar thumb")
   }
-  let model = Model::new()
-  model.home_scroll.scroll_to(x=0.0, y=620.0)
+  let model = {
+    ..Model::new(),
+    home_scroll: @geometry.Point::new(x=0.0, y=620.0),
+  }
   let scrolled = model
     .test_runtime(width=size.width, height=size.height)
     .draw_commands()
@@ -726,7 +734,7 @@ test "website route host receives deep-link and anchor commands" {
   )
   let runtime = test_runtime(
     Model::new().program_with_services(
-      @backend_common.app_services(bridge~),
+      @backend_common_services.app_services(bridge~),
       route_host=Some(route_host),
     ),
     width=1180.0,
@@ -856,6 +864,24 @@ fn Model::test_runtime(
   height~ : Double,
 ) -> @runtime.AppRuntime {
   test_runtime(self.program(), width~, height~)
+}
+
+///|
+fn Model::tracked_test_runtime(
+  self : Model,
+  latest : Ref[Model],
+  width~ : Double,
+  height~ : Double,
+) -> @runtime.AppRuntime {
+  let program = @moui.Program::new_with_environment(
+    init=() => (self, @moui.Effect::none()),
+    update=(model, message) => (model.update(message), @moui.Effect::none()),
+    view=(model, env) => {
+      latest.val = model
+      model.view(env)
+    },
+  )
+  test_runtime(program, width~, height~)
 }
 
 ///|

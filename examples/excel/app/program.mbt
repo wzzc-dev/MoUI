@@ -14,12 +14,7 @@ pub fn ExcelApp::program(
   @moui.Program::new(
     init=() => (self, @moui.Effect::none()),
     update=(app, msg) => app.update_with_services(msg, services),
-    view=app => {
-      @views.component(ctx => {
-        ignore(ctx.watch(app.model))
-        app.view()
-      })
-    },
+    view=app => app.view(),
   ).with_commands(commands=app => excel_program_commands(app))
 }
 
@@ -27,7 +22,7 @@ pub fn ExcelApp::program(
 pub fn excel_program_commands(
   app : ExcelApp,
 ) -> Array[@moui.ProgramCommand[ExcelMsg]] {
-  let model = app.model.get()
+  let model = app.model
   let commands : Array[@moui.ProgramCommand[ExcelMsg]] = []
   let add = command => commands.push(command)
   let add_dual = (label : String, key : String, message : ExcelMsg) => {

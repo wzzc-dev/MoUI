@@ -6,7 +6,7 @@ fn main {
   )
   @runtime.run_app("MoUI Showcase", runtime)
   // .render(@render_skia.raster())
-  .render(@render_skia.gpu())
+  .render(@render_skia.gpu(platform=@render_skia.NativeGpuPlatform::MacOS))
   .backend(
     @macos_backend.entry(
       smoke_options=@macos_backend.MacosHostSmokeOptions::new(

@@ -13,7 +13,7 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
   inspect(info.capabilities.drag_drop, content="true")
   inspect(info.capabilities.scale_factor, content="true")
   inspect(info.capabilities.accessibility, content="true")
-  inspect(info.accessibility.kind.label(), content="at-spi")
+  inspect(info.accessibility.kind, content="at-spi")
   inspect(info.accessibility.semantics_bridge_available, content="true")
   inspect(
     info.accessibility.native_accessibility_bridge_available,
@@ -127,10 +127,10 @@ test "linux backend carries tracked modifiers into keyboard events" {
     Some("a"),
     Some("A"),
   )
-  let modifiers = @window_host.modifiers_to_core(
+  let modifiers = @window_input.modifiers_to_core(
     @window_core.Modifiers::Modifiers(true, true, false, false),
   )
-  let event = @window_host.window_event_to_host_with_modifiers(
+  let event = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::KeyboardInput(None, key_event, false),
     @core.Point::new(x=0.0, y=0.0),
     modifiers,
@@ -153,7 +153,7 @@ test "linux backend carries tracked modifiers into keyboard events" {
 
 ///|
 test "linux backend uses Wayland button event coordinates" {
-  let event = @window_host.window_event_to_host_with_modifiers(
+  let event = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
@@ -177,7 +177,7 @@ test "linux backend uses Wayland button event coordinates" {
 
 ///|
 test "linux backend converts high dpi pointer coordinates to logical space" {
-  let event = @window_host.window_event_to_host_with_modifiers(
+  let event = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::PointerMoved(
       None,
       @dpi.PhysicalPositionF64::PhysicalPositionF64(84.0, 128.0),
@@ -199,7 +199,7 @@ test "linux backend converts high dpi pointer coordinates to logical space" {
 
 ///|
 test "linux backend preserves normalized vertical wheel direction" {
-  let event = @window_host.window_event_to_host_with_modifiers(
+  let event = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::MouseWheel(
       None,
       @window_core.MouseScrollDelta::PixelDelta(
@@ -226,7 +226,7 @@ test "linux backend preserves normalized vertical wheel direction" {
 
 ///|
 test "linux backend converts high dpi pixel scroll delta to logical space" {
-  let event = @window_host.window_event_to_host_with_modifiers(
+  let event = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::MouseWheel(
       None,
       @window_core.MouseScrollDelta::PixelDelta(
@@ -250,7 +250,7 @@ test "linux backend converts high dpi pixel scroll delta to logical space" {
 
 ///|
 test "linux backend converts high dpi drag drop coordinates to logical space" {
-  let event = @window_host.window_event_to_host_with_modifiers(
+  let event = @window_input.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::DragDropped(
       ["/tmp/high-dpi.txt"],
       @dpi.PhysicalPositionF64::PhysicalPositionF64(96.0, 144.0),
@@ -540,8 +540,12 @@ test "linux accessibility bridge dispatches semantics actions" {
     }
   }
   let target = target.unwrap()
-  let bridge = linux_accessibility_bridge(runtime)
-  inspect(bridge.kind.label(), content="at-spi")
+  let driver = @runtime.HostRuntimeDriver::new(
+    runtime~,
+    schedule_redraw=() => (),
+  )
+  let bridge = linux_accessibility_bridge(driver)
+  inspect(linux_accessibility_bridge_info().kind, content="at-spi")
   inspect(bridge.available, content="true")
   match bridge.publish_semantics(@runtime.SemanticsRead::Full(snapshot)) {
     Some(_) => ()
@@ -549,13 +553,13 @@ test "linux accessibility bridge dispatches semantics actions" {
   }
   match
     bridge.perform_action(
-      @runtime.NativeAccessibilityActionRequest::new(
+      @accesskit_bridge.accesskit_semantics_action_request(
         node_id=target.node_id,
         generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @runtime.NativeAccessibilityActionResult::Handled(receipt) =>
+    @accesskit_bridge.AccessKitActionResult::Handled(receipt) =>
       assert_true(receipt.before == snapshot.generation())
     _ => fail("expected Linux accessibility bridge action dispatch")
   }

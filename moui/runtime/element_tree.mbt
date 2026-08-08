@@ -7,7 +7,6 @@ priv struct ElementNode {
   mut children : Array[ElementNode]
   dirty : DirtyFlags
   control : ElementControlState
-  component : ElementComponentState
   layout_cache : ElementLayoutCache
   render_cache : ElementRenderCache
   semantics_cache : ElementSemanticsCache
@@ -50,12 +49,6 @@ fn ElementControlState::apply_view_context(
   value : @core.ViewStateContext,
 ) -> Unit {
   self.view_state = value
-}
-
-///|
-priv struct ElementComponentState {
-  mut component_subscriptions : Array[StateSubscription]
-  mut component_effects : Array[ComponentEffect]
 }
 
 ///|
@@ -148,18 +141,6 @@ priv struct RenderNode {
 }
 
 ///|
-priv struct CachedLayerState {
-  key : String
-  content_revision : Int
-}
-
-///|
-priv struct CachedLayerAdmissionState {
-  key : String
-  content_revision : Int
-  visible_streak : Int
-}
-
 ///|
 priv struct RenderTree {
   root : RenderNode
@@ -257,14 +238,6 @@ fn ElementControlState::new() -> ElementControlState {
     text_undo_stack: [],
     text_redo_stack: [],
   }
-}
-
-///|
-fn ElementComponentState::new(
-  subscriptions~ : Array[StateSubscription],
-  effects~ : Array[ComponentEffect],
-) -> ElementComponentState {
-  { component_subscriptions: subscriptions, component_effects: effects }
 }
 
 ///|

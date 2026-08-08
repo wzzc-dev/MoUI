@@ -29,15 +29,6 @@ pub fn[Msg] tab_item(
 }
 
 ///|
-pub fn[Msg] navigation_stack(
-  state : @core.NavigationState,
-  destinations : Array[NavigationDestination[Msg]],
-  fallback? : @core.View[Msg] = @container.empty(),
-) -> @core.View[Msg] {
-  navigation_stack_selected(state.current(), destinations, fallback~)
-}
-
-///|
 pub fn[Msg] navigation_stack_selected(
   selected : String,
   destinations : Array[NavigationDestination[Msg]],

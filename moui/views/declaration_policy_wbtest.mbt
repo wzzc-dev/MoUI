@@ -34,19 +34,14 @@ test "view declarations distinguish equal-length and exact numeric changes" {
 }
 
 ///|
-test "shared Binding aliases are sampled into immutable node declarations" {
-  let checked = Ref(false)
-  let binding = @core.Binding::new(get=() => checked.val, set=value => {
-    checked.val = value
-  })
+test "controlled values are sampled into immutable node declarations" {
   let before : @core.View[Unit] = checkbox_control(
     label="Shared",
-    checked=binding,
+    checked=@core.ControlledValue::new(value=false, changed=_ => ()),
   )
-  binding.set(true)
   let after : @core.View[Unit] = checkbox_control(
     label="Shared",
-    checked=binding,
+    checked=@core.ControlledValue::new(value=true, changed=_ => ()),
   )
   debug_inspect(
     declaration_policy_changes(after.declaration(), before.declaration()),
@@ -77,14 +72,4 @@ test "aggregate themes and callback views declare uncacheable channels" {
   assert_true(callback_changes.paint())
   assert_true(callback_changes.semantics())
   assert_true(callback_changes.platform())
-}
-
-///|
-test "component host declaration stays constant while rebuilt children reconcile" {
-  let first : @core.View[Unit] = component(_context => empty())
-  let second : @core.View[Unit] = component(_context => spacer(min_length=12.0))
-  debug_inspect(
-    declaration_policy_changes(second.declaration(), first.declaration()),
-    content="(false, false, false, false)",
-  )
 }

@@ -65,7 +65,7 @@ const compilerWorkerRevision = hashFile(
 
 let index = readFileSync(join(repoRoot, "website/playground/web_wasm/index.html"), "utf8");
 index = index
-  .replaceAll("../../../moui/render/webgpu_adapter/runtime.js", "./runtime.js")
+  .replaceAll("../../../moui_web_renderer/runtime.js", "./runtime.js")
   .replaceAll(
     "../../../_build/wasm-gc/debug/build/website/playground/web_wasm/web_wasm.wasm",
     `./playground.wasm?v=${wasmRevision}`,

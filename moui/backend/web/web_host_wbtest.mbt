@@ -1,6 +1,6 @@
 ///|
 test "web async host service descriptors drain and complete browser responses" {
-  let queue = @window_host.ServiceAsyncQueue::new()
+  let queue = @window_services.ServiceAsyncQueue::new()
   let bridge = web_service_bridge(
     clipboard_read=true,
     file_dialog=true,
@@ -74,7 +74,7 @@ test "web async host service descriptors drain and complete browser responses" {
 
 ///|
 test "web async file open caches browser text for text-file reads" {
-  let queue = @window_host.ServiceAsyncQueue::new()
+  let queue = @window_services.ServiceAsyncQueue::new()
   let bridge = web_service_bridge(
     file_dialog=true,
     file_access=true,
@@ -176,7 +176,7 @@ test "web async file open caches browser text for text-file reads" {
 
 ///|
 test "web async text-file read fetches and caches static text" {
-  let queue = @window_host.ServiceAsyncQueue::new()
+  let queue = @window_services.ServiceAsyncQueue::new()
   let bridge = web_service_bridge(file_access=true, async_queue=Some(queue))
   let read_id = match
     bridge.dispatch(

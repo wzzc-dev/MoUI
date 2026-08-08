@@ -527,7 +527,7 @@ cross-origin text-file fetches。
 ## macOS 原生
 
 macOS 示例使用共享应用包、`backend/macos` 和显式 renderer 包。推荐的 `_skia` 入口导入
-`render/skia`，并通过 `@runtime.run_app` 与 `@macos.entry()` 组合：
+`moui_skia_renderer`，并通过 `@runtime.run_app` 与 `@macos.entry()` 组合：
 
 ```sh
 moon build examples/showcase/macos_skia --target native
@@ -567,8 +567,8 @@ HarmonyOS 的约束更严格：`auto` / `skia-gpu` 必须解析为 static，dyna
 `skia-raster`。
 
 如需更完整的本地 smoke，请传入 `--run-showcase-smoke`。helper 会构建 Showcase，然后运行
-`moui_tester` first-frame smoke。添加 `--run-markdown-smoke` 会构建 Markdown Editor，并运行同一个
-tester-owned first-frame marker：
+未发布 `moui_tests` 模块中的 first-frame smoke。添加 `--run-markdown-smoke` 会构建 Markdown Editor，并运行同一个
+内部 first-frame marker：
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
@@ -603,7 +603,7 @@ bundle 包含并验证 schema version 1 `Contents/Resources/moui-package.json` m
 ## Windows 原生
 
 Windows 原生示例使用 MSVC toolchain 和 vcpkg `zlib:x64-windows`。推荐的 `_skia` 入口导入
-`backend/windows` 与 `render/skia`，并通过 `@runtime.run_app` 显式组合它们。Showcase
+`backend/windows` 与 `moui_skia_renderer`，并通过 `@runtime.run_app` 显式组合它们。Showcase
 `windows_wgpu` 是唯一 canonical native WGPU diagnostic；build/package helper 只为该
 WGPU 路线下载并打包 `wgpu_native.dll`。
 
@@ -621,7 +621,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
 ```
 
-`windows_skia` 遵循 renderer factory 的 Skia availability rules：如果
+`windows_skia` 遵循 renderer provider 的 Skia availability rules：如果
 `moui_skia/native` 只处于 fallback mode，renderer creation 会报告 diagnostic，而不是打开空
 HWND。
 Windows Skia 示例入口是 interactive app entrypoints。请把 matching-host first-frame smoke 放在
@@ -644,7 +644,7 @@ package 会写入 `dist\windows-msvc\MoUIShowcase`，并包含 schema version 1
 ## Linux 原生
 
 Linux 示例使用 `wzzc-dev/window@0.5.4-0.1.5` Wayland host core。推荐的原生入口导入
-`backend/linux` 与 `render/skia`，通过 AppBuilder 组合后由中立 Wayland `wl_shm` presenter
+`backend/linux` 与 `moui_skia_renderer`，通过 AppBuilder 组合后由中立 Wayland `wl_shm` presenter
 呈现 Skia CPU pixel frames。请在已配置
 Wayland compositor 和真实 Skia link flags 的 Linux host 上运行：
 

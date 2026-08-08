@@ -190,7 +190,7 @@ test "web service bridge exposes browser-selected text-file reads when enabled" 
 
 ///|
 test "web service bridge can defer async clipboard read, file dialogs, and writes" {
-  let queue = @window_host.ServiceAsyncQueue::new()
+  let queue = @window_services.ServiceAsyncQueue::new()
   let bridge = web_service_bridge(
     clipboard_read=true,
     file_dialog=true,
@@ -320,12 +320,11 @@ fn find_aria_node(nodes : Array[AriaNode], role : String) -> AriaNode? {
 
 ///|
 test "web accessibility maps semantics to aria nodes" {
-  let checked = @core.State::new(true)
   let runtime = @runtime.AppRuntime::new_view(
     root=(
       @views.checkbox(
         "Done",
-        checked=checked.get(),
+        checked=true,
         on_change=_value => (),
         font=@core.FontSpec::new(),
         foreground=@core.Color::black(),

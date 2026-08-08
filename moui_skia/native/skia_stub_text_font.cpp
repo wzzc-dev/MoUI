@@ -167,24 +167,30 @@ private:
 };
 
 static std::unique_ptr<SkShaper> moonbit_skia_make_shaper() {
-#if defined(MOUI_SKIA_HAS_SKSHAPER_CORETEXT)
-  if (std::unique_ptr<SkShaper> shaper = SkShapers::CT::CoreText()) {
-    return shaper;
+  // Always resolve and validate the fallback manager before constructing a
+  // shaper.  The legacy CoreText convenience path creates its own font-run
+  // iterator; on macOS that iterator can dereference a null manager during
+  // character fallback (SkFontMgr::matchFamilyStyleCharacter).
+  sk_sp<SkFontMgr> fallback = moonbit_skia_default_font_mgr();
+  if (!fallback) {
+    return nullptr;
   }
-#endif
+  // Do not use SkShapers::CT::CoreText() directly here.  Its legacy
+  // single-font overload owns the fallback iterator and has no way to pass
+  // the validated manager above.
 #if defined(MOUI_SKIA_HAS_SKSHAPER_HARFBUZZ) && defined(MOUI_SKIA_HAS_SKUNICODE_ICU)
   // Prefer HarfBuzz on Android/Linux — MakePrimitive alone has crashed with a
   // null deref when shaping denser layouts after rotation / catalog navigation.
   if (sk_sp<SkUnicode> unicode = SkUnicodes::ICU::Make()) {
     if (std::unique_ptr<SkShaper> shaper = SkShapers::HB::ShapeDontWrapOrReorder(
           unicode,
-          moonbit_skia_default_font_mgr()
+          fallback
         )) {
       return shaper;
     }
     if (std::unique_ptr<SkShaper> shaper = SkShapers::HB::ShapeThenWrap(
           unicode,
-          moonbit_skia_default_font_mgr()
+          fallback
         )) {
       return shaper;
     }
@@ -192,7 +198,7 @@ static std::unique_ptr<SkShaper> moonbit_skia_make_shaper() {
 #endif
 #if defined(MOUI_SKIA_HAS_SKSHAPER_HEADERS)
   if (std::unique_ptr<SkShaper> shaper = SkShaper::Make(
-        moonbit_skia_default_font_mgr()
+        fallback
       )) {
     return shaper;
   }

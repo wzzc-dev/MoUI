@@ -138,7 +138,7 @@ pub(all) struct LayerSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct CachedLayerSpec {
+pub(all) struct RetainedLayerSpec {
   key : String
   frame : Rect
   content_revision : Int
@@ -201,9 +201,8 @@ pub(all) enum DrawCommand {
   PopOpacity
   PushLayer(LayerSpec)
   PopLayer
-  BeginCachedLayer(CachedLayerSpec)
-  EndCachedLayer(String)
-  DrawCachedLayer(CachedLayerSpec)
+  BeginRetainedLayer(RetainedLayerSpec)
+  EndRetainedLayer(String)
   PushFilter(FilterEffect)
   PopFilter
   DrawPath(PathSpec)
@@ -527,12 +526,12 @@ pub fn LayerSpec::new(
 }
 
 ///|
-pub fn CachedLayerSpec::new(
+pub fn RetainedLayerSpec::new(
   key~ : String,
   frame~ : Rect,
   content_revision~ : Int,
   scale_factor? : Double = 1.0,
-) -> CachedLayerSpec {
+) -> RetainedLayerSpec {
   { key, frame, content_revision, scale_factor }
 }
 

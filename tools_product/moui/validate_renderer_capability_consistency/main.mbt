@@ -15,7 +15,7 @@
 ///   (provider `sun-raster`)
 ///
 /// The "Web wasm-gc" column is intentionally out of scope: its self-report
-/// lives in `moui/render/webgpu_adapter`, a `wasm-gc`-only package that a
+/// lives in `moui_web_renderer`, a `wasm-gc`-only package that a
 /// native validator cannot import. Web capability consistency is covered by
 /// the wasm-side package tests instead.
 ///

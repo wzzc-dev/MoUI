@@ -66,22 +66,22 @@ Options:
   --no-sync-deps         Skip python3 tools/git-sync-deps for source provider.
   --no-fetch             Reuse an existing Skia checkout for source provider.
   --skip-showcase-build  Skip building examples/showcase/macos_skia.
-  --run-showcase-smoke   After building macos_skia, run the moui_tester
+  --run-showcase-smoke   After building macos_skia, run the moui_tests
                          first-frame smoke and verify the renderer-present
                          marker.
   --run-text-emoji-smoke After the renderer smoke, build and run
-                         moui/tests/skia_text_emoji_smoke/native with the same
+                         moui_tests/skia_text_emoji_smoke/native with the same
                          real Skia link flags and verify the text/emoji smoke
                          success marker.
   --run-markdown-smoke   Build markdown_editor/macos_skia, then run the
-                         moui_tester first-frame smoke and verify the marker.
-  --run-ime-smoke        Build and run moui_tester/macos_skia_ime_smoke and
+                         moui_tests first-frame smoke and verify the marker.
+  --run-ime-smoke        Build and run moui_tests/tester/macos_skia_ime_smoke and
                          verify native IME marker tokens.
   --run-gpu-smoke        Also run the opt-in macOS Metal/Ganesh Skia GPU route
                          smoke. This adds MOUI_SKIA_ENABLE_GPU_METAL and the
                          Metal-related frameworks for the temporary build,
                          and selects MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu
-                         for tester-owned first-frame/IME smoke runs.
+                         for internal first-frame/IME smoke runs.
   --showcase-timeout SECONDS
                          Seconds to wait for --run-showcase-smoke. Default: 20.
   --markdown-timeout SECONDS
@@ -868,8 +868,8 @@ fi
 unset MOUI_SKIA_DISABLE_PREBUILD_SKIA || true
 
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-  moon build moui/tests/skia_renderer_smoke/native --target native
-renderer_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
+  moon build moui_tests/skia_renderer_smoke/native --target native
+renderer_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tests/skia_renderer_smoke/native/native.exe"
 if [[ ! -x "$renderer_exe" ]]; then
   echo "MoUI Skia renderer smoke executable was not produced at $renderer_exe" >&2
   exit 1
@@ -925,8 +925,8 @@ fi
 
 if [[ $run_text_emoji_smoke -eq 1 ]]; then
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    moon build moui/tests/skia_text_emoji_smoke/native --target native
-  text_emoji_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe"
+    moon build moui_tests/skia_text_emoji_smoke/native --target native
+  text_emoji_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tests/skia_text_emoji_smoke/native/native.exe"
   if [[ ! -x "$text_emoji_exe" ]]; then
     echo "MoUI Skia text/emoji smoke executable was not produced at $text_emoji_exe" >&2
     exit 1
@@ -1034,13 +1034,13 @@ if [[ $skip_showcase_build -eq 0 ]]; then
 
   if [[ $run_showcase_smoke -eq 1 ]]; then
     MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-      moon build moui_tester/macos_skia_first_frame_smoke --target native
-    first_frame_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tester/macos_skia_first_frame_smoke/macos_skia_first_frame_smoke.exe"
+      moon build moui_tests/tester/macos_skia_first_frame_smoke --target native
+    first_frame_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tests/tester/macos_skia_first_frame_smoke/macos_skia_first_frame_smoke.exe"
     if [[ ! -x "$first_frame_exe" ]]; then
-      echo "moui_tester macOS Skia first-frame smoke executable was not produced at $first_frame_exe" >&2
+      echo "moui_tests macOS Skia first-frame smoke executable was not produced at $first_frame_exe" >&2
       exit 1
     fi
-    echo "Running moui_tester macOS Skia first-frame smoke executable: $first_frame_exe"
+    echo "Running moui_tests macOS Skia first-frame smoke executable: $first_frame_exe"
     if [[ -z "$showcase_log" ]]; then
       showcase_log="$(mktemp "${TMPDIR:-/tmp}/moui-macos-skia-first-frame-smoke.XXXXXX.log")"
       showcase_log_is_temporary=1
@@ -1061,7 +1061,7 @@ if [[ $skip_showcase_build -eq 0 ]]; then
     (
       sleep "$showcase_timeout"
       if kill -0 "$showcase_pid" 2>/dev/null; then
-        echo "moui_tester first-frame smoke timed out after ${showcase_timeout}s" >>"$showcase_log"
+        echo "moui_tests first-frame smoke timed out after ${showcase_timeout}s" >>"$showcase_log"
         kill "$showcase_pid" 2>/dev/null
       fi
     ) &
@@ -1077,14 +1077,14 @@ if [[ $skip_showcase_build -eq 0 ]]; then
     fi
     require_log_marker "$showcase_log" \
       "macOS renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" \
-      "moui_tester first-frame smoke did not print the expected first-frame marker with title=MoUI Text Input Smoke"
+      "moui_tests first-frame smoke did not print the expected first-frame marker with title=MoUI Text Input Smoke"
     if [[ $run_gpu_smoke -eq 1 ]]; then
       require_log_marker "$showcase_log" \
         "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" \
-        "moui_tester first-frame smoke did not report the Metal GPU route"
-      echo "Verified moui_tester first-frame GPU route marker."
+        "moui_tests first-frame smoke did not report the Metal GPU route"
+      echo "Verified moui_tests first-frame GPU route marker."
     fi
-    echo "Verified moui_tester first-frame smoke marker."
+    echo "Verified moui_tests first-frame smoke marker."
   fi
 fi
 
@@ -1100,14 +1100,14 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
   fi
 
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    moon build moui_tester/macos_skia_first_frame_smoke --target native
-  first_frame_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tester/macos_skia_first_frame_smoke/macos_skia_first_frame_smoke.exe"
+    moon build moui_tests/tester/macos_skia_first_frame_smoke --target native
+  first_frame_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tests/tester/macos_skia_first_frame_smoke/macos_skia_first_frame_smoke.exe"
   if [[ ! -x "$first_frame_exe" ]]; then
-    echo "moui_tester macOS Skia first-frame smoke executable was not produced at $first_frame_exe" >&2
+    echo "moui_tests macOS Skia first-frame smoke executable was not produced at $first_frame_exe" >&2
     exit 1
   fi
 
-  echo "Running moui_tester macOS Skia first-frame smoke executable: $first_frame_exe"
+  echo "Running moui_tests macOS Skia first-frame smoke executable: $first_frame_exe"
   if [[ -z "$markdown_log" ]]; then
     markdown_log="$(mktemp "${TMPDIR:-/tmp}/moui-macos-skia-markdown-smoke.XXXXXX.log")"
     markdown_log_is_temporary=1
@@ -1128,7 +1128,7 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
   (
     sleep "$markdown_timeout"
     if kill -0 "$markdown_pid" 2>/dev/null; then
-      echo "moui_tester first-frame smoke timed out after ${markdown_timeout}s" >>"$markdown_log"
+      echo "moui_tests first-frame smoke timed out after ${markdown_timeout}s" >>"$markdown_log"
       kill "$markdown_pid" 2>/dev/null
     fi
   ) &
@@ -1144,26 +1144,26 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
   fi
   require_log_marker "$markdown_log" \
     "macOS renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" \
-    "moui_tester first-frame smoke did not print the expected first-frame marker with title=MoUI Text Input Smoke"
+    "moui_tests first-frame smoke did not print the expected first-frame marker with title=MoUI Text Input Smoke"
   if [[ $run_gpu_smoke -eq 1 ]]; then
     require_log_marker "$markdown_log" \
       "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" \
-      "moui_tester first-frame smoke did not report the Metal GPU route"
-    echo "Verified moui_tester first-frame GPU route marker."
+      "moui_tests first-frame smoke did not report the Metal GPU route"
+    echo "Verified moui_tests first-frame GPU route marker."
   fi
-  echo "Verified moui_tester first-frame smoke marker."
+  echo "Verified moui_tests first-frame smoke marker."
 fi
 
 if [[ $run_ime_smoke -eq 1 ]]; then
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    moon build moui_tester/macos_skia_ime_smoke --target native
-  ime_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tester/macos_skia_ime_smoke/macos_skia_ime_smoke.exe"
+    moon build moui_tests/tester/macos_skia_ime_smoke --target native
+  ime_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tests/tester/macos_skia_ime_smoke/macos_skia_ime_smoke.exe"
   if [[ ! -x "$ime_exe" ]]; then
-    echo "moui_tester macOS Skia IME smoke executable was not produced at $ime_exe" >&2
+    echo "moui_tests macOS Skia IME smoke executable was not produced at $ime_exe" >&2
     exit 1
   fi
 
-  echo "Running moui_tester macOS Skia IME smoke executable: $ime_exe"
+  echo "Running moui_tests macOS Skia IME smoke executable: $ime_exe"
   if [[ -z "$ime_log" ]]; then
     ime_log="$(mktemp "${TMPDIR:-/tmp}/moui-macos-skia-ime-smoke.XXXXXX.log")"
     ime_log_is_temporary=1
@@ -1182,7 +1182,7 @@ if [[ $run_ime_smoke -eq 1 ]]; then
   (
     sleep "$ime_timeout"
     if kill -0 "$ime_pid" 2>/dev/null; then
-      echo "moui_tester IME smoke timed out after ${ime_timeout}s" >>"$ime_log"
+      echo "moui_tests IME smoke timed out after ${ime_timeout}s" >>"$ime_log"
       kill "$ime_pid" 2>/dev/null
     fi
   ) &
@@ -1208,18 +1208,18 @@ if [[ $run_ime_smoke -eq 1 ]]; then
     "$ime_prefix MoUI native IME resize anchor passed"; do
     require_log_marker "$ime_log" \
       "$marker" \
-      "moui_tester IME smoke did not print expected marker: $marker"
+      "moui_tests IME smoke did not print expected marker: $marker"
   done
   reject_log_marker "$ime_log" \
     "MoUI native IME runtime failed" \
-    "moui_tester IME smoke printed a failure marker"
+    "moui_tests IME smoke printed a failure marker"
   if [[ $run_gpu_smoke -eq 1 ]]; then
     require_log_marker "$ime_log" \
       "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" \
-      "moui_tester IME smoke did not report the Metal GPU route"
-    echo "Verified moui_tester IME GPU route marker."
+      "moui_tests IME smoke did not report the Metal GPU route"
+    echo "Verified moui_tests IME GPU route marker."
   fi
-  echo "Verified moui_tester native IME smoke markers."
+  echo "Verified moui_tests native IME smoke markers."
 fi
 
 echo "MoUI macOS Skia renderer smoke passed."

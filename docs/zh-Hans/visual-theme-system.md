@@ -98,5 +98,5 @@ Skia provider 呈现 CPU 像素帧，并使用本地 `moui_skia` 绑定进行栅
 
 文本测量流经运行时 `TextSystem` 契约。`core/` 拥有中立契约和确定性兜底；
 原生 Skia 主线暴露 `skia_text_system()` 用于渲染器/文本诊断，WGPU 诊断 provider
-位于 `render/wgpu/*` 下，Web 安装一个由浏览器 Canvas 支撑的系统，以匹配其
+位于 `moui_wgpu_renderer/*` 下，Web 安装一个由浏览器 Canvas 支撑的系统，以匹配其
 WebGPU 字形路径。见 [文本系统](text-system.md)。

@@ -39,3 +39,4 @@ deliverables/*
 .reasonix/
 reasonix.toml
 *.obj
+tmp/*

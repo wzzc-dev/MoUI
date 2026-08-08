@@ -74,7 +74,7 @@
       <iframe id="preview-frame" title="Compiled MoUI preview" sandbox="allow-scripts"></iframe>
     </main>
     <script type="module">
-      import { bootMouiWasmGcApp } from "../../../moui/render/webgpu_adapter/runtime.js";
+      import { bootMouiWasmGcApp } from "../../../moui_web_renderer/runtime.js";
       import { PlaygroundBridge } from "../host/playground-bridge.js";
       import { PreviewHost } from "../host/preview-host.js";
       const bridge = new PlaygroundBridge({ workerUrl: new URL("../host/compiler-worker.js", import.meta.url) });

@@ -2,7 +2,6 @@
 package "wzzc-dev/moui/runtime"
 
 import {
-  "Milky2018/moon_accesskit",
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
@@ -10,18 +9,6 @@ import {
 }
 
 // Values
-pub fn accesskit_action_from_semantics(@core.SemanticsActionKind) -> @moon_accesskit.Action
-
-pub fn accesskit_node_from_semantics(@core.SemanticsNode) -> @moon_accesskit.Node
-
-pub fn accesskit_node_id_for_semantics(@core.SemanticsNodeId) -> @moon_accesskit.NodeId
-
-pub fn accesskit_rect_from_core(@core.Rect) -> @moon_accesskit.Rect
-
-pub fn accesskit_role_from_semantics(@core.SemanticsRole) -> @moon_accesskit.Role
-
-pub fn accesskit_update_from_semantics_read(SemanticsRead) -> NativeAccessibilityUpdate?
-
 pub fn[Msg] effect_plan_summary(@core.Effect[Msg]) -> EffectPlanSummary
 
 pub fn finish_first_frame_smoke_auto_exit(platform_name~ : String, title~ : String, flag~ : Bool, finish~ : () -> Unit) -> Bool
@@ -36,8 +23,6 @@ pub fn[Msg] new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? :
 
 pub fn run_app(String, AppRuntime) -> AppBuilder
 
-pub fn semantics_action_label(@core.SemanticsAction) -> String
-
 pub fn[Msg] subscription_plan_summary(@core.Subscription[Msg]) -> SubscriptionPlanSummary
 
 pub fn sync_platform_view_plugins(Array[@backend.PlatformViewPlugin], UInt64, @core.DrawFrame, content_offset? : Double) -> Unit
@@ -48,13 +33,13 @@ pub fn sync_platform_view_plugins(Array[@backend.PlatformViewPlugin], UInt64, @c
 pub struct AppBuilder {
   title : String
   runtime : AppRuntime
-  renderer_factories : Array[@render.RendererFactory]
+  renderer_providers : Array[@render.RendererProvider]
   backend : PlatformEntry?
   window_requests : @backend.WindowRequests
 }
 pub fn AppBuilder::backend(Self, PlatformEntry) -> Self
-pub fn AppBuilder::render(Self, @render.RendererFactory) -> Self
-pub fn AppBuilder::render_all(Self, Array[@render.RendererFactory]) -> Self
+pub fn AppBuilder::render(Self, @render.RendererProvider) -> Self
+pub fn AppBuilder::render_all(Self, Array[@render.RendererProvider]) -> Self
 pub fn AppBuilder::run(Self) -> Unit
 pub async fn AppBuilder::run_async_pump(Self, frame_interval_ms? : Int) -> Unit
 pub fn AppBuilder::window_requests(Self, @backend.WindowRequests) -> Self
@@ -62,10 +47,10 @@ pub fn AppBuilder::window_requests(Self, @backend.WindowRequests) -> Self
 pub struct AppLaunchRequest {
   title : String
   runtime : AppRuntime
-  renderer_factories : Array[@render.RendererFactory]
+  renderer_providers : Array[@render.RendererProvider]
   window_requests : @backend.WindowRequests
 }
-pub fn AppLaunchRequest::renderer_factories(Self) -> Array[@render.RendererFactory]
+pub fn AppLaunchRequest::renderer_providers(Self) -> Array[@render.RendererProvider]
 pub fn AppLaunchRequest::runtime(Self) -> AppRuntime
 pub fn AppLaunchRequest::title(Self) -> String
 pub fn AppLaunchRequest::window_requests(Self) -> @backend.WindowRequests
@@ -91,7 +76,6 @@ pub fn AppRuntime::focus_next(Self) -> Bool
 pub fn AppRuntime::focus_previous(Self) -> Bool
 pub fn AppRuntime::focused_text_input(Self) -> @core.TextInputState
 pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot
-pub fn AppRuntime::invalidate_cached_layer_key(Self, String) -> Unit
 pub fn AppRuntime::layout(Self) -> @core.LayoutResult
 pub fn AppRuntime::needs_layout(Self) -> Bool
 pub fn AppRuntime::needs_paint(Self) -> Bool
@@ -189,7 +173,6 @@ pub(all) struct HostRuntimeDriver {
   mut close_requested : Bool
   mut frame_time_ms : Double
 }
-pub fn HostRuntimeDriver::apply_render_frame_result(Self, @render.RenderFrameResult) -> Unit
 pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::dispatch(Self, @backend.Event) -> @backend.EventResult
 pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @core.ActionCommand, @backend.HostServiceBridge) -> @backend.EventResult
@@ -204,7 +187,7 @@ pub fn HostRuntimeDriver::event_result(Self) -> @backend.EventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::focused_text_input(Self) -> @core.TextInputState
 pub fn HostRuntimeDriver::new(runtime~ : AppRuntime, schedule_redraw~ : () -> Unit) -> Self
-pub fn HostRuntimeDriver::perform_semantics_action(Self, NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
+pub fn HostRuntimeDriver::perform_semantics_action(Self, PerformSemanticsActionRequest) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError]
 pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
 pub fn HostRuntimeDriver::set_environment(Self, @core.Environment) -> Unit
@@ -270,48 +253,6 @@ pub fn LayoutInspectorSnapshot::leaf_count(Self) -> Int
 pub fn LayoutInspectorSnapshot::max_depth(Self) -> Int
 pub fn LayoutInspectorSnapshot::node_count(Self) -> Int
 pub fn LayoutInspectorSnapshot::root_frame(Self) -> @core.Rect
-
-pub(all) struct NativeAccessibilityActionRequest {
-  node_id : @core.SemanticsNodeId
-  generation : @core.SemanticsGeneration
-  action : @core.SemanticsAction
-} derive(Eq, ToJson, @debug.Debug)
-pub fn NativeAccessibilityActionRequest::new(node_id~ : @core.SemanticsNodeId, generation~ : @core.SemanticsGeneration, action~ : @core.SemanticsAction) -> Self
-
-pub(all) enum NativeAccessibilityActionResult {
-  Handled(SemanticsActionReceipt)
-  Rejected(SemanticsActionDispatchError)
-  BridgeUnavailable(String)
-} derive(Eq, @debug.Debug)
-
-pub(all) struct NativeAccessibilityBridge {
-  kind : NativeAccessibilityBridgeKind
-  available : Bool
-  publish : (SemanticsRead) -> NativeAccessibilityUpdate?
-  perform : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
-}
-pub fn NativeAccessibilityBridge::new(kind~ : NativeAccessibilityBridgeKind, available? : Bool, publish? : (SemanticsRead) -> NativeAccessibilityUpdate?, perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult) -> Self
-pub fn NativeAccessibilityBridge::perform_action(Self, NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
-pub fn NativeAccessibilityBridge::publish_semantics(Self, SemanticsRead) -> NativeAccessibilityUpdate?
-pub fn NativeAccessibilityBridge::runtime(kind~ : NativeAccessibilityBridgeKind, runtime~ : AppRuntime) -> Self
-pub fn NativeAccessibilityBridge::unavailable(kind~ : NativeAccessibilityBridgeKind, reason? : String) -> Self
-
-pub(all) enum NativeAccessibilityBridgeKind {
-  AppKit
-  UIAutomation
-  ATSPI
-  TestBridge
-} derive(Eq, ToJson, @debug.Debug)
-pub fn NativeAccessibilityBridgeKind::label(Self) -> String
-
-pub struct NativeAccessibilityUpdate {
-  generation : @core.SemanticsGeneration
-  tree_update : @moon_accesskit.TreeUpdate
-  removed : Array[@core.SemanticsNodeId]
-}
-pub fn NativeAccessibilityUpdate::generation(Self) -> @core.SemanticsGeneration
-pub fn NativeAccessibilityUpdate::removed(Self) -> Array[@core.SemanticsNodeId]
-pub fn NativeAccessibilityUpdate::tree_update(Self) -> @moon_accesskit.TreeUpdate
 
 pub(all) struct PerformSemanticsActionRequest {
   target : @core.SemanticsTarget
@@ -461,8 +402,6 @@ pub(all) enum RendererRecoveryState {
 pub struct RuntimeDirtyStateSummary {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RuntimeDirtyStateSummary::cache_epoch(Self) -> Int
-pub fn RuntimeDirtyStateSummary::cached_layer_count(Self) -> Int
 pub fn RuntimeDirtyStateSummary::damage_full_reason(Self) -> String
 pub fn RuntimeDirtyStateSummary::damage_kind(Self) -> String
 pub fn RuntimeDirtyStateSummary::damage_rect_count(Self) -> Int
@@ -675,7 +614,6 @@ pub fn ViewInspectorSummary::needs_paint(Self) -> Bool
 pub struct ViewTreeInspectorSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
-pub fn ViewTreeInspectorSnapshot::component_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::control_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::dirty_build_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::dirty_layout_count(Self) -> Int

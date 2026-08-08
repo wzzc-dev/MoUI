@@ -65,7 +65,7 @@ fn datepicker_view_date_slot() -> @core.ViewStateSlot[DatePickerViewDateState] {
 
 ///|
 fn[Msg] date_picker_control(
-  selected~ : @core.Binding[@core.DateValue],
+  selected~ : @core.DateValue,
   mode~ : DatePickerDisplayMode,
   placeholder~ : String,
   theme? : @core.Theme,
@@ -76,7 +76,7 @@ fn[Msg] date_picker_control(
   kind? : String = "DatePicker",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let selected_snapshot = selected.get()
+  let selected_snapshot = selected
   @core.View::from_node(
     DatePicker::{
       selected: selected_snapshot,
@@ -208,7 +208,7 @@ impl @core.ViewNode for DatePicker with fn focusable(_self) {
 fn[Msg] date_picker_event(
   node : DatePicker,
   ctx : @core.ViewEventContext,
-  selected : @core.Binding[@core.DateValue],
+  selected : @core.DateValue,
   on_select : ((@core.DateValue) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
@@ -457,7 +457,7 @@ fn[Msg] handle_datepicker_pointer(
   state : @core.ViewStateContext,
   event : @core.PointerEvent,
   frame~ : @core.Rect,
-  selected~ : @core.Binding[@core.DateValue],
+  selected~ : @core.DateValue,
   min_date~ : @core.DateValue?,
   max_date~ : @core.DateValue?,
   on_select~ : ((@core.DateValue) -> Msg)?,
@@ -474,7 +474,7 @@ fn[Msg] handle_datepicker_pointer(
         changed=true,
         focused=true,
         captured=true,
-        state=Some(datepicker_state(state, expanded=false, selected.get())),
+        state=Some(datepicker_state(state, expanded=false, selected)),
         dirty=@core.ViewDirtyHint::ViewPaintDirty,
       )
     } else if event.phase == @core.PointerPhase::Up &&
@@ -492,7 +492,7 @@ fn[Msg] handle_datepicker_pointer(
       @common.view_event_result(
         changed=true,
         captured=true,
-        state=Some(datepicker_state(state, expanded=false, selected.get())),
+        state=Some(datepicker_state(state, expanded=false, selected)),
         dirty=@core.ViewDirtyHint::ViewPaintDirty,
       )
     } else if frame.contains(event.position) ||
@@ -510,7 +510,7 @@ fn[Msg] handle_datepicker_pointer(
       changed=true,
       focused=true,
       captured=true,
-      state=Some(datepicker_state(state, expanded=true, selected.get())),
+      state=Some(datepicker_state(state, expanded=true, selected)),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   } else if claim_focus {
@@ -525,12 +525,12 @@ fn[Msg] handle_datepicker_panel_pointer(
   state : @core.ViewStateContext,
   event : @core.PointerEvent,
   panel_frame~ : @core.Rect,
-  selected~ : @core.Binding[@core.DateValue],
+  selected~ : @core.DateValue,
   min_date~ : @core.DateValue?,
   max_date~ : @core.DateValue?,
   on_select~ : ((@core.DateValue) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
-  let view_date = datepicker_view_date(state, selected.get())
+  let view_date = datepicker_view_date(state, selected)
   if datepicker_left_nav_frame(panel_frame).contains(event.position) {
     let next_view = datepicker_previous_month(view_date)
     @common.view_event_result(
@@ -552,7 +552,7 @@ fn[Msg] handle_datepicker_panel_pointer(
   } else {
     match datepicker_day_at_position(panel_frame, event.position, view_date) {
       Some(day) => {
-        let current = selected.get()
+        let current = selected
         let next = {
           ..current,
           year: view_date.year,
@@ -560,7 +560,6 @@ fn[Msg] handle_datepicker_panel_pointer(
           day,
         }
         if datepicker_value_in_range(next, min_date, max_date) {
-          selected.set(next)
           @common.view_event_result(
             changed=true,
             activated=true,
@@ -584,7 +583,7 @@ fn[Msg] handle_datepicker_panel_pointer(
 fn[Msg] handle_datepicker_keyboard(
   state : @core.ViewStateContext,
   event : @core.KeyboardEvent,
-  selected~ : @core.Binding[@core.DateValue],
+  selected~ : @core.DateValue,
 ) -> @core.ViewEventResult[Msg] {
   if !event.pressed {
     @core.ViewEventResult::ignored()
@@ -592,7 +591,7 @@ fn[Msg] handle_datepicker_keyboard(
     @common.view_event_result(
       changed=true,
       captured=true,
-      state=Some(datepicker_state(state, expanded=false, selected.get())),
+      state=Some(datepicker_state(state, expanded=false, selected)),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
@@ -600,7 +599,7 @@ fn[Msg] handle_datepicker_keyboard(
       changed=true,
       captured=true,
       state=Some(
-        datepicker_state(state, expanded=!state.expanded, selected.get()),
+        datepicker_state(state, expanded=!state.expanded, selected),
       ),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )

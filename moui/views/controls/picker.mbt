@@ -24,11 +24,10 @@ pub fn[Msg] picker(
 ) -> @core.View[Msg] {
   picker_control(
     items=picker_options(items),
-    selected=@core.Binding::new(get=() => selected, set=_value => ()),
+    selected=@core.ControlledValue::new(value=selected, changed=on_select),
     placeholder~,
     theme?,
     style?,
     max_height~,
-    on_select=Some(on_select),
   )
 }

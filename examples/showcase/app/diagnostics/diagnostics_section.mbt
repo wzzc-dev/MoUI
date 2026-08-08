@@ -43,7 +43,6 @@ priv struct ShowcaseSubscriptionKindCount {
 ///|
 priv struct ShowcaseViewTreeInspectorSnapshot {
   node_count : Int
-  component_count : Int
 }
 
 ///|
@@ -217,8 +216,7 @@ fn ShowcaseModel::inspector_snapshot_card(
             stat_card(
               "View nodes",
               snapshot.view_tree.node_count.to_string(),
-              caption="Components " +
-                snapshot.view_tree.component_count.to_string(),
+              caption="Runtime element tree",
               theme~,
               width=stat_width,
               height=96.0,
@@ -418,7 +416,7 @@ fn showcase_inspector_snapshot(
         { kind: "host-event", count: 1 },
       ],
     },
-    view_tree: { node_count: 6, component_count: 1 },
+    view_tree: { node_count: 6 },
     layout: { bounds_count: 3, max_depth: 3 },
     render: {
       command_count: 8,

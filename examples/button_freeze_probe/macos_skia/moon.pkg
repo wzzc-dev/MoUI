@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/backend/macos" @macos_backend,
-  "wzzc-dev/moui/render/skia" @render_skia,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/moui/runtime",
   "examples/button_freeze_probe/app",
 }

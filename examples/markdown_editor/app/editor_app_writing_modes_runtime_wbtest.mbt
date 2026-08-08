@@ -54,7 +54,7 @@ test "markdown editor quick format can set writing appearance directly" {
   let app = MarkdownEditorApp::new()
   app.apply_action("format-palette")
   app.set_format_palette_query("wide look")
-  ignore(app.update(ApplyFirstFormatPaletteAction))
+  app.update_in_place(ApplyFirstFormatPaletteAction)
   inspect(app.appearance_label_for_test(), content="Wide")
   assert_false(app.format_palette_visible())
 }
@@ -213,7 +213,7 @@ test "markdown editor quick format can enable zen mode" {
   let app = MarkdownEditorApp::new()
   app.apply_action("format-palette")
   app.set_format_palette_query("zen")
-  ignore(app.update(ApplyFirstFormatPaletteAction))
+  app.update_in_place(ApplyFirstFormatPaletteAction)
   assert_true(app.zen_mode_enabled())
   assert_false(app.format_palette_visible())
 }
@@ -274,7 +274,7 @@ test "markdown editor typewriter mode recenters after document input" {
   app.set_document(source)
   app.apply_action("typewriter-mode")
   app.set_selection(target, None)
-  app.editor_scroll.scroll_to(x=0.0, y=0.0)
+  app.editor_scroll = @geometry.Point::new(x=0.0, y=0.0)
   app.edit_document(source + " updated")
   assert_true(app.editor_scroll_y() > 0.0)
 }

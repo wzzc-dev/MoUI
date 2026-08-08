@@ -58,7 +58,7 @@ pub fn[Msg] center(@core.View[Msg], width? : Double, height? : Double, backgroun
 
 pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, box_shape? : @style.ChoiceControlShape, check_style? : @style.CheckMarkStyle, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] checkbox_control(label~ : String, checked~ : @core.Binding[Bool], theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, box_shape? : @style.ChoiceControlShape, check_style? : @style.CheckMarkStyle, height? : Double, on_change? : ((Bool) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
+pub fn[Msg] checkbox_control(label~ : String, checked~ : @core.ControlledValue[Bool, Msg], theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, box_shape? : @style.ChoiceControlShape, check_style? : @style.CheckMarkStyle, height? : Double, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] checkbox_group(Array[@controls.ChoiceItem], selected~ : Array[String], on_change~ : (String, Bool) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
@@ -87,8 +87,6 @@ pub fn[Msg] command_menu(Array[@controls.CommandMenuSection], on_select~ : (@cor
 pub fn command_menu_section(title~ : String, commands~ : Array[@core.ActionCommand]) -> @controls.CommandMenuSection
 
 pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
-
-pub fn[Msg] component((@core.ComponentContext) -> @core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] container(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, border? : @core.BorderStyle?, variant? : @style.ContainerVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
 
@@ -194,9 +192,9 @@ pub fn[Msg] intrinsic_width(@core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] layout_priority(@core.View[Msg], Double) -> @core.View[Msg]
 
-pub fn[T, Msg] lazy_grid(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, columns? : Int, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double, shows_indicator? : Bool) -> @core.View[Msg]
+pub fn[T, Msg] lazy_grid(Array[T], (T) -> String, (T) -> @core.View[Msg], columns? : Int, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double, offset? : @core.Point, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
 
-pub fn[T, Msg] lazy_list(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double) -> @core.View[Msg]
+pub fn[T, Msg] lazy_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 pub fn light_theme() -> @core.Theme
 
@@ -215,8 +213,6 @@ pub fn[Msg] menu_item(id~ : String, label~ : String, message~ : Msg, enabled? : 
 pub fn minimal_control_theme_set(@core.Theme) -> @style.ControlThemeSet
 
 pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> @navigation.NavigationDestination[Msg]
-
-pub fn[Msg] navigation_stack(@core.NavigationState, Array[@navigation.NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] navigation_stack_selected(String, Array[@navigation.NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
@@ -296,9 +292,9 @@ pub fn[Msg] router_stack(@navigation.RouterState, Array[@navigation.NavigationDe
 
 pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : @style.MainAlign, align? : @style.CrossAlign) -> @core.View[Msg]
 
-pub fn scroll_to_index(@core.ScrollState, index~ : Int, item_height? : Double, spacing? : Double) -> @layout.ScrollToIndexIntent
+pub fn scroll_to_index(request_id~ : Int, index~ : Int, item_height? : Double, spacing? : Double) -> @core.ScrollRequest
 
-pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?, shows_indicator? : Bool) -> @core.View[Msg]
+pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] searchbar(query~ : String, on_input~ : (String) -> Msg, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
 
@@ -306,7 +302,7 @@ pub fn[Msg] section_nav(String, Array[@navigation.SectionNavItem[Msg]], selected
 
 pub fn[Msg] section_nav_item(id~ : String, label~ : String, message~ : Msg, summary? : String, enabled? : Bool) -> @navigation.SectionNavItem[Msg]
 
-pub fn[T, Msg] sectioned_list(Array[@layout.SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, header? : (@layout.SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
+pub fn[T, Msg] sectioned_list(Array[@layout.SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], header? : (@layout.SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 pub fn[Msg] segmented_control(Array[@controls.ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : @style.SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -382,7 +378,7 @@ pub fn[Msg] tree_view(Array[@data.TreeItem], expanded~ : Array[String], selected
 
 pub fn validate_form(Array[@form.FormFieldState]) -> @form.FormValidationResult
 
-pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
+pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 pub fn[Msg] wizard(Array[@controls.WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 

@@ -4,9 +4,9 @@ fn MarkdownEditorApp::push_toast_for_test(
   message : String,
   tone? : @views.FeedbackTone = @views.FeedbackTone::Neutral,
 ) -> Unit {
-  let queue = self.toasts.get()
+  let queue = self.toasts
   let serial = queue.items.length()
-  self.toasts.set(
+  self.toasts = 
     queue.push(
       @views.ToastQueueItem::new(
         id="toast-" + serial.to_string(),
@@ -14,8 +14,8 @@ fn MarkdownEditorApp::push_toast_for_test(
         tone~,
         dismiss=Some(DismissToastTick),
       ),
-    ),
-  )
+    )
+  
 }
 
 ///|
@@ -52,10 +52,10 @@ test "markdown editor confirm dialog guards dirty New Document" {
   assert_true(app.is_dirty())
   // A New Document on a dirty document should stage a confirm request instead
   // of clearing the document.
-  let _ = app.update(NewDocument)
-  assert_true(app.pending_confirm.get() is Some(_))
+  app.update_in_place(NewDocument)
+  assert_true(app.pending_confirm is Some(_))
   // The document is still intact (not cleared) while the confirm is pending.
-  assert_true(app.document.get().contains("Plan"))
+  assert_true(app.document.contains("Plan"))
 }
 
 ///|
@@ -63,11 +63,11 @@ test "markdown editor confirm cancel keeps the document" {
   let app = MarkdownEditorApp::new()
   app.load_document_for_test("# Plan", path="/tmp/plan.md")
   app.edit_document("# Plan\n\nMore")
-  let _ = app.update(NewDocument)
-  assert_true(app.pending_confirm.get() is Some(_))
-  let _ = app.update(ResolvePendingConfirm(ConfirmCancel))
-  assert_true(app.pending_confirm.get() is None)
-  assert_true(app.document.get().contains("Plan"))
+  app.update_in_place(NewDocument)
+  assert_true(app.pending_confirm is Some(_))
+  app.update_in_place(ResolvePendingConfirm(ConfirmCancel))
+  assert_true(app.pending_confirm is None)
+  assert_true(app.document.contains("Plan"))
 }
 
 ///|
@@ -75,22 +75,22 @@ test "markdown editor confirm discard runs the deferred action" {
   let app = MarkdownEditorApp::new()
   app.load_document_for_test("# Plan", path="/tmp/plan.md")
   app.edit_document("# Plan\n\nMore")
-  let _ = app.update(NewDocument)
-  assert_true(app.pending_confirm.get() is Some(_))
+  app.update_in_place(NewDocument)
+  assert_true(app.pending_confirm is Some(_))
   // Discard should run the deferred NewDocument, clearing the editor content.
-  let _ = app.update(ResolvePendingConfirm(ConfirmDiscard))
-  assert_true(app.pending_confirm.get() is None)
-  assert_true(!app.document.get().contains("Plan"))
+  app.update_in_place(ResolvePendingConfirm(ConfirmDiscard))
+  assert_true(app.pending_confirm is None)
+  assert_true(!app.document.contains("Plan"))
 }
 
 ///|
 test "markdown editor dark mode toggle switches chrome theme" {
   let app = MarkdownEditorApp::new()
   // Light by default.
-  assert_true(!app.dark_mode_enabled.get())
+  assert_true(!app.dark_mode_enabled)
   // Toggling flips to dark.
-  app.dark_mode_enabled.set(true)
-  assert_true(app.dark_mode_enabled.get())
+  app.dark_mode_enabled = true
+  assert_true(app.dark_mode_enabled)
   // The chrome theme helper reflects the toggle.
   let light_palette = @views.light_theme().palette.background
   let dark_palette = @views.dark_theme().palette.background
@@ -110,7 +110,7 @@ test "markdown editor confirm dialog renders when pending" {
   let app = MarkdownEditorApp::new()
   app.load_document_for_test("# Plan", path="/tmp/plan.md")
   app.edit_document("# Plan\n\nMore")
-  let _ = app.update(NewDocument)
+  app.update_in_place(NewDocument)
   let commands = app.runtime(width=980.0, height=640.0).draw_commands()
   let has_dialog = commands.any(command => {
     match command {

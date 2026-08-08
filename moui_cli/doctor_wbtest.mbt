@@ -184,7 +184,7 @@ test "Skia doctor resolves the nearest repository workspace" {
 fn doctor_mobile_entrypoint_contract_text() -> String {
   let text =
     #|@runtime.run_app("app", runtime)
-    #|  .render_all(@render_skia.from_env())
+    #|  .render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Android))
     #|  .backend(@platform_host.entry())
     #|  .run()
   text
@@ -216,7 +216,7 @@ test "mobile entrypoint requires nonempty package and main files" {
     }
   }
   @fs.write_string_to_file(
-    package_path, "wzzc-dev/moui/runtime\nwzzc-dev/moui/backend/android\nwzzc-dev/moui/render/skia\n",
+    package_path, "wzzc-dev/moui/runtime\nwzzc-dev/moui/backend/android\nwzzc-dev/moui_skia_renderer\n",
   ) catch {
     _ => {
       remove_tree(root)
@@ -243,7 +243,7 @@ test "mobile entrypoint accepts the repository app layout" {
   }
   let contract = doctor_mobile_entrypoint_contract_text()
   @fs.write_string_to_file(
-    package_path, "wzzc-dev/moui/runtime\nwzzc-dev/moui/backend/android\nwzzc-dev/moui/render/skia\n",
+    package_path, "wzzc-dev/moui/runtime\nwzzc-dev/moui/backend/android\nwzzc-dev/moui_skia_renderer\n",
   ) catch {
     _ => {
       remove_tree(root)

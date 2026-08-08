@@ -8,7 +8,7 @@ pub(all) struct MacosBackendInfo {
 
 ///|
 pub(all) struct MacosAccessibilityBridgeInfo {
-  kind : @runtime.NativeAccessibilityBridgeKind
+  kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
@@ -21,6 +21,7 @@ pub struct MacosHostAppOptions {
   priv event_sources : @runtime.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
+  priv show_after_first_present : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
   /// Optional callback invoked once after the primary window is created and
   /// the app has finished launching. This runs after the default macOS menu
@@ -51,25 +52,29 @@ pub struct MacosHostSmokeOptions {
 
 ///|
 priv struct MacosSurfaceBinding {
-  create_renderer : (@window_macos.Window, @core.SurfaceMetrics) -> @render.RendererResolution?
+  create_renderer : (@window_macos.Window, @core.SurfaceMetrics) -> @render.RendererSession?
   sync_surface : (@window_macos.Window, @core.SurfaceMetrics) -> Unit
 }
 
 ///|
 /// Native host backend: owns the macOS host runtime, native windows, and
 /// event-loop integration rather than attaching a runtime to an embedder.
-/// Platform-neutral window coordination (registry, runtime slots, requests,
-/// image resources, IME) lives in `coordinator` (@window_host.WindowCoordinator).
+/// Shared lifecycle, frame, image, input, and service state is held through
+/// its matching backend/common owner.
 struct MacosNativeHostBackend {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
-  coordinator : @window_host.WindowCoordinator
+  lifecycle : @window_lifecycle.WindowLifecycle
+  frames : @window_frame.WindowFrameStates
+  images : @window_image.WindowImageTaskStates
+  input : @window_input.WindowInputState
   surface_binding : MacosSurfaceBinding
-  services : @host.HostServiceBridge
-  platform_slots : @window_host.WindowSlotMap[@window_macos.Window, Unit]
+  services : @window_services.WindowServiceState
+  platform_slots : @window_lifecycle.WindowSlotMap[@window_macos.Window, Unit]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
+  mut show_after_first_present : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
   on_ready : (() -> Unit)?
   min_window_size : @dpi.LogicalSize?
@@ -111,11 +116,17 @@ struct MacosNativeHostBackend {
 }
 
 ///|
+/// Configure the macOS host. By default the primary window stays hidden until
+/// its renderer reports a successful presentation, which prevents an
+/// uninitialised native surface from flashing during slow startup. Pass
+/// `show_after_first_present=false` only when creation-time visibility is
+/// required.
 pub fn MacosHostAppOptions::new(
   scene_resolver? : @runtime.WindowSceneResolver = @runtime.WindowSceneResolver::unavailable(),
   event_sources? : @runtime.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
+  show_after_first_present? : Bool = true,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
   on_ready? : (() -> Unit)? = None,
   min_window_size? : @dpi.LogicalSize? = None,
@@ -125,6 +136,7 @@ pub fn MacosHostAppOptions::new(
     event_sources,
     platform_view_plugins,
     transparent_titlebar,
+    show_after_first_present,
     platform_attributes,
     on_ready,
     min_window_size,
@@ -184,7 +196,7 @@ pub fn macos_native_view_handle(window : @window_macos.Window) -> UInt64? {
 
 ///|
 fn MacosSurfaceBinding::new(
-  create_renderer~ : (@window_macos.Window, @core.SurfaceMetrics) -> @render.RendererResolution?,
+  create_renderer~ : (@window_macos.Window, @core.SurfaceMetrics) -> @render.RendererSession?,
   sync_surface? : (@window_macos.Window, @core.SurfaceMetrics) -> Unit = (
     _window,
     _metrics,
