@@ -539,20 +539,43 @@ if [[ $run_qemu -eq 1 ]]; then
     echo "=== qemu $name ($qemu_mode) ===" | tee "$log"
     if [[ "$qemu_mode" == chroot ]]; then
       local staged="/tmp/moui-riscv64-$name-$$"
-      local qemu_extra=""
-      if [[ "$name" == "text-emoji-smoke" ]]; then
-        qemu_extra="-strace"
-      fi
       "${root_cmd[@]}" cp "$executable" "$sysroot$staged"
       "${root_cmd[@]}" chmod 755 "$sysroot$staged"
       set +e
+      if [[ "$name" == "text-emoji-smoke" && -n "${MOUI_RISCV64_QEMU_GDB:-}" ]]; then
+        # Diagnostic mode: run under gdb-multiarch via QEMU's gdbstub so an
+        # abort yields a backtrace. Enable with MOUI_RISCV64_QEMU_GDB=1.
+        "${root_cmd[@]}" env \
+          HOME=/tmp \
+          XDG_CACHE_HOME=/tmp/.cache \
+          FONTCONFIG_FILE=/etc/fonts/fonts.conf \
+          MOUI_SKIA_FONT_DIRS=/usr/share/fonts \
+          MOUI_SKIA_RENDERER=skia-raster \
+          chroot "$sysroot" /usr/bin/qemu-riscv64-static -g 1234 "$staged" \
+          >"$log" 2>&1 &
+        local qemu_pid=$!
+        sleep 2
+        gdb-multiarch -batch \
+          -ex "set pagination off" \
+          -ex "target remote :1234" \
+          -ex "handle SIGABRT stop print" \
+          -ex "continue" \
+          -ex "bt 40" \
+          "$executable" 2>&1 | tee -a "$log"
+        local status=$?
+        kill "$qemu_pid" 2>/dev/null || true
+        wait "$qemu_pid" 2>/dev/null || true
+        set -e
+        "${root_cmd[@]}" rm -f "$sysroot$staged"
+        return "$status"
+      fi
       "${root_cmd[@]}" env \
         HOME=/tmp \
         XDG_CACHE_HOME=/tmp/.cache \
         FONTCONFIG_FILE=/etc/fonts/fonts.conf \
         MOUI_SKIA_FONT_DIRS=/usr/share/fonts \
         MOUI_SKIA_RENDERER=skia-raster \
-        chroot "$sysroot" /usr/bin/qemu-riscv64-static $qemu_extra "$staged" 2>&1 | tee -a "$log"
+        chroot "$sysroot" /usr/bin/qemu-riscv64-static "$staged" 2>&1 | tee -a "$log"
       local status="${PIPESTATUS[0]}"
       set -e
       "${root_cmd[@]}" rm -f "$sysroot$staged"
