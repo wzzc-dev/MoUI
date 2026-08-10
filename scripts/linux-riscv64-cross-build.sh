@@ -363,21 +363,29 @@ export MOON_AR="$wrapper_dir/moui-riscv64-ar"
 # both simdutf objects exist; they are x86_64 and cannot link into the
 # riscv64 target. Hide them for this cross build and restore afterwards.
 toolchain_lib="$(cd "$(dirname "$(command -v moon)")/.." && pwd)/lib"
-hidden_simdutf=()
-for object in simdutf.o moonbit_simdutf.o; do
+hidden_toolchain=()
+for object in simdutf.o moonbit_simdutf.o libbacktrace.a; do
   if [[ -f "$toolchain_lib/$object" ]]; then
     mv "$toolchain_lib/$object" "$toolchain_lib/$object.moui-cross-hidden"
-    hidden_simdutf+=("$object")
+    hidden_toolchain+=("$object")
   fi
 done
 restore_toolchain() {
   local object
-  for object in "${hidden_simdutf[@]:-}"; do
+  for object in "${hidden_toolchain[@]:-}"; do
     [[ -f "$toolchain_lib/$object.moui-cross-hidden" ]] &&
       mv "$toolchain_lib/$object.moui-cross-hidden" "$toolchain_lib/$object"
   done
 }
 trap 'restore_toolchain; cleanup' EXIT
+
+# Provide a riscv64 libbacktrace substitute so the linker finds a
+# compatible archive at the path moon always passes.
+stub_src="$repo_root/scripts/moui-riscv64-libbacktrace-stub.c"
+stub_obj="$wrapper_dir/moui-riscv64-libbacktrace-stub.o"
+"$zig_bin" cc -target riscv64-linux-gnu --sysroot "$sysroot" \
+  -lc++ -O2 -c "$stub_src" -o "$stub_obj"
+"$zig_bin" ar rcs "$toolchain_lib/libbacktrace.a" "$stub_obj"
 
 export MOUI_LINUX_GLIB_STUB_CC_FLAGS="$glib_stub_flags"
 export MOUI_LINUX_GLIB_CC_LINK_FLAGS="$glib_link_flags"
