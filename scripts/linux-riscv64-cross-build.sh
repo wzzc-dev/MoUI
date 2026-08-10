@@ -311,7 +311,10 @@ trap cleanup EXIT
 
 cat > "$wrapper_dir/moui-riscv64-cc" <<EOF
 #!/usr/bin/env bash
-exec "$zig_bin" cc -target riscv64-linux-gnu --sysroot "$sysroot" "\$@"
+exec "$zig_bin" cc -target riscv64-linux-gnu --sysroot "$sysroot" \
+  -lc++ \
+  -isystem "$sysroot/usr/include" \
+  "\$@"
 EOF
 cat > "$wrapper_dir/moui-riscv64-ar" <<EOF
 #!/usr/bin/env bash
