@@ -369,7 +369,7 @@ if [[ \$has_c -eq 0 && \$has_o -eq 1 ]]; then
   # and needs the exception runtime; pass the sysroot libraries directly
   # (zig filters -lstdc++ and would substitute its own libc++ instead).
   args+=(
-    "\$sysroot/usr/lib/riscv64-linux-gnu/libstdc++.so"
+    "\$sysroot/usr/lib/gcc/riscv64-linux-gnu/\$cxx_ver/libstdc++.so"
     "\$sysroot/lib/riscv64-linux-gnu/libgcc_s.so.1"
   )
 fi
