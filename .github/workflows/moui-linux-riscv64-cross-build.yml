@@ -96,8 +96,6 @@ jobs:
 
       - name: Build and run RISC-V64 L0-L2 helper
         shell: bash
-        env:
-          MOUI_RISCV64_QEMU_GDB: "1"
         run: |
           bash scripts/linux-riscv64-cross-build.sh \
             --sysroot "$MOUI_RISCV64_SYSROOT" \
