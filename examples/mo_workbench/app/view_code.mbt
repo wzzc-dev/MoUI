@@ -32,6 +32,9 @@ fn code_chat_pane_view(
     model, settings, theme, width, height,
   )
   let list = code_message_list(model, theme, width, list_height)
+  // repaint boundary:消息列表内容未变时(点击按钮、开关设置等交互)整块复用
+  // 为图层,避免全窗口重新光栅化几百段文本;滚动/流式导致内容变化时自动失效。
+  .repaint_boundary()
   let composer = code_composer(model, settings, theme, width)
   @views.container(
     @views.custom_children_layout(
@@ -840,6 +843,162 @@ fn quick_chip(
 }
 
 ///|
+/// 消息高度数组的含 spacing 总高(`n` 条消息,`n-1` 个间距)。
+fn code_heights_total(heights : Array[Double], spacing : Double) -> Double {
+  if heights.is_empty() {
+    return 0.0
+  }
+  let mut total = 0.0
+  for h in heights {
+    total = total + h
+  }
+  total + (heights.length() - 1).to_double() * spacing
+}
+
+///|
+/// 前 `count` 条消息(含它们之间的 spacing)的高度和,用作窗口顶部的占位高度。
+fn code_prefix_height(
+  heights : Array[Double],
+  spacing : Double,
+  count : Int,
+) -> Double {
+  let mut prefix = 0.0
+  let mut i = 0
+  while i < count && i < heights.length() {
+    prefix = prefix + heights[i]
+    if i + 1 < count {
+      prefix = prefix + spacing
+    }
+    i = i + 1
+  }
+  prefix
+}
+
+///|
+/// 由滚动 offset 推算出需要真实构建的消息区间 `[first, last)`(排他)。
+/// 做法:按估算高度累加定位可视区 `[offset, offset + viewport]`,再向上下各延伸
+/// `overscan` 条作为缓冲,补偿高度估算与真实布局的微小偏差,并钳制到 `[0, n)`。
+/// `follow_latest` 的 `offset=1e9` 会钳到内容底部,自然得到末尾窗口。
+fn code_visible_window(
+  heights : Array[Double],
+  spacing : Double,
+  offset : Double,
+  viewport : Double,
+  overscan : Int,
+) -> (Int, Int) {
+  let n = heights.length()
+  if n == 0 {
+    return (0, 0)
+  }
+  let total = code_heights_total(heights, spacing)
+  let max_scroll = (total - viewport).max(0.0)
+  let top = offset.min(max_scroll).max(0.0)
+  let bottom = top + viewport
+  // 定位 first:含 `top` 的那条。
+  let mut acc = 0.0
+  let mut first = n - 1
+  for i in 0..<n {
+    let end = acc + heights[i]
+    if end >= top {
+      first = i
+      break
+    }
+    acc = end + spacing
+  }
+  // 定位 last:起始位置超过 `bottom` 之后的那条(排他上界)。
+  let mut acc2 = 0.0
+  let mut last = 0
+  for i in 0..<n {
+    if acc2 > bottom {
+      last = i
+      break
+    }
+    last = i + 1
+    acc2 = acc2 + heights[i] + spacing
+  }
+  first = (first - overscan).max(0)
+  last = (last + overscan).min(n)
+  (first, last)
+}
+
+///|
+/// 窗口化:只构建可视区 ±overscan 内的消息行,窗口外用等高空占位(`spacer`),
+/// 消息行带稳定 key(全局下标)。返回需放进 `list(spacing=4)` 的 rows。
+fn code_message_window_rows(
+  model : CodeWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+  viewport : Double,
+) -> Array[@moui.View[CodeMsg]] {
+  let messages = model.messages
+  let n = messages.length()
+  let rows : Array[@moui.View[CodeMsg]] = []
+  if n == 0 {
+    if code_should_show_streaming_placeholder(model) {
+      rows.push(code_streaming_placeholder_row(model, theme, width))
+    }
+    return rows
+  }
+  let spacing = 4.0
+  let heights = message_row_heights(messages, theme, width)
+  let (first, last) = code_visible_window(
+    heights,
+    spacing,
+    model.scroll_offset.y,
+    viewport,
+    12,
+  )
+  if first > 0 {
+    let top = code_prefix_height(heights, spacing, first)
+    if top > 0.0 {
+      rows.push(@views.spacer(min_length=top, weight=0.0))
+    }
+  }
+  for i in first..<last {
+    let key = "msg-\{i}"
+    let msg = if i == n - 1 && model.is_streaming {
+      match messages[i] {
+        Assistant(content, reasoning) =>
+          throttled_assistant_message(
+            content,
+            reasoning,
+            stream_message_key(model, i),
+            theme,
+            width,
+          )
+        other => other
+      }
+    } else {
+      messages[i]
+    }
+    rows.push(message_row(msg, theme, width).key(key))
+  }
+  if last < n {
+    // The list's inter-row spacing before this placeholder is supplied by
+    // `@views.list`; exclude that one gap from the spacer itself.
+    let bottom = (code_heights_total(heights, spacing) -
+    code_prefix_height(heights, spacing, last) -
+    spacing).max(0.0)
+    if bottom > 0.0 {
+      rows.push(@views.spacer(min_length=bottom, weight=0.0))
+    }
+  }
+  if code_should_show_streaming_placeholder(model) {
+    rows.push(code_streaming_placeholder_row(model, theme, width))
+  }
+  rows
+}
+
+///|
+/// 流式消息的节流 key:优先 message_id(跨 rebuild 稳定),缺失时回退全局下标。
+fn stream_message_key(model : CodeWorkspace, index : Int) -> String {
+  match model.last_assistant_message_id {
+    Some(id) => "msg-\{index}-\{id}"
+    None => "msg-\{index}"
+  }
+}
+
+///|
 /// Streaming message timeline (chat mode). Renders each message via
 /// `message_row` inside a scroll view bound to the workspace scroll state.
 fn code_message_list(
@@ -850,13 +1009,7 @@ fn code_message_list(
 ) -> @moui.View[CodeMsg] {
   let inner_width = (width - 56.0).max(320.0)
   let inner_height = (height - 20.0).max(0.0)
-  let rows : Array[@moui.View[CodeMsg]] = []
-  for msg in model.messages {
-    rows.push(message_row(msg, theme, inner_width))
-  }
-  if code_should_show_streaming_placeholder(model) {
-    rows.push(code_streaming_placeholder_row(model, theme, inner_width))
-  }
+  let rows = code_message_window_rows(model, theme, inner_width, inner_height)
   @views.padding_edges(
     @views.scroll_view(
       @views.list(rows, spacing=4.0),

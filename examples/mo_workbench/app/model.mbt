@@ -449,6 +449,7 @@ pub struct WorkbenchModel {
   task_tree : Array[TaskTreeNode]
   task_filter : TaskFilter
   task_search_query : String
+  task_scroll_offset : @geometry.Point
   settings_open : Bool
   sidebar_visible : Bool
   code : CodeWorkspace
@@ -497,6 +498,7 @@ fn WorkbenchModel::new(
     task_tree: [],
     task_filter: TaskFilter::AllTasks,
     task_search_query: "",
+    task_scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
     settings_open: false,
     sidebar_visible: true,
     code: {
@@ -530,6 +532,7 @@ pub(all) enum WorkbenchMsg {
   ShowRunningTasks
   ShowFailedTasks
   TaskSearchChanged(String)
+  TaskListScrolled(@geometry.Point)
   ToggleSidebar
   ToggleSettings
   CodeMsg(CodeMsg)

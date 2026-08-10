@@ -84,6 +84,46 @@ test "code chat message list uses explicit scroll viewport" {
 }
 
 ///|
+test "sidebar task window mounts a bounded slice" {
+  let nodes : Array[TaskTreeNode] = []
+  let children : Array[TaskTreeNode] = []
+  for i in 0..<200 {
+    children.push(
+      TaskTreeNode::Task(
+        "s" + i.to_string(),
+        "task " + i.to_string(),
+        TaskGroup::Today,
+        TaskStatus::Completed,
+        0,
+      ),
+    )
+  }
+  nodes.push(
+    TaskTreeNode::Folder(
+      "folder_today",
+      "Today",
+      TaskGroup::Today,
+      children,
+      true,
+    ),
+  )
+  let entries = sidebar_task_entries(nodes)
+  let cached_entries = sidebar_task_entries(nodes)
+  inspect(physical_equal(entries, cached_entries), content="true")
+  let (first, last) = sidebar_visible_window(
+    entries.length(),
+    0.0,
+    300.0,
+    sidebar_task_content_top(),
+    sidebar_task_row_spacing(),
+    6,
+  )
+  inspect(first, content="0")
+  inspect(last < entries.length(), content="true")
+  inspect(last - first < 30, content="true")
+}
+
+///|
 test "code composer prompt grows from two lines with content" {
   let model = test_model(script=_cmd => [])
   let theme = @views.light_theme()
@@ -509,6 +549,84 @@ test "session list event updates sessions" {
   )
   inspect(model.code.sessions.length(), content="2")
   inspect(model.code.sessions[0].id, content="s1")
+}
+
+///|
+test "scroll and streaming chunks preserve the existing task projection" {
+  let model = test_model(script=_cmd => [])
+  let sentinel = [
+    TaskTreeNode::Task(
+      "sentinel",
+      "must stay mounted",
+      TaskGroup::Today,
+      TaskStatus::Completed,
+      0,
+    ),
+  ]
+  let model = {
+    ..model,
+    task_tree: sentinel,
+    code: {
+      ..model.code,
+      sessions: [SessionSummary::new(id="s1", first_prompt="real session")],
+      active_session_id: Some("s1"),
+      is_streaming: true,
+    },
+  }
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::MessageListScrolled(@geometry.Point::new(x=0.0, y=120.0)),
+    ),
+  )
+  inspect(physical_equal(model.task_tree, sentinel), content="true")
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), "chunk")),
+    ),
+  )
+  inspect(physical_equal(model.task_tree, sentinel), content="true")
+}
+
+///|
+test "session metadata and terminal events refresh the task projection" {
+  let model = test_model(script=_cmd => [])
+  let model = {
+    ..model,
+    code: {
+      ..model.code,
+      sessions: [SessionSummary::new(id="s1", first_prompt="old title")],
+      active_session_id: Some("s1"),
+      is_streaming: true,
+    },
+  }
+  let model = sync_task_tree(model)
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(
+        SessionInfoUpdated("s1", Some("new title"), None),
+      ),
+    ),
+  )
+  guard model.task_tree[0] is Folder(_, _, _, children, _) else {
+    fail("expected folder")
+  }
+  guard children[0] is Task(_, title, _, status, _) else {
+    fail("expected task")
+  }
+  inspect(title, content="new title")
+  inspect(status == TaskStatus::Running, content="true")
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(
+        TurnTerminal(TurnStatus::Failed, "network error"),
+      ),
+    ),
+  )
+  guard model.task_tree[0] is Folder(_, _, _, children, _) else {
+    fail("expected folder")
+  }
+  guard children[0] is Task(_, _, _, status, _) else { fail("expected task") }
+  inspect(status == TaskStatus::Failed, content="true")
 }
 
 ///|
@@ -1401,4 +1519,165 @@ test "workbench theme token helpers use neutral gray reference colors" {
     ),
     content="true",
   )
+}
+
+///|
+test "message row height tracks wrapped lines and card kinds" {
+  let theme = @views.light_theme()
+  let width = 640.0
+  let body_size = chat_message_text_role_font(@views.TextRole::Body, theme).size
+  let line_h = chat_message_line_height(body_size)
+  // 短消息:高度 = 消息行边距 + 气泡 padding + 换行行数 × 行高。
+  let short = message_row_height(ChatMessage::User("hi"), theme, width)
+  let content_w = (width * 0.72 - 28.0).max(80.0)
+  let short_lines = chat_message_display_lines("hi", content_w, body_size).length()
+  inspect(
+    short == 4.0 + 28.0 + short_lines.to_double() * line_h,
+    content="true",
+  )
+  // 长消息行数更多 → 高度更高。
+  let long_text = "word word word word word word word word word word word word word word"
+  let long = message_row_height(ChatMessage::User(long_text), theme, width)
+  inspect(long > short, content="true")
+  // Assistant 带 reasoning 比不带高。
+  let with_r = message_row_height(
+    ChatMessage::Assistant("a", Some("long reasoning text here")),
+    theme,
+    width,
+  )
+  let without_r = message_row_height(
+    ChatMessage::Assistant("a", None),
+    theme,
+    width,
+  )
+  inspect(with_r > without_r, content="true")
+  // 工具结果卡片比运行时提示高。
+  let tool = message_row_height(
+    ChatMessage::ToolResult("bash", "output line", false, None),
+    theme,
+    width,
+  )
+  let notice = message_row_height(ChatMessage::RuntimeNotice("n"), theme, width)
+  inspect(tool > notice, content="true")
+}
+
+///|
+test "message line memo reuses identical wrap results" {
+  let text = "the quick brown fox jumps over the lazy dog"
+  let a = chat_message_display_lines(text, 120.0, 14.0)
+  let b = chat_message_display_lines(text, 120.0, 14.0)
+  inspect(a.length() == b.length(), content="true")
+  let mut same = true
+  for i in 0..<a.length() {
+    if a[i] != b[i] {
+      same = false
+    }
+  }
+  inspect(same, content="true")
+}
+
+///|
+test "message row heights reuse unchanged message arrays" {
+  let theme = @views.light_theme()
+  let messages = [
+    ChatMessage::User("question"),
+    ChatMessage::Assistant("answer", None),
+  ]
+  let first = message_row_heights(messages, theme, 584.0)
+  let second = message_row_heights(messages, theme, 584.0)
+  inspect(physical_equal(first, second), content="true")
+  let grown = Array::copy(messages)
+  grown[1] = ChatMessage::Assistant("answer with more content", None)
+  let third = message_row_heights(grown, theme, 584.0)
+  inspect(third.length(), content="2")
+  inspect(third[0] == first[0], content="true")
+}
+
+///|
+test "visible window covers top middle and end" {
+  let heights = [
+    100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
+  ]
+  let spacing = 4.0
+  // 顶部。
+  let (f0, l0) = code_visible_window(heights, spacing, 0.0, 200.0, 2)
+  inspect(f0, content="0")
+  inspect(l0 > 0 && l0 < 10, content="true")
+  // 中部(offset 较大,overscan 后仍在窗口内)。
+  let (f1, l1) = code_visible_window(heights, spacing, 800.0, 200.0, 2)
+  inspect(f1 > 0, content="true")
+  inspect(l1 > f1, content="true")
+  // 末尾(follow_latest 的 1e9 钳到内容底部)。
+  let (f2, l2) = code_visible_window(heights, spacing, 1.0e9, 200.0, 2)
+  inspect(l2, content="10")
+  inspect(f2 < 10, content="true")
+  // 内容不满一屏 → 全窗口。
+  let (f3, l3) = code_visible_window(heights, spacing, 0.0, 5000.0, 2)
+  inspect(f3, content="0")
+  inspect(l3, content="10")
+  // 空列表。
+  let (f4, l4) = code_visible_window([], spacing, 0.0, 200.0, 2)
+  inspect(f4 == 0 && l4 == 0, content="true")
+}
+
+///|
+test "message window builds only the visible slice" {
+  let model = test_model(script=_cmd => [])
+  let theme = @views.light_theme()
+  let messages : Array[ChatMessage] = []
+  for _ in 0..<200 {
+    messages.push(ChatMessage::User("short"))
+  }
+  let at_bottom = {
+    ..model.code,
+    messages,
+    scroll_offset: @geometry.Point::new(x=0.0, y=1.0e9),
+  }
+  let rows = code_message_window_rows(at_bottom, theme, 584.0, 400.0)
+  // 200 条只构建可视窗口 ±overscan,远小于全量。
+  inspect(rows.length() < 80, content="true")
+  inspect(rows.length() > 4, content="true")
+  let at_top = {
+    ..at_bottom,
+    scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
+  }
+  let top_rows = code_message_window_rows(at_top, theme, 584.0, 400.0)
+  inspect(top_rows.length() < 80, content="true")
+}
+
+///|
+test "streaming assistant throttle reuses snapshot until step" {
+  let theme = @views.light_theme()
+  // 首次调用:建立快照,返回完整内容。
+  let first = throttled_assistant_message("hello", None, "m1", theme, 600.0)
+  guard first is Assistant(c1, None) else { fail("expected assistant") }
+  inspect(c1, content="hello")
+  // 内容增长 6 字符(< 48):复用上次渲染的快照,显示滞后。
+  let second = throttled_assistant_message(
+    "hello world",
+    None,
+    "m1",
+    theme,
+    600.0,
+  )
+  guard second is Assistant(c2, None) else { fail("expected assistant") }
+  inspect(c2, content="hello")
+  // 增长 ≥ 48 字符:刷新快照,返回新内容。
+  let mut long = ""
+  for _ in 0..<60 {
+    long = long + "x"
+  }
+  let grown = throttled_assistant_message(long, None, "m1", theme, 600.0)
+  guard grown is Assistant(c3, None) else { fail("expected assistant") }
+  inspect(c3.char_length(), content="60")
+  // message_key 变化:视为新消息,立即渲染新内容。
+  let switched = throttled_assistant_message(
+    "another",
+    None,
+    "m2",
+    theme,
+    600.0,
+  )
+  guard switched is Assistant(c4, None) else { fail("expected assistant") }
+  inspect(c4, content="another")
 }
