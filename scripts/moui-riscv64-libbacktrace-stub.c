@@ -7,13 +7,12 @@
  * (x86_64) and cannot be linked into a riscv64 target ("incompatible
  * with elf64lriscv"). The moon runtime only calls backtrace_create_state
  * and backtrace_pcinfo, so provide those (plus the rest of the public
- * API) backed by _Unwind_Backtrace/dladdr, which are available in the
- * riscv64 sysroot.
+ * API) backed by glibc backtrace()/dladdr() from the target sysroot.
  */
 #define _GNU_SOURCE
 #include <stdint.h>
 #include <stdlib.h>
-#include <unwind.h>
+#include <execinfo.h>
 #include <dlfcn.h>
 
 struct backtrace_state {
@@ -69,29 +68,6 @@ static int symbolize_pc(uintptr_t pc, backtrace_full_callback callback,
   return callback(data, pc, filename, lineno, function);
 }
 
-struct unwind_full_ctx {
-  int skip;
-  backtrace_full_callback callback;
-  void *data;
-};
-
-static _Unwind_Reason_Code unwind_full_cb(struct _Unwind_Context *ctx,
-                                          void *arg) {
-  struct unwind_full_ctx *uc = (struct unwind_full_ctx *)arg;
-  uintptr_t pc = (uintptr_t)_Unwind_GetIP(ctx);
-  if (pc == 0) {
-    return _URC_END_OF_STACK;
-  }
-  if (uc->skip > 0) {
-    uc->skip--;
-    return _URC_NO_REASON;
-  }
-  if (uc->callback(uc->data, pc, NULL, 0, NULL) != 0) {
-    return _URC_END_OF_STACK;
-  }
-  return _URC_NO_REASON;
-}
-
 int backtrace_pcinfo(struct backtrace_state *state, uintptr_t pc,
                      backtrace_full_callback callback,
                      backtrace_error_callback error_callback, void *data) {
@@ -111,32 +87,14 @@ int backtrace_full(struct backtrace_state *state, int skip,
     report_error(error_callback, data, "no callback");
     return 0;
   }
-  struct unwind_full_ctx uc = {skip, callback, data};
-  _Unwind_Backtrace(unwind_full_cb, &uc);
+  void *frames[128];
+  int count = backtrace(frames, 128);
+  for (int i = skip + 2; i < count; i++) {
+    if (symbolize_pc((uintptr_t)frames[i], callback, data) != 0) {
+      break;
+    }
+  }
   return 1;
-}
-
-struct unwind_simple_ctx {
-  int skip;
-  backtrace_simple_callback callback;
-  void *data;
-};
-
-static _Unwind_Reason_Code unwind_simple_cb(struct _Unwind_Context *ctx,
-                                            void *arg) {
-  struct unwind_simple_ctx *uc = (struct unwind_simple_ctx *)arg;
-  uintptr_t pc = (uintptr_t)_Unwind_GetIP(ctx);
-  if (pc == 0) {
-    return _URC_END_OF_STACK;
-  }
-  if (uc->skip > 0) {
-    uc->skip--;
-    return _URC_NO_REASON;
-  }
-  if (uc->callback(uc->data, pc) != 0) {
-    return _URC_END_OF_STACK;
-  }
-  return _URC_NO_REASON;
 }
 
 int backtrace_simple(struct backtrace_state *state, int skip,
@@ -147,8 +105,13 @@ int backtrace_simple(struct backtrace_state *state, int skip,
     report_error(error_callback, data, "no callback");
     return 0;
   }
-  struct unwind_simple_ctx uc = {skip, callback, data};
-  _Unwind_Backtrace(unwind_simple_cb, &uc);
+  void *frames[128];
+  int count = backtrace(frames, 128);
+  for (int i = skip + 2; i < count; i++) {
+    if (callback(data, (uintptr_t)frames[i]) != 0) {
+      break;
+    }
+  }
   return 1;
 }
 
