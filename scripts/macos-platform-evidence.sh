@@ -161,19 +161,17 @@ fi
 
 cat > "$showcase_pkg" <<PKGEOF
 import {
-  "moonbitlang/core/env",
-  "wzzc-dev/moui" @moui,
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui_skia_renderer" @render_skia,
-  "examples/showcase/app",
+  "examples/showcase",
 }
 
 supported_targets = "native"
 
+pkgtype(kind: "executable")
+
 options(
-  "is-main": true,
   link: {
     "native": {
       "stub-cc-flags": "$macos_stub_cc_flags",
@@ -188,21 +186,18 @@ echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
 if [[ -f "$markdown_pkg" ]]; then
   cat > "$markdown_pkg" <<PKGEOF
 import {
-  "wzzc-dev/moui" @moui,
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/window/dpi",
-  "wzzc-dev/window/macos" @window_macos,
-  "examples/markdown_editor/app",
+  "examples/markdown_editor",
 }
 
 supported_targets = "native"
 
+pkgtype(kind: "executable")
+
 options(
-  "is-main": true,
   link: {
     "native": {
       "stub-cc-flags": "$macos_stub_cc_flags",
