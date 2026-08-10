@@ -8,9 +8,10 @@ concurrency:
   cancel-in-progress: false
 
 on:
-  schedule:
-    - cron: "41 4 * * 2"
-  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   linux-riscv64-l0-l2:
