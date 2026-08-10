@@ -26,6 +26,7 @@
     "libharfbuzz-dev",
     "fonts-dejavu-core",
     "fonts-noto-core",
+    "fonts-noto-cjk",
     "fonts-noto-color-emoji"
   ]
 }
