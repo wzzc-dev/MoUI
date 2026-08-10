@@ -111,6 +111,40 @@ one workspace-wide `moon info`, and fails only when generation creates new
 differences. This keeps the check useful in a dirty working tree while a clean
 CI checkout still rejects uncommitted public-interface drift.
 
+### Linux RISC-V64 Experimental Route
+
+The RISC-V64 route is a non-blocking scheduled/manual architecture variant of
+`linux/skia`; it does not change the generated 14-route canonical matrix. Its
+locked Ubuntu sysroot and Zig toolchain are described in
+`checks/toolchains/linux-riscv64.json`.
+
+```sh
+bash scripts/prepare-linux-riscv64-sysroot.sh \
+  --output .cache/moui/riscv64/sysroot/ubuntu-24.04.4-riscv64
+bash scripts/linux-riscv64-cross-build.sh \
+  --sysroot .cache/moui/riscv64/sysroot/ubuntu-24.04.4-riscv64 \
+  --target-dir _build/riscv64-linux-gnu \
+  --log-dir artifacts/linux-riscv64 \
+  --run-qemu
+```
+
+The helper's L0 evidence is the Showcase ELF architecture report. L2 requires
+QEMU markers from both real-Skia offscreen smokes, including the async image
+second frame and SkParagraph text/emoji output. QEMU evidence is
+renderer-only; it must not be folded into Linux Wayland L3 status. Validate
+metadata and helper failure contracts without a sysroot with:
+
+```sh
+node scripts/validate-platform-matrix.mjs
+moon test tools/moui/validate_platform_matrix --target native
+bash scripts/test-linux-riscv64-cross-build.sh
+```
+
+`.github/workflows/moui-linux-riscv64-cross-build.yml` is the non-blocking
+scheduled/manual producer. It uploads the sysroot package/checksum manifests,
+Release build log, ELF reports and checksums, renderer smoke log, and
+SkParagraph text/emoji smoke log. L3 remains a separate matching-device gate.
+
 The `external-consumer.yml` workflow copies the selected base, Skia, or Web
 fixture outside the checkout. Until 0.2 is published, registry mode validates
 the stable base `wzzc-dev/moui@0.1.7`; package mode validates the 0.2 head

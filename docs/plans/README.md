@@ -57,6 +57,8 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [linux-riscv64-support](active/linux-riscv64-support.md) | Add non-blocking Linux Skia Raster L0-L2 cross-build evidence for `riscv64-linux-gnu` |
+| [mo-workbench-message-windowing](active/mo-workbench-message-windowing.md) | Mo Workbench 消息列表窗口化与重建优化 |
 | [release-module-dependency-closures](done/release-module-dependency-closures.md) | Split concrete renderers and integration tests out of the base publication closure |
 | [backend-renderer-lifecycle-convergence](active/backend-renderer-lifecycle-convergence.md) | Split backend-common state owners and collapse renderer binding to provider/session |
 | [runtime-state-render-ownership-convergence](active/runtime-state-render-ownership-convergence.md) | Move accessibility out of runtime, unify app state ownership, and make renderer sessions own render resources |
