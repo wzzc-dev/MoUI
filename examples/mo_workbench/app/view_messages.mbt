@@ -25,6 +25,151 @@ fn message_row(
 }
 
 ///|
+/// 消息行高度估算,用于列表窗口化(只构建可视区消息行)。
+///
+/// 与 `view_messages.mbt` 的布局公式共享常量:行高 `chat_message_line_height`
+/// (由 `theme.typography.body.size` 决定)、气泡 padding 14、reasoning 容器 padding 8、
+/// tool/permission 卡片 padding 12、外层 padding 4、列表/行内 spacing、badge 高 24。
+/// `PermissionRequest` 结构复杂,给一个保守估算;偏差由窗口 overscan 吸收。
+/// `message_row` 外层的 `padding_edges(top=2, bottom=2)` 计入 `+4`。
+fn message_row_height(
+  msg : ChatMessage,
+  theme : @moui.Theme,
+  width : Double,
+) -> Double {
+  let body_size = chat_message_text_role_font(@views.TextRole::Body, theme).size
+  let line_h = chat_message_line_height(body_size)
+  // `message_row` 的 `padding_edges(top=2, bottom=2)`。
+  let row_edge = 4.0
+  match msg {
+    User(text) => {
+      let content_width = (width * 0.72 - 28.0).max(80.0)
+      let lines = chat_message_display_lines(text, content_width, body_size).length()
+      row_edge + 28.0 + lines.to_double() * line_h
+    }
+    Assistant(content, reasoning) => {
+      let content_width = (width * 0.82 - 28.0).max(80.0)
+      let mut inner_h = 0.0
+      let mut row_count = 0
+      match reasoning {
+        Some(r) =>
+          if !r.is_empty() {
+            let reasoning_width = (content_width - 16.0).max(64.0)
+            let r_lines = chat_message_display_lines(
+              r, reasoning_width, body_size,
+            ).length()
+            inner_h = inner_h + 16.0 + r_lines.to_double() * line_h
+            row_count = row_count + 1
+          }
+        None => ()
+      }
+      let c_lines = chat_message_display_lines(
+        content, content_width, body_size,
+      ).length()
+      inner_h = inner_h + c_lines.to_double() * line_h
+      row_count = row_count + 1
+      row_edge + 28.0 + inner_h + (row_count - 1).to_double() * 4.0
+    }
+    ToolResult(_tool_name, content, _is_error, brief) => {
+      let shown = match brief {
+        Some(b) => b
+        None => content
+      }
+      let card_width = width * 0.9
+      let lines = chat_message_display_lines(
+        shown,
+        card_width - 24.0,
+        body_size,
+      ).length()
+      // 外层 container padding 4 + 卡片 padding 12 + badge 行(24 + 行余量约 6)
+      // + rows spacing 6 + mono 正文 + 卡片 padding 12 + message_row 边 4。
+      row_edge +
+      4.0 +
+      12.0 +
+      30.0 +
+      6.0 +
+      lines.to_double() * line_h +
+      12.0 +
+      4.0
+    }
+    RuntimeNotice(text) => {
+      let lines = chat_message_display_lines(text, width - 16.0, body_size).length()
+      row_edge + 8.0 + lines.to_double() * line_h
+    }
+    Terminal(_status, message) => {
+      let lines = chat_message_display_lines(message, width - 96.0, body_size).length()
+      row_edge + 8.0 + lines.to_double().max(1.0) * line_h
+    }
+    PermissionRequest(_request) =>
+      row_edge + 4.0 + 12.0 + 40.0 + 8.0 + 34.0 + 12.0 + 4.0
+  }
+}
+
+///|
+priv struct MessageRowHeightsSnapshot {
+  messages : Array[ChatMessage]
+  width : Double
+  body_size : Double
+  heights : Array[Double]
+}
+
+///|
+let message_row_heights_snapshot : Ref[MessageRowHeightsSnapshot?] = Ref(None)
+
+///|
+/// Reuse all heights while scrolling the same message array. When streaming
+/// creates a copied array, reuse the physically unchanged prefix and recompute
+/// only the appended or replaced tail (normally the final assistant message).
+fn message_row_heights(
+  messages : Array[ChatMessage],
+  theme : @moui.Theme,
+  width : Double,
+) -> Array[Double] {
+  let body_size = chat_message_text_role_font(@views.TextRole::Body, theme).size
+  match message_row_heights_snapshot.val {
+    Some(snapshot) if snapshot.width == width && snapshot.body_size == body_size => {
+      if physical_equal(snapshot.messages, messages) {
+        return snapshot.heights
+      }
+      let heights : Array[Double] = []
+      let shared = snapshot.messages.length().min(messages.length())
+      let mut first_changed = 0
+      while first_changed < shared &&
+            physical_equal(
+              snapshot.messages[first_changed],
+              messages[first_changed],
+            ) {
+        heights.push(snapshot.heights[first_changed])
+        first_changed = first_changed + 1
+      }
+      for i in first_changed..<messages.length() {
+        heights.push(message_row_height(messages[i], theme, width))
+      }
+      message_row_heights_snapshot.val = Some({
+        messages,
+        width,
+        body_size,
+        heights,
+      })
+      heights
+    }
+    _ => {
+      let heights : Array[Double] = []
+      for message in messages {
+        heights.push(message_row_height(message, theme, width))
+      }
+      message_row_heights_snapshot.val = Some({
+        messages,
+        width,
+        body_size,
+        heights,
+      })
+      heights
+    }
+  }
+}
+
+///|
 fn aligned_message_bubble(
   bubble : @moui.View[CodeMsg],
   width : Double,
