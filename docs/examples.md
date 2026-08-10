@@ -90,11 +90,13 @@ does not precompile Markdown into wasm; the Web host text-file service fetches
 the selected same-origin Markdown file from `docs/` at runtime. For local
 preview, run `node scripts/sync-website-docs.mjs` so `website/web_wasm/docs/`
 contains the root docs plus `moui-readme.md` and `moui-skia-readme.md`. The
-GitHub Pages workflow packages `website/web_wasm` with
+GitHub Pages workflow packages `website/web_wasm` at the site root, plus
+`examples/showcase/web_wasm` at `/showcase/` and
+`examples/markdown_editor/web_wasm` at `/markdown-editor/`, using
 `scripts/package-web-app.mjs` for release/strip wasm, local runtime JS,
-precompressed assets, and `bundle-size.json`, then runs
+precompressed assets, and `bundle-size.json`. It then runs
 `node scripts/sync-website-docs.mjs --out dist/pages/docs` so the published
-site fetches the same Markdown paths from `docs/`.
+Website Docs page fetches the same Markdown paths from `docs/`.
 
 ## Counter
 

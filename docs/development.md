@@ -505,8 +505,9 @@ The sync command refreshes the ignored local preview copy. The check command
 generates and validates an isolated temporary copy, so it does not require
 `website/web_wasm/docs/` to exist in a clean checkout.
 
-GitHub Pages packages `website/web_wasm` with
-`scripts/package-web-app.mjs website/web_wasm --out dist/pages`, nests the
+GitHub Pages packages `website/web_wasm` at the site root, packages the
+Showcase and Markdown Editor Web entrypoints at `/showcase/` and
+`/markdown-editor/` with `scripts/package-web-app.mjs`, and nests the
 Playground with
 `node scripts/package-website-playground.mjs --out dist/pages/playground`,
 then stages docs with
