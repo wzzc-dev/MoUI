@@ -120,6 +120,30 @@ logs. `--run-qemu` chroots into the target rootfs for dynamic libraries,
 fontconfig, and fonts, and executes only renderer-owned offscreen smokes; it
 does not prove a Wayland compositor, input, IME, clipboard, or desktop service.
 
+Cross-build details worth knowing when touching this route:
+
+- The Zig wrapper links against the sysroot `libstdc++` (the Skia release
+  archive is built with libstdc++, not zig's bundled libc++) and drops
+  `-lstdc++`/`-lc++` from link inputs so zig does not substitute its own
+  libc++. It also strips the `--sysroot` prefix from absolute `-L` paths
+  (zig re-adds it) and maps host-absolute library dirs (e.g. the Skia
+  release cache) into the sysroot via stable symlinks.
+- moon links host-prebuilt x86_64 runtime objects (`simdutf.o`,
+  `moonbit_simdutf.o`, `libbacktrace.a`) from the toolchain lib dir. The
+  helper hides the simdutf objects and substitutes a small riscv64
+  libbacktrace implementation
+  (`scripts/moui-riscv64-libbacktrace-stub.c`) for the duration of the
+  cross build, restoring everything afterwards.
+- QEMU smokes run under a pseudo-terminal so MoonBit's buffered stdout is
+  flushed per line; otherwise failure details printed immediately before
+  `fail_smoke`'s `abort()` are lost.
+- Set `MOUI_RISCV64_QEMU_GDB=1` (and install `gdb-multiarch`) to run the
+  text-emoji smoke under gdb via QEMU's gdbstub and print a backtrace at
+  SIGABRT.
+- The locked sysroot includes `fonts-noto-cjk`: the text/emoji smoke
+  renders CJK composition text, and without a CJK font fontconfig cannot
+  fall back, leaving the composed line without dark pixels.
+
 The helper self-test requires no downloaded sysroot and pins the explicit
 failure diagnostics for the wrong architecture/ABI, missing target `.pc`
 files, and accidental Vulkan enablement:

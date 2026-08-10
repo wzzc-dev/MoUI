@@ -48,6 +48,27 @@ Release 模式构建现有 Showcase、Skia renderer smoke 与 text/emoji smoke�
 QEMU 日志。`--run-qemu` 在目标 rootfs 中使用其动态库、fontconfig 与字体；
 该结果仍不是 Wayland L3。
 
+该交叉构建路线值得了解的细节：
+
+- Zig wrapper 链接 sysroot 的 `libstdc++`（Skia release 归档是用
+  libstdc++ 构建的，不是 zig 自带的 libc++），并从链接输入中剔除
+  `-lstdc++`/`-lc++`，避免 zig 替换成自己的 libc++；同时去掉绝对 `-L`
+  路径上多余的 `--sysroot` 前缀（zig 会重新拼接），并把 sysroot 外的
+  宿主绝对库目录（如 Skia release 缓存）通过稳定符号链接映射进
+  sysroot。
+- moon 会把工具链目录下宿主预编译的 x86_64 runtime 对象
+  （`simdutf.o`、`moonbit_simdutf.o`、`libbacktrace.a`）加入链接。helper
+  在交叉构建期间隐藏 simdutf 对象，并用一个小的 riscv64 libbacktrace
+  实现（`scripts/moui-riscv64-libbacktrace-stub.c`）替换宿主归档，结束后
+  全部恢复。
+- QEMU smoke 在伪终端（pty）下运行，使 MoonBit 的缓冲 stdout 按行刷出；
+  否则 `fail_smoke` 的 `abort()` 前刚打印的失败详情会随缓冲丢失。
+- 设置 `MOUI_RISCV64_QEMU_GDB=1`（并安装 `gdb-multiarch`）可通过 QEMU
+  的 gdbstub 用 gdb 运行 text-emoji smoke，在 SIGABRT 时打印调用栈。
+- 锁定 sysroot 包含 `fonts-noto-cjk`：text/emoji smoke 会渲染含 CJK 的
+  组合文本，缺少 CJK 字体时 fontconfig 无法 fallback，组合行将没有深色
+  像素。
+
 无需下载 sysroot 的负向检查为：
 
 ```sh
