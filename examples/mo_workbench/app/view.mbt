@@ -498,26 +498,237 @@ fn task_tree_view(
     if model.task_tree.is_empty() {
       body.push(sidebar_caption("没有匹配任务", theme, width - 32.0))
     } else {
-      for node in model.task_tree {
-        body.push(task_tree_node_view(node, model, theme, width - 48.0))
+      let entries = sidebar_task_entries(model.task_tree)
+      let (first, last) = sidebar_visible_window(
+        entries.length(),
+        model.task_scroll_offset.y,
+        height,
+        sidebar_task_content_top(),
+        sidebar_task_row_spacing(),
+        6,
+      )
+      if first > 0 {
+        body.push(
+          @views.spacer(
+            min_length=sidebar_task_prefix_height(first),
+            weight=0.0,
+          ),
+        )
+      }
+      for index in first..<last {
+        body.push(
+          sidebar_task_entry_view(entries[index], model, theme, width - 48.0).key(
+            sidebar_task_entry_key(entries[index]),
+          ),
+        )
+      }
+      if last < entries.length() {
+        body.push(
+          @views.spacer(
+            min_length=sidebar_task_suffix_height(entries.length() - last),
+            weight=0.0,
+          ),
+        )
       }
     }
   }
   @views.container(
     @views.scroll_view(
       @views.padding_xy(
-        @views.column(body, spacing=4.0, align=@views.CrossAlign::Stretch),
+        @views.column(
+          body,
+          spacing=sidebar_task_row_spacing(),
+          align=@views.CrossAlign::Stretch,
+        ),
         horizontal=16.0,
         vertical=12.0,
       ),
       width~,
       height~,
+      offset=model.task_scroll_offset,
+      on_scroll=Some(offset => WorkbenchMsg::TaskListScrolled(offset)),
     ),
     width~,
     height~,
     background=workbench_sidebar_background(theme),
     padding=0.0,
   )
+}
+
+///|
+/// Flatten the grouped task tree into the rows that are actually laid out.
+/// Folder headers and task leaves have stable identities, so scrolling only
+/// mounts a small slice while preserving reconciliation across window moves.
+priv enum SidebarTaskEntry {
+  Folder(String, String, Bool)
+  Task(String, String, TaskStatus, Bool)
+}
+
+///|
+priv struct SidebarTaskEntriesSnapshot {
+  tree : Array[TaskTreeNode]
+  entries : Array[SidebarTaskEntry]
+}
+
+///|
+let sidebar_task_entries_snapshot : Ref[SidebarTaskEntriesSnapshot?] = Ref(None)
+
+///|
+fn sidebar_task_entries(tree : Array[TaskTreeNode]) -> Array[SidebarTaskEntry] {
+  match sidebar_task_entries_snapshot.val {
+    Some(snapshot) if physical_equal(snapshot.tree, tree) =>
+      return snapshot.entries
+    _ => ()
+  }
+  let entries : Array[SidebarTaskEntry] = []
+  for node in tree {
+    match node {
+      Folder(id, title, _, children, expanded) => {
+        entries.push(SidebarTaskEntry::Folder(id, title, expanded))
+        if expanded {
+          for child in children {
+            match child {
+              Task(id, title, _, status, _) =>
+                entries.push(SidebarTaskEntry::Task(id, title, status, true))
+              Folder(_, _, _, _, _) => ()
+            }
+          }
+        }
+      }
+      Task(id, title, _, status, _) =>
+        entries.push(SidebarTaskEntry::Task(id, title, status, false))
+    }
+  }
+  sidebar_task_entries_snapshot.val = Some({ tree, entries })
+  entries
+}
+
+///|
+fn sidebar_task_row_height() -> Double {
+  30.0
+}
+
+///|
+fn sidebar_task_row_spacing() -> Double {
+  4.0
+}
+
+///|
+/// Top padding (12), header (22), search (30), and two list gaps (4 each)
+/// precede task entries in the scroll content.
+fn sidebar_task_content_top() -> Double {
+  72.0
+}
+
+///|
+fn sidebar_task_prefix_height(count : Int) -> Double {
+  if count <= 0 {
+    0.0
+  } else {
+    count.to_double() * sidebar_task_row_height() +
+    (count - 1).to_double() * sidebar_task_row_spacing()
+  }
+}
+
+///|
+fn sidebar_task_suffix_height(count : Int) -> Double {
+  sidebar_task_prefix_height(count)
+}
+
+///|
+fn sidebar_visible_window(
+  count : Int,
+  offset : Double,
+  viewport : Double,
+  content_top : Double,
+  spacing : Double,
+  overscan : Int,
+) -> (Int, Int) {
+  if count <= 0 {
+    return (0, 0)
+  }
+  let stride = sidebar_task_row_height() + spacing
+  let entries_height = count.to_double() * sidebar_task_row_height() +
+    (count - 1).to_double() * spacing
+  let max_scroll = (content_top + entries_height - viewport).max(0.0)
+  let clamped_offset = offset.min(max_scroll).max(0.0)
+  let top = (clamped_offset - content_top).max(0.0)
+  let bottom = (clamped_offset + viewport - content_top).max(0.0)
+  let first = (top / stride).to_int().max(0).min(count - 1)
+  let visible_last = ((bottom / stride).to_int() + 1).max(first + 1).min(count)
+  ((first - overscan).max(0), (visible_last + overscan).min(count))
+}
+
+///|
+fn sidebar_task_entry_key(entry : SidebarTaskEntry) -> String {
+  match entry {
+    Folder(id, _, _) => "folder-" + id
+    Task(id, _, _, _) => "task-" + id
+  }
+}
+
+///|
+fn sidebar_task_entry_view(
+  entry : SidebarTaskEntry,
+  model : WorkbenchModel,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[WorkbenchMsg] {
+  match entry {
+    Folder(id, title, expanded) =>
+      task_folder_header(id, title, expanded, theme, width)
+    Task(id, title, status, indented) => {
+      let row_width = if indented { width - 20.0 } else { width }
+      let row = task_row(id, title, status, model, theme, row_width)
+      if indented {
+        @views.padding_edges(row, left=20.0)
+      } else {
+        row
+      }
+    }
+  }
+}
+
+///|
+fn task_folder_header(
+  id : String,
+  title : String,
+  expanded : Bool,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[WorkbenchMsg] {
+  let icon = if expanded {
+    @views.IconName::ChevronDown
+  } else {
+    @views.IconName::ChevronRight
+  }
+  @views.container(
+    @views.row(
+      [
+        @views.container(
+          @views.icon(icon, size=12.0, color=theme.palette.muted),
+          width=18.0,
+          height=18.0,
+          padding=0.0,
+        ),
+        @views.text(
+          title,
+          role=@views.TextRole::Caption,
+          theme~,
+          width=width - 26.0,
+          height=18.0,
+        )
+        .font(sidebar_fine_font(theme, size_delta=-1.0, weight=300))
+        .foreground(workbench_text_muted(theme)),
+      ],
+      spacing=4.0,
+      align=@views.CrossAlign::Center,
+    ),
+    width~,
+    height=sidebar_task_row_height(),
+    corner_radius=4.0,
+    padding=4.0,
+  ).on_tap(WorkbenchMsg::ToggleFolder(id))
 }
 
 ///|
@@ -570,78 +781,6 @@ fn task_filter_chip(
     border=Some(hairline_border(theme)),
     padding=2.5,
   ).on_tap(WorkbenchMsg::CycleTaskFilter)
-}
-
-///|
-/// Render a single task tree node (folder or leaf).
-fn task_tree_node_view(
-  node : TaskTreeNode,
-  model : WorkbenchModel,
-  theme : @moui.Theme,
-  width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  match node {
-    Folder(id, title, _, children, expanded) => {
-      let icon = if expanded {
-        @views.IconName::ChevronDown
-      } else {
-        @views.IconName::ChevronRight
-      }
-      let rows : Array[@moui.View[WorkbenchMsg]] = [
-        @views.container(
-          @views.row(
-            [
-              @views.container(
-                @views.icon(icon, size=12.0, color=theme.palette.muted),
-                width=18.0,
-                height=18.0,
-                padding=0.0,
-              ),
-              @views.text(
-                title,
-                role=@views.TextRole::Caption,
-                theme~,
-                width=width - 26.0,
-                height=18.0,
-              )
-              .font(sidebar_fine_font(theme, size_delta=-1.0, weight=300))
-              .foreground(workbench_text_muted(theme)),
-            ],
-            spacing=4.0,
-            align=@views.CrossAlign::Center,
-          ),
-          width~,
-          corner_radius=4.0,
-          padding=4.0,
-        ).on_tap(WorkbenchMsg::ToggleFolder(id)),
-      ]
-      if expanded {
-        for child in children {
-          rows.push(indented_task_view(child, model, theme, width - 20.0))
-        }
-      }
-      @views.column(rows, spacing=2.0, align=@views.CrossAlign::Stretch)
-    }
-    Task(id, title, _, status, _) =>
-      task_row(id, title, status, model, theme, width)
-  }
-}
-
-///|
-/// An indented wrapper for child tasks inside a folder.
-fn indented_task_view(
-  node : TaskTreeNode,
-  model : WorkbenchModel,
-  theme : @moui.Theme,
-  width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  @views.padding_edges(
-    task_tree_node_view(node, model, theme, width),
-    left=20.0,
-    top=0.0,
-    right=0.0,
-    bottom=0.0,
-  )
 }
 
 ///|

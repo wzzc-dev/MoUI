@@ -200,8 +200,37 @@ fn derive_task_status(
 /// The shell update. Routes tab-scoped / task-scoped messages at the shell
 /// level and delegates `CodeMsg` / `SettingsMsg` to the matching sub-update,
 /// lifting sub-effects back to `Effect[WorkbenchMsg]`. After any `CodeMsg`
-/// (which may change sessions / streaming state) the task tree projection is
-/// re-synced via `sync_task_tree`.
+/// that can change sessions / active state, the task tree projection is
+/// re-synced via `sync_task_tree`; scrolling and streaming chunks stay local to
+/// the center timeline.
+
+///|
+/// CodeMsg 中会影响 task_tree 投影(会话列表 / streaming 状态 / active session)
+/// 的消息才需要 `sync_task_tree`;滚动、输入、纯点击类消息跳过。
+fn code_msg_needs_task_sync(msg : CodeMsg) -> Bool {
+  match msg {
+    NewSession | SelectSession(_) | SubmitPrompt | CancelTurn => true
+    ReceiveAgentEvent(event) => agent_event_needs_task_sync(event)
+    _ => false
+  }
+}
+
+///|
+/// Streaming chunks update the center timeline but do not change the sidebar
+/// projection. Avoid rebuilding the task tree for every chunk; only session
+/// metadata or a lifecycle transition can change a task row.
+fn agent_event_needs_task_sync(event : AgentEvent) -> Bool {
+  match event {
+    SessionListed(_)
+    | ActiveSessionChanged(_)
+    | SessionInfoUpdated(_, _, _)
+    | SessionRebuilt(_)
+    | TurnTerminal(_, _) => true
+    _ => false
+  }
+}
+
+///|
 fn WorkbenchModel::update(
   self : WorkbenchModel,
   msg : WorkbenchMsg,
@@ -272,6 +301,8 @@ fn WorkbenchModel::update(
         sync_task_tree({ ..self, task_search_query: query }),
         @moui.Effect::none(),
       )
+    TaskListScrolled(offset) =>
+      ({ ..self, task_scroll_offset: offset }, @moui.Effect::none())
     ToggleSettings =>
       ({ ..self, settings_open: !self.settings_open }, @moui.Effect::none())
     ToggleAppearance => {
@@ -419,12 +450,16 @@ fn WorkbenchModel::update(
           )
         _ => {
           let (code, eff) = self.code.update(m, self.backend)
-          // Re-sync the task tree projection then lift `Effect[CodeMsg]` to
-          // `Effect[WorkbenchMsg]` via `Effect::map`.
-          (
-            sync_task_tree({ ..self, code, }),
-            eff.map(m => WorkbenchMsg::CodeMsg(m)),
-          )
+          // 只对可能改变 sessions / streaming / active session 的消息重建
+          // task tree 投影;滚动、输入、点击等纯 UI 消息跳过,避免每次交互
+          // 全量重建 sidebar 树(会话多时这是交互卡顿的来源之一)。
+          let model = if code_msg_needs_task_sync(m) {
+            sync_task_tree({ ..self, code, })
+          } else {
+            { ..self, code, }
+          }
+          // Lift `Effect[CodeMsg]` to `Effect[WorkbenchMsg]` via `Effect::map`.
+          (model, eff.map(m => WorkbenchMsg::CodeMsg(m)))
         }
       }
     SettingsMsg(m) =>
