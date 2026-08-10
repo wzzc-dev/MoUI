@@ -74,6 +74,11 @@ Showcase uses the standard `web_wasm`, `<platform>_skia`, and explicit
 renderer-diagnostic entrypoint names. Its embedded-runtime routes use the matching
 `*_window_hosted` entrypoint.
 
+Linux RISC-V64 is the `linux-skia-riscv64` architecture variant of the existing
+`examples/showcase/linux_skia` composition root. Do not add a RISC-V-specific
+app package or entrypoint; cross-build and QEMU evidence belong to the framework
+helper documented in `docs/platform-notes-linux.md`.
+
 Default shared app imports:
 
 ```moonbit

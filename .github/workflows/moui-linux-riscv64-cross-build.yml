@@ -1,0 +1,107 @@
+name: MoUI Linux RISC-V64 Cross Build
+
+permissions:
+  contents: read
+
+concurrency:
+  group: moui-linux-riscv64-cross-build
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: "41 4 * * 2"
+  workflow_dispatch:
+
+jobs:
+  linux-riscv64-l0-l2:
+    name: Linux RISC-V64 Skia Raster L0-L2
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install cross-build host dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            binutils \
+            ca-certificates \
+            curl \
+            file \
+            pkg-config \
+            python3 \
+            qemu-user-static \
+            tar \
+            unzip \
+            xz-utils
+
+      - name: Install locked Zig
+        shell: bash
+        run: |
+          zig_url="$(node -e 'const x=require("./checks/toolchains/linux-riscv64.json"); process.stdout.write(x.zigUrl)')"
+          zig_sha="$(node -e 'const x=require("./checks/toolchains/linux-riscv64.json"); process.stdout.write(x.zigSha256)')"
+          zig_version="$(node -e 'const x=require("./checks/toolchains/linux-riscv64.json"); process.stdout.write(x.zigVersion)')"
+          archive="$RUNNER_TEMP/zig-$zig_version.tar.xz"
+          curl -fL --retry 3 --retry-delay 2 "$zig_url" -o "$archive"
+          echo "$zig_sha  $archive" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/zig"
+          tar -xJf "$archive" -C "$RUNNER_TEMP/zig"
+          echo "$RUNNER_TEMP/zig/zig-x86_64-linux-$zig_version" >> "$GITHUB_PATH"
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Update MoonBit registry
+        shell: bash
+        run: sh scripts/ci-moon-update.sh
+
+      - name: Cache RISC-V64 sysroot
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/moui-riscv64-sysroot-cache
+          key: moui-riscv64-sysroot-${{ hashFiles('checks/toolchains/linux-riscv64.json', 'scripts/prepare-linux-riscv64-sysroot.sh') }}
+
+      - name: Prepare RISC-V64 sysroot
+        shell: bash
+        run: |
+          sysroot="$RUNNER_TEMP/moui-riscv64-sysroot-cache/ubuntu-24.04.4-riscv64"
+          mkdir -p "$(dirname "$sysroot")"
+          mkdir -p artifacts/linux-riscv64
+          bash scripts/prepare-linux-riscv64-sysroot.sh --output "$sysroot" \
+            2>&1 | tee artifacts/linux-riscv64/prepare-sysroot.log
+          cp "$sysroot/.moui-riscv64-sysroot" artifacts/linux-riscv64/
+          cp "$sysroot/.moui-riscv64-packages" artifacts/linux-riscv64/
+          cp "$sysroot/.moui-riscv64-files.sha256" artifacts/linux-riscv64/
+          echo "MOUI_RISCV64_SYSROOT=$sysroot" >> "$GITHUB_ENV"
+
+      - name: Cache release Skia
+        uses: actions/cache@v4
+        with:
+          path: moui_skia/.skia-cache/release
+          key: release-skia-linux-riscv64-static-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
+
+      - name: Validate platform metadata and helper contracts
+        shell: bash
+        run: |
+          node scripts/validate-platform-matrix.mjs
+          moon test tools/moui/validate_platform_matrix --target native
+          bash scripts/test-linux-riscv64-cross-build.sh
+
+      - name: Build and run RISC-V64 L0-L2 helper
+        shell: bash
+        run: |
+          bash scripts/linux-riscv64-cross-build.sh \
+            --sysroot "$MOUI_RISCV64_SYSROOT" \
+            --target-dir "$RUNNER_TEMP/moui-riscv64-target" \
+            --log-dir artifacts/linux-riscv64 \
+            --run-qemu
+
+      - name: Upload RISC-V64 cross-build evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-linux-riscv64-l0-l2
+          path: artifacts/linux-riscv64/
+          if-no-files-found: warn

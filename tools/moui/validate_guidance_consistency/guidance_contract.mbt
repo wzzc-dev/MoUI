@@ -35,6 +35,10 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "name: MoUI Linux Platform Evidence",
     },
     {
+      path: ".github/workflows/moui-linux-riscv64-cross-build.yml",
+      token: "name: MoUI Linux RISC-V64 Cross Build",
+    },
+    {
       path: ".github/workflows/moui-windows-platform-evidence.yml",
       token: "name: MoUI Windows Platform Evidence",
     },
@@ -160,6 +164,30 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: "skills/moui-app-development/SKILL.md",
       token: "examples/<name>/app",
     },
+    { path: "AGENTS.md", token: "linux-skia-riscv64" },
+    { path: "docs/platform-notes-linux.md", token: "riscv64-linux-gnu" },
+    { path: "docs/testing.md", token: "test-linux-riscv64-cross-build.sh" },
+    {
+      path: "docs/platform-readiness-declaration.md",
+      token: "checks/architecture-evidence/linux-skia-riscv64.json",
+    },
+    { path: "docs/zh-Hans/platform-notes-linux.md", token: "riscv64-linux-gnu" },
+    {
+      path: "docs/zh-Hans/testing.md",
+      token: "test-linux-riscv64-cross-build.sh",
+    },
+    {
+      path: "docs/zh-Hans/platform-readiness-declaration.md",
+      token: "linux-skia-riscv64",
+    },
+    {
+      path: "skills/moui-framework-development-skill/SKILL.md",
+      token: "linux-riscv64-cross-build.sh",
+    },
+    {
+      path: "skills/moui-app-development/SKILL.md",
+      token: "linux-skia-riscv64",
+    },
   ]
 }
 
@@ -186,6 +214,9 @@ fn guidance_file_exists_rules() -> Array[String] {
     ".github/workflows/moui-skia-provider-fallback-ci.yml", ".github/workflows/moui-skia-provider-linux-real-skia-nightly.yml",
     ".github/workflows/moui-skia-provider-macos-real-skia-manual.yml", ".github/workflows/moui-skia-provider-windows-real-skia-manual.yml",
     ".github/workflows/moui-skia-provider-real-skia-acceptance.yml", "checks/profiles.json",
+    ".github/workflows/moui-linux-riscv64-cross-build.yml", "checks/toolchains/linux-riscv64.json",
+    "checks/architecture-evidence/linux-skia-riscv64.json", "scripts/prepare-linux-riscv64-sysroot.sh",
+    "scripts/linux-riscv64-cross-build.sh", "scripts/test-linux-riscv64-cross-build.sh",
     "skills/moui-app-development/SKILL.md", "skills/moui-framework-development-skill/SKILL.md",
     "tools/moui/validate_guidance_consistency/moon.pkg",
   ]
