@@ -27,4 +27,3 @@ pub async fn Pty::write_input(Self, Bytes) -> Int
 // Type aliases
 
 // Traits
-

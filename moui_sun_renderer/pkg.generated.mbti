@@ -235,4 +235,3 @@ pub fn SunUnsupportedCommandDiagnostic::reason(Self) -> String
 // Type aliases
 
 // Traits
-

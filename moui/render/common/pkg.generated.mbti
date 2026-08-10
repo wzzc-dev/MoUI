@@ -321,4 +321,3 @@ pub fn SvgImportResult::diagnostics(Self) -> Array[String]
 // Type aliases
 
 // Traits
-

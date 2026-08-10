@@ -37,4 +37,3 @@ pub using @core {type View}
 pub using @core {type ViewEnvironment}
 
 // Traits
-

@@ -45,4 +45,3 @@ pub using @core {type ShadowStyle}
 pub using @core {type Transform2D}
 
 // Traits
-

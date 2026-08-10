@@ -119,4 +119,3 @@ pub fn EditorState::with_source(Self, String) -> Self
 // Type aliases
 
 // Traits
-

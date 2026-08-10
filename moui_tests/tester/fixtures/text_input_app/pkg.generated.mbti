@@ -29,4 +29,3 @@ pub(all) enum TextInputSmokeMsg {
 // Type aliases
 
 // Traits
-

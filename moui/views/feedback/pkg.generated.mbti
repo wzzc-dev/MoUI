@@ -69,4 +69,3 @@ pub fn[Msg] ToastStackItem::new(id~ : String, message~ : String, tone? : @style.
 pub using @controls {type StateViewAction}
 
 // Traits
-

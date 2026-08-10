@@ -755,4 +755,3 @@ pub fn TextMaskDrawResult::did_render_mask(Self) -> Bool
 // Type aliases
 
 // Traits
-

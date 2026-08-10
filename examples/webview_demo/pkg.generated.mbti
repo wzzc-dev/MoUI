@@ -16,4 +16,3 @@ pub fn runtime(commands~ : @host.HostWebViewCommandQueue, capabilities~ : @host.
 // Type aliases
 
 // Traits
-

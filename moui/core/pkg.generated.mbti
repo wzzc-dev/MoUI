@@ -1967,4 +1967,3 @@ pub impl ViewStateValue for Int
 pub impl ViewStateValue for Double
 pub impl ViewStateValue for String
 pub impl ViewStateValue for Bytes
-

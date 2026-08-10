@@ -15,4 +15,3 @@ pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, 
 // Type aliases
 
 // Traits
-

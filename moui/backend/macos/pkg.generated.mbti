@@ -77,4 +77,3 @@ pub impl @wzzc-dev/window/macos.ApplicationHandler for MacosNativeHostBackend
 // Type aliases
 
 // Traits
-

@@ -15,4 +15,3 @@ pub fn[Msg] divider(axis? : @core.Axis, theme? : @core.Theme, thickness? : Doubl
 // Type aliases
 
 // Traits
-

@@ -1535,4 +1535,3 @@ pub fn WindowSurfaceDescriptor::with_window_id(Self, Bytes) -> Self
 pub type Scalar = Float
 
 // Traits
-

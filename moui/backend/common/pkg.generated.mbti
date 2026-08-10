@@ -52,4 +52,3 @@ pub fn to_render_metrics(@core.SurfaceMetrics) -> @core.SurfaceMetrics
 // Type aliases
 
 // Traits
-

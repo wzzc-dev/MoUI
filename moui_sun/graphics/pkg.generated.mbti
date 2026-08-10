@@ -1101,4 +1101,3 @@ pub(open) trait Surface {
   fn present_pixels(Self, Int, Int, Int, FixedArray[Byte]) -> Result[Unit, PresentError]
   fn present_pixels_rect(Self, Int, Int, Int, Int, Int, FixedArray[Byte]) -> Result[Unit, PresentError]
 }
-

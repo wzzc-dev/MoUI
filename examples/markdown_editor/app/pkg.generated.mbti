@@ -193,4 +193,3 @@ type MarkdownEditorTargetKind derive(Eq, ToJson, @debug.Debug)
 // Type aliases
 
 // Traits
-

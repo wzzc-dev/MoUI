@@ -65,4 +65,3 @@ pub struct SettingsSnapshot {
 // Type aliases
 
 // Traits
-

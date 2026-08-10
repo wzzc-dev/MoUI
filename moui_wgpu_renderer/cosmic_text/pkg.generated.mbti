@@ -20,4 +20,3 @@ pub fn cosmic_text_font_path_for_spec(@core.FontSpec) -> String
 // Type aliases
 
 // Traits
-

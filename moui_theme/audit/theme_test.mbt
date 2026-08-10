@@ -174,10 +174,7 @@ test "source package inventories expose pinned package import gaps" {
       assert_true(item.status == DesignTokenStatus::PreviewMapped)
     }
   }
-  guard source_package_inventory(@common.DesignPreset::Material)[0]
-    is material_system else {
-    fail("expected Material source package row")
-  }
+  let material_system = source_package_inventory(@common.DesignPreset::Material)[0]
   assert_true(material_system.package_path.contains("_md-sys"))
   assert_true(material_system.mapped_token_count == 13)
   assert_true(
@@ -214,10 +211,7 @@ test "source package inventories expose pinned package import gaps" {
       item.stable_lock
     }),
   )
-  guard source_package_inventory(@common.DesignPreset::Carbon)[1]
-    is carbon_tokens else {
-    fail("expected Carbon token source row")
-  }
+  let carbon_tokens = source_package_inventory(@common.DesignPreset::Carbon)[1]
   assert_true(carbon_tokens.package_path.contains("src/tokens"))
   assert_true(
     source_package_inventory(@common.DesignPreset::Carbon).any(item => {
@@ -253,10 +247,7 @@ test "source package inventories expose pinned package import gaps" {
       item.imported_token_count == 6
     }),
   )
-  guard source_package_inventory(@common.DesignPreset::Primer)[0]
-    is primer_color else {
-    fail("expected Primer color source row")
-  }
+  let primer_color = source_package_inventory(@common.DesignPreset::Primer)[0]
   assert_true(primer_color.package_path.contains("base/color"))
   assert_true(
     source_package_inventory(@common.DesignPreset::Primer).any(item => {
@@ -293,10 +284,7 @@ test "source package inventories expose pinned package import gaps" {
       item.mapped_token_count == 6
     }),
   )
-  guard source_package_inventory(@common.DesignPreset::Fluent)[0]
-    is fluent_global else {
-    fail("expected Fluent global source row")
-  }
+  let fluent_global = source_package_inventory(@common.DesignPreset::Fluent)[0]
   assert_true(fluent_global.package_path.contains("src/global"))
   assert_true(fluent_global.mapped_token_count == 90)
   assert_true(fluent_global.imported_token_count == 90)

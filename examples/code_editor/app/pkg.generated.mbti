@@ -230,4 +230,3 @@ pub fn CodeLanguageRegistry::tokenize(Self, String, String) -> Array[CodeEditorT
 // Type aliases
 
 // Traits
-
