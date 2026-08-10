@@ -10,8 +10,8 @@ fn welcome_demo(
 ) -> @moui.View[ComponentGalleryMsg] {
   let inner = section_inner_width(width)
   let gap = theme.spacing_scale.sm
-  // Match responsive_grid column counts so child widths equal placed cell
-  // widths. Fixed 2/3-column math overlaps when the grid adds more columns.
+  // Cap the desired columns, then pass the matching cell width back to
+  // responsive_grid so its uncapped column calculation cannot exceed it.
   let stat_columns = welcome_grid_columns(
     available=inner,
     min_column_width=if compact { inner } else { 168.0 },
@@ -61,7 +61,7 @@ fn welcome_demo(
                 ),
               ],
               width=inner,
-              min_column_width=if compact { inner } else { 168.0 },
+              min_column_width=stat_width,
               row_spacing=gap,
               column_spacing=gap,
             ),
@@ -103,7 +103,7 @@ fn welcome_demo(
             ),
           ],
           width=inner,
-          min_column_width=if compact { inner } else { 220.0 },
+          min_column_width=group_width,
           row_spacing=gap,
           column_spacing=gap,
         ),
