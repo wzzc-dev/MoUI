@@ -31,4 +31,3 @@ pub fn start_compile(Int, String, (String) -> Unit) -> Unit
 // Type aliases
 
 // Traits
-

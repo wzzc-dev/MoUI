@@ -193,4 +193,3 @@ pub fn ShowcaseTodoItem::new(id~ : Int, text~ : String) -> Self
 // Type aliases
 
 // Traits
-

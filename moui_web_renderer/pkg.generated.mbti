@@ -157,4 +157,3 @@ pub fn WebGpuWasmRenderer::to_renderer_session(Self) -> @render.RendererSession
 // Type aliases
 
 // Traits
-

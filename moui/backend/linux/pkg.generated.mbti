@@ -129,4 +129,3 @@ pub impl @wzzc-dev/window/linux.ApplicationHandler for LinuxNativeHostBackend
 // Type aliases
 
 // Traits
-

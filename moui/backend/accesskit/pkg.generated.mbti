@@ -56,4 +56,3 @@ pub fn AccessKitUpdate::tree_update(Self) -> @moon_accesskit.TreeUpdate
 // Type aliases
 
 // Traits
-

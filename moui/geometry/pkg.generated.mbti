@@ -31,4 +31,3 @@ pub using @core {type Rect}
 pub using @core {type Size}
 
 // Traits
-

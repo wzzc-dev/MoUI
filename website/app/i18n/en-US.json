@@ -20,6 +20,7 @@
     "action.get_started": "Get Started",
     "action.open_source": "Open Source",
     "action.open_source_for": "Open source for {title}",
+    "action.open_demo": "Open live demo {url}",
     "action.copy": "Copy",
     "action.copied": "Copied",
     "action.read_docs": "Read the Docs",

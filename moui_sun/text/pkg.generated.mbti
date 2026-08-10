@@ -466,4 +466,3 @@ pub fn TextSystemLayout::selection_rects(Self, Int, Int) -> Array[TextSelectionR
 pub(open) trait FontLoader {
   fn load_font_data(Self, String) -> Result[FontData, FontLoadError]
 }
-

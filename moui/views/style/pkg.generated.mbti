@@ -604,4 +604,3 @@ pub using @core {type ColorPalette}
 pub using @core {type TypographyScale}
 
 // Traits
-

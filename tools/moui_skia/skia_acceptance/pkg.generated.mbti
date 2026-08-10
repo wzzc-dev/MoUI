@@ -23,4 +23,3 @@ pub fn verify_revision_texts(String, String, Bool) -> Result[String, String]
 // Type aliases
 
 // Traits
-

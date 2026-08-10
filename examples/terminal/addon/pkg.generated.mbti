@@ -32,4 +32,3 @@ pub fn TerminalSelectionNode::new(cell_width~ : Double, cell_height~ : Double, s
 // Type aliases
 
 // Traits
-

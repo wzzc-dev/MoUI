@@ -17,4 +17,3 @@ pub fn fontconfig_text_provider() -> @moui_wgpu_renderer.NativePlatformTextProvi
 // Type aliases
 
 // Traits
-

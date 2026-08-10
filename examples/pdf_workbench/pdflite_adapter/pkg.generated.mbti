@@ -28,4 +28,3 @@ pub fn writeback_document(@app.PdfWorkbenchDocument) -> @app.PdfWorkbenchDocumen
 // Type aliases
 
 // Traits
-

@@ -40,4 +40,3 @@ pub fn WindowImageTasks::take_scheduled_count(Self) -> Int
 // Type aliases
 
 // Traits
-

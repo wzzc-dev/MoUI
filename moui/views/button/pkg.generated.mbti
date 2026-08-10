@@ -18,4 +18,3 @@ pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardS
 // Type aliases
 
 // Traits
-

@@ -34,4 +34,3 @@ pub fn TesterStepResult::pass(name~ : String, detail? : String) -> Self
 // Type aliases
 
 // Traits
-

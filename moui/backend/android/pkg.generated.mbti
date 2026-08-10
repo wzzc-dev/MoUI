@@ -99,4 +99,3 @@ pub fn AndroidSurfaceHandle::raw(Self) -> UInt64
 // Type aliases
 
 // Traits
-

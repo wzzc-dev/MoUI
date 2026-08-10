@@ -177,4 +177,3 @@ pub fn[Msg] WizardStep::new(id~ : String, title~ : String, subtitle? : String, c
 pub using @core {type DateValue}
 
 // Traits
-

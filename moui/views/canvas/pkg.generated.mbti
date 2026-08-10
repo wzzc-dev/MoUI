@@ -23,4 +23,3 @@ pub fn view_exact_channel(@core.DeclarationKey) -> @core.DeclarationChannel
 pub using @common {type PaintContext}
 
 // Traits
-

@@ -38,4 +38,3 @@ pub fn views_ambient_theme(@core.Theme?) -> @core.Theme
 // Type aliases
 
 // Traits
-

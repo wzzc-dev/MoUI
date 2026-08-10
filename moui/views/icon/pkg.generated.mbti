@@ -24,4 +24,3 @@ pub fn icon_scale_verbs(Array[@core.PathVerb], Double, Double, Double) -> Array[
 // Type aliases
 
 // Traits
-

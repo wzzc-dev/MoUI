@@ -161,4 +161,3 @@ pub fn SessionRuntimeInfo::new(host~ : String, path~ : String, backend~ : String
 // Type aliases
 
 // Traits
-

@@ -22,4 +22,3 @@ pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, p
 // Type aliases
 
 // Traits
-

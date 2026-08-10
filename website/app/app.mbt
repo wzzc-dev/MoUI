@@ -38,6 +38,7 @@ pub enum Msg {
   OpenDocs
   OpenShowcases
   OpenShowcaseSource(String)
+  OpenLiveDemo(String)
   SelectDoc(String)
   OpenDocLink(String)
   CopyText(String)
@@ -125,7 +126,7 @@ fn Model::update(self : Model, message : Msg) -> Model {
     CounterIncrement =>
       { ..self, hero_count: self.hero_count + 1, copied_text: None }
     CounterReset => { ..self, hero_count: 0, copied_text: None }
-    OpenRepository | OpenShowcaseSource(_) | OpenDocLink(_) =>
+    OpenRepository | OpenShowcaseSource(_) | OpenLiveDemo(_) | OpenDocLink(_) =>
       { ..self, copied_text: None }
     CopyText(value) => { ..self, copied_text: Some(value) }
     OpenHome => { ..self.with_route("home"), copied_text: None }
@@ -394,6 +395,7 @@ fn Model::update_with_services(
         website_open_url_effect(services, website_playground_url(example=id)),
       )
     OpenShowcaseSource(url) => (self, website_open_url_effect(services, url))
+    OpenLiveDemo(url) => (self, website_open_url_effect(services, url))
     OpenDocLink(target) => self.open_doc_link(target, services, route_host)
     CopyText(value) =>
       (

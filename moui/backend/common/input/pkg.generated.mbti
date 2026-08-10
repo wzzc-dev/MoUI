@@ -147,4 +147,3 @@ pub fn WindowInputState::sync(Self, @wzzc-dev/moui/core.TextInputState) -> TextI
 // Type aliases
 
 // Traits
-

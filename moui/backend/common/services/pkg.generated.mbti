@@ -46,4 +46,3 @@ pub fn WindowServiceState::new(bridge~ : @backend.HostServiceBridge, dispose? : 
 // Type aliases
 
 // Traits
-

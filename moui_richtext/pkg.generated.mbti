@@ -657,4 +657,3 @@ pub(all) struct RichTextTableCell {
 pub type RichTextFormatter = (String) -> RichTextDocument
 
 // Traits
-

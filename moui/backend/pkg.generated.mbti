@@ -408,4 +408,3 @@ pub fn WindowScene::new(scene_id~ : String, payload? : String) -> Self
 pub type PlatformViewEventCallback = (UInt64, String, @core.PlatformViewEvent) -> Unit
 
 // Traits
-

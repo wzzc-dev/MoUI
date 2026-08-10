@@ -41,4 +41,3 @@ pub fn smoke_view_state() -> @core.ViewStateContext
 // Type aliases
 
 // Traits
-

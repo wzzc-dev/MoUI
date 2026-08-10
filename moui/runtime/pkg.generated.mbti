@@ -656,4 +656,3 @@ pub fn WindowSceneResolver::unavailable(reason? : String) -> Self
 // Type aliases
 
 // Traits
-

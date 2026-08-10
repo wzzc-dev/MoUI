@@ -218,4 +218,3 @@ pub enum PdfWorkbenchStatus {
 // Type aliases
 
 // Traits
-

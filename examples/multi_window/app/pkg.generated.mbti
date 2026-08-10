@@ -85,4 +85,3 @@ pub fn WindowScene::new(scene_id~ : String, payload? : String) -> Self
 // Type aliases
 
 // Traits
-

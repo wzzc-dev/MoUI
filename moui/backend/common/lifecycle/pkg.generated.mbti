@@ -252,4 +252,3 @@ pub fn WindowSurfaceActions::new(focus~ : () -> Unit, request_resize~ : (@wzzc-d
 // Type aliases
 
 // Traits
-

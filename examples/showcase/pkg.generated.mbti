@@ -26,4 +26,3 @@ pub fn runtime(host_summary~ : @backend.HostCapabilitySummary, environment? : @s
 // Type aliases
 
 // Traits
-

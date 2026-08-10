@@ -15,4 +15,3 @@ pub fn filesystem_image_source() -> @render.HostImageSource
 // Type aliases
 
 // Traits
-

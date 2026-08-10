@@ -55,4 +55,3 @@ pub(all) enum CommandPaletteMsg {
 // Type aliases
 
 // Traits
-

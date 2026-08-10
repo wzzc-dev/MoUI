@@ -39,4 +39,3 @@ pub fn PdfWorkbenchPdfliteServiceResponse::to_json_line(Self) -> String
 // Type aliases
 
 // Traits
-

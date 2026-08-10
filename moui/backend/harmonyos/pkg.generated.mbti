@@ -92,4 +92,3 @@ pub fn HarmonyOSSurfaceHandle::raw(Self) -> UInt64
 // Type aliases
 
 // Traits
-

@@ -70,6 +70,14 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
 }
 
 ///|
+fn website_live_demo_urls() -> Array[String] {
+  [
+    "https://wzzc-dev.github.io/MoUI/showcase/", "https://wzzc-dev.github.io/MoUI/markdown-editor/",
+    "https://wzzc-dev.github.io/MoUI/playground",
+  ]
+}
+
+///|
 fn Model::showcases_content(
   self : Model,
   theme : @moui.Theme,
@@ -89,9 +97,16 @@ fn Model::showcases_content(
   // explanatory copy, without duplicating that title above the grid.
   let section_inset = if metrics.compact { 24.0 } else { 32.0 }
   let intro_height = 64.0
+  let link_height = 30.0
+  let links_height = link_height * 3.0 + 6.0 * 2.0
   let grid_height = max_website_double(
-    180.0,
-    metrics.body_height - section_inset * 2.0 - intro_height - 16.0,
+    60.0,
+    metrics.body_height -
+    section_inset * 2.0 -
+    intro_height -
+    16.0 -
+    links_height -
+    16.0,
   )
   section_shell(
     theme,
@@ -133,6 +148,32 @@ fn Model::showcases_content(
           offset=self.showcase_grid_scroll,
           on_scroll=Some(offset => ShowcaseGridScrolled(offset)),
           shows_indicator=true,
+        ),
+        column(
+          website_live_demo_urls().map(url => {
+            container(
+              text(
+                url,
+                width=metrics.content_width,
+                height=link_height,
+                align=@core.TextAlign::TextStart,
+              )
+              .font(theme.typography.caption)
+              .foreground(theme.palette.primary),
+              width=metrics.content_width,
+              height=link_height,
+            )
+            .on_tap(OpenLiveDemo(url))
+            .semantics_role(@core.SemanticsRole::Link)
+            .semantics_url(url)
+            .accessibility_label(
+              website_message_with(self.locale, "action.open_demo", [
+                ("url", url),
+              ]),
+            )
+          }),
+          spacing=6.0,
+          align=@views.CrossAlign::Start,
         ),
       ],
       spacing=16.0,

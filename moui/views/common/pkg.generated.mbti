@@ -170,4 +170,3 @@ pub fn PaintContext::new() -> Self
 pub using @core {type DateValue}
 
 // Traits
-

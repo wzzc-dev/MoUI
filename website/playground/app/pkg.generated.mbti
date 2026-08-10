@@ -105,4 +105,3 @@ pub fn PlaygroundProject::to_json_line(Self) -> String
 // Type aliases
 
 // Traits
-

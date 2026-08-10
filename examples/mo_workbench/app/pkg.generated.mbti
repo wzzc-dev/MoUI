@@ -391,4 +391,3 @@ pub type SettingsLoadFn = () -> MoWorkbenchSettingsFile?
 pub type SettingsPersistFn = (MoWorkbenchSettingsFile) -> Unit
 
 // Traits
-
