@@ -155,19 +155,17 @@ cp "$showcase_pkg" "$showcase_backup"
 
 cat > "$showcase_pkg" <<PKGEOF
 import {
-  "moonbitlang/core/env",
-  "wzzc-dev/moui" @moui,
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/linux" @linux_backend,
   "wzzc-dev/moui_skia_renderer" @render_skia,
-  "examples/showcase/app" @showcase_app,
+  "examples/showcase",
 }
 
 supported_targets = "native"
 
+pkgtype(kind: "executable")
+
 options(
-  "is-main": true,
   link: {
     "native": {
       "stub-cc-flags": "$linux_stub_cc_flags",
@@ -186,7 +184,7 @@ cp "$first_frame_pkg" "$first_frame_backup"
 
 cat > "$first_frame_pkg" <<PKGEOF
 import {
-  "wzzc-dev/moui" @moui,
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/linux",
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/moui_tests/tester/fixtures/text_input_app" @fixture,
@@ -194,8 +192,9 @@ import {
 
 supported_targets = "native"
 
+pkgtype(kind: "executable")
+
 options(
-  "is-main": true,
   link: {
     "native": {
       "stub-cc-flags": "$linux_stub_cc_flags",
