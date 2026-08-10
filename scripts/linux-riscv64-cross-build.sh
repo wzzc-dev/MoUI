@@ -417,6 +417,7 @@ restore_toolchain() {
     [[ -f "$toolchain_lib/$object.moui-cross-hidden" ]] &&
       mv "$toolchain_lib/$object.moui-cross-hidden" "$toolchain_lib/$object"
   done
+  return 0
 }
 trap 'restore_toolchain; cleanup' EXIT
 
