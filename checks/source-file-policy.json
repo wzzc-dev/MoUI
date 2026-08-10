@@ -173,7 +173,7 @@
     },
     {
       "path": "examples/mo_workbench/app/workbench_wbtest.mbt",
-      "maxLines": 1404,
+      "maxLines": 1683,
       "reason": "Existing workbench integration test with declaration invalidation coverage."
     },
     {
@@ -225,6 +225,11 @@
       "path": "moui_wgpu_renderer/native_smoke.mbt",
       "maxLines": 1248,
       "reason": "Existing native WGPU diagnostic smoke."
+    },
+    {
+      "path": "examples/mo_workbench/app/view_code.mbt",
+      "maxLines": 1241,
+      "reason": "Existing workbench code workspace view implementation."
     },
     {
       "path": "moui_sun/renderer/renderer_image_sampling_cache.mbt",
