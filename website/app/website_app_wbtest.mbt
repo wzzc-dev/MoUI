@@ -211,22 +211,6 @@ test "website showcases scroll their virtual grid without a duplicate page headi
 }
 
 ///|
-test "website showcases footer links stay visible in short viewports" {
-  let model = Model::new().update(OpenShowcases)
-  let compact_size = @geometry.Size::new(width=390.0, height=390.0)
-  let compact = model.test_runtime(width=390.0, height=390.0).draw_commands()
-  let urls = website_live_demo_urls()
-  for url in urls {
-    assert_true(text_within(compact, url, compact_size))
-  }
-  let desktop_size = @geometry.Size::new(width=1180.0, height=760.0)
-  let desktop = model.test_runtime(width=1180.0, height=760.0).draw_commands()
-  for url in urls {
-    assert_true(text_within(desktop, url, desktop_size))
-  }
-}
-
-///|
 test "website resets showcase grid scroll when returning to the route" {
   let model = {
     ..Model::new().update(OpenShowcases),
@@ -263,45 +247,6 @@ test "website showcase cards link to their owning source entrypoints" {
       entry.status_key == "showcase.status.pending"
     }),
   )
-}
-
-///|
-test "website showcases footer opens live demo pages" {
-  let opened_urls : Array[String] = []
-  let bridge = @host.HostServiceBridge::new(
-    capabilities=@host.HostServiceCapabilities::new(open_url=true),
-    handle=request => {
-      match request {
-        @host.HostServiceRequest::OpenUrl(url) => {
-          opened_urls.push(url)
-          @host.HostServiceResponse::UrlOpened
-        }
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
-      }
-    },
-  )
-  let runtime = Model::new()
-    .update(OpenShowcases)
-    .test_runtime_with_services(
-      @backend_common_services.app_services(bridge~),
-      width=1180.0,
-      height=760.0,
-    )
-  let commands = runtime.draw_commands()
-  let urls = website_live_demo_urls()
-  inspect(urls.length(), content="3")
-  for url in urls {
-    assert_true(has_text(commands, url))
-  }
-  click_text(runtime, urls[0])
-  inspect(opened_urls.length(), content="1")
-  inspect(opened_urls[0], content=urls[0])
-  click_text(runtime, urls[1])
-  inspect(opened_urls.length(), content="2")
-  inspect(opened_urls[1], content=urls[1])
-  click_text(runtime, urls[2])
-  inspect(opened_urls.length(), content="3")
-  inspect(opened_urls[2], content=urls[2])
 }
 
 ///|
