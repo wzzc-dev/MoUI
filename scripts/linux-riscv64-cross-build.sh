@@ -309,13 +309,31 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Align the zig target glibc version with the sysroot (libstdc++ headers
+# require glibc >= 2.32 features) and resolve the libstdc++ include layout.
+glibc_major="$(awk '/^#define __GLIBC_MAJOR__/ { print $3; exit }' \
+  "$sysroot/usr/include/features.h" 2>/dev/null)"
+glibc_minor="$(awk '/^#define __GLIBC_MINOR__/ { print $3; exit }' \
+  "$sysroot/usr/include/features.h" 2>/dev/null)"
+: "${glibc_major:=2}"
+: "${glibc_minor:=39}"
+cxx_ver="$(ls "$sysroot/usr/include/c++/" 2>/dev/null | head -1)"
+: "${cxx_ver:=13}"
+target_triple="riscv64-linux-gnu.${glibc_major}.${glibc_minor}"
+
 cat > "$wrapper_dir/moui-riscv64-cc" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 sysroot="$sysroot"
+target_triple="$target_triple"
+cxx_ver="$cxx_ver"
+has_c=0
+has_o=0
 args=()
 for arg in "\$@"; do
   case "\$arg" in
+    "-c") has_c=1; args+=("\$arg") ;;
+    "-o") has_o=1; args+=("\$arg") ;;
     "-DMOONBIT_ALLOW_STACKTRACE"|"-DMOONBIT_USE_SIMDUTF")
       # moon compiles its runtime with stacktrace/simdutf enabled and then
       # links host-prebuilt objects (~/.moon/lib) that are not available for
@@ -346,8 +364,24 @@ for arg in "\$@"; do
       ;;
   esac
 done
-exec "$zig_bin" cc -target riscv64-linux-gnu --sysroot "\$sysroot" \
-  -lc++ \
+if [[ \$has_c -eq 0 && \$has_o -eq 1 ]]; then
+  # Link invocation: the Skia release archive is built against libstdc++
+  # and needs the exception runtime; pass the sysroot libraries directly
+  # (zig filters -lstdc++ and would substitute its own libc++ instead).
+  args+=(
+    "\$sysroot/usr/lib/riscv64-linux-gnu/libstdc++.so"
+    "\$sysroot/lib/riscv64-linux-gnu/libgcc_s.so.1"
+  )
+fi
+# Use the sysroot libstdc++ (matching the Skia archive) instead of zig's
+# bundled libc++, disable zig's default UBSan instrumentation, and expose
+# the sysroot include layout (libstdc++ before /usr/include so that
+# include_next resolves against the target glibc headers).
+exec "$zig_bin" cc -target "\$target_triple" --sysroot "\$sysroot" \
+  -fno-sanitize=all \
+  -isystem "\$sysroot/usr/include/c++/\$cxx_ver" \
+  -isystem "\$sysroot/usr/include/riscv64-linux-gnu/c++/\$cxx_ver" \
+  -isystem "\$sysroot/usr/include/backward" \
   -isystem "\$sysroot/usr/include" \
   "\${args[@]}"
 EOF
@@ -383,8 +417,8 @@ trap 'restore_toolchain; cleanup' EXIT
 # compatible archive at the path moon always passes.
 stub_src="$repo_root/scripts/moui-riscv64-libbacktrace-stub.c"
 stub_obj="$wrapper_dir/moui-riscv64-libbacktrace-stub.o"
-"$zig_bin" cc -target riscv64-linux-gnu --sysroot "$sysroot" \
-  -lc++ -O2 -c "$stub_src" -o "$stub_obj"
+"$zig_bin" cc -target "$target_triple" --sysroot "$sysroot" \
+  -fno-sanitize=all -O2 -c "$stub_src" -o "$stub_obj"
 "$zig_bin" ar rcs "$toolchain_lib/libbacktrace.a" "$stub_obj"
 
 export MOUI_LINUX_GLIB_STUB_CC_FLAGS="$glib_stub_flags"
