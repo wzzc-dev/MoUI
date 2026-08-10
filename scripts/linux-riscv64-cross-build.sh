@@ -572,13 +572,17 @@ if [[ $run_qemu -eq 1 ]]; then
         "${root_cmd[@]}" rm -f "$sysroot$staged"
         return "$status"
       fi
-      "${root_cmd[@]}" env \
-        HOME=/tmp \
-        XDG_CACHE_HOME=/tmp/.cache \
-        FONTCONFIG_FILE=/etc/fonts/fonts.conf \
-        MOUI_SKIA_FONT_DIRS=/usr/share/fonts \
-        MOUI_SKIA_RENDERER=skia-raster \
-        chroot "$sysroot" /usr/bin/qemu-riscv64-static "$staged" 2>&1 | tee -a "$log"
+      # Run under a pseudo-terminal so MoonBit's buffered stdout is flushed
+      # per line; otherwise failure details printed right before abort() are
+      # lost when the smoke fails and calls fail_smoke.
+      local chroot_cmd="env \
+HOME=/tmp \
+XDG_CACHE_HOME=/tmp/.cache \
+FONTCONFIG_FILE=/etc/fonts/fonts.conf \
+MOUI_SKIA_FONT_DIRS=/usr/share/fonts \
+MOUI_SKIA_RENDERER=skia-raster \
+chroot \"$sysroot\" /usr/bin/qemu-riscv64-static \"$staged\""
+      "${root_cmd[@]}" script -qec "$chroot_cmd" /dev/null 2>&1 | tee -a "$log"
       local status="${PIPESTATUS[0]}"
       set -e
       "${root_cmd[@]}" rm -f "$sysroot$staged"
