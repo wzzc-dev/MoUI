@@ -46,6 +46,8 @@ jobs:
       - name: Stage website artifact
         run: |
           node scripts/package-web-app.mjs website/web_wasm --out dist/pages
+          node scripts/package-web-app.mjs examples/showcase/web_wasm --out dist/pages/showcase
+          node scripts/package-web-app.mjs examples/markdown_editor/web_wasm --out dist/pages/markdown-editor
           node scripts/package-website-playground.mjs --out dist/pages/playground
           node scripts/sync-website-docs.mjs --out dist/pages/docs
 
@@ -70,6 +72,18 @@ jobs:
           test -f dist/pages/docs/harmonyos-support.md
           test -f dist/pages/robots.txt
           test -f dist/pages/sitemap.xml
+          test -f dist/pages/showcase/index.html
+          test -f dist/pages/showcase/web_wasm.wasm
+          test -f dist/pages/showcase/runtime.js
+          test -f dist/pages/showcase/browser_runtime.js
+          test -f dist/pages/showcase/canvas2d_runtime.js
+          test -f dist/pages/showcase/bundle-size.json
+          test -f dist/pages/markdown-editor/index.html
+          test -f dist/pages/markdown-editor/web_wasm.wasm
+          test -f dist/pages/markdown-editor/runtime.js
+          test -f dist/pages/markdown-editor/browser_runtime.js
+          test -f dist/pages/markdown-editor/canvas2d_runtime.js
+          test -f dist/pages/markdown-editor/bundle-size.json
           test -f dist/pages/playground/index.html
           test -f dist/pages/playground/playground.wasm
           test -f dist/pages/playground/runtime.js
@@ -82,6 +96,12 @@ jobs:
           grep -q 'from "./runtime.js"' dist/pages/index.html
           grep -q '"./web_wasm.wasm"' dist/pages/index.html
           ! grep -q '_build/wasm-gc' dist/pages/index.html
+          grep -q 'from "./runtime.js"' dist/pages/showcase/index.html
+          grep -q '"./web_wasm.wasm"' dist/pages/showcase/index.html
+          ! grep -q '_build/wasm-gc' dist/pages/showcase/index.html
+          grep -q 'from "./runtime.js"' dist/pages/markdown-editor/index.html
+          grep -q '"./web_wasm.wasm"' dist/pages/markdown-editor/index.html
+          ! grep -q '_build/wasm-gc' dist/pages/markdown-editor/index.html
           ! grep -q '_build' dist/pages/playground/index.html
           ! grep -q 'CodeMirror' dist/pages/playground/index.html
           node scripts/test-playground-assets.mjs --root dist/pages/playground

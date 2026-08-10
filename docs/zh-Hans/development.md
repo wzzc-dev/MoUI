@@ -279,7 +279,9 @@ node scripts/check-website-docs.mjs
 
 sync 命令刷新被忽略的本地预览副本。check 命令会生成并验证隔离的临时副本，因此干净 checkout 中不要求存在 `website/web_wasm/docs/`。
 
-GitHub Pages 会用 `scripts/package-web-app.mjs website/web_wasm --out dist/pages` 打包 `website/web_wasm`，用
+GitHub Pages 会在站点根目录打包 `website/web_wasm`，并用
+`scripts/package-web-app.mjs` 将 Showcase 和 Markdown Editor Web 入口分别放到
+`/showcase/` 和 `/markdown-editor/`，用
 `node scripts/package-website-playground.mjs --out dist/pages/playground` 嵌入 Playground，然后用
 `node scripts/sync-website-docs.mjs --out dist/pages/docs` stage docs。本地同一布局是一条命令：
 
