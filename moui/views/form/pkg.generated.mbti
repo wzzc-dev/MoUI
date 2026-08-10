@@ -132,4 +132,3 @@ pub fn FormValidationSummary::valid(Self) -> Bool
 // Type aliases
 
 // Traits
-

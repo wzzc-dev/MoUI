@@ -47,4 +47,3 @@ pub fn TextGraphemeBoundaries::utf8_offset(Self, Int) -> Int
 // Type aliases
 
 // Traits
-

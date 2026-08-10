@@ -20,6 +20,7 @@
     "action.get_started": "开始使用",
     "action.open_source": "打开源码",
     "action.open_source_for": "打开 {title} 的源码",
+    "action.open_demo": "打开在线演示 {url}",
     "action.copy": "复制",
     "action.copied": "已复制",
     "action.read_docs": "阅读文档",

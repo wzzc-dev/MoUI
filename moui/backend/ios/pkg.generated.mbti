@@ -98,4 +98,3 @@ pub fn IosSurfaceHandle::raw(Self) -> UInt64
 // Type aliases
 
 // Traits
-

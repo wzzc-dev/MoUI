@@ -473,4 +473,3 @@ pub(open) trait NativeSurfaceCapability {
   fn resize(Self, @core.SurfaceMetrics) -> Unit
   fn dispose(Self) -> Unit
 }
-

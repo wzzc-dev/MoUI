@@ -17,4 +17,3 @@ pub fn directwrite_text_provider() -> @moui_wgpu_renderer.NativePlatformTextProv
 // Type aliases
 
 // Traits
-

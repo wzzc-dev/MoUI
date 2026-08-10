@@ -55,4 +55,3 @@ pub fn WindowFrameStates::renderer(Self, @backend.WindowId) -> @render.RendererS
 // Type aliases
 
 // Traits
-

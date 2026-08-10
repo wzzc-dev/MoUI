@@ -234,4 +234,3 @@ pub fn HostedWindowBackend::title(Self) -> String
 // Type aliases
 
 // Traits
-

@@ -60,4 +60,3 @@ pub(all) enum DesignSystemsMsg {
 // Type aliases
 
 // Traits
-

@@ -199,4 +199,3 @@ pub fn VtParser::screen(Self) -> TermScreen
 // Type aliases
 
 // Traits
-

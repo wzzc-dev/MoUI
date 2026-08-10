@@ -132,4 +132,3 @@ pub fn Workspace::title(Self) -> String
 // Type aliases
 
 // Traits
-

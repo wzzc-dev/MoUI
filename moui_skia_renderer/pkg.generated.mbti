@@ -231,4 +231,3 @@ pub(open) trait NativePlatformSurface {
   fn gpu_promoted(Self) -> Bool
   fn platform_label(Self) -> String
 }
-

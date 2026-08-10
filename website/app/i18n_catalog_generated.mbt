@@ -113,6 +113,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "a11y.open_lesson",
         GeneratedI18nMessage::Text("Open lesson in MoUI Playground"),
       ),
+      ("action.open_demo", GeneratedI18nMessage::Text("Open live demo {url}")),
       ("action.open_docs", GeneratedI18nMessage::Text("Open Docs")),
       ("action.read_docs", GeneratedI18nMessage::Text("Read the Docs")),
       ("docs.search_a11y", GeneratedI18nMessage::Text("Search documentation")),
@@ -670,6 +671,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "a11y.open_lesson",
         GeneratedI18nMessage::Text("在 MoUI Playground 中打开课程"),
+      ),
+      (
+        "action.open_demo",
+        GeneratedI18nMessage::Text("打开在线演示 {url}"),
       ),
       ("action.open_docs", GeneratedI18nMessage::Text("打开文档")),
       ("action.read_docs", GeneratedI18nMessage::Text("阅读文档")),

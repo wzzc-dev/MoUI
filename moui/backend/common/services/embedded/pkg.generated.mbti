@@ -121,4 +121,3 @@ pub(all) struct HostWireUpdate {
 // Type aliases
 
 // Traits
-

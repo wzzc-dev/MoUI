@@ -604,4 +604,3 @@ pub using @core {type TypographyScale}
 pub using @controls {type WizardStep}
 
 // Traits
-

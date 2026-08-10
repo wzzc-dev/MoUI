@@ -67,6 +67,7 @@ pub enum Msg {
   OpenDocs
   OpenShowcases
   OpenShowcaseSource(String)
+  OpenLiveDemo(String)
   SelectDoc(String)
   OpenDocLink(String)
   CopyText(String)
@@ -149,4 +150,3 @@ pub fn WebsiteRouteHost::new(route_source~ : @services.RouteSource, push_route? 
 // Type aliases
 
 // Traits
-

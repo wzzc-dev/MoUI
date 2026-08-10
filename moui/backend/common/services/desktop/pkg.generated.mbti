@@ -43,4 +43,3 @@ pub fn DesktopHostServices::new(capabilities~ : @backend.HostServiceCapabilities
 // Type aliases
 
 // Traits
-

@@ -62,4 +62,3 @@ pub fn Canvas2DRenderer::to_renderer_session(Self) -> @render.RendererSession
 pub type Canvas2DError = String
 
 // Traits
-

@@ -646,4 +646,3 @@ pub fn Typeface::is_italic(Self) -> Bool
 // Type aliases
 
 // Traits
-
