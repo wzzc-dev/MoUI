@@ -139,10 +139,9 @@ pub fn[Msg] FlexibleModifier::to_any_modifier(
         [] => Size::new(width=0.0, height=0.0)
       }
       let s = ctx.constraints.constrain(child_size)
-      ViewLayoutResult::new(
-        size=s,
-        child_frames=[Rect::new(x=0.0, y=0.0, width=s.width, height=s.height)],
-      )
+      ViewLayoutResult::new(size=s, child_frames=[
+        Rect::new(x=0.0, y=0.0, width=s.width, height=s.height),
+      ])
     },
   }
 }
