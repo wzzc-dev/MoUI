@@ -90,6 +90,56 @@ Linux runtime requirements are intentionally native:
   detection with `MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` and
   `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS`.
 
+## Linux RISC-V64 Cross-build
+
+MoUI's first Linux RISC-V64 path is an experimental architecture variant of
+the canonical `linux/skia` route. It targets `riscv64-linux-gnu` (glibc/LP64D)
+and deliberately selects Skia Raster with static linking. Vulkan, WGPU,
+WebView, and matching-device Wayland runtime claims are outside this first
+slice.
+
+The fixture is locked to Ubuntu Base 24.04.4 RISC-V64 and Zig 0.16.0 in
+`checks/toolchains/linux-riscv64.json`. On a Linux host with
+`qemu-user-static`, prepare the sysroot and run the L0-L2 helper:
+
+```sh
+bash scripts/prepare-linux-riscv64-sysroot.sh \
+  --output .cache/moui/riscv64/sysroot/ubuntu-24.04.4-riscv64
+bash scripts/linux-riscv64-cross-build.sh \
+  --sysroot .cache/moui/riscv64/sysroot/ubuntu-24.04.4-riscv64 \
+  --run-qemu
+```
+
+The helper sets `MOON_CC`/`MOON_AR` to Zig wrappers, redirects `pkg-config` to
+the target sysroot, builds `examples/showcase/linux_skia` and the offscreen
+Skia renderer/text smokes in Moon Release mode, then verifies ELF64, the RISC-V
+machine, the LP64D glibc interpreter, static Skia, and the absence of a Vulkan
+dependency. The evidence directory includes the complete target package list,
+the sysroot file-checksum manifest, ELF reports, executable checksums, and smoke
+logs. `--run-qemu` chroots into the target rootfs for dynamic libraries,
+fontconfig, and fonts, and executes only renderer-owned offscreen smokes; it
+does not prove a Wayland compositor, input, IME, clipboard, or desktop service.
+
+The helper self-test requires no downloaded sysroot and pins the explicit
+failure diagnostics for the wrong architecture/ABI, missing target `.pc`
+files, and accidental Vulkan enablement:
+
+```sh
+bash scripts/test-linux-riscv64-cross-build.sh
+```
+
+The architecture evidence contract lives in
+`checks/architecture-evidence/linux-skia-riscv64.json`. Keep its `ready=false`
+and `runtimeL3.status=pending` until a real RISC-V64 Wayland device produces
+matching-host evidence. A device run uses the existing Linux Showcase command
+and remains a separate L3 promotion step. Copy the cross-built Showcase ELF to
+the matching RISC-V64 Wayland device, then collect first-frame, input, IME,
+clipboard, and service logs with:
+
+```sh
+MOUI_SKIA_RENDERER=skia-raster ./linux_skia.exe
+```
+
 ## Running
 
 Useful focused commands on a configured Linux host:

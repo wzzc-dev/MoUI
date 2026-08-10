@@ -243,7 +243,12 @@ owning-package boundaries clear.
   host-service bridge, text-input/IME request sync, drag/drop conversion, a
   neutral CPU presenter plus Wayland GPU surface descriptor,
   optional WebKitGTK platform-view sync, shared host event conversion, and
-  explicit native menu/AT-SPI follow-up reporting.
+  explicit native menu/AT-SPI follow-up reporting. Its RISC-V64 architecture
+  variant uses the existing Linux route with `riscv64-linux-gnu` glibc and
+  Skia Raster static linking; use
+  `scripts/prepare-linux-riscv64-sysroot.sh` and
+  `scripts/linux-riscv64-cross-build.sh --sysroot PATH --run-qemu` for
+  non-blocking L0-L2 evidence. QEMU offscreen smokes do not promote Wayland L3.
 - `backend/android/`: Android embedded runtime backend. `window/android` owns
   the Kotlin/AndroidX template, native event queue, lifecycle, surface, and
   input; the backend translates window events and supplies a neutral

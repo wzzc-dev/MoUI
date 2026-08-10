@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "linux-riscv64-gnu",
+  "distribution": "ubuntu",
+  "suite": "noble",
+  "baseVersion": "24.04.4",
+  "architecture": "riscv64",
+  "abi": "gnu",
+  "targetTriple": "riscv64-linux-gnu",
+  "glibcAbi": "lp64d",
+  "baseUrl": "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.4-base-riscv64.tar.gz",
+  "baseSha256": "1b3cdb6a9c2370491584313b79e35838eaec0ec6a8d6b67f3ffff578c34cce2d",
+  "zigVersion": "0.16.0",
+  "zigUrl": "https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz",
+  "zigSha256": "70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00",
+  "packages": [
+    "libc6-dev",
+    "libgcc-13-dev",
+    "libstdc++-13-dev",
+    "libwayland-dev",
+    "wayland-protocols",
+    "libglib2.0-dev",
+    "zlib1g-dev",
+    "libfontconfig1-dev",
+    "libfreetype-dev",
+    "libharfbuzz-dev",
+    "fonts-dejavu-core",
+    "fonts-noto-core",
+    "fonts-noto-color-emoji"
+  ]
+}

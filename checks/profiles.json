@@ -29,6 +29,16 @@
           ]
         },
         {
+          "name": "platform matrix validator tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/validate_platform_matrix",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "guidance consistency",
           "argv": [
             "node",
@@ -671,6 +681,14 @@
           "argv": [
             "node",
             "scripts/validate-platform-matrix.mjs"
+          ]
+        },
+        {
+          "name": "Linux RISC-V64 helper self-test",
+          "host": "linux",
+          "argv": [
+            "bash",
+            "scripts/test-linux-riscv64-cross-build.sh"
           ]
         },
         {

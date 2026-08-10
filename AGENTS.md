@@ -86,6 +86,17 @@ sh scripts/check.sh --profile platform
 sh scripts/check.sh --profile theme
 ```
 
+## Linux RISC-V64 experimental route
+
+Linux RISC-V64 is an architecture variant of the canonical `linux/skia` route,
+recorded as `linux-skia-riscv64`, not a new platform route. The first slice
+targets `riscv64-linux-gnu` with Skia Raster static linking and is limited to
+non-blocking L0-L2 evidence. Use
+`scripts/prepare-linux-riscv64-sysroot.sh` with the locked Ubuntu Base fixture,
+then `scripts/linux-riscv64-cross-build.sh --sysroot PATH --run-qemu` for the
+cross-build and renderer-owned QEMU smokes. Keep `ready=false` and do not raise
+Linux Wayland L3 status without matching-device evidence.
+
 Design Systems is addon diagnostic coverage; use the theme profile for it.
 Windows check wrapper plan and shared platform service checks are tracked in
 `docs/testing.md` and `checks/profiles.json`.

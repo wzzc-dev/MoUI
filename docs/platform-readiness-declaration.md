@@ -33,6 +33,24 @@ OS product completeness.
 | **HarmonyOS** | **experimental** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Signed-device presenter/service evidence; GPU seven-gate claim; usability commitment |
 | **WeChat Mini Program** | **experimental** | `ready=false`: the window-hosted Canvas 2D session compiles, but no development/demonstration usability or product commitment is made; `status=experimental` | Canvas 2D renderer and wasm-gc build pipeline compile; Skyline project template is staged | Real Mini Program pixel smoke; touch event verification; wx API service integrations; usability commitment |
 
+### Linux RISC-V64 Architecture Variant
+
+Linux RISC-V64 is recorded as `linux-skia-riscv64` under
+`checks/platform-matrix.json`, not as a new canonical platform route. The
+variant targets `riscv64-linux-gnu`, is Tier 3 and `experimental`, and keeps
+`ready=false` while the matching-device Wayland path is unverified.
+
+| Evidence | Initial contract | Promotion boundary |
+|---|---|---|
+| L0 | Cross-built `examples/showcase/linux_skia` ELF64 RISC-V | Locked sysroot, Zig wrapper, and ELF report |
+| L1 | Cross-build package/link checks | Target GLib/Wayland/fontconfig pkg-config and native link success |
+| L2 | QEMU offscreen Skia Raster renderer and text/emoji smokes | Real pixel markers, async second frame, and SkParagraph output |
+| L3 | `pending` | Matching RISC-V64 Wayland device first frame, input, IME, clipboard, and services |
+
+The independent evidence file is
+`checks/architecture-evidence/linux-skia-riscv64.json`. QEMU L2 evidence does
+not promote `checks/platforms/linux.json` or the Linux Wayland runtime claim.
+
 ### Two Prohibited Misstatements
 
 1. **Do not** state “all six platforms are product-ready / all L3 checks are green.”

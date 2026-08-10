@@ -23,6 +23,45 @@ Linux 运行时要求有意保持原生：
 - glib-2.0 开发头文件和运行时库。`backend/linux` 无条件通过 GLib main loop（`g_timeout_add` / `g_source_remove`）驱动 `@services.TimerSource` subscription，因此 `moui` prebuild 通过 `pkg-config` 解析 `glib-2.0`，把得到的 `-I` include 标志送入 `stub-cc-flags`，并把 libs 合并进 `backend/linux` `link_configs` 条目。在 `pkg-config` 找不到 `glib-2.0` 的宿主上，两者都会解析为空（C stub 主体由 `#ifdef __linux__` 保护，并且只在 Linux 上有意义）。发行版特定设置可以用 `MOUI_LINUX_GLIB_STUB_CC_FLAGS` 和 `MOUI_LINUX_GLIB_CC_LINK_FLAGS` 覆盖解析出的标志。
 - 原生 WebView 支持需要 WebKitGTK 开发包（`libwebkit2gtk-4.1-dev` 或 `4.0`）。`moui_webview` prebuild 通过 `pkg-config` 自动检测带 `webkit2gtk-4.1` 或 `webkit2gtk-4.0` 的 `gtk+-3.0`；如果找到，则启用原生桥。fallback 构建不链接 WebKitGTK，并报告 WebView 不可用。发行版特定设置可以用 `MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` 和 `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS` 覆盖检测。
 
+## Linux RISC-V64 交叉构建
+
+首版 Linux RISC-V64 支持是 canonical `linux/skia` 路线的实验性架构变体，
+目标 ABI 固定为 `riscv64-linux-gnu`（glibc/LP64D）。它只承诺 Skia Raster
+static provider 的 L0-L2 证据，不承诺 Vulkan、WGPU、WebView 或 Wayland L3。
+
+Ubuntu Base 24.04.4 RISC-V64 与 Zig 0.16.0 的 URL 和 SHA-256 锁在
+`checks/toolchains/linux-riscv64.json`。在安装了 `qemu-user-static` 的 Linux
+宿主上运行：
+
+```sh
+bash scripts/prepare-linux-riscv64-sysroot.sh \
+  --output .cache/moui/riscv64/sysroot/ubuntu-24.04.4-riscv64
+bash scripts/linux-riscv64-cross-build.sh \
+  --sysroot .cache/moui/riscv64/sysroot/ubuntu-24.04.4-riscv64 \
+  --run-qemu
+```
+
+helper 使用临时 `MOON_CC`/`MOON_AR` Zig wrapper 和目标 `pkg-config`，以
+Release 模式构建现有 Showcase、Skia renderer smoke 与 text/emoji smoke。
+它严格检查 ELF64、RISC-V machine、LP64D glibc interpreter、static Skia、
+无 Vulkan 动态依赖，并记录目标包版本、sysroot 文件 checksum、ELF 报告和
+QEMU 日志。`--run-qemu` 在目标 rootfs 中使用其动态库、fontconfig 与字体；
+该结果仍不是 Wayland L3。
+
+无需下载 sysroot 的负向检查为：
+
+```sh
+bash scripts/test-linux-riscv64-cross-build.sh
+```
+
+架构证据保存在 `checks/architecture-evidence/linux-skia-riscv64.json`，必须
+保持 `ready=false` 与 `runtimeL3.status=pending`。真实 RISC-V64 Wayland
+设备上的 L3 仍需单独收集首帧、输入、IME、剪贴板和服务日志：
+
+```sh
+MOUI_SKIA_RENDERER=skia-raster ./linux_skia.exe
+```
+
 ## 运行
 
 在已配置 Linux 宿主上有用的聚焦命令：

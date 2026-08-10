@@ -256,5 +256,25 @@
       "ready": false,
       "coverage": ["scheduled", "manual"]
     }
+  ],
+  "architectureVariants": [
+    {
+      "id": "linux-skia-riscv64",
+      "baseRoute": "linux-skia",
+      "platform": "linux",
+      "renderer": "skia",
+      "target": "native",
+      "architecture": "riscv64",
+      "abi": "gnu",
+      "rendererModes": ["skia-raster"],
+      "tier": 3,
+      "releaseGate": "non-blocking",
+      "releaseBlocking": false,
+      "evidenceRequired": "L0-L2",
+      "evidenceFile": "checks/architecture-evidence/linux-skia-riscv64.json",
+      "productClass": "experimental",
+      "ready": false,
+      "coverage": ["scheduled", "manual"]
+    }
   ]
 }

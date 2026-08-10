@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "linux-skia-riscv64",
+  "baseRoute": "linux-skia",
+  "platform": "linux",
+  "renderer": "skia",
+  "architecture": "riscv64",
+  "abi": "gnu",
+  "rendererModes": ["skia-raster"],
+  "evidenceRequired": "L0-L2",
+  "sourceBuild": {
+    "status": "pending",
+    "command": "scripts/linux-riscv64-cross-build.sh --sysroot PATH"
+  },
+  "protocolL1": {
+    "status": "pending",
+    "evidence": "cross-build package and link checks"
+  },
+  "rendererL2": {
+    "status": "pending",
+    "presenterRoute": "offscreen-raster",
+    "evidence": "qemu-riscv64 Skia renderer and text/emoji smokes"
+  },
+  "runtimeL3": {
+    "status": "pending",
+    "evidence": "matching RISC-V64 Wayland device required"
+  },
+  "ready": false,
+  "productClass": "experimental"
+}

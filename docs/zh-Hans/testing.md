@@ -61,6 +61,37 @@ Native WGPU 是诊断路线。修改该路线，或需要 full-workspace hotspot
 
 generated-interface 步骤会快照每个被跟踪的 `pkg.generated.mbti`，运行一次 workspace-wide `moon info`，并且只在生成产生新差异时失败。这让检查在 dirty working tree 中仍然有用，同时干净 CI checkout 仍会拒绝未提交的 public-interface drift。
 
+### Linux RISC-V64 实验路线
+
+RISC-V64 是 `linux/skia` 的非阻塞 scheduled/manual 架构变体，不增加第
+15 条 canonical route。Ubuntu sysroot 与 Zig 锁定信息位于
+`checks/toolchains/linux-riscv64.json`：
+
+```sh
+bash scripts/prepare-linux-riscv64-sysroot.sh \
+  --output .cache/moui/riscv64/sysroot/ubuntu-24.04.4-riscv64
+bash scripts/linux-riscv64-cross-build.sh \
+  --sysroot .cache/moui/riscv64/sysroot/ubuntu-24.04.4-riscv64 \
+  --target-dir _build/riscv64-linux-gnu \
+  --log-dir artifacts/linux-riscv64 \
+  --run-qemu
+```
+
+L0 要求 Showcase ELF 报告包含 ELF64、RISC-V 与 LP64D glibc
+interpreter。L2 要求 renderer、async image second frame、text/emoji 和真实
+SkParagraph marker。QEMU 证据仅属于 renderer，不能提升 Linux Wayland L3。
+无需 sysroot 的 metadata/schema 与负向 helper 检查为：
+
+```sh
+node scripts/validate-platform-matrix.mjs
+moon test tools/moui/validate_platform_matrix --target native
+bash scripts/test-linux-riscv64-cross-build.sh
+```
+
+`.github/workflows/moui-linux-riscv64-cross-build.yml` 是 scheduled/manual
+producer，上传 sysroot 包版本与 checksum manifest、Release build log、ELF
+报告与 checksum，以及两类 QEMU smoke 日志。
+
 `external-consumer.yml` workflow 会把选定的 base、Skia 或 Web fixture 复制到 checkout 外部。0.2 发布前，registry mode 继续验证稳定版 `wzzc-dev/moui@0.1.7` 的 base profile；package mode 验证 0.2 head 的 base-only、Skia 与 Web archives。package-mode `moon tree` 还会拒绝 concrete renderer 与诊断/测试依赖进入基础闭包。所有解析后的 `.mooncakes` 路径都必须报告 `monorepoSource=false`：
 
 ```sh

@@ -21,6 +21,24 @@ OS 产品完成度。
 | **iOS** | **experimental** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching simulator/device presenter 和 VoiceOver evidence；GPU seven-gate claim；可用性承诺 |
 | **HarmonyOS** | **experimental** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | signed-device presenter/service evidence；GPU seven-gate claim；可用性承诺 |
 
+### Linux RISC-V64 架构变体
+
+`linux-skia-riscv64` 登记在 `checks/platform-matrix.json` 的
+`architectureVariants` 中，不是新的 canonical platform route。它使用
+`riscv64-linux-gnu`、Tier 3、`experimental`、`ready=false`，并固定为
+Skia Raster static provider。
+
+| 证据级别 | 首版契约 | 晋升边界 |
+|---|---|---|
+| L0 | 交叉构建现有 `examples/showcase/linux_skia` 的 ELF64 RISC-V binary | 锁定 sysroot/Zig、LP64D interpreter 与 ELF report |
+| L1 | 目标包、header、`.pc` 与 link 检查 | GLib、Wayland、fontconfig、FreeType、HarfBuzz |
+| L2 | QEMU rootfs 内的 Skia renderer 与 text/emoji smoke | pixels、async second frame、真实 SkParagraph marker |
+| L3 | `pending` | 真实 RISC-V64 Wayland 设备的首帧、输入、IME、剪贴板与服务 |
+
+独立证据文件为
+`checks/architecture-evidence/linux-skia-riscv64.json`。QEMU L2 不得提升
+`checks/platforms/linux.json` 或 Linux Wayland L3。
+
 ### 禁止的两种错误表述
 
 1. **不要**写「六端均已产品就绪 / L3 全绿」。
