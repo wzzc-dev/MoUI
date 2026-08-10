@@ -67,7 +67,6 @@ pub enum Msg {
   OpenDocs
   OpenShowcases
   OpenShowcaseSource(String)
-  OpenLiveDemo(String)
   SelectDoc(String)
   OpenDocLink(String)
   CopyText(String)
