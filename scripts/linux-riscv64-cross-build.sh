@@ -311,10 +311,38 @@ trap cleanup EXIT
 
 cat > "$wrapper_dir/moui-riscv64-cc" <<EOF
 #!/usr/bin/env bash
-exec "$zig_bin" cc -target riscv64-linux-gnu --sysroot "$sysroot" \
+set -euo pipefail
+sysroot="$sysroot"
+args=()
+for arg in "\$@"; do
+  case "\$arg" in
+    "-L\$sysroot"/*)
+      # zig cc prefixes every absolute -L with --sysroot; strip the
+      # already-prefixed sysroot path so zig rebuilds the correct one.
+      args+=("-L/\${arg#-L\$sysroot/}")
+      ;;
+    -L/*)
+      # Host-absolute library dirs outside the sysroot (e.g. the Skia
+      # release cache) would also get the sysroot prefix. Map them into
+      # the sysroot with a stable symlink so lld can resolve them.
+      target="\${arg#-L}"
+      digest="\$(printf '%s' "\$target" | cksum | awk '{print \$1}')"
+      link_dir="\$sysroot/.moui-lib-\$digest"
+      if [[ ! -e "\$link_dir" ]]; then
+        mkdir -p "\$(dirname "\$link_dir")"
+        ln -s "\$target" "\$link_dir" 2>/dev/null || true
+      fi
+      args+=("-L/.moui-lib-\$digest")
+      ;;
+    *)
+      args+=("\$arg")
+      ;;
+  esac
+done
+exec "$zig_bin" cc -target riscv64-linux-gnu --sysroot "\$sysroot" \
   -lc++ \
-  -isystem "$sysroot/usr/include" \
-  "\$@"
+  -isystem "\$sysroot/usr/include" \
+  "\${args[@]}"
 EOF
 cat > "$wrapper_dir/moui-riscv64-ar" <<EOF
 #!/usr/bin/env bash
