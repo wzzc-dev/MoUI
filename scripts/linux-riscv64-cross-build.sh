@@ -341,6 +341,13 @@ for arg in "\$@"; do
       # them nor extracts the incompatible host archives.
       continue
       ;;
+    "-lstdc++"|"-lc++")
+      # moui_skia/build.js appends -lstdc++ for Linux; zig would recognize
+      # it as a request for its bundled libc++ and mix two incompatible
+      # C++ runtimes into the link. The sysroot libstdc++.so is provided
+      # explicitly on link invocations instead.
+      continue
+      ;;
     "-L\$sysroot"/*)
       # zig cc prefixes every absolute -L with --sysroot; strip the
       # already-prefixed sysroot path so zig rebuilds the correct one.
