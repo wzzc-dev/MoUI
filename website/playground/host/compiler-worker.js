@@ -272,7 +272,15 @@ async function compile(request) {
     return { revision: request.revision, status: "failed", diagnostics: normalizedDiagnostics(runner.diagnostics) };
   }
 
-  const roots = [...imports.map(value => value.path), "wzzc-dev/moui/runtime", "wzzc-dev/moui/backend/web"];
+  const roots = [
+    ...imports.map(value => value.path),
+    "wzzc-dev/moui/runtime",
+    "wzzc-dev/moui/backend/web",
+    // The fixed Runner links the web adapter directly; its core must be
+    // included or linkCore fails with Key_not_found for
+    // $_M0FP210wzzc_2ddev19moui__web__renderer9from__env.
+    "wzzc-dev/moui_web_renderer",
+  ];
   const packageCores = await Promise.all(reachablePackageIds(manifest, roots).map(id => fetchBytes(manifest.packages[id].core)));
   const coreFiles = [
     ...(manifest.core.abort ? [await fetchBytes(manifest.core.abort)] : []),
