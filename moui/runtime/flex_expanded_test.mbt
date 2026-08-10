@@ -1,9 +1,15 @@
 ///| Regression guards for the playground blank-editor bug: weighted flex
+
 ///| children (`expanded`/`flexible`) measured 0x0 (correct flex base) but
+
 ///| also placed their content in a 0x0 frame, and root-level background
+
 ///| modifiers loosened the root's tight constraints so a `column(...)`
+
 ///| measured its content height and the expanded child never received slack.
+
 ///| Together these collapsed every `expanded` subtree on the web playground
+
 ///| (and any desktop app using the same layout shape).
 
 ///|
