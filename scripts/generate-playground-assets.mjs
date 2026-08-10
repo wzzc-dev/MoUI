@@ -165,7 +165,15 @@ const collectPackage = id => {
   packageIds.add(id);
   for (const dependency of item.deps) collectPackage(dependency.path);
 };
-for (const id of [...ALLOWED_IMPORTS, "wzzc-dev/moui/runtime", "wzzc-dev/moui/backend/web"]) {
+for (const id of [
+  ...ALLOWED_IMPORTS,
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/web",
+  // The fixed Runner imports the web adapter directly
+  // (compiler-worker.js RUNNER_SOURCE); without it the in-browser compile
+  // fails with "Package asset is unavailable for wzzc-dev/moui_web_renderer".
+  "wzzc-dev/moui_web_renderer",
+]) {
   collectPackage(id);
 }
 const packages = Object.fromEntries([...packageIds].sort().map(id => [id, allPackages[id]]));
