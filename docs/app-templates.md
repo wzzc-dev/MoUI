@@ -141,14 +141,15 @@ Platform entrypoints construct the runtime outside the shared app package:
 ```moonbit
 ///|
 fn main {
-  @web.run_app(
-    "MoUI Counter",
-    @runtime.new_program_with_dimensions(
-      program=@counter_app.program(),
-      width=520.0,
-      height=360.0,
-    ),
+  let runtime = @runtime.new_program_with_dimensions(
+    program=@counter_app.program(),
+    width=520.0,
+    height=360.0,
   )
+  @runtime.run_app("MoUI Counter", runtime)
+    .render_all(@webgpu_adapter.from_env())
+    .backend(@web.entry())
+    .run()
 }
 ```
 

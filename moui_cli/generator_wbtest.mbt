@@ -164,6 +164,16 @@ test "default macOS project file plan is exact" {
   assert_true(root_mod.contains("wzzc-dev/moui@0.1.9"))
   assert_true(root_mod.contains("wzzc-dev/moui_web_renderer@0.1.9"))
   assert_true(root_mod.contains("wzzc-dev/moui_skia_renderer@0.1.9"))
+  let web_pkg = test_planned_text(files, "web_wasm/moon.pkg")
+  assert_true(web_pkg.contains("wzzc-dev/moui_web_renderer"))
+  assert_true(web_pkg.contains("@webgpu_adapter"))
+  assert_true(web_pkg.contains("web_dispatch_pointer_input"))
+  let web_main = test_planned_text(files, "web_wasm/main.mbt")
+  assert_true(web_main.contains("@runtime.run_app"))
+  assert_true(web_main.contains(".render_all(@webgpu_adapter.from_env())"))
+  assert_true(web_main.contains(".backend(@web.entry())"))
+  assert_true(web_main.contains("pub fn web_dispatch_pointer_input"))
+  assert_false(web_main.contains("@web.run_app"))
   let html = test_planned_text(files, "web_wasm/index.html")
   inspect(
     html.contains("../_build/wasm-gc/debug/build/web_wasm/web_wasm.wasm"),

@@ -292,6 +292,7 @@ fn web_pkg_text(module_name : String) -> String {
   let template =
     #|import {
     #|  "wzzc-dev/moui/backend/web",
+    #|  "wzzc-dev/moui_web_renderer" @webgpu_adapter,
     #|  "wzzc-dev/moui/runtime",
     #|  "__MODULE__/app" @app,
     #|}
@@ -305,6 +306,7 @@ fn web_pkg_text(module_name : String) -> String {
     #|    "wasm-gc": {
     #|      "exports": [
     #|        "web_dispatch_event",
+    #|        "web_dispatch_pointer_input",
     #|        "web_dispatch_semantics_action",
     #|        "web_dispatch_route",
     #|        "web_complete_async_clipboard_read",
@@ -323,14 +325,15 @@ fn web_main_text(title : String) -> String {
   let template =
     #|///|
     #|fn main {
-    #|  @web.run_app(
-    #|    "__TITLE__",
-    #|    @runtime.new_program_with_dimensions(
-    #|      program=@app.program(),
-    #|      width=720.0,
-    #|      height=480.0,
-    #|    ),
+    #|  let runtime = @runtime.new_program_with_dimensions(
+    #|    program=@app.program(),
+    #|    width=720.0,
+    #|    height=480.0,
     #|  )
+    #|  @runtime.run_app("__TITLE__", runtime)
+    #|    .render_all(@webgpu_adapter.from_env())
+    #|    .backend(@web.entry())
+    #|    .run()
     #|}
     #|
     #|///|
@@ -343,6 +346,29 @@ fn web_main_text(title : String) -> String {
     #|  text_id : Int,
     #|) -> Unit {
     #|  @web.web_dispatch_event(kind, raw_id, arg0, arg1, argd, text_id)
+    #|}
+    #|
+    #|///|
+    #|pub fn web_dispatch_pointer_input(
+    #|  raw_id : Int,
+    #|  kind : Int,
+    #|  x_px : Double,
+    #|  y_px : Double,
+    #|  delta_x_px : Double,
+    #|  delta_y_px : Double,
+    #|  button : Int,
+    #|  modifiers : Int,
+    #|) -> Int {
+    #|  @web.web_dispatch_pointer_input(
+    #|    raw_id,
+    #|    kind,
+    #|    x_px,
+    #|    y_px,
+    #|    delta_x_px,
+    #|    delta_y_px,
+    #|    button,
+    #|    modifiers,
+    #|  )
     #|}
     #|
     #|///|
