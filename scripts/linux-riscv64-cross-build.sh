@@ -539,6 +539,10 @@ if [[ $run_qemu -eq 1 ]]; then
     echo "=== qemu $name ($qemu_mode) ===" | tee "$log"
     if [[ "$qemu_mode" == chroot ]]; then
       local staged="/tmp/moui-riscv64-$name-$$"
+      local qemu_extra=""
+      if [[ "$name" == "text-emoji-smoke" ]]; then
+        qemu_extra="-strace"
+      fi
       "${root_cmd[@]}" cp "$executable" "$sysroot$staged"
       "${root_cmd[@]}" chmod 755 "$sysroot$staged"
       set +e
@@ -548,7 +552,7 @@ if [[ $run_qemu -eq 1 ]]; then
         FONTCONFIG_FILE=/etc/fonts/fonts.conf \
         MOUI_SKIA_FONT_DIRS=/usr/share/fonts \
         MOUI_SKIA_RENDERER=skia-raster \
-        chroot "$sysroot" /usr/bin/qemu-riscv64-static "$staged" 2>&1 | tee -a "$log"
+        chroot "$sysroot" /usr/bin/qemu-riscv64-static $qemu_extra "$staged" 2>&1 | tee -a "$log"
       local status="${PIPESTATUS[0]}"
       set -e
       "${root_cmd[@]}" rm -f "$sysroot$staged"
