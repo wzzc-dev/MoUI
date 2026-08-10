@@ -316,6 +316,13 @@ sysroot="$sysroot"
 args=()
 for arg in "\$@"; do
   case "\$arg" in
+    "-DMOONBIT_ALLOW_STACKTRACE"|"-DMOONBIT_USE_SIMDUTF")
+      # moon compiles its runtime with stacktrace/simdutf enabled and then
+      # links host-prebuilt objects (~/.moon/lib) that are not available for
+      # the riscv64 target. Drop the macros so the runtime neither references
+      # them nor extracts the incompatible host archives.
+      continue
+      ;;
     "-L\$sysroot"/*)
       # zig cc prefixes every absolute -L with --sysroot; strip the
       # already-prefixed sysroot path so zig rebuilds the correct one.
@@ -351,6 +358,26 @@ EOF
 chmod +x "$wrapper_dir/moui-riscv64-cc" "$wrapper_dir/moui-riscv64-ar"
 export MOON_CC="$wrapper_dir/moui-riscv64-cc"
 export MOON_AR="$wrapper_dir/moui-riscv64-ar"
+
+# moon links host-prebuilt runtime objects from the toolchain lib dir when
+# both simdutf objects exist; they are x86_64 and cannot link into the
+# riscv64 target. Hide them for this cross build and restore afterwards.
+toolchain_lib="$(cd "$(dirname "$(command -v moon)")/.." && pwd)/lib"
+hidden_simdutf=()
+for object in simdutf.o moonbit_simdutf.o; do
+  if [[ -f "$toolchain_lib/$object" ]]; then
+    mv "$toolchain_lib/$object" "$toolchain_lib/$object.moui-cross-hidden"
+    hidden_simdutf+=("$object")
+  fi
+done
+restore_toolchain() {
+  local object
+  for object in "${hidden_simdutf[@]:-}"; do
+    [[ -f "$toolchain_lib/$object.moui-cross-hidden" ]] &&
+      mv "$toolchain_lib/$object.moui-cross-hidden" "$toolchain_lib/$object"
+  done
+}
+trap 'restore_toolchain; cleanup' EXIT
 
 export MOUI_LINUX_GLIB_STUB_CC_FLAGS="$glib_stub_flags"
 export MOUI_LINUX_GLIB_CC_LINK_FLAGS="$glib_link_flags"
