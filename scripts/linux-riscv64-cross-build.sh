@@ -311,7 +311,7 @@ trap cleanup EXIT
 
 # Align the zig target glibc version with the sysroot (libstdc++ headers
 # require glibc >= 2.32 features) and resolve the libstdc++ include layout.
-glibc_major="$(awk '/^#define __GLIBC_MAJOR__/ { print $3; exit }' \
+glibc_major="$(awk '/^#define __GLIBC__/ { print $3; exit }' \
   "$sysroot/usr/include/features.h" 2>/dev/null)"
 glibc_minor="$(awk '/^#define __GLIBC_MINOR__/ { print $3; exit }' \
   "$sysroot/usr/include/features.h" 2>/dev/null)"
@@ -421,12 +421,16 @@ restore_toolchain() {
 trap 'restore_toolchain; cleanup' EXIT
 
 # Provide a riscv64 libbacktrace substitute so the linker finds a
-# compatible archive at the path moon always passes.
-stub_src="$repo_root/scripts/moui-riscv64-libbacktrace-stub.c"
-stub_obj="$wrapper_dir/moui-riscv64-libbacktrace-stub.o"
-"$zig_bin" cc -target "$target_triple" --sysroot "$sysroot" \
-  -fno-sanitize=all -O2 -c "$stub_src" -o "$stub_obj"
-"$zig_bin" ar rcs "$toolchain_lib/libbacktrace.a" "$stub_obj"
+# compatible archive at the path moon always passes. Only replace the
+# archive when the host one was actually hidden, so a failed lookup never
+# leaves an incompatible archive on the host toolchain.
+if [[ " ${hidden_toolchain[*]} " == *" libbacktrace.a "* ]]; then
+  stub_src="$repo_root/scripts/moui-riscv64-libbacktrace-stub.c"
+  stub_obj="$wrapper_dir/moui-riscv64-libbacktrace-stub.o"
+  "$zig_bin" cc -target "$target_triple" --sysroot "$sysroot" \
+    -fno-sanitize=all -O2 -c "$stub_src" -o "$stub_obj"
+  "$zig_bin" ar rcs "$toolchain_lib/libbacktrace.a" "$stub_obj"
+fi
 
 export MOUI_LINUX_GLIB_STUB_CC_FLAGS="$glib_stub_flags"
 export MOUI_LINUX_GLIB_CC_LINK_FLAGS="$glib_link_flags"
@@ -456,6 +460,10 @@ run_build() {
 run_build examples/showcase/linux_skia
 run_build moui_tests/skia_renderer_smoke/native
 run_build moui_tests/skia_text_emoji_smoke/native
+
+# All moon builds are done; put the host toolchain back immediately so a
+# later crash (e.g. SIGKILL) cannot leave the user's moon install broken.
+restore_toolchain
 
 find_executable() {
   local package="$1"
