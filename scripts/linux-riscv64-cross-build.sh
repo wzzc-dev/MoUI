@@ -557,10 +557,13 @@ if [[ $run_qemu -eq 1 ]]; then
         sleep 2
         gdb-multiarch -batch \
           -ex "set pagination off" \
+          -ex "set sysroot $sysroot" \
+          -ex "set solib-search-path $sysroot" \
           -ex "target remote :1234" \
           -ex "handle SIGABRT stop print" \
           -ex "continue" \
           -ex "bt 40" \
+          -ex "info sharedlibrary" \
           "$executable" 2>&1 | tee -a "$log"
         local status=$?
         kill "$qemu_pid" 2>/dev/null || true
