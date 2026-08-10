@@ -31,11 +31,14 @@ jobs:
             ca-certificates \
             curl \
             file \
+            libwayland-bin \
+            libwayland-dev \
             pkg-config \
             python3 \
             qemu-user-static \
             tar \
             unzip \
+            wayland-protocols \
             xz-utils
 
       - name: Install locked Zig
