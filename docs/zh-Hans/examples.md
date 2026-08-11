@@ -75,6 +75,12 @@ Markdown 文件。进行本地预览时，运行 `node scripts/sync-website-docs
 `node scripts/sync-website-docs.mjs --out dist/pages/docs`，使发布站点从 `docs/`
 获取相同的 Markdown 路径。
 
+`website/web_wasm` 入口附带静态降级视图(`fallback.js`)：不支持
+WebAssembly 或缺少 wasm-gc 扩展的浏览器会看到 Canvas2D 品牌 hero、showcase
+截图画廊和 docs 目录 / Markdown 阅读视图，而不是空白画布。检测逻辑对"完全
+无 WebAssembly"使用同步判定，对"缺少 wasm-gc"使用
+`WebAssembly.validate` 校验下载的 wasm；其余 Web 示例保持 fail-clearly 行为。
+
 ## Counter
 
 Counter 是最小的推荐应用形态。它把用户代码保留在

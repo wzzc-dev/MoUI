@@ -117,6 +117,281 @@
         margin: 0;
         white-space: pre-wrap;
       }
+      /* ---- 静态降级视图(fallback.js)---- */
+      #fallback-view {
+        display: none;
+        position: fixed;
+        inset: 0;
+        overflow: auto;
+        background: #0f172a;
+        color: #e2e8f0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      }
+
+      body.fallback #fallback-view {
+        display: block;
+      }
+
+      body.fallback #canvas-host,
+      body.fallback #renderer-badge {
+        display: none;
+      }
+
+      body.fallback #diagnostics {
+        display: none;
+      }
+
+      #fallback-hero {
+        display: block;
+        width: 100%;
+      }
+
+      .fallback-content {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 4px 20px 48px;
+      }
+
+      .fallback-langs {
+        margin: 14px 0 4px;
+      }
+
+      .fallback-langs button {
+        background: #1e293b;
+        color: #cbd5e1;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        padding: 4px 12px;
+        margin-right: 8px;
+        font-size: 12px;
+        font-family: inherit;
+        cursor: pointer;
+      }
+
+      .fallback-langs button.active {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+      }
+
+      .fallback-notice {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-left: 4px solid #f59e0b;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin: 18px 0 6px;
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .fallback-notice strong {
+        display: block;
+        color: #fbbf24;
+        margin-bottom: 4px;
+      }
+
+      .fallback-hint {
+        color: #94a3b8;
+        font-size: 12.5px;
+        margin-top: 6px;
+        line-height: 1.5;
+      }
+
+      .fallback-back {
+        display: inline-block;
+        margin: 16px 0 0;
+        background: #1e293b;
+        color: #93c5fd;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 7px 14px;
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+      }
+
+      .fallback-back:hover {
+        border-color: #3b82f6;
+      }
+
+      .fallback-section-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 26px 0 6px;
+        color: #f8fafc;
+      }
+
+      .fallback-group {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        margin: 22px 0 4px;
+      }
+
+      .fallback-entry {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin: 8px 0;
+        color: #e2e8f0;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .fallback-entry:hover {
+        border-color: #3b82f6;
+        background: #24324a;
+      }
+
+      .fallback-entry .t {
+        display: block;
+        font-size: 15px;
+        font-weight: 600;
+        color: #f8fafc;
+      }
+
+      .fallback-entry .s {
+        display: block;
+        font-size: 13px;
+        color: #94a3b8;
+        margin-top: 3px;
+        line-height: 1.5;
+      }
+
+      .fallback-doc {
+        background: #111c33;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-top: 16px;
+        line-height: 1.7;
+        font-size: 14.5px;
+      }
+
+      .fallback-doc h1 {
+        font-size: 26px;
+        margin: 0 0 14px;
+        color: #f8fafc;
+      }
+
+      .fallback-doc h2 {
+        font-size: 20px;
+        margin: 26px 0 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #334155;
+        color: #f8fafc;
+      }
+
+      .fallback-doc h3 {
+        font-size: 16.5px;
+        margin: 22px 0 8px;
+        color: #e2e8f0;
+      }
+
+      .fallback-doc h4,
+      .fallback-doc h5,
+      .fallback-doc h6 {
+        font-size: 14.5px;
+        margin: 18px 0 6px;
+        color: #cbd5e1;
+      }
+
+      .fallback-doc a {
+        color: #60a5fa;
+      }
+
+      .fallback-doc code {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 5px;
+        padding: 1px 5px;
+        font-size: 13px;
+        font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+      }
+
+      .fallback-doc blockquote {
+        margin: 12px 0;
+        padding: 4px 16px;
+        border-left: 3px solid #3b82f6;
+        color: #94a3b8;
+        background: #0f172a;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .fallback-doc img {
+        max-width: 100%;
+        border-radius: 8px;
+      }
+
+      .fallback-doc ul,
+      .fallback-doc ol {
+        padding-left: 24px;
+        margin: 8px 0;
+      }
+
+      .fallback-doc li {
+        margin: 4px 0;
+      }
+
+      .fallback-doc hr {
+        border: none;
+        border-top: 1px solid #334155;
+        margin: 20px 0;
+      }
+
+      .fallback-loading,
+      .fallback-error {
+        color: #94a3b8;
+      }
+
+      .fallback-error code {
+        white-space: pre-wrap;
+      }
+
+      .fallback-markdown {
+        background: #0b1120;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin: 12px 0;
+        overflow: auto;
+        font: 13px/1.55 "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+        white-space: pre-wrap;
+      }
+
+      .fallback-table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0;
+        font-size: 13px;
+      }
+
+      .fallback-table th,
+      .fallback-table td {
+        border: 1px solid #334155;
+        padding: 6px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .fallback-table th {
+        background: #1e293b;
+        color: #f1f5f9;
+      }
+
+      #fallback-gallery-canvas {
+        display: block;
+        width: 100%;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        margin-top: 10px;
+      }
     </style>
   </head>
   <body>
@@ -126,13 +401,36 @@
       <pre id="log"></pre>
     </aside>
     <div id="renderer-badge">Canvas2D</div>
+    <!-- 静态降级视图:无 WebAssembly / 无 wasm-gc 的浏览器渲染此视图(内容由 fallback.js 注入) -->
+    <div id="fallback-view" hidden></div>
+
+    <script>
+      // 完全无 WebAssembly 的浏览器(如 IE11、2017 年前的 Safari)同步判定,零下载立即降级。
+      // 有 WebAssembly 但缺少 wasm-gc 的浏览器由下方 module 脚本 fetch+validate 判定。
+      window.__mouiWasmUnsupported = typeof WebAssembly === "undefined";
+    </script>
+    <script src="fallback.js"></script>
 
     <script type="module">
       import { bootMouiWasmGcApp } from "../../moui_web_renderer/runtime.js";
 
+      const wasmUrl = new URL(
+        "../../_build/wasm-gc/debug/build/website/web_wasm/web_wasm.wasm",
+        import.meta.url,
+      );
+
       if (new URLSearchParams(window.location.search).get("debug") === "1") {
         document.body.classList.add("debug");
       }
+
+      // 静态降级视图:无 wasm 或非 wasm-gc 引擎。fallback.js 暴露全局函数。
+      const showFallback = reason => {
+        document.body.classList.add("fallback");
+        document.getElementById("fallback-view").hidden = false;
+        if (typeof window.mouiShowFallback === "function") {
+          window.mouiShowFallback({ reason });
+        }
+      };
 
       const status = document.querySelector("#status");
       const log = document.querySelector("#log");
@@ -152,27 +450,54 @@
         }
       };
 
-      bootMouiWasmGcApp({
-        wasmUrl: new URL(
-          "../../_build/wasm-gc/debug/build/website/web_wasm/web_wasm.wasm",
-          import.meta.url,
-        ),
-        canvasHost: "#canvas-host",
-        webgpu: {
-          textSelection: {
-            enabled: true,
+      // 加载策略:先同步判定无 wasm → 降级;否则 fetch 主模块并 validate。
+      // validate 失败即非 wasm-gc 引擎(如 2023 年底前的 Chrome/Firefox/Safari)→ 降级,不执行。
+      // validate 通过后再交给 bootMouiWasmGcApp(fetch 命中 HTTP 缓存,开销可忽略)。
+      const startApp = () =>
+        bootMouiWasmGcApp({
+          wasmUrl,
+          canvasHost: "#canvas-host",
+          webgpu: {
+            textSelection: {
+              enabled: true,
+            },
           },
-        },
-        onStatus: setStatus,
-        onPrint(ch) {
-          if (ch === "\n") {
-            append(line);
-            line = "";
-          } else {
-            line += ch;
+          onStatus: setStatus,
+          onPrint(ch) {
+            if (ch === "\n") {
+              append(line);
+              line = "";
+            } else {
+              line += ch;
+            }
+          },
+        });
+
+      (async () => {
+        if (window.__mouiWasmUnsupported) {
+          showFallback("no-wasm");
+          return;
+        }
+        try {
+          const response = await fetch(wasmUrl);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch wasm module: HTTP ${response.status}`);
           }
-        },
-      }).then(() => {
+          const bytes = await response.arrayBuffer();
+          if (!WebAssembly.validate(bytes)) {
+            // 引擎存在但缺少 wasm-gc 支持。
+            showFallback("no-wasm-gc");
+            return;
+          }
+          await startApp();
+        } catch (error) {
+          // fetch/validate 或 app 启动失败:按原有错误路径展示。
+          document.body.classList.add("failed");
+          status.textContent = "Failed";
+          append(error.stack || String(error));
+          console.error(error);
+          return;
+        }
         status.textContent = "Running";
         append("MoonBit wasm-gc started.");
         // Keep canvas filling the viewport and notify MoonBit runtime
@@ -218,12 +543,7 @@
             ro.observe(host);
           }
         }
-      }).catch(error => {
-        document.body.classList.add("failed");
-        status.textContent = "Failed";
-        append(error.stack || String(error));
-        console.error(error);
-      });
+      })();
     </script>
   </body>
 </html>

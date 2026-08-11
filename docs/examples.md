@@ -98,6 +98,14 @@ precompressed assets, and `bundle-size.json`. It then runs
 `node scripts/sync-website-docs.mjs --out dist/pages/docs` so the published
 Website Docs page fetches the same Markdown paths from `docs/`.
 
+The `website/web_wasm` entrypoint ships a static fallback view
+(`fallback.js`): browsers without WebAssembly or without the wasm-gc
+extension get a Canvas2D brand hero, a showcase screenshot gallery, and the
+docs catalog / Markdown reader instead of a blank canvas. Detection is
+synchronous for missing WebAssembly and `WebAssembly.validate` on the
+downloaded wasm for missing wasm-gc; other Web examples keep the fail-clearly
+behavior.
+
 ## Counter
 
 Counter is the smallest recommended app shape. It keeps user code in

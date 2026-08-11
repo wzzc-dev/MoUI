@@ -58,6 +58,10 @@ try {
   );
   copiedFiles.push(packagedIndexPath);
   copyTracked(wasmPath, wasmFileName);
+  const fallbackIndexPath = join(sourceRoot, "fallback.js");
+  if (existsSync(fallbackIndexPath)) {
+    copyTracked(fallbackIndexPath, "fallback.js");
+  }
   for (const assetPath of runtimeAssetPaths) {
     if (basename(assetPath) === "runtime.js") {
       const destination = join(outDir, "runtime.js");
