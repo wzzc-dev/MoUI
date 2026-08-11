@@ -61,6 +61,7 @@ fn skia_system_font_mgr_text_system() -> @core.TextSystem {
           )
       }
     }),
+    register_font_data=skia_register_font_data,
   )
 }
 

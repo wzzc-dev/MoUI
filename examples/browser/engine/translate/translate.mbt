@@ -208,6 +208,7 @@ fn font_spec(p : @paint_model.PaintProperties) -> @core.FontSpec {
       p.font_weight.to_int()
     },
     style: @core.FontStyle::Normal,
+    variations: [],
   }
 }
 

@@ -1410,6 +1410,156 @@ moonbit_skia_typeface_default(void) {
 #endif
 }
 
+#if defined(MOUI_SKIA_HAS_SKIA)
+// Embedded-font registry: family name -> typeface. Populated by
+// moonbit_skia_typeface_register_data and consulted by paragraph layout
+// (skia_stub_paragraph.cpp) so app-registered font data resolves by name.
+static std::map<std::string, sk_sp<SkTypeface>> g_moui_skia_embedded_typefaces;
+
+sk_sp<SkTypeface> moonbit_skia_embedded_typeface_for_name(
+  const std::string& name
+) {
+  auto it = g_moui_skia_embedded_typefaces.find(name);
+  if (it == g_moui_skia_embedded_typefaces.end()) {
+    return nullptr;
+  }
+  return it->second;
+}
+#endif
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaTypeface*
+moonbit_skia_typeface_from_data(moonbit_bytes_t data, int32_t index) {
+  if (data == nullptr || Moonbit_array_length(data) <= 0 || index < 0) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+#if defined(MOUI_SKIA_HAS_SKIA)
+  sk_sp<SkFontMgr> font_mgr = moonbit_skia_default_font_mgr();
+  if (!font_mgr) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+  sk_sp<SkData> font_data = SkData::MakeWithCopy(
+    static_cast<const void*>(data),
+    static_cast<size_t>(Moonbit_array_length(data))
+  );
+  sk_sp<SkTypeface> typeface = font_mgr->makeFromData(font_data, index);
+  if (!typeface) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+  return moonbit_skia_make_typeface_wrapper(typeface.release());
+#else
+  (void)index;
+  return moonbit_skia_make_typeface_wrapper(nullptr);
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaTypeface*
+moonbit_skia_typeface_register_data(
+  moonbit_bytes_t alias,
+  moonbit_bytes_t data,
+  int32_t index
+) {
+  if (
+    alias == nullptr ||
+    Moonbit_array_length(alias) <= 0 ||
+    data == nullptr ||
+    Moonbit_array_length(data) <= 0 ||
+    index < 0
+  ) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+#if defined(MOUI_SKIA_HAS_SKIA)
+  sk_sp<SkFontMgr> font_mgr = moonbit_skia_default_font_mgr();
+  if (!font_mgr) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+  sk_sp<SkData> font_data = SkData::MakeWithCopy(
+    static_cast<const void*>(data),
+    static_cast<size_t>(Moonbit_array_length(data))
+  );
+  sk_sp<SkTypeface> typeface = font_mgr->makeFromData(font_data, index);
+  if (!typeface) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+  std::string alias_text = moonbit_skia_bytes_to_string(alias);
+  SkString family_name;
+  typeface->getFamilyName(&family_name);
+  // Register under both the app-provided alias and the font's own family
+  // name, so paragraph layout matches either spelling.
+  g_moui_skia_embedded_typefaces[alias_text] = typeface;
+  if (family_name.size() > 0) {
+    g_moui_skia_embedded_typefaces[family_name.c_str()] = typeface;
+  }
+  return moonbit_skia_make_typeface_wrapper(typeface.release());
+#else
+  (void)index;
+  return moonbit_skia_make_typeface_wrapper(nullptr);
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaTypeface*
+moonbit_skia_typeface_clone_variation(
+  MoonbitSkiaTypeface* wrapper,
+  moonbit_bytes_t axis,
+  float value
+) {
+  if (
+    wrapper == nullptr ||
+    wrapper->typeface == nullptr ||
+    axis == nullptr ||
+    Moonbit_array_length(axis) < 4
+  ) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+#if defined(MOUI_SKIA_HAS_SKIA)
+  // Read the current variation coordinates so clones compose.
+  using SkVariationCoordinate =
+    SkFontArguments::VariationPosition::Coordinate;
+  std::vector<SkVariationCoordinate> coordinates;
+  int existing_count = wrapper->typeface->getVariationDesignPosition(
+    SkSpan<SkVariationCoordinate>(nullptr, 0)
+  );
+  if (existing_count > 0) {
+    coordinates.resize(static_cast<size_t>(existing_count));
+    int filled = wrapper->typeface->getVariationDesignPosition(
+      SkSpan<SkVariationCoordinate>(coordinates.data(), coordinates.size())
+    );
+    if (filled < 0) {
+      coordinates.clear();
+    } else {
+      coordinates.resize(static_cast<size_t>(filled));
+    }
+  }
+  uint32_t tag = 0;
+  for (int i = 0; i < 4; ++i) {
+    tag = (tag << 8) | static_cast<uint8_t>(axis[i]);
+  }
+  // Replace an existing coordinate with the same tag, then append.
+  bool replaced = false;
+  for (auto& coordinate : coordinates) {
+    if (coordinate.axis == tag) {
+      coordinate.value = value;
+      replaced = true;
+      break;
+    }
+  }
+  if (!replaced) {
+    coordinates.push_back({tag, value});
+  }
+  SkFontArguments arguments;
+  arguments.setVariationDesignPosition(
+    {coordinates.data(), static_cast<int>(coordinates.size())}
+  );
+  sk_sp<SkTypeface> clone = wrapper->typeface->makeClone(arguments);
+  if (!clone) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+  return moonbit_skia_make_typeface_wrapper(clone.release());
+#else
+  (void)value;
+  return moonbit_skia_make_typeface_wrapper(nullptr);
+#endif
+}
+
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaTypeface*
 moonbit_skia_typeface_from_name(
   moonbit_bytes_t family_name,

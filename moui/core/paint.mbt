@@ -33,11 +33,20 @@ pub(all) enum FontStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// A single variation axis of a variable font. `axis` is the 4-character
+/// OpenType tag (e.g. "wght", "wdth", "ital", "opsz", "slnt").
+pub struct FontVariation {
+  axis : String
+  value : Double
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct FontSpec {
   families : FontFamilyStack
   size : Double
   weight : Int
   style : FontStyle
+  variations : Array[FontVariation]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -374,13 +383,55 @@ pub fn FontFamilyStack::css(self : FontFamilyStack) -> String {
 }
 
 ///|
+pub fn FontVariation::new(axis~ : String, value~ : Double) -> FontVariation {
+  { axis, value }
+}
+
+///|
+pub fn FontVariation::axis(self : FontVariation) -> String {
+  self.axis
+}
+
+///|
+pub fn FontVariation::value(self : FontVariation) -> Double {
+  self.value
+}
+
+///|
 pub fn FontSpec::new(
   families? : FontFamilyStack = FontFamilyStack::system_ui(),
   size? : Double = 16.0,
   weight? : Int = 400,
   style? : FontStyle = FontStyle::Normal,
+  variations? : Array[FontVariation] = [],
 ) -> FontSpec {
-  { families, size, weight, style }
+  { families, size, weight, style, variations }
+}
+
+///|
+/// Returns a copy of this font spec with one more variable-font axis applied.
+/// Later axes win when the same tag appears twice.
+pub fn FontSpec::with_variation(
+  self : FontSpec,
+  axis~ : String,
+  value~ : Double,
+) -> FontSpec {
+  let variations = self.variations.filter(
+    fn(existing) { existing.axis != axis },
+  )
+  variations.push(FontVariation::new(axis~, value~))
+  { ..self, variations }
+}
+
+///|
+pub fn FontSpec::variation_value(self : FontSpec, axis : String) -> Double? {
+  let mut found : Double? = None
+  for variation in self.variations {
+    if variation.axis == axis {
+      found = Some(variation.value)
+    }
+  }
+  found
 }
 
 ///|

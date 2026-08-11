@@ -242,6 +242,38 @@ extern "C" fn native_typeface_from_file(
 ) -> TypefaceHandle = "moonbit_skia_typeface_from_file"
 
 ///|
+/// Creates a typeface from in-memory font data (e.g. an embedded TTF/OTF) via
+/// the default font manager. The typeface is not registered anywhere; use
+/// `register_data` when the family must also be visible to paragraph layout.
+#borrow(data)
+extern "C" fn native_typeface_from_data(
+  data : Bytes,
+  index : Int,
+) -> TypefaceHandle = "moonbit_skia_typeface_from_data"
+
+///|
+/// Creates a typeface from in-memory font data and registers it under
+/// `alias` (plus its own family name) in the C++ embedded-font registry so
+/// that paragraph layout can resolve the family too.
+#borrow(family_alias, data)
+extern "C" fn native_typeface_register_data(
+  family_alias : Bytes,
+  data : Bytes,
+  index : Int,
+) -> TypefaceHandle = "moonbit_skia_typeface_register_data"
+
+///|
+/// Returns a cloned typeface with one variation axis applied. `axis` is the
+/// 4-byte OpenType tag (e.g. b"wght"). The clone inherits the typeface's
+/// existing variation coordinates, so calls compose.
+#borrow(typeface, axis)
+extern "C" fn native_typeface_clone_variation(
+  typeface : TypefaceHandle,
+  axis : Bytes,
+  value : Float,
+) -> TypefaceHandle = "moonbit_skia_typeface_clone_variation"
+
+///|
 #borrow(typeface)
 extern "C" fn native_typeface_is_null(typeface : TypefaceHandle) -> Bool = "moonbit_skia_typeface_is_null"
 
@@ -776,6 +808,59 @@ pub fn Typeface::from_file(path : Bytes, index? : Int = 0) -> Typeface? {
   } else {
     Typeface::from_handle(native_typeface_from_file(path, index))
   }
+}
+
+///|
+/// Creates a typeface from in-memory font data (embedded TTF/OTF bytes).
+/// `index` selects a face from a TTC collection. The resulting typeface is
+/// usable for measurement and drawing but is not registered for family-name
+/// resolution; use `register_data` when paragraph layout must resolve it too.
+pub fn Typeface::from_data(data : Bytes, index? : Int = 0) -> Typeface? {
+  if data.is_empty() || index < 0 {
+    None
+  } else {
+    Typeface::from_handle(native_typeface_from_data(data, index))
+  }
+}
+
+///|
+/// Creates a typeface from in-memory font data and registers it under `alias`
+/// (plus the font's own family name) in the embedded-font registry, so that
+/// paragraph layout can resolve the family by name as well.
+pub fn Typeface::register_data(
+  family_alias : Bytes,
+  data : Bytes,
+  index? : Int = 0,
+) -> Typeface? {
+  if family_alias.is_empty() || data.is_empty() || index < 0 {
+    None
+  } else {
+    Typeface::from_handle(native_typeface_register_data(family_alias, data, index))
+  }
+}
+
+///|
+/// Returns a typeface with the given variation axes applied. Each pair is the
+/// 4-byte OpenType axis tag (e.g. `b"wght"`) and the desired value. The clone
+/// composes with any variations already baked into the typeface. Returns
+/// `None` if the typeface does not support variation cloning; an empty
+/// `variations` list returns the original typeface unchanged.
+pub fn Typeface::with_variations(
+  self : Typeface,
+  variations : Array[(Bytes, Float)],
+) -> Typeface? {
+  if variations.is_empty() {
+    return Some(self)
+  }
+  let mut current = self
+  for pair in variations {
+    let (axis, value) = pair
+    match Typeface::from_handle(native_typeface_clone_variation(current.handle, axis, value)) {
+      Some(clone) => current = clone
+      None => return None
+    }
+  }
+  Some(current)
 }
 
 ///|

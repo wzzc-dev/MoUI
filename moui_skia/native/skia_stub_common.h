@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <algorithm>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -91,6 +92,14 @@
 #endif
 #include "include/core/SkTypeface.h"
 #include "include/core/SkTypes.h"
+#if defined(MOUI_SKIA_HAS_SKIA)
+// Embedded-font registry lookup (see moonbit_skia_typeface_register_data in
+// skia_stub_text_font.cpp). Returns nullptr when the family name is unknown.
+// Paragraph layout uses this to resolve app-registered font data.
+sk_sp<SkTypeface> moonbit_skia_embedded_typeface_for_name(
+  const std::string& name
+);
+#endif
 #if __has_include("include/gpu/ganesh/GrDirectContext.h")
 #include "include/gpu/ganesh/GrDirectContext.h"
 #define MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT 1
