@@ -521,28 +521,32 @@ moon test examples/showcase/app --target native
 
 Use `virtual_list` and `sectioned_list` when app data is larger than the current
 viewport. The helpers compute a visible window plus overscan and still return a
-normal `View[Msg]`; renderer behavior does not change. Use `scroll_to_index` to
-calculate a controlled offset, then store that offset in the app model.
+normal `View[Msg]`; renderer behavior does not change. The list keeps a fixed
+stride `item_height + spacing`, so the app owns the scroll position: keep the
+`offset` in the app model and feed new positions back through `on_scroll`, and
+use `scroll_to_index` to build a `ScrollRequest` for programmatic jumps.
 
 ```moonbit nocheck
-using @views {scroll_view, virtual_list}
+using @views {virtual_list, scroll_to_index}
 
 fn activity_list(
   rows : Array[Activity],
-  scroll : @core.ScrollState,
+  scroll_offset : @core.Point,
 ) -> @moui.View[Msg] {
-  scroll_view(
-    virtual_list(
-      rows,
-      key=row => row.id,
-      row=row => @views.text(row.title, height=28.0),
-      state=scroll,
-      item_height=32.0,
-      viewport_height=360.0,
-    ),
-    state=Some(scroll),
+  virtual_list(
+    rows,
+    key=row => row.id,
+    row=row => @views.text(row.title, height=28.0),
+    item_height=32.0,
+    viewport_height=360.0,
+    offset=scroll_offset,
     on_scroll=ActivityScrolled,
   )
+}
+
+/// Jump to row 10: apply the request with a fresh id.
+fn jump_to_ten() -> @core.ScrollRequest {
+  scroll_to_index(request_id=1, index=10, item_height=32.0)
 }
 ```
 
