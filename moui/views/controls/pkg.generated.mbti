@@ -72,9 +72,9 @@ pub fn[Msg] intrinsic_width(@core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] layout_priority(@core.View[Msg], Double) -> @core.View[Msg]
 
-pub fn[T, Msg] lazy_grid(Array[T], (T) -> String, (T) -> @core.View[Msg], columns? : Int, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double, offset? : @core.Point, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
+pub fn[T, Msg] lazy_grid(Array[T], (T) -> String, (T) -> @core.View[Msg], columns? : Int, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double, overscan? : Int, offset? : @core.Point, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
 
-pub fn[T, Msg] lazy_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, request? : @core.ScrollRequest) -> @core.View[Msg]
+pub fn[T, Msg] lazy_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 pub fn[Msg] menu_button(String, on_click? : Msg, variant? : @style.ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -126,7 +126,7 @@ pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Doubl
 
 pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
 
-pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?, request? : @core.ScrollRequest) -> @core.View[Msg]
+pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 // Errors
 

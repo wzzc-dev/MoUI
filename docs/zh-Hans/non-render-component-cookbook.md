@@ -493,28 +493,31 @@ moon test examples/showcase/app --target native
 ## 虚拟列表
 
 当应用数据大于当前 viewport 时，使用 `virtual_list` 和 `sectioned_list`。这些辅助函数计算
-可见窗口和 overscan，但仍返回普通 `View[Msg]`；渲染器行为不会改变。使用
-`scroll_to_index` 计算受控偏移，然后把该偏移保存在应用模型中。
+可见窗口和 overscan，但仍返回普通 `View[Msg]`；渲染器行为不会改变。列表保持固定步长
+`item_height + spacing`，因此滚动位置由应用拥有：把 `offset` 保存在应用模型中，
+并通过 `on_scroll` 回喂新位置；程序化跳转用 `scroll_to_index` 构造 `ScrollRequest`。
 
 ```moonbit nocheck
-using @views {scroll_view, virtual_list}
+using @views {virtual_list, scroll_to_index}
 
 fn activity_list(
   rows : Array[Activity],
-  scroll : @core.ScrollState,
+  scroll_offset : @core.Point,
 ) -> @moui.View[Msg] {
-  scroll_view(
-    virtual_list(
-      rows,
-      key=row => row.id,
-      row=row => @views.text(row.title, height=28.0),
-      state=scroll,
-      item_height=32.0,
-      viewport_height=360.0,
-    ),
-    state=Some(scroll),
+  virtual_list(
+    rows,
+    key=row => row.id,
+    row=row => @views.text(row.title, height=28.0),
+    item_height=32.0,
+    viewport_height=360.0,
+    offset=scroll_offset,
     on_scroll=ActivityScrolled,
   )
+}
+
+/// 跳到第 10 行：用新的 id 应用请求。
+fn jump_to_ten() -> @core.ScrollRequest {
+  scroll_to_index(request_id=1, index=10, item_height=32.0)
 }
 ```
 

@@ -152,6 +152,10 @@ pub fn view_uncacheable_declaration() -> @core.ViewDeclaration
 
 pub fn views_ambient_theme(@core.Theme?) -> @core.Theme
 
+pub fn visible_row_window(row_count~ : Int, scroll_y~ : Double, viewport_extent~ : Double, row_extent~ : Double, row_spacing~ : Double, overscan~ : Int) -> WindowedRowRange?
+
+pub fn windowed_row_count(item_count~ : Int, columns~ : Int) -> Int
+
 // Errors
 
 // Types and methods
@@ -165,6 +169,11 @@ pub(all) struct PaintContext {
 }
 pub fn PaintContext::finish(Self) -> Array[@core.DrawCommand]
 pub fn PaintContext::new() -> Self
+
+pub struct WindowedRowRange {
+  first_row : Int
+  last_row : Int
+}
 
 // Type aliases
 pub using @core {type DateValue}
