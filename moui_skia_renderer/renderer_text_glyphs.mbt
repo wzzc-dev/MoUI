@@ -278,11 +278,16 @@ fn skia_font_with_resolution_for_text(
       @skia_native.Font::empty(size=Float::from_double(font.size))
     SkiaFontResolution::SystemFontMgr =>
       match skia_typeface_for_text(font, text) {
-        Some(typeface) =>
+        Some(typeface) => {
+          let typeface = match typeface.with_variations(skia_variation_pairs(font)) {
+            Some(varied) => varied
+            None => typeface
+          }
           @skia_native.Font::from_typeface(
             typeface,
             size=Float::from_double(font.size),
           )
+        }
         None => @skia_native.Font::default(size=Float::from_double(font.size))
       }
   }
@@ -293,6 +298,10 @@ fn skia_typeface_for_text(
   font : @core.FontSpec,
   text : String,
 ) -> @skia_native.Typeface? {
+  match skia_typeface_from_embedded(font) {
+    Some(typeface) => return Some(typeface)
+    None => ()
+  }
   match skia_typeface_from_font_files(font) {
     Some(typeface) => return Some(typeface)
     None => ()

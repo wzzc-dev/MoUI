@@ -1,6 +1,10 @@
 #include "skia_stub_common.h"
 
 #if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+#if __has_include("modules/skparagraph/include/TypefaceFontProvider.h")
+#include "modules/skparagraph/include/TypefaceFontProvider.h"
+#define MOUI_SKIA_HAS_TYPEFACE_FONT_PROVIDER 1
+#endif
 using skia::textlayout::Affinity;
 using skia::textlayout::FontCollection;
 using skia::textlayout::LineMetrics;
@@ -13,6 +17,31 @@ using skia::textlayout::RectWidthStyle;
 using skia::textlayout::TextBox;
 using skia::textlayout::TextDirection;
 using skia::textlayout::TextStyle;
+
+#if defined(MOUI_SKIA_HAS_TYPEFACE_FONT_PROVIDER)
+// If `family` names an app-registered embedded font, register it on a
+// TypefaceFontProvider and use it as the asset font manager so paragraph
+// layout resolves the family from the embedded data.
+static sk_sp<FontCollection> moonbit_skia_paragraph_font_collection(
+  const std::string& family
+) {
+  sk_sp<FontCollection> font_collection = sk_make_sp<FontCollection>();
+  sk_sp<SkTypeface> embedded = moonbit_skia_embedded_typeface_for_name(family);
+  if (embedded) {
+    sk_sp<skia::textlayout::TypefaceFontProvider> provider =
+      sk_make_sp<skia::textlayout::TypefaceFontProvider>();
+    SkString family_name;
+    embedded->getFamilyName(&family_name);
+    if (family_name.size() > 0) {
+      provider->registerTypeface(embedded, family_name);
+    }
+    provider->registerTypeface(embedded, SkString(family.data(), family.size()));
+    font_collection->setAssetFontManager(provider);
+  }
+  font_collection->setDefaultFontManager(moonbit_skia_default_font_mgr());
+  return font_collection;
+}
+#endif
 
 static int32_t moonbit_skia_clamp_text_index(size_t value) {
   if (value > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
@@ -72,8 +101,12 @@ moonbit_skia_paragraph_layout_utf8(
     return moonbit_skia_make_paragraph_wrapper(nullptr);
   }
 #if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
-  sk_sp<FontCollection> font_collection = sk_make_sp<FontCollection>();
-  font_collection->setDefaultFontManager(moonbit_skia_default_font_mgr());
+  std::string family;
+  if (moonbit_skia_paragraph_has_family(family_name)) {
+    family = moonbit_skia_bytes_to_string(family_name);
+  }
+  sk_sp<FontCollection> font_collection =
+    moonbit_skia_paragraph_font_collection(family);
 
   TextStyle text_style;
   text_style.setFontSize(size);

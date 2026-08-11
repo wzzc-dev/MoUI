@@ -658,15 +658,26 @@ pub(all) struct FontSpec {
   size : Double
   weight : Int
   style : FontStyle
+  variations : Array[FontVariation]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FontSpec::css_family(Self) -> String
 pub fn FontSpec::css_style(Self) -> String
-pub fn FontSpec::new(families? : FontFamilyStack, size? : Double, weight? : Int, style? : FontStyle) -> Self
+pub fn FontSpec::new(families? : FontFamilyStack, size? : Double, weight? : Int, style? : FontStyle, variations? : Array[FontVariation]) -> Self
+pub fn FontSpec::variation_value(Self, String) -> Double?
+pub fn FontSpec::with_variation(Self, axis~ : String, value~ : Double) -> Self
 
 pub(all) enum FontStyle {
   Normal
   Italic
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct FontVariation {
+  axis : String
+  value : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FontVariation::axis(Self) -> String
+pub fn FontVariation::new(axis~ : String, value~ : Double) -> Self
+pub fn FontVariation::value(Self) -> Double
 
 pub(all) struct ForegroundModifier {
   color : Color
