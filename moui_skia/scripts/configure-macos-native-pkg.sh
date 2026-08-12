@@ -184,6 +184,26 @@ if [[ $require_skparagraph -eq 1 ]]; then
     fi
   done
 fi
+if [[ $enable_skparagraph -eq 1 && $require_skparagraph -eq 0 ]]; then
+  # Release shared bundles ship no SkParagraph libraries; degrade instead of
+  # emitting -lskparagraph flags that cannot link. Set
+  # MOUI_SKIA_REQUIRE_SKPARAGRAPH=1 to fail instead.
+  paragraph_artifacts_missing=0
+  for paragraph_header in "${paragraph_headers[@]}"; do
+    if [[ ! -f "$paragraph_header" ]]; then
+      paragraph_artifacts_missing=1
+    fi
+  done
+  for paragraph_lib in "${paragraph_libs[@]}"; do
+    if [[ ! -f "$lib_path/lib$paragraph_lib.a" && ! -f "$lib_path/lib$paragraph_lib.dylib" ]]; then
+      paragraph_artifacts_missing=1
+    fi
+  done
+  if [[ $paragraph_artifacts_missing -eq 1 ]]; then
+    echo "SkParagraph headers/libraries missing in $lib_path; disabling SkParagraph (set MOUI_SKIA_REQUIRE_SKPARAGRAPH=1 to fail instead)" >&2
+    enable_skparagraph=0
+  fi
+fi
 
 static_lib="$lib_path/lib$skia_lib.a"
 dynamic_lib="$lib_path/lib$skia_lib.dylib"
