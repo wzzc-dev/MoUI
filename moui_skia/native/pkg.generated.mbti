@@ -632,6 +632,7 @@ pub(all) struct Typeface {
 }
 pub fn Typeface::default() -> Self?
 pub fn Typeface::family_name(Self) -> Bytes?
+pub fn Typeface::from_data(Bytes, index? : Int) -> Self?
 pub fn Typeface::from_file(Bytes, index? : Int) -> Self?
 pub fn Typeface::from_font_mgr_family(FontMgr, Bytes, weight? : Int, width? : Int, slant? : Int) -> Self?
 pub fn Typeface::from_font_mgr_request(FontMgr, @moui_skia.FontFallbackRequest) -> Self?
@@ -642,6 +643,8 @@ pub fn Typeface::is_available(Self) -> Bool
 pub fn Typeface::is_bold(Self) -> Bool
 pub fn Typeface::is_fixed_pitch(Self) -> Bool
 pub fn Typeface::is_italic(Self) -> Bool
+pub fn Typeface::register_data(Bytes, Bytes, index? : Int) -> Self?
+pub fn Typeface::with_variations(Self, Array[(Bytes, Float)]) -> Self?
 
 // Type aliases
 
