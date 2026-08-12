@@ -318,6 +318,14 @@ if [[ $enable_skparagraph -eq 1 ]]; then
     echo "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but one or more SkParagraph libraries are missing in $lib_path" >&2
     exit 1
   fi
+  if [[ $require_skparagraph -eq 0 && \
+        ( "$paragraph_headers_status" != "available" || "$paragraph_libraries_status" != "available" ) ]]; then
+    # The Skia bundle lacks SkParagraph headers or libraries (e.g. release
+    # shared builds ship no libskparagraph.dylib). Emit no SKPARAGRAPH defines
+    # and no -lskparagraph flags; use --require-skparagraph to fail instead.
+    echo "SkParagraph headers/libraries missing in $lib_path; disabling SkParagraph (use --require-skparagraph to fail instead)" >&2
+    enable_skparagraph=0
+  fi
 fi
 
 static_lib="$lib_path/lib$skia_lib.a"
