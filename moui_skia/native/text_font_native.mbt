@@ -835,7 +835,9 @@ pub fn Typeface::register_data(
   if family_alias.is_empty() || data.is_empty() || index < 0 {
     None
   } else {
-    Typeface::from_handle(native_typeface_register_data(family_alias, data, index))
+    Typeface::from_handle(
+      native_typeface_register_data(family_alias, data, index),
+    )
   }
 }
 
@@ -855,7 +857,10 @@ pub fn Typeface::with_variations(
   let mut current = self
   for pair in variations {
     let (axis, value) = pair
-    match Typeface::from_handle(native_typeface_clone_variation(current.handle, axis, value)) {
+    match
+      Typeface::from_handle(
+        native_typeface_clone_variation(current.handle, axis, value),
+      ) {
       Some(clone) => current = clone
       None => return None
     }

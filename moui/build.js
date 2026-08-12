@@ -43,7 +43,7 @@ function linuxGlibFlags(config) {
 }
 
 const macosBackendHostFlags =
-  "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreGraphics -framework CoreFoundation -lz -lobjc";
+  "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreGraphics -framework CoreFoundation -lz";
 const linuxBackendHostFlags = "-lz";
 const androidBackendHostFlags = "-landroid -llog";
 

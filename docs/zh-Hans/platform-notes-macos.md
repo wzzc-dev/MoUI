@@ -16,10 +16,9 @@ macOS 宿主循环 drain `RendererEvent` 的 image request，只在 `backend/com
 
 ## 链接标志
 
-macOS host/Skia framework 与 Skia/Ganesh 库由 `moui/build.js` prebuild `link_configs` 注入，适用于：
+macOS host framework 由 `moui/build.js` 为 `wzzc-dev/moui/backend/macos` 注入。Skia/Ganesh 库及其所需 framework 由 `moui_skia/build.js` 生成，并分成两个用途：`moui_skia/native/moon.pkg` 服务 binding 自测，renderer 的最终应用 `link_configs` 服务 is-main 应用。
 
-- `wzzc-dev/moui/backend/macos`
-- `wzzc-dev/moui_skia_renderer`（host framework + `MOUI_SKIA_CC_LINK_FLAGS`）
+`moui_skia_renderer/build.js` 会复用 binding 的构建变量，并只注册一次最终应用条目。binding 的 package flags 不会穿过 renderer 依赖传递到 is-main 应用；重复注册 renderer 条目才会让每个静态 archive 被追加两次。
 
 示例 `macos_skia` 入口点不应重复 AppKit/Metal/Skia 路径。它们只需要一个空的 `cc-link-flags` 覆盖，让 Moon 禁用 `tcc -run`，并对最终二进制使用系统 linker：
 
@@ -31,6 +30,6 @@ link: {
 },
 ```
 
-宿主与 renderer 包分别为 AppKit、CoreText、WebKit 和 Skia 符号声明自己的链接标志。缺少 `_objc_msgSend`、`___CFConstantStringClassReference`、`CAMetalLayer` 或 Skia Ganesh 符号通常意味着 prebuild `link_configs` 没有应用，或 `tcc -run` 没有被禁用。
+宿主与 binding 包分别为 AppKit、CoreText、WebKit 和 Skia 符号声明自己的链接标志。缺少 `_objc_msgSend`、`___CFConstantStringClassReference`、`CAMetalLayer` 或 Skia Ganesh 符号通常意味着 prebuild `link_configs` 没有应用，或 `tcc -run` 没有被禁用。
 
 使用 `moon run <package> --target native --dry-run -v` 检查最终 `cc` 命令，并确认 AppKit/Metal/Skia 标志存在。如果 `moon build` 可用但 `moon run` 失败并出现 `tcc: error: file 'AppKit' not found`，则该入口点缺少空的 `cc-link-flags` 覆盖。

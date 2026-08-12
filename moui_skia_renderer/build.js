@@ -91,6 +91,8 @@ function main() {
         MOUI_SKIA_STUB_CC_FLAGS: shouldConfigureSkia(config) ? stubFlags : "",
         MOUI_SKIA_CC_LINK_FLAGS: shouldConfigureSkia(config) ? linkFlags : "",
       },
+      // Package cc-link-flags cover binding-local tests but do not propagate
+      // through the renderer to final is-main links.
       link_configs: linkFlags
         ? [{ package: "wzzc-dev/moui_skia_renderer", link_flags: linkFlags }]
         : [],
