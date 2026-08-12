@@ -19,7 +19,7 @@ Linux 运行时要求有意保持原生：
   sudo apt-get install zenity
   ```
   当 portal 和 zenity 都不可用时，文件和文件夹选择会静默返回 cancelled，应用会向 stdout 打印诊断消息。
-- 最终原生链接需要 zlib / pthread / fontconfig 系统库。`moui/build.js` 通过 prebuild `link_configs` 为 `backend/linux`、`moui_skia_renderer` 和 `moui_wgpu_renderer/fontconfig` 注入这些库。Linux 示例入口点不应重复 `-lz` 或 fontconfig 栈；它们只需要一个空的 `cc-link-flags` 覆盖，让 Moon 在需要时禁用 `tcc -run`。
+- 最终原生链接需要 zlib / pthread / fontconfig 系统库。`moui/build.js` 负责 `backend/linux` 的 zlib 条目，`moui_skia/build.js` 负责 Skia binding 的 pthread/fontconfig 栈，`moui_wgpu_renderer/build.js` 负责 `moui_wgpu_renderer/fontconfig`。Linux 示例入口点不应重复 `-lz` 或 fontconfig 栈；它们只需要一个空的 `cc-link-flags` 覆盖，让 Moon 在需要时禁用 `tcc -run`。
 - glib-2.0 开发头文件和运行时库。`backend/linux` 无条件通过 GLib main loop（`g_timeout_add` / `g_source_remove`）驱动 `@services.TimerSource` subscription，因此 `moui` prebuild 通过 `pkg-config` 解析 `glib-2.0`，把得到的 `-I` include 标志送入 `stub-cc-flags`，并把 libs 合并进 `backend/linux` `link_configs` 条目。在 `pkg-config` 找不到 `glib-2.0` 的宿主上，两者都会解析为空（C stub 主体由 `#ifdef __linux__` 保护，并且只在 Linux 上有意义）。发行版特定设置可以用 `MOUI_LINUX_GLIB_STUB_CC_FLAGS` 和 `MOUI_LINUX_GLIB_CC_LINK_FLAGS` 覆盖解析出的标志。
 - 原生 WebView 支持需要 WebKitGTK 开发包（`libwebkit2gtk-4.1-dev` 或 `4.0`）。`moui_webview` prebuild 通过 `pkg-config` 自动检测带 `webkit2gtk-4.1` 或 `webkit2gtk-4.0` 的 `gtk+-3.0`；如果找到，则启用原生桥。fallback 构建不链接 WebKitGTK，并报告 WebView 不可用。发行版特定设置可以用 `MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` 和 `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS` 覆盖检测。
 

@@ -17,9 +17,10 @@ moonbit_skia_color_filter_matrix(void* values_obj) {
   if (values_obj == nullptr) {
     return moonbit_skia_make_color_filter_wrapper(nullptr);
   }
-  // MoonBit may pass either a val array (Array[Float], inline data) or a
-  // regular object (MoonbitSkiaFloatArray, {length, buffer*}). Detect the
-  // kind and read accordingly.
+  // MoonBit passes a FixedArray[Float] (val array, inline float32 data with
+  // the length in the object header meta). A regular object
+  // (MoonbitSkiaFloatArray, {length, buffer*}) is still accepted for callers
+  // that build the descriptor by hand. Detect the kind and read accordingly.
   const float* values_data = nullptr;
   int32_t values_length;
   if (Moonbit_object_kind(values_obj) == moonbit_BLOCK_KIND_VAL_ARRAY) {

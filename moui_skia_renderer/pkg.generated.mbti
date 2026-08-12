@@ -92,8 +92,6 @@ pub(all) enum NativeRendererMode {
 pub fn NativeRendererMode::label(Self) -> String
 pub fn NativeRendererMode::parse(String) -> Self?
 
-type SkiaEmbeddedFont
-
 pub struct SkiaEmojiFontFallbackDiagnostic {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)

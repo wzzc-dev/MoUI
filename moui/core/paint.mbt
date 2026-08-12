@@ -416,11 +416,9 @@ pub fn FontSpec::with_variation(
   axis~ : String,
   value~ : Double,
 ) -> FontSpec {
-  let variations = self.variations.filter(
-    fn(existing) { existing.axis != axis },
-  )
+  let variations = self.variations.filter(fn(existing) { existing.axis != axis })
   variations.push(FontVariation::new(axis~, value~))
-  { ..self, variations }
+  { ..self, variations, }
 }
 
 ///|

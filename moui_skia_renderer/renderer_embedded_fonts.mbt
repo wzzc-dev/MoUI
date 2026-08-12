@@ -1,7 +1,7 @@
 ///|
 /// App-registered embedded font: the family it was registered under plus the
 /// Skia typeface created from the font data.
-struct SkiaEmbeddedFont {
+priv struct SkiaEmbeddedFont {
   family : @core.FontFamily
   typeface : @skia_native.Typeface
 }
@@ -10,7 +10,7 @@ struct SkiaEmbeddedFont {
 /// Registry of fonts registered via `@core.TextSystem::register_font_data`.
 /// Renderer-global so multiple text systems share one registry; later
 /// registrations of the same family replace earlier ones.
-let embedded_fonts : Ref[Array[SkiaEmbeddedFont]] = Ref::new([])
+let embedded_fonts : Ref[Array[SkiaEmbeddedFont]] = Ref([])
 
 ///|
 /// Registers in-memory font data under a family. The typeface is created
@@ -20,9 +20,9 @@ fn skia_register_font_data(family : @core.FontFamily, data : Bytes) -> Unit {
   let family_alias = skia_embedded_font_alias(family)
   match @skia_native.Typeface::register_data(family_alias, data) {
     Some(typeface) => {
-      embedded_fonts.val = embedded_fonts.val.filter(
-        fn(existing) { existing.family != family },
-      )
+      embedded_fonts.val = embedded_fonts.val.filter(fn(existing) {
+        existing.family != family
+      })
       embedded_fonts.val.push({ family, typeface })
     }
     None => ()
@@ -33,9 +33,7 @@ fn skia_register_font_data(family : @core.FontFamily, data : Bytes) -> Unit {
 /// Returns the registered typeface for `font` when any family in the font
 /// spec's family stack matches a registered embedded font. The font spec's
 /// own order wins: the first matching registered family is used.
-fn skia_typeface_from_embedded(
-  font : @core.FontSpec,
-) -> @skia_native.Typeface? {
+fn skia_typeface_from_embedded(font : @core.FontSpec) -> @skia_native.Typeface? {
   for family in font.families.families {
     for embedded in embedded_fonts.val {
       if embedded.family == family {
@@ -48,15 +46,13 @@ fn skia_typeface_from_embedded(
 
 ///|
 /// Converts a font spec's variation axes into native (tag, value) pairs.
-fn skia_variation_pairs(
-  font : @core.FontSpec,
-) -> Array[(Bytes, Float)] {
-  font.variations.map(
-    fn(variation) {
-      (@utf8.encode(variation.axis[:], bom=false),
-        Float::from_double(variation.value))
-    },
-  )
+fn skia_variation_pairs(font : @core.FontSpec) -> Array[(Bytes, Float)] {
+  font.variations.map(fn(variation) {
+    (
+      @utf8.encode(variation.axis[:], bom=false),
+      Float::from_double(variation.value),
+    )
+  })
 }
 
 ///|

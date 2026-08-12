@@ -13,19 +13,6 @@ function readJsonFromStdin() {
   }
 }
 
-function readModuleName() {
-  const jsonPath = path.join(repoRoot, "moon.mod.json");
-  if (fs.existsSync(jsonPath)) {
-    return JSON.parse(fs.readFileSync(jsonPath, "utf8")).name;
-  }
-  const modText = fs.readFileSync(path.join(repoRoot, "moon.mod"), "utf8");
-  const match = modText.match(/^\s*name\s*=\s*"([^"]+)"/m);
-  if (!match) {
-    throw new Error("module name not found in moon.mod");
-  }
-  return match[1];
-}
-
 function targetKind(config) {
   return (
     config?.build?.target?.kind ||
@@ -285,11 +272,36 @@ function appendMissingFlags(base, flags) {
   return parts.join(" ");
 }
 
+function appendMissingFrameworks(base, frameworks) {
+  const parts = base.split(/\s+/).filter(Boolean);
+  const result = [];
+  const seen = new Set();
+  for (let index = 0; index < parts.length; index += 1) {
+    if (parts[index] !== "-framework" || index + 1 >= parts.length) {
+      result.push(parts[index]);
+      continue;
+    }
+    const framework = parts[index + 1];
+    index += 1;
+    if (!seen.has(framework)) {
+      result.push("-framework", framework);
+      seen.add(framework);
+    }
+  }
+  for (const framework of frameworks) {
+    if (!seen.has(framework)) {
+      result.push("-framework", framework);
+      seen.add(framework);
+    }
+  }
+  return result.join(" ");
+}
+
 function macosExampleLinkFlags(base, extraFrameworks, platform = hostSkiaPlatform()) {
   if (platform !== "macos") {
     return base;
   }
-  return appendFlags(base, extraFrameworks);
+  return appendMissingFrameworks(base, extraFrameworks);
 }
 
 function overlayEnvValues(config, values, keys) {
@@ -688,7 +700,7 @@ function platformFlags(config, values) {
     const metalGpu = skiaMetalGpuEnabled(config, platform);
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
     linkFlags = macosLibraryFlags(config, libPath, skiaLib, metalGpu, linkMode) +
-      " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -lobjc";
+      " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices";
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(
         stubCcFlags,
@@ -701,10 +713,13 @@ function platformFlags(config, values) {
     }
     if (metalGpu) {
       stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_METAL");
-      linkFlags = appendFlags(
-        linkFlags,
-        "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
-      );
+      linkFlags = appendMissingFrameworks(linkFlags, [
+        "Metal",
+        "QuartzCore",
+        "CoreVideo",
+        "IOSurface",
+        "AppKit",
+      ]);
     }
   } else if (platform === "ios" || platform === "iosSim") {
     const resolvedLinkMode = resolveUnixLibraryMode(linkMode, libPath, skiaLib, ".dylib");
@@ -716,7 +731,7 @@ function platformFlags(config, values) {
       skiaLib,
       metalGpu,
       linkMode,
-    ) + " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework QuartzCore -framework UIKit -lobjc";
+    ) + " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework QuartzCore -framework UIKit";
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(
         stubCcFlags,
@@ -729,10 +744,11 @@ function platformFlags(config, values) {
     }
     if (metalGpu) {
       stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_METAL");
-      linkFlags = appendFlags(
-        linkFlags,
-        "-framework Metal -framework CoreVideo -framework IOSurface",
-      );
+      linkFlags = appendMissingFrameworks(linkFlags, [
+        "Metal",
+        "CoreVideo",
+        "IOSurface",
+      ]);
     }
   } else if (platform === "linux") {
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
@@ -902,9 +918,12 @@ function platformFlags(config, values) {
     }
   }
 
+  const combinedLinkFlags = appendFlags(linkFlags, extraLinkFlags);
   return {
     stubCcFlags: appendFlags(stubCcFlags, extraCcFlags),
-    linkFlags: appendFlags(linkFlags, extraLinkFlags),
+    linkFlags: ["macos", "ios", "iosSim"].includes(platform)
+      ? appendMissingFrameworks(combinedLinkFlags, [])
+      : combinedLinkFlags,
     androidLinkFlags: platform === "android" ? "-landroid -llog" : "",
   };
 }
@@ -935,15 +954,14 @@ function main() {
     const nativeRuntimeLinkFlags =
       process.env.MOUI_SKIA_CC_LINK_FLAGS ||
       fallbackNativeRuntimeLinkFlags(platform);
-    const nativePackageName = `${readModuleName()}/native`;
     const triangleLinkFlags = macosExampleLinkFlags(
       "",
-      "-framework QuartzCore -framework AppKit",
+      ["QuartzCore", "AppKit"],
       platform,
     );
     const metalWindowLinkFlags = macosExampleLinkFlags(
       "",
-      "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+      ["Metal", "QuartzCore", "CoreVideo", "IOSurface", "AppKit"],
       platform,
     );
     console.log(
@@ -958,12 +976,7 @@ function main() {
           MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
           MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
         },
-        link_configs: [
-          {
-            package: nativePackageName,
-            link_flags: nativeRuntimeLinkFlags,
-          },
-        ],
+        link_configs: [],
       }),
     );
     return;
@@ -973,15 +986,14 @@ function main() {
     const nativeRuntimeLinkFlags =
       process.env.MOUI_SKIA_CC_LINK_FLAGS ||
       fallbackNativeRuntimeLinkFlags(platform);
-    const nativePackageName = `${readModuleName()}/native`;
     const triangleLinkFlags = macosExampleLinkFlags(
       "",
-      "-framework QuartzCore -framework AppKit",
+      ["QuartzCore", "AppKit"],
       platform,
     );
     const metalWindowLinkFlags = macosExampleLinkFlags(
       "",
-      "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+      ["Metal", "QuartzCore", "CoreVideo", "IOSurface", "AppKit"],
       platform,
     );
     console.log(
@@ -993,29 +1005,22 @@ function main() {
           MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
           MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
         },
-        link_configs: [
-          {
-            package: nativePackageName,
-            link_flags: nativeRuntimeLinkFlags,
-          },
-        ],
+        link_configs: [],
       }),
     );
     return;
   }
 
-  const moduleName = readModuleName();
-  const nativePackageName = `${moduleName}/native`;
   const values = skiaValues(config);
   const flags = platformFlags(config, values);
   const triangleLinkFlags = macosExampleLinkFlags(
     flags.linkFlags,
-    "-framework QuartzCore -framework AppKit",
+    ["QuartzCore", "AppKit"],
     platform,
   );
   const metalWindowLinkFlags = macosExampleLinkFlags(
     flags.linkFlags,
-    "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+    ["Metal", "QuartzCore", "CoreVideo", "IOSurface", "AppKit"],
     platform,
   );
 
@@ -1028,12 +1033,7 @@ function main() {
         MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
         MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
       },
-      link_configs: [
-        {
-          package: nativePackageName,
-          link_flags: flags.linkFlags,
-        },
-      ],
+      link_configs: [],
     }),
   );
 }

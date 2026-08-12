@@ -279,7 +279,8 @@ fn skia_font_with_resolution_for_text(
     SkiaFontResolution::SystemFontMgr =>
       match skia_typeface_for_text(font, text) {
         Some(typeface) => {
-          let typeface = match typeface.with_variations(skia_variation_pairs(font)) {
+          let typeface = match
+            typeface.with_variations(skia_variation_pairs(font)) {
             Some(varied) => varied
             None => typeface
           }

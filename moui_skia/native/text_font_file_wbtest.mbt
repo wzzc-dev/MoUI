@@ -16,8 +16,9 @@ test "typeface from data rejects invalid inputs" {
   assert_true(Typeface::from_data(b"\x00\x01\x02", index=-1) is None)
   assert_true(Typeface::register_data(b"", b"\x00\x01\x02") is None)
   assert_true(Typeface::register_data(b"family", b"") is None)
-  assert_true(Typeface::register_data(b"family", b"\x00\x01\x02", index=-1)
-    is None)
+  assert_true(
+    Typeface::register_data(b"family", b"\x00\x01\x02", index=-1) is None,
+  )
 }
 
 ///|

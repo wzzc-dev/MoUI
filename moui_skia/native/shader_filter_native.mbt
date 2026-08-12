@@ -13,7 +13,7 @@ extern "C" fn native_color_filter_is_null(
 ///|
 #borrow(values)
 extern "C" fn native_color_filter_matrix(
-  values : Array[Float],
+  values : FixedArray[Float],
 ) -> ColorFilterHandle = "moonbit_skia_color_filter_matrix"
 
 ///|
@@ -82,7 +82,9 @@ pub fn ColorFilter::matrix(values : Array[Float]) -> ColorFilter? {
   if values.length() != 20 || !skia_float_array_is_finite(values) {
     None
   } else {
-    ColorFilter::from_handle(native_color_filter_matrix(values))
+    ColorFilter::from_handle(
+      native_color_filter_matrix(FixedArray::from_array(values)),
+    )
   }
 }
 

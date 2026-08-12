@@ -28,7 +28,7 @@ Showcase Windows Skia 路线是交互式应用入口。匹配宿主的首帧 smo
 
 ## 链接标志
 
-Windows Skia/Ganesh 库由 `moui/build.js` prebuild `link_configs` 注入，适用于 `wzzc-dev/moui_skia_renderer`（来自 `MOUI_SKIA_CC_LINK_FLAGS`）。窗口宿主的 Win32 系统库来自 `window/windows` prebuild `link_configs`。DirectWrite WGPU 文本使用 `moui_wgpu_renderer/directwrite` link_configs（`-lz`）。
+Windows Skia/Ganesh 链接标志由 `moui_skia/build.js` 生成（来自 `MOUI_SKIA_CC_LINK_FLAGS`）：`moui_skia/native/moon.pkg` 用于 binding 自测，`moui_skia_renderer/build.js` 为最终应用只注册一个 `link_configs` 条目。窗口宿主的 Win32 系统库来自 `window/windows` prebuild `link_configs`。DirectWrite WGPU 文本使用 `moui_wgpu_renderer/directwrite` link_configs（`-lz`）。
 
 示例 `windows_skia` / `windows_wgpu` 入口点不应重复 Skia 或 Win32 链接标志。它们只需要一个空的 `cc-link-flags` 覆盖，让 Moon 在需要时禁用 `tcc -run`：
 
