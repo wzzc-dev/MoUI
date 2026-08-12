@@ -4,3 +4,10 @@
 - 陷阱:这类链接失败可能被 moon 构建缓存掩盖——只要源码与链接命令不变,CI 不重新链接就"通过";改动 `moui_skia` 下任意 .mbt/.cpp 才会暴露。改链接相关脚本后应强制清缓存验证。
 - `--require-skparagraph`(静态模式,如 `moui-renderer-real-skia-ci.yml`)仍严格检查并失败。
 - 改 `moui/core` 等 public API 后必须跑 `node scripts/generate-repo-docs.mjs --write`,否则 `checks/api-surface-report.json` 过期导致 pr-profile 失败;`checks/source-file-policy.json` 的 maxLines 是棘轮,超行必须同步上调。
+
+## moon prebuild:link_configs 是链接 flags 的唯一可靠载体
+
+- moon **不会**在 `moon.pkg` 的 `link."native"."cc-link-flags"` 位置展开 `${build.MOUI_SKIA_CC_LINK_FLAGS}`(最终链接阶段拿不到 prebuild vars);`stub-cc-flags` 的 `${build.MOUI_SKIA_STUB_CC_FLAGS}` 会展开(编译 stub 时)。
+- 因此 `moui_skia/build.js` prebuild 必须用 `link_configs: [{package: "wzzc-dev/moui_skia/native", link_flags}]` 把 flags 挂到 native 包,否则直接依赖 native 包的 is-main 链接(scripts/native_smoke、moon test)缺 Skia/libstdc++ flags,报 `undefined reference to SkJpegEncoder::Encode/std::__throw_length_error`。
+- example 链路(经 moui_skia_renderer)会合并 native+renderer 两份 flags,产生 duplicate libraries 警告——历史如此,无害,勿再清空 link_configs。
+- 真实 Skia smoke 脚本不依赖 prebuild:它们直接写临时 `moon.pkg`(硬编码 cc-link-flags)再 restore。
