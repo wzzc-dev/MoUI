@@ -270,6 +270,38 @@ pub fn Typeface::from_file(path : Bytes, index? : Int = 0) -> Typeface? {
 }
 
 ///|
+pub fn Typeface::from_data(data : Bytes, index? : Int = 0) -> Typeface? {
+  ignore(data)
+  ignore(index)
+  None
+}
+
+///|
+pub fn Typeface::register_data(
+  family_alias : Bytes,
+  data : Bytes,
+  index? : Int = 0,
+) -> Typeface? {
+  ignore(family_alias)
+  ignore(data)
+  ignore(index)
+  None
+}
+
+///|
+pub fn Typeface::with_variations(
+  self : Typeface,
+  variations : Array[(Bytes, Float)],
+) -> Typeface? {
+  if variations.is_empty() {
+    Some(self)
+  } else {
+    ignore(variations)
+    None
+  }
+}
+
+///|
 pub fn FontMgr::default() -> FontMgr? {
   None
 }
