@@ -11,3 +11,8 @@
 - 因此 `moui_skia/build.js` prebuild 必须用 `link_configs: [{package: "wzzc-dev/moui_skia/native", link_flags}]` 把 flags 挂到 native 包,否则直接依赖 native 包的 is-main 链接(scripts/native_smoke、moon test)缺 Skia/libstdc++ flags,报 `undefined reference to SkJpegEncoder::Encode/std::__throw_length_error`。
 - example 链路(经 moui_skia_renderer)会合并 native+renderer 两份 flags,产生 duplicate libraries 警告——历史如此,无害,勿再清空 link_configs。
 - 真实 Skia smoke 脚本不依赖 prebuild:它们直接写临时 `moon.pkg`(硬编码 cc-link-flags)再 restore。
+
+## native 包 public API 变更必须同步 fallback 实现
+
+- `moui_skia/native/text_font_*_unavailable.mbt` 等 fallback 实现必须与 `*_native.mbt` 的 `pub fn` 名称一一对应,`tools/moui_skia/verify_native_capability_contract`(源码级解析 `pub fn X::y` 名称,双向比对)会检查;缺 API 报 "native capability fallback is missing public APIs"。
+- 新增 native 包 public API 后:① 补 fallback 同名实现(None/降级语义)② `moon info -p moui_skia/native` 重新生成 `pkg.generated.mbti` 并提交,否则 PR profile 的 generated interface drift 失败。
