@@ -976,7 +976,15 @@ function main() {
           MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
           MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
         },
-        link_configs: [],
+        // moon does not expand ${build.MOUI_SKIA_CC_LINK_FLAGS} in moon.pkg
+        // cc-link-flags at final link time, so the native package must also
+        // receive the flags via link_configs.
+        link_configs: [
+          {
+            package: "wzzc-dev/moui_skia/native",
+            link_flags: nativeRuntimeLinkFlags,
+          },
+        ],
       }),
     );
     return;
@@ -1005,7 +1013,12 @@ function main() {
           MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
           MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
         },
-        link_configs: [],
+        link_configs: [
+          {
+            package: "wzzc-dev/moui_skia/native",
+            link_flags: nativeRuntimeLinkFlags,
+          },
+        ],
       }),
     );
     return;
@@ -1033,7 +1046,15 @@ function main() {
         MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
         MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
       },
-      link_configs: [],
+      // moon does not expand ${build.MOUI_SKIA_CC_LINK_FLAGS} in moon.pkg
+      // cc-link-flags at final link time; link_configs is the carrier that
+      // reaches is-main links (native smoke, package tests, examples).
+      link_configs: [
+        {
+          package: "wzzc-dev/moui_skia/native",
+          link_flags: flags.linkFlags,
+        },
+      ],
     }),
   );
 }
