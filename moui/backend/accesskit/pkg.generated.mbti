@@ -48,7 +48,9 @@ pub struct AccessKitUpdate {
   generation : @core.SemanticsGeneration
   tree_update : @moon_accesskit.TreeUpdate
   removed : Array[@core.SemanticsNodeId]
+  announcements : Array[@runtime.AccessibilityAnnouncement]
 }
+pub fn AccessKitUpdate::announcements(Self) -> Array[@runtime.AccessibilityAnnouncement]
 pub fn AccessKitUpdate::generation(Self) -> @core.SemanticsGeneration
 pub fn AccessKitUpdate::removed(Self) -> Array[@core.SemanticsNodeId]
 pub fn AccessKitUpdate::tree_update(Self) -> @moon_accesskit.TreeUpdate

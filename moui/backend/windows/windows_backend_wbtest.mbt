@@ -105,3 +105,52 @@ test "windows host options carry optional scene resolver and smoke options stay 
     _ => fail("expected configured Windows scene resolver")
   }
 }
+
+///|
+test "windows UIA actions preserve node generation and typed payload" {
+  let numeric = windows_decode_accessibility_action(
+    b"{\"node_id\":\"42\",\"generation\":\"7\",\"kind\":\"set_numeric_value\",\"value\":\"37.5\"}",
+  )
+  guard numeric
+    is Some(
+      {
+        target: @core.SemanticsTarget::ByNodeId(node_id),
+        action: @core.SemanticsAction::SetNumericValue(value),
+        precondition: @runtime.SemanticsGenerationPrecondition::Exact(
+          generation
+        ),
+      }
+    ) else {
+    fail("expected decoded UIA numeric action")
+  }
+  inspect(node_id.to_wire(), content="42")
+  inspect(generation.to_wire(), content="7")
+  inspect(value, content="37.5")
+
+  let selection = windows_decode_accessibility_action(
+    b"{\"node_id\":\"43\",\"generation\":\"8\",\"kind\":\"set_selection\",\"value\":\"3,9\"}",
+  )
+  guard selection
+    is Some({ action: @core.SemanticsAction::SetSelection(range), .. }) else {
+    fail("expected decoded UIA selection action")
+  }
+  inspect(range.start, content="3")
+  inspect(range.end, content="9")
+}
+
+///|
+test "windows UIA action decoder rejects malformed requests" {
+  assert_eq(windows_decode_accessibility_action(b""), None)
+  assert_eq(
+    windows_decode_accessibility_action(
+      b"{\"node_id\":\"x\",\"generation\":\"7\",\"kind\":\"activate\",\"value\":\"\"}",
+    ),
+    None,
+  )
+  assert_eq(
+    windows_decode_accessibility_action(
+      b"{\"node_id\":\"42\",\"generation\":\"7\",\"kind\":\"unknown\",\"value\":\"\"}",
+    ),
+    None,
+  )
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "description": "Decision-complete work graph and Agent handoff contract for native accessibility delivery.",
+  "handoffSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["task", "changed_files", "tests", "api_diff", "evidence", "known_gaps", "blocked_by"],
+    "properties": {
+      "task": {"type": "string"},
+      "changed_files": {"type": "array", "items": {"type": "string"}},
+      "tests": {"type": "array", "items": {"type": "string"}},
+      "api_diff": {"type": "boolean"},
+      "evidence": {"type": "array", "items": {"type": "string"}},
+      "known_gaps": {"type": "array", "items": {"type": "string"}},
+      "blocked_by": {"type": "array", "items": {"type": "string"}}
+    }
+  },
+  "packages": [
+    {"id": "NA-00", "owner_paths": ["docs/plans/active/native-accessibility.md", "docs/decisions/0029-native-accessibility-adapters-and-evidence.md", "checks/accessibility-*.json", "moui/backend/linux"], "depends_on": [], "validation": ["node scripts/validate-accessibility-foundation.mjs"], "evidence_level": "L0", "can_parallel": false},
+    {"id": "NA-01", "owner_paths": ["moui/core/semantics.mbt", "moui/core/view_protocol.mbt", "moui/runtime/semantics*.mbt", "moui/backend/accesskit", "moui_agent", "moui_agent_mcp"], "depends_on": ["NA-00"], "validation": ["moon test moui/core --target native", "moon test moui/runtime --target native", "moon test moui/backend/accesskit --target native"], "evidence_level": "L1", "can_parallel": false},
+    {"id": "NA-02", "owner_paths": ["checks/accessibility-*.json", "scripts/*accessibility*", "smoke/gates.json"], "depends_on": ["NA-00"], "validation": ["node scripts/validate-accessibility-foundation.mjs", "node scripts/record-macos-accessibility-evidence.mjs --help"], "evidence_level": "L1", "can_parallel": true},
+    {"id": "NA-03", "owner_paths": ["moui/runtime"], "depends_on": ["NA-01"], "validation": ["moon test moui/runtime --target native"], "evidence_level": "L1", "can_parallel": true},
+    {"id": "NA-04", "owner_paths": ["moui/views", "examples/showcase/app"], "depends_on": ["NA-01"], "validation": ["moon test moui/views --target native", "moon test examples/showcase/app --target native"], "evidence_level": "L1", "can_parallel": true},
+    {"id": "NA-05", "owner_paths": ["moui/backend/web", "scripts/test-web-semantics-dom.mjs"], "depends_on": ["NA-01", "NA-02", "NA-04"], "validation": ["moon test moui/backend/web --target native", "node scripts/test-web-semantics-dom.mjs"], "evidence_level": "L2", "can_parallel": true},
+    {"id": "NA-06", "owner_paths": ["moui/backend/macos", "window/modules/window/macos", "scripts/*macos*accessibility*"], "depends_on": ["NA-01", "NA-02", "NA-03", "NA-04"], "validation": ["moon test moui/backend/macos --target native", "scripts/macos-accessibility-probe.sh --help"], "evidence_level": "L3", "can_parallel": true},
+    {"id": "NA-07", "owner_paths": ["moui/backend/windows", "window/modules/window/windows", "scripts/*windows*accessibility*"], "depends_on": ["NA-01", "NA-02", "NA-03", "NA-04"], "validation": ["moon test moui/backend/windows --target native"], "evidence_level": "L3", "can_parallel": true},
+    {"id": "NA-08", "owner_paths": ["moui/backend/linux", "window/modules/window/linux", "scripts/*linux*accessibility*"], "depends_on": ["NA-01", "NA-02", "NA-03", "NA-04"], "validation": ["moon test moui/backend/linux --target native"], "evidence_level": "L3", "can_parallel": true},
+    {"id": "NA-09", "owner_paths": ["checks", "smoke", "scripts", ".github/workflows", "docs"], "depends_on": ["NA-05", "NA-06", "NA-07", "NA-08"], "validation": ["sh scripts/check.sh --profile pr", "node scripts/smoke-check.mjs --check"], "evidence_level": "L3", "can_parallel": false}
+  ]
+}

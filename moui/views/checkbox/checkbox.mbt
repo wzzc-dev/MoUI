@@ -236,7 +236,11 @@ impl @core.ViewNode for Checkbox with fn semantics(self) {
     role=@core.SemanticsRole::Checkbox,
     label=self.label,
     value=if self.checked { "true" } else { "false" },
-    checked=self.checked,
+    checked=if self.checked {
+      @core.SemanticsCheckedState::Checked
+    } else {
+      @core.SemanticsCheckedState::Unchecked
+    },
   )
 }
 

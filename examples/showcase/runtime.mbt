@@ -15,6 +15,8 @@ pub fn runtime(
   let model = @app.ShowcaseModel::new(diagnostics_input~, route~)
   let model = if initial_section_code == 1 {
     model.update(@app.ShowcaseMsg::Navigate("diagnostics/advanced-rendering"))
+  } else if initial_section_code == 2 {
+    model.update(@app.ShowcaseMsg::Navigate("components/accessibility-probe"))
   } else {
     model
   }

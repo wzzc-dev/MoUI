@@ -206,6 +206,85 @@ pub fn[Msg] ViewSemanticsActionHandler::dismiss(
 }
 
 ///|
+pub fn[Msg] ViewSemanticsActionHandler::increment(
+  handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
+) -> ViewSemanticsActionHandler[Msg] {
+  {
+    kind: SemanticsActionKind::Increment,
+    handle: (context, action) => {
+      match action {
+        SemanticsAction::Increment => handle(context)
+        _ => ViewSemanticsActionResult::rejected()
+      }
+    },
+  }
+}
+
+///|
+pub fn[Msg] ViewSemanticsActionHandler::decrement(
+  handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
+) -> ViewSemanticsActionHandler[Msg] {
+  {
+    kind: SemanticsActionKind::Decrement,
+    handle: (context, action) => {
+      match action {
+        SemanticsAction::Decrement => handle(context)
+        _ => ViewSemanticsActionResult::rejected()
+      }
+    },
+  }
+}
+
+///|
+pub fn[Msg] ViewSemanticsActionHandler::set_numeric_value(
+  handle : (ViewSemanticsActionContext, Double) -> ViewSemanticsActionResult[
+    Msg,
+  ],
+) -> ViewSemanticsActionHandler[Msg] {
+  {
+    kind: SemanticsActionKind::SetNumericValue,
+    handle: (context, action) => {
+      match action {
+        SemanticsAction::SetNumericValue(value) => handle(context, value)
+        _ => ViewSemanticsActionResult::rejected()
+      }
+    },
+  }
+}
+
+///|
+pub fn[Msg] ViewSemanticsActionHandler::set_selection(
+  handle : (ViewSemanticsActionContext, TextRange) -> ViewSemanticsActionResult[
+    Msg,
+  ],
+) -> ViewSemanticsActionHandler[Msg] {
+  {
+    kind: SemanticsActionKind::SetSelection,
+    handle: (context, action) => {
+      match action {
+        SemanticsAction::SetSelection(selection) => handle(context, selection)
+        _ => ViewSemanticsActionResult::rejected()
+      }
+    },
+  }
+}
+
+///|
+pub fn[Msg] ViewSemanticsActionHandler::show_menu(
+  handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
+) -> ViewSemanticsActionHandler[Msg] {
+  {
+    kind: SemanticsActionKind::ShowMenu,
+    handle: (context, action) => {
+      match action {
+        SemanticsAction::ShowMenu => handle(context)
+        _ => ViewSemanticsActionResult::rejected()
+      }
+    },
+  }
+}
+
+///|
 pub fn[Msg] ViewSemanticsActionHandler::kind(
   self : ViewSemanticsActionHandler[Msg],
 ) -> SemanticsActionKind {

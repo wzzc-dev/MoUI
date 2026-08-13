@@ -65,5 +65,7 @@ fn component_body(
         width~,
         theme~,
       )
+    ComponentGalleryItemId::AccessibilityProbe =>
+      accessibility_probe(model, theme, width)
   }
 }

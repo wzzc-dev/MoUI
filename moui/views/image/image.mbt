@@ -6,12 +6,20 @@ pub fn[Msg] image(
   opacity? : Double = 1.0,
   corner_radius? : Double = 0.0,
   fit? : @core.ImageFit = @core.ImageFit::Contain,
+  accessibility_label? : String = "",
 ) -> @core.View[Msg] {
   let size = match (width, height) {
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  @core.View::from_node(Image::{ source, size, opacity, corner_radius, fit })
+  @core.View::from_node(Image::{
+    source,
+    size,
+    opacity,
+    corner_radius,
+    fit,
+    accessibility_label,
+  })
 }
 
 ///|
@@ -21,6 +29,7 @@ priv struct Image {
   opacity : Double
   corner_radius : Double
   fit : @core.ImageFit
+  accessibility_label : String
 }
 
 ///|
@@ -50,6 +59,9 @@ impl @core.ViewNode for Image with fn declaration(self) {
         ("corner_radius", @core.DeclarationKey::double(self.corner_radius)),
         ("fit", fit),
       ]),
+    ),
+    semantics=@common.view_exact_channel(
+      @core.DeclarationKey::string(self.accessibility_label),
     ),
   )
 }
@@ -91,8 +103,14 @@ impl @core.ViewNode for Image with fn paint(self, context) {
 }
 
 ///|
-impl @core.ViewNode for Image with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+impl @core.ViewNode for Image with fn semantics(self) {
+  if self.accessibility_label == "" {
+    @core.ViewSemanticsInfo::new(composition=@core.SemanticsComposition::Hidden)
+  } else {
+    @core.ViewSemanticsInfo::new(
+      composition=@core.SemanticsComposition::Boundary,
+      role=@core.SemanticsRole::Image,
+      label=self.accessibility_label,
+    )
+  }
 }

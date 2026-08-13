@@ -33,6 +33,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [views-api-guide.md](views-api-guide.md) | `deep` | Views API usage |
 | [tea-program-model.md](tea-program-model.md) | `canonical` | Program / Effect / Subscription model |
 | [agent-semantics.md](agent-semantics.md) | `canonical` | Committed semantics, generations, typed Agent actions, and MCP surface |
+| [plans/active/native-accessibility.md](plans/active/native-accessibility.md) | `map` | Native accessibility adapters, Probe work graph, and evidence rollout |
 | [canvas-and-custom-paint.md](canvas-and-custom-paint.md) | `canonical` | Custom paint / canvas |
 | [non-render-component-cookbook.md](non-render-component-cookbook.md) | `canonical` | Host services from app code |
 | [button-styling-guide.md](button-styling-guide.md) | `canonical` | Button colors / styles pipeline |

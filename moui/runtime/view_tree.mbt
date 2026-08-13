@@ -51,6 +51,7 @@ priv trait RuntimeViewNode {
     @core.SemanticsAction,
   ) -> RuntimeSemanticsActionOutcome
   fn focusable(Self) -> Bool
+  fn focus_trap(Self) -> Bool
   fn flex_weight(Self) -> Double
 }
 
@@ -204,6 +205,11 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn semantics_action(
 ///|
 impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn focusable(self) {
   self.view.accepts_focus()
+}
+
+///|
+impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn focus_trap(self) {
+  self.view.traps_focus()
 }
 
 ///|

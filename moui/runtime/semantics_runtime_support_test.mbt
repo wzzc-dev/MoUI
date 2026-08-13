@@ -74,6 +74,15 @@ fn runtime_semantic_role_key(
       @core.SemanticsRole::TreeItem => 25
       @core.SemanticsRole::Group => 26
       @core.SemanticsRole::WebView => 27
+      @core.SemanticsRole::Image => 28
+      @core.SemanticsRole::Alert => 29
+      @core.SemanticsRole::Status => 30
+      @core.SemanticsRole::ComboBox => 31
+      @core.SemanticsRole::Option => 32
+      @core.SemanticsRole::Table => 33
+      @core.SemanticsRole::Row => 34
+      @core.SemanticsRole::Cell => 35
+      @core.SemanticsRole::Separator => 36
     },
   )
 }
@@ -193,6 +202,7 @@ priv struct RuntimeSemanticContainerNode {
   declaration : @core.ViewDeclaration
   semantic_id : @core.SemanticId?
   composition : @core.SemanticsComposition
+  focus_trap : Bool
 }
 
 ///|
@@ -235,11 +245,17 @@ impl @core.ViewNode for RuntimeSemanticContainerNode with fn semantics(self) {
 }
 
 ///|
+impl @core.ViewNode for RuntimeSemanticContainerNode with fn focus_trap(self) {
+  self.focus_trap
+}
+
+///|
 fn[Msg] runtime_semantic_container(
   children : Array[@core.View[Msg]],
   kind? : String = "RuntimeSemanticContainer",
   composition? : @core.SemanticsComposition = @core.SemanticsComposition::Transparent,
   semantic_id? : @core.SemanticId,
+  focus_trap? : Bool = false,
 ) -> @core.View[Msg] {
   let node = RuntimeSemanticContainerNode::{
     kind,
@@ -250,12 +266,14 @@ fn[Msg] runtime_semantic_container(
         @core.DeclarationKey::record(type_tag="RuntimeSemanticContainer", fields=[
           ("composition", runtime_semantic_composition_key(composition)),
           ("semantic_id", runtime_semantic_optional_id_key(semantic_id)),
+          ("focus_trap", @core.DeclarationKey::bool(focus_trap)),
         ]),
       ),
       platform=@core.DeclarationChannel::Constant,
     ),
     semantic_id,
     composition,
+    focus_trap,
   }
   @core.View::from_node(node, children=_node => children)
 }

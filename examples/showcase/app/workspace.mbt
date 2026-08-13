@@ -109,6 +109,8 @@ pub fn ShowcaseRoute::parse(raw : String) -> ShowcaseRoute {
 /// Legacy bare section ids still used by scripts, web deep links, and tests.
 fn legacy_showcase_route(path : String) -> ShowcaseRoute? {
   match path {
+    "showcase/accessibility-probe" | "accessibility-probe" =>
+      Some(ShowcaseRoute::new(workspace=Components, id="accessibility-probe"))
     "advanced-rendering" =>
       Some(ShowcaseRoute::new(workspace=Diagnostics, id="advanced-rendering"))
     "runtime-renderer" | "theme-renderer" =>

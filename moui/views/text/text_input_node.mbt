@@ -151,6 +151,10 @@ impl @core.ViewNode for SingleLineTextInput with fn semantics(self) {
     role=@core.SemanticsRole::TextField,
     label=self.placeholder,
     value=self.value,
+    read_only=false,
+    multiline=false,
+    password=false,
+    text=@core.SemanticsTextValue::new(editable=true),
   )
 }
 

@@ -108,7 +108,7 @@ pub fn[T, Msg] sectioned_list(Array[@layout.SectionListSection[T]], (T) -> Strin
 
 pub fn[Msg] segmented_control(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : @style.SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] semantic_dismiss_action_control(@core.View[Msg], Msg) -> @core.View[Msg]
+pub fn[Msg] semantic_dismiss_action_control(@core.View[Msg], Msg, role? : @core.SemanticsRole?) -> @core.View[Msg]
 
 pub fn[Msg] semantic_toggle_action_control(@core.View[Msg], Bool, Msg) -> @core.View[Msg]
 

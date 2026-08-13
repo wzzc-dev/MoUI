@@ -1,6 +1,8 @@
 import {
   "moonbitlang/async",
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/json",
+  "moonbitlang/core/string",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/common" @render_common,
@@ -39,6 +41,7 @@ options(
     "macos_timer_host.m",
     "macos_perf_clock.c",
     "macos_present.mm",
+    "macos_accessibility_host.m",
   ],
   targets: { },
 )

@@ -278,6 +278,16 @@ int32_t moui_macos_system_theme_is_dark(void) {
 }
 
 MOONBIT_FFI_EXPORT
+int32_t moui_macos_accessibility_increase_contrast(void) {
+  return [[NSWorkspace sharedWorkspace] accessibilityDisplayShouldIncreaseContrast] ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_accessibility_reduce_motion(void) {
+  return [[NSWorkspace sharedWorkspace] accessibilityDisplayShouldReduceMotion] ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
 int32_t moui_macos_settings_has_value(moonbit_bytes_t key) {
   NSString *name = moui_macos_string_from_bytes(key);
   if ([name length] == 0) {

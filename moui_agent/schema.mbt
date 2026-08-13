@@ -2,6 +2,17 @@
 /// Agent-facing duplicate identity diagnostic from one committed snapshot.
 pub(all) enum AgentSemanticsIssue {
   DuplicateSemanticId(@core.SemanticId, Array[@core.SemanticsNodeId])
+  MissingRelationTarget(
+    @core.SemanticsNodeId,
+    @core.SemanticsRelationKind,
+    @core.SemanticId
+  )
+  AmbiguousRelationTarget(
+    @core.SemanticsNodeId,
+    @core.SemanticsRelationKind,
+    @core.SemanticId,
+    Array[@core.SemanticsNodeId]
+  )
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -24,6 +35,17 @@ pub(all) struct AgentSemanticsDelta {
   upserted : Array[@core.SemanticsNode]
   removed : Array[@core.SemanticsNodeId]
   issues : Array[AgentSemanticsIssue]
+  announcements : Array[AgentAccessibilityAnnouncement]
+} derive(Eq, Debug, ToJson)
+
+///|
+/// Agent-facing projection of one live-region change.
+pub(all) struct AgentAccessibilityAnnouncement {
+  node_id : @core.SemanticsNodeId
+  generation : @core.SemanticsGeneration
+  live : @core.SemanticsLive
+  is_atomic : Bool
+  text : String
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -99,6 +121,10 @@ fn agent_semantics_issue(
   match issue {
     @runtime.SemanticsIssue::DuplicateSemanticId(id, nodes) =>
       DuplicateSemanticId(id, nodes.copy())
+    @runtime.SemanticsIssue::MissingRelationTarget(source, kind, id) =>
+      MissingRelationTarget(source, kind, id)
+    @runtime.SemanticsIssue::AmbiguousRelationTarget(source, kind, id, nodes) =>
+      AmbiguousRelationTarget(source, kind, id, nodes.copy())
   }
 }
 
@@ -122,6 +148,15 @@ fn agent_semantics_read(read : @runtime.SemanticsRead) -> AgentSemanticsRead {
         upserted: delta.upserted(),
         removed: delta.removed(),
         issues: delta.issues().map(agent_semantics_issue),
+        announcements: delta
+        .announcements()
+        .map(announcement => {
+          node_id: announcement.node_id,
+          generation: announcement.generation,
+          live: announcement.live,
+          is_atomic: announcement.is_atomic,
+          text: announcement.text,
+        }),
       })
     @runtime.SemanticsRead::Unchanged(generation) => Unchanged(generation)
   }

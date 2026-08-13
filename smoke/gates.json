@@ -128,6 +128,89 @@
       "artifacts": ["artifacts/window-package-smoke/<platform>.log"]
     },
     {
+      "id": "accessibility.screen-reader-evidence",
+      "tier": "release",
+      "kind": "screen-reader-evidence-validation",
+      "host": "matching-host",
+      "purpose": "Validate an existing matching-host accessibility manifest, including real screen-reader navigation and spoken-output observations, without producing evidence or promoting readiness.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "node",
+            "scripts/validate-accessibility-foundation.mjs",
+            "--evidence",
+            "artifacts/accessibility/<platform>/manifest.json",
+            "--require-screen-reader"
+          ],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": ["docs/plans/active/native-accessibility.md", "docs/testing.md"],
+      "artifacts": ["artifacts/accessibility/<platform>/manifest.json"]
+    },
+    {
+      "id": "accessibility.macos-ax-probe",
+      "tier": "nightly",
+      "kind": "native-accessibility-client-evidence",
+      "host": "matching-host",
+      "purpose": "Run the Showcase Accessibility Probe through the real macOS AX API, record generation-checked action receipts and live announcements, and validate the resulting L2 manifest.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": ["scripts/macos-accessibility-probe.sh", "--manifest", "artifacts/accessibility/macos/manifest.json", "--require-passed"],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "nightly-macos"
+      },
+      "docs": ["docs/plans/active/native-accessibility.md", "docs/testing.md"],
+      "artifacts": [
+        "artifacts/accessibility/macos/manifest.json",
+        "artifacts/accessibility/macos/showcase.log",
+        "artifacts/accessibility/macos/ax-probe.log"
+      ]
+    },
+    {
+      "id": "accessibility.web-chrome-ax-probe",
+      "tier": "nightly",
+      "kind": "native-accessibility-client-evidence",
+      "host": "matching-host",
+      "purpose": "Run the Showcase Accessibility Probe through Chrome's real Accessibility Tree, execute DOM/keyboard actions, and record exact-generation runtime receipts.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": ["scripts/web-accessibility-probe.sh"],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "nightly-web"
+      },
+      "docs": ["docs/plans/active/native-accessibility.md", "docs/testing.md"],
+      "artifacts": [
+        "artifacts/accessibility/web/manifest.json",
+        "artifacts/accessibility/web/http-server.log",
+        "artifacts/accessibility/web/chrome.log"
+      ]
+    },
+    {
       "id": "mobile.window-hosted-hostsim",
       "tier": "nightly",
       "kind": "window-hosted-hostsim",

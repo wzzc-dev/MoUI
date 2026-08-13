@@ -98,6 +98,7 @@ class FakeDocument {
 
 const node = (id, role, frame, children = [], extra = {}) => ({
   node_id: `${id}`,
+  semantic_id: null,
   role,
   level: null,
   url: "",
@@ -164,6 +165,7 @@ const manager = createSemanticsDomManager({
 const first = node(1, "main", [0, 0, 400, 300], [
   node(2, "heading", [20, 30, 200, 40], [], { label: "Docs", level: 2 }),
   node(3, "link", [20, 80, 140, 30], [], {
+    semantic_id: "a11y.link",
     label: "Android",
     url: "https://example.test/android",
     actions: ["focus", "activate"],
@@ -179,6 +181,7 @@ const link = main.children[1];
 assert(heading.tagName === "H2", "heading level should select h2");
 assert(heading.style.left === "20px" && heading.style.top === "30px", "child frame should be parent-relative");
 assert(link.tagName === "A" && link.getAttribute("href") === "https://example.test/android", "link url should map to href");
+assert(link.getAttribute("data-moui-semantic-id") === "a11y.link", "stable semantic ids must be queryable by native browser clients");
 assert(link.style.pointerEvents === "auto", "actionable semantics elements must receive pointer input");
 link.dispatch("pointerdown", { detail: 1, clientX: 42, clientY: 96 });
 link.dispatch("click", { detail: 1, clientX: 42, clientY: 96 });
@@ -224,6 +227,47 @@ assert(
   actions.length === 2,
   "pointer clicks on semantic textboxes must not bypass the canvas hit tree",
 );
+
+manager.sync(11, canvasOne, fullUpdate(4, node(5, "slider", [20, 180, 260, 32], [], {
+  semantic_id: "a11y.slider",
+  label: "Coverage",
+  numeric: { current: 0.5, min: 0, max: 1, step: 0.1, value_text: "50 percent" },
+  actions: ["focus", "increment", "decrement", "set-numeric-value"],
+})));
+const slider = manager.layer(11).children[0];
+assert(slider.tagName === "INPUT" && slider.type === "range", "slider semantics should use a native range input");
+assert(slider.tabIndex === 0, "range semantics must be keyboard focusable");
+slider.dispatch("keydown", { key: "ArrowRight" });
+slider.dispatch("keydown", { key: "ArrowLeft" });
+assert(actions.at(-2)[3] === 9 && actions.at(-1)[3] === 10, "slider arrows must dispatch increment and decrement");
+slider.value = "0.7";
+slider.dispatch("input");
+assert(actions.at(-1)[3] === 11 && actions.at(-1)[4] === "0.7", "native range input must dispatch set numeric value");
+
+manager.sync(11, canvasOne, fullUpdate(5, node(6, "dialog", [20, 220, 260, 120], [], {
+  semantic_id: "a11y.dialog",
+  label: "Probe dialog",
+  modal: true,
+  read_only: true,
+  password: true,
+  actions: ["dismiss"],
+})));
+const dialog = manager.layer(11).children[0];
+assert(dialog.getAttribute("aria-modal") === "true", "dialog modal state must use aria-modal");
+assert(dialog.getAttribute("aria-readonly") === "true", "read-only state must use legal aria-readonly spelling");
+assert(dialog.getAttribute("aria-read-only") === null, "invalid aria-read-only must not be generated");
+assert(dialog.getAttribute("aria-password") === null, "invalid aria-password must not be generated");
+dialog.dispatch("keydown", { key: "Escape" });
+assert(actions.at(-1)[3] === 8, "Escape must dispatch dismiss");
+
+manager.sync(11, canvasOne, fullUpdate(6, node(7, "status", [20, 220, 260, 40], [], {
+  semantic_id: "a11y.status",
+  label: "Ready",
+  live: "Polite",
+  live_atomic: true,
+})));
+const status = manager.layer(11).children[0];
+assert(status.getAttribute("aria-live") === "polite", "ARIA live tokens must use lowercase values");
 
 manager.sync(22, canvasTwo, fullUpdate(1, node(9, "navigation", [0, 0, 200, 50])));
 assert(manager.layer(22) !== layerOne, "each canvas should own an isolated semantics layer");

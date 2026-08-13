@@ -79,6 +79,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can
               ),
             ),
           )
+          self.sync_atspi_window(window_id)
           window.request_redraw()
           self.drain_window_requests(event_loop)
         }
@@ -117,6 +118,16 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn abo
     None => event_loop.set_control_flow(@window_core.ControlFlow::Wait)
   }
   self.drain_window_requests(event_loop)
+  for slot in self.lifecycle.runtime_slots().open_slots() {
+    let current = slot.driver.environment()
+    let next = linux_environment_with_accessibility_settings(current)
+    if next != current {
+      slot.driver.set_environment(next)
+    }
+  }
+  for slot in self.lifecycle.runtime_slots().open_slots() {
+    self.sync_atspi_window(slot.id)
+  }
 }
 
 ///|

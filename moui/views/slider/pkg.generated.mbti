@@ -7,7 +7,7 @@ import {
 }
 
 // Values
-pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
+pub fn[Msg] slider(Double, min? : Double, max? : Double, step? : Double, label? : String, value_text? : String, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
 
 // Errors
 

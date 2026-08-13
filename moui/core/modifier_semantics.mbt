@@ -10,6 +10,11 @@ fn sem_decl(key : DeclarationKey) -> ViewDeclaration {
 }
 
 ///|
+fn semantics_info_declaration(info : ViewSemanticsInfo) -> ViewDeclaration {
+  sem_decl(DeclarationKey::string((info.to_json() : Json).stringify()))
+}
+
+///|
 pub(all) struct AccessibilityLabelModifier {
   label : String
 }
@@ -18,12 +23,12 @@ pub(all) struct AccessibilityLabelModifier {
 pub fn[Msg] AccessibilityLabelModifier::to_any_modifier(
   self : AccessibilityLabelModifier,
 ) -> AnyModifier[Msg] {
-  let label = self.label
+  let info = ViewSemanticsInfo::new(label=self.label)
   {
     ..noop_modifier(),
     identity_kind: "AccessibilityLabel",
-    declaration: sem_decl(DeclarationKey::string(label)),
-    semantics: ViewSemanticsInfo::new(label~, value=label),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -36,10 +41,12 @@ pub(all) struct SemanticIdModifier {
 pub fn[Msg] SemanticIdModifier::to_any_modifier(
   self : SemanticIdModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(semantic_id=self.semantic_id)
   {
     ..noop_modifier(),
     identity_kind: "SemanticId",
-    semantics: ViewSemanticsInfo::new(semantic_id=self.semantic_id),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -52,10 +59,12 @@ pub(all) struct SemanticsCompositionModifier {
 pub fn[Msg] SemanticsCompositionModifier::to_any_modifier(
   self : SemanticsCompositionModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(composition=self.composition)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsComposition",
-    semantics: ViewSemanticsInfo::new(composition=self.composition),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -68,10 +77,12 @@ pub(all) struct SemanticsRoleModifier {
 pub fn[Msg] SemanticsRoleModifier::to_any_modifier(
   self : SemanticsRoleModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(role=self.role)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsRole",
-    semantics: ViewSemanticsInfo::new(role=self.role),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -84,10 +95,12 @@ pub(all) struct SemanticsLevelModifier {
 pub fn[Msg] SemanticsLevelModifier::to_any_modifier(
   self : SemanticsLevelModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(level=self.level)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsLevel",
-    semantics: ViewSemanticsInfo::new(level=self.level),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -100,10 +113,12 @@ pub(all) struct SemanticsUrlModifier {
 pub fn[Msg] SemanticsUrlModifier::to_any_modifier(
   self : SemanticsUrlModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(url=self.url)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsUrl",
-    semantics: ViewSemanticsInfo::new(url=self.url),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -116,10 +131,12 @@ pub(all) struct SemanticsSelectedModifier {
 pub fn[Msg] SemanticsSelectedModifier::to_any_modifier(
   self : SemanticsSelectedModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(selected=self.selected)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsSelected",
-    semantics: ViewSemanticsInfo::new(selected=self.selected),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -132,26 +149,30 @@ pub(all) struct SemanticsPressedModifier {
 pub fn[Msg] SemanticsPressedModifier::to_any_modifier(
   self : SemanticsPressedModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(pressed=self.pressed)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsPressed",
-    semantics: ViewSemanticsInfo::new(pressed=self.pressed),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
 ///|
 pub(all) struct SemanticsCheckedModifier {
-  checked : Bool
+  checked : SemanticsCheckedState
 }
 
 ///|
 pub fn[Msg] SemanticsCheckedModifier::to_any_modifier(
   self : SemanticsCheckedModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(checked=self.checked)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsChecked",
-    semantics: ViewSemanticsInfo::new(checked=self.checked),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -164,10 +185,12 @@ pub(all) struct SemanticsExpandedModifier {
 pub fn[Msg] SemanticsExpandedModifier::to_any_modifier(
   self : SemanticsExpandedModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(expanded=self.expanded)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsExpanded",
-    semantics: ViewSemanticsInfo::new(expanded=self.expanded),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -180,10 +203,12 @@ pub(all) struct SemanticsInvalidModifier {
 pub fn[Msg] SemanticsInvalidModifier::to_any_modifier(
   self : SemanticsInvalidModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(invalid=self.invalid)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsInvalid",
-    semantics: ViewSemanticsInfo::new(invalid=self.invalid),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -196,10 +221,12 @@ pub(all) struct SemanticsRequiredModifier {
 pub fn[Msg] SemanticsRequiredModifier::to_any_modifier(
   self : SemanticsRequiredModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(required=self.required)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsRequired",
-    semantics: ViewSemanticsInfo::new(required=self.required),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }
 
@@ -212,9 +239,30 @@ pub(all) struct SemanticsDescriptionModifier {
 pub fn[Msg] SemanticsDescriptionModifier::to_any_modifier(
   self : SemanticsDescriptionModifier,
 ) -> AnyModifier[Msg] {
+  let info = ViewSemanticsInfo::new(description=self.description)
   {
     ..noop_modifier(),
     identity_kind: "SemanticsDescription",
-    semantics: ViewSemanticsInfo::new(description=self.description),
+    declaration: semantics_info_declaration(info),
+    semantics: info,
+  }
+}
+
+///|
+/// Grouped advanced semantics metadata with an exact cache key.
+pub(all) struct SemanticsMetadataModifier {
+  info : ViewSemanticsInfo
+}
+
+///|
+pub fn[Msg] SemanticsMetadataModifier::to_any_modifier(
+  self : SemanticsMetadataModifier,
+) -> AnyModifier[Msg] {
+  let info = self.info
+  {
+    ..noop_modifier(),
+    identity_kind: "SemanticsMetadata",
+    declaration: semantics_info_declaration(info),
+    semantics: info,
   }
 }

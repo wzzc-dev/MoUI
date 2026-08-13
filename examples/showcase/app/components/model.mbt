@@ -62,6 +62,7 @@ pub(all) enum ComponentGalleryItemId {
   ScrollView
   PlatformRoutes
   MobileServiceProbe
+  AccessibilityProbe
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -83,6 +84,7 @@ pub(all) struct ComponentGalleryModel {
   probe_text : String
   probe_action_count : Int
   probe_submit_count : Int
+  probe_dialog_open : Bool
   checkbox_group_selection : Array[String]
 }
 
@@ -102,8 +104,12 @@ pub(all) enum ComponentGalleryMsg {
   Decrement
   Reset
   ProbeTextChanged(String)
+  ProbeFeatureToggled(Bool)
+  ProbeSliderChanged(Double)
   ProbeAction
   ProbeSubmit
+  ProbeDialogOpen
+  ProbeDialogClose
   ToggleCheckboxGroupItem(String)
   PageScrolled(@geometry.Point)
 } derive(Eq, Debug, ToJson)
@@ -243,6 +249,7 @@ pub fn ComponentGalleryModel::new(
     probe_text: "mobile-service-probe",
     probe_action_count: 0,
     probe_submit_count: 0,
+    probe_dialog_open: false,
     checkbox_group_selection: ["desktop", "mobile"],
   }
 }
@@ -326,8 +333,27 @@ pub fn update(
     Increment => { ..model, counter: model.counter + 1 }
     Decrement => { ..model, counter: model.counter - 1 }
     ProbeTextChanged(value) => { ..model, probe_text: value }
+    ProbeFeatureToggled(value) =>
+      {
+        ..model,
+        feature_enabled: value,
+        probe_action_count: model.probe_action_count + 1,
+      }
+    ProbeSliderChanged(value) =>
+      {
+        ..model,
+        slider_value: value,
+        probe_action_count: model.probe_action_count + 1,
+      }
     ProbeAction => { ..model, probe_action_count: model.probe_action_count + 1 }
     ProbeSubmit => { ..model, probe_submit_count: model.probe_submit_count + 1 }
+    ProbeDialogOpen =>
+      {
+        ..model,
+        probe_dialog_open: true,
+        probe_action_count: model.probe_action_count + 1,
+      }
+    ProbeDialogClose => { ..model, probe_dialog_open: false }
     ToggleCheckboxGroupItem(id) => {
       let next : Array[String] = []
       for item in model.checkbox_group_selection {
@@ -355,6 +381,7 @@ pub fn update(
         probe_text: "mobile-service-probe",
         probe_action_count: 0,
         probe_submit_count: 0,
+        probe_dialog_open: false,
         checkbox_group_selection: ["desktop", "mobile"],
       }
   }

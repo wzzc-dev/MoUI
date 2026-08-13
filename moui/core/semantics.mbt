@@ -28,6 +28,15 @@ pub(all) enum SemanticsRole {
   TreeItem
   Group
   WebView
+  Image
+  Alert
+  Status
+  ComboBox
+  Option
+  Table
+  Row
+  Cell
+  Separator
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -150,6 +159,11 @@ pub(all) enum SemanticsActionKind {
   Expand
   Collapse
   Dismiss
+  Increment
+  Decrement
+  SetNumericValue
+  SetSelection
+  ShowMenu
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -175,6 +189,11 @@ pub(all) enum SemanticsAction {
   Expand
   Collapse
   Dismiss
+  Increment
+  Decrement
+  SetNumericValue(Double)
+  SetSelection(TextRange)
+  ShowMenu
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -189,6 +208,147 @@ pub fn SemanticsAction::kind(self : SemanticsAction) -> SemanticsActionKind {
     Expand => SemanticsActionKind::Expand
     Collapse => SemanticsActionKind::Collapse
     Dismiss => SemanticsActionKind::Dismiss
+    Increment => SemanticsActionKind::Increment
+    Decrement => SemanticsActionKind::Decrement
+    SetNumericValue(_) => SemanticsActionKind::SetNumericValue
+    SetSelection(_) => SemanticsActionKind::SetSelection
+    ShowMenu => SemanticsActionKind::ShowMenu
+  }
+}
+
+///|
+pub(all) enum SemanticsCheckedState {
+  Unchecked
+  Checked
+  Mixed
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum SemanticsLive {
+  Off
+  Polite
+  Assertive
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct SemanticsNumericValue {
+  current : Double?
+  min : Double?
+  max : Double?
+  step : Double?
+  value_text : String?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn SemanticsNumericValue::new(
+  current? : Double,
+  min? : Double,
+  max? : Double,
+  step? : Double,
+  value_text? : String,
+) -> SemanticsNumericValue {
+  { current, min, max, step, value_text }
+}
+
+///|
+pub(all) struct SemanticsTextValue {
+  selection : TextRange?
+  caret : Int?
+  editable : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn SemanticsTextValue::new(
+  selection? : TextRange,
+  caret? : Int,
+  editable? : Bool = false,
+) -> SemanticsTextValue {
+  { selection, caret, editable }
+}
+
+///|
+pub(all) struct SemanticsCollectionInfo {
+  row_index : Int?
+  row_count : Int?
+  row_span : Int?
+  column_index : Int?
+  column_count : Int?
+  column_span : Int?
+  set_size : Int?
+  set_position : Int?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn SemanticsCollectionInfo::new(
+  row_index? : Int,
+  row_count? : Int,
+  row_span? : Int,
+  column_index? : Int,
+  column_count? : Int,
+  column_span? : Int,
+  set_size? : Int,
+  set_position? : Int,
+) -> SemanticsCollectionInfo {
+  {
+    row_index,
+    row_count,
+    row_span,
+    column_index,
+    column_count,
+    column_span,
+    set_size,
+    set_position,
+  }
+}
+
+///|
+/// Relations declared by views use application-stable semantic IDs.
+pub(all) struct SemanticsRelationsDeclaration {
+  labelled_by : Array[SemanticId]
+  described_by : Array[SemanticId]
+  controls : Array[SemanticId]
+  error_message : Array[SemanticId]
+  active_descendant : Array[SemanticId]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn SemanticsRelationsDeclaration::new(
+  labelled_by? : Array[SemanticId] = [],
+  described_by? : Array[SemanticId] = [],
+  controls? : Array[SemanticId] = [],
+  error_message? : Array[SemanticId] = [],
+  active_descendant? : Array[SemanticId] = [],
+) -> SemanticsRelationsDeclaration {
+  { labelled_by, described_by, controls, error_message, active_descendant }
+}
+
+///|
+pub(all) enum SemanticsRelationKind {
+  LabelledBy
+  DescribedBy
+  Controls
+  ErrorMessage
+  ActiveDescendant
+} derive(Eq, Debug, ToJson)
+
+///|
+/// Relations in a committed snapshot contain only resolved runtime node IDs.
+pub(all) struct SemanticsRelations {
+  labelled_by : Array[SemanticsNodeId]
+  described_by : Array[SemanticsNodeId]
+  controls : Array[SemanticsNodeId]
+  error_message : Array[SemanticsNodeId]
+  active_descendant : Array[SemanticsNodeId]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn SemanticsRelations::empty() -> SemanticsRelations {
+  {
+    labelled_by: [],
+    described_by: [],
+    controls: [],
+    error_message: [],
+    active_descendant: [],
   }
 }
 
@@ -216,10 +376,15 @@ pub(all) struct SemanticsState {
   disabled : Bool
   selected : Bool
   pressed : Bool
-  checked : Bool
+  checked : SemanticsCheckedState?
   expanded : Bool
   invalid : Bool
   required : Bool
+  read_only : Bool
+  busy : Bool
+  multiline : Bool
+  password : Bool
+  modal : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -233,6 +398,12 @@ pub(all) struct SemanticsNode {
   value : String
   description : String
   state : SemanticsState
+  numeric : SemanticsNumericValue?
+  text : SemanticsTextValue?
+  collection : SemanticsCollectionInfo?
+  relations : SemanticsRelations
+  live : SemanticsLive
+  live_atomic : Bool
   actions : Array[SemanticsActionKind]
   focus_order : Int?
   frame : Rect
@@ -246,10 +417,15 @@ pub fn SemanticsState::default() -> SemanticsState {
     disabled: false,
     selected: false,
     pressed: false,
-    checked: false,
+    checked: None,
     expanded: false,
     invalid: false,
     required: false,
+    read_only: false,
+    busy: false,
+    multiline: false,
+    password: false,
+    modal: false,
   }
 }
 

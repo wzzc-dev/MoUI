@@ -48,6 +48,15 @@ extern "C" fn linux_settings_write_bytes(key : Bytes, value : Bytes) -> Int = "m
 extern "C" fn linux_settings_remove_bytes(key : Bytes) -> Int = "moui_linux_settings_remove"
 
 ///|
+extern "C" fn linux_accessibility_high_contrast() -> Int = "moui_linux_accessibility_high_contrast"
+
+///|
+extern "C" fn linux_accessibility_reduce_motion() -> Int = "moui_linux_accessibility_reduce_motion"
+
+///|
+extern "C" fn linux_accessibility_text_scale() -> Double = "moui_linux_accessibility_text_scale"
+
+///|
 pub fn capability_matrix() -> LinuxBackendCapabilities {
   {
     window: true,
@@ -149,9 +158,32 @@ pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo {
   {
     kind: "at-spi",
     semantics_bridge_available: true,
-    native_accessibility_bridge_available: true,
+    native_accessibility_bridge_available: false,
     action_dispatch_available: true,
-    description: "Linux exposes an AT-SPI accessibility binding over the shared semantics tree with snapshot publish, action dispatch, and cleanup diagnostics.",
+    description: "Linux has a GDBus AT-SPI transport candidate with committed snapshot/delta publish, exact-generation action dispatch, and window-scoped cleanup; native readiness remains false until accessibility-bus Registry integration and real AT-SPI client evidence pass.",
+  }
+}
+
+///|
+/// Read desktop accessibility preferences through the existing Environment
+/// channel. The host helper is conservative when no desktop setting is known.
+pub fn linux_environment_with_accessibility_settings(
+  environment : @core.Environment,
+) -> @core.Environment {
+  let updated = environment
+    .with_accessibility_contrast(
+      if linux_accessibility_high_contrast() != 0 {
+        @core.AccessibilityContrast::High
+      } else {
+        @core.AccessibilityContrast::Standard
+      },
+    )
+    .with_reduced_motion(linux_accessibility_reduce_motion() != 0)
+  let text_scale = linux_accessibility_text_scale()
+  if text_scale > 0.0 {
+    updated.with_text_scale(text_scale)
+  } else {
+    updated
   }
 }
 

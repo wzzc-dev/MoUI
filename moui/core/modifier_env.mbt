@@ -92,7 +92,12 @@ pub(all) struct FocusTrapModifier {
 
 ///|
 pub fn[Msg] FocusTrapModifier::to_any_modifier(
-  _self : FocusTrapModifier,
+  self : FocusTrapModifier,
 ) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "FocusTrap" }
+  {
+    ..noop_modifier(),
+    identity_kind: "FocusTrap",
+    focus_trap: self.trap,
+    semantics: ViewSemanticsInfo::new(modal=self.trap),
+  }
 }

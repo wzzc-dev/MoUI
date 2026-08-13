@@ -84,7 +84,7 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
   let published = binding.publish_semantics(
     @runtime.SemanticsRead::Full(snapshot),
   )
-  inspect(published.native_binding_ready, content="true")
+  inspect(published.native_binding_ready, content="false")
   assert_true(published.published_node_count >= 1)
   inspect(published.disposed, content="false")
   match
@@ -115,4 +115,59 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
       inspect(message, content="Linux AT-SPI binding is disposed")
     _ => fail("expected disposed Linux AT-SPI binding to reject actions")
   }
+}
+
+///|
+test "linux native at-spi actions preserve identity generation and payload" {
+  let numeric = linux_atspi_decode_action(
+    b"{\"node_id\":\"42\",\"generation\":\"7\",\"kind\":\"set_numeric_value\",\"value\":\"37.5\"}",
+  )
+  guard numeric
+    is Some(
+      {
+        target: @core.SemanticsTarget::ByNodeId(node_id),
+        action: @core.SemanticsAction::SetNumericValue(value),
+        precondition: @runtime.SemanticsGenerationPrecondition::Exact(
+          generation
+        ),
+      }
+    ) else {
+    fail("expected decoded AT-SPI numeric action")
+  }
+  inspect(node_id.to_wire(), content="42")
+  inspect(generation.to_wire(), content="7")
+  inspect(value, content="37.5")
+
+  let selection = linux_atspi_decode_action(
+    b"{\"node_id\":\"43\",\"generation\":\"8\",\"kind\":\"set_selection\",\"value\":\"3,9\"}",
+  )
+  guard selection
+    is Some({ action: @core.SemanticsAction::SetSelection(range), .. }) else {
+    fail("expected decoded AT-SPI selection action")
+  }
+  inspect(range.start, content="3")
+  inspect(range.end, content="9")
+}
+
+///|
+test "linux native at-spi action decoder rejects stale wire shapes" {
+  assert_eq(linux_atspi_decode_action(b""), None)
+  assert_eq(
+    linux_atspi_decode_action(
+      b"{\"node_id\":\"x\",\"generation\":\"7\",\"kind\":\"activate\",\"value\":\"\"}",
+    ),
+    None,
+  )
+  assert_eq(
+    linux_atspi_decode_action(
+      b"{\"node_id\":\"42\",\"generation\":\"7\",\"kind\":\"set_selection\",\"value\":\"9,3,1\"}",
+    ),
+    None,
+  )
+  assert_eq(
+    linux_atspi_decode_action(
+      b"{\"node_id\":\"42\",\"generation\":\"7\",\"kind\":\"unknown\",\"value\":\"\"}",
+    ),
+    None,
+  )
 }

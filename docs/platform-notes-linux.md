@@ -286,11 +286,13 @@ contract. The backend encodes enabled command rows for a desktop menu picker,
 dispatches the selected `ActionCommand` through `HostRuntimeDriver`, and reports
 an unavailable response when the configured desktop menu tool is absent.
 
-Linux AT-SPI accessibility binding stays behind `backend/linux`: it publishes
-AccessKit-shaped snapshots from the shared semantics tree, dispatches action
-callbacks through the shared semantics action bridge, and reports cleanup
-diagnostics when disposed. Matching-host assistive-technology smoke is still
-runtime evidence, not package-level proof.
+Linux AT-SPI accessibility work stays behind `backend/linux`: the neutral
+binding and native GDBus transport publish committed snapshots/deltas, carry
+exact-generation actions back through the shared runtime entrypoint, and tear
+down window-scoped objects. Native accessibility readiness remains false until
+the transport registers on the AT-SPI accessibility bus/Registry and a real
+AT-SPI client proves tree queries, actions, focus, deletion, and announcements.
+Session-bus object export and package tests are not matching-host evidence.
 
 ### Remaining Gaps
 

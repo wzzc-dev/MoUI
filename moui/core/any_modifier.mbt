@@ -30,6 +30,8 @@ pub(all) struct AnyModifier[Msg] {
   semantics_actions : Array[ViewSemanticsActionHandler[Msg]]
   /// Whether this modifier makes the element focusable.
   focusable : Bool
+  /// Whether this modifier establishes a keyboard focus scope.
+  focus_trap : Bool
   /// Flex weight contributed by this modifier.
   flex_weight : Double
 }
@@ -59,6 +61,7 @@ pub fn[Msg] noop_modifier() -> AnyModifier[Msg] {
     semantics: ViewSemanticsInfo::new(),
     semantics_actions: [],
     focusable: false,
+    focus_trap: false,
     flex_weight: 0.0,
   }
 }

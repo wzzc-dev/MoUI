@@ -172,7 +172,9 @@ fn create_macos_app(
   let event_loop = @window_macos.EventLoop::EventLoop()
   let services = macos_service_bridge()
   runtime.set_environment(
-    services.environment_with_system_theme(runtime.environment()),
+    macos_environment_with_accessibility_settings(
+      services.environment_with_system_theme(runtime.environment()),
+    ),
   )
   let app = MacosNativeHostBackend::{
     title,
@@ -189,6 +191,7 @@ fn create_macos_app(
     ),
     surface_binding: binding,
     services: @window_services.WindowServiceState::new(bridge=services),
+    accessibility_state: MacosAccessibilityState::new(),
     platform_slots: @window_lifecycle.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,

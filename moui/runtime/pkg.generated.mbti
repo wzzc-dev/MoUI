@@ -30,6 +30,14 @@ pub fn sync_platform_view_plugins(Array[@backend.PlatformViewPlugin], UInt64, @c
 // Errors
 
 // Types and methods
+pub(all) struct AccessibilityAnnouncement {
+  node_id : @core.SemanticsNodeId
+  generation : @core.SemanticsGeneration
+  live : @core.SemanticsLive
+  is_atomic : Bool
+  text : String
+} derive(Eq, ToJson, @debug.Debug)
+
 pub struct AppBuilder {
   title : String
   runtime : AppRuntime
@@ -91,6 +99,7 @@ pub fn AppRuntime::scroll_to_key(Self, String, alignment? : @core.ScrollAlignmen
 pub fn AppRuntime::set_environment(Self, @core.Environment) -> Unit
 pub fn AppRuntime::set_event_observer(Self, (@core.AppEvent) -> Unit) -> Unit
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
+pub fn AppRuntime::set_semantic_focus(Self, @core.SemanticsNodeId?) -> Bool
 pub fn AppRuntime::set_text_system(Self, @core.TextSystem) -> Unit
 pub fn AppRuntime::size(Self) -> @core.Size
 pub fn AppRuntime::text_system(Self) -> @core.TextSystem
@@ -188,6 +197,7 @@ pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::focused_text_input(Self) -> @core.TextInputState
 pub fn HostRuntimeDriver::new(runtime~ : AppRuntime, schedule_redraw~ : () -> Unit) -> Self
 pub fn HostRuntimeDriver::perform_semantics_action(Self, PerformSemanticsActionRequest) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError]
+pub fn HostRuntimeDriver::read_semantics(Self, since? : @core.SemanticsGeneration) -> Result[SemanticsRead, SemanticsReadError]
 pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
 pub fn HostRuntimeDriver::set_environment(Self, @core.Environment) -> Unit
@@ -504,11 +514,13 @@ pub(all) struct SemanticsActionReceipt {
 pub struct SemanticsDelta {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn SemanticsDelta::announcements(Self) -> Array[AccessibilityAnnouncement]
 pub fn SemanticsDelta::focused(Self) -> @core.SemanticsNodeId?
 pub fn SemanticsDelta::from(Self) -> @core.SemanticsGeneration
 pub fn SemanticsDelta::issues(Self) -> Array[SemanticsIssue]
 pub fn SemanticsDelta::removed(Self) -> Array[@core.SemanticsNodeId]
 pub fn SemanticsDelta::root(Self) -> @core.SemanticsNodeId?
+pub fn SemanticsDelta::semantic_focused(Self) -> @core.SemanticsNodeId?
 pub fn SemanticsDelta::to(Self) -> @core.SemanticsGeneration
 pub fn SemanticsDelta::upserted(Self) -> Array[@core.SemanticsNode]
 
@@ -534,6 +546,8 @@ pub fn SemanticsInspectorSnapshot::selected_count(Self) -> Int
 
 pub(all) enum SemanticsIssue {
   DuplicateSemanticId(@core.SemanticId, Array[@core.SemanticsNodeId])
+  MissingRelationTarget(@core.SemanticsNodeId, @core.SemanticsRelationKind, @core.SemanticId)
+  AmbiguousRelationTarget(@core.SemanticsNodeId, @core.SemanticsRelationKind, @core.SemanticId, Array[@core.SemanticsNodeId])
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum SemanticsRead {
@@ -554,6 +568,7 @@ pub fn SemanticsSnapshot::generation(Self) -> @core.SemanticsGeneration
 pub fn SemanticsSnapshot::issues(Self) -> Array[SemanticsIssue]
 pub fn SemanticsSnapshot::nodes(Self) -> Array[@core.SemanticsNode]
 pub fn SemanticsSnapshot::root(Self) -> @core.SemanticsNodeId?
+pub fn SemanticsSnapshot::semantic_focused(Self) -> @core.SemanticsNodeId?
 
 pub(all) enum SubscriptionCancelReason {
   SubscriptionKeyChanged

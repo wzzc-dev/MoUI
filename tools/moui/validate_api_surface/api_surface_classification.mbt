@@ -33,7 +33,9 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/core/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 178,
+      // Neutral accessibility DTOs are required cross-runtime protocol
+      // surface, including their public enum/record shapes.
+      max_count: 187,
     },
     {
       path: "moui/core/pkg.generated.mbti",

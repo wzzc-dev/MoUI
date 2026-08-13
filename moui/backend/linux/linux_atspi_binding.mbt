@@ -88,7 +88,9 @@ pub fn LinuxATSPIBinding::diagnostics(
   self : LinuxATSPIBinding,
 ) -> LinuxATSPIBindingDiagnostics {
   {
-    native_binding_ready: true,
+    // This binding currently mirrors committed nodes in memory only. It does
+    // not become native until the objects are exported through AT-SPI D-Bus.
+    native_binding_ready: false,
     published_node_count: self.published_nodes.length(),
     action_dispatch_count: self.action_dispatch_count,
     disposed: self.disposed,

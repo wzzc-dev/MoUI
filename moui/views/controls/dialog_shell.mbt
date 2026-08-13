@@ -78,23 +78,32 @@ pub fn[Msg] dialog(
       ).frame(width=content_width, height=footer_height),
     )
   }
-  @container.container(
-    @layout.column(
-      body_rows,
-      spacing=section_spacing,
-      align=@style.CrossAlign::Start,
-    ),
-    width~,
-    height~,
-    variant=@style.ContainerVariant::Raised,
-    theme=resolved_theme,
-    padding=panel_padding,
-  )
-  .border(dialog_border(resolved_theme))
-  .shadow(resolved_theme.shadow_scale.lg)
-  .semantics_role(@core.SemanticsRole::Dialog)
-  .semantics_description(subtitle)
-  .accessibility_label(title)
+  let dialog_view = @container.container(
+      @layout.column(
+        body_rows,
+        spacing=section_spacing,
+        align=@style.CrossAlign::Start,
+      ),
+      width~,
+      height~,
+      variant=@style.ContainerVariant::Raised,
+      theme=resolved_theme,
+      padding=panel_padding,
+    )
+    .border(dialog_border(resolved_theme))
+    .shadow(resolved_theme.shadow_scale.lg)
+    .semantics_role(@core.SemanticsRole::Dialog)
+    .semantics_description(subtitle)
+    .accessibility_label(title)
+  match dismiss_action {
+    Some(action) =>
+      semantic_dismiss_action_control(
+        dialog_view,
+        action.message,
+        role=Some(@core.SemanticsRole::Dialog),
+      )
+    None => dialog_view
+  }
 }
 
 ///|

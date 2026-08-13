@@ -61,7 +61,9 @@ fn launch_linux_app(
     system_theme=linux_color_scheme_from_theme(event_loop.system_theme()),
   )
   runtime.set_environment(
-    services.environment_with_system_theme(runtime.environment()),
+    linux_environment_with_accessibility_settings(
+      services.environment_with_system_theme(runtime.environment()),
+    ),
   )
   let app = LinuxNativeHostBackend::{
     title,
@@ -78,6 +80,7 @@ fn launch_linux_app(
     ),
     surface_binding: binding,
     services: @window_services.WindowServiceState::new(bridge=services),
+    atspi_state: LinuxAtspiHostState::new(),
     platform_slots: @window_lifecycle.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,

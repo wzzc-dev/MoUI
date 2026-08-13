@@ -94,6 +94,78 @@ fn ElementNode::focusable_key_target(
 }
 
 ///|
+fn ElementNode::focusable_semantic_target(
+  self : ElementNode,
+  semantic_id : SemanticId,
+) -> ElementId? {
+  if self.view_node.semantics().semantic_id == Some(semantic_id) {
+    self.first_focusable_descendant()
+  } else {
+    for child in self.children {
+      match child.focusable_semantic_target(semantic_id) {
+        Some(id) => return Some(id)
+        None => ()
+      }
+    }
+    None
+  }
+}
+
+///|
+fn ElementNode::stable_focus_identity(
+  self : ElementNode,
+  target : ElementId,
+  inherited_key : String?,
+  inherited_semantic_id : SemanticId?,
+) -> (String?, SemanticId?)? {
+  let key = match self.key {
+    Some(value) => Some(value.value())
+    None => inherited_key
+  }
+  let semantic_id = match self.view_node.semantics().semantic_id {
+    Some(value) => Some(value)
+    None => inherited_semantic_id
+  }
+  if self.id == target {
+    Some((key, semantic_id))
+  } else {
+    for child in self.children {
+      match child.stable_focus_identity(target, key, semantic_id) {
+        Some(identity) => return Some(identity)
+        None => ()
+      }
+    }
+    None
+  }
+}
+
+///|
+fn ElementNode::focusable_order(self : ElementNode, target : ElementId) -> Int? {
+  let ids : Array[ElementId] = []
+  self.focusable_ids(ids)
+  for index, id in ids {
+    if id == target {
+      return Some(index)
+    }
+  }
+  None
+}
+
+///|
+fn ElementNode::focusable_at_order(
+  self : ElementNode,
+  order : Int,
+) -> ElementId? {
+  let ids : Array[ElementId] = []
+  self.focusable_ids(ids)
+  if ids.is_empty() {
+    None
+  } else {
+    Some(ids[order.clamp(min=0, max=ids.length() - 1)])
+  }
+}
+
+///|
 fn ElementNode::first_focusable_descendant(self : ElementNode) -> ElementId? {
   let ids : Array[ElementId] = []
   self.focusable_ids(ids)
@@ -126,9 +198,106 @@ fn ElementNode::active_focus_trap(
   self : ElementNode,
   current~ : ElementId?,
 ) -> ElementNode? {
-  ignore(self)
-  ignore(current)
-  None
+  let mut index = self.children.length() - 1
+  while index >= 0 {
+    match self.children[index].active_focus_trap(current~) {
+      Some(scope) => return Some(scope)
+      None => ()
+    }
+    index = index - 1
+  }
+  if self.view_node.focus_trap() {
+    Some(self)
+  } else {
+    None
+  }
+}
+
+///|
+fn RuntimeState::capture_focus_restore_candidate_before_rebuild(
+  self : RuntimeState,
+) -> Unit {
+  if self.animfocus.active_focus_trap is Some(_) {
+    return
+  }
+  match self.animfocus.focused_element {
+    Some(focused) => {
+      match self.element_tree.root.stable_focus_identity(focused, None, None) {
+        Some((key, semantic_id)) => {
+          self.animfocus.saved_focus_key = key
+          self.animfocus.saved_focus_semantic_id = semantic_id
+        }
+        None => {
+          self.animfocus.saved_focus_key = None
+          self.animfocus.saved_focus_semantic_id = None
+        }
+      }
+      self.animfocus.saved_focus_order = self.element_tree.root.focusable_order(
+        focused,
+      )
+    }
+    None => {
+      self.animfocus.saved_focus_key = None
+      self.animfocus.saved_focus_semantic_id = None
+      self.animfocus.saved_focus_order = None
+    }
+  }
+}
+
+///|
+fn RuntimeState::sync_focus_trap_after_rebuild(self : RuntimeState) -> Unit {
+  let previous_trap = self.animfocus.active_focus_trap
+  let next_scope = self.element_tree.root.active_focus_trap(
+    current=self.animfocus.focused_element,
+  )
+  let next_trap = next_scope.map(scope => scope.id)
+  if previous_trap == next_trap {
+    match (next_scope, self.animfocus.focused_element) {
+      (Some(scope), Some(focused)) =>
+        if !scope.contains_element_id(focused) {
+          ignore(self.commit_focus(scope.first_focusable_descendant()))
+        }
+      _ => ()
+    }
+    return
+  }
+  match (previous_trap, next_scope) {
+    (None, Some(scope)) => {
+      self.animfocus.active_focus_trap = Some(scope.id)
+      ignore(self.commit_focus(scope.first_focusable_descendant()))
+    }
+    (Some(_), None) => {
+      let mut restored : ElementId? = None
+      match self.animfocus.saved_focus_key {
+        Some(key) => restored = self.element_tree.root.focusable_key_target(key)
+        None => ()
+      }
+      if restored is None {
+        match self.animfocus.saved_focus_semantic_id {
+          Some(id) =>
+            restored = self.element_tree.root.focusable_semantic_target(id)
+          None => ()
+        }
+      }
+      if restored is None {
+        match self.animfocus.saved_focus_order {
+          Some(order) =>
+            restored = self.element_tree.root.focusable_at_order(order)
+          None => ()
+        }
+      }
+      self.animfocus.active_focus_trap = None
+      self.animfocus.saved_focus_key = None
+      self.animfocus.saved_focus_semantic_id = None
+      self.animfocus.saved_focus_order = None
+      ignore(self.commit_focus(restored))
+    }
+    (Some(_), Some(scope)) => {
+      self.animfocus.active_focus_trap = Some(scope.id)
+      ignore(self.commit_focus(scope.first_focusable_descendant()))
+    }
+    (None, None) => ()
+  }
 }
 
 ///|
