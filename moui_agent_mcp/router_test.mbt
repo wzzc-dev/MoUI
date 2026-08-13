@@ -8,6 +8,50 @@ struct RecordingHost {
 }
 
 ///|
+struct SemanticsWireHost {}
+
+///|
+pub impl @agent.AgentHost for SemanticsWireHost with fn read_semantics(
+  _self,
+  _since,
+) {
+  Ok(
+    @agent.AgentSemanticsRead::Delta({
+      from: @core.SemanticsGeneration::new(7UL),
+      to: @core.SemanticsGeneration::new(8UL),
+      root: None,
+      focused: None,
+      upserted: [],
+      removed: [],
+      issues: [
+        @agent.AgentSemanticsIssue::MissingRelationTarget(
+          @core.SemanticsNodeId::new(3UL),
+          @core.SemanticsRelationKind::LabelledBy,
+          @core.SemanticId::parse("missing.label").unwrap(),
+        ),
+      ],
+      announcements: [
+        {
+          node_id: @core.SemanticsNodeId::new(4UL),
+          generation: @core.SemanticsGeneration::new(8UL),
+          live: @core.SemanticsLive::Assertive,
+          is_atomic: true,
+          text: "Validation failed",
+        },
+      ],
+    }),
+  )
+}
+
+///|
+pub impl @agent.AgentHost for SemanticsWireHost with fn perform_action(
+  _self,
+  _request,
+) {
+  Err(@agent.AgentActionError::HostClosed)
+}
+
+///|
 fn RecordingHost::new(
   reject_action? : Bool = false,
   closed? : Bool = false,
@@ -290,6 +334,19 @@ test "read_semantics returns structured content and text fallback" {
   assert_true(response.contains("\"isError\":false"))
   assert_true(response.contains("\\\"kind\\\":\\\"full\\\""))
   assert_true(host.last_since == Some(@core.SemanticsGeneration::new(5UL)))
+}
+
+///|
+test "read_semantics explicitly encodes relation and announcement wire values" {
+  let response = route(
+    SemanticsWireHost::{  },
+    tool_call("read_semantics", Json::empty_object()),
+  ).stringify()
+  assert_true(response.contains("\"relation\":\"labelled_by\""))
+  assert_true(response.contains("\"live\":\"assertive\""))
+  assert_true(response.contains("\"atomic\":true"))
+  assert_false(response.contains("is_atomic"))
+  assert_false(response.contains("LabelledBy"))
 }
 
 ///|
@@ -609,17 +666,31 @@ test "read_semantics output schema fully types node issue and delta arrays" {
   ignore(schema_property(node, "node_id"))
   ignore(schema_property(node, "semantic_id"))
   ignore(schema_property(node, "state"))
+  ignore(schema_property(node, "numeric"))
+  ignore(schema_property(node, "relations"))
+  ignore(schema_property(node, "live"))
+  ignore(schema_property(node, "atomic"))
   ignore(schema_property(node, "frame"))
   ignore(array_item_schema(schema_property(node, "actions")))
   ignore(array_item_schema(schema_property(node, "children")))
 
   let issue = array_item_schema(schema_property(full, "issues"))
-  ignore(schema_property(issue, "semantic_id"))
-  ignore(array_item_schema(schema_property(issue, "nodes")))
+  let duplicate_issue = tagged_schema_variant(issue, "duplicate_semantic_id")
+  ignore(schema_property(duplicate_issue, "semantic_id"))
+  ignore(array_item_schema(schema_property(duplicate_issue, "nodes")))
+  let missing_issue = tagged_schema_variant(issue, "missing_relation_target")
+  ignore(schema_property(missing_issue, "source"))
+  ignore(schema_property(missing_issue, "relation"))
 
   ignore(array_item_schema(schema_property(delta, "upserted")))
   ignore(array_item_schema(schema_property(delta, "removed")))
   ignore(array_item_schema(schema_property(delta, "issues")))
+  let announcement = array_item_schema(schema_property(delta, "announcements"))
+  ignore(schema_property(announcement, "node_id"))
+  ignore(schema_property(announcement, "generation"))
+  ignore(schema_property(announcement, "live"))
+  ignore(schema_property(announcement, "atomic"))
+  ignore(schema_property(announcement, "text"))
 }
 
 ///|

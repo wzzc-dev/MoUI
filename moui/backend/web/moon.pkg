@@ -15,7 +15,7 @@ import {
   "wzzc-dev/window/dpi",
   "wzzc-dev/window/web" @window_web,
   "moonbitlang/core/encoding/base64",
-  "moonbitlang/core/json",
+  "moonbitlang/core/string",
 }
 
 import {

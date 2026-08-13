@@ -263,6 +263,7 @@ fn LinuxNativeHostBackend::dispose_window(
   self : LinuxNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
+  self.dispose_atspi_window(window_id)
   @window_host.dispose_window(
     self.lifecycle,
     self.frames,

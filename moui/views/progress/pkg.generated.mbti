@@ -7,7 +7,7 @@ import {
 }
 
 // Values
-pub fn[Msg] progress(Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.ProgressStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] progress(Double, label? : String, value_text? : String, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.ProgressStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
 // Errors
 

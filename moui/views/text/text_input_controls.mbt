@@ -37,6 +37,30 @@ fn[Msg] text_field_control(
         @core.ViewSemanticsActionHandler::set_text((ctx, next) => {
           text_semantics_set_text(ctx, value, on_input, next)
         }),
+        @core.ViewSemanticsActionHandler::set_selection((ctx, selection) => {
+          let selection = @core.normalize_grapheme_range(
+            @core.TextGraphemeBoundaries::new(text=value),
+            selection,
+          )
+          let text_control = {
+            ..ctx.text_control,
+            caret: selection.end,
+            selection: if selection.is_collapsed() {
+              None
+            } else {
+              Some(selection)
+            },
+            text_selection_anchor: if selection.is_collapsed() {
+              None
+            } else {
+              Some(selection.start)
+            },
+          }
+          @core.ViewSemanticsActionResult::accepted(
+            text_control=Some(text_control),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          )
+        }),
       ]
       match on_submit {
         Some(message) =>
@@ -148,6 +172,29 @@ fn[Msg] search_bar_control(
       let handlers : Array[@core.ViewSemanticsActionHandler[Msg]] = [
         @core.ViewSemanticsActionHandler::set_text((ctx, next) => {
           text_semantics_set_text(ctx, query, on_input, next)
+        }),
+        @core.ViewSemanticsActionHandler::set_selection((ctx, selection) => {
+          let selection = @core.normalize_grapheme_range(
+            @core.TextGraphemeBoundaries::new(text=query),
+            selection,
+          )
+          @core.ViewSemanticsActionResult::accepted(
+            text_control=Some({
+              ..ctx.text_control,
+              caret: selection.end,
+              selection: if selection.is_collapsed() {
+                None
+              } else {
+                Some(selection)
+              },
+              text_selection_anchor: if selection.is_collapsed() {
+                None
+              } else {
+                Some(selection.start)
+              },
+            }),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          )
         }),
       ]
       match on_submit {

@@ -51,6 +51,12 @@ extern "C" fn macos_open_url_bytes(url : Bytes) -> Int = "moui_macos_open_url"
 extern "C" fn macos_system_theme_is_dark() -> Int = "moui_macos_system_theme_is_dark"
 
 ///|
+extern "C" fn macos_accessibility_increase_contrast() -> Int = "moui_macos_accessibility_increase_contrast"
+
+///|
+extern "C" fn macos_accessibility_reduce_motion() -> Int = "moui_macos_accessibility_reduce_motion"
+
+///|
 #borrow(key)
 extern "C" fn macos_settings_has_value(key : Bytes) -> Int = "moui_macos_settings_has_value"
 
@@ -124,7 +130,7 @@ pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
     semantics_bridge_available: true,
     native_accessibility_bridge_available: false,
     action_dispatch_available: true,
-    description: "macOS exposes an AppKit accessibility bridge contract over the shared semantics tree; real NSAccessibility object binding is still a backend follow-up.",
+    description: "macOS attaches NSAccessibility objects to the AppKit content view and routes actions through exact generations; availability stays false until the external AX L2 probe passes.",
   }
 }
 
@@ -178,6 +184,20 @@ pub fn macos_system_theme() -> @core.ColorScheme {
   } else {
     @core.ColorScheme::Light
   }
+}
+
+///|
+fn macos_environment_with_accessibility_settings(
+  environment : @core.Environment,
+) -> @core.Environment {
+  let contrast = if macos_accessibility_increase_contrast() != 0 {
+    @core.AccessibilityContrast::High
+  } else {
+    @core.AccessibilityContrast::Standard
+  }
+  environment
+  .with_accessibility_contrast(contrast)
+  .with_reduced_motion(macos_accessibility_reduce_motion() != 0)
 }
 
 ///|

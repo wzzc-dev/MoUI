@@ -39,6 +39,12 @@ pub(all) struct EmbeddedSemanticsNode {
   value : String
   description : String
   state : @core.SemanticsState
+  numeric : @core.SemanticsNumericValue?
+  text : @core.SemanticsTextValue?
+  collection : @core.SemanticsCollectionInfo?
+  relations : @core.SemanticsRelations
+  live : @core.SemanticsLive
+  live_atomic : Bool
   actions : Array[@core.SemanticsActionKind]
   focus_order : Int?
   frame : @core.Rect
@@ -51,9 +57,11 @@ pub(all) struct EmbeddedSemanticsUpdate {
   generation : @core.SemanticsGeneration
   root : @core.SemanticsNodeId?
   focused : @core.SemanticsNodeId?
+  semantic_focused : @core.SemanticsNodeId?
   nodes : Array[EmbeddedSemanticsNode]
   removed : Array[@core.SemanticsNodeId]
   issues : Array[@runtime.SemanticsIssue]
+  announcements : Array[@runtime.AccessibilityAnnouncement]
 } derive(Eq, Debug, ToJson)
 
 ///|

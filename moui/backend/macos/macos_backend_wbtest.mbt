@@ -82,6 +82,9 @@ extern "C" fn macos_gpu_surface_presenter_test() -> Int = "moui_macos_gpu_surfac
 extern "C" fn macos_gpu_surface_partial_overlay_hit_test() -> Int = "moui_macos_gpu_surface_partial_overlay_hit_test"
 
 ///|
+extern "C" fn macos_accessibility_view_adapter_test() -> Int = "moui_macos_accessibility_view_adapter_test"
+
+///|
 test "macOS GPU surface uses a transparent reorderable presenter sibling" {
   assert_eq(macos_gpu_surface_presenter_test(), 1)
 }
@@ -106,4 +109,9 @@ test "macOS platform view sync brackets native overlay transitions" {
     damage=@core.DamageRegion::empty(),
   )
   assert_false(macos_platform_views_sync_before_render(overlay))
+}
+
+///|
+test "macOS accessibility adapter exposes content-view children to AppKit" {
+  assert_eq(macos_accessibility_view_adapter_test(), 1)
 }

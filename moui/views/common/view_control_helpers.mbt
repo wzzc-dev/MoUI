@@ -119,6 +119,15 @@ pub fn view_semantics_role_key(
       @core.SemanticsRole::TreeItem => 25
       @core.SemanticsRole::Group => 26
       @core.SemanticsRole::WebView => 27
+      @core.SemanticsRole::Image => 28
+      @core.SemanticsRole::Alert => 29
+      @core.SemanticsRole::Status => 30
+      @core.SemanticsRole::ComboBox => 31
+      @core.SemanticsRole::Option => 32
+      @core.SemanticsRole::Table => 33
+      @core.SemanticsRole::Row => 34
+      @core.SemanticsRole::Cell => 35
+      @core.SemanticsRole::Separator => 36
     },
   )
 }

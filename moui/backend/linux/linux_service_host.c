@@ -10,6 +10,44 @@
 #include <sys/wait.h>
 #include <moonbit.h>
 
+static char *capture_command(const char *command);
+
+MOONBIT_FFI_EXPORT int32_t moui_linux_accessibility_high_contrast(void) {
+  const char *value = getenv("MOUI_ACCESSIBILITY_CONTRAST");
+  if (value) {
+    return strcmp(value, "high") == 0 || strcmp(value, "1") == 0 ? 1 : 0;
+  }
+  char *theme = capture_command(
+      "gsettings get org.gnome.desktop.a11y.interface high-contrast 2>/dev/null");
+  int32_t enabled = theme && strcmp(theme, "true") == 0 ? 1 : 0;
+  free(theme);
+  return enabled;
+}
+
+MOONBIT_FFI_EXPORT int32_t moui_linux_accessibility_reduce_motion(void) {
+  const char *value = getenv("MOUI_REDUCED_MOTION");
+  if (value) {
+    return strcmp(value, "1") == 0 || strcmp(value, "true") == 0 ? 1 : 0;
+  }
+  char *animations = capture_command(
+      "gsettings get org.gnome.desktop.interface enable-animations 2>/dev/null");
+  int32_t reduced = animations && strcmp(animations, "false") == 0 ? 1 : 0;
+  free(animations);
+  return reduced;
+}
+
+MOONBIT_FFI_EXPORT double moui_linux_accessibility_text_scale(void) {
+  const char *override = getenv("MOUI_TEXT_SCALE");
+  char *value = override ? strdup(override) : capture_command(
+      "gsettings get org.gnome.desktop.interface text-scaling-factor 2>/dev/null");
+  if (!value) return 0.0;
+  char *end = NULL;
+  double scale = strtod(value, &end);
+  int valid = end && *end == '\0' && scale > 0.0;
+  free(value);
+  return valid ? scale : 0.0;
+}
+
 static char *copy_bytes(const uint8_t *bytes, int32_t len,
                         const char *fallback) {
   if (!bytes || len <= 0) {
@@ -990,6 +1028,10 @@ int32_t moui_linux_clipboard_write_image(moonbit_bytes_t mime,
 #include <stdint.h>
 #include <stdio.h>
 #include <moonbit.h>
+
+MOONBIT_FFI_EXPORT int32_t moui_linux_accessibility_high_contrast(void) { return 0; }
+MOONBIT_FFI_EXPORT int32_t moui_linux_accessibility_reduce_motion(void) { return 0; }
+MOONBIT_FFI_EXPORT double moui_linux_accessibility_text_scale(void) { return 0.0; }
 
 MOONBIT_FFI_EXPORT
 int32_t moui_linux_open_url(const uint8_t *url, int32_t url_len) {

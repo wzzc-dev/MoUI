@@ -138,6 +138,12 @@ pub(all) struct EmbeddedSemanticsNode {
   value : String
   description : String
   state : @wzzc-dev/moui/core.SemanticsState
+  numeric : @wzzc-dev/moui/core.SemanticsNumericValue?
+  text : @wzzc-dev/moui/core.SemanticsTextValue?
+  collection : @wzzc-dev/moui/core.SemanticsCollectionInfo?
+  relations : @wzzc-dev/moui/core.SemanticsRelations
+  live : @wzzc-dev/moui/core.SemanticsLive
+  live_atomic : Bool
   actions : Array[@wzzc-dev/moui/core.SemanticsActionKind]
   focus_order : Int?
   frame : @wzzc-dev/moui/core.Rect
@@ -149,9 +155,11 @@ pub(all) struct EmbeddedSemanticsUpdate {
   generation : @wzzc-dev/moui/core.SemanticsGeneration
   root : @wzzc-dev/moui/core.SemanticsNodeId?
   focused : @wzzc-dev/moui/core.SemanticsNodeId?
+  semantic_focused : @wzzc-dev/moui/core.SemanticsNodeId?
   nodes : Array[EmbeddedSemanticsNode]
   removed : Array[@wzzc-dev/moui/core.SemanticsNodeId]
   issues : Array[@runtime.SemanticsIssue]
+  announcements : Array[@runtime.AccessibilityAnnouncement]
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct HostSurfaceBinding {

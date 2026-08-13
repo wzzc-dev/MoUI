@@ -83,8 +83,8 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1941,
-      "reason": "Existing API validator with explicit declaration and semantic contract audits."
+      "maxLines": 1943,
+      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits."
     },
     {
       "path": "moui_sun/graphics/path.mbt",
@@ -210,6 +210,16 @@
       "path": "scripts/record-web-runtime-presentation.mjs",
       "maxLines": 1323,
       "reason": "Existing browser presentation evidence orchestrator."
+    },
+    {
+      "path": "moui/runtime/semantics.mbt",
+      "maxLines": 1293,
+      "reason": "Existing committed semantics tree, relation, modal, delta, announcement, and exact-generation action implementation."
+    },
+    {
+      "path": "moui/runtime/semantics_runtime_test.mbt",
+      "maxLines": 1263,
+      "reason": "Existing runtime semantics contract and modal, focus, delta, announcement, and stale-action regression suite."
     },
     {
       "path": "moui/runtime/view_runtime_test.mbt",

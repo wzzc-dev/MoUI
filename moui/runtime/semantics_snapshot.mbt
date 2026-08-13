@@ -1,6 +1,17 @@
 ///|
 pub(all) enum SemanticsIssue {
   DuplicateSemanticId(@core.SemanticId, Array[@core.SemanticsNodeId])
+  MissingRelationTarget(
+    @core.SemanticsNodeId,
+    @core.SemanticsRelationKind,
+    @core.SemanticId
+  )
+  AmbiguousRelationTarget(
+    @core.SemanticsNodeId,
+    @core.SemanticsRelationKind,
+    @core.SemanticId,
+    Array[@core.SemanticsNodeId]
+  )
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -12,6 +23,7 @@ pub struct SemanticsSnapshot {
   priv generation : @core.SemanticsGeneration
   priv root : @core.SemanticsNodeId?
   priv focused : @core.SemanticsNodeId?
+  priv semantic_focused : @core.SemanticsNodeId?
   priv nodes : Array[@core.SemanticsNode]
   priv issues : Array[SemanticsIssue]
 } derive(Eq, Debug)
@@ -22,10 +34,22 @@ pub struct SemanticsDelta {
   priv to : @core.SemanticsGeneration
   priv root : @core.SemanticsNodeId?
   priv focused : @core.SemanticsNodeId?
+  priv semantic_focused : @core.SemanticsNodeId?
   priv upserted : Array[@core.SemanticsNode]
   priv removed : Array[@core.SemanticsNodeId]
   priv issues : Array[SemanticsIssue]
+  priv announcements : Array[AccessibilityAnnouncement]
 } derive(Eq, Debug)
+
+///|
+/// A live-region change for platform adapters to publish without moving focus.
+pub(all) struct AccessibilityAnnouncement {
+  node_id : @core.SemanticsNodeId
+  generation : @core.SemanticsGeneration
+  live : @core.SemanticsLive
+  is_atomic : Bool
+  text : String
+} derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) enum SemanticsRead {
@@ -94,13 +118,28 @@ priv struct SemanticsNodeRoute {
 
 ///|
 fn clone_semantics_node(node : @core.SemanticsNode) -> @core.SemanticsNode {
-  { ..node, actions: node.actions.copy(), children: node.children.copy() }
+  {
+    ..node,
+    relations: {
+      labelled_by: node.relations.labelled_by.copy(),
+      described_by: node.relations.described_by.copy(),
+      controls: node.relations.controls.copy(),
+      error_message: node.relations.error_message.copy(),
+      active_descendant: node.relations.active_descendant.copy(),
+    },
+    actions: node.actions.copy(),
+    children: node.children.copy(),
+  }
 }
 
 ///|
 fn clone_semantics_issue(issue : SemanticsIssue) -> SemanticsIssue {
   match issue {
     DuplicateSemanticId(id, nodes) => DuplicateSemanticId(id, nodes.copy())
+    MissingRelationTarget(source, kind, id) =>
+      MissingRelationTarget(source, kind, id)
+    AmbiguousRelationTarget(source, kind, id, nodes) =>
+      AmbiguousRelationTarget(source, kind, id, nodes.copy())
   }
 }
 
@@ -110,6 +149,7 @@ fn SemanticsSnapshot::empty() -> SemanticsSnapshot {
     generation: @core.SemanticsGeneration::new(0UL),
     root: None,
     focused: None,
+    semantic_focused: None,
     nodes: [],
     issues: [],
   }
@@ -134,6 +174,15 @@ pub fn SemanticsSnapshot::focused(
   self : SemanticsSnapshot,
 ) -> @core.SemanticsNodeId? {
   self.focused
+}
+
+///|
+/// Assistive-technology browsing focus, kept independent from keyboard/input
+/// focus. Platform navigation may update this value without stealing input.
+pub fn SemanticsSnapshot::semantic_focused(
+  self : SemanticsSnapshot,
+) -> @core.SemanticsNodeId? {
+  self.semantic_focused
 }
 
 ///|
@@ -171,6 +220,13 @@ pub fn SemanticsDelta::focused(self : SemanticsDelta) -> @core.SemanticsNodeId? 
 }
 
 ///|
+pub fn SemanticsDelta::semantic_focused(
+  self : SemanticsDelta,
+) -> @core.SemanticsNodeId? {
+  self.semantic_focused
+}
+
+///|
 pub fn SemanticsDelta::upserted(
   self : SemanticsDelta,
 ) -> Array[@core.SemanticsNode] {
@@ -187,4 +243,22 @@ pub fn SemanticsDelta::removed(
 ///|
 pub fn SemanticsDelta::issues(self : SemanticsDelta) -> Array[SemanticsIssue] {
   self.issues.map(clone_semantics_issue)
+}
+
+///|
+pub fn SemanticsDelta::announcements(
+  self : SemanticsDelta,
+) -> Array[AccessibilityAnnouncement] {
+  self.announcements.copy()
+}
+
+///|
+/// Update assistive-technology browsing focus without moving keyboard/input
+/// focus. The target must exist in the committed semantics tree; `None`
+/// clears browsing focus.
+pub fn AppRuntime::set_semantic_focus(
+  self : AppRuntime,
+  node_id : @core.SemanticsNodeId?,
+) -> Bool {
+  self.state.set_semantic_focus(node_id)
 }

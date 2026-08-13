@@ -592,7 +592,7 @@ test "virtual node sheet handles outside dismiss and preserves child event" {
 test "runtime semantics includes declared state modifiers" {
   let root : @core.View[Unit] = @views.text("Stateful", width=80.0, height=24.0)
     .semantics_role(@core.SemanticsRole::Checkbox)
-    .semantics_checked(checked=true)
+    .semantics_checked(checked=@core.SemanticsCheckedState::Checked)
     .semantics_selected(selected=true)
     .semantics_pressed(pressed=true)
     .semantics_expanded(expanded=true)
@@ -605,7 +605,7 @@ test "runtime semantics includes declared state modifiers" {
   )
   let snapshot = runtime_expect_full_semantics(runtime)
   let semantics = snapshot.nodes()[0]
-  assert_true(semantics.state.checked)
+  assert_eq(semantics.state.checked, Some(@core.SemanticsCheckedState::Checked))
   assert_true(semantics.state.selected)
   assert_true(semantics.state.pressed)
   assert_true(semantics.state.expanded)

@@ -3,6 +3,9 @@ pub fn[Msg] slider(
   value : Double,
   min? : Double = 0.0,
   max? : Double = 1.0,
+  step? : Double,
+  label? : String = "",
+  value_text? : String,
   width? : Double = 180.0,
   height? : Double = 28.0,
   theme? : @core.Theme,
@@ -11,10 +14,19 @@ pub fn[Msg] slider(
   background? : @core.Color,
   on_change? : ((Double) -> Msg)? = None,
 ) -> @core.View[Msg] {
+  let resolved_max = if max <= min { min + 1.0 } else { max }
+  let resolved_range = resolved_max - min
+  let resolved_step = match step {
+    Some(value) => if value > 0.0 { value } else { resolved_range / 10.0 }
+    None => resolved_range / 10.0
+  }
   let node = Slider::{
-    value,
+    value: @common.clamp_view_double(value, min, resolved_max),
     min,
-    max,
+    max: resolved_max,
+    step: resolved_step,
+    label,
+    value_text,
     width,
     height,
     theme,
@@ -95,15 +107,46 @@ pub fn[Msg] slider(
     match on_change {
       Some(handler) =>
         [
+          @core.ViewSemanticsActionHandler::increment(_ctx => {
+            let next = @common.clamp_view_double(
+              node.value + node.step,
+              node.min,
+              node.max,
+            )
+            if next == node.value {
+              @core.ViewSemanticsActionResult::rejected()
+            } else {
+              @core.ViewSemanticsActionResult::message(handler(next))
+            }
+          }),
+          @core.ViewSemanticsActionHandler::decrement(_ctx => {
+            let next = @common.clamp_view_double(
+              node.value - node.step,
+              node.min,
+              node.max,
+            )
+            if next == node.value {
+              @core.ViewSemanticsActionResult::rejected()
+            } else {
+              @core.ViewSemanticsActionResult::message(handler(next))
+            }
+          }),
+          @core.ViewSemanticsActionHandler::set_numeric_value((_ctx, value) => {
+            let next = @common.clamp_view_double(value, node.min, node.max)
+            if next == node.value {
+              @core.ViewSemanticsActionResult::rejected()
+            } else {
+              @core.ViewSemanticsActionResult::message(handler(next))
+            }
+          }),
           @core.ViewSemanticsActionHandler::scroll((_ctx, direction) => {
-            let step = (node.max - node.min) / 10.0
             let delta = match direction {
               @core.SemanticsScrollDirection::Forward
               | @core.SemanticsScrollDirection::Up
-              | @core.SemanticsScrollDirection::Right => step
+              | @core.SemanticsScrollDirection::Right => node.step
               @core.SemanticsScrollDirection::Backward
               | @core.SemanticsScrollDirection::Down
-              | @core.SemanticsScrollDirection::Left => -step
+              | @core.SemanticsScrollDirection::Left => -node.step
             }
             let next = @common.clamp_view_double(
               node.value + delta,
@@ -128,6 +171,9 @@ priv struct Slider {
   value : Double
   min : Double
   max : Double
+  step : Double
+  label : String
+  value_text : String?
   width : Double
   height : Double
   theme : @core.Theme?
@@ -155,6 +201,7 @@ impl @core.ViewNode for Slider with fn declaration(self) {
       ("value", @core.DeclarationKey::double(self.value)),
       ("min", @core.DeclarationKey::double(self.min)),
       ("max", @core.DeclarationKey::double(self.max)),
+      ("step", @core.DeclarationKey::double(self.step)),
       (
         "style",
         @core.DeclarationKey::option(
@@ -185,6 +232,7 @@ impl @core.ViewNode for Slider with fn declaration(self) {
     ],
     [
       ("value", @core.DeclarationKey::double(self.value)),
+      ("label", @core.DeclarationKey::string(self.label)),
       ("scroll", @core.DeclarationKey::bool(self.has_on_change)),
     ],
     layout_theme_dependent=false,
@@ -316,8 +364,15 @@ impl @core.ViewNode for Slider with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::Slider,
-    label="Slider",
+    label=self.label,
     value="\{self.value}",
+    numeric=@core.SemanticsNumericValue::new(
+      current=self.value,
+      min=self.min,
+      max=self.max,
+      step=self.step,
+      value_text?=self.value_text,
+    ),
   )
 }
 

@@ -88,6 +88,7 @@ pub(all) enum ComponentGalleryItemId {
   ScrollView
   PlatformRoutes
   MobileServiceProbe
+  AccessibilityProbe
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ComponentGalleryModel {
@@ -108,6 +109,7 @@ pub(all) struct ComponentGalleryModel {
   probe_text : String
   probe_action_count : Int
   probe_submit_count : Int
+  probe_dialog_open : Bool
   checkbox_group_selection : Array[String]
 }
 pub fn ComponentGalleryModel::new(active_platform~ : PlatformId, session_runtime? : SessionRuntimeInfo, active_item? : ComponentGalleryItemId) -> Self
@@ -129,8 +131,12 @@ pub(all) enum ComponentGalleryMsg {
   Decrement
   Reset
   ProbeTextChanged(String)
+  ProbeFeatureToggled(Bool)
+  ProbeSliderChanged(Double)
   ProbeAction
   ProbeSubmit
+  ProbeDialogOpen
+  ProbeDialogClose
   ToggleCheckboxGroupItem(String)
   PageScrolled(@core.Point)
 } derive(Eq, ToJson, @debug.Debug)

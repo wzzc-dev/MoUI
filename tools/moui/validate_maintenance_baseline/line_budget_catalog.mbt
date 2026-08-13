@@ -290,13 +290,17 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/controls/input_number.mbt", max_lines: 105 },
     { path: "moui/views/controls/disclosure.mbt", max_lines: 210 },
     { path: "moui/views/controls/dialog_alert.mbt", max_lines: 85 },
-    { path: "moui/views/controls/dialog_shell.mbt", max_lines: 200 },
+    // Dialog semantics now carry modal dismissal/focus behavior in the shared
+    // shell; keep this focused control file's ratchet explicit.
+    { path: "moui/views/controls/dialog_shell.mbt", max_lines: 205 },
     { path: "moui/views/controls/toolbar.mbt", max_lines: 130 },
     { path: "moui/views/layout/layout_state.mbt", max_lines: 40 },
     { path: "moui/views/layout/grid_list.mbt", max_lines: 25 },
     { path: "moui/views/checkbox/choice.mbt", max_lines: 45 },
     { path: "moui/views/progress/progress.mbt", max_lines: 155 },
-    { path: "moui/views/slider/slider.mbt", max_lines: 370 },
+    // Slider exposes localized labels, range metadata, and typed numeric
+    // actions as part of the neutral accessibility contract.
+    { path: "moui/views/slider/slider.mbt", max_lines: 395 },
     { path: "moui/views/form/form_state.mbt", max_lines: 75 },
     { path: "moui/views/form/form_layout.mbt", max_lines: 80 },
     { path: "moui/views/form/form_field.mbt", max_lines: 95 },
@@ -305,7 +309,9 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/form/form_validation.mbt", max_lines: 230 },
     { path: "moui/views/form/form_workflow.mbt", max_lines: 220 },
     { path: "moui/views/form/form_support_text.mbt", max_lines: 55 },
-    { path: "moui/views/text/text_input_controls.mbt", max_lines: 210 },
+    // Text controls now publish selection/caret actions for native and Web
+    // accessibility clients.
+    { path: "moui/views/text/text_input_controls.mbt", max_lines: 235 },
     { path: "moui/views/text/text_input_event_handlers.mbt", max_lines: 245 },
     { path: "moui/views/text/text_input_apply.mbt", max_lines: 400 },
     { path: "moui/views/text/text_input_editing.mbt", max_lines: 500 },

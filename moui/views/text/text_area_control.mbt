@@ -35,6 +35,29 @@ fn[Msg] text_area_control(
         @core.ViewSemanticsActionHandler::set_text((ctx, next) => {
           text_semantics_set_text(ctx, value, on_input, next)
         }),
+        @core.ViewSemanticsActionHandler::set_selection((ctx, selection) => {
+          let selection = @core.normalize_grapheme_range(
+            @core.TextGraphemeBoundaries::new(text=value),
+            selection,
+          )
+          @core.ViewSemanticsActionResult::accepted(
+            text_control=Some({
+              ..ctx.text_control,
+              caret: selection.end,
+              selection: if selection.is_collapsed() {
+                None
+              } else {
+                Some(selection)
+              },
+              text_selection_anchor: if selection.is_collapsed() {
+                None
+              } else {
+                Some(selection.start)
+              },
+            }),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          )
+        }),
       ]
       match on_submit {
         Some(message) =>

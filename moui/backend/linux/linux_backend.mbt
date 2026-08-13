@@ -82,6 +82,7 @@ struct LinuxNativeHostBackend {
   input : @window_input.WindowInputState
   surface_binding : LinuxSurfaceBinding
   services : @window_services.WindowServiceState
+  atspi_state : LinuxAtspiHostState
   platform_slots : @window_lifecycle.WindowSlotMap[
     @window_linux.Window,
     LinuxClientDecorationState,

@@ -314,6 +314,7 @@ test "accessibility_label identity and label" {
   let view = test_leaf().accessibility_label("Hello")
   assert_true(view.identity().kind.contains("AccessibilityLabel"))
   assert_eq(view.semantics().label, Some("Hello"))
+  assert_eq(view.semantics().value, None)
 }
 
 ///|
@@ -325,9 +326,14 @@ test "semantics_role identity and role" {
 
 ///|
 test "semantics_checked identity and value" {
-  let view = test_leaf().semantics_checked(checked=true)
+  let view = test_leaf().semantics_checked(
+    checked=@core.SemanticsCheckedState::Checked,
+  )
   assert_true(view.identity().kind.contains("SemanticsChecked"))
-  assert_eq(view.semantics().checked, Some(true))
+  assert_eq(
+    view.semantics().checked,
+    Some(@core.SemanticsCheckedState::Checked),
+  )
 }
 
 ///|
@@ -382,6 +388,75 @@ test "merge_descendant_semantics identity and composition" {
 test "hide_semantics identity and composition" {
   let view = test_leaf().hide_semantics()
   assert_eq(view.semantics().composition, @core.SemanticsComposition::Hidden)
+}
+
+///|
+test "semantics modifiers declare exact semantics-only invalidation" {
+  let first_id = @core.SemanticId::parse("test.first").unwrap()
+  let second_id = @core.SemanticId::parse("test.second").unwrap()
+  let pairs : Array[(@core.View[Unit], @core.View[Unit])] = [
+    (
+      test_leaf().accessibility_label("First"),
+      test_leaf().accessibility_label("Second"),
+    ),
+    (test_leaf().semantic_id(first_id), test_leaf().semantic_id(second_id)),
+    (
+      test_leaf().semantics_composition(@core.SemanticsComposition::Boundary),
+      test_leaf().semantics_composition(
+        @core.SemanticsComposition::MergeDescendants,
+      ),
+    ),
+    (
+      test_leaf().semantics_role(@core.SemanticsRole::Button),
+      test_leaf().semantics_role(@core.SemanticsRole::Checkbox),
+    ),
+    (test_leaf().semantics_level(1), test_leaf().semantics_level(2)),
+    (
+      test_leaf().semantics_url("https://first.example"),
+      test_leaf().semantics_url("https://second.example"),
+    ),
+    (
+      test_leaf().semantics_selected(selected=false),
+      test_leaf().semantics_selected(selected=true),
+    ),
+    (
+      test_leaf().semantics_pressed(pressed=false),
+      test_leaf().semantics_pressed(pressed=true),
+    ),
+    (
+      test_leaf().semantics_checked(
+        checked=@core.SemanticsCheckedState::Unchecked,
+      ),
+      test_leaf().semantics_checked(checked=@core.SemanticsCheckedState::Mixed),
+    ),
+    (
+      test_leaf().semantics_expanded(expanded=false),
+      test_leaf().semantics_expanded(expanded=true),
+    ),
+    (
+      test_leaf().semantics_invalid(invalid=false),
+      test_leaf().semantics_invalid(invalid=true),
+    ),
+    (
+      test_leaf().semantics_required(required=false),
+      test_leaf().semantics_required(required=true),
+    ),
+    (
+      test_leaf().semantics_description("First description"),
+      test_leaf().semantics_description("Second description"),
+    ),
+    (
+      test_leaf().semantics_state(busy=false),
+      test_leaf().semantics_state(busy=true),
+    ),
+  ]
+  for pair in pairs {
+    let changes = pair.1.declaration().changes_from(pair.0.declaration())
+    assert_false(changes.layout())
+    assert_false(changes.paint())
+    assert_true(changes.semantics())
+    assert_false(changes.platform())
+  }
 }
 
 // == Environment modifiers ==
@@ -447,8 +522,11 @@ test "chained semantics modifiers: outermost modifier contributes its semantics"
   let view = test_leaf()
     .semantics_role(@core.SemanticsRole::Checkbox)
     .accessibility_label("Agree")
-    .semantics_checked(checked=true)
-  assert_eq(view.semantics().checked, Some(true))
+    .semantics_checked(checked=@core.SemanticsCheckedState::Checked)
+  assert_eq(
+    view.semantics().checked,
+    Some(@core.SemanticsCheckedState::Checked),
+  )
   // The inner semantics_role modifier is wrapped deeper; view.semantics()
   // returns the outermost's info which is only about checked.
 }

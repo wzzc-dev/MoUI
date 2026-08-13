@@ -1,4 +1,5 @@
 import {
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui",
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/graphics",

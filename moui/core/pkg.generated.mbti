@@ -143,6 +143,7 @@ pub(all) struct AnyModifier[Msg] {
   semantics : ViewSemanticsInfo
   semantics_actions : Array[ViewSemanticsActionHandler[Msg]]
   focusable : Bool
+  focus_trap : Bool
   flex_weight : Double
 }
 
@@ -1086,6 +1087,11 @@ pub(all) enum SemanticsAction {
   Expand
   Collapse
   Dismiss
+  Increment
+  Decrement
+  SetNumericValue(Double)
+  SetSelection(TextRange)
+  ShowMenu
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsAction::kind(Self) -> SemanticsActionKind
 
@@ -1099,12 +1105,35 @@ pub(all) enum SemanticsActionKind {
   Expand
   Collapse
   Dismiss
+  Increment
+  Decrement
+  SetNumericValue
+  SetSelection
+  ShowMenu
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SemanticsCheckedModifier {
-  checked : Bool
+  checked : SemanticsCheckedState
 }
 pub fn[Msg] SemanticsCheckedModifier::to_any_modifier(Self) -> AnyModifier[Msg]
+
+pub(all) enum SemanticsCheckedState {
+  Unchecked
+  Checked
+  Mixed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SemanticsCollectionInfo {
+  row_index : Int?
+  row_count : Int?
+  row_span : Int?
+  column_index : Int?
+  column_count : Int?
+  column_span : Int?
+  set_size : Int?
+  set_position : Int?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsCollectionInfo::new(row_index? : Int, row_count? : Int, row_span? : Int, column_index? : Int, column_count? : Int, column_span? : Int, set_size? : Int, set_position? : Int) -> Self
 
 pub(all) enum SemanticsComposition {
   Transparent
@@ -1146,6 +1175,17 @@ pub(all) struct SemanticsLevelModifier {
 }
 pub fn[Msg] SemanticsLevelModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
+pub(all) enum SemanticsLive {
+  Off
+  Polite
+  Assertive
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SemanticsMetadataModifier {
+  info : ViewSemanticsInfo
+}
+pub fn[Msg] SemanticsMetadataModifier::to_any_modifier(Self) -> AnyModifier[Msg]
+
 pub(all) struct SemanticsNode {
   node_id : SemanticsNodeId
   semantic_id : SemanticId?
@@ -1156,6 +1196,12 @@ pub(all) struct SemanticsNode {
   value : String
   description : String
   state : SemanticsState
+  numeric : SemanticsNumericValue?
+  text : SemanticsTextValue?
+  collection : SemanticsCollectionInfo?
+  relations : SemanticsRelations
+  live : SemanticsLive
+  live_atomic : Bool
   actions : Array[SemanticsActionKind]
   focus_order : Int?
   frame : Rect
@@ -1170,10 +1216,45 @@ pub fn SemanticsNodeId::to_wire(Self) -> String
 pub fn SemanticsNodeId::value(Self) -> UInt64
 pub impl ToJson for SemanticsNodeId
 
+pub(all) struct SemanticsNumericValue {
+  current : Double?
+  min : Double?
+  max : Double?
+  step : Double?
+  value_text : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsNumericValue::new(current? : Double, min? : Double, max? : Double, step? : Double, value_text? : String) -> Self
+
 pub(all) struct SemanticsPressedModifier {
   pressed : Bool
 }
 pub fn[Msg] SemanticsPressedModifier::to_any_modifier(Self) -> AnyModifier[Msg]
+
+pub(all) enum SemanticsRelationKind {
+  LabelledBy
+  DescribedBy
+  Controls
+  ErrorMessage
+  ActiveDescendant
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SemanticsRelations {
+  labelled_by : Array[SemanticsNodeId]
+  described_by : Array[SemanticsNodeId]
+  controls : Array[SemanticsNodeId]
+  error_message : Array[SemanticsNodeId]
+  active_descendant : Array[SemanticsNodeId]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsRelations::empty() -> Self
+
+pub(all) struct SemanticsRelationsDeclaration {
+  labelled_by : Array[SemanticId]
+  described_by : Array[SemanticId]
+  controls : Array[SemanticId]
+  error_message : Array[SemanticId]
+  active_descendant : Array[SemanticId]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsRelationsDeclaration::new(labelled_by? : Array[SemanticId], described_by? : Array[SemanticId], controls? : Array[SemanticId], error_message? : Array[SemanticId], active_descendant? : Array[SemanticId]) -> Self
 
 pub(all) struct SemanticsRequiredModifier {
   required : Bool
@@ -1209,6 +1290,15 @@ pub(all) enum SemanticsRole {
   TreeItem
   Group
   WebView
+  Image
+  Alert
+  Status
+  ComboBox
+  Option
+  Table
+  Row
+  Cell
+  Separator
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SemanticsRoleModifier {
@@ -1235,10 +1325,15 @@ pub(all) struct SemanticsState {
   disabled : Bool
   selected : Bool
   pressed : Bool
-  checked : Bool
+  checked : SemanticsCheckedState?
   expanded : Bool
   invalid : Bool
   required : Bool
+  read_only : Bool
+  busy : Bool
+  multiline : Bool
+  password : Bool
+  modal : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsState::default() -> Self
 
@@ -1246,6 +1341,13 @@ pub(all) enum SemanticsTarget {
   BySemanticId(SemanticId)
   ByNodeId(SemanticsNodeId)
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SemanticsTextValue {
+  selection : TextRange?
+  caret : Int?
+  editable : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsTextValue::new(selection? : TextRange, caret? : Int, editable? : Bool) -> Self
 
 pub(all) struct SemanticsUrlModifier {
   url : String
@@ -1707,16 +1809,22 @@ pub fn[Msg] View::semantic_id(Self[Msg], SemanticId) -> Self[Msg]
 pub fn[Msg] View::semantics(Self[Msg]) -> ViewSemanticsInfo
 pub fn[Msg] View::semantics_action_kinds(Self[Msg]) -> Array[SemanticsActionKind]
 pub fn[Msg] View::semantics_boundary(Self[Msg]) -> Self[Msg]
-pub fn[Msg] View::semantics_checked(Self[Msg], checked? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_checked(Self[Msg], checked? : SemanticsCheckedState) -> Self[Msg]
+pub fn[Msg] View::semantics_collection(Self[Msg], SemanticsCollectionInfo) -> Self[Msg]
 pub fn[Msg] View::semantics_composition(Self[Msg], SemanticsComposition) -> Self[Msg]
 pub fn[Msg] View::semantics_description(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::semantics_expanded(Self[Msg], expanded? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_invalid(Self[Msg], invalid? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_level(Self[Msg], Int) -> Self[Msg]
+pub fn[Msg] View::semantics_live(Self[Msg], SemanticsLive, live_atomic? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_numeric(Self[Msg], SemanticsNumericValue) -> Self[Msg]
 pub fn[Msg] View::semantics_pressed(Self[Msg], pressed? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_relations(Self[Msg], SemanticsRelationsDeclaration) -> Self[Msg]
 pub fn[Msg] View::semantics_required(Self[Msg], required? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_role(Self[Msg], SemanticsRole) -> Self[Msg]
 pub fn[Msg] View::semantics_selected(Self[Msg], selected? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_state(Self[Msg], read_only? : Bool, busy? : Bool, multiline? : Bool, password? : Bool, modal? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_text_metadata(Self[Msg], SemanticsTextValue) -> Self[Msg]
 pub fn[Msg] View::semantics_url(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::shadow(Self[Msg], ShadowStyle) -> Self[Msg]
 pub fn[Msg] View::spacing(Self[Msg], Double) -> Self[Msg]
@@ -1726,6 +1834,7 @@ pub fn[Msg] View::text_input_state(Self[Msg], ViewPaintContext) -> TextInputStat
 pub fn[Msg] View::theme(Self[Msg], Theme) -> Self[Msg]
 pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
+pub fn[Msg] View::traps_focus(Self[Msg]) -> Bool
 
 pub struct ViewDeclaration {
   layout : DeclarationChannel
@@ -1802,7 +1911,7 @@ pub(all) struct ViewLayoutContext {
 pub(all) struct ViewLayoutResult {
   size : Size
   child_frames : Array[Rect]
-} derive(Eq, @debug.Debug)
+} derive(Eq, ToJson, @debug.Debug)
 pub fn ViewLayoutResult::new(size~ : Size, child_frames? : Array[Rect]) -> Self
 
 pub(all) struct ViewPaintContext {
@@ -1862,12 +1971,17 @@ pub struct ViewSemanticsActionHandler[Msg] {
 }
 pub fn[Msg] ViewSemanticsActionHandler::activate((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
 pub fn[Msg] ViewSemanticsActionHandler::collapse((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::decrement((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
 pub fn[Msg] ViewSemanticsActionHandler::dismiss((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
 pub fn[Msg] ViewSemanticsActionHandler::expand((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::increment((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
 pub fn[Msg] ViewSemanticsActionHandler::kind(Self[Msg]) -> SemanticsActionKind
 pub fn[Msg] ViewSemanticsActionHandler::scroll((ViewSemanticsActionContext, SemanticsScrollDirection) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
 pub fn[Msg] ViewSemanticsActionHandler::select((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::set_numeric_value((ViewSemanticsActionContext, Double) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::set_selection((ViewSemanticsActionContext, TextRange) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
 pub fn[Msg] ViewSemanticsActionHandler::set_text((ViewSemanticsActionContext, String) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::show_menu((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
 pub fn[Msg] ViewSemanticsActionHandler::submit((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
 
 pub(all) struct ViewSemanticsActionResult[Msg] {
@@ -1894,12 +2008,23 @@ pub(all) struct ViewSemanticsInfo {
   disabled : Bool?
   selected : Bool?
   pressed : Bool?
-  checked : Bool?
+  checked : SemanticsCheckedState?
   expanded : Bool?
   invalid : Bool?
   required : Bool?
-} derive(Eq, @debug.Debug)
-pub fn ViewSemanticsInfo::new(composition? : SemanticsComposition, semantic_id? : SemanticId, role? : SemanticsRole, level? : Int, url? : String, label? : String, value? : String, description? : String, disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : Bool, expanded? : Bool, invalid? : Bool, required? : Bool) -> Self
+  read_only : Bool?
+  busy : Bool?
+  multiline : Bool?
+  password : Bool?
+  modal : Bool?
+  numeric : SemanticsNumericValue?
+  text : SemanticsTextValue?
+  collection : SemanticsCollectionInfo?
+  relations : SemanticsRelationsDeclaration?
+  live : SemanticsLive?
+  live_atomic : Bool?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ViewSemanticsInfo::new(composition? : SemanticsComposition, semantic_id? : SemanticId, role? : SemanticsRole, level? : Int, url? : String, label? : String, value? : String, description? : String, disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : SemanticsCheckedState, expanded? : Bool, invalid? : Bool, required? : Bool, read_only? : Bool, busy? : Bool, multiline? : Bool, password? : Bool, modal? : Bool, numeric? : SemanticsNumericValue, text? : SemanticsTextValue, collection? : SemanticsCollectionInfo, relations? : SemanticsRelationsDeclaration, live? : SemanticsLive, live_atomic? : Bool) -> Self
 
 pub(all) struct ViewStateContext {
   focused : Bool
@@ -1969,6 +2094,7 @@ pub(open) trait ViewNode {
   fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
   fn semantics(Self) -> ViewSemanticsInfo = _
   fn focusable(Self) -> Bool = _
+  fn focus_trap(Self) -> Bool = _
   fn flex_weight(Self) -> Double = _
 }
 

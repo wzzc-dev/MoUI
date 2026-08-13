@@ -101,6 +101,16 @@ The native app entrypoint applies that reported theme to the runtime environment
 before creating the host driver, matching the macOS startup path. Windows
 theme-change events use the shared `Event::ThemeChanged` runtime path when
 emitted by the local window backend.
+The UI Automation bridge in `backend/windows` is a candidate native adapter.
+It consumes committed semantics snapshots/deltas, creates fragment providers,
+and returns UIA actions through the exact-generation runtime action entrypoint.
+It depends on the narrow `mbw_install_native_message_hook` API in
+`wzzc-dev/window/windows` so the window-owned WndProc can delegate
+`WM_GETOBJECT` without subclassing the HWND. The hook must first be released in
+the pinned window package and the adapter must compile with MSVC plus the
+Windows SDK. Native accessibility readiness remains false until a real UIA
+client proves tree queries, patterns, actions, focus, deletion, and live
+notifications; package tests and non-Windows fallback builds are only L1.
 Right-click context-menu requests use the same `TrackPopupMenu` path and dispatch
 the selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/windows` backend are

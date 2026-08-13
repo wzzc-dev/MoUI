@@ -22,6 +22,13 @@
           ]
         },
         {
+          "name": "accessibility foundation",
+          "argv": [
+            "node",
+            "scripts/validate-accessibility-foundation.mjs"
+          ]
+        },
+        {
           "name": "platform matrix",
           "argv": [
             "node",
@@ -499,6 +506,13 @@
           "argv": [
             "node",
             "scripts/test-moui-prebuild.mjs"
+          ]
+        },
+        {
+          "name": "accessibility foundation validator tests",
+          "argv": [
+            "node",
+            "scripts/test-accessibility-foundation.mjs"
           ]
         },
         {

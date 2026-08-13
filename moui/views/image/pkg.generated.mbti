@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.View[Msg]
+pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit, accessibility_label? : String) -> @core.View[Msg]
 
 // Errors
 

@@ -2,6 +2,7 @@
 priv struct SemanticsBuildContext {
   nodes : Map[SemanticsNodeId, SemanticsNode]
   routes : Map[SemanticsNodeId, SemanticsNodeRoute]
+  relation_declarations : Map[SemanticsNodeId, SemanticsRelationsDeclaration]
   mut next_focus_order : Int
 }
 
@@ -9,7 +10,12 @@ priv struct SemanticsBuildContext {
 fn SemanticsBuildContext::from_tree(
   tree : SemanticsTree,
 ) -> SemanticsBuildContext {
-  { nodes: tree.nodes.copy(), routes: tree.routes.copy(), next_focus_order: 0 }
+  {
+    nodes: tree.nodes.copy(),
+    routes: tree.routes.copy(),
+    relation_declarations: tree.relation_declarations.copy(),
+    next_focus_order: 0,
+  }
 }
 
 ///|
@@ -20,6 +26,18 @@ fn SemanticsBuildContext::put(
 ) -> Unit {
   self.nodes[node.node_id] = node
   self.routes[node.node_id] = route
+}
+
+///|
+fn SemanticsBuildContext::put_relation_declaration(
+  self : SemanticsBuildContext,
+  node_id : SemanticsNodeId,
+  declaration : SemanticsRelationsDeclaration?,
+) -> Unit {
+  match declaration {
+    Some(value) => self.relation_declarations[node_id] = value
+    None => self.relation_declarations.remove(node_id) |> ignore
+  }
 }
 
 ///|
@@ -61,6 +79,20 @@ fn ElementSemanticsCache::matches(
   self.frame == Some(frame) &&
   self.environment == Some(environment) &&
   self.style == Some(style)
+}
+
+///|
+fn ElementSemanticsCache::can_replay(
+  self : ElementSemanticsCache,
+  context : SemanticsBuildContext,
+  frame : Rect,
+  environment : Environment,
+  style : ViewStyle,
+) -> Bool {
+  if !self.matches(frame, environment, style) {
+    return false
+  }
+  self.roots.all(root => context.nodes.contains(root))
 }
 
 ///|
@@ -148,7 +180,18 @@ fn ViewSemanticsInfo::has_overlay(self : ViewSemanticsInfo) -> Bool {
   self.checked is Some(_) ||
   self.expanded is Some(_) ||
   self.invalid is Some(_) ||
-  self.required is Some(_)
+  self.required is Some(_) ||
+  self.read_only is Some(_) ||
+  self.busy is Some(_) ||
+  self.multiline is Some(_) ||
+  self.password is Some(_) ||
+  self.modal is Some(_) ||
+  self.numeric is Some(_) ||
+  self.text is Some(_) ||
+  self.collection is Some(_) ||
+  self.relations is Some(_) ||
+  self.live is Some(_) ||
+  self.live_atomic is Some(_)
 }
 
 ///|
@@ -164,10 +207,29 @@ fn semantics_state_for_element(
     disabled: info.disabled.unwrap_or(state.disabled || !environment.enabled),
     selected: info.selected.unwrap_or(state.selected),
     pressed: info.pressed.unwrap_or(state.pressed),
-    checked: info.checked.unwrap_or(state.checked),
+    checked: match info.checked {
+      Some(value) => Some(value)
+      None =>
+        match info.role {
+          Some(Checkbox | Switch | Radio) =>
+            Some(
+              if state.checked {
+                SemanticsCheckedState::Checked
+              } else {
+                SemanticsCheckedState::Unchecked
+              },
+            )
+          _ => None
+        }
+    },
     expanded: info.expanded.unwrap_or(state.expanded),
     invalid: info.invalid.unwrap_or(false),
     required: info.required.unwrap_or(false),
+    read_only: info.read_only.unwrap_or(false),
+    busy: info.busy.unwrap_or(false),
+    multiline: info.multiline.unwrap_or(false),
+    password: info.password.unwrap_or(false),
+    modal: info.modal.unwrap_or(false),
   }
 }
 
@@ -232,12 +294,27 @@ fn RuntimeState::boundary_node(
       self.animfocus.focused_element == Some(element.id),
       environment,
     ),
+    numeric: info.numeric,
+    text: match info.text {
+      Some(text) =>
+        Some({
+          ..text,
+          selection: element.control.selection,
+          caret: Some(element.control.caret),
+        })
+      None => None
+    },
+    collection: info.collection,
+    relations: SemanticsRelations::empty(),
+    live: info.live.unwrap_or(SemanticsLive::Off),
+    live_atomic: info.live_atomic.unwrap_or(false),
     actions: element.view_node.semantics_action_kinds(),
     focus_order,
     frame: layout.frame,
     children,
   }
   context.put(node, route)
+  context.put_relation_declaration(id, info.relations)
   id
 }
 
@@ -253,10 +330,18 @@ fn overlay_state(
     disabled: info.disabled.unwrap_or(current.disabled || !environment.enabled),
     selected: info.selected.unwrap_or(current.selected),
     pressed: info.pressed.unwrap_or(current.pressed),
-    checked: info.checked.unwrap_or(current.checked),
+    checked: match info.checked {
+      Some(value) => Some(value)
+      None => current.checked
+    },
     expanded: info.expanded.unwrap_or(current.expanded),
     invalid: info.invalid.unwrap_or(current.invalid),
     required: info.required.unwrap_or(current.required),
+    read_only: info.read_only.unwrap_or(current.read_only),
+    busy: info.busy.unwrap_or(current.busy),
+    multiline: info.multiline.unwrap_or(current.multiline),
+    password: info.password.unwrap_or(current.password),
+    modal: info.modal.unwrap_or(current.modal),
   }
 }
 
@@ -315,6 +400,25 @@ fn RuntimeState::apply_semantics_overlay(
       label: info.label.unwrap_or(current.label),
       value: info.value.unwrap_or(current.value),
       description: info.description.unwrap_or(current.description),
+      numeric: match info.numeric {
+        Some(value) => Some(value)
+        None => current.numeric
+      },
+      text: match info.text {
+        Some(value) =>
+          Some({
+            ..value,
+            selection: element.control.selection,
+            caret: Some(element.control.caret),
+          })
+        None => current.text
+      },
+      collection: match info.collection {
+        Some(value) => Some(value)
+        None => current.collection
+      },
+      live: info.live.unwrap_or(current.live),
+      live_atomic: info.live_atomic.unwrap_or(current.live_atomic),
       state: overlay_state(
         current.state,
         info,
@@ -326,6 +430,10 @@ fn RuntimeState::apply_semantics_overlay(
     },
     route,
   )
+  match info.relations {
+    Some(relations) => context.put_relation_declaration(target, Some(relations))
+    None => ()
+  }
 }
 
 ///|
@@ -393,10 +501,24 @@ fn RuntimeState::merged_boundary_node(
           disabled: state.disabled || descendant.state.disabled,
           selected: state.selected || descendant.state.selected,
           pressed: state.pressed || descendant.state.pressed,
-          checked: state.checked || descendant.state.checked,
+          checked: match (state.checked, descendant.state.checked) {
+            (None, next) => next
+            (current, None) => current
+            (Some(current), Some(next)) =>
+              if current == next {
+                Some(current)
+              } else {
+                Some(SemanticsCheckedState::Mixed)
+              }
+          },
           expanded: state.expanded || descendant.state.expanded,
           invalid: state.invalid || descendant.state.invalid,
           required: state.required || descendant.state.required,
+          read_only: state.read_only || descendant.state.read_only,
+          busy: state.busy || descendant.state.busy,
+          multiline: state.multiline || descendant.state.multiline,
+          password: state.password || descendant.state.password,
+          modal: state.modal || descendant.state.modal,
         }
         for kind in descendant.actions {
           append_action_kind(merged_actions, kind)
@@ -450,7 +572,12 @@ fn RuntimeState::build_semantics_for_element(
   style : ViewStyle,
 ) -> Array[SemanticsNodeId] {
   if !element.has_dirty_semantics() &&
-    element.semantics_cache.matches(layout.frame, environment, style) {
+    element.semantics_cache.can_replay(
+      context,
+      layout.frame,
+      environment,
+      style,
+    ) {
     return element.semantics_cache.replay()
   }
   self.stats.semantics_recompute_count = self.stats.semantics_recompute_count +
@@ -555,6 +682,43 @@ fn SemanticsBuildContext::collect_dfs(
 }
 
 ///|
+/// Returns the deepest modal boundary; later siblings win equal-depth ties.
+fn deepest_modal_semantics_node_at(
+  nodes : Map[SemanticsNodeId, SemanticsNode],
+  id : SemanticsNodeId,
+  depth : Int,
+) -> (SemanticsNodeId, Int)? {
+  guard nodes.get(id) is Some(node) else { return None }
+  let mut best = if node.state.modal { Some((id, depth)) } else { None }
+  for child in node.children {
+    match deepest_modal_semantics_node_at(nodes, child, depth + 1) {
+      Some(candidate) =>
+        match best {
+          Some(current) =>
+            if candidate.1 >= current.1 {
+              best = Some(candidate)
+            }
+          None => best = Some(candidate)
+        }
+      None => ()
+    }
+  }
+  best
+}
+
+///|
+fn deepest_modal_semantics_node(
+  nodes : Array[SemanticsNode],
+) -> SemanticsNodeId? {
+  guard nodes.get(0) is Some(root) else { return None }
+  let index : Map[SemanticsNodeId, SemanticsNode] = Map([])
+  for node in nodes {
+    index[node.node_id] = node
+  }
+  deepest_modal_semantics_node_at(index, root.node_id, 0).map(result => result.0)
+}
+
+///|
 fn assign_semantics_focus_order(nodes : Array[SemanticsNode]) -> Unit {
   let mut next_order = 0
   for index, node in nodes {
@@ -568,8 +732,34 @@ fn assign_semantics_focus_order(nodes : Array[SemanticsNode]) -> Unit {
 }
 
 ///|
-fn semantics_duplicate_issues(
+fn resolve_semantics_relation_targets(
+  source : SemanticsNodeId,
+  kind : SemanticsRelationKind,
+  targets : Array[SemanticId],
+  occurrences : Map[SemanticId, Array[SemanticsNodeId]],
+  resolved : Array[SemanticsNodeId],
+  issues : Array[SemanticsIssue],
+) -> Unit {
+  for target in targets {
+    match occurrences.get(target) {
+      Some(ids) =>
+        if ids.length() == 1 {
+          if !resolved.contains(ids[0]) {
+            resolved.push(ids[0])
+          }
+        } else {
+          issues.push(AmbiguousRelationTarget(source, kind, target, ids.copy()))
+        }
+      None => issues.push(MissingRelationTarget(source, kind, target))
+    }
+  }
+}
+
+///|
+/// Resolves stable declaration relations after the entire tree is known.
+fn resolve_semantics_relations_and_issues(
   nodes : Array[SemanticsNode],
+  declarations : Map[SemanticsNodeId, SemanticsRelationsDeclaration],
 ) -> Array[SemanticsIssue] {
   let occurrences : Map[SemanticId, Array[SemanticsNodeId]] = Map([])
   for node in nodes {
@@ -600,6 +790,55 @@ fn semantics_duplicate_issues(
       None => ()
     }
   }
+  for index, node in nodes {
+    match declarations.get(node.node_id) {
+      Some(declaration) => {
+        let relations = SemanticsRelations::empty()
+        resolve_semantics_relation_targets(
+          node.node_id,
+          SemanticsRelationKind::LabelledBy,
+          declaration.labelled_by,
+          occurrences,
+          relations.labelled_by,
+          issues,
+        )
+        resolve_semantics_relation_targets(
+          node.node_id,
+          SemanticsRelationKind::DescribedBy,
+          declaration.described_by,
+          occurrences,
+          relations.described_by,
+          issues,
+        )
+        resolve_semantics_relation_targets(
+          node.node_id,
+          SemanticsRelationKind::Controls,
+          declaration.controls,
+          occurrences,
+          relations.controls,
+          issues,
+        )
+        resolve_semantics_relation_targets(
+          node.node_id,
+          SemanticsRelationKind::ErrorMessage,
+          declaration.error_message,
+          occurrences,
+          relations.error_message,
+          issues,
+        )
+        resolve_semantics_relation_targets(
+          node.node_id,
+          SemanticsRelationKind::ActiveDescendant,
+          declaration.active_descendant,
+          occurrences,
+          relations.active_descendant,
+          issues,
+        )
+        nodes[index] = { ..node, relations, }
+      }
+      None => ()
+    }
+  }
   issues
 }
 
@@ -608,47 +847,15 @@ fn semantics_same_public_content(
   snapshot : SemanticsSnapshot,
   root : SemanticsNodeId?,
   focused : SemanticsNodeId?,
+  semantic_focused : SemanticsNodeId?,
   nodes : Array[SemanticsNode],
   issues : Array[SemanticsIssue],
 ) -> Bool {
   snapshot.root == root &&
   snapshot.focused == focused &&
+  snapshot.semantic_focused == semantic_focused &&
   snapshot.nodes == nodes &&
   snapshot.issues == issues
-}
-
-///|
-fn semantics_delta_between(
-  previous : SemanticsSnapshot,
-  current : SemanticsSnapshot,
-) -> SemanticsDelta {
-  let previous_nodes : Map[SemanticsNodeId, SemanticsNode] = Map([])
-  let current_ids : Map[SemanticsNodeId, Bool] = Map([])
-  for node in previous.nodes {
-    previous_nodes[node.node_id] = node
-  }
-  let upserted : Array[SemanticsNode] = []
-  for node in current.nodes {
-    current_ids[node.node_id] = true
-    if previous_nodes.get(node.node_id) != Some(node) {
-      upserted.push(node)
-    }
-  }
-  let removed : Array[SemanticsNodeId] = []
-  for node in previous.nodes {
-    if !current_ids.contains(node.node_id) {
-      removed.push(node.node_id)
-    }
-  }
-  {
-    from: previous.generation,
-    to: current.generation,
-    root: current.root,
-    focused: current.focused,
-    upserted,
-    removed,
-    issues: current.issues.map(clone_semantics_issue),
-  }
 }
 
 ///|
@@ -725,6 +932,15 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
       ),
     )
   }
+  let all_nodes : Array[SemanticsNode] = []
+  match root {
+    Some(id) => context.collect_dfs(id, Map([]), all_nodes)
+    None => ()
+  }
+  let root : SemanticsNodeId? = match deepest_modal_semantics_node(all_nodes) {
+    Some(id) => Some(id)
+    None => root
+  }
   let nodes : Array[SemanticsNode] = []
   match root {
     Some(id) => context.collect_dfs(id, Map([]), nodes)
@@ -741,10 +957,17 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
       break
     }
   }
-  let issues = semantics_duplicate_issues(nodes)
+  let semantic_focused = match self.animfocus.semantic_focused {
+    Some(id) if nodes.any(node => node.node_id == id) => Some(id)
+    _ => None
+  }
+  let issues = resolve_semantics_relations_and_issues(
+    nodes,
+    context.relation_declarations,
+  )
   let previous = self.semantics.committed_semantics
   let changed = !semantics_same_public_content(
-    previous, root, focused, nodes, issues,
+    previous, root, focused, semantic_focused, nodes, issues,
   )
   if changed && previous.generation.value() == semantics_uint64_max {
     // A wrapped generation could make a stale consumer look current. Stop
@@ -758,8 +981,20 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
   } else {
     previous.generation
   }
-  let next_tree = SemanticsTree::from_reachable(root, nodes, context.routes)
-  let next = { generation, root: next_tree.root, focused, nodes, issues }
+  let next_tree = SemanticsTree::from_reachable(
+    root,
+    nodes,
+    context.routes,
+    context.relation_declarations,
+  )
+  let next = {
+    generation,
+    root: next_tree.root,
+    focused,
+    semantic_focused,
+    nodes,
+    issues,
+  }
   self.refresh_semantic_id_index(next)
   self.semantics.semantics_tree = next_tree
   self.semantics.committed_semantics = next
@@ -798,6 +1033,7 @@ fn RuntimeState::combined_semantics_delta(
   let removed : Map[SemanticsNodeId, Bool] = Map([])
   let removed_order : Array[SemanticsNodeId] = []
   let mut expected = since
+  let announcements : Array[AccessibilityAnnouncement] = []
   for index in start..<self.semantics.semantics_journal.length() {
     let delta = self.semantics.semantics_journal[index]
     if delta.from != expected {
@@ -814,6 +1050,7 @@ fn RuntimeState::combined_semantics_delta(
       removed.remove(node.node_id)
       changed[node.node_id] = true
     }
+    announcements.append(delta.announcements)
     expected = delta.to
     if expected == current.generation {
       let upserted = current.nodes.filter(node => changed.contains(node.node_id))
@@ -822,9 +1059,11 @@ fn RuntimeState::combined_semantics_delta(
         to: current.generation,
         root: current.root,
         focused: current.focused,
+        semantic_focused: current.semantic_focused,
         upserted,
         removed: removed_order.filter(id => removed.contains(id)),
         issues: current.issues.map(clone_semantics_issue),
+        announcements,
       })
     }
   }
@@ -857,6 +1096,29 @@ fn RuntimeState::read_semantics(
           None => Ok(Full(self.semantics.committed_semantics))
         }
       }
+  }
+}
+
+///|
+fn RuntimeState::set_semantic_focus(
+  self : RuntimeState,
+  node_id : SemanticsNodeId?,
+) -> Bool {
+  if self.closed {
+    return false
+  }
+  self.commit_semantics()
+  match node_id {
+    Some(id) if !self.semantics.semantics_tree.nodes.contains(id) => false
+    _ => {
+      if self.animfocus.semantic_focused != node_id {
+        self.animfocus.semantic_focused = node_id
+        self.dirty.needs_semantics = true
+        self.dirty.needs_platform = true
+        self.commit_semantics()
+      }
+      true
+    }
   }
 }
 

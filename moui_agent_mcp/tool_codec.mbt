@@ -206,6 +206,26 @@ fn semantics_action_codec() -> JsonCodec[@core.SemanticsAction] {
       tagged_empty_schema("expand"),
       tagged_empty_schema("collapse"),
       tagged_empty_schema("dismiss"),
+      tagged_empty_schema("increment"),
+      tagged_empty_schema("decrement"),
+      object_schema(
+        (
+          {
+            "kind": { "const": "set_numeric_value" },
+            "value": { "type": "number" },
+          } : Json),
+        required=["kind", "value"],
+      ),
+      object_schema(
+        (
+          {
+            "kind": { "const": "set_selection" },
+            "start": { "type": "integer", "minimum": 0 },
+            "end": { "type": "integer", "minimum": 0 },
+          } : Json),
+        required=["kind", "start", "end"],
+      ),
+      tagged_empty_schema("show_menu"),
     ]),
     decode: value => {
       match value {
@@ -308,14 +328,23 @@ fn semantics_state_schema() -> Json {
         "disabled": boolean,
         "selected": boolean,
         "pressed": boolean,
-        "checked": boolean,
+        "checked": nullable_schema(
+          (
+            { "type": "string", "enum": ["unchecked", "checked", "mixed"] } :
+            Json),
+        ),
         "expanded": boolean,
         "invalid": boolean,
         "required": boolean,
+        "read_only": boolean,
+        "busy": boolean,
+        "multiline": boolean,
+        "password": boolean,
+        "modal": boolean,
       } : Json),
     required=[
       "focused", "disabled", "selected", "pressed", "checked", "expanded", "invalid",
-      "required",
+      "required", "read_only", "busy", "multiline", "password", "modal",
     ],
   )
 }
@@ -342,13 +371,91 @@ fn rect_schema() -> Json {
 }
 
 ///|
+fn text_range_schema() -> Json {
+  let index = ({ "type": "integer", "minimum": 0 } : Json)
+  object_schema(({ "start": index, "end": index } : Json), required=[
+    "start", "end",
+  ])
+}
+
+///|
+fn semantics_numeric_schema() -> Json {
+  let optional_number = nullable_schema(({ "type": "number" } : Json))
+  object_schema(
+    (
+      {
+        "current": optional_number,
+        "min": optional_number,
+        "max": optional_number,
+        "step": optional_number,
+        "value_text": nullable_schema(({ "type": "string" } : Json)),
+      } : Json),
+    required=["current", "min", "max", "step", "value_text"],
+  )
+}
+
+///|
+fn semantics_text_schema() -> Json {
+  object_schema(
+    (
+      {
+        "selection": nullable_schema(text_range_schema()),
+        "caret": nullable_schema(({ "type": "integer", "minimum": 0 } : Json)),
+        "editable": { "type": "boolean" },
+      } : Json),
+    required=["selection", "caret", "editable"],
+  )
+}
+
+///|
+fn semantics_collection_schema() -> Json {
+  let optional_integer = nullable_schema(({ "type": "integer" } : Json))
+  object_schema(
+    (
+      {
+        "row_index": optional_integer,
+        "row_count": optional_integer,
+        "row_span": optional_integer,
+        "column_index": optional_integer,
+        "column_count": optional_integer,
+        "column_span": optional_integer,
+        "set_size": optional_integer,
+        "set_position": optional_integer,
+      } : Json),
+    required=[
+      "row_index", "row_count", "row_span", "column_index", "column_count", "column_span",
+      "set_size", "set_position",
+    ],
+  )
+}
+
+///|
+fn semantics_relations_schema(node_id : Json) -> Json {
+  let ids = array_schema(node_id)
+  object_schema(
+    (
+      {
+        "labelled_by": ids,
+        "described_by": ids,
+        "controls": ids,
+        "error_message": ids,
+        "active_descendant": ids,
+      } : Json),
+    required=[
+      "labelled_by", "described_by", "controls", "error_message", "active_descendant",
+    ],
+  )
+}
+
+///|
 fn semantics_action_kind_schema() -> Json {
   (
     {
       "type": "string",
       "enum": [
         "activate", "focus", "set_text", "submit", "scroll", "select", "expand",
-        "collapse", "dismiss",
+        "collapse", "dismiss", "increment", "decrement", "set_numeric_value", "set_selection",
+        "show_menu",
       ],
     } : Json)
 }
@@ -362,7 +469,8 @@ fn semantics_role_schema() -> Json {
         "none", "text", "link", "heading", "navigation", "main", "button", "checkbox",
         "text_field", "list", "list_item", "grid", "scroll_view", "switch", "radio",
         "slider", "progress", "tab", "dialog", "tooltip", "menu", "button_group",
-        "form", "form_field", "tree", "tree_item", "group", "web_view",
+        "form", "form_field", "tree", "tree_item", "group", "web_view", "image",
+        "alert", "status", "combo_box", "option", "table", "row", "cell", "separator",
       ],
     } : Json)
 }
@@ -384,6 +492,12 @@ fn semantics_node_schema() -> Json {
         "value": { "type": "string" },
         "description": { "type": "string" },
         "state": semantics_state_schema(),
+        "numeric": nullable_schema(semantics_numeric_schema()),
+        "text": nullable_schema(semantics_text_schema()),
+        "collection": nullable_schema(semantics_collection_schema()),
+        "relations": semantics_relations_schema(node_id),
+        "live": { "type": "string", "enum": ["off", "polite", "assertive"] },
+        "atomic": { "type": "boolean" },
         "actions": array_schema(semantics_action_kind_schema()),
         "focus_order": optional_integer,
         "frame": rect_schema(),
@@ -391,22 +505,55 @@ fn semantics_node_schema() -> Json {
       } : Json),
     required=[
       "node_id", "semantic_id", "role", "level", "url", "label", "value", "description",
-      "state", "actions", "focus_order", "frame", "children",
+      "state", "numeric", "text", "collection", "relations", "live", "atomic", "actions",
+      "focus_order", "frame", "children",
     ],
   )
 }
 
 ///|
 fn semantics_issue_schema() -> Json {
-  object_schema(
-    (
-      {
-        "kind": { "const": "duplicate_semantic_id" },
-        "semantic_id": semantic_id_codec().schema,
-        "nodes": array_schema(decimal_u64_codec(positive=true).schema),
-      } : Json),
-    required=["kind", "semantic_id", "nodes"],
-  )
+  let node_id = decimal_u64_codec(positive=true).schema
+  let semantic_id = semantic_id_codec().schema
+  let relation = (
+    {
+      "type": "string",
+      "enum": [
+        "labelled_by", "described_by", "controls", "error_message", "active_descendant",
+      ],
+    } : Json)
+  one_of_schema([
+    object_schema(
+      (
+        {
+          "kind": { "const": "duplicate_semantic_id" },
+          "semantic_id": semantic_id,
+          "nodes": array_schema(node_id),
+        } : Json),
+      required=["kind", "semantic_id", "nodes"],
+    ),
+    object_schema(
+      (
+        {
+          "kind": { "const": "missing_relation_target" },
+          "source": node_id,
+          "relation": relation,
+          "semantic_id": semantic_id,
+        } : Json),
+      required=["kind", "source", "relation", "semantic_id"],
+    ),
+    object_schema(
+      (
+        {
+          "kind": { "const": "ambiguous_relation_target" },
+          "source": node_id,
+          "relation": relation,
+          "semantic_id": semantic_id,
+          "nodes": array_schema(node_id),
+        } : Json),
+      required=["kind", "source", "relation", "semantic_id", "nodes"],
+    ),
+  ])
 }
 
 ///|
@@ -416,6 +563,19 @@ fn semantics_read_value_schema() -> Json {
   let optional_node_id = nullable_schema(node_id)
   let nodes = array_schema(semantics_node_schema())
   let issues = array_schema(semantics_issue_schema())
+  let announcements = array_schema(
+    object_schema(
+      (
+        {
+          "node_id": node_id,
+          "generation": generation,
+          "live": { "type": "string", "enum": ["off", "polite", "assertive"] },
+          "atomic": { "type": "boolean" },
+          "text": { "type": "string" },
+        } : Json),
+      required=["node_id", "generation", "live", "atomic", "text"],
+    ),
+  )
   one_of_schema([
     object_schema(
       (
@@ -440,9 +600,11 @@ fn semantics_read_value_schema() -> Json {
           "upserted": nodes,
           "removed": array_schema(node_id),
           "issues": issues,
+          "announcements": announcements,
         } : Json),
       required=[
         "kind", "from", "to", "root", "focused", "upserted", "removed", "issues",
+        "announcements",
       ],
     ),
     object_schema(

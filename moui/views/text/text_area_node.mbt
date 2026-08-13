@@ -126,6 +126,10 @@ impl @core.ViewNode for TextArea with fn semantics(self) {
     role=@core.SemanticsRole::TextField,
     label=self.placeholder,
     value=self.value,
+    read_only=false,
+    multiline=true,
+    password=false,
+    text=@core.SemanticsTextValue::new(editable=true),
   )
 }
 

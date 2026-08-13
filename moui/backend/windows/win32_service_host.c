@@ -238,6 +238,41 @@ int32_t moui_windows_system_theme_is_light(void) {
   return value != 0 ? 1 : 0;
 }
 
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_accessibility_high_contrast(void) {
+  HIGHCONTRASTW value = {0};
+  value.cbSize = sizeof(value);
+  return SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(value), &value, 0) &&
+         (value.dwFlags & HCF_HIGHCONTRASTON) ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_accessibility_reduce_motion(void) {
+  // Windows exposes animation reduction through SPI_GETCLIENTAREAANIMATION.
+  BOOL enabled = TRUE;
+  if (!SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &enabled, 0)) {
+    return 0;
+  }
+  return enabled ? 0 : 1;
+}
+
+MOONBIT_FFI_EXPORT
+double moui_windows_accessibility_text_scale(void) {
+  DWORD percent = 100;
+  DWORD size = sizeof(percent);
+  LSTATUS status = RegGetValueW(
+      HKEY_CURRENT_USER,
+      L"Software\\Microsoft\\Accessibility",
+      L"TextScaleFactor",
+      RRF_RT_REG_DWORD,
+      NULL,
+      &percent,
+      &size);
+  return status == ERROR_SUCCESS && percent >= 10 && percent <= 1000
+      ? (double)percent / 100.0
+      : 1.0;
+}
+
 static const wchar_t *moui_windows_settings_subkey = L"Software\\MoUI";
 
 MOONBIT_FFI_EXPORT
@@ -478,6 +513,13 @@ MOONBIT_FFI_EXPORT
 int32_t moui_windows_system_theme_is_light(void) {
   return 1;
 }
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_accessibility_high_contrast(void) { return 0; }
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_accessibility_reduce_motion(void) { return 0; }
+MOONBIT_FFI_EXPORT
+double moui_windows_accessibility_text_scale(void) { return 1.0; }
 
 MOONBIT_FFI_EXPORT
 int32_t moui_windows_settings_has_value(moonbit_bytes_t key) {

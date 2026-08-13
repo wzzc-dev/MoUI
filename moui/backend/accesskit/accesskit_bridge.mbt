@@ -4,6 +4,7 @@ pub struct AccessKitUpdate {
   generation : @core.SemanticsGeneration
   tree_update : @moon_accesskit.TreeUpdate
   removed : Array[@core.SemanticsNodeId]
+  announcements : Array[@runtime.AccessibilityAnnouncement]
 }
 
 ///|
@@ -42,6 +43,13 @@ pub fn AccessKitUpdate::removed(
   self : AccessKitUpdate,
 ) -> Array[@core.SemanticsNodeId] {
   self.removed.copy()
+}
+
+///|
+pub fn AccessKitUpdate::announcements(
+  self : AccessKitUpdate,
+) -> Array[@runtime.AccessibilityAnnouncement] {
+  self.announcements.copy()
 }
 
 ///|
@@ -94,6 +102,15 @@ pub fn accesskit_role_from_semantics(
     @core.SemanticsRole::Tree => @moon_accesskit.Role::Tree
     @core.SemanticsRole::TreeItem => @moon_accesskit.Role::TreeItem
     @core.SemanticsRole::Group => @moon_accesskit.Role::Group
+    @core.SemanticsRole::Image => @moon_accesskit.Role::Image
+    @core.SemanticsRole::Alert => @moon_accesskit.Role::Alert
+    @core.SemanticsRole::Status => @moon_accesskit.Role::Status
+    @core.SemanticsRole::ComboBox => @moon_accesskit.Role::ComboBox
+    @core.SemanticsRole::Option => @moon_accesskit.Role::ListBoxOption
+    @core.SemanticsRole::Table => @moon_accesskit.Role::Table
+    @core.SemanticsRole::Row => @moon_accesskit.Role::Row
+    @core.SemanticsRole::Cell => @moon_accesskit.Role::Cell
+    @core.SemanticsRole::Separator => @moon_accesskit.Role::Splitter
   }
 }
 
@@ -111,6 +128,14 @@ pub fn accesskit_action_from_semantics(
     @core.SemanticsActionKind::Expand => @moon_accesskit.Action::Expand
     @core.SemanticsActionKind::Collapse => @moon_accesskit.Action::Collapse
     @core.SemanticsActionKind::Dismiss => @moon_accesskit.Action::HideTooltip
+    @core.SemanticsActionKind::Increment => @moon_accesskit.Action::Increment
+    @core.SemanticsActionKind::Decrement => @moon_accesskit.Action::Decrement
+    @core.SemanticsActionKind::SetNumericValue =>
+      @moon_accesskit.Action::SetValue
+    @core.SemanticsActionKind::SetSelection =>
+      @moon_accesskit.Action::SetTextSelection
+    @core.SemanticsActionKind::ShowMenu =>
+      @moon_accesskit.Action::ShowContextMenu
   }
 }
 
@@ -118,9 +143,18 @@ pub fn accesskit_action_from_semantics(
 pub fn accesskit_node_from_semantics(
   node : @core.SemanticsNode,
 ) -> @moon_accesskit.Node {
-  let access_node = @moon_accesskit.Node(
-    accesskit_role_from_semantics(node.role),
-  )
+  let role = if node.role == @core.SemanticsRole::TextField {
+    if node.state.password {
+      @moon_accesskit.Role::PasswordInput
+    } else if node.state.multiline {
+      @moon_accesskit.Role::MultilineTextInput
+    } else {
+      @moon_accesskit.Role::TextInput
+    }
+  } else {
+    accesskit_role_from_semantics(node.role)
+  }
+  let access_node = @moon_accesskit.Node(role)
   access_node.set_bounds(accesskit_rect_from_core(node.frame))
   if node.label != "" {
     access_node.set_label(node.label)
@@ -144,8 +178,14 @@ pub fn accesskit_node_from_semantics(
   if node.state.selected {
     access_node.set_selected(true)
   }
-  if node.state.checked {
-    access_node.set_toggled(@moon_accesskit.Toggled::True)
+  match node.state.checked {
+    Some(@core.SemanticsCheckedState::Unchecked) =>
+      access_node.set_toggled(@moon_accesskit.Toggled::False)
+    Some(@core.SemanticsCheckedState::Checked) =>
+      access_node.set_toggled(@moon_accesskit.Toggled::True)
+    Some(@core.SemanticsCheckedState::Mixed) =>
+      access_node.set_toggled(@moon_accesskit.Toggled::Mixed)
+    None => ()
   }
   if node.state.expanded {
     access_node.set_expanded(true)
@@ -155,6 +195,140 @@ pub fn accesskit_node_from_semantics(
   }
   if node.state.required {
     access_node.set_required()
+  }
+  if node.state.read_only {
+    access_node.set_read_only()
+  }
+  if node.state.busy {
+    access_node.set_busy()
+  }
+  if node.state.modal {
+    access_node.set_modal()
+  }
+  match node.numeric {
+    Some(numeric) => {
+      match numeric.current {
+        Some(value) => access_node.set_numeric_value(value)
+        None => ()
+      }
+      match numeric.min {
+        Some(value) => access_node.set_min_numeric_value(value)
+        None => ()
+      }
+      match numeric.max {
+        Some(value) => access_node.set_max_numeric_value(value)
+        None => ()
+      }
+      match numeric.step {
+        Some(value) => access_node.set_numeric_value_step(value)
+        None => ()
+      }
+      match numeric.value_text {
+        Some(value) => access_node.set_value(value)
+        None => ()
+      }
+    }
+    None => ()
+  }
+  match node.text {
+    Some(text) =>
+      match text.selection {
+        Some(selection) => {
+          let id = accesskit_node_id_for_semantics(node.node_id)
+          access_node.set_text_selection(
+            @moon_accesskit.TextSelection::TextSelection(
+              @moon_accesskit.TextPosition::TextPosition(id, selection.start),
+              @moon_accesskit.TextPosition::TextPosition(id, selection.end),
+            ),
+          )
+        }
+        None =>
+          match text.caret {
+            Some(caret) => {
+              let id = accesskit_node_id_for_semantics(node.node_id)
+              let position = @moon_accesskit.TextPosition::TextPosition(
+                id, caret,
+              )
+              access_node.set_text_selection(
+                @moon_accesskit.TextSelection::TextSelection(position, position),
+              )
+            }
+            None => ()
+          }
+      }
+    None => ()
+  }
+  match node.collection {
+    Some(collection) => {
+      match collection.row_count {
+        Some(value) => access_node.set_row_count(value)
+        None => ()
+      }
+      match collection.column_count {
+        Some(value) => access_node.set_column_count(value)
+        None => ()
+      }
+      match collection.row_index {
+        Some(value) => access_node.set_row_index(value)
+        None => ()
+      }
+      match collection.column_index {
+        Some(value) => access_node.set_column_index(value)
+        None => ()
+      }
+      match collection.row_span {
+        Some(value) => access_node.set_row_span(value)
+        None => ()
+      }
+      match collection.column_span {
+        Some(value) => access_node.set_column_span(value)
+        None => ()
+      }
+      match collection.set_size {
+        Some(value) => access_node.set_size_of_set(value)
+        None => ()
+      }
+      match collection.set_position {
+        Some(value) => access_node.set_position_in_set(value)
+        None => ()
+      }
+    }
+    None => ()
+  }
+  if node.relations.labelled_by.length() > 0 {
+    access_node.set_labelled_by(
+      node.relations.labelled_by.map(accesskit_node_id_for_semantics),
+    )
+  }
+  if node.relations.described_by.length() > 0 {
+    access_node.set_described_by(
+      node.relations.described_by.map(accesskit_node_id_for_semantics),
+    )
+  }
+  if node.relations.controls.length() > 0 {
+    access_node.set_controls(
+      node.relations.controls.map(accesskit_node_id_for_semantics),
+    )
+  }
+  if node.relations.error_message.length() > 0 {
+    access_node.set_error_message(
+      accesskit_node_id_for_semantics(node.relations.error_message[0]),
+    )
+  }
+  if node.relations.active_descendant.length() > 0 {
+    access_node.set_active_descendant(
+      accesskit_node_id_for_semantics(node.relations.active_descendant[0]),
+    )
+  }
+  access_node.set_live(
+    match node.live {
+      @core.SemanticsLive::Off => @moon_accesskit.Live::Off
+      @core.SemanticsLive::Polite => @moon_accesskit.Live::Polite
+      @core.SemanticsLive::Assertive => @moon_accesskit.Live::Assertive
+    },
+  )
+  if node.live_atomic {
+    access_node.set_live_atomic()
   }
   for action in node.actions {
     access_node.add_action(accesskit_action_from_semantics(action))
@@ -176,6 +350,7 @@ fn build_accesskit_update(
   focused : @core.SemanticsNodeId?,
   nodes : Array[@core.SemanticsNode],
   removed : Array[@core.SemanticsNodeId],
+  announcements : Array[@runtime.AccessibilityAnnouncement],
 ) -> AccessKitUpdate {
   let (root_id, empty_node) = match root {
     Some(node_id) => (accesskit_node_id_for_semantics(node_id), None)
@@ -203,7 +378,7 @@ fn build_accesskit_update(
       accesskit_node_from_semantics(node),
     )
   }
-  { generation, tree_update: update, removed }
+  { generation, tree_update: update, removed, announcements }
 }
 
 ///|
@@ -219,6 +394,7 @@ pub fn accesskit_update_from_semantics_read(
           snapshot.focused(),
           snapshot.nodes(),
           [],
+          [],
         ),
       )
     @runtime.SemanticsRead::Delta(delta) =>
@@ -229,6 +405,7 @@ pub fn accesskit_update_from_semantics_read(
           delta.focused(),
           delta.upserted(),
           delta.removed(),
+          delta.announcements(),
         ),
       )
     @runtime.SemanticsRead::Unchanged(_) => None

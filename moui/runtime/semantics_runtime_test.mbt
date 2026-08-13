@@ -27,6 +27,101 @@ priv enum RuntimeSemanticBatchMessage {
 }
 
 ///|
+priv enum RuntimeModalFocusMessage {
+  OpenModal
+  CloseModal
+  RemoveOriginAndClose
+}
+
+///|
+priv struct RuntimeModalFocusModel {
+  modal_open : Bool
+  origin_present : Bool
+}
+
+///|
+fn runtime_modal_focus_program() -> @core.Program[
+  RuntimeModalFocusModel,
+  RuntimeModalFocusMessage,
+] {
+  let origin_id = runtime_test_semantic_id("modal.origin")
+  let outside_id = runtime_test_semantic_id("modal.outside")
+  let dialog_id = runtime_test_semantic_id("modal.dialog")
+  let first_id = runtime_test_semantic_id("modal.first")
+  let second_id = runtime_test_semantic_id("modal.second")
+  @core.Program::simple(
+    init={ modal_open: false, origin_present: true },
+    update=(model, message) => {
+      match message {
+        OpenModal => { ..model, modal_open: true }
+        CloseModal => { ..model, modal_open: false }
+        RemoveOriginAndClose => { modal_open: false, origin_present: false }
+      }
+    },
+    view=model => {
+      let children : Array[@core.View[RuntimeModalFocusMessage]] = []
+      if model.origin_present {
+        children.push(
+          runtime_semantic_test_view(
+            semantic_id=origin_id,
+            label="Open dialog",
+            focusable=true,
+            handlers=[
+              @core.ViewSemanticsActionHandler::activate(_context => {
+                @core.ViewSemanticsActionResult::message(OpenModal)
+              }),
+            ],
+          ).key("modal.origin.key"),
+        )
+      }
+      children.push(
+        runtime_semantic_test_view(
+          semantic_id=outside_id,
+          label="Outside",
+          focusable=true,
+        ).key("modal.outside.key"),
+      )
+      if model.modal_open {
+        let dialog = runtime_semantic_container(
+            [
+              runtime_semantic_test_view(
+                semantic_id=first_id,
+                label="Close dialog",
+                focusable=true,
+                handlers=[
+                  @core.ViewSemanticsActionHandler::activate(_context => {
+                    @core.ViewSemanticsActionResult::message(CloseModal)
+                  }),
+                ],
+              ).key("modal.first.key"),
+              runtime_semantic_test_view(
+                semantic_id=second_id,
+                label="Remove origin and close",
+                focusable=true,
+                handlers=[
+                  @core.ViewSemanticsActionHandler::activate(_context => {
+                    @core.ViewSemanticsActionResult::message(
+                      RemoveOriginAndClose,
+                    )
+                  }),
+                ],
+              ).key("modal.second.key"),
+            ],
+            kind="RuntimeModalDialog",
+            composition=@core.SemanticsComposition::Boundary,
+            semantic_id=dialog_id,
+            focus_trap=true,
+          )
+          .semantics_role(@core.SemanticsRole::Dialog)
+          .semantics_state(modal=true)
+        children.push(dialog)
+      }
+      runtime_semantic_container(children, kind="RuntimeModalRoot")
+    },
+  )
+}
+
+///|
 fn runtime_semantic_batch_program(
   semantic_id : @core.SemanticId,
 ) -> @core.Program[Array[String], RuntimeSemanticBatchMessage] {
@@ -310,6 +405,194 @@ test "runtime semantics: typed actions commit through TEA without fake input" {
 }
 
 ///|
+test "runtime semantics: live changes announce without moving focus" {
+  let semantic_id = runtime_test_semantic_id("test.live")
+  let runtime = AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=0,
+      update=(value, _message : Unit) => value + 1,
+      view=value => {
+        runtime_semantic_test_view(
+          semantic_id~,
+          role=@core.SemanticsRole::Status,
+          label="Status \{value}",
+          handlers=[
+            @core.ViewSemanticsActionHandler::activate(_context => {
+              @core.ViewSemanticsActionResult::message(())
+            }),
+          ],
+        ).semantics_live(@core.SemanticsLive::Polite, live_atomic=true)
+      },
+    ),
+    size=@core.Size::new(width=200.0, height=80.0),
+  )
+  let initial = runtime_expect_full_semantics(runtime)
+  let receipt = runtime_expect_semantics_action(
+    runtime,
+    @core.SemanticsTarget::BySemanticId(semantic_id),
+    @core.SemanticsAction::Activate,
+    initial.generation(),
+  )
+  match runtime.read_semantics(since=initial.generation()) {
+    Ok(SemanticsRead::Delta(delta)) => {
+      assert_eq(delta.focused(), initial.focused())
+      assert_eq(delta.announcements().length(), 1)
+      let announcement = delta.announcements()[0]
+      assert_eq(announcement.generation, receipt.after)
+      assert_eq(announcement.live, @core.SemanticsLive::Polite)
+      assert_true(announcement.is_atomic)
+      assert_eq(announcement.text, "Status 1")
+    }
+    _ => fail("expected live-region delta")
+  }
+}
+
+///|
+test "runtime semantics: modal trap isolates tree and restores stable focus" {
+  let runtime = AppRuntime::new_program(
+    program=runtime_modal_focus_program(),
+    size=@core.Size::new(width=240.0, height=160.0),
+  )
+  let origin_id = runtime_test_semantic_id("modal.origin")
+  let outside_id = runtime_test_semantic_id("modal.outside")
+  let dialog_id = runtime_test_semantic_id("modal.dialog")
+  let first_id = runtime_test_semantic_id("modal.first")
+  let second_id = runtime_test_semantic_id("modal.second")
+  let initial = runtime_expect_full_semantics(runtime)
+  let initial_background_ids = initial.nodes().map(node => node.node_id)
+  assert_true(runtime.focus_key("modal.origin.key"))
+  let focused_origin = runtime_expect_full_semantics(runtime)
+  guard focused_origin.focused() is Some(_) else {
+    fail("origin should receive keyboard focus")
+  }
+  guard runtime_semantic_node_by_id(focused_origin, origin_id) is Some(_) else {
+    fail("origin semantic node missing")
+  }
+  let open_receipt = runtime_expect_semantics_action(
+    runtime,
+    @core.SemanticsTarget::BySemanticId(origin_id),
+    @core.SemanticsAction::Activate,
+    focused_origin.generation(),
+  )
+  guard runtime.read_semantics(since=open_receipt.after)
+    is Ok(SemanticsRead::Unchanged(_)) else {
+    fail("open action should commit synchronously")
+  }
+  let modal = runtime_expect_full_semantics(runtime)
+  assert_true(modal.generation() > initial.generation())
+  match runtime.read_semantics(since=focused_origin.generation()) {
+    Ok(SemanticsRead::Delta(delta)) =>
+      for node_id in initial_background_ids {
+        assert_true(delta.removed().contains(node_id))
+      }
+    _ => fail("opening modal should remove every background semantic node")
+  }
+  assert_true(runtime_semantic_node_by_id(modal, dialog_id) is Some(_))
+  assert_true(runtime_semantic_node_by_id(modal, first_id) is Some(_))
+  assert_true(runtime_semantic_node_by_id(modal, second_id) is Some(_))
+  assert_true(runtime_semantic_node_by_id(modal, origin_id) is None)
+  assert_true(runtime_semantic_node_by_id(modal, outside_id) is None)
+  guard modal.focused() is Some(first_node) else {
+    fail("modal should focus its first descendant")
+  }
+  guard runtime_semantic_node_by_id(modal, first_id) is Some(node) else {
+    fail("modal first node missing")
+  }
+  assert_eq(first_node, node.node_id)
+  assert_true(runtime.focus_next())
+  let second_focused = runtime_expect_full_semantics(runtime)
+  guard second_focused.focused() is Some(_) else {
+    fail("Tab should move within the trap")
+  }
+  guard runtime_semantic_node_by_id(second_focused, second_id) is Some(node) else {
+    fail("modal second node missing")
+  }
+  assert_eq(second_focused.focused(), Some(node.node_id))
+  assert_true(runtime.focus_next())
+  assert_eq(runtime_expect_full_semantics(runtime).focused(), Some(first_node))
+  match
+    runtime.perform_semantics_action({
+      target: @core.SemanticsTarget::BySemanticId(outside_id),
+      action: @core.SemanticsAction::Focus,
+      precondition: SemanticsGenerationPrecondition::Latest,
+    }) {
+    Err(SemanticsActionDispatchError::TargetNotFound(_)) => ()
+    _ => fail("outside semantic focus must be isolated while modal is open")
+  }
+  let close_receipt = runtime_expect_semantics_action(
+    runtime,
+    @core.SemanticsTarget::BySemanticId(first_id),
+    @core.SemanticsAction::Activate,
+    runtime_expect_full_semantics(runtime).generation(),
+  )
+  let restored = runtime_expect_full_semantics(runtime)
+  assert_true(restored.generation() >= close_receipt.after)
+  match runtime.read_semantics(since=second_focused.generation()) {
+    Ok(SemanticsRead::Delta(delta)) =>
+      for node_id in initial_background_ids {
+        assert_true(delta.upserted().any(node => node.node_id == node_id))
+      }
+    _ =>
+      fail("closing modal should restore every live background semantic node")
+  }
+  for node_id in initial_background_ids {
+    assert_true(restored.nodes().any(node => node.node_id == node_id))
+  }
+  guard restored.focused() is Some(restored_node) else {
+    fail("closing modal should restore focus")
+  }
+  guard runtime_semantic_node_by_id(restored, origin_id) is Some(origin_node) else {
+    fail("origin should return after modal close")
+  }
+  assert_eq(restored_node, origin_node.node_id)
+}
+
+///|
+test "runtime semantics: modal restore falls back when original target is gone" {
+  let runtime = AppRuntime::new_program(
+    program=runtime_modal_focus_program(),
+    size=@core.Size::new(width=240.0, height=160.0),
+  )
+  let origin_id = runtime_test_semantic_id("modal.origin")
+  let second_id = runtime_test_semantic_id("modal.second")
+  assert_true(runtime.focus_key("modal.origin.key"))
+  let opened = runtime_expect_semantics_action(
+    runtime,
+    @core.SemanticsTarget::BySemanticId(origin_id),
+    @core.SemanticsAction::Activate,
+    runtime_expect_full_semantics(runtime).generation(),
+  )
+  let modal = runtime_expect_full_semantics(runtime)
+  guard runtime_semantic_node_by_id(modal, second_id) is Some(second) else {
+    fail("modal second node missing")
+  }
+  ignore(
+    runtime_expect_semantics_action(
+      runtime,
+      @core.SemanticsTarget::ByNodeId(second.node_id),
+      @core.SemanticsAction::Focus,
+      opened.after,
+    ),
+  )
+  let changed = runtime_expect_full_semantics(runtime)
+  ignore(
+    runtime_expect_semantics_action(
+      runtime,
+      @core.SemanticsTarget::BySemanticId(second_id),
+      @core.SemanticsAction::Activate,
+      changed.generation(),
+    ),
+  )
+  let restored = runtime_expect_full_semantics(runtime)
+  guard restored.focused() is Some(focused) else {
+    fail("fallback focus should remain available")
+  }
+  assert_true(runtime_semantic_node_by_id(restored, origin_id) is None)
+  assert_eq(restored.nodes().length(), 1)
+  assert_eq(restored.focused(), Some(focused))
+}
+
+///|
 test "runtime semantics: action message batch preserves FIFO before effects" {
   let semantic_id = runtime_test_semantic_id("test.batch")
   let runtime = AppRuntime::new_program(
@@ -437,6 +720,7 @@ test "runtime semantics: duplicate ids are committed but never dispatched" {
       assert_eq(id, duplicate_id)
       assert_eq(nodes.length(), 2)
     }
+    _ => fail("expected duplicate semantic ID issue")
   }
   match
     runtime.perform_semantics_action({
@@ -795,6 +1079,7 @@ test "runtime semantics: accepted handler defers destroy until after commit" {
   let runtime = AppRuntime::new_view(
     root=runtime_semantic_test_view(
       semantic_id~,
+      role=@core.SemanticsRole::Checkbox,
       label="accepted transactional destroy",
       handlers=[handler],
     ),
@@ -834,9 +1119,12 @@ test "runtime semantics: reentrant reads observe only the committed snapshot" {
     },
   )
   let runtime = AppRuntime::new_view(
-    root=runtime_semantic_test_view(semantic_id~, label="transaction read", handlers=[
-      handler,
-    ]),
+    root=runtime_semantic_test_view(
+      semantic_id~,
+      role=@core.SemanticsRole::Checkbox,
+      label="transaction read",
+      handlers=[handler],
+    ),
     size=@core.Size::new(width=160.0, height=60.0),
     on_message=Some(_message => {
       match runtime_ref.val {
@@ -845,7 +1133,9 @@ test "runtime semantics: reentrant reads observe only the committed snapshot" {
             Ok(SemanticsRead::Full(snapshot)) => {
               observed_generation.val = Some(snapshot.generation())
               match runtime_semantic_node_by_id(snapshot, semantic_id) {
-                Some(node) => observed_checked.val = node.state.checked
+                Some(node) =>
+                  observed_checked.val = node.state.checked ==
+                    Some(@core.SemanticsCheckedState::Checked)
                 None => ()
               }
             }
@@ -869,7 +1159,7 @@ test "runtime semantics: reentrant reads observe only the committed snapshot" {
   guard runtime_semantic_node_by_id(after, semantic_id) is Some(node) else {
     fail("missing transaction read node")
   }
-  assert_true(node.state.checked)
+  assert_eq(node.state.checked, Some(@core.SemanticsCheckedState::Checked))
   assert_eq(after.generation(), receipt.after)
 }
 

@@ -1,5 +1,7 @@
 import {
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/json",
+  "moonbitlang/core/string",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/common" @render_common,
@@ -37,6 +39,7 @@ options(
     "win32_service_host.c",
     "win32_timer_host.c",
     "windows_present.cpp",
+    "windows_accessibility_host.cpp",
   ],
   targets: { },
 )

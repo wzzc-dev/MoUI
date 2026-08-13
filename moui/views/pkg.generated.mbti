@@ -180,7 +180,7 @@ pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, 
 
 pub fn[Msg] icon(@style.IconName, size? : Double, color? : @core.Color, weight? : Double) -> @core.View[Msg]
 
-pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.View[Msg]
+pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit, accessibility_label? : String) -> @core.View[Msg]
 
 pub fn[Msg] inline_error(String, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, badge_style? : @style.BadgeStyle, width? : Double) -> @core.View[Msg]
 
@@ -256,7 +256,7 @@ pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expan
 
 pub fn[Msg] presence_dot(@presence_dot.PresenceStatus, size? : Double, theme? : @core.Theme, on_surface? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] progress(Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.ProgressStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] progress(Double, label? : String, value_text? : String, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.ProgressStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] progress_status(String, value~ : Double, message? : String, status? : String, tone? : @style.FeedbackTone, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, badge_style? : @style.BadgeStyle, progress_style? : @style.ProgressStyle, width? : Double) -> @core.View[Msg]
 
@@ -324,7 +324,7 @@ pub fn[Msg] sidebar(String, Array[@navigation.SidebarItem[Msg]], selected~ : Str
 
 pub fn[Msg] sidebar_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> @navigation.SidebarItem[Msg]
 
-pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
+pub fn[Msg] slider(Double, min? : Double, max? : Double, step? : Double, label? : String, value_text? : String, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
 
 pub fn[Msg] snackbar(String, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double) -> @core.View[Msg]
 

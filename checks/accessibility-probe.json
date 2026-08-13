@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "description": "Canonical Accessibility Probe contract shared by semantics tests, native clients, screen-reader smokes, and Agent evidence.",
+  "route": "showcase/accessibility-probe",
+  "controls": [
+    {"id": "a11y.button", "role": "button", "requiredFields": ["label", "actions"], "actions": ["activate"]},
+    {"id": "a11y.checkbox", "role": "checkbox", "requiredFields": ["label", "checked", "actions"], "actions": ["activate"]},
+    {"id": "a11y.slider", "role": "slider", "requiredFields": ["label", "numeric", "actions"], "actions": ["increment", "decrement", "set_numeric_value"]},
+    {"id": "a11y.textfield", "role": "text_field", "requiredFields": ["label", "text", "actions"], "actions": ["focus", "set_text", "set_selection", "submit"]},
+    {"id": "a11y.dialog", "role": "dialog", "requiredFields": ["label", "modal", "actions"], "actions": ["dismiss"]},
+    {"id": "a11y.tree", "role": "tree", "requiredFields": ["label", "collection", "actions"], "actions": ["expand", "collapse", "select"]},
+    {"id": "a11y.grid", "role": "grid", "requiredFields": ["label", "collection"]},
+    {"id": "a11y.scroll", "role": "scroll_view", "requiredFields": ["label", "actions"], "actions": ["scroll"]},
+    {"id": "a11y.status", "role": "status", "requiredFields": ["label", "live"]},
+    {"id": "a11y.alert", "role": "alert", "requiredFields": ["label", "live"]},
+    {"id": "a11y.image", "role": "image", "requiredFields": ["label"]},
+    {"id": "a11y.separator", "role": "separator", "requiredFields": []}
+  ],
+  "platformQueries": {
+    "web": "chrome-accessibility-tree",
+    "macos": "ax-api",
+    "windows": "uia-client",
+    "linux": "at-spi-client"
+  },
+  "evidence": {
+    "artifactRoot": "artifacts/accessibility",
+    "manifestSchema": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "level", "commit", "host", "os", "architecture", "window", "backend",
+        "generations", "semanticsCommits", "nativeTree", "actions", "keyboardFocus",
+        "accessibilityFocus", "announcements", "environment", "result",
+        "failures", "unverifiedCapabilities"
+      ],
+      "properties": {
+        "level": {"type": "string", "enum": ["L1", "L2", "L3"]},
+        "commit": {"type": "string"},
+        "host": {"type": "string"},
+        "os": {"type": "string"},
+        "architecture": {"type": "string"},
+        "window": {"type": "string"},
+        "backend": {"type": "string"},
+        "generations": {"type": "array", "items": {"type": "string"}},
+        "semanticsCommits": {"type": "array", "items": {"type": "object"}},
+        "nativeTree": {"type": "object"},
+        "actions": {"type": "array", "items": {"type": "object"}},
+        "keyboardFocus": {"type": "array", "items": {"type": "object"}},
+        "accessibilityFocus": {"type": "array", "items": {"type": "object"}},
+        "announcements": {"type": "array", "items": {"type": "object"}},
+        "environment": {"type": "object"},
+        "result": {"type": "string"},
+        "failures": {"type": "array", "items": {"type": "string"}},
+        "unverifiedCapabilities": {"type": "array", "items": {"type": "string"}},
+        "screenReader": {"type": "string"},
+        "navigation": {"type": "array", "items": {"type": "object"}},
+        "spokenOutput": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "screenReaderRequired": ["screenReader", "navigation", "spokenOutput"]
+  }
+}

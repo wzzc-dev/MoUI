@@ -146,9 +146,11 @@ fn MacosNativeHostBackend::attach_resolved_window(
         self.request_redraw_window_if_needed(resolved.id)
       })
       driver.set_environment(
-        self.services
-        .bridge()
-        .environment_with_system_theme(driver.environment()),
+        macos_environment_with_accessibility_settings(
+          self.services
+          .bridge()
+          .environment_with_system_theme(driver.environment()),
+        ),
       )
       driver.set_text_system(renderer.text_system())
       ignore(driver.dispatch(@host.Event::Resized(metrics)))
@@ -182,6 +184,7 @@ fn MacosNativeHostBackend::attach_resolved_window(
           self.macos_surface_actions(window, renderer),
         ),
       )
+      self.sync_accessibility_window(resolved.id)
       self.request_platform_redraw(resolved.id)
       @host.WindowRequestResult::WindowOpened(resolved.id)
     }
@@ -246,6 +249,7 @@ fn MacosNativeHostBackend::dispose_window(
   self : MacosNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
+  self.dispose_accessibility_window(window_id)
   @window_host.dispose_window(
     self.lifecycle,
     self.frames,

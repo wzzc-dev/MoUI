@@ -9,6 +9,7 @@ priv enum SemanticControlAction {
 priv struct SemanticActionControl {
   action : SemanticControlAction
   expanded : Bool?
+  role : @core.SemanticsRole?
 }
 
 ///|
@@ -42,6 +43,12 @@ impl @core.ViewNode for SemanticActionControl with fn declaration(self) {
           self.expanded.map(@core.DeclarationKey::bool),
         ),
       ),
+      (
+        "role",
+        @core.DeclarationKey::option(
+          self.role.map(@common.view_semantics_role_key),
+        ),
+      ),
     ]),
   )
 }
@@ -71,6 +78,7 @@ impl @core.ViewNode for SemanticActionControl with fn layout(_self, ctx) {
 impl @core.ViewNode for SemanticActionControl with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     composition=@core.SemanticsComposition::MergeDescendants,
+    role?=self.role,
     expanded?=self.expanded,
   )
 }
@@ -87,7 +95,7 @@ pub fn[Msg] semantic_toggle_action_control(
     SemanticControlAction::Expand
   }
   @core.View::from_node(
-    SemanticActionControl::{ action, expanded: Some(expanded) },
+    SemanticActionControl::{ action, expanded: Some(expanded), role: None },
     children=_node => [child],
     semantics_actions=_node => {
       match action {
@@ -113,9 +121,10 @@ pub fn[Msg] semantic_toggle_action_control(
 pub fn[Msg] semantic_dismiss_action_control(
   child : @core.View[Msg],
   message : Msg,
+  role? : @core.SemanticsRole? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    SemanticActionControl::{ action: Dismiss, expanded: None },
+    SemanticActionControl::{ action: Dismiss, expanded: None, role },
     children=_node => [child],
     semantics_actions=_node => {
       [

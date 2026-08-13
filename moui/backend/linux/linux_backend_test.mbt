@@ -17,7 +17,7 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
   inspect(info.accessibility.semantics_bridge_available, content="true")
   inspect(
     info.accessibility.native_accessibility_bridge_available,
-    content="true",
+    content="false",
   )
   inspect(info.services.clipboard, content="true")
   inspect(info.services.file_dialogs, content="true")

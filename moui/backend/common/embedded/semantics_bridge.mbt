@@ -10,6 +10,12 @@ fn embedded_semantics_node(node : @core.SemanticsNode) -> EmbeddedSemanticsNode 
     value: node.value,
     description: node.description,
     state: node.state,
+    numeric: node.numeric,
+    text: node.text,
+    collection: node.collection,
+    relations: node.relations,
+    live: node.live,
+    live_atomic: node.live_atomic,
     actions: node.actions.copy(),
     focus_order: node.focus_order,
     frame: node.frame,
@@ -28,9 +34,11 @@ fn embedded_semantics_update(
         generation: snapshot.generation(),
         root: snapshot.root(),
         focused: snapshot.focused(),
+        semantic_focused: snapshot.semantic_focused(),
         nodes: snapshot.nodes().map(embedded_semantics_node),
         removed: [],
         issues: snapshot.issues(),
+        announcements: [],
       })
     @runtime.SemanticsRead::Delta(delta) =>
       Some({
@@ -38,9 +46,11 @@ fn embedded_semantics_update(
         generation: delta.to(),
         root: delta.root(),
         focused: delta.focused(),
+        semantic_focused: delta.semantic_focused(),
         nodes: delta.upserted().map(embedded_semantics_node),
         removed: delta.removed(),
         issues: delta.issues(),
+        announcements: delta.announcements(),
       })
     @runtime.SemanticsRead::Unchanged(_) => None
   }

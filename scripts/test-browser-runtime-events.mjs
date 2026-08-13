@@ -374,6 +374,10 @@ const createRuntime = ({ pointerFlags = 1 } = {}) => {
     removed: [],
   };
   imports.sync_semantics(7, imports.register_host_string(canvas.id), imports.register_host_string(JSON.stringify(semantics)));
+  assert(
+    globalThis.__mouiAccessibilitySemanticsEvidence.at(-1)?.generation === "1",
+    "Web semantics commits must be observable by the browser L2 recorder",
+  );
   const layer = canvas.parentElement.children.find(child => child.className === "moui-semantics-layer");
   const link = layer.children[0];
   link.dispatch("pointerdown", { clientX: 20, clientY: 20 });
@@ -383,6 +387,34 @@ const createRuntime = ({ pointerFlags = 1 } = {}) => {
   assert(events.map(event => event.kind).join(",") === "23,24,30", "semantic overlay input must use the host router exactly once");
   assert(wheel.defaultPrevented, "handled semantic wheel must use the runtime default-action policy");
   assert(!layer.listeners.has("pointermove") && !layer.listeners.has("wheel"), "semantic layers must not forward synthetic input");
+}
+
+{
+  const observed = [];
+  const imports = createWindowWebImports({ onEvent: event => observed.push(event) });
+  imports.record_semantics_action(7, imports.register_host_string(JSON.stringify({
+    node_id: "12",
+    request_generation: "41",
+    action: "activate",
+    status: "passed",
+    before: "41",
+    after: "42",
+    pending_work: true,
+    error: "",
+  })));
+  assert(
+    observed.length === 1 &&
+      observed[0].name === "accessibility_action" &&
+      observed[0].source === "runtime-receipt" &&
+      observed[0].rawId === 7 &&
+      observed[0].before === "41" &&
+      observed[0].after === "42",
+    "Web semantics action evidence must preserve the exact runtime receipt",
+  );
+  assert(
+    globalThis.__mouiAccessibilityActionEvidence.at(-1)?.node_id === "12",
+    "Web semantics action receipts must be available to the browser L2 recorder",
+  );
 }
 
 {

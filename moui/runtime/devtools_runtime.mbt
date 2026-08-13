@@ -228,7 +228,7 @@ fn semantics_inspector_snapshot_from_state(
     if node.state.selected {
       selected_count = selected_count + 1
     }
-    if node.state.checked {
+    if node.state.checked == Some(SemanticsCheckedState::Checked) {
       checked_count = checked_count + 1
     }
     if node.state.expanded {

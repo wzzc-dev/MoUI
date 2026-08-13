@@ -228,7 +228,7 @@ pub fn[Msg] View::semantics_pressed(
 ///|
 pub fn[Msg] View::semantics_checked(
   self : View[Msg],
-  checked? : Bool = true,
+  checked? : SemanticsCheckedState = SemanticsCheckedState::Checked,
 ) -> View[Msg] {
   self.apply_modifier(SemanticsCheckedModifier::{ checked, }.to_any_modifier())
 }
@@ -268,6 +268,81 @@ pub fn[Msg] View::semantics_description(
 ) -> View[Msg] {
   self.apply_modifier(
     SemanticsDescriptionModifier::{ description, }.to_any_modifier(),
+  )
+}
+
+///|
+pub fn[Msg] View::semantics_state(
+  self : View[Msg],
+  read_only? : Bool,
+  busy? : Bool,
+  multiline? : Bool,
+  password? : Bool,
+  modal? : Bool,
+) -> View[Msg] {
+  self.apply_modifier(
+    SemanticsMetadataModifier::{
+      info: ViewSemanticsInfo::new(
+        read_only?,
+        busy?,
+        multiline?,
+        password?,
+        modal?,
+      ),
+    }.to_any_modifier(),
+  )
+}
+
+///|
+pub fn[Msg] View::semantics_numeric(
+  self : View[Msg],
+  numeric : SemanticsNumericValue,
+) -> View[Msg] {
+  self.apply_modifier(
+    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(numeric~) }.to_any_modifier(),
+  )
+}
+
+///|
+pub fn[Msg] View::semantics_text_metadata(
+  self : View[Msg],
+  text : SemanticsTextValue,
+) -> View[Msg] {
+  self.apply_modifier(
+    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(text~) }.to_any_modifier(),
+  )
+}
+
+///|
+pub fn[Msg] View::semantics_collection(
+  self : View[Msg],
+  collection : SemanticsCollectionInfo,
+) -> View[Msg] {
+  self.apply_modifier(
+    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(collection~) }.to_any_modifier(),
+  )
+}
+
+///|
+pub fn[Msg] View::semantics_relations(
+  self : View[Msg],
+  relations : SemanticsRelationsDeclaration,
+) -> View[Msg] {
+  self.apply_modifier(
+    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(relations~) }.to_any_modifier(),
+  )
+}
+
+///|
+pub fn[Msg] View::semantics_live(
+  self : View[Msg],
+  live : SemanticsLive,
+  live_atomic? : Bool = false,
+) -> View[Msg] {
+  self.apply_modifier(
+    SemanticsMetadataModifier::{
+      info: ViewSemanticsInfo::new(live~, live_atomic~),
+    }.to_any_modifier(),
   )
 }
 

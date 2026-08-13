@@ -23,6 +23,7 @@ pub(open) trait ViewNode {
   fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
   fn semantics(Self) -> ViewSemanticsInfo = _
   fn focusable(Self) -> Bool = _
+  fn focus_trap(Self) -> Bool = _
   fn flex_weight(Self) -> Double = _
 }
 
@@ -78,6 +79,11 @@ impl ViewNode with fn focusable(_self) {
 }
 
 ///|
+impl ViewNode with fn focus_trap(_self) {
+  false
+}
+
+///|
 impl ViewNode with fn flex_weight(_self) {
   0.0
 }
@@ -114,6 +120,7 @@ priv struct ViewAdapter[Msg] {
   declaration_snapshot : ViewDeclaration
   semantics_snapshot : ViewSemanticsInfo
   focusable_snapshot : Bool
+  focus_trap_snapshot : Bool
   semantics_action_handlers : Array[ViewSemanticsActionHandler[Msg]]
   children_snapshot : Array[View[Msg]]
   event_fn : (ViewEventContext) -> ViewEventResult[Msg]
@@ -129,6 +136,7 @@ fn[Msg] ViewAdapter::new(
   declaration~ : ViewDeclaration,
   semantics~ : ViewSemanticsInfo,
   focusable~ : Bool,
+  focus_trap~ : Bool,
   semantics_action_handlers~ : Array[ViewSemanticsActionHandler[Msg]],
   children~ : Array[View[Msg]],
   event~ : (ViewEventContext) -> ViewEventResult[Msg],
@@ -142,6 +150,7 @@ fn[Msg] ViewAdapter::new(
     declaration_snapshot: declaration,
     semantics_snapshot: semantics,
     focusable_snapshot: focusable,
+    focus_trap_snapshot: focus_trap,
     semantics_action_handlers: semantics_action_handlers.copy(),
     children_snapshot: children.copy(),
     event_fn: event,
@@ -183,6 +192,7 @@ fn[Msg, NextMsg] ViewAdapter::map(
     declaration=self.declaration_snapshot,
     semantics=self.semantics_snapshot,
     focusable=self.focusable_snapshot,
+    focus_trap=self.focus_trap_snapshot,
     semantics_action_handlers=self.semantics_action_handlers.map(handler => {
       handler.map(map)
     }),

@@ -415,6 +415,15 @@ fn web_settings_write(key : WebHostString, value : WebHostString) -> Bool = "win
 fn web_settings_remove(key : WebHostString) -> Bool = "window_web" "settings_remove"
 
 ///|
+fn web_accessibility_contrast() -> Int = "window_web" "accessibility_contrast"
+
+///|
+fn web_reduced_motion() -> Int = "window_web" "reduced_motion"
+
+///|
+fn web_text_scale() -> Double = "window_web" "text_scale"
+
+///|
 extern "wasm" fn web_wall_clock_year() -> Int = "window_web" "wall_clock_year"
 
 ///|

@@ -114,6 +114,19 @@ pub fn HostRuntimeDriver::perform_semantics_action(
 }
 
 ///|
+/// Reads the same atomically committed stream used by Agent hosts. Native
+/// adapters keep their own cursor and do not inspect the runtime tree directly.
+pub fn HostRuntimeDriver::read_semantics(
+  self : HostRuntimeDriver,
+  since? : @core.SemanticsGeneration,
+) -> Result[SemanticsRead, SemanticsReadError] {
+  match since {
+    Some(generation) => self.runtime.read_semantics(since=generation)
+    None => self.runtime.read_semantics()
+  }
+}
+
+///|
 pub fn HostRuntimeDriver::dispatch_command_with_services(
   self : HostRuntimeDriver,
   intent : @core.CommandIntent,

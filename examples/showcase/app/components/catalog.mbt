@@ -317,6 +317,14 @@ fn component_gallery_items() -> Array[ComponentGalleryItemInfo] {
       badge: "mobile host",
       tone: @views.BadgeTone::Accent,
     },
+    {
+      id: ComponentGalleryItemId::AccessibilityProbe,
+      group: "runtime",
+      name: "Accessibility Probe",
+      description: "Stable cross-platform semantics, native tree, action, focus, and live-region evidence fixture.",
+      badge: "a11y probe",
+      tone: @views.BadgeTone::Accent,
+    },
   ]
 }
 
@@ -359,6 +367,7 @@ pub fn gallery_item_id_to_string(id : ComponentGalleryItemId) -> String {
     ComponentGalleryItemId::ScrollView => "scroll-view"
     ComponentGalleryItemId::PlatformRoutes => "platform-routes"
     ComponentGalleryItemId::MobileServiceProbe => "mobile-service-probe"
+    ComponentGalleryItemId::AccessibilityProbe => "accessibility-probe"
   }
 }
 
@@ -401,6 +410,7 @@ pub fn gallery_item_id_from_string(id : String) -> ComponentGalleryItemId? {
     "scroll-view" => Some(ComponentGalleryItemId::ScrollView)
     "platform-routes" => Some(ComponentGalleryItemId::PlatformRoutes)
     "mobile-service-probe" => Some(ComponentGalleryItemId::MobileServiceProbe)
+    "accessibility-probe" => Some(ComponentGalleryItemId::AccessibilityProbe)
     _ => None
   }
 }

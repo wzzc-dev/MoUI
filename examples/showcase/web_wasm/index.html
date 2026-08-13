@@ -106,7 +106,10 @@
         imports: {
           showcase: {
             initial_section() {
-              return params.get("section") === "advanced-rendering" ? 1 : 0;
+              const section = params.get("section");
+              if (section === "advanced-rendering") return 1;
+              if (section === "accessibility-probe") return 2;
+              return 0;
             },
           },
         },

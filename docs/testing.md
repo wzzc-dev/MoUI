@@ -111,6 +111,46 @@ one workspace-wide `moon info`, and fails only when generation creates new
 differences. This keeps the check useful in a dirty working tree while a clean
 CI checkout still rejects uncommitted public-interface drift.
 
+### Accessibility evidence
+
+Accessibility has three separate evidence levels. L1 package tests validate
+the committed semantics contract, generation checks, focus/modal behavior,
+and Agent wire shape. L2 must query and operate the real platform tree through
+AX, UIA, AT-SPI, or Chrome's accessibility tree. L3 records navigation and
+spoken output from a matching screen reader; an L2 client cannot substitute
+for it.
+
+Windows and Linux candidate adapters remain below L2. Windows requires an MSVC
+plus Windows SDK build against a released window-host message hook, followed by
+a UIA client action/query trace. Linux requires AT-SPI accessibility-bus and
+Registry registration followed by a real AT-SPI client trace. A process-local
+hook preflight or ordinary session-bus object export does not promote either
+platform's native capability.
+
+On macOS, grant Accessibility permission to the shell or Agent host that runs
+the probe, then use:
+
+```sh
+scripts/macos-accessibility-probe.sh --require-passed
+node scripts/validate-accessibility-foundation.mjs \
+  --evidence artifacts/accessibility/macos/manifest.json \
+  --require-native-client
+```
+
+The producer launches the Showcase Accessibility Probe, queries the external
+AX tree by stable `a11y.*` identifiers, performs actions, and matches each
+native action to the bridge request and exact-generation runtime receipt. It
+also observes `AXAnnouncementRequested` without moving focus. Missing TCC
+permission or incomplete evidence produces a failed manifest under
+`artifacts/accessibility/macos/`; it never promotes capability. VoiceOver L3
+remains the separate release gate:
+
+```sh
+node scripts/validate-accessibility-foundation.mjs \
+  --evidence artifacts/accessibility/macos/manifest.json \
+  --require-screen-reader
+```
+
 ### Linux RISC-V64 Experimental Route
 
 The RISC-V64 route is a non-blocking scheduled/manual architecture variant of

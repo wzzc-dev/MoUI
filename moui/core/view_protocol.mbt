@@ -19,7 +19,7 @@ pub(all) struct ViewLayoutContext {
 pub(all) struct ViewLayoutResult {
   size : Size
   child_frames : Array[Rect]
-} derive(Eq, Debug)
+} derive(Eq, Debug, ToJson)
 
 ///|
 /// Recursive layout tree produced by the layout pass. Unlike
@@ -150,11 +150,22 @@ pub(all) struct ViewSemanticsInfo {
   disabled : Bool?
   selected : Bool?
   pressed : Bool?
-  checked : Bool?
+  checked : SemanticsCheckedState?
   expanded : Bool?
   invalid : Bool?
   required : Bool?
-} derive(Eq, Debug)
+  read_only : Bool?
+  busy : Bool?
+  multiline : Bool?
+  password : Bool?
+  modal : Bool?
+  numeric : SemanticsNumericValue?
+  text : SemanticsTextValue?
+  collection : SemanticsCollectionInfo?
+  relations : SemanticsRelationsDeclaration?
+  live : SemanticsLive?
+  live_atomic : Bool?
+} derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct ViewStateContext {
@@ -306,10 +317,21 @@ pub fn ViewSemanticsInfo::new(
   disabled? : Bool,
   selected? : Bool,
   pressed? : Bool,
-  checked? : Bool,
+  checked? : SemanticsCheckedState,
   expanded? : Bool,
   invalid? : Bool,
   required? : Bool,
+  read_only? : Bool,
+  busy? : Bool,
+  multiline? : Bool,
+  password? : Bool,
+  modal? : Bool,
+  numeric? : SemanticsNumericValue,
+  text? : SemanticsTextValue,
+  collection? : SemanticsCollectionInfo,
+  relations? : SemanticsRelationsDeclaration,
+  live? : SemanticsLive,
+  live_atomic? : Bool,
 ) -> ViewSemanticsInfo {
   {
     composition,
@@ -327,6 +349,17 @@ pub fn ViewSemanticsInfo::new(
     expanded,
     invalid,
     required,
+    read_only,
+    busy,
+    multiline,
+    password,
+    modal,
+    numeric,
+    text,
+    collection,
+    relations,
+    live,
+    live_atomic,
   }
 }
 
@@ -363,6 +396,7 @@ pub fn[Node : ViewNode, Msg] View::from_node(
   let declaration_snapshot = node.declaration()
   let semantics_snapshot = node.semantics()
   let focusable_snapshot = node.focusable()
+  let focus_trap_snapshot = node.focus_trap()
   let semantics_action_handlers = semantics_actions(node)
   let children_snapshot = children(node)
   {
@@ -372,6 +406,7 @@ pub fn[Node : ViewNode, Msg] View::from_node(
       declaration=declaration_snapshot,
       semantics=semantics_snapshot,
       focusable=focusable_snapshot,
+      focus_trap=focus_trap_snapshot,
       semantics_action_handlers~,
       children=children_snapshot,
       event=context => event(node, context),
@@ -486,6 +521,11 @@ pub fn[Msg] View::semantics(self : View[Msg]) -> ViewSemanticsInfo {
 ///|
 pub fn[Msg] View::accepts_focus(self : View[Msg]) -> Bool {
   self.adapter.focusable_snapshot
+}
+
+///|
+pub fn[Msg] View::traps_focus(self : View[Msg]) -> Bool {
+  self.adapter.focus_trap_snapshot
 }
 
 ///|

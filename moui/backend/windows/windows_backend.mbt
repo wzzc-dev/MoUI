@@ -16,6 +16,17 @@ extern "C" fn windows_open_url_bytes(url : Bytes) -> Int = "moui_windows_open_ur
 extern "C" fn windows_system_theme_is_light() -> Int = "moui_windows_system_theme_is_light"
 
 ///|
+/// Windows accessibility settings are read on the host thread so changes made
+/// while the app is running flow through the existing Environment object.
+extern "C" fn windows_accessibility_high_contrast() -> Int = "moui_windows_accessibility_high_contrast"
+
+///|
+extern "C" fn windows_accessibility_reduce_motion() -> Int = "moui_windows_accessibility_reduce_motion"
+
+///|
+extern "C" fn windows_accessibility_text_scale() -> Double = "moui_windows_accessibility_text_scale"
+
+///|
 #borrow(key)
 extern "C" fn windows_settings_has_value(key : Bytes) -> Int = "moui_windows_settings_has_value"
 
@@ -86,6 +97,7 @@ struct WindowsNativeHostBackend {
   input : @window_input.WindowInputState
   surface_binding : WindowsSurfaceBinding
   services : @window_services.WindowServiceState
+  accessibility_state : WindowsAccessibilityState
   platform_slots : @window_lifecycle.WindowSlotMap[@win.Window, Unit]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   mut last_pointer : @core.Point
@@ -198,6 +210,7 @@ fn launch_windows_app(
     ),
     surface_binding: binding,
     services: @window_services.WindowServiceState::new(bridge=services),
+    accessibility_state: WindowsAccessibilityState::new(),
     platform_slots: @window_lifecycle.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
@@ -449,6 +462,7 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn can_create
               ),
             ),
           )
+          self.sync_accessibility_window(window_id)
           window.request_redraw()
           self.drain_window_requests(event_loop)
         }
@@ -477,6 +491,30 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn about_to_w
     None => event_loop.set_control_flow(@window_core.ControlFlow::Wait)
   }
   self.drain_window_requests(event_loop)
+  self.sync_accessibility_environment()
+  self.sync_accessibility_windows()
+}
+
+///|
+fn WindowsNativeHostBackend::sync_accessibility_environment(
+  self : WindowsNativeHostBackend,
+) -> Unit {
+  let contrast = if windows_accessibility_high_contrast() != 0 {
+    @core.AccessibilityContrast::High
+  } else {
+    @core.AccessibilityContrast::Standard
+  }
+  let reduced_motion = windows_accessibility_reduce_motion() != 0
+  for slot in self.lifecycle.runtime_slots().open_slots() {
+    let current = slot.driver.environment()
+    let next = current
+      .with_accessibility_contrast(contrast)
+      .with_reduced_motion(reduced_motion)
+      .with_text_scale(windows_accessibility_text_scale())
+    if next != current {
+      slot.driver.set_environment(next)
+    }
+  }
 }
 
 ///|
@@ -774,6 +812,7 @@ fn WindowsNativeHostBackend::attach_resolved_window(
           self.windows_surface_actions(window, renderer),
         ),
       )
+      self.sync_accessibility_window(resolved.id)
       self.request_platform_redraw(resolved.id)
       @host.WindowRequestResult::WindowOpened(resolved.id)
     }
@@ -830,6 +869,7 @@ fn WindowsNativeHostBackend::dispose_window(
   self : WindowsNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
+  self.dispose_accessibility_window(window_id)
   @window_host.dispose_window(
     self.lifecycle,
     self.frames,

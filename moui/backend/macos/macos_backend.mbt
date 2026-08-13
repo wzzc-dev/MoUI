@@ -71,6 +71,7 @@ struct MacosNativeHostBackend {
   input : @window_input.WindowInputState
   surface_binding : MacosSurfaceBinding
   services : @window_services.WindowServiceState
+  accessibility_state : MacosAccessibilityState
   platform_slots : @window_lifecycle.WindowSlotMap[@window_macos.Window, Unit]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool

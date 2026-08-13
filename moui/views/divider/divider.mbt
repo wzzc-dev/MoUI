@@ -107,7 +107,10 @@ impl @core.ViewNode for Divider with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for Divider with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=@core.SemanticsComposition::Hidden)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
+    role=@core.SemanticsRole::Separator,
+  )
 }
 
 ///|

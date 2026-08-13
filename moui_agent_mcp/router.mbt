@@ -243,6 +243,11 @@ fn semantics_action_kind_code(kind : @core.SemanticsActionKind) -> String {
     @core.SemanticsActionKind::Expand => "expand"
     @core.SemanticsActionKind::Collapse => "collapse"
     @core.SemanticsActionKind::Dismiss => "dismiss"
+    @core.SemanticsActionKind::Increment => "increment"
+    @core.SemanticsActionKind::Decrement => "decrement"
+    @core.SemanticsActionKind::SetNumericValue => "set_numeric_value"
+    @core.SemanticsActionKind::SetSelection => "set_selection"
+    @core.SemanticsActionKind::ShowMenu => "show_menu"
   }
 }
 
@@ -719,6 +724,49 @@ fn decode_action(
       } else {
         Err("dismiss contains unknown fields.")
       }
+    "increment" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@core.SemanticsAction::Increment)
+      } else {
+        Err("increment contains unknown fields.")
+      }
+    "decrement" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@core.SemanticsAction::Decrement)
+      } else {
+        Err("decrement contains unknown fields.")
+      }
+    "set_numeric_value" =>
+      match fields.get("value") {
+        Some(Json::Number(value, repr=_)) if fields_are_exact(fields, [
+            "kind", "value",
+          ]) => Ok(@core.SemanticsAction::SetNumericValue(value))
+        Some(_) => Err("set_numeric_value requires numeric 'value'.")
+        None => Err("set_numeric_value requires numeric 'value'.")
+      }
+    "set_selection" =>
+      match (fields.get("start"), fields.get("end")) {
+        (Some(Json::Number(start, repr=_)), Some(Json::Number(end, repr=_))) if fields_are_exact(
+            fields,
+            ["kind", "start", "end"],
+          ) &&
+          start >= 0.0 &&
+          end >= 0.0 &&
+          start == start.to_int().to_double() &&
+          end == end.to_int().to_double() =>
+          Ok(
+            @core.SemanticsAction::SetSelection(
+              @core.TextRange::new(start=start.to_int(), end=end.to_int()),
+            ),
+          )
+        _ => Err("set_selection requires non-negative integer start and end.")
+      }
+    "show_menu" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@core.SemanticsAction::ShowMenu)
+      } else {
+        Err("show_menu contains unknown fields.")
+      }
     _ => Err("Unknown action kind.")
   }
 }
@@ -781,6 +829,34 @@ fn agent_semantics_issue_json(issue : @agent.AgentSemanticsIssue) -> Json {
       (
         { "kind": "duplicate_semantic_id", "semantic_id": id, "nodes": nodes } :
         Json)
+    @agent.AgentSemanticsIssue::MissingRelationTarget(source, kind, id) =>
+      (
+        {
+          "kind": "missing_relation_target",
+          "source": source,
+          "relation": semantics_relation_kind_code(kind),
+          "semantic_id": id,
+        } : Json)
+    @agent.AgentSemanticsIssue::AmbiguousRelationTarget(source, kind, id, nodes) =>
+      (
+        {
+          "kind": "ambiguous_relation_target",
+          "source": source,
+          "relation": semantics_relation_kind_code(kind),
+          "semantic_id": id,
+          "nodes": nodes,
+        } : Json)
+  }
+}
+
+///|
+fn semantics_relation_kind_code(kind : @core.SemanticsRelationKind) -> String {
+  match kind {
+    @core.SemanticsRelationKind::LabelledBy => "labelled_by"
+    @core.SemanticsRelationKind::DescribedBy => "described_by"
+    @core.SemanticsRelationKind::Controls => "controls"
+    @core.SemanticsRelationKind::ErrorMessage => "error_message"
+    @core.SemanticsRelationKind::ActiveDescendant => "active_descendant"
   }
 }
 
@@ -815,6 +891,15 @@ fn semantics_role_code(role : @core.SemanticsRole) -> String {
     @core.SemanticsRole::TreeItem => "tree_item"
     @core.SemanticsRole::Group => "group"
     @core.SemanticsRole::WebView => "web_view"
+    @core.SemanticsRole::Image => "image"
+    @core.SemanticsRole::Alert => "alert"
+    @core.SemanticsRole::Status => "status"
+    @core.SemanticsRole::ComboBox => "combo_box"
+    @core.SemanticsRole::Option => "option"
+    @core.SemanticsRole::Table => "table"
+    @core.SemanticsRole::Row => "row"
+    @core.SemanticsRole::Cell => "cell"
+    @core.SemanticsRole::Separator => "separator"
   }
 }
 
@@ -843,6 +928,59 @@ fn optional_int_json(value : Int?) -> Json {
 }
 
 ///|
+fn optional_checked_json(value : @core.SemanticsCheckedState?) -> Json {
+  match value {
+    Some(@core.SemanticsCheckedState::Unchecked) => "unchecked".to_json()
+    Some(@core.SemanticsCheckedState::Checked) => "checked".to_json()
+    Some(@core.SemanticsCheckedState::Mixed) => "mixed".to_json()
+    None => json_null()
+  }
+}
+
+///|
+fn semantics_state_json(state : @core.SemanticsState) -> Json {
+  (
+    {
+      "focused": state.focused,
+      "disabled": state.disabled,
+      "selected": state.selected,
+      "pressed": state.pressed,
+      "checked": optional_checked_json(state.checked),
+      "expanded": state.expanded,
+      "invalid": state.invalid,
+      "required": state.required,
+      "read_only": state.read_only,
+      "busy": state.busy,
+      "multiline": state.multiline,
+      "password": state.password,
+      "modal": state.modal,
+    } : Json)
+}
+
+///|
+fn semantics_live_code(value : @core.SemanticsLive) -> String {
+  match value {
+    @core.SemanticsLive::Off => "off"
+    @core.SemanticsLive::Polite => "polite"
+    @core.SemanticsLive::Assertive => "assertive"
+  }
+}
+
+///|
+fn accessibility_announcement_json(
+  announcement : @agent.AgentAccessibilityAnnouncement,
+) -> Json {
+  (
+    {
+      "node_id": announcement.node_id,
+      "generation": announcement.generation,
+      "live": semantics_live_code(announcement.live),
+      "atomic": announcement.is_atomic,
+      "text": announcement.text,
+    } : Json)
+}
+
+///|
 fn semantics_node_json(node : @core.SemanticsNode) -> Json {
   (
     {
@@ -854,7 +992,13 @@ fn semantics_node_json(node : @core.SemanticsNode) -> Json {
       "label": node.label,
       "value": node.value,
       "description": node.description,
-      "state": node.state,
+      "state": semantics_state_json(node.state),
+      "numeric": node.numeric,
+      "text": node.text,
+      "collection": node.collection,
+      "relations": node.relations,
+      "live": semantics_live_code(node.live),
+      "atomic": node.live_atomic,
       "actions": node.actions.map(semantics_action_kind_code),
       "focus_order": optional_int_json(node.focus_order),
       "frame": node.frame,
@@ -886,6 +1030,9 @@ fn agent_semantics_read_json(read : @agent.AgentSemanticsRead) -> Json {
           "upserted": delta.upserted.map(semantics_node_json),
           "removed": delta.removed,
           "issues": delta.issues.map(agent_semantics_issue_json),
+          "announcements": delta.announcements.map(
+            accessibility_announcement_json,
+          ),
         } : Json)
     @agent.AgentSemanticsRead::Unchanged(generation) =>
       ({ "kind": "unchanged", "generation": generation } : Json)

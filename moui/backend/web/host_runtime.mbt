@@ -79,7 +79,9 @@ fn run_app_internal(
     async_queue=Some(async_services),
   )
   runtime.set_environment(
-    services.environment_with_system_theme(runtime.environment()),
+    web_environment_with_accessibility_settings(
+      services.environment_with_system_theme(runtime.environment()),
+    ),
   )
   let lifecycle = @window_lifecycle.WindowLifecycle::new(
     requests=window_requests,
@@ -116,6 +118,22 @@ fn run_app_internal(
   })
   app.driver.set_redraw_scheduler(() => ())
   event_loop.spawn_app(app)
+}
+
+///|
+fn web_environment_with_accessibility_settings(
+  environment : @core.Environment,
+) -> @core.Environment {
+  environment
+  .with_accessibility_contrast(
+    if web_accessibility_contrast() != 0 {
+      @core.AccessibilityContrast::High
+    } else {
+      @core.AccessibilityContrast::Standard
+    },
+  )
+  .with_reduced_motion(web_reduced_motion() != 0)
+  .with_text_scale(web_text_scale())
 }
 
 ///|
@@ -216,7 +234,7 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
           register_web_semantics_runtime(
             window.id().into_raw(),
             window_web_default_canvas_id(window.id().into_raw()),
-            self.runtime,
+            self.driver,
           )
           window.request_redraw()
         }
@@ -238,8 +256,20 @@ pub impl @window_web.ApplicationHandler for WebApp with fn new_events(
   }
   web_timer_dispatch_due()
   self.drain_async_host_services()
+  self.sync_accessibility_environment()
   sync_all_web_semantics()
   self.redraw_dirty_windows()
+}
+
+///|
+fn WebApp::sync_accessibility_environment(self : WebApp) -> Unit {
+  for slot in self.lifecycle.runtime_slots().open_slots() {
+    let current = slot.driver.environment()
+    let next = web_environment_with_accessibility_settings(current)
+    if next != current {
+      slot.driver.set_environment(next)
+    }
+  }
 }
 
 ///|

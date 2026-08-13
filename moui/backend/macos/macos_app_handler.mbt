@@ -76,6 +76,7 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
               ),
             ),
           )
+          self.sync_accessibility_window(window_id)
           window.request_redraw()
           self.drain_window_requests(event_loop)
           // The primary window is ready and the app has finished launching,
@@ -112,6 +113,23 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn abo
     None => event_loop.set_control_flow(@window_core.ControlFlow::Wait)
   }
   self.drain_window_requests(event_loop)
+  self.sync_accessibility_environment()
+  self.sync_accessibility_windows()
+}
+
+///|
+fn MacosNativeHostBackend::sync_accessibility_environment(
+  self : MacosNativeHostBackend,
+) -> Unit {
+  for slot in self.lifecycle.runtime_slots().open_slots() {
+    let current = slot.driver.environment()
+    let next = macos_environment_with_accessibility_settings(
+      self.services.bridge().environment_with_system_theme(current),
+    )
+    if next != current {
+      slot.driver.set_environment(next)
+    }
+  }
 }
 
 ///|
@@ -237,6 +255,7 @@ fn MacosNativeHostBackend::redraw_window(
   self : MacosNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Bool {
+  self.sync_accessibility_window(window_id)
   match self.platform_slots.lookup_host(window_id) {
     Some(platform_slot) =>
       @window_host.run_window_redraw(

@@ -161,6 +161,11 @@ const SEMANTICS_ACTION_CODES = new Map([
   ["expand", 6],
   ["collapse", 7],
   ["dismiss", 8],
+  ["increment", 9],
+  ["decrement", 10],
+  ["set-numeric-value", 11],
+  ["show-menu", 12],
+  ["set-selection", 13],
 ]);
 
 const semanticsTag = node => {
@@ -170,7 +175,8 @@ const semanticsTag = node => {
     case "navigation": return "nav";
     case "main": return "main";
     case "button": return "button";
-    case "textbox": return `${node.value ?? ""}`.includes("\n") ? "textarea" : "input";
+    case "textbox": return node.multiline || `${node.value ?? ""}`.includes("\n") ? "textarea" : "input";
+    case "slider": return "input";
     default: return "div";
   }
 };
@@ -188,8 +194,10 @@ const setElementStyle = (element, name, value) => {
   if (element.style[name] !== value) element.style[name] = value;
 };
 
-const semanticsFocusable = actions =>
-  actions.includes("focus") || actions.includes("activate") || actions.includes("set-text");
+const semanticsFocusable = actions => actions.some(action => [
+  "focus", "activate", "set-text", "submit", "select", "expand", "collapse",
+  "dismiss", "increment", "decrement", "set-numeric-value", "show-menu",
+].includes(action));
 
 const semanticsActivation = actions => {
   for (const action of ["activate", "submit", "select", "expand", "collapse", "dismiss"]) {
@@ -269,9 +277,25 @@ export function createSemanticsDomManager(options = {}) {
       }
     });
     element.addEventListener("keydown", event => {
-      if (event.key !== "Enter" && event.key !== " ") return;
       const node = record.node;
-      const action = semanticsActivation(node?.actions ?? []);
+      const actions = node?.actions ?? [];
+      if (event.key === "Escape" && actions.includes("dismiss")) {
+        event.preventDefault();
+        dispatchAction(state, node, "dismiss");
+        return;
+      }
+      const rangeAction = event.key === "ArrowRight" || event.key === "ArrowUp"
+        ? "increment"
+        : event.key === "ArrowLeft" || event.key === "ArrowDown"
+          ? "decrement"
+          : undefined;
+      if (rangeAction && actions.includes(rangeAction)) {
+        event.preventDefault();
+        dispatchAction(state, node, rangeAction);
+        return;
+      }
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const action = semanticsActivation(actions);
       if (action) {
         event.preventDefault();
         dispatchAction(state, node, action);
@@ -281,6 +305,23 @@ export function createSemanticsDomManager(options = {}) {
       const node = record.node;
       if (node?.actions?.includes("set-text")) {
         dispatchAction(state, node, "set-text", event.currentTarget?.value ?? "");
+      } else if (node?.actions?.includes("set-numeric-value")) {
+        dispatchAction(state, node, "set-numeric-value", event.currentTarget?.value ?? "");
+      }
+    });
+    const dispatchSelection = event => {
+      const node = record.node;
+      const target = event.currentTarget;
+      if (!node?.actions?.includes("set-selection") || !target) return;
+      const start = Number(target.selectionStart);
+      const end = Number(target.selectionEnd);
+      if (!Number.isInteger(start) || !Number.isInteger(end)) return;
+      dispatchAction(state, node, "set-selection", `${start},${end}`);
+    };
+    element.addEventListener("select", dispatchSelection);
+    element.addEventListener("keyup", event => {
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === "Home" || event.key === "End") {
+        dispatchSelection(event);
       }
     });
   };
@@ -308,9 +349,13 @@ export function createSemanticsDomManager(options = {}) {
     const tabIndex = node.disabled ? -1 : (semanticsFocusable(actions) ? 0 : -1);
     const textValue = node.label || node.value || "";
     const presentationKey = [
-      pointerEvents, node.role, node.level, node.url, node.label, node.value,
+      pointerEvents, node.semantic_id, node.role, node.level, node.url, node.label, node.value,
       node.description, node.checked, node.selected, node.expanded, node.invalid,
-      node.required, node.disabled, actions.join("\u0000"),
+      node.required, node.disabled, node.read_only, node.busy, node.multiline,
+      node.password, node.modal, JSON.stringify(node.numeric ?? null), JSON.stringify(node.text ?? null), JSON.stringify(node.collection ?? null),
+      JSON.stringify(node.labelled_by ?? []), JSON.stringify(node.described_by ?? []),
+      JSON.stringify(node.controls ?? []), JSON.stringify(node.error_message ?? []),
+      JSON.stringify(node.active_descendant ?? []), node.live, node.live_atomic, actions.join("\u0000"),
     ].join("\u0000");
     if (record.presentationKey !== presentationKey) {
       Object.assign(element.style, {
@@ -322,30 +367,89 @@ export function createSemanticsDomManager(options = {}) {
         margin: "0",
         pointerEvents,
       });
-      setOptionalAttribute(element, "role", node.role === "presentation" ? "none" : node.role);
+      setOptionalAttribute(element, "role", node.role === "presentation" || node.role === "" ? undefined : node.role);
+      setOptionalAttribute(element, "data-moui-semantic-id", node.semantic_id);
       setOptionalAttribute(element, "aria-label", node.label);
       setOptionalAttribute(element, "aria-description", node.description);
       setOptionalAttribute(element, "aria-level", node.role === "heading" ? node.level : undefined);
       setOptionalAttribute(element, "href", node.role === "link" ? node.url : undefined);
       setOptionalAttribute(element, "aria-checked", node.checked);
-      for (const name of ["selected", "expanded", "invalid", "required", "disabled"]) {
+      for (const name of ["selected", "expanded", "invalid", "required", "disabled", "busy", "multiline", "modal"]) {
         const value = node[name];
-        setOptionalAttribute(element, name === "disabled" ? "aria-disabled" : `aria-${name}`, value ? "true" : undefined);
+        const attribute = name === "disabled" ? "aria-disabled" : `aria-${name.replaceAll("_", "-")}`;
+        setOptionalAttribute(element, attribute, value ? "true" : undefined);
+      }
+      setOptionalAttribute(element, "aria-readonly", node.read_only ? "true" : undefined);
+      const live = `${node.live ?? ""}`.toLowerCase();
+      setOptionalAttribute(element, "aria-live", live && live !== "off" ? live : undefined);
+      setOptionalAttribute(element, "aria-atomic", node.live_atomic ? "true" : undefined);
+      setOptionalAttribute(element, "aria-labelledby", relationIds(node.labelled_by));
+      setOptionalAttribute(element, "aria-describedby", relationIds(node.described_by));
+      setOptionalAttribute(element, "aria-controls", relationIds(node.controls));
+      setOptionalAttribute(element, "aria-errormessage", relationIds(node.error_message));
+      setOptionalAttribute(element, "aria-activedescendant", relationIds(node.active_descendant, true));
+      if (node.numeric) {
+        setOptionalAttribute(element, "aria-valuenow", numberAttribute(node.numeric.current));
+        setOptionalAttribute(element, "aria-valuemin", numberAttribute(node.numeric.min));
+        setOptionalAttribute(element, "aria-valuemax", numberAttribute(node.numeric.max));
+        setOptionalAttribute(element, "aria-valuetext", node.numeric.value_text);
+      } else {
+        for (const name of ["aria-valuenow", "aria-valuemin", "aria-valuemax", "aria-valuetext"]) {
+          setOptionalAttribute(element, name, undefined);
+        }
+      }
+      if (node.collection) {
+        for (const [key, value] of Object.entries({
+          "aria-rowindex": node.collection.row_index,
+          "aria-rowcount": node.collection.row_count,
+          "aria-rowspan": node.collection.row_span,
+          "aria-colindex": node.collection.column_index,
+          "aria-colcount": node.collection.column_count,
+          "aria-colspan": node.collection.column_span,
+          "aria-setsize": node.collection.set_size,
+          "aria-posinset": node.collection.set_position,
+        })) setOptionalAttribute(element, key, numberAttribute(value));
+      } else {
+        for (const name of ["aria-rowindex", "aria-rowcount", "aria-rowspan", "aria-colindex", "aria-colcount", "aria-colspan", "aria-setsize", "aria-posinset"]) {
+          setOptionalAttribute(element, name, undefined);
+        }
       }
       if (element.tabIndex !== tabIndex) element.tabIndex = tabIndex;
       if (node.role === "textbox") {
         if (element.value !== `${node.value ?? ""}`) element.value = node.value ?? "";
+        if (node.password) element.type = "password";
+        if (node.text?.selection && documentRef.activeElement === element) {
+          try { element.setSelectionRange(Number(node.text.selection.start), Number(node.text.selection.end)); } catch (_) { /* non-input fallback */ }
+        }
         setOptionalAttribute(element, "autocomplete", "off");
+      } else if (node.role === "slider") {
+        element.type = "range";
+        if (element.value !== `${node.numeric?.current ?? ""}`) {
+          element.value = `${node.numeric?.current ?? ""}`;
+        }
+        setOptionalAttribute(element, "min", numberAttribute(node.numeric?.min));
+        setOptionalAttribute(element, "max", numberAttribute(node.numeric?.max));
+        setOptionalAttribute(element, "step", numberAttribute(node.numeric?.step));
       } else if (element.textContent !== textValue) {
         element.textContent = textValue;
       }
       record.presentationKey = presentationKey;
     }
-    const hostTextInputFocused =
-      documentRef.activeElement?.dataset?.mouiTextInput === "true";
-    if (node.focused && documentRef.activeElement !== element && !hostTextInputFocused) {
-      element.focus({ preventScroll: true });
-    }
+    // Semantic commit must not steal browser input focus. Explicit Focus
+    // actions are dispatched through the generation-checked bridge.
+  };
+
+  const numberAttribute = value => {
+    if (value == null) return undefined;
+    const number = Number(value);
+    return Number.isFinite(number) ? `${number}` : undefined;
+  };
+
+  const relationIds = (ids, single = false) => {
+    if (!Array.isArray(ids)) return undefined;
+    const values = ids.map(value => `moui-a11y-${value ?? ""}`).filter(Boolean);
+    if (single) return values[0] || undefined;
+    return values.length ? values.join(" ") : undefined;
   };
 
   const visit = (state, nodeId, parent, parentFrame, seen) => {
@@ -360,6 +464,7 @@ export function createSemanticsDomManager(options = {}) {
       record?.element.remove();
       const element = documentRef.createElement(tag);
       element.dataset.mouiSemanticsNodeId = id;
+      element.id = `moui-a11y-${id}`;
       record = { element, node, geometryKey: "", presentationKey: "" };
       state.elements.set(id, record);
       installHandlers(state, record);
@@ -1675,13 +1780,45 @@ export function createWindowWebImports(options = {}) {
       const canvas = globalThis.document?.getElementById?.(stringValue(canvasId));
       if (!(canvas instanceof globalThis.HTMLCanvasElement)) return;
       try {
-        semantics.sync(rawId, canvas, JSON.parse(stringValue(json)));
+        const update = JSON.parse(stringValue(json));
+        globalThis.__mouiAccessibilitySemanticsEvidence ??= [];
+        globalThis.__mouiAccessibilitySemanticsEvidence.push({
+          rawId,
+          kind: update.kind,
+          generation: `${update.generation ?? ""}`,
+          root: `${update.root ?? ""}`,
+          focused: `${update.focused ?? ""}`,
+          semanticFocused: `${update.semantic_focused ?? ""}`,
+          nodes: (update.nodes ?? []).map(node => ({
+            node_id: `${node.node_id ?? ""}`,
+            semantic_id: node.semantic_id ?? "",
+            role: node.role ?? "",
+          })),
+          removed: (update.removed ?? []).map(id => `${id}`),
+        });
+        semantics.sync(rawId, canvas, update);
       } catch (error) {
         globalThis.console?.error?.("MoUI semantics synchronization failed", error);
       }
     },
     remove_semantics(rawId) {
       semantics.remove(rawId);
+    },
+    record_semantics_action(rawId, json) {
+      try {
+        const evidence = JSON.parse(stringValue(json));
+        const event = {
+          name: "accessibility_action",
+          source: "runtime-receipt",
+          rawId,
+          ...evidence,
+        };
+        globalThis.__mouiAccessibilityActionEvidence ??= [];
+        globalThis.__mouiAccessibilityActionEvidence.push(event);
+        observeEvent(event);
+      } catch (error) {
+        globalThis.console?.error?.("MoUI semantics action evidence failed", error);
+      }
     },
     update_document_metadata(json) {
       try {
@@ -2161,6 +2298,24 @@ export function createWindowWebImports(options = {}) {
     system_theme() {
       return globalThis.window?.matchMedia?.("(prefers-color-scheme: dark)")
         .matches ? 1 : 0;
+    },
+    accessibility_settings() {
+      const root = globalThis.document?.documentElement;
+      const contrast = globalThis.window?.matchMedia?.("(prefers-contrast: more)")?.matches;
+      const reducedMotion = globalThis.window?.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      const scale = Number.parseFloat(root?.style?.fontSize || "") || 1;
+      return { contrast: contrast ? 1 : 0, reducedMotion: reducedMotion ? 1 : 0, textScale: scale };
+    },
+    accessibility_contrast() {
+      return globalThis.window?.matchMedia?.("(prefers-contrast: more)")?.matches ? 1 : 0;
+    },
+    reduced_motion() {
+      return globalThis.window?.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ? 1 : 0;
+    },
+    text_scale() {
+      const root = globalThis.document?.documentElement;
+      const size = Number.parseFloat(globalThis.window?.getComputedStyle?.(root)?.fontSize || "16");
+      return Number.isFinite(size) && size > 0 ? size / 16 : 1;
     },
   };
 }

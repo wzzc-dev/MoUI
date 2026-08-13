@@ -46,7 +46,13 @@ pub fn[Msg] checkbox_group(
         checked~,
         on_change=value => on_change(item.id, value),
         theme=resolved_theme,
-      ).semantics_checked(checked~),
+      ).semantics_checked(
+        checked=if checked {
+          @core.SemanticsCheckedState::Checked
+        } else {
+          @core.SemanticsCheckedState::Unchecked
+        },
+      ),
     )
   }
   @layout.column(rows, spacing~, align=@style.CrossAlign::Start).semantics_role(

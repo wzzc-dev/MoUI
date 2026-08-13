@@ -188,6 +188,10 @@ fn RuntimeState::destroy_now(self : RuntimeState) -> Unit {
   self.dirty.clear()
   self.animfocus.focused_element = None
   self.animfocus.active_pointer_capture = None
+  self.animfocus.active_focus_trap = None
+  self.animfocus.saved_focus_key = None
+  self.animfocus.saved_focus_semantic_id = None
+  self.animfocus.saved_focus_order = None
   self.pending_scroll_request = None
   self.stats.rebuild_pass_count = 0
   self.stats.layout_pass_count = 0
@@ -383,6 +387,7 @@ fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
     match self.root_builder {
       Some(build) => {
         self.stats.rebuild_pass_count = self.stats.rebuild_pass_count + 1
+        self.capture_focus_restore_candidate_before_rebuild()
         let result = reconcile_element_for_runtime(
           self.element_tree.root,
           build(),
@@ -391,6 +396,7 @@ fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
         )
         self.element_tree = ElementTree::new(result.node)
         self.next_element_id = result.next_id
+        self.sync_focus_trap_after_rebuild()
         self.clear_stale_pointer_capture()
         self.mark_current_dirty_elements()
       }
@@ -471,7 +477,12 @@ priv struct AnimFocusState {
   mut now_ms : Double
   mut active_animations : Bool
   mut focused_element : ElementId?
+  mut semantic_focused : SemanticsNodeId?
   mut active_pointer_capture : ElementId?
+  mut active_focus_trap : ElementId?
+  mut saved_focus_key : String?
+  mut saved_focus_semantic_id : SemanticId?
+  mut saved_focus_order : Int?
 }
 
 ///|
@@ -549,7 +560,12 @@ fn AnimFocusState::new() -> AnimFocusState {
     now_ms: 0.0,
     active_animations: false,
     focused_element: None,
+    semantic_focused: None,
     active_pointer_capture: None,
+    active_focus_trap: None,
+    saved_focus_key: None,
+    saved_focus_semantic_id: None,
+    saved_focus_order: None,
   }
 }
 
