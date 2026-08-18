@@ -20,6 +20,10 @@ extern "C" fn macos_webview_install_event_callback(
 extern "C" fn macos_webview_native_available() -> Int = "moui_macos_webview_available"
 
 ///|
+/// Start the WebKit content process before the first platform-view sync.
+extern "C" fn macos_webview_prewarm() -> Unit = "moui_macos_webview_prewarm"
+
+///|
 extern "C" fn macos_webview_platform_views_begin(
   raw_content_view_handle : UInt64,
 ) -> Unit = "moui_macos_webview_platform_views_begin"
@@ -37,6 +41,18 @@ extern "C" fn macos_webview_sync(
   width : Double,
   height : Double,
 ) -> Unit = "moui_macos_webview_sync"
+
+///|
+#borrow(id)
+extern "C" fn macos_webview_sync_overlay_mask(
+  raw_content_view_handle : UInt64,
+  id : Bytes,
+  has_bounds : Int,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+) -> Unit = "moui_macos_webview_sync_overlay_mask"
 
 ///|
 extern "C" fn macos_webview_platform_views_end(
@@ -114,6 +130,28 @@ pub fn sync_macos_platform_views(
             placement.frame.size.width,
             placement.frame.size.height,
           )
+          match frame.overlay_bounds {
+            Some(bounds) =>
+              macos_webview_sync_overlay_mask(
+                raw_content_view_handle,
+                @host.webview_encode_ffi_string(placement.id),
+                1,
+                bounds.origin.x,
+                bounds.origin.y,
+                bounds.size.width,
+                bounds.size.height,
+              )
+            None =>
+              macos_webview_sync_overlay_mask(
+                raw_content_view_handle,
+                @host.webview_encode_ffi_string(placement.id),
+                0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+              )
+          }
         }
       }
       macos_webview_platform_views_end(raw_content_view_handle)

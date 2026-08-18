@@ -96,10 +96,18 @@ pub(all) enum HostServiceRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// One top-level application menu (for example File or Edit).
+pub(all) enum HostApplicationMenuPlacement {
+  MenuBar
+  ApplicationMenu
+} derive(Eq, Debug, ToJson)
+
+///|
+/// One application menu group. `MenuBar` creates a top-level menu; hosts with
+/// a standard application menu may place `ApplicationMenu` items there.
 pub(all) struct HostApplicationMenu {
   title : String
   items : Array[HostApplicationMenuItem]
+  placement : HostApplicationMenuPlacement
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -122,8 +130,9 @@ pub(all) struct HostApplicationMenuItem {
 pub fn HostApplicationMenu::new(
   title~ : String,
   items~ : Array[HostApplicationMenuItem],
+  placement? : HostApplicationMenuPlacement = HostApplicationMenuPlacement::MenuBar,
 ) -> HostApplicationMenu {
-  { title, items }
+  { title, items, placement }
 }
 
 ///|

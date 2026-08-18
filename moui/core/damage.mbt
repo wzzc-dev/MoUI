@@ -13,6 +13,10 @@ pub(all) enum DamageRegion {
 pub(all) struct DrawFrame {
   commands : Array[DrawCommand]
   platform_views : Array[PlatformViewPlacement]
+  /// Bounds of the runtime's view-level overlay paint, when present. Native
+  /// platform views may use this to expose the already-rendered overlay pixels
+  /// above their own surface without introducing a second renderer.
+  overlay_bounds : Rect?
   damage : DamageRegion
   clear_color : Color
 } derive(Eq, Debug, ToJson)
@@ -146,10 +150,11 @@ pub fn DamageRegion::full_reason(self : DamageRegion) -> String {
 pub fn DrawFrame::new(
   commands~ : Array[DrawCommand],
   platform_views? : Array[PlatformViewPlacement] = [],
+  overlay_bounds? : Rect? = None,
   damage~ : DamageRegion,
   clear_color? : Color = Color::white(),
 ) -> DrawFrame {
-  { commands, platform_views, damage, clear_color }
+  { commands, platform_views, overlay_bounds, damage, clear_color }
 }
 
 ///|

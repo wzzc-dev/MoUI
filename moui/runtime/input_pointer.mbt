@@ -309,11 +309,17 @@ fn RenderNode::overlay_hit_bounds(self : RenderNode) -> Rect? {
   match self.cached_overlay_draw_commands {
     Some(commands) =>
       for command in commands {
-        bounds = @core.optional_rect_union(bounds, command.bounds())
+        bounds = @core.optional_rect_union(
+          bounds,
+          pointer_overlay_command_bounds(command),
+        )
       }
     None => {
       for command in self.overlay_paint_commands {
-        bounds = @core.optional_rect_union(bounds, command.bounds())
+        bounds = @core.optional_rect_union(
+          bounds,
+          pointer_overlay_command_bounds(command),
+        )
       }
       for child in self.children {
         bounds = @core.optional_rect_union(bounds, child.overlay_hit_bounds())
@@ -321,6 +327,17 @@ fn RenderNode::overlay_hit_bounds(self : RenderNode) -> Rect? {
     }
   }
   bounds
+}
+
+///|
+/// Fully transparent overlay fills can carry native-composition bounds without
+/// representing interactive content. Excluding them here keeps a modal scrim's
+/// marker from taking pointer priority over the dialog painted above it.
+fn pointer_overlay_command_bounds(command : DrawCommand) -> Rect? {
+  match command {
+    FillRect(_, color) if color.a == 0.0 => None
+    _ => command.bounds()
+  }
 }
 
 ///|

@@ -13,6 +13,21 @@ when the WebKit-backed stub is linked, syncs placements from
 `DrawFrame.platform_views`, forwards WebView navigation/title/history/script
 events through `Event::WebView`, and drains `HostWebViewCommandQueue`
 commands after frame rendering.
+For the full-window WebView/modal route, the active Skia presenter stays above
+WKWebView and full-surface platform-view frames clear it transparently. Both the
+GPU `CAMetalLayer` host view and CPU raster image view pass hit testing through
+to WKWebView without an overlay. While `DrawFrame.overlay_bounds` is present,
+the presenter routes input to MoUI and WKWebView excludes those bounds from hit
+testing. Modal transitions therefore do not reorder or reattach WKWebView's
+remote layer. Partial platform-view frames remain opaque white. This is
+deliberately limited to modal MoUI composition over a full-window native
+WebView rather than arbitrary native-view interleaving.
+The macOS WebView also reserves the first 32 logical points as a drag region.
+The host injects a small document-end script that reports top-bar rectangles
+for links, buttons, form controls, editable elements, and explicit
+`data-moui-no-drag` elements. Those rectangles remain clickable; blank points
+in the same strip call AppKit's `performWindowDragWithEvent:`. This keeps a
+web-owned title bar interactive without adding a native shell overlay.
 Window events pass through the shared `backend` conversion helpers, and the
 native host never imports `moui_wgpu_renderer`, `moui_skia_renderer`, `wgpu_mbt`, or
 `moui_skia`.
@@ -22,6 +37,11 @@ opens URLs through `NSWorkspace`, presents open/save/directory dialogs through
 position through `NSMenu`, reads/writes UTF-8 text files through the shared
 text-file service contract, and reports the effective light/dark system
 appearance through the shared `HostServiceBridge` contract.
+`ApplicationMenu::application` items are inserted after About in the standard
+application menu. The backend installs an Objective-C target/action bridge,
+keeps the MoonBit command callback alive while installed, and releases the old
+callback when the menu is replaced. Standard Services, Hide, and Quit items
+remain AppKit-owned.
 The native app entrypoint applies that reported appearance to the runtime
 environment before creating the host driver, so components see the system color
 scheme on their initial build. AppKit theme-change events use the shared
@@ -59,17 +79,16 @@ owned Pi JSONL transport worker.
 Select the native mainline Skia renderer by importing
 `wzzc-dev/moui_skia_renderer`, adding
 `@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS)` to the app
-builder, and capturing `MacosHostAppOptions` in `@macos.entry`. The provider
-binds a per-window `RendererSession` backed by `@render_skia.SkiaRasterRenderer`,
-draws into a CPU raster surface in physical pixels, scales the canvas by the
-host scale factor, reads premultiplied pixels back after each frame, and sends
-them to a macOS presenter. The Objective-C presenter builds a `CGImage` from the
-pixel bytes and installs it on a dedicated `NSImageView` attached to the content
-view. macOS Skia options default to the same system `FontMgr` text path as the
-Windows and Linux Skia providers; tester-owned first-frame smoke entrypoints
-explicitly select `EmptyTypeface`. This path is intentionally separate from the experimental
-`moui_wgpu_renderer` factory; Skia is a renderer package, not a host-core
-`NativeRenderer` variant.
+builder, and capturing `MacosHostAppOptions` in `@macos.entry`. Auto mode offers
+the direct Metal GPU provider first and the CPU raster provider second. The GPU
+route attaches its `CAMetalLayer` to a dedicated transparent host view; if GPU
+surface creation is unavailable, provider resolution falls back to CPU raster,
+reads premultiplied pixels after each frame, and presents them through a
+dedicated `NSImageView`. macOS Skia options default to the same system `FontMgr`
+text path as the Windows and Linux Skia providers; tester-owned first-frame
+smoke entrypoints explicitly select `EmptyTypeface`. These paths are
+intentionally separate from the experimental `moui_wgpu_renderer` factory;
+Skia is a renderer package, not a host-core `NativeRenderer` variant.
 For local real Skia configuration, direct `moon run`/`moon build` commands use
 the `moui_skia` prebuild hook and `MOUI_SKIA_LINK_MODE=dynamic|static|auto` to
 choose the Skia library mode. Helper smoke runs can pass

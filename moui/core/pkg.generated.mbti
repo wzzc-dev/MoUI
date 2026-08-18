@@ -504,10 +504,11 @@ pub fn DrawCommand::bounds(Self) -> Rect?
 pub(all) struct DrawFrame {
   commands : Array[DrawCommand]
   platform_views : Array[PlatformViewPlacement]
+  overlay_bounds : Rect?
   damage : DamageRegion
   clear_color : Color
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DrawFrame::new(commands~ : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement], damage~ : DamageRegion, clear_color? : Color) -> Self
+pub fn DrawFrame::new(commands~ : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement], overlay_bounds? : Rect?, damage~ : DamageRegion, clear_color? : Color) -> Self
 
 pub(all) enum Easing {
   Linear

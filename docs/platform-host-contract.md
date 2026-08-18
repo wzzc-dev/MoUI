@@ -70,7 +70,20 @@ WebViews. Hosts report whether native embedding is available, sync
 `DrawFrame.platform_views` to concrete WebView objects, dispatch
 `Event::WebView` back into the runtime, and drain queued commands at the
 platform edge. Browser Web wasm reports unavailable instead of creating an
-iframe overlay.
+iframe overlay. On macOS, the WKWebView host also consumes
+`DrawFrame.overlay_bounds`: for a full-surface WebView it keeps the active
+transparent Skia presenter above the WebView and excludes that sibling region
+from WebView hit testing, so
+already-rendered MoUI dialogs, sheets, and popovers remain visible and
+interactive while the page stays visible underneath. Ordinary full-surface
+platform-view frames clear transparently and pass presenter hit testing through
+to WKWebView, so modal transitions do not reattach the WebView's remote layer.
+This is currently macOS-only;
+Web, Windows, and Linux do not expose MoUI overlays over native platform
+views. The macOS WebView reserves a fixed 32-point top drag region. Blank
+space there starts native window dragging, while interactive DOM controls and
+elements marked `data-moui-no-drag` report no-drag rectangles and keep normal
+WebView clicks.
 Web, macOS, Windows, and Linux should convert their native window events into
 `Event` and then let `AppRuntime` update state, rebuild, and emit
 `DrawCommand` values.
@@ -273,13 +286,17 @@ platform backends skip ordinary pointer dispatch for those events, then native
 menu-capable hosts ask `HostServiceBridge::ShowMenu` to present the current
 runtime action commands and dispatch the selected intent back through
 `HostRuntimeDriver`.
-Application menu bars (L2) use `@services.MenuServices::install_application`
-with `ApplicationMenu` descriptors derived from the same typed Program command
-declarations.
-macOS installs native main-menu titles/items via the window package; Windows,
-Linux, and Web currently return `Unavailable`. Selection delivery still uses
-the platform action handler installed by the entrypoint (for example
-`@window_macos.set_system_menu_action_handler`). See
+Application menus (L2) use `@services.MenuServices::install_application` with
+`ApplicationMenu` descriptors derived from the same typed Program command
+declarations. `ApplicationMenuPlacement::MenuBar` is the default and creates a
+top-level menu. `ApplicationMenu::application(items=...)` selects
+`ApplicationMenuPlacement::ApplicationMenu`; on macOS those commands are
+inserted into the standard application menu after About and before Services,
+without replacing Services, Hide, or Quit. macOS owns the AppKit target/action
+bridge and retains the installed MoonBit callback until the menu is replaced.
+Windows, Linux, and Web currently return `Unavailable`. Selection delivery for
+top-level menus still uses the platform action handler installed by the
+entrypoint (for example `@window_macos.set_system_menu_action_handler`). See
 [Non-render cookbook](non-render-component-cookbook.md) and
 Showcase's Platform workspace (`examples/showcase/app/platform`).
 App-facing multi-window lifecycle requests go through `WindowActions`

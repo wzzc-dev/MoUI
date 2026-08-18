@@ -36,9 +36,16 @@ pub(all) enum ApplicationMenuItem {
 }
 
 ///|
+pub(all) enum ApplicationMenuPlacement {
+  MenuBar
+  ApplicationMenu
+} derive(Eq, Debug)
+
+///|
 pub(all) struct ApplicationMenu {
   title : String
   items : Array[ApplicationMenuItem]
+  placement : ApplicationMenuPlacement
 }
 
 ///|
@@ -186,8 +193,18 @@ pub fn AppearanceServices::system_color_scheme(
 pub fn ApplicationMenu::new(
   title~ : String,
   items~ : Array[ApplicationMenuItem],
+  placement? : ApplicationMenuPlacement = ApplicationMenuPlacement::MenuBar,
 ) -> ApplicationMenu {
-  { title, items }
+  { title, items, placement }
+}
+
+///|
+/// Commands placed in the platform's standard application menu. On macOS,
+/// these appear after About and before Services.
+pub fn ApplicationMenu::application(
+  items~ : Array[ApplicationMenuItem],
+) -> ApplicationMenu {
+  { title: "", items, placement: ApplicationMenuPlacement::ApplicationMenu }
 }
 
 ///|

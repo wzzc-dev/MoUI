@@ -2,6 +2,7 @@
 fn[Msg] handle_text_field_event(
   ctx : @core.ViewEventContext,
   value~ : String,
+  font~ : @core.FontSpec,
   on_input~ : ((String) -> Msg)?,
   on_submit~ : Msg?,
   search_bar~ : Bool,
@@ -12,6 +13,7 @@ fn[Msg] handle_text_field_event(
       handle_text_field_pointer(
         ctx,
         value~,
+        font~,
         on_input~,
         search_bar~,
         on_clear~,
@@ -29,6 +31,7 @@ fn[Msg] handle_text_field_event(
 fn[Msg] handle_text_field_pointer(
   ctx : @core.ViewEventContext,
   value~ : String,
+  font~ : @core.FontSpec,
   on_input~ : ((String) -> Msg)?,
   search_bar~ : Bool,
   on_clear~ : Msg?,
@@ -55,12 +58,19 @@ fn[Msg] handle_text_field_pointer(
   }
   if event.phase == @core.PointerPhase::Down &&
     ctx.frame.contains(event.position) {
-    let caret_at_end = @core.TextGraphemeBoundaries::new(text~).length()
+    let caret = single_line_text_caret_at_position(
+      text,
+      ctx.frame,
+      font,
+      ctx.text_system,
+      search_bar,
+      event.position,
+    )
     let next_control = {
       ..ctx.text_control,
-      caret: caret_at_end,
+      caret,
       selection: None,
-      text_selection_anchor: None,
+      text_selection_anchor: Some(caret),
       composition: None,
       composition_cursor: None,
     }
@@ -69,6 +79,44 @@ fn[Msg] handle_text_field_pointer(
       focused=true,
       captured=true,
       text_control=Some(next_control),
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+    )
+  } else if event.phase == @core.PointerPhase::Move &&
+    ctx.text_control.text_selection_anchor is Some(anchor) {
+    let caret = single_line_text_caret_at_position(
+      text,
+      ctx.frame,
+      font,
+      ctx.text_system,
+      search_bar,
+      event.position,
+    )
+    let selection = if caret == anchor {
+      None
+    } else {
+      Some(
+        @core.TextRange::new(
+          start=@core.min_int(anchor, caret),
+          end=@core.max_int(anchor, caret),
+        ),
+      )
+    }
+    if caret != ctx.text_control.caret || selection != ctx.text_control.selection {
+      @common.view_event_result(
+        changed=true,
+        captured=true,
+        text_control=Some({ ..ctx.text_control, caret, selection }),
+        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      )
+    } else {
+      @core.ViewEventResult::ignored()
+    }
+  } else if event.phase == @core.PointerPhase::Up &&
+    ctx.text_control.text_selection_anchor is Some(_) {
+    @common.view_event_result(
+      changed=true,
+      captured=true,
+      text_control=Some({ ..ctx.text_control, text_selection_anchor: None }),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   } else {

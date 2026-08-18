@@ -1,0 +1,18 @@
+import {
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui_webview/host" @webview_host,
+  "wzzc-dev/moui_webview/views" @webview_views,
+  "wzzc-dev/moui",
+}
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+} for "test"
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

@@ -73,12 +73,16 @@ pub fn[Msg] dialog_host(
   child : @core.View[Msg],
   dialog? : @core.View[Msg]? = None,
   presented? : Bool = false,
+  on_backdrop? : Msg? = None,
   trap_focus? : Bool = true,
 ) -> @core.View[Msg] {
   if presented {
     match dialog {
       Some(dialog) => {
-        let scrim = modal_scrim(alpha=0.22)
+        let scrim = match on_backdrop {
+          Some(message) => modal_scrim(alpha=0.22).on_tap(message)
+          None => modal_scrim(alpha=0.22)
+        }
         let presented_dialog = dialog
           .semantics_role(@core.SemanticsRole::Dialog)
           .align(alignment=@core.Alignment::center())

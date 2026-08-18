@@ -13,7 +13,6 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
     .with_titlebar_transparent(true)
     .with_title_hidden(true)
     .with_fullsize_content_view(true)
-    .with_movable_by_window_background(true)
   } else {
     self.platform_attributes
   }
@@ -241,15 +240,32 @@ fn MacosNativeHostBackend::redraw_window(
         render=(renderer, _runtime_slot, submission) => {
           let frame = submission.frame()
           platform_slot.window.pre_present_notify()
+          let native_handle = macos_native_view_handle(platform_slot.window)
+          let sync_before_render = macos_platform_views_sync_before_render(
+            frame,
+          )
+          if sync_before_render {
+            match native_handle {
+              Some(handle) =>
+                @runtime.sync_platform_view_plugins(
+                  self.platform_view_plugins,
+                  handle,
+                  frame,
+                )
+              None => ()
+            }
+          }
           let result = renderer.render_frame(submission)
-          match macos_native_view_handle(platform_slot.window) {
-            Some(handle) =>
-              @runtime.sync_platform_view_plugins(
-                self.platform_view_plugins,
-                handle,
-                frame,
-              )
-            None => ()
+          if !sync_before_render {
+            match native_handle {
+              Some(handle) =>
+                @runtime.sync_platform_view_plugins(
+                  self.platform_view_plugins,
+                  handle,
+                  frame,
+                )
+              None => ()
+            }
           }
           result
         },
@@ -259,6 +275,14 @@ fn MacosNativeHostBackend::redraw_window(
       )
     None => false
   }
+}
+
+///|
+/// Sync ordinary full-surface platform-view frames before rendering so their
+/// presenter is already transparent and input is routed to the native view.
+/// Overlay input is enabled only after the transparent overlay frame renders.
+fn macos_platform_views_sync_before_render(frame : @core.DrawFrame) -> Bool {
+  frame.overlay_bounds is None
 }
 
 ///|

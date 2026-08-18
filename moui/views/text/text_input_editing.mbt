@@ -30,11 +30,7 @@ fn text_input_state_for_single_line(
 ) -> @core.TextInputState {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let display_text = text_with_composition(text, control, focused=true)
-  let text_frame = if search_bar {
-    searchbar_text_frame(frame, has_text=text != "")
-  } else {
-    frame.inset(@core.Insets::symmetric(horizontal=10.0, vertical=4.0))
-  }
+  let text_frame = single_line_text_frame(frame, search_bar, text != "")
   let layout = text_system.measure_text(
     @core.TextLayoutInput::new(
       text=display_text,
@@ -60,6 +56,61 @@ fn text_input_state_for_single_line(
     frame,
     caret_rect,
   }
+}
+
+///|
+fn single_line_text_frame(
+  frame : @core.Rect,
+  search_bar : Bool,
+  has_text : Bool,
+) -> @core.Rect {
+  if search_bar {
+    searchbar_text_frame(frame, has_text~)
+  } else {
+    frame.inset(@core.Insets::symmetric(horizontal=10.0, vertical=4.0))
+  }
+}
+
+///| Find the nearest grapheme-safe caret for a pointer in a single-line field.
+/// The layout uses the same caret positions as painting, so this remains
+/// correct for native text providers as well as the fallback text system.
+fn single_line_text_caret_at_position(
+  text : String,
+  frame : @core.Rect,
+  font : @core.FontSpec,
+  text_system : @core.TextSystem,
+  search_bar : Bool,
+  position : @core.Point,
+) -> Int {
+  let boundaries = @core.TextGraphemeBoundaries::new(text~)
+  let text_frame = single_line_text_frame(frame, search_bar, text != "")
+  let layout = text_system.measure_text(
+    @core.TextLayoutInput::new(
+      text~,
+      font~,
+      max_width=text_frame.size.width,
+    ),
+  )
+  let caret_positions = layout.caret_positions
+  if caret_positions.is_empty() {
+    return 0
+  }
+  let x = position.x - text_frame.origin.x
+  let mut best = 0
+  let mut best_distance = 1.0e18
+  for boundary in boundaries.boundaries() {
+    if boundary >= caret_positions.length() {
+      break
+    }
+    let distance = (caret_positions[boundary] - x).abs()
+    // Prefer the later boundary on a tie. This makes clicks past a clipped
+    // line select the end rather than the first boundary sharing max_width.
+    if distance <= best_distance {
+      best = boundary
+      best_distance = distance
+    }
+  }
+  best
 }
 
 ///|

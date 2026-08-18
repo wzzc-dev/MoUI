@@ -17,6 +17,7 @@ pub fn create_macos_webview_plugin(
     kind="web_view",
     capabilities_summary~,
     install_event_dispatcher=fn(callback) {
+      macos_webview_prewarm()
       macos_webview_install_event_callback(
         fn(cb, raw_handle, kind, id, url, detail, flag) {
           cb(raw_handle, kind, id, url, detail, flag)
@@ -55,6 +56,28 @@ pub fn create_macos_webview_plugin(
             placement.frame.size.width,
             placement.frame.size.height,
           )
+          match frame.overlay_bounds {
+            Some(bounds) =>
+              macos_webview_sync_overlay_mask(
+                handle,
+                @host.webview_encode_ffi_string(placement.id),
+                1,
+                bounds.origin.x,
+                bounds.origin.y,
+                bounds.size.width,
+                bounds.size.height,
+              )
+            None =>
+              macos_webview_sync_overlay_mask(
+                handle,
+                @host.webview_encode_ffi_string(placement.id),
+                0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+              )
+          }
         }
       }
       macos_webview_platform_views_end(handle)

@@ -61,9 +61,15 @@ fn[Msg] single_line_text_event(
   on_submit : Msg?,
   on_clear : Msg?,
 ) -> @core.ViewEventResult[Msg] {
+  let resolved_theme = node.theme.unwrap_or(ctx.environment.theme)
+  let resolved_style = match node.style {
+    Some(value) => value
+    None => node.variant.style(resolved_theme)
+  }
   handle_text_field_event(
     ctx,
     value~,
+    font=resolved_style.font,
     on_input~,
     on_submit~,
     search_bar=node.search_bar,

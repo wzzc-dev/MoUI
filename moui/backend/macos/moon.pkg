@@ -39,6 +39,7 @@ options(
     },
   },
   "native-stub": [
+    "macos_application_menu.m",
     "macos_service_host.m",
     "macos_timer_host.m",
     "macos_perf_clock.c",

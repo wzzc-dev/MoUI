@@ -114,7 +114,7 @@ pub fn[Msg] detail_panel(String, Array[@data.DescriptionItem], subtitle? : Strin
 
 pub fn[Msg] dialog(String, content~ : @core.View[Msg], subtitle? : String, primary_action? : @controls.StateViewAction[Msg]?, secondary_action? : @controls.StateViewAction[Msg]?, dismiss_action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool, trap_focus? : Bool) -> @core.View[Msg]
+pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool, on_backdrop? : Msg?, trap_focus? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] disclosure(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 

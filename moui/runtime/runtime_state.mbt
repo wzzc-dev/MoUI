@@ -321,14 +321,51 @@ fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   self.rebuild_if_possible()
   self.ensure_render_tree()
   self.render_tree.root.collect_frame_commands(commands)
+  let overlay_bounds = self.render_tree.root.overlay_bounds()
   let platform_views = self.platform_tree.placements()
+  let transparent_platform_frame = (
+      !platform_views.is_empty() && overlay_bounds is Some(_)
+    ) ||
+    platform_views.any(placement => {
+      platform_view_covers_surface(placement, self.size)
+    })
+  let clear_color = if transparent_platform_frame {
+    Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
+  } else {
+    Color::white()
+  }
   self.stats.last_command_count = commands.length()
   DrawFrame::new(
     commands~,
     platform_views~,
+    overlay_bounds~,
     damage=self.stats.last_damage_region,
-    clear_color=Color::white(),
+    clear_color~,
   )
+}
+
+///|
+/// A full-surface native view owns the ordinary frame background. Keeping the
+/// renderer clear transparent lets a presenter remain above that view without
+/// obscuring it, so modal overlay state does not require native sibling churn.
+fn platform_view_covers_surface(
+  placement : PlatformViewPlacement,
+  surface_size : Size,
+) -> Bool {
+  let frame = placement.frame
+  let covers_surface = frame.origin.x <= 0.0 &&
+    frame.origin.y <= 0.0 &&
+    frame.max_x() >= surface_size.width &&
+    frame.max_y() >= surface_size.height
+  let clip_covers_surface = match placement.clip {
+    Some(clip) =>
+      clip.origin.x <= 0.0 &&
+      clip.origin.y <= 0.0 &&
+      clip.max_x() >= surface_size.width &&
+      clip.max_y() >= surface_size.height
+    None => true
+  }
+  covers_surface && clip_covers_surface
 }
 
 ///|

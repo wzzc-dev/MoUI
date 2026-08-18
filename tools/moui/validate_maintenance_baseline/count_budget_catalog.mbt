@@ -25,9 +25,10 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/backend",
       path: "moui/backend",
-      // AccessKit's backend-owned adapter adds one package-level protocol
-      // record while the common owners replace the former coordinator.
-      max_count: 95,
+      // AccessKit's backend-owned adapter plus application-menu placement add
+      // two package-level protocol records while common owners replace the
+      // former coordinator.
+      max_count: 96,
     },
     {
       kind: "pub(all)",

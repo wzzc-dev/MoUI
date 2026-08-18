@@ -128,3 +128,41 @@ test "app service adapter maps persistent settings operations" {
   ignore(services.read("editor/theme").start(result => missing.push(result)))
   assert_eq(missing, [@app_services.ServiceTaskResult::Success(None)])
 }
+
+///|
+test "app service adapter preserves application menu placement" {
+  let received : Ref[@backend_host.HostServiceRequest?] = Ref(None)
+  let services = app_services(
+    bridge=@backend_host.HostServiceBridge::new(
+      capabilities=@backend_host.HostServiceCapabilities::new(menus=true),
+      handle=request => {
+        received.val = Some(request)
+        @backend_host.HostServiceResponse::ApplicationMenuInstalled
+      },
+    ),
+  )
+  let command = @core.ActionCommand::new(
+    intent=@core.CommandIntent::Activate,
+    label="Settings",
+  )
+  ignore(
+    services
+    .menus()
+    .install_application([
+      @app_services.ApplicationMenu::application(items=[
+        @app_services.ApplicationMenuItem::MenuCommand(command),
+      ]),
+    ])
+    .start(_ => ()),
+  )
+  match received.val {
+    Some(@backend_host.HostServiceRequest::SetApplicationMenu([menu])) => {
+      assert_true(
+        menu.placement
+        is @backend_host.HostApplicationMenuPlacement::ApplicationMenu,
+      )
+      assert_eq(menu.items.length(), 1)
+    }
+    _ => fail("expected one application-menu host request")
+  }
+}
