@@ -1,9 +1,9 @@
 import {
   "moonbitlang/x/fs",
-  "wzzc-dev/moui/backend/macos" @macos_backend,
-  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "wzzc-dev/moui/backend/linux" @linux_backend,
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui_webview/backend/macos" @macos_webview,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "wzzc-dev/moui_webview/backend/linux" @linux_webview,
   "wzzc-dev/moui_webview/host" @webview_host,
   "examples/deepseek_harness_desktop" @harness,
 }

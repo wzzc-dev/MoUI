@@ -101,7 +101,8 @@ fn[Msg] handle_text_field_pointer(
         ),
       )
     }
-    if caret != ctx.text_control.caret || selection != ctx.text_control.selection {
+    if caret != ctx.text_control.caret ||
+      selection != ctx.text_control.selection {
       @common.view_event_result(
         changed=true,
         captured=true,

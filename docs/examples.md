@@ -69,7 +69,7 @@ entrypoint supplies the program and renderer provider. Run
 | Excel | Spreadsheet workbook prototype | `examples/excel/app/`, `examples/excel/{cell,formula,sheet,xlsx}/`, `examples/excel/macos_skia/` | Native `.xlsx` workflow, spreadsheet shell, formulas, editing, and typed file services |
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone plus typed `ServiceTaskResult` success/failure/cancellation flow |
 | WebView Demo | Native platform WebView pattern | `examples/webview_demo/app/` | Controlled WebView with retained macOS Skia entrypoint |
-| DSH Desktop | Thin DeepSeek Harness WebView host | `examples/deepseek_harness_desktop/app/` | Native macOS WKWebView surface for an existing local Harness Host, with no duplicated Web UI state |
+| DSH Desktop | Thin DeepSeek Harness WebView host | `examples/deepseek_harness_desktop/app/` | Native macOS WKWebView, Windows WebView2, and Linux WebKitGTK surfaces for an existing local Harness Host, with no duplicated Web UI state |
 | Browser | Pure-MoonBit HTML browser demo | `examples/browser/app/`, `examples/browser/engine/` | crater (HTML/CSS/paint) + dowdiness/js_engine (pure-MoonBit JS) rendered through MoUI canvas: address bar, link hit-testing, data-URL navigation, page scripts |
 | PDF Workbench | PDF reading and light editing prototype | `examples/pdf_workbench/app/` | Typed binary file services, PDF adapters, and retained macOS Skia entrypoint |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette, typed `ProgramCommand`, and context-menu service flow through the same TEA queue |
@@ -269,12 +269,13 @@ moon check examples/webview_demo/macos_skia --target native
 DSH Desktop is a thin native WebView host for a local DeepSeek Harness surface.
 The DSH Web UI owns navigation, sessions, profiles, settings, and plugin UI.
 The shared app only supplies the WebView surface and a native-unavailable
-fallback; the macOS composition root wires the WKWebView plugin. The default
-surface is `http://127.0.0.1:3080`. `Settings…` (`Cmd+,`) edits that root URL in
-a MoUI modal and persists it through macOS settings before applying it. Saving
-the current value leaves the existing page intact. The modal uses the targeted full-window
-WKWebView overlay path and restores WebView input when closed. macOS also
-reserves a 32-point top drag region;
+fallback. The macOS, Windows, and Linux composition roots select the matching
+WKWebView, WebView2, or WebKitGTK plugin together with the Skia provider route.
+The default surface is `http://127.0.0.1:3080`. `Settings…` (`Cmd+,`) edits that
+root URL in a MoUI modal and persists it through macOS settings before applying
+it. Saving the current value leaves the existing page intact. The modal uses the
+targeted full-window WKWebView overlay path and restores WebView input when
+closed. macOS also reserves a 32-point top drag region;
 interactive DOM controls and `[data-moui-no-drag]` elements remain clickable
 inside it.
 
@@ -283,6 +284,8 @@ Focused DSH Desktop checks:
 ```sh
 moon test examples/deepseek_harness_desktop/app --target native
 moon check examples/deepseek_harness_desktop/macos_skia --target native
+moon check examples/deepseek_harness_desktop/windows_skia --target native
+moon check examples/deepseek_harness_desktop/linux_skia --target native
 ```
 
 Showcase is organized around the main catalog order:
