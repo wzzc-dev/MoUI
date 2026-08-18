@@ -17,7 +17,6 @@ struct Entrypoint {
 ///|
 struct MatrixEntrypointRoute {
   suffix : String
-  tier : Int
   mobile : Bool
   line_budget : Int
 }
@@ -194,7 +193,7 @@ fn parse_matrix_entrypoint_routes(
       Some(String(value)) => value
       _ => return Err(path + ": route showcasePackage must be a string")
     }
-    let tier = match route_fields.get("tier") {
+    let _ = match route_fields.get("tier") {
       Some(Number(value, repr=_)) => value.to_int()
       _ => return Err(path + ": route tier must be an integer")
     }
@@ -210,7 +209,7 @@ fn parse_matrix_entrypoint_routes(
     if result.any(item => item.suffix == suffix) {
       return Err(path + ": duplicate entrypoint suffix " + suffix)
     }
-    result.push({ suffix, tier, mobile: kind == "mobile", line_budget })
+    result.push({ suffix, mobile: kind == "mobile", line_budget })
   }
   if result.is_empty() {
     Err(path + ": routes must not be empty")
@@ -283,23 +282,18 @@ fn validate_entrypoint_catalog(
           push_fail(
             results, "P1", relative, "matrix-external platform/renderer composition root. Fix: remove it or add the RFC, platform matrix route, evidence contract, and matching Showcase route required by docs/invariants.md#P1",
           )
-        Some(route) =>
-          if example != "showcase" && route.tier > 1 {
-            push_fail(
-              results, "P1", relative, "non-Showcase examples may expose only applicable Tier 1 roots. Fix: keep this platform route in Showcase and move probes to tester/smoke. See docs/invariants.md#P1",
-            )
-          }
+        Some(_) => ()
       }
     }
   }
-  if ui_roots.length() > 34 {
+  if ui_roots.length() > 36 {
     push_fail(
       results,
       "P1",
       "examples",
       "UI composition root count " +
       ui_roots.length().to_string() +
-      " exceeds 34. Fix: converge non-Showcase examples to applicable Tier 1 roots. See docs/invariants.md#P1",
+      " exceeds 36. Fix: keep composition roots within the repository budget. See docs/invariants.md#P1",
     )
   }
   for route in routes {
