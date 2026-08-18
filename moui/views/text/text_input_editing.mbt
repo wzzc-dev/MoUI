@@ -71,7 +71,8 @@ fn single_line_text_frame(
   }
 }
 
-///| Find the nearest grapheme-safe caret for a pointer in a single-line field.
+///|
+/// Find the nearest grapheme-safe caret for a pointer in a single-line field.
 /// The layout uses the same caret positions as painting, so this remains
 /// correct for native text providers as well as the fallback text system.
 fn single_line_text_caret_at_position(
@@ -85,11 +86,7 @@ fn single_line_text_caret_at_position(
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let text_frame = single_line_text_frame(frame, search_bar, text != "")
   let layout = text_system.measure_text(
-    @core.TextLayoutInput::new(
-      text~,
-      font~,
-      max_width=text_frame.size.width,
-    ),
+    @core.TextLayoutInput::new(text~, font~, max_width=text_frame.size.width),
   )
   let caret_positions = layout.caret_positions
   if caret_positions.is_empty() {

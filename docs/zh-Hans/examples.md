@@ -51,7 +51,7 @@ lifecycle、surface creation 和 input，MoUI 入口负责 program 和 renderer 
 | Excel | Spreadsheet workbook 原型 | `examples/excel/{cell,formula,sheet,xlsx,app}/`, `examples/excel/macos_skia/` | 原生 `.xlsx` load/save、spreadsheet shell、formula/name bars、sheet tabs、编辑与 undo/redo，以及保留的 macOS Skia 入口 |
 | File Importer | 文件导入工作流模式 | `examples/file_importer/app/` | Drop zone、typed `ServiceTask`、成功/失败/取消消息和 selected file list，不暴露 host request id |
 | WebView Demo | 原生 platform WebView 模式 | `examples/webview_demo/app/` | 受控 `web_view` primitive、native host capability fallback、address bar、navigation commands、JavaScript evaluation command，以及 macOS Skia native entrypoint |
-| DSH Desktop | 薄的 DeepSeek Harness WebView 宿主 | `examples/deepseek_harness_desktop/app/` | 为已有本地 Harness Host 提供原生 macOS WKWebView surface，不复制 Web UI 状态；`Settings…`（`Cmd+,`）持久化根地址并用 MoUI 模态层覆盖 WebView；顶部 32 点支持 drag/no-drag |
+| DSH Desktop | 薄的 DeepSeek Harness WebView 宿主 | `examples/deepseek_harness_desktop/app/` | 为已有本地 Harness Host 提供原生 macOS WKWebView、Windows WebView2 和 Linux WebKitGTK surface，不复制 Web UI 状态；`Settings…`（`Cmd+,`）持久化根地址并用 MoUI 模态层覆盖 WebView；顶部 32 点支持 drag/no-drag |
 | PDF Workbench | PDF 阅读和轻量编辑原型 | `examples/pdf_workbench/app/` | 简洁的原生 PDF reader/editor shell、host binary file service open/save flow、PDFium page bitmap preview、fit-width responsive reading canvas、scrollable page/inspector panels、reader fullscreen toggle、page navigation/direct page jump/search/metadata summaries、可 undo/可 discard 的 preview rotate/crop/stamp/title/bookmark/note edit state、用于真实 parsing/writeback checks 的独立 `pdflite_adapter` 包、JSONL pdflite helper protocol 加 native process transport、用于 page rasterization 的 native-only `pdfium_adapter` 包、macOS/Windows/Linux Skia native entrypoints |
 | Command Palette | 命令元数据和菜单模式 | `examples/command_palette/app/` | Command palette rows、shortcut labels、enabled/disabled dispatch、command menu、context menu fallback、`program(environment)`，以及 `@services.MenuServices::show_context` native menu preview |
 | Markdown Editor | Typora 风格编辑原型 | `examples/markdown_editor/app/` | Editor snapshot core、`mizchi/markdown` parsing、source-range mapping、primary rich text editor、可选 source preview |
@@ -237,7 +237,9 @@ DSH Desktop 是已有 DeepSeek Harness Web UI 的薄原生宿主，默认加载
 模态层，只编辑要加载的 DSH 根地址，不复制网页内部的 profile、导航或 API 设置。
 地址在 macOS settings 持久化成功后才应用；保存相同地址会显式刷新。
 
-模态层打开时，透明 Skia presenter 位于全窗口 WKWebView 上方，WebView 保持可见
+共享 app 只提供 WebView surface 和 native-unavailable fallback；macOS、Windows、Linux
+composition root 分别接入 WKWebView、WebView2、WebKitGTK plugin，并选择 Skia provider
+route。模态层打开时，透明 Skia presenter 位于全窗口 WKWebView 上方，WebView 保持可见
 但不接收点击；关闭后恢复 WebView 层级和输入。Skia auto 路由优先使用 GPU surface，
 不可用时回退 CPU raster，两种 presenter 都支持该层级切换。该能力只承诺全窗口原生
 WebView 上的 MoUI 模态覆盖，不代表任意 native view 与普通 MoUI 内容交错。
@@ -245,6 +247,8 @@ WebView 上的 MoUI 模态覆盖，不代表任意 native view 与普通 MoUI �
 ```sh
 moon test examples/deepseek_harness_desktop/app --target native
 moon check examples/deepseek_harness_desktop/macos_skia --target native
+moon check examples/deepseek_harness_desktop/windows_skia --target native
+moon check examples/deepseek_harness_desktop/linux_skia --target native
 ```
 
 Showcase 按主目录顺序组织：

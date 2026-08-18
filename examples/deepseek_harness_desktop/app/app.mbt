@@ -344,12 +344,7 @@ pub fn application_menus() -> Array[@services.ApplicationMenu] {
         edit_action_command(@views.CommandIntent::Undo, "Undo", "z"),
       ),
       @services.ApplicationMenuItem::MenuCommand(
-        edit_action_command(
-          @views.CommandIntent::Redo,
-          "Redo",
-          "z",
-          shift=true,
-        ),
+        edit_action_command(@views.CommandIntent::Redo, "Redo", "z", shift=true),
       ),
       @services.ApplicationMenuItem::MenuSeparator,
       @services.ApplicationMenuItem::MenuCommand(
@@ -363,11 +358,7 @@ pub fn application_menus() -> Array[@services.ApplicationMenu] {
       ),
       @services.ApplicationMenuItem::MenuSeparator,
       @services.ApplicationMenuItem::MenuCommand(
-        edit_action_command(
-          @views.CommandIntent::SelectAll,
-          "Select All",
-          "a",
-        ),
+        edit_action_command(@views.CommandIntent::SelectAll, "Select All", "a"),
       ),
     ]),
   ]

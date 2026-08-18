@@ -14,6 +14,7 @@
 - [ ] The MoUI dialog validates and persists HTTP(S) URLs; a changed URL applies immediately and same-URL Save leaves the existing page intact.
 - [ ] The modal scrim and dialog remain visible and interactive above WKWebView while the page remains visible behind them.
 - [ ] Closing the dialog restores WKWebView drawing and input.
+- [ ] Linux and Windows composition roots select the matching native WebView plugin and Skia provider route.
 - [ ] Focused app, views, runtime, services, macOS backend, WebView, API, and guidance checks pass.
 - [ ] Transparent-titlebar MoUI apps do not treat the full content surface as a window-drag region.
 
@@ -28,6 +29,7 @@
 | 2026-08-18 | Install standard DSH Edit commands as native key equivalents and dispatch focused-text commands through the macOS clipboard path; transparent titlebars no longer opt every drawn MoUI pixel into background window dragging. |
 | 2026-08-18 | When a native platform view owns AppKit first-responder status, dispatch standard Edit commands through its responder chain before falling back to MoUI text handling. |
 | 2026-08-18 | Intercept local Command key-down events after native menu installation, resolve exact menu-item key equivalents first, then fall back to `NSApp.mainMenu`; command shortcuts now take the same action path as clicked menu items even with the window event bridge installed. |
+| 2026-08-18 | Add Linux WebKitGTK and Windows WebView2 composition roots that use the Skia auto provider route and share the DSH navigation patch. |
 
 ## Progress
 
