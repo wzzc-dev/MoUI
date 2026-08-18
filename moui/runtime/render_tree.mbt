@@ -11,6 +11,21 @@ fn RenderNode::collect_draw_commands(
 }
 
 ///|
+/// Return the union of view-level overlay paint bounds. Native platform views
+/// may use this to expose the already-rendered overlay pixels above their own
+/// surface without introducing a second renderer.
+fn RenderNode::overlay_bounds(self : RenderNode) -> @core.Rect? {
+  let mut bounds : @core.Rect? = None
+  for command in self.overlay_paint_commands {
+    bounds = @core.optional_rect_union(bounds, command.bounds())
+  }
+  for child in self.children {
+    bounds = @core.optional_rect_union(bounds, child.overlay_bounds())
+  }
+  bounds
+}
+
+///|
 fn RenderNode::collect_frame_commands(
   self : RenderNode,
   commands : Array[DrawCommand],

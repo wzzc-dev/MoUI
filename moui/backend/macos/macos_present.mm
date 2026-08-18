@@ -2,16 +2,42 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <QuartzCore/QuartzCore.h>
 #import <moonbit.h>
+#import <objc/runtime.h>
 #import <stdint.h>
+
+@interface NSView (MOUIOverlayStateKey)
+- (BOOL)mouiOverlayActive;
+@end
+
+static BOOL moui_host_presenter_overlay_active(NSView *view) {
+  NSNumber *active = objc_getAssociatedObject(view, @selector(mouiOverlayActive));
+  return active.boolValue;
+}
 
 @interface MOUIHostPixelImageView : NSImageView
 @end
 
 @implementation MOUIHostPixelImageView
 - (NSView *)hitTest:(NSPoint)point {
-  return nil;
+  (void)point;
+  return moui_host_presenter_overlay_active(self) ? self.superview : nil;
 }
 @end
+
+@interface MOUIHostGpuSurfaceView : NSView
+@end
+
+@implementation MOUIHostGpuSurfaceView
+- (NSView *)hitTest:(NSPoint)point {
+  (void)point;
+  return moui_host_presenter_overlay_active(self) ? self.superview : nil;
+}
+@end
+
+static NSString *const kMouiHostPixelImageViewIdentifier =
+    @"moui_host_pixel_image_view";
+static NSString *const kMouiHostGpuSurfaceViewIdentifier =
+    @"moui_host_gpu_surface_view";
 
 extern "C" MOONBIT_FFI_EXPORT
 int32_t moui_macos_present_pixels_to_view(uint64_t raw_view,
@@ -51,7 +77,7 @@ int32_t moui_macos_present_pixels_to_view(uint64_t raw_view,
 
   MOUIHostPixelImageView *image_view = nil;
   for (NSView *subview in view.subviews) {
-    if ([subview.identifier isEqualToString:@"moui_host_pixel_image_view"] &&
+    if ([subview.identifier isEqualToString:kMouiHostPixelImageViewIdentifier] &&
         [subview isKindOfClass:[MOUIHostPixelImageView class]]) {
       image_view = (MOUIHostPixelImageView *)subview;
       break;
@@ -59,9 +85,12 @@ int32_t moui_macos_present_pixels_to_view(uint64_t raw_view,
   }
   if (image_view == nil) {
     image_view = [[MOUIHostPixelImageView alloc] initWithFrame:view.bounds];
-    image_view.identifier = @"moui_host_pixel_image_view";
+    image_view.identifier = kMouiHostPixelImageViewIdentifier;
     image_view.imageScaling = NSImageScaleAxesIndependently;
     image_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    image_view.wantsLayer = YES;
+    image_view.layer.opaque = NO;
+    image_view.layer.backgroundColor = NSColor.clearColor.CGColor;
     [view addSubview:image_view positioned:NSWindowAbove relativeTo:nil];
     [image_view release];
   }
@@ -82,23 +111,40 @@ uint64_t moui_macos_surface_layer_from_view(uint64_t raw_view,
   NSView *view = (__bridge NSView *)(void *)raw_view;
   if (view == nil) return 0;
 
-  view.wantsLayer = YES;
+  MOUIHostGpuSurfaceView *surface_view = nil;
+  for (NSView *subview in view.subviews) {
+    if ([subview.identifier isEqualToString:kMouiHostGpuSurfaceViewIdentifier] &&
+        [subview isKindOfClass:[MOUIHostGpuSurfaceView class]]) {
+      surface_view = (MOUIHostGpuSurfaceView *)subview;
+      break;
+    }
+  }
+  if (surface_view == nil) {
+    surface_view = [[MOUIHostGpuSurfaceView alloc] initWithFrame:view.bounds];
+    surface_view.identifier = kMouiHostGpuSurfaceViewIdentifier;
+    surface_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    surface_view.wantsLayer = YES;
+    [view addSubview:surface_view positioned:NSWindowAbove relativeTo:nil];
+    [surface_view release];
+  }
+  surface_view.frame = view.bounds;
+  surface_view.wantsLayer = YES;
   CAMetalLayer *layer = nil;
-  if ([view.layer isKindOfClass:[CAMetalLayer class]]) {
-    layer = (CAMetalLayer *)view.layer;
+  if ([surface_view.layer isKindOfClass:[CAMetalLayer class]]) {
+    layer = (CAMetalLayer *)surface_view.layer;
   }
   if (layer == nil) {
     layer = [CAMetalLayer layer];
     layer.name = @"moui_host_surface_layer";
-    view.layer = layer;
-    view.wantsLayer = YES;
+    surface_view.layer = layer;
+    surface_view.wantsLayer = YES;
   }
 
   double resolved_scale = scale_factor > 0.0
       ? scale_factor
       : view.window.backingScaleFactor;
   if (resolved_scale <= 0.0) resolved_scale = 1.0;
-  CGRect bounds = view.bounds;
+  CGRect bounds = surface_view.bounds;
   if (bounds.size.width <= 0.0 || bounds.size.height <= 0.0) {
     bounds = CGRectMake(0.0, 0.0,
                         width > 0 ? width / resolved_scale : 1.0,
@@ -111,6 +157,41 @@ uint64_t moui_macos_surface_layer_from_view(uint64_t raw_view,
   layer.drawableSize = CGSizeMake(
       width > 0 ? width : bounds.size.width * resolved_scale,
       height > 0 ? height : bounds.size.height * resolved_scale);
-  layer.opaque = YES;
+  // Full-surface platform-view frames keep this presenter transparent, while
+  // modal frames add translucent overlay pixels above the native view.
+  layer.opaque = NO;
+  layer.backgroundColor = NSColor.clearColor.CGColor;
   return (uint64_t)(uintptr_t)(__bridge void *)layer;
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+int32_t moui_macos_gpu_surface_presenter_test(void) {
+  @autoreleasepool {
+    NSView *parent = [[[NSView alloc]
+        initWithFrame:NSMakeRect(0.0, 0.0, 32.0, 24.0)] autorelease];
+    uint64_t raw_parent =
+        (uint64_t)(uintptr_t)(__bridge void *)parent;
+    uint64_t raw_layer =
+        moui_macos_surface_layer_from_view(raw_parent, 64, 48, 2.0);
+    NSView *presenter = nil;
+    for (NSView *subview in parent.subviews) {
+      if ([subview.identifier
+              isEqualToString:kMouiHostGpuSurfaceViewIdentifier]) {
+        presenter = subview;
+        break;
+      }
+    }
+    if (raw_layer == 0 || presenter == nil ||
+        ![presenter isKindOfClass:[MOUIHostGpuSurfaceView class]] ||
+        ![presenter.layer isKindOfClass:[CAMetalLayer class]] ||
+        presenter.layer.opaque ||
+        CGColorGetAlpha(presenter.layer.backgroundColor) != 0.0 ||
+        [presenter hitTest:NSMakePoint(1.0, 1.0)] != nil) {
+      return 0;
+    }
+    return raw_layer ==
+                   (uint64_t)(uintptr_t)(__bridge void *)presenter.layer
+               ? 1
+               : 0;
+  }
 }

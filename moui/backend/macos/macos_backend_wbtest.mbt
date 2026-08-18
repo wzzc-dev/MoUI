@@ -74,3 +74,28 @@ test "macos host options carry optional scene resolver and smoke options stay se
     _ => fail("expected configured macOS scene resolver")
   }
 }
+
+///|
+extern "C" fn macos_gpu_surface_presenter_test() -> Int = "moui_macos_gpu_surface_presenter_test"
+
+///|
+test "macOS GPU surface uses a transparent reorderable presenter sibling" {
+  assert_eq(macos_gpu_surface_presenter_test(), 1)
+}
+
+///|
+test "macOS platform view sync brackets native overlay transitions" {
+  let regular = @core.DrawFrame::new(
+    commands=[],
+    damage=@core.DamageRegion::empty(),
+  )
+  assert_true(macos_platform_views_sync_before_render(regular))
+  let overlay = @core.DrawFrame::new(
+    commands=[],
+    overlay_bounds=Some(
+      @core.Rect::new(x=0.0, y=0.0, width=320.0, height=200.0),
+    ),
+    damage=@core.DamageRegion::empty(),
+  )
+  assert_false(macos_platform_views_sync_before_render(overlay))
+}

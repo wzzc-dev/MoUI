@@ -52,6 +52,45 @@ test "skia render_frame full damage clears entire surface" {
 }
 
 ///|
+test "skia preserves transparent modal scrim pixels" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let result = renderer.render_frame(
+    @core.DrawFrame::new(
+      commands=[
+        @core.DrawCommand::FillRect(
+          @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+          @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.22),
+        ),
+      ],
+      damage=@core.DamageRegion::full("transparent modal scrim"),
+      clear_color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
+    ),
+  )
+  assert_true(result.presented)
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected transparent modal frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      (red, green, blue, alpha) => {
+        red == 0 && green == 0 && blue == 0 && alpha >= 55 && alpha <= 57
+      },
+    ),
+  )
+}
+
+///|
 test "skia render_frame rects damage clears only dirty rects" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)

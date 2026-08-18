@@ -48,13 +48,20 @@ pub fn AppearanceServices::system_color_scheme(Self) -> ServiceTask[@core.ColorS
 pub(all) struct ApplicationMenu {
   title : String
   items : Array[ApplicationMenuItem]
+  placement : ApplicationMenuPlacement
 }
-pub fn ApplicationMenu::new(title~ : String, items~ : Array[ApplicationMenuItem]) -> Self
+pub fn ApplicationMenu::application(items~ : Array[ApplicationMenuItem]) -> Self
+pub fn ApplicationMenu::new(title~ : String, items~ : Array[ApplicationMenuItem], placement? : ApplicationMenuPlacement) -> Self
 
 pub(all) enum ApplicationMenuItem {
   MenuCommand(@core.ActionCommand)
   MenuSeparator
 }
+
+pub(all) enum ApplicationMenuPlacement {
+  MenuBar
+  ApplicationMenu
+} derive(Eq, @debug.Debug)
 
 pub(all) struct ClipboardImage {
   mime_type : String

@@ -80,6 +80,29 @@ extern "C" fn macos_file_dialog_bytes(
 extern "C" fn macos_show_menu_bytes(commands : Bytes) -> Int = "moui_macos_show_menu"
 
 ///|
+#borrow(payload, call_closure)
+#owned(callback)
+extern "C" fn macos_install_application_menu_items(
+  payload : Bytes,
+  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
+  callback : (Int) -> Unit,
+) -> Int = "moui_macos_install_application_menu_items"
+
+///|
+#borrow(payload, call_closure, callback)
+extern "C" fn macos_bind_menu_bar_items(
+  payload : Bytes,
+  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
+  callback : (Int) -> Unit,
+) -> Int = "moui_macos_bind_menu_bar_items"
+
+///|
+extern "C" fn macos_dispatch_first_responder_edit_action(action : Int) -> Int = "moui_macos_dispatch_first_responder_edit_action"
+
+///|
+extern "C" fn macos_install_application_menu_key_equivalent_monitor() -> Int = "moui_macos_install_application_menu_key_equivalent_monitor"
+
+///|
 
 ///|
 pub fn backend_info() -> MacosBackendInfo {
@@ -250,13 +273,88 @@ pub fn application_menu_on_ready(
 ) -> () -> Unit {
   () => {
     let commands = macos_application_menu_commands(menus)
-    @window_macos.set_system_menu_action_handler(fn(action_id : Int) {
+    let dispatch = fn(action_id : Int) {
       match commands.get(action_id - 1) {
-        Some(command) => ignore(runtime.dispatch_action_command(command))
+        Some(command) => dispatch_macos_application_command(runtime, command)
         None => ()
       }
-    })
+    }
+    @window_macos.set_system_menu_action_handler(dispatch)
     @window_macos.set_system_menus(macos_application_menu_descriptors(menus))
+    ignore(
+      bind_macos_menu_bar_items(
+        macos_application_menu_bar_items(menus),
+        dispatch,
+      ),
+    )
+    ignore(
+      install_macos_application_menu_items(
+        macos_application_menu_items(menus),
+        dispatch,
+      ),
+    )
+    ignore(macos_install_application_menu_key_equivalent_monitor())
+  }
+}
+
+///|
+fn dispatch_macos_application_command(
+  runtime : @runtime.AppRuntime,
+  command : @core.ActionCommand,
+) -> Unit {
+  let focused_text = runtime.focused_text_input().focused
+  if !focused_text && dispatch_macos_native_edit_command(command.intent) {
+    return ()
+  }
+  if focused_text {
+    match command.intent {
+      @core.CommandIntent::Copy | @core.CommandIntent::Cut => {
+        let result = runtime.dispatch_focused_text_command(command.intent)
+        match result.clipboard_text {
+          Some(text) => ignore(macos_clipboard_write_text(text))
+          None => ()
+        }
+        return ()
+      }
+      @core.CommandIntent::Paste => {
+        match macos_clipboard_read_text() {
+          Some(text) =>
+            ignore(
+              runtime.dispatch_focused_text_command(
+                @core.CommandIntent::Paste,
+                paste_text=Some(text),
+              ),
+            )
+          None => ()
+        }
+        return ()
+      }
+      @core.CommandIntent::Undo
+      | @core.CommandIntent::Redo
+      | @core.CommandIntent::SelectAll => {
+        ignore(runtime.dispatch_command(command.intent))
+        return ()
+      }
+      _ => ()
+    }
+  }
+  ignore(runtime.dispatch_action_command(command))
+}
+
+///|
+fn dispatch_macos_native_edit_command(intent : @core.CommandIntent) -> Bool {
+  let action = match intent {
+    @core.CommandIntent::Copy => Some(0)
+    @core.CommandIntent::Cut => Some(1)
+    @core.CommandIntent::Paste => Some(2)
+    @core.CommandIntent::Undo => Some(3)
+    @core.CommandIntent::Redo => Some(4)
+    @core.CommandIntent::SelectAll => Some(5)
+    _ => None
+  }
+  match action {
+    Some(code) => macos_dispatch_first_responder_edit_action(code) != 0
+    None => false
   }
 }
 
@@ -281,39 +379,161 @@ fn macos_application_menu_commands(
 fn macos_application_menu_descriptors(
   menus : Array[@services.ApplicationMenu],
 ) -> Array[@window_macos.SystemMenuDescriptor] {
+  let descriptors : Array[@window_macos.SystemMenuDescriptor] = []
   let next_action_id = Ref(1)
-  menus.map(menu => {
+  for menu in menus {
+    let in_menu_bar = menu.placement
+      is @services.ApplicationMenuPlacement::MenuBar
     let items : Array[@window_macos.SystemMenuItemDescriptor] = []
     for item in menu.items {
       match item {
         @services.ApplicationMenuItem::MenuSeparator =>
-          items.push(
-            @window_macos.SystemMenuItemDescriptor::new(
-              title="",
-              action_id=0,
-              key_equivalent="",
-              key_modifier_mask=-1,
-              separator=true,
-            ),
-          )
+          if in_menu_bar {
+            items.push(
+              @window_macos.SystemMenuItemDescriptor::new(
+                title="",
+                action_id=0,
+                key_equivalent="",
+                key_modifier_mask=-1,
+                separator=true,
+              ),
+            )
+          }
         @services.ApplicationMenuItem::MenuCommand(command) => {
           let action_id = next_action_id.val
           next_action_id.val = action_id + 1
-          let (key, modifiers) = macos_application_menu_shortcut(command)
-          items.push(
-            @window_macos.SystemMenuItemDescriptor::new(
-              title=command.display_label(),
-              action_id~,
-              key_equivalent=key,
-              key_modifier_mask=modifiers,
-              separator=false,
-            ),
-          )
+          if in_menu_bar {
+            let (key, modifiers) = macos_application_menu_shortcut(command)
+            items.push(
+              @window_macos.SystemMenuItemDescriptor::new(
+                title=command.display_label(),
+                action_id~,
+                key_equivalent=key,
+                key_modifier_mask=modifiers,
+                separator=false,
+              ),
+            )
+          }
         }
       }
     }
-    @window_macos.SystemMenuDescriptor::new(title=menu.title, items~)
-  })
+    if in_menu_bar {
+      descriptors.push(
+        @window_macos.SystemMenuDescriptor::new(title=menu.title, items~),
+      )
+    }
+  }
+  descriptors
+}
+
+///|
+fn macos_application_menu_items(
+  menus : Array[@services.ApplicationMenu],
+) -> Array[@host.HostApplicationMenuItem] {
+  let result : Array[@host.HostApplicationMenuItem] = []
+  let next_action_id = Ref(1)
+  for menu in menus {
+    let in_application_menu = menu.placement
+      is @services.ApplicationMenuPlacement::ApplicationMenu
+    for item in menu.items {
+      match item {
+        @services.ApplicationMenuItem::MenuSeparator =>
+          if in_application_menu {
+            result.push(@host.HostApplicationMenuItem::separator())
+          }
+        @services.ApplicationMenuItem::MenuCommand(command) => {
+          let action_id = next_action_id.val
+          next_action_id.val = action_id + 1
+          if in_application_menu {
+            let (key, modifiers) = macos_application_menu_shortcut(command)
+            result.push(
+              @host.HostApplicationMenuItem::new(
+                title=command.display_label(),
+                action_id~,
+                key_equivalent=key,
+                key_modifier_mask=modifiers,
+                enabled=command.enabled,
+              ),
+            )
+          }
+        }
+      }
+    }
+  }
+  result
+}
+
+///|
+fn macos_application_menu_bar_items(
+  menus : Array[@services.ApplicationMenu],
+) -> Array[@host.HostApplicationMenu] {
+  let result : Array[@host.HostApplicationMenu] = []
+  let next_action_id = Ref(1)
+  for menu in menus {
+    let items : Array[@host.HostApplicationMenuItem] = []
+    for item in menu.items {
+      match item {
+        @services.ApplicationMenuItem::MenuSeparator =>
+          if menu.placement is @services.ApplicationMenuPlacement::MenuBar {
+            items.push(@host.HostApplicationMenuItem::separator())
+          }
+        @services.ApplicationMenuItem::MenuCommand(command) => {
+          let action_id = next_action_id.val
+          next_action_id.val = action_id + 1
+          if menu.placement is @services.ApplicationMenuPlacement::MenuBar {
+            let (key, modifiers) = macos_application_menu_shortcut(command)
+            items.push(
+              @host.HostApplicationMenuItem::new(
+                title=command.display_label(),
+                action_id~,
+                key_equivalent=key,
+                key_modifier_mask=modifiers,
+                enabled=command.enabled,
+              ),
+            )
+          }
+        }
+      }
+    }
+    if menu.placement is @services.ApplicationMenuPlacement::MenuBar {
+      result.push(
+        @host.HostApplicationMenu::new(
+          title=menu.title,
+          items~,
+          placement=@host.HostApplicationMenuPlacement::MenuBar,
+        ),
+      )
+    }
+  }
+  result
+}
+
+///|
+fn bind_macos_menu_bar_items(
+  menus : Array[@host.HostApplicationMenu],
+  dispatch : (Int) -> Unit,
+) -> Bool {
+  let text = (menus.to_json() : Json).stringify()
+  macos_bind_menu_bar_items(
+    @utf8.encode(text[:], bom=false),
+    fn(callback, action_id) { callback(action_id) },
+    dispatch,
+  ) !=
+  0
+}
+
+///|
+fn install_macos_application_menu_items(
+  items : Array[@host.HostApplicationMenuItem],
+  dispatch : (Int) -> Unit,
+) -> Bool {
+  let text = (items.to_json() : Json).stringify()
+  macos_install_application_menu_items(
+    @utf8.encode(text[:], bom=false),
+    fn(callback, action_id) { callback(action_id) },
+    dispatch,
+  ) !=
+  0
 }
 
 ///|
@@ -346,24 +566,32 @@ fn dispatch_macos_application_menu(
   menus : Array[@host.HostApplicationMenu],
 ) -> @host.HostServiceResponse {
   let descriptors : Array[@window_macos.SystemMenuDescriptor] = []
+  let application_items : Array[@host.HostApplicationMenuItem] = []
   for menu in menus {
-    let items : Array[@window_macos.SystemMenuItemDescriptor] = []
-    for item in menu.items {
-      items.push(
-        @window_macos.SystemMenuItemDescriptor::new(
-          title=item.title,
-          action_id=item.action_id,
-          key_equivalent=item.key_equivalent,
-          key_modifier_mask=item.key_modifier_mask,
-          separator=item.separator,
-        ),
-      )
+    match menu.placement {
+      @host.HostApplicationMenuPlacement::MenuBar => {
+        let items : Array[@window_macos.SystemMenuItemDescriptor] = []
+        for item in menu.items {
+          items.push(
+            @window_macos.SystemMenuItemDescriptor::new(
+              title=item.title,
+              action_id=item.action_id,
+              key_equivalent=item.key_equivalent,
+              key_modifier_mask=item.key_modifier_mask,
+              separator=item.separator,
+            ),
+          )
+        }
+        descriptors.push(
+          @window_macos.SystemMenuDescriptor::new(title=menu.title, items~),
+        )
+      }
+      @host.HostApplicationMenuPlacement::ApplicationMenu =>
+        application_items.append(menu.items)
     }
-    descriptors.push(
-      @window_macos.SystemMenuDescriptor::new(title=menu.title, items~),
-    )
   }
   @window_macos.set_system_menus(descriptors)
+  ignore(install_macos_application_menu_items(application_items, _ => ()))
   @host.HostServiceResponse::ApplicationMenuInstalled
 }
 

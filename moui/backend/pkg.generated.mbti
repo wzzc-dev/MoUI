@@ -45,8 +45,9 @@ pub fn HostAppInfo::new(backend~ : HostBackendKind, description? : String, uses_
 pub(all) struct HostApplicationMenu {
   title : String
   items : Array[HostApplicationMenuItem]
+  placement : HostApplicationMenuPlacement
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostApplicationMenu::new(title~ : String, items~ : Array[HostApplicationMenuItem]) -> Self
+pub fn HostApplicationMenu::new(title~ : String, items~ : Array[HostApplicationMenuItem], placement? : HostApplicationMenuPlacement) -> Self
 
 pub(all) struct HostApplicationMenuItem {
   title : String
@@ -58,6 +59,11 @@ pub(all) struct HostApplicationMenuItem {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostApplicationMenuItem::new(title~ : String, action_id~ : Int, key_equivalent? : String, key_modifier_mask? : Int, separator? : Bool, enabled? : Bool) -> Self
 pub fn HostApplicationMenuItem::separator() -> Self
+
+pub(all) enum HostApplicationMenuPlacement {
+  MenuBar
+  ApplicationMenu
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum HostBackendKind {
   Native

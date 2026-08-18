@@ -1,0 +1,65 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/dsh_desktop/app"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui_webview/host",
+}
+
+// Values
+pub fn application_menus() -> Array[@services.ApplicationMenu]
+
+pub let default_url : String
+
+pub fn normalize_request_url(String) -> String?
+
+pub fn program(capability~ : WebViewCapability, environment? : @services.AppEnvironment, url? : String, on_navigation_finished? : (String) -> Unit) -> @core.Program[Model, Msg]
+
+pub let request_url_settings_key : String
+
+pub fn settings_action_command() -> @core.ActionCommand
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  url : String
+  configured_url : String
+  title : String
+  status : String
+  web_view_available : Bool
+  web_view_description : String
+  settings_ready : Bool
+  settings_presented : Bool
+  request_url_input : String
+  settings_error : String
+  settings_saving : Bool
+}
+pub fn Model::new(capability~ : WebViewCapability, url? : String) -> Self
+
+pub(all) enum Msg {
+  WebViewEvent(@host.WebViewEvent)
+  SettingsLoaded(@services.ServiceTaskResult[String?])
+  OpenSettings
+  RequestUrlChanged(String)
+  SaveSettings
+  CancelSettings
+  SettingsBackdropPressed
+  SettingsSaved(String, @services.ServiceTaskResult[Unit])
+}
+
+pub(all) struct WebViewCapability {
+  available : Bool
+  description : String
+}
+pub fn WebViewCapability::available(description? : String) -> Self
+pub fn WebViewCapability::unavailable(description? : String) -> Self
+
+// Type aliases
+
+// Traits

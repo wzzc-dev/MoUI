@@ -309,6 +309,12 @@ fn app_menu_to_host(
   menus.map(menu => {
     @backend_host.HostApplicationMenu::new(
       title=menu.title,
+      placement=match menu.placement {
+        @app_services.ApplicationMenuPlacement::MenuBar =>
+          @backend_host.HostApplicationMenuPlacement::MenuBar
+        @app_services.ApplicationMenuPlacement::ApplicationMenu =>
+          @backend_host.HostApplicationMenuPlacement::ApplicationMenu
+      },
       items=menu.items.map(item => {
         match item {
           @app_services.ApplicationMenuItem::MenuSeparator =>

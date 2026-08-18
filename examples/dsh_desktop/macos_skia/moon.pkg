@@ -1,9 +1,12 @@
 import {
-  "wzzc-dev/moui/runtime",
+  "moonbitlang/x/fs",
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui_skia_renderer" @render_skia,
-  "wzzc-dev/window/dpi",
-  "examples/markdown_editor",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui_webview/backend/macos" @macos_webview,
+  "wzzc-dev/moui_webview/host" @webview_host,
+  "examples/dsh_desktop/app",
 }
 
 supported_targets = "native"
