@@ -15,8 +15,8 @@ MoUI uses one machine-readable platform-route matrix with three support tiers:
 Support tier, L0-L3 evidence, and product readiness are independent. Tier 3 is
 non-blocking and does not promote experimental or diagnostic routes.
 
-Showcase is the only example that carries the complete route matrix. Other
-product examples keep only applicable Tier 1 entrypoints. A platform/renderer
+Showcase carries the complete route matrix, while product examples may expose
+additional routes that are present in the matrix. A platform/renderer
 combination outside the matrix requires a follow-up RFC.
 
 ## TEA Boundary

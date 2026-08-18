@@ -15,7 +15,7 @@ test "text input session enables updates and disables ime requests" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=10.0, y=10.0),
+        position=@core.Point::new(x=110.0, y=10.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
