@@ -1,6 +1,6 @@
 # DSH Desktop
 
-`dsh_desktop` is a thin native MoUI window for DeepSeek Harness. DSH owns the
+`deepseek_harness_desktop` is a thin native MoUI window for DeepSeek Harness. DSH owns the
 product UI and state; this example only embeds the local Harness surface in a
 controlled `moui_webview` platform view and reports a clear fallback when the
 native WebView is unavailable.
@@ -11,7 +11,7 @@ WKWebView plugin, Skia renderer, and native host.
 Run the native prototype on macOS with:
 
 ```sh
-moon run examples/dsh_desktop/macos_skia --target native
+moon run examples/deepseek_harness_desktop/macos_skia --target native
 ```
 
 The default surface is `http://127.0.0.1:3080`, matching a local DSH host.

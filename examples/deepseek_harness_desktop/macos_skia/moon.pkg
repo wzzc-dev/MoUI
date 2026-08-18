@@ -6,7 +6,7 @@ import {
   "wzzc-dev/moui/services",
   "wzzc-dev/moui_webview/backend/macos" @macos_webview,
   "wzzc-dev/moui_webview/host" @webview_host,
-  "examples/dsh_desktop/app",
+  "examples/deepseek_harness_desktop/app",
 }
 
 supported_targets = "native"

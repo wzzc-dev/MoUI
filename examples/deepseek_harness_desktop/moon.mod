@@ -1,4 +1,4 @@
-name = "examples/dsh_desktop"
+name = "examples/deepseek_harness_desktop"
 
 version = "0.1.0"
 
