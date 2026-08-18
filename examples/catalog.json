@@ -19,7 +19,7 @@
     {"id": "code_editor", "path": "examples/code_editor", "title": "Code Editor", "featured": false},
     {"id": "browser", "path": "examples/browser", "title": "Browser", "featured": false},
     {"id": "webview_demo", "path": "examples/webview_demo", "title": "WebView Demo", "featured": false},
-    {"id": "dsh_desktop", "path": "examples/dsh_desktop", "title": "DSH Desktop", "featured": true},
+    {"id": "deepseek_harness_desktop", "path": "examples/deepseek_harness_desktop", "title": "DSH Desktop", "featured": true},
     {"id": "excel", "path": "examples/excel", "title": "Excel Viewer", "featured": true},
     {"id": "terminal", "path": "examples/terminal", "title": "Terminal", "featured": true}
   ]

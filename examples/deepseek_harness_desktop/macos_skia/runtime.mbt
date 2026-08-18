@@ -32,7 +32,7 @@ pub fn application_menus() -> Array[@services.ApplicationMenu] {
 fn run_macos() -> Unit {
   let commands = @webview_host.HostWebViewCommandQueue::new()
   let patch = @fs.read_file_to_string(
-    "examples/dsh_desktop/macos_skia/patch.js",
+    "examples/deepseek_harness_desktop/macos_skia/patch.js",
   ) catch {
     _ => ""
   }

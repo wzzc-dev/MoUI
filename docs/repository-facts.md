@@ -44,7 +44,7 @@ This file is generated from repository manifests and validator reports.
 | ./examples/mo_workbench |
 | ./examples/code_editor |
 | ./examples/webview_demo |
-| ./examples/dsh_desktop |
+| ./examples/deepseek_harness_desktop |
 | ./examples/browser |
 | ./examples/terminal |
 | ./benchmarks/app_cached_layer |
@@ -101,7 +101,7 @@ This file is generated from repository manifests and validator reports.
 | Mo Workbench | examples/mo_workbench | yes |
 | Code Editor | examples/code_editor | no |
 | WebView Demo | examples/webview_demo | no |
-| DSH Desktop | examples/dsh_desktop | yes |
+| DSH Desktop | examples/deepseek_harness_desktop | yes |
 | Browser | examples/browser | no |
 | Terminal | examples/terminal | yes |
 

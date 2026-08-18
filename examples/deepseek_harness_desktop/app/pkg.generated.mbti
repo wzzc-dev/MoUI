@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "examples/dsh_desktop/app"
+package "examples/deepseek_harness_desktop/app"
 
 import {
   "wzzc-dev/moui/core",
