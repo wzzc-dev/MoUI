@@ -9,7 +9,26 @@ test "dsh desktop emits native placement for the local Harness surface" {
   inspect(frame.platform_views.length(), content="1")
   inspect(frame.platform_views[0].id, content="dsh-desktop-surface")
   inspect(frame.platform_views[0].property_or("url", ""), content=default_url)
-  assert_true(frame.overlay_bounds is None)
+  assert_true(
+    frame.commands.any(command => {
+      match command {
+        @core.DrawCommand::FillRoundedRect(_, color) =>
+          color == @core.Color::rgba(r=0.302, g=0.420, b=0.996, a=1.0)
+        @core.DrawCommand::FillRoundedRectBrush(_, @core.Brush::Solid(color)) =>
+          color == @core.Color::rgba(r=0.302, g=0.420, b=0.996, a=1.0)
+        _ => false
+      }
+    }),
+  )
+  match frame.overlay_bounds {
+    Some(bounds) => {
+      // The marker must carry the button's absolute window position through
+      // to native WebView hit testing, not its local 0,0 origin.
+      assert_true(bounds.origin.x > 1200.0)
+      assert_true(bounds.origin.y <= 1.0)
+    }
+    None => fail("expected floating button overlay bounds")
+  }
   assert_true(
     frame.clear_color == @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
   )
@@ -37,6 +56,280 @@ test "dsh desktop tracks WebView lifecycle without duplicating Web state" {
   )
   inspect(loaded.status, content="ready")
   inspect(loaded.url, content=default_url)
+}
+
+///|
+test "dsh desktop switches between Harness and Chat roots" {
+  let initial = Model::new(capability=WebViewCapability::available())
+  let ready = update(
+    update(initial, SettingsLoaded(@services.ServiceTaskResult::Success(None))),
+    ChatSettingsLoaded(@services.ServiceTaskResult::Success(None)),
+  )
+  assert_true(ready.active_site == Site::Harness)
+  let chat = update(ready, SwitchSite)
+  assert_true(chat.active_site == Site::Chat)
+  inspect(chat.url, content=default_chat_url)
+  let harness = update(chat, SwitchSite)
+  assert_true(harness.active_site == Site::Harness)
+  inspect(harness.url, content=default_url)
+}
+
+///|
+test "dsh desktop secondary floating tap opens settings" {
+  let model = update(
+    Model::new(capability=WebViewCapability::available()),
+    FloatingSecondaryTap,
+  )
+  assert_true(model.settings_presented)
+}
+
+///|
+test "dsh desktop floating button receives primary pointer input" {
+  let runtime = test_runtime(
+    program(capability=WebViewCapability::available()),
+    width=1280.0,
+    height=820.0,
+  )
+  ignore(runtime.draw_frame())
+  let button = test_semantics_node(
+    runtime,
+    role=@core.SemanticsRole::Button,
+    label=Some("Switch DeepSeek site"),
+  )
+  inspect(button.frame.size.width, content="52")
+  inspect(button.frame.size.height, content="52")
+  inspect(button.frame.origin.x, content="1228")
+  let before_click = runtime.draw_frame()
+  let before_bounds = match before_click.overlay_bounds {
+    Some(bounds) => bounds
+    None => abort("expected floating button overlay bounds")
+  }
+  test_click_node(runtime, button)
+  let switched_frame = runtime.draw_frame()
+  inspect(
+    switched_frame.platform_views[0].property_or("url", ""),
+    content=default_chat_url,
+  )
+  // A click must release the drag recognizer. A later hover move must not
+  // move the button or leave the native WebView exclusion rectangle behind.
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=button.frame.origin.x + button.frame.size.width + 24.0,
+          y=button.frame.origin.y + button.frame.size.height / 2.0,
+        ),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  let after_move = runtime.draw_frame()
+  match after_move.overlay_bounds {
+    Some(bounds) => assert_true(bounds == before_bounds)
+    None => fail("expected floating button overlay bounds after hover")
+  }
+  let snapshot = runtime.read_semantics()
+  ignore(snapshot)
+}
+
+///|
+test "dsh desktop floating button keeps a free position away from edges" {
+  let model = Model::new(capability=WebViewCapability::available())
+  let moved = update(
+    model,
+    FloatingDragged({
+      phase: @core.DragGesturePhase::Started,
+      start: @core.Point::new(x=0.0, y=0.0),
+      position: @core.Point::new(x=900.0, y=180.0),
+      delta: @core.Point::new(x=-120.0, y=40.0),
+      translation: @core.Point::new(x=-120.0, y=40.0),
+    }),
+  )
+  let free = update(
+    moved,
+    FloatingDragged({
+      phase: @core.DragGesturePhase::Changed,
+      start: @core.Point::new(x=0.0, y=0.0),
+      position: @core.Point::new(x=700.0, y=220.0),
+      delta: @core.Point::new(x=-200.0, y=40.0),
+      translation: @core.Point::new(x=-320.0, y=80.0),
+    }),
+  )
+  let settled = update(
+    free,
+    FloatingDragged({
+      phase: @core.DragGesturePhase::Ended,
+      start: @core.Point::new(x=0.0, y=0.0),
+      position: @core.Point::new(x=700.0, y=220.0),
+      delta: @core.Point::new(x=0.0, y=0.0),
+      translation: @core.Point::new(x=-320.0, y=80.0),
+    }),
+  )
+  assert_false(settled.floating_left)
+  assert_false(settled.floating_collapsed)
+  inspect(settled.floating_x, content="-320")
+  inspect(settled.floating_y, content="80")
+}
+
+///|
+test "dsh desktop floating button docks and leaves a visible edge tab" {
+  let model = Model::new(capability=WebViewCapability::available())
+  let moved = update(
+    model,
+    FloatingDragged({
+      phase: @core.DragGesturePhase::Started,
+      start: @core.Point::new(x=1220.0, y=100.0),
+      position: @core.Point::new(x=800.0, y=120.0),
+      delta: @core.Point::new(x=-420.0, y=20.0),
+      translation: @core.Point::new(x=-420.0, y=20.0),
+    }),
+  )
+  let docked = update(
+    moved,
+    FloatingDragged({
+      phase: @core.DragGesturePhase::Ended,
+      start: @core.Point::new(x=1220.0, y=100.0),
+      position: @core.Point::new(x=6.0, y=120.0),
+      delta: @core.Point::new(x=0.0, y=0.0),
+      translation: @core.Point::new(x=-1214.0, y=20.0),
+    }),
+  )
+  assert_true(docked.floating_left)
+  assert_true(docked.floating_collapsed)
+  inspect(docked.floating_x, content="0")
+  let expanded = update(docked, FloatingSecondaryTap)
+  assert_false(expanded.floating_collapsed)
+  assert_true(expanded.settings_presented)
+}
+
+///|
+test "dsh desktop drag keeps the native overlay at the free position" {
+  let runtime = test_runtime(
+    program(capability=WebViewCapability::available()),
+    width=1280.0,
+    height=820.0,
+  )
+  ignore(runtime.draw_frame())
+  let button = test_semantics_node(
+    runtime,
+    role=@core.SemanticsRole::Button,
+    label=Some("Switch DeepSeek site"),
+  )
+  let start = @core.Point::new(
+    x=button.frame.origin.x + button.frame.size.width / 2.0,
+    y=button.frame.origin.y + button.frame.size.height / 2.0,
+  )
+  let finish = @core.Point::new(x=start.x - 320.0, y=start.y + 180.0)
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(position=start, phase=@core.PointerPhase::Down),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(position=finish, phase=@core.PointerPhase::Move),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(position=finish, phase=@core.PointerPhase::Up),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  let after = test_semantics_node(
+    runtime,
+    role=@core.SemanticsRole::Button,
+    label=Some("Switch DeepSeek site"),
+  )
+  inspect(after.frame.origin.x, content="908")
+  inspect(after.frame.origin.y, content="180")
+  match runtime.draw_frame().overlay_bounds {
+    Some(bounds) => {
+      inspect(bounds.origin.x, content="907")
+      inspect(bounds.origin.y, content="179")
+    }
+    None => fail("expected free floating overlay bounds")
+  }
+}
+
+///|
+test "dsh desktop can dock from either side using the viewport" {
+  let model = Model::new(capability=WebViewCapability::available())
+  let left_docked = update(
+    model,
+    FloatingDraggedInViewport(
+      {
+        phase: @core.DragGesturePhase::Ended,
+        start: @core.Point::new(x=26.0, y=120.0),
+        position: @core.Point::new(x=4.0, y=120.0),
+        delta: @core.Point::new(x=0.0, y=0.0),
+        translation: @core.Point::new(x=-22.0, y=0.0),
+      },
+      1280.0,
+      820.0,
+    ),
+  )
+  let left_moved = update(
+    left_docked,
+    FloatingDraggedInViewport(
+      {
+        phase: @core.DragGesturePhase::Started,
+        start: @core.Point::new(x=8.0, y=120.0),
+        position: @core.Point::new(x=464.0, y=120.0),
+        delta: @core.Point::new(x=456.0, y=0.0),
+        translation: @core.Point::new(x=456.0, y=0.0),
+      },
+      1280.0,
+      820.0,
+    ),
+  )
+  let left_free = update(
+    left_moved,
+    FloatingDraggedInViewport(
+      {
+        phase: @core.DragGesturePhase::Ended,
+        start: @core.Point::new(x=8.0, y=120.0),
+        position: @core.Point::new(x=464.0, y=120.0),
+        delta: @core.Point::new(x=0.0, y=0.0),
+        translation: @core.Point::new(x=456.0, y=0.0),
+      },
+      1280.0,
+      820.0,
+    ),
+  )
+  let right_docked = update(
+    left_free,
+    FloatingDraggedInViewport(
+      {
+        phase: @core.DragGesturePhase::Ended,
+        start: @core.Point::new(x=446.0, y=120.0),
+        position: @core.Point::new(x=1276.0, y=120.0),
+        delta: @core.Point::new(x=0.0, y=0.0),
+        translation: @core.Point::new(x=830.0, y=0.0),
+      },
+      1280.0,
+      820.0,
+    ),
+  )
+  assert_false(right_docked.floating_left)
+  assert_true(right_docked.floating_collapsed)
+  let right_free = update(
+    right_docked,
+    FloatingDraggedInViewport(
+      {
+        phase: @core.DragGesturePhase::Started,
+        start: @core.Point::new(x=1276.0, y=120.0),
+        position: @core.Point::new(x=1076.0, y=120.0),
+        delta: @core.Point::new(x=-200.0, y=0.0),
+        translation: @core.Point::new(x=-200.0, y=0.0),
+      },
+      1280.0,
+      820.0,
+    ),
+  )
+  assert_false(right_free.floating_collapsed)
+  inspect(right_docked.floating_x, content="0")
+  inspect(right_free.floating_x, content="-164")
 }
 
 ///|
@@ -251,7 +544,7 @@ test "settings dialog accepts pointer editing cancel and save" {
       label=Some("Cancel"),
     ),
   )
-  assert_true(runtime.draw_frame().overlay_bounds is None)
+  assert_true(runtime.draw_frame().overlay_bounds is Some(_))
 
   assert_true(runtime.dispatch_action_command(command))
   ignore(runtime.draw_frame())
@@ -277,7 +570,7 @@ test "settings dialog accepts pointer editing cancel and save" {
     ),
   )
   let saved_frame = runtime.draw_frame()
-  assert_true(saved_frame.overlay_bounds is None)
+  assert_true(saved_frame.overlay_bounds is Some(_))
   inspect(
     saved_frame.platform_views[0].property_or("url", ""),
     content=next_url,

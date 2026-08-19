@@ -7,11 +7,20 @@
 
 @interface NSView (MOUIOverlayStateKey)
 - (BOOL)mouiOverlayActive;
+- (NSValue *)mouiOverlayRect;
 @end
 
-static BOOL moui_host_presenter_overlay_active(NSView *view) {
+static BOOL moui_host_presenter_overlay_contains(NSView *view, NSPoint point) {
+  NSView *parent = view.superview;
   NSNumber *active = objc_getAssociatedObject(view, @selector(mouiOverlayActive));
-  return active.boolValue;
+  NSValue *value = objc_getAssociatedObject(parent, @selector(mouiOverlayRect));
+  if (!active.boolValue || value == nil || parent == nil) {
+    return NO;
+  }
+  // `hitTest:` supplies presenter-local coordinates, while the runtime stores
+  // overlay bounds in the parent content-view coordinate space.
+  NSPoint parent_point = [view convertPoint:point toView:parent];
+  return NSPointInRect(parent_point, value.rectValue);
 }
 
 @interface MOUIHostPixelImageView : NSImageView
@@ -19,8 +28,7 @@ static BOOL moui_host_presenter_overlay_active(NSView *view) {
 
 @implementation MOUIHostPixelImageView
 - (NSView *)hitTest:(NSPoint)point {
-  (void)point;
-  return moui_host_presenter_overlay_active(self) ? self.superview : nil;
+  return moui_host_presenter_overlay_contains(self, point) ? self.superview : nil;
 }
 @end
 
@@ -29,8 +37,7 @@ static BOOL moui_host_presenter_overlay_active(NSView *view) {
 
 @implementation MOUIHostGpuSurfaceView
 - (NSView *)hitTest:(NSPoint)point {
-  (void)point;
-  return moui_host_presenter_overlay_active(self) ? self.superview : nil;
+  return moui_host_presenter_overlay_contains(self, point) ? self.superview : nil;
 }
 @end
 
@@ -38,6 +45,15 @@ static NSString *const kMouiHostPixelImageViewIdentifier =
     @"moui_host_pixel_image_view";
 static NSString *const kMouiHostGpuSurfaceViewIdentifier =
     @"moui_host_gpu_surface_view";
+
+@interface MOUITestFlippedView : NSView
+@end
+
+@implementation MOUITestFlippedView
+- (BOOL)isFlipped {
+  return YES;
+}
+@end
 
 extern "C" MOONBIT_FFI_EXPORT
 int32_t moui_macos_present_pixels_to_view(uint64_t raw_view,
@@ -193,5 +209,32 @@ int32_t moui_macos_gpu_surface_presenter_test(void) {
                    (uint64_t)(uintptr_t)(__bridge void *)presenter.layer
                ? 1
                : 0;
+  }
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+int32_t moui_macos_gpu_surface_partial_overlay_hit_test(void) {
+  @autoreleasepool {
+    NSView *parent = [[[MOUITestFlippedView alloc]
+        initWithFrame:NSMakeRect(0.0, 0.0, 100.0, 80.0)] autorelease];
+    MOUIHostGpuSurfaceView *presenter =
+        [[[MOUIHostGpuSurfaceView alloc]
+            initWithFrame:NSMakeRect(10.0, 10.0, 80.0, 60.0)] autorelease];
+    [parent addSubview:presenter];
+    objc_setAssociatedObject(
+        presenter, @selector(mouiOverlayActive), @YES,
+        OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(
+        parent, @selector(mouiOverlayRect),
+        [NSValue valueWithRect:NSMakeRect(12.0, 12.0, 20.0, 20.0)],
+        OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    // The presenter intentionally keeps AppKit's default (bottom-left)
+    // coordinate system while its flipped parent uses top-left coordinates.
+    // A top-left parent point (12,12) therefore arrives at presenter-local
+    // y=58, and convertPoint: must map it back before the bounds check.
+    BOOL inside = [presenter hitTest:NSMakePoint(2.0, 58.0)] == parent;
+    BOOL outside = [presenter hitTest:NSMakePoint(0.0, 60.0)] == nil;
+    BOOL parent_inside = [parent hitTest:NSMakePoint(12.0, 12.0)] == parent;
+    return inside && outside && parent_inside ? 1 : 0;
   }
 }

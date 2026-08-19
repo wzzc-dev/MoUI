@@ -37,6 +37,16 @@ extern "C" fn windows_webview_sync(
 ) -> Unit = "moui_windows_webview_sync"
 
 ///|
+extern "C" fn windows_webview_sync_overlay_mask(
+  hwnd : UInt64,
+  has_bounds : Int,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+) -> Unit = "moui_windows_webview_sync_overlay_mask"
+
+///|
 extern "C" fn windows_webview_platform_views_end(hwnd : UInt64) -> Unit = "moui_windows_webview_platform_views_end"
 
 ///|
@@ -107,6 +117,13 @@ pub fn sync_windows_platform_views(
         placement.frame.size.width,
         placement.frame.size.height,
       )
+      match frame.overlay_bounds {
+        Some(bounds) => windows_webview_sync_overlay_mask(
+          hwnd, 1, bounds.origin.x, bounds.origin.y,
+          bounds.size.width, bounds.size.height,
+        )
+        None => windows_webview_sync_overlay_mask(hwnd, 0, 0.0, 0.0, 0.0, 0.0)
+      }
     }
   }
   windows_webview_platform_views_end(hwnd)

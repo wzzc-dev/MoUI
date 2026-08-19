@@ -222,6 +222,8 @@ pub fn[Msg] number_field(String, on_input~ : (String) -> Msg, on_step? : ((Doubl
 
 pub fn[Msg] overlay(@core.View[Msg], @core.View[Msg]) -> @core.View[Msg]
 
+pub fn[Msg] overlay_marker(width~ : Double, height~ : Double) -> @core.View[Msg]
+
 pub fn[Msg] padding(@core.View[Msg], Double) -> @core.View[Msg]
 
 pub fn[Msg] padding_edges(@core.View[Msg], top? : Double, right? : Double, bottom? : Double, left? : Double) -> @core.View[Msg]
@@ -458,6 +460,10 @@ pub using @style {type DatePickerMode}
 pub using @core {type DateValue}
 
 pub using @data {type DescriptionItem}
+
+pub using @core {type DragGestureEvent}
+
+pub using @core {type DragGesturePhase}
 
 pub using @popover {type DropdownState}
 

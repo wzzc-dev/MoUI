@@ -221,6 +221,36 @@ static void apply_bounds(MOUWindowsWebView *view, double x, double y,
   view->controller->put_IsVisible(width > 0.0 && height > 0.0);
 }
 
+static BOOL CALLBACK find_webview_child(HWND child, LPARAM data) {
+  HWND *result = reinterpret_cast<HWND *>(data);
+  if (IsWindowVisible(child) && result != nullptr && *result == nullptr) {
+    *result = child;
+  }
+  return *result == nullptr;
+}
+
+static void sync_overlay_region(HWND parent, BOOL has_bounds, double x,
+                                double y, double width, double height) {
+  if (parent == nullptr) return;
+  HWND child = nullptr;
+  EnumChildWindows(parent, find_webview_child, reinterpret_cast<LPARAM>(&child));
+  if (child == nullptr) return;
+  RECT client;
+  if (!GetClientRect(child, &client)) return;
+  HRGN region = CreateRectRgn(0, 0, client.right, client.bottom);
+  if (has_bounds && width > 0.0 && height > 0.0) {
+    const bool small_floating_overlay = width < 96.0 && height < 96.0;
+    HRGN hole = small_floating_overlay
+                    ? CreateEllipticRgn((int)x, (int)y, (int)(x + width),
+                                       (int)(y + height))
+                    : CreateRectRgn((int)x, (int)y, (int)(x + width),
+                                    (int)(y + height));
+    CombineRgn(region, region, hole, RGN_DIFF);
+    DeleteObject(hole);
+  }
+  SetWindowRgn(child, region, TRUE);
+}
+
 static void install_handlers(MOUWindowsWebView *view) {
   if (view == nullptr || !view->webview) {
     return;
@@ -471,6 +501,23 @@ void moui_windows_webview_sync(uint64_t hwnd, moonbit_bytes_t id,
   (void)url;
   (void)title;
   (void)policy;
+  (void)x;
+  (void)y;
+  (void)width;
+  (void)height;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+void moui_windows_webview_sync_overlay_mask(uint64_t hwnd, int32_t has_bounds,
+                                             double x, double y, double width,
+                                             double height) {
+#if defined(_WIN32) && defined(MOUI_WINDOWS_ENABLE_WEBVIEW2)
+  sync_overlay_region((HWND)(uintptr_t)hwnd, has_bounds != 0, x, y, width,
+                      height);
+#else
+  (void)hwnd;
+  (void)has_bounds;
   (void)x;
   (void)y;
   (void)width;

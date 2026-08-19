@@ -1,10 +1,63 @@
 ///|
-/// Event modifiers: OnTap, OnLongPress, OnDoubleTap, OnDrag,
+/// Event modifiers: OnTap, OnSecondaryTap, OnLongPress, OnDoubleTap, OnDrag,
 /// OnDragWithFrame, OnFileDrop, KeyboardShortcut.
 
 ///|
 pub(all) struct OnTapModifier[Msg] {
   message : Msg
+}
+
+///|
+/// Secondary mouse-button activation. Native desktop backends normalize the
+/// context-menu button to `button == 1`; primary taps continue to use 0.
+priv struct OnSecondaryTapModifier[Msg] {
+  message : Msg
+}
+
+///|
+fn[Msg] OnSecondaryTapModifier::to_any_modifier(
+  self : OnSecondaryTapModifier[Msg],
+) -> AnyModifier[Msg] {
+  let message = self.message
+  {
+    ..noop_modifier(),
+    identity_kind: "OnSecondaryTap",
+    focusable: true,
+    semantics: ViewSemanticsInfo::new(role=SemanticsRole::Button),
+    event: fn(ctx) {
+      match ctx.event {
+        Pointer(event) if event.button == 1 => {
+          let inside = ctx.frame.contains(event.position)
+          let current = view_state_to_pressable_state(ctx.state)
+          let tap = recognize_press_tap(current, inside, event.phase)
+          let next_state = pressable_state_to_view_state(
+            ctx.state,
+            tap.next_state,
+          )
+          let changed = next_state != ctx.state || tap.activated
+          {
+            changed,
+            activated: tap.activated,
+            focused: false,
+            captured: inside || current == PressableState::Pressed,
+            state: Some(next_state),
+            text_control: None,
+            dirty: if changed {
+              ViewDirtyHint::ViewPaintDirty
+            } else {
+              ViewDirtyHint::ViewClean
+            },
+            messages: if tap.activated {
+              [message]
+            } else {
+              []
+            },
+          }
+        }
+        _ => ViewEventResult::ignored()
+      }
+    },
+  }
 }
 
 ///|
@@ -234,7 +287,27 @@ fn[Msg] handle_drag_modifier_event(
               messages: [],
             }
           } else {
-            ViewEventResult::ignored()
+            // Terminal pointer phases must commit the reset even when the
+            // gesture did not cross the drag slop.  In particular, a simple
+            // click leaves the recognizer in `Pending`; returning `ignored`
+            // here would preserve that slot forever and the next Move could
+            // be interpreted as a drag from the old click.
+            {
+              // State is still committed, but terminal cleanup is transparent
+              // to parent tap modifiers so they can observe the same Up.
+              changed: false,
+              activated: false,
+              focused: false,
+              captured: false,
+              state: Some(next_state),
+              text_control: None,
+              dirty: if next_state != ctx.state {
+                ViewDirtyHint::ViewPaintDirty
+              } else {
+                ViewDirtyHint::ViewClean
+              },
+              messages: [],
+            }
           }
       }
     }
