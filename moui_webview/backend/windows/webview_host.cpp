@@ -207,11 +207,43 @@ static void emit_policy_blocked(MOUWindowsWebView *view,
             L"WebView navigation policy blocked URL", 0);
 }
 
+static double window_dpi_scale(HWND hwnd) {
+  if (hwnd == nullptr) {
+    return 1.0;
+  }
+  HMODULE user32 = GetModuleHandleW(L"user32.dll");
+  if (user32 != nullptr) {
+    typedef UINT(WINAPI *GetDpiForWindowFn)(HWND);
+    auto get_dpi_for_window =
+        (GetDpiForWindowFn)GetProcAddress(user32, "GetDpiForWindow");
+    if (get_dpi_for_window != nullptr) {
+      UINT dpi = get_dpi_for_window(hwnd);
+      if (dpi > 0) {
+        return (double)dpi / 96.0;
+      }
+    }
+  }
+  HDC dc = GetDC(hwnd);
+  if (dc != nullptr) {
+    int dpi = GetDeviceCaps(dc, LOGPIXELSX);
+    ReleaseDC(hwnd, dc);
+    if (dpi > 0) {
+      return (double)dpi / 96.0;
+    }
+  }
+  return 1.0;
+}
+
 static void apply_bounds(MOUWindowsWebView *view, double x, double y,
                          double width, double height) {
   if (view == nullptr || !view->controller) {
     return;
   }
+  double scale = window_dpi_scale(view->parent);
+  x *= scale;
+  y *= scale;
+  width *= scale;
+  height *= scale;
   RECT bounds;
   bounds.left = (LONG)x;
   bounds.top = (LONG)y;
@@ -230,8 +262,20 @@ static BOOL CALLBACK find_webview_child(HWND child, LPARAM data) {
 }
 
 static void sync_overlay_region(HWND parent, BOOL has_bounds, double x,
-                                double y, double width, double height) {
+                                 double y, double width, double height) {
   if (parent == nullptr) return;
+  // DrawCommand::bounds() inflates overlay paint rects by 1.0 logical px for
+  // damage safety (moui/core/damage.mbt). The mask must expose exactly the
+  // painted overlay pixels, so deflate back before DPI scaling.
+  x += 1.0;
+  y += 1.0;
+  width -= 2.0;
+  height -= 2.0;
+  double scale = window_dpi_scale(parent);
+  x *= scale;
+  y *= scale;
+  width *= scale;
+  height *= scale;
   HWND child = nullptr;
   EnumChildWindows(parent, find_webview_child, reinterpret_cast<LPARAM>(&child));
   if (child == nullptr) return;
@@ -239,7 +283,7 @@ static void sync_overlay_region(HWND parent, BOOL has_bounds, double x,
   if (!GetClientRect(child, &client)) return;
   HRGN region = CreateRectRgn(0, 0, client.right, client.bottom);
   if (has_bounds && width > 0.0 && height > 0.0) {
-    const bool small_floating_overlay = width < 96.0 && height < 96.0;
+    const bool small_floating_overlay = width < 96.0 * scale && height < 96.0 * scale;
     HRGN hole = small_floating_overlay
                     ? CreateEllipticRgn((int)x, (int)y, (int)(x + width),
                                        (int)(y + height))

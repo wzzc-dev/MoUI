@@ -46,6 +46,27 @@ const macosBackendHostFlags =
   "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreGraphics -framework CoreFoundation -lz";
 const linuxBackendHostFlags = "-lz";
 const androidBackendHostFlags = "-landroid -llog";
+const windowsBackendHostLibs = [
+  "comdlg32",
+  "shell32",
+  "ole32",
+  "oleaut32",
+  "user32",
+  "gdi32",
+  "kernel32",
+  "advapi32",
+  "dwmapi",
+  "imm32",
+  "shcore",
+];
+const windowsBackendUsesMsvc =
+  Boolean(process.env.VSCMD_VER || process.env.VCINSTALLDIR) ||
+  (process.env.CC || "").toLowerCase().endsWith("cl.exe") ||
+  (process.env.CC || "").toLowerCase() === "cl" ||
+  process.platform === "win32";
+const windowsBackendHostFlags = windowsBackendUsesMsvc
+  ? windowsBackendHostLibs.map((lib) => `${lib}.lib`).join(" ")
+  : windowsBackendHostLibs.map((lib) => `-l${lib}`).join(" ");
 
 function appendLinkFlags(base, extra) {
   if (!extra) return base || "";
@@ -70,6 +91,13 @@ function main() {
       macosBackendHostFlags,
     );
   }
+  if (process.platform === "win32") {
+    pushLinkConfig(
+      linkConfigs,
+      "wzzc-dev/moui/backend/windows",
+      windowsBackendHostFlags,
+    );
+  }
   pushLinkConfig(
     linkConfigs,
     "wzzc-dev/moui/backend/linux",
@@ -89,6 +117,7 @@ function main() {
           linuxBackendHostFlags,
           linuxGlib.linkFlags,
         ),
+        MOUI_WINDOWS_BACKEND_HOST_LINK_FLAGS: windowsBackendHostFlags,
       },
       link_configs: linkConfigs,
     }),

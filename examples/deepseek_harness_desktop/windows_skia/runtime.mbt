@@ -15,9 +15,10 @@ fn run_windows() -> Unit {
     }
   })
   @runtime.run_app("DSH Desktop", runtime)
-  .render_all(
-    @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Windows),
-  )
+  .render(@render_skia.raster())
+  // .render_all(
+  //   @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Windows),
+  // )
   .backend(
     @windows_backend.entry(
       options=@windows_backend.WindowsHostAppOptions::new(platform_view_plugins=[

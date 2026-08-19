@@ -515,12 +515,13 @@ fn view_with_viewport(
   } else {
     floating_button(model, theme, viewport_width, viewport_height)
   }
-  @views.dialog_host(
+  let root = @views.dialog_host(
     @views.overlay(content, floating),
     dialog=Some(settings_dialog(model, theme)),
     presented=model.settings_presented,
     on_backdrop=Some(SettingsBackdropPressed),
   )
+  root
 }
 
 ///|
