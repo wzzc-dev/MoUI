@@ -293,6 +293,14 @@ pub fn[Msg] View::on_tap(self : View[Msg], message : Msg) -> View[Msg] {
 }
 
 ///|
+pub fn[Msg] View::on_secondary_tap(
+  self : View[Msg],
+  message : Msg,
+) -> View[Msg] {
+  self.apply_modifier(OnSecondaryTapModifier::{ message, }.to_any_modifier())
+}
+
+///|
 pub fn[Msg] View::on_long_press(self : View[Msg], message : Msg) -> View[Msg] {
   self.apply_modifier(OnLongPressModifier::{ message, }.to_any_modifier())
 }

@@ -258,6 +258,17 @@ test "on_tap identity focusable and button semantics role" {
 }
 
 ///|
+test "on_secondary_tap only activates for the secondary mouse button" {
+  let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
+    kind: "secondary-tappable",
+    size: @core.Size::new(width=8.0, height=8.0),
+  }).on_secondary_tap(7)
+  assert_true(view.identity().kind.contains("OnSecondaryTap"))
+  assert_true(view.accepts_focus())
+  assert_true(view.semantics().role == Some(@core.SemanticsRole::Button))
+}
+
+///|
 test "on_long_press identity and focusable" {
   let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
     kind: "pressable",

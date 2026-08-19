@@ -79,8 +79,16 @@ test "macos host options carry optional scene resolver and smoke options stay se
 extern "C" fn macos_gpu_surface_presenter_test() -> Int = "moui_macos_gpu_surface_presenter_test"
 
 ///|
+extern "C" fn macos_gpu_surface_partial_overlay_hit_test() -> Int = "moui_macos_gpu_surface_partial_overlay_hit_test"
+
+///|
 test "macOS GPU surface uses a transparent reorderable presenter sibling" {
   assert_eq(macos_gpu_surface_presenter_test(), 1)
+}
+
+///|
+test "macOS GPU presenter hit-tests only the local overlay rectangle" {
+  assert_eq(macos_gpu_surface_partial_overlay_hit_test(), 1)
 }
 
 ///|

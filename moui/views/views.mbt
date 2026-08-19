@@ -76,6 +76,12 @@ pub using @layout {row, column}
 pub using @layout {stack, overlay}
 
 ///|
+pub using @navigation {overlay_marker}
+
+///|
+pub using @core {type DragGestureEvent, type DragGesturePhase}
+
+///|
 pub using @layout {frame}
 
 ///|

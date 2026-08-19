@@ -453,32 +453,56 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
             bubble_scroll~,
           ) {
           (Some(result), bubbled) => {
-            if bubble_scroll &&
-              !bubbled &&
+            // Pointer capture normally routes Move/Up/Cancel only to the
+            // target. Gesture modifiers are often stacked, though (for
+            // example a tap wrapped by a drag), so ancestors must observe the
+            // captured stream as it unwinds. A child activation wins the
+            // gesture; ancestors receive a synthetic Cancel in that case so
+            // they can release pending drag/tap state without activating a
+            // second command.
+            let should_bubble = bubble_scroll &&
               event.phase != PointerPhase::Down &&
-              self.is_scroll_view_node() {
+              // A nested scroll view has already observed this stream when
+              // `bubbled` is true. Keep walking so non-scroll gesture
+              // ancestors can still clean up, but avoid feeding a second
+              // scroll container the same captured event.
+              (!bubbled || !self.is_scroll_view_node())
+            if should_bubble {
+              let ancestor_event = if result.activated &&
+                event.phase == PointerPhase::Up {
+                PointerEvent::new(
+                  position=event.position,
+                  phase=PointerPhase::Cancel,
+                  button=event.button,
+                  modifiers=event.modifiers,
+                  time_ms=event.time_ms,
+                )
+              } else {
+                event
+              }
               let own = self.dispatch_view_event(
                 self.view_node,
-                AppEvent::Pointer(event),
+                AppEvent::Pointer(ancestor_event),
                 render,
                 text_system,
                 environment~,
                 style~,
                 now_ms~,
               )
-              if !own.captured {
-                if result.changed {
-                  self.mark_pointer_paint_dirty()
-                }
-                return (Some(result), bubbled)
-              }
               let combined = merge_element_event_results(result, own)
+              // Once an ancestor drag recognizes a Move, cancel the child
+              // press recognizer. Otherwise the captured child can still
+              // activate on Up after the drag has already started.
               let combined = if event.phase == PointerPhase::Move &&
                 own.changed &&
+                (own.activated || self.is_scroll_view_node()) &&
                 result.captured {
                 let cancel_event = PointerEvent::new(
                   position=event.position,
                   phase=PointerPhase::Cancel,
+                  button=event.button,
+                  modifiers=event.modifiers,
+                  time_ms=event.time_ms,
                 )
                 match
                   self.children[index].dispatch_pointer_to_target_with_scroll_ancestor(
@@ -501,7 +525,14 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
               if combined.changed {
                 self.mark_pointer_paint_dirty()
               }
-              return (Some(combined), true)
+              // `bubbled` tracks whether a scroll ancestor has already
+              // observed the stream, rather than whether an arbitrary
+              // gesture ancestor handled it. This lets a scroll view above a
+              // tap/drag stack continue to receive the captured Move.
+              return (
+                Some(combined),
+                bubbled || (self.is_scroll_view_node() && own.captured),
+              )
             }
             if result.changed {
               self.mark_pointer_paint_dirty()

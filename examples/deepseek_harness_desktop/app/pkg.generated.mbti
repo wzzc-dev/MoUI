@@ -2,6 +2,7 @@
 package "examples/deepseek_harness_desktop/app"
 
 import {
+  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/services",
   "wzzc-dev/moui_webview/host",
@@ -9,6 +10,10 @@ import {
 
 // Values
 pub fn application_menus() -> Array[@services.ApplicationMenu]
+
+pub let chat_url_settings_key : String
+
+pub let default_chat_url : String
 
 pub let default_url : String
 
@@ -30,28 +35,52 @@ pub fn view(Model) -> @core.View[Msg]
 pub struct Model {
   url : String
   configured_url : String
+  harness_url : String
+  chat_url : String
+  active_site : Site
   title : String
   status : String
   web_view_available : Bool
   web_view_description : String
+  harness_settings_ready : Bool
+  chat_settings_ready : Bool
   settings_ready : Bool
   settings_presented : Bool
   request_url_input : String
+  chat_url_input : String
   settings_error : String
   settings_saving : Bool
+  settings_writes_pending : Int
+  floating_x : Double
+  floating_y : Double
+  floating_left : Bool
+  floating_collapsed : Bool
 }
 pub fn Model::new(capability~ : WebViewCapability, url? : String) -> Self
 
 pub(all) enum Msg {
   WebViewEvent(@host.WebViewEvent)
   SettingsLoaded(@services.ServiceTaskResult[String?])
+  ChatSettingsLoaded(@services.ServiceTaskResult[String?])
   OpenSettings
   RequestUrlChanged(String)
+  ChatUrlChanged(String)
   SaveSettings
   CancelSettings
   SettingsBackdropPressed
   SettingsSaved(String, @services.ServiceTaskResult[Unit])
+  HarnessSettingsSaved(String, @services.ServiceTaskResult[Unit])
+  ChatSettingsSaved(String, @services.ServiceTaskResult[Unit])
+  SwitchSite
+  FloatingSecondaryTap
+  FloatingDragged(@core.DragGestureEvent)
+  FloatingDraggedInViewport(@core.DragGestureEvent, Double, Double)
 }
+
+pub(all) enum Site {
+  Harness
+  Chat
+} derive(Eq, @debug.Debug)
 
 pub(all) struct WebViewCapability {
   available : Bool

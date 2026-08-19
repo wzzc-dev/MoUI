@@ -225,6 +225,76 @@ test "direct pointer input keeps a button target across a redraw" {
 }
 
 ///|
+/// A drag modifier commonly wraps a tap modifier in app controls.  A click
+/// must clear the drag recognizer before the next hover Move; otherwise the
+/// stale Pending state turns that Move into a drag and makes the control
+/// follow the pointer.
+test "drag modifier clears its state after a child tap consumes Up" {
+  let received : Array[String] = []
+  let root : @core.View[String] = @views.container(
+      @views.spacer(min_length=0.0, weight=0.0),
+      width=40.0,
+      height=40.0,
+      padding=0.0,
+    )
+    .on_drag(event => "drag:" + event.phase.label())
+    .on_tap("clicked")
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=40.0, height=40.0),
+    on_message=Some(message => received.push(message)),
+  )
+  let center = @core.Point::new(x=20.0, y=20.0)
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(position=center, phase=@core.PointerPhase::Down),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(position=center, phase=@core.PointerPhase::Up),
+    ),
+  )
+  // This is an ordinary hover move after the click, not a button drag.
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=24.0, y=20.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  inspect(received.join(","), content="clicked")
+}
+
+/// A drag nested inside a tap must still let the tap observe a short click,
+/// while a real drag cancels the tap before its Up can activate.
+test "captured gesture ancestors arbitrate tap versus drag" {
+  let received : Array[String] = []
+  let root : @core.View[String] = @views.container(
+    @views.spacer(min_length=0.0, weight=0.0),
+    width=40.0,
+    height=40.0,
+    padding=0.0,
+  ).on_drag(event => "drag:" + event.phase.label()).on_tap("clicked")
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=40.0, height=40.0),
+    on_message=Some(message => received.push(message)),
+  )
+  let center = @core.Point::new(x=20.0, y=20.0)
+  ignore(runtime.dispatch_pointer_input(@core.PointerEvent::new(position=center, phase=@core.PointerPhase::Down)))
+  ignore(runtime.dispatch_pointer_input(@core.PointerEvent::new(position=center, phase=@core.PointerPhase::Up)))
+  inspect(received.join(","), content="clicked")
+
+  received.clear()
+  ignore(runtime.dispatch_pointer_input(@core.PointerEvent::new(position=center, phase=@core.PointerPhase::Down)))
+  ignore(runtime.dispatch_pointer_input(@core.PointerEvent::new(position=@core.Point::new(x=28.0, y=20.0), phase=@core.PointerPhase::Move)))
+  ignore(runtime.dispatch_pointer_input(@core.PointerEvent::new(position=@core.Point::new(x=28.0, y=20.0), phase=@core.PointerPhase::Up)))
+  inspect(received.join(","), content="drag:Started,drag:Ended")
+}
+
+///|
 fn runtime_damage_rebuild_program() -> @core.Program[Bool, Unit] {
   @core.Program::simple(init=false, update=(visible, _message) => !visible, view=visible => {
     if visible {

@@ -86,6 +86,7 @@ static NSString *const kMouiHostGpuSurfaceViewIdentifier =
 
 @interface NSView (MOUIOverlayStateKey)
 - (BOOL)mouiOverlayActive;
+- (NSValue *)mouiOverlayRect;
 @end
 
 static BOOL moui_macos_webview_presenter_overlay_active(NSView *view) {
@@ -96,6 +97,14 @@ static BOOL moui_macos_webview_presenter_overlay_active(NSView *view) {
 static void moui_macos_webview_set_presenter_overlay_active(NSView *view,
                                                              BOOL active) {
   objc_setAssociatedObject(view, @selector(mouiOverlayActive), @(active),
+                           OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+static void moui_macos_webview_set_presenter_overlay_rect(NSView *view,
+                                                           BOOL has_bounds,
+                                                           NSRect rect) {
+  objc_setAssociatedObject(view, @selector(mouiOverlayRect),
+                           has_bounds ? [NSValue valueWithRect:rect] : nil,
                            OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
@@ -406,6 +415,8 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
   [(MOUIMaskedWebView *)self.webView syncOverlayExclusion:hasBounds rect:rect];
   BOOL overlayActive =
       [(MOUIMaskedWebView *)self.webView hasOverlayExclusion];
+  moui_macos_webview_set_presenter_overlay_rect(
+      self.parent, overlayActive, rect);
   if (overlayActive != self.overlayActive) {
     moui_macos_webview_log(@"overlay id=%@ active=%d rect=(%.0f,%.0f %.0fx%.0f)",
                            self.identifier, overlayActive ? 1 : 0,
