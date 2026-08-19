@@ -396,13 +396,12 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn can_create
   self,
   event_loop,
 ) {
-  let initial_size = @dpi.PhysicalSize::PhysicalSize(
-    size_dim_to_int(self.runtime.size().width),
-    size_dim_to_int(self.runtime.size().height),
+  let initial_size = @window_input.core_size_to_window_surface_size(
+    self.runtime.size(),
   )
   let attributes = @window_core.WindowAttributes::default()
     .with_title(self.title)
-    .with_surface_size(initial_size.into_size())
+    .with_surface_size(initial_size)
   let window : @win.Window? = Some(event_loop.try_create_window(attributes)) catch {
     err => {
       println("error creating Windows window: \{err}")
@@ -894,13 +893,4 @@ fn WindowsNativeHostBackend::windows_surface_actions(
       }
     },
   )
-}
-
-///|
-fn size_dim_to_int(value : Double) -> Int {
-  if value < 1.0 {
-    1
-  } else {
-    value.to_int()
-  }
 }

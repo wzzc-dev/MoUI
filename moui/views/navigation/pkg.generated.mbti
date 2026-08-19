@@ -34,6 +34,8 @@ pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> 
 
 pub fn[Msg] navigation_stack_selected(String, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
+pub fn[Msg] overlay_marker(width~ : Double, height~ : Double) -> @core.View[Msg]
+
 pub fn[Msg] resizable_split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], primary_width~ : Double, detail_width? : Double, height? : Double, min_primary_width? : Double, max_primary_width? : Double, spacing? : Double, handle_width? : Double, theme? : @core.Theme, on_drag~ : (Double) -> Msg) -> @core.View[Msg]
 
 pub fn resolve_route(RouteLocation, Array[RouteDescriptor]) -> RouteDescriptor?

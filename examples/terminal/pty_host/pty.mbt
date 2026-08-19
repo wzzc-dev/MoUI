@@ -28,7 +28,7 @@ pub struct Pty {
 
 ///|
 /// 派生一个运行 shell 的 PTY 会话。
-pub async fn Pty::spawn(shell : String, cols : Int, rows : Int) -> Pty? {
+pub fn Pty::spawn(shell : String, cols : Int, rows : Int) -> Pty? {
   let bytes = @utf8.encode(shell)
   let arr : Array[Byte] = []
   for i in 0..<bytes.length() {
@@ -56,8 +56,8 @@ async fn raw_fd_from_int(fd : Int) -> @raw_fd.RawFd {
 ///|
 /// Windows 上 PTY 宿主不可用(moonpty_* C stub 仅非 Windows 提供实现)。
 #cfg(platform="windows")
-async fn raw_fd_from_int(fd : Int) -> @raw_fd.RawFd {
-  abort("pty_host: PTY is not supported on Windows")
+fn raw_fd_from_int(fd : Int) -> @raw_fd.RawFd {
+  abort("pty_host: PTY is not supported on Windows, fd:" + fd.to_string())
 }
 
 ///|

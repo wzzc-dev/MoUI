@@ -50,15 +50,17 @@ pub fn create_windows_webview_plugin(
             placement.frame.size.height,
           )
           match frame.overlay_bounds {
-            Some(bounds) => windows_webview_sync_overlay_mask(
-              hwnd,
-              1,
-              bounds.origin.x,
-              bounds.origin.y,
-              bounds.size.width,
-              bounds.size.height,
-            )
-            None => windows_webview_sync_overlay_mask(hwnd, 0, 0.0, 0.0, 0.0, 0.0)
+            Some(bounds) =>
+              windows_webview_sync_overlay_mask(
+                hwnd,
+                1,
+                bounds.origin.x,
+                bounds.origin.y,
+                bounds.size.width,
+                bounds.size.height,
+              )
+            None =>
+              windows_webview_sync_overlay_mask(hwnd, 0, 0.0, 0.0, 0.0, 0.0)
           }
         }
       }

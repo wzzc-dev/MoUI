@@ -17,21 +17,27 @@ import {
   "wzzc-dev/moui/backend/common/services/native" @host_services_native,
   "wzzc-dev/moui/backend/common/services/desktop" @host_services_desktop,
   "wzzc-dev/window/core" @window_core,
-  "wzzc-dev/window/dpi",
   "wzzc-dev/window/windows" @win,
 }
 
 import {
   "wzzc-dev/moui/views",
+  "wzzc-dev/window/dpi",
 } for "test"
 
 import {
   "wzzc-dev/moui/views",
+  "wzzc-dev/window/dpi",
 } for "wbtest"
 
 supported_targets = "native"
 
 options(
+  link: {
+    "native": {
+      "cc-link-flags": "comdlg32.lib shell32.lib ole32.lib oleaut32.lib user32.lib gdi32.lib kernel32.lib advapi32.lib dwmapi.lib imm32.lib shcore.lib",
+    },
+  },
   "native-stub": [
     "win32_service_host.c",
     "win32_timer_host.c",
