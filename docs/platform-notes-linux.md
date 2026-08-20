@@ -215,11 +215,11 @@ Linux native WebView support is auto-detected via `pkg-config`. When
 WebKitGTK development packages are installed, the host syncs placements from
 `DrawFrame.platform_views` using the Wayland surface handle, offsets placement
 below client decorations when needed, pumps the GTK main context from the Linux
-event-loop wait path, forwards navigation/title/history/JavaScript events
-through `Event::WebView`, and drains `HostWebViewCommandQueue` commands
-after frame rendering. macOS, Windows, and Linux native bridges enforce the
-shared `WebViewNavigationPolicy` before committing a navigation; blocked URLs
-produce a `NavigationFailed` event. Matching-host smoke is still required before
+event-loop wait path, forwards validated navigation/title/history/bridge events
+through the `WebViewHost`, and drains `WebViewController` tasks after frame
+rendering. macOS, Windows, and Linux native bridges enforce the shared
+`WebViewSecurityPolicy` before committing a navigation; blocked URLs produce a
+`NavigationFailed` event. Matching-host smoke is still required before
 promoting Linux WebView runtime observation beyond package-level compile coverage.
 The Linux host loop drains `RendererEvent` image requests, keeps only
 cancellable byte-I/O tasks, and returns token-matched completions to the

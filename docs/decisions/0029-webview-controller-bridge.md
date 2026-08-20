@@ -35,7 +35,7 @@ callback, so the patch is neither configuration-scoped nor generation-safe.
    They may provide CSS plus document-start/document-end scripts but no native
    capability. Public arbitrary JavaScript evaluation is removed.
 6. The old queue, command enum, placement URL, and old event variants are
-   removed together. The addon version advances to 0.2.0 and repository
+   removed together. The addon version advances to 0.1.10 and repository
    consumers migrate in the same change.
 
 ## Consequences

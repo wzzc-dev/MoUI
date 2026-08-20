@@ -10,9 +10,10 @@ constructs those renderers.
 macOS native WebView support uses `WKWebView` as a host platform view attached
 to the window content view. `backend/macos` reports native WebView available
 when the WebKit-backed stub is linked, syncs placements from
-`DrawFrame.platform_views`, forwards WebView navigation/title/history/script
-events through `Event::WebView`, and drains `HostWebViewCommandQueue`
-commands after frame rendering.
+`DrawFrame.platform_views`, forwards validated `WebViewEvent` values through
+the composition root, and drains `WebViewController` tasks after frame
+rendering. Page communication uses the versioned JSON Bridge; raw JavaScript
+evaluation is not part of the public API.
 For the full-window WebView/modal route, the active Skia presenter stays above
 WKWebView and full-surface platform-view frames clear it transparently. Both the
 GPU `CAMetalLayer` host view and CPU raster image view pass hit testing through

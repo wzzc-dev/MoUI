@@ -37,9 +37,9 @@
 宿主生命周期事件，同时保持槽位记录对齐。
 `PlatformWindowMap` 把来自 `wzzc-dev/window` 的平台窗口 id 绑定到 MoUI `WindowId` 值，使事件分派
 可以通过宿主注册表路由，而不是假设只有一个全局窗口。
-`HostWebViewCapabilities`、`HostWebViewCommandQueue` 和 `HostWebViewEventSource` 是原生平台
-WebView 的宿主侧契约。宿主报告原生嵌入是否可用，把 `DrawFrame.platform_views` 同步到具体的 WebView
-对象，把 `Event::WebView` 分派回运行时，并在平台边缘排空已排队命令。浏览器 Web wasm 报告
+`HostWebViewCapabilities` 是原生平台 WebView 的能力契约。独立的 `moui_webview` addon 拥有
+`WebViewHost` 和 `WebViewController`；宿主把 `DrawFrame.platform_views` 同步到具体 WebView
+对象，校验并分派 `WebViewEvent`，并在平台边缘 drain controller task。浏览器 Web wasm 报告
 不可用，而不是创建 iframe 覆盖层。
 Web、macOS、Windows 和 Linux 应将其原生窗口事件转换为 `Event`，然后让 `AppRuntime` 更新状态、
 重建并发出 `DrawCommand` 值。

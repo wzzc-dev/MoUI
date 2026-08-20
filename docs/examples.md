@@ -247,16 +247,15 @@ moon check examples/code_editor/macos_skia --target native
 ## WebView Demo
 
 WebView Demo shows the native platform-view path without involving renderer
-draw commands. The shared app owns controlled navigation state: a page link
-emits `NavigationRequested`, the model updates `url`, and the host commits the
-real native WebView to the next `DrawFrame.platform_views` rectangle. Buttons
-exercise the host command queue for load, reload, stop, back, forward, and
-JavaScript evaluation.
+draw commands. Its composition root creates a `WebViewHost` and
+`WebViewController`; navigation and history controls issue controller tasks,
+while validated `WebViewEvent` values update the program. Bridge examples use
+the versioned JSON request/response path rather than raw JavaScript evaluation.
 
-The retained macOS entrypoint passes `HostWebViewCommandQueue` through platform
-host options, so `WKWebView` can drain commands after rendering. Windows
-WebView2 and Linux WebKitGTK remain backend capabilities covered by backend and
-matching-host probes rather than separate demo composition roots.
+The macOS entrypoint passes the controller-owned plugin through platform host
+options, so `WKWebView` drains tasks after rendering. Windows WebView2 and Linux
+WebKitGTK remain backend capabilities covered by backend and matching-host
+probes rather than separate demo composition roots.
 
 Focused WebView Demo checks:
 

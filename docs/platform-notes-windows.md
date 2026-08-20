@@ -11,8 +11,8 @@ auto-detects WebKitGTK via `pkg-config`. Fallback builds compile without the
 WebView2 SDK and report `HostWebViewCapabilities.available=false`; builds with
 the SDK use WebView2 controllers parented to the app HWND, sync
 `DrawFrame.platform_views`, forward controlled navigation and
-title/history/script events, and drain `HostWebViewCommandQueue` commands after
-renderer presentation. Override auto-detection by setting environment variables
+title/history/bridge events, and drain `WebViewController` tasks after renderer
+presentation. Override auto-detection by setting environment variables
 such as `MOUI_WINDOWS_ENABLE_WEBVIEW2=1`,
 `MOUI_WINDOWS_WEBVIEW2_INCLUDE=<webview2-sdk-include>`, and
 `MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS=\"<WebView2Loader link flags>\"`, or by setting

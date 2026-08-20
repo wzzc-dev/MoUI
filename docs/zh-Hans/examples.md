@@ -50,7 +50,7 @@ lifecycle、surface creation 和 input，MoUI 入口负责 program 和 renderer 
 | Data Table | 面向操作型数据浏览器的模式 | `examples/data_table/app/` | 搜索/过滤 toolbar 模式、状态 chip、`ColumnVisibilityState`、带 `DataSortState` 的可排序表头、应用拥有的列宽/列顺序状态、带 `SelectionState` 的行选择、选择 toolbar 操作、树过滤器、loading/error/empty 状态、`PaginationState`、公开 `pagination` 和 `detail_panel`、model-level filtering 与 data slicing |
 | Excel | Spreadsheet workbook 原型 | `examples/excel/{cell,formula,sheet,xlsx,app}/`, `examples/excel/macos_skia/` | 原生 `.xlsx` load/save、spreadsheet shell、formula/name bars、sheet tabs、编辑与 undo/redo，以及保留的 macOS Skia 入口 |
 | File Importer | 文件导入工作流模式 | `examples/file_importer/app/` | Drop zone、typed `ServiceTask`、成功/失败/取消消息和 selected file list，不暴露 host request id |
-| WebView Demo | 原生 platform WebView 模式 | `examples/webview_demo/app/` | 受控 `web_view` primitive、native host capability fallback、address bar、navigation commands、JavaScript evaluation command，以及 macOS Skia native entrypoint |
+| WebView Demo | 原生 platform WebView 模式 | `examples/webview_demo/app/` | 受控 `web_view` primitive、native host capability fallback、address bar、controller navigation tasks、JSON Bridge request/response，以及 macOS Skia native entrypoint |
 | DSH Desktop | 薄的 DeepSeek Harness WebView 宿主 | `examples/deepseek_harness_desktop/app/` | 为已有本地 Harness Host 提供原生 macOS WKWebView、Windows WebView2 和 Linux WebKitGTK surface，不复制 Web UI 状态；`Settings…`（`Cmd+,`）持久化根地址并用 MoUI 模态层覆盖 WebView；顶部 32 点支持 drag/no-drag |
 | PDF Workbench | PDF 阅读和轻量编辑原型 | `examples/pdf_workbench/app/` | 简洁的原生 PDF reader/editor shell、host binary file service open/save flow、PDFium page bitmap preview、fit-width responsive reading canvas、scrollable page/inspector panels、reader fullscreen toggle、page navigation/direct page jump/search/metadata summaries、可 undo/可 discard 的 preview rotate/crop/stamp/title/bookmark/note edit state、用于真实 parsing/writeback checks 的独立 `pdflite_adapter` 包、JSONL pdflite helper protocol 加 native process transport、用于 page rasterization 的 native-only `pdfium_adapter` 包、macOS/Windows/Linux Skia native entrypoints |
 | Command Palette | 命令元数据和菜单模式 | `examples/command_palette/app/` | Command palette rows、shortcut labels、enabled/disabled dispatch、command menu、context menu fallback、`program(environment)`，以及 `@services.MenuServices::show_context` native menu preview |
@@ -215,13 +215,12 @@ moon check examples/code_editor/macos_skia --target native
 ## WebView Demo
 
 WebView Demo 展示原生 platform-view 路径，而不涉及渲染器绘制命令。共享应用拥有受控
-导航状态：页面链接发出 `NavigationRequested`，model 更新 `url`，host 将真实 native
-WebView commit 到下一个 `DrawFrame.platform_views` rectangle。按钮覆盖 host command
-queue，用于 load、reload、stop、back、forward 和 JavaScript evaluation。
+导航状态由 `WebViewController` task 驱动，经过校验的 `WebViewEvent` 更新 program；
+Bridge 示例使用版本化 JSON request/response path，而不是 raw JavaScript evaluation。
 
-保留的 macOS 入口把 `HostWebViewCommandQueue` 传给平台 backend，使 `WKWebView` 可以在
-rendering 后 drain commands。Windows WebView2 与 Linux WebKitGTK 继续作为 backend 能力，
-由 backend tests 和 matching-host probes 覆盖，不再建立单独 demo composition root。
+macOS 入口把 controller-owned plugin 传给平台 host options，使 `WKWebView` 可以在 rendering
+后 drain task。Windows WebView2 与 Linux WebKitGTK 继续作为 backend 能力，由 backend tests
+和 matching-host probes 覆盖，不再建立单独 demo composition root。
 
 聚焦 WebView Demo 检查：
 

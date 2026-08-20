@@ -26,8 +26,9 @@
   `moui/views`，而不是塞进 kernel。
 - Runtime implementation：element tree、dirty state、runtime lifecycle、component
   storage、任务/订阅实际调度应属于 `moui/runtime`。
-- Platform service layer：WebView、文件对话框、剪贴板、窗口服务、平台 channel
-  应属于 `moui/backend` 或具体 backend。
+- Platform service layer：文件对话框、剪贴板、窗口服务、平台 channel 应属于
+  `moui/backend` 或具体 backend；WebView 专用协议属于独立的 `moui_webview`
+  addon。
 - Renderer implementation：Skia/WGPU/browser WebGPU 细节应属于 `moui/render/*`。
 - Design-system addon：Material、Fluent、Carbon、Primer 及其 component token
   应属于 `moui_theme/*` 或 `moui/views` 的 app-facing style facade。
@@ -58,12 +59,13 @@ app-facing facade/extension over `core`，第一阶段主要通过
 当前目标落点是：
 
 - app-facing 能力和具体控件行为进入 `moui/views`：控件样式、form helper、
-  routing/history、picker item、WebView constructor、普通 app 需要看到的 rich text
-  facade，以及 button/text field/picker 等低层 custom view 实现。
+  routing/history、picker item、普通 app 需要看到的 rich text facade，以及
+  button/text field/picker 等低层 custom view 实现。WebView constructor 和
+  bridge type 属于 `moui_webview/views` 与 `moui_webview/host`。
 - runtime/diagnostics 进入 `moui/runtime`：runtime inspector、program lifecycle
   snapshot、view/render diagnostics snapshot、`ComponentContext` runtime 构造细节。
-- 平台服务进入 `moui/backend`：WebView command/event/policy/spec、host
-  capability、host service contract。
+- 平台服务进入 `moui/backend`：通用 host capability、host service contract。
+  WebView command/event/policy/spec 属于独立的 `moui_webview` addon。
 - renderer/backend 实现仍在 `moui/render/*` 和 `moui/backend/*`。
 
 只有当一个能力无法由上述层自然承接，且会被多个包稳定复用时，才考虑新增 addon
@@ -90,13 +92,12 @@ app-facing facade/extension over `core`，第一阶段主要通过
   `@style.views_ambient_control_theme(theme)` 读取 `@views.ControlThemeSet`，
   并使用 `@views.*Style` 与 `light_theme`/`theme`。详见
   `docs/plans/done/core-component-theme-to-views.md`（已被 ADR 0017 取代）。
-- **WebView ownership 已迁出**：`WebViewSpec`、`WebViewCommand`、
-  `WebViewEvent`、`WebViewNavigationPolicy` 已归 `moui/backend` 拥有。
+- **WebView ownership 已迁出**：WebView 专用的 controller、bridge、policy、
+  request 和 event 类型由独立的 `wzzc-dev/moui_webview` addon 拥有。
   `core` 只保留 renderer-neutral 的 `PlatformViewPlacement`、
   `PlatformViewProperty`、`PlatformViewEvent` 和 `AppEvent::PlatformView`。
-  普通 app 使用 `moui/views.web_view` 以及 `@views.WebViewEvent` /
-  `@views.WebViewNavigationPolicy` facade；平台入口和 backend 使用
-  `@host.WebView*`。
+  composition root 创建 `@host.WebViewHost` 和 `@host.WebViewController`；
+  view 只接收 controller identity 和 native appearance 字段。
 - **表单模型 ownership 已迁出**：`FormFieldState`、`FormValidationRule`、
   `FormController`、`validate_form`、`required_field` 已由 `moui/views` 的 form
   支持层拥有。`core` 不再承载具体表单工作流。
@@ -144,8 +145,9 @@ app-facing facade/extension over `core`，第一阶段主要通过
 本规范描述的是当前 API 的目标边界。新增依赖或公开 API 时，按 owning package
 直接落位，不保留兼容别名或 deprecated 过渡入口。
 
-- app-facing 控件、控件语义、默认主题、form/routing/WebView/rich text facade、
-  以及具体 custom view 控件行为进入 `moui/views`。
+- app-facing 控件、控件语义、默认主题、form/routing/rich text facade，以及具体
+  custom view 控件行为进入 `moui/views`。WebView view 和 controller/bridge type
+  进入独立的 `moui_webview` addon。
 - runtime lifecycle、component runtime input、effect/subscription diagnostics
   summary、inspector snapshot 进入 `moui/runtime`。
 - host/platform service 协议进入 `moui/backend` 或具体 backend。
@@ -183,7 +185,7 @@ capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当
   同类型双前缀（参见 showcase 早期的 `@moui.View` + `@core.Point` 并存问题）。
   跨示例包引用业务 API 仍用 `@app.ShowcaseModel` 等。
 
-- `wzzc-dev/moui/views` —— app-facing UI 构造器入口。应用层组合按钮、文本、布局、表单、列表、弹窗、WebView wrapper、主题 helper 等，应该优先使用这里的函数。
+- `wzzc-dev/moui/views` —— app-facing UI 构造器入口。应用层组合按钮、文本、布局、表单、列表、弹窗和主题 helper 等，应该优先使用这里的函数。WebView wrapper 使用 `wzzc-dev/moui_webview/views`。
   另通过 facade 转发命令/菜单类型（`ActionCommand`、`CommandIntent`、
   `KeyboardShortcut` 等）、默认主题 helper、控件 style、form/navigation/data helper。
   `DateValue` 因 datepicker 公共 API 已暴露而暂留 `@views.DateValue` facade；
@@ -205,7 +207,7 @@ capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当
 
 普通 app 可以按需直接依赖:
 
-- `wzzc-dev/moui/backend`:仅当 app 需要 host service / 平台服务协议时使用,例如文件对话框、异步图片、剪贴板、WebView command queue 或 host service 交互。普通 app 处理 WebView 事件时优先使用 `@views.WebViewEvent`。
+- `wzzc-dev/moui/backend`：仅当 app 需要通用 host service / 平台服务协议时使用，例如文件对话框、异步图片、剪贴板或 host service 交互。WebView app 使用 `wzzc-dev/moui_webview` 的 controller/bridge 类型。
 
 普通 app 不应该直接依赖:
 
@@ -254,7 +256,8 @@ facade 做 curated re-export，让普通 app 减少 `@core` 前缀的样板。�
   不 re-export 其他领域 facade 或 `views`/`runtime`/`backend`/`render`/`host` 的类型。
 - **只转 app-safe neutral 类型**。不转发 runtime tree、renderer、backend、inspector、
   debug payload、private view implementation details、控件 mode/style/default theme、
-  form helper、WebView command/event、routing/history controller、rich text document。
+  form helper、routing/history controller、rich text document；WebView command/event
+  由 `moui_webview` addon 拥有。
 
 ### 领域 facade 清单
 
@@ -348,10 +351,10 @@ Diagnostics 类型的 owning package 是 `wzzc-dev/moui/runtime`。`core` 不再
 `InspectorSnapshot`、`ProgramRuntimeSnapshot` 或 `RenderInspectorSnapshot` 这类
 diagnostics/runtime 类型，领域 facade 也不转发。
 
-WebView 类型的 owning package 是 `wzzc-dev/moui/backend`。`core` 不再导出
-`WebViewSpec`、`WebViewCommand`、`WebViewEvent` 或
-`WebViewNavigationPolicy`，也不提供 `PlatformViewPlacement::web_view` 这类
-WebView 专有 helper；领域 facade 也不转发。
+WebView 类型的 owning package 是独立的 `wzzc-dev/moui_webview` addon。
+`core` 不再导出 WebView 专用的 controller、bridge、policy 或 event 类型，
+也不提供 `PlatformViewPlacement::web_view` 这类 WebView 专有 helper；领域
+facade 也不转发。
 
 ### 扩展领域 facade
 
@@ -383,8 +386,9 @@ helper：
 - semantics
 - focus
 
-如果只是组合已有控件，例如按钮、表单、列表、布局、弹窗、菜单、
-WebView wrapper，应用层应使用 `wzzc-dev/moui/views` 的 app-facing constructor。
+如果只是组合已有控件，例如按钮、表单、列表、布局、弹窗、菜单，应用层应使用
+`wzzc-dev/moui/views` 的 app-facing constructor。WebView wrapper 使用
+`wzzc-dev/moui_webview/views`。
 
 新增控件时遵循这个落点：
 

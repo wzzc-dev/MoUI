@@ -64,13 +64,12 @@ host lifecycle events while keeping the slot record aligned.
 `PlatformWindowMap` binds platform window ids from `wzzc-dev/window` to
 MoUI `WindowId` values so event dispatch can route through the host registry
 instead of assuming one global window.
-`HostWebViewCapabilities`, `HostWebViewCommandQueue`, and
-`HostWebViewEventSource` are the host-side contract for native platform
-WebViews. Hosts report whether native embedding is available, sync
-`DrawFrame.platform_views` to concrete WebView objects, dispatch
-`Event::WebView` back into the runtime, and drain queued commands at the
-platform edge. Browser Web wasm reports unavailable instead of creating an
-iframe overlay. On macOS, the WKWebView host also consumes
+`HostWebViewCapabilities` is the capability contract for native platform
+WebViews. The independent `moui_webview` addon owns `WebViewHost` and
+`WebViewController`; hosts sync `DrawFrame.platform_views` to concrete WebView
+objects, validate and dispatch `WebViewEvent` values, and drain controller tasks
+at the platform edge. Browser Web wasm reports unavailable instead of creating
+an iframe overlay. On macOS, the WKWebView host also consumes
 `DrawFrame.overlay_bounds`: for a full-surface WebView it keeps the active
 transparent Skia presenter above the WebView and excludes that sibling region
 from WebView hit testing, so
