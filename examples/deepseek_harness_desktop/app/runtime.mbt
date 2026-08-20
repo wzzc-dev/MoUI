@@ -1,27 +1,24 @@
 ///|
+/// Platform-neutral composition for the DSH WebView program. Native roots
+/// wrap this program in `@runtime.new_program_with_dimensions` before adding
+/// their renderer and backend.
 pub fn runtime(
   capabilities~ : @webview_host.HostWebViewCapabilities,
   controller~ : @webview_host.WebViewController,
   environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
-  url? : String = @app.default_url,
+  url? : String = default_url,
   on_navigation_finished? : (String) -> Unit = _ => (),
-) -> @runtime.AppRuntime {
-  @runtime.new_program_with_dimensions(
-    program=@app.program(
-      controller=Some(controller),
-      capability=if capabilities.available {
-        @app.WebViewCapability::available(description=capabilities.description)
-      } else {
-        @app.WebViewCapability::unavailable(
-          description=capabilities.description,
-        )
-      },
-      environment~,
-      url~,
-      on_navigation_finished~,
-    ),
-    width=1280.0,
-    height=820.0,
+) -> @moui.Program[Model, Msg] {
+  program(
+    capability=if capabilities.available {
+      WebViewCapability::available(description=capabilities.description)
+    } else {
+      WebViewCapability::unavailable(description=capabilities.description)
+    },
+    controller=Some(controller),
+    environment~,
+    url~,
+    on_navigation_finished~,
   )
 }
 
@@ -33,8 +30,8 @@ pub fn create_controller(
   host : @webview_host.WebViewHost,
 ) -> @webview_host.WebViewController {
   let origins = [
-    @webview_host.WebViewOrigin::parse(@app.default_url).unwrap(),
-    @webview_host.WebViewOrigin::parse(@app.default_chat_url).unwrap(),
+    @webview_host.WebViewOrigin::parse(default_url).unwrap(),
+    @webview_host.WebViewOrigin::parse(default_chat_url).unwrap(),
   ]
   let security = @webview_host.WebViewSecurityPolicy::new(
     allowed_origins=origins.copy(),
@@ -70,9 +67,4 @@ pub fn create_controller(
     ),
   )
   .unwrap()
-}
-
-///|
-pub fn application_menus() -> Array[@services.ApplicationMenu] {
-  @app.application_menus()
 }

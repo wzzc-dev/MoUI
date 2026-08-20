@@ -13,6 +13,8 @@ pub fn application_menus() -> Array[@services.ApplicationMenu]
 
 pub let chat_url_settings_key : String
 
+pub fn create_controller(@host.WebViewHost) -> @host.WebViewController
+
 pub let default_chat_url : String
 
 pub let default_url : String
@@ -22,6 +24,8 @@ pub fn normalize_request_url(String) -> String?
 pub fn program(capability~ : WebViewCapability, controller? : @host.WebViewController?, environment? : @services.AppEnvironment, url? : String, on_navigation_finished? : (String) -> Unit) -> @core.Program[Model, Msg]
 
 pub let request_url_settings_key : String
+
+pub fn runtime(capabilities~ : @host.HostWebViewCapabilities, controller~ : @host.WebViewController, environment? : @services.AppEnvironment, url? : String, on_navigation_finished? : (String) -> Unit) -> @core.Program[Model, Msg]
 
 pub fn settings_action_command() -> @core.ActionCommand
 

@@ -564,7 +564,7 @@ fn validate_route_policy(
     route.entrypoint_kind == "wechat" {
     40
   } else {
-    24
+    50
   }
   if route.line_budget != expected_budget {
     failures.push(

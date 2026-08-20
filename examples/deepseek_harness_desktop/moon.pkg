@@ -1,8 +1,0 @@
-import {
-  "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/services",
-  "wzzc-dev/moui_webview/host" @webview_host,
-  "examples/deepseek_harness_desktop/app",
-}
-
-supported_targets = "native"
