@@ -10,7 +10,7 @@ GPU rendering.
 | Static glTF/GLB subset | implemented | accessor, POSITION/NORMAL/TEXCOORD_0, indices, TRS, PBR metadata and embedded/URI texture tests |
 | 3D viewport snapshot and latest-wins mailbox | implemented | `ThreeDViewportBinding` tests |
 | Renderer-neutral 3D provider/session protocol | implemented | `moon test moui_3d/render --target native` |
-| Native WGPU surface and depth-tested forward pass | implemented / experimental | `moon build examples/three_d_viewer/macos_wgpu --target native`; real CAMetalLayer child surface, WGPU device/surface/depth pipeline |
+| Native WGPU surface and depth-tested forward pass | implemented / experimental | `moon build examples/three_d_viewer/macos --target native`; real CAMetalLayer child surface, WGPU device/surface/depth pipeline |
 | WebGPU secondary canvas and depth-tested forward pass | implemented / experimental | `moon build examples/three_d_viewer/web_wasm --target wasm-gc`; independent `webgpu` 3D host imports and depth pipeline |
 | macOS child surface plugin | implemented / experimental | AppKit/QuartzCore child `CAMetalLayer`, resize/dispose and pointer/wheel bridge in `moui_3d/backend/macos` |
 | Web secondary canvas plugin | implemented / experimental | `window_web` canvas placement/visibility bridge and `WebAppOptions` registration in `moui_3d/backend/web` |

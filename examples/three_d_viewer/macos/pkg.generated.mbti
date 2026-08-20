@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "examples/three_d_viewer/macos_wgpu"
+package "examples/three_d_viewer/macos"
 
 // Values
 
