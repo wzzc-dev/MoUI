@@ -4,7 +4,7 @@ import {
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/moui_webview/backend/linux" @linux_webview,
   "wzzc-dev/moui_webview/host" @webview_host,
-  "examples/deepseek_harness_desktop" @harness,
+  "examples/deepseek_harness_desktop/app",
 }
 
 supported_targets = "native"
