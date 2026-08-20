@@ -25,6 +25,10 @@ pub let request_url_settings_key : String
 
 pub fn settings_action_command() -> @core.ActionCommand
 
+pub fn switch_site_action_command() -> @core.ActionCommand
+
+pub fn toggle_floating_action_command() -> @core.ActionCommand
+
 pub fn update(Model, Msg) -> Model
 
 pub fn view(Model) -> @core.View[Msg]
@@ -55,6 +59,7 @@ pub struct Model {
   floating_y : Double
   floating_left : Bool
   floating_collapsed : Bool
+  floating_enabled : Bool
 }
 pub fn Model::new(capability~ : WebViewCapability, url? : String) -> Self
 
@@ -72,6 +77,7 @@ pub(all) enum Msg {
   HarnessSettingsSaved(String, @services.ServiceTaskResult[Unit])
   ChatSettingsSaved(String, @services.ServiceTaskResult[Unit])
   SwitchSite
+  ToggleFloating
   FloatingSecondaryTap
   FloatingDragged(@core.DragGestureEvent)
   FloatingDraggedInViewport(@core.DragGestureEvent, Double, Double)
