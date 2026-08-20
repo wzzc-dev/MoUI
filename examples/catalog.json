@@ -20,6 +20,7 @@
     {"id": "browser", "path": "examples/browser", "title": "Browser", "featured": false},
     {"id": "webview_demo", "path": "examples/webview_demo", "title": "WebView Demo", "featured": false},
     {"id": "deepseek_harness_desktop", "path": "examples/deepseek_harness_desktop", "title": "DSH Desktop", "featured": true},
+    {"id": "three_d_viewer", "path": "examples/three_d_viewer", "title": "3D Viewer", "featured": false},
     {"id": "excel", "path": "examples/excel", "title": "Excel Viewer", "featured": true},
     {"id": "terminal", "path": "examples/terminal", "title": "Terminal", "featured": true}
   ]

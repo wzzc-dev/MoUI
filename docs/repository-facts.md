@@ -9,6 +9,10 @@ This file is generated from repository manifests and validator reports.
 | Member |
 |---|
 | ./moui |
+| ./moui_3d |
+| ./moui_3d_wgpu_renderer |
+| ./moui_3d_web_renderer |
+| ./examples/three_d_viewer |
 | ./moui_skia_renderer |
 | ./moui_web_renderer |
 | ./moui_wgpu_renderer |
@@ -83,6 +87,7 @@ This file is generated from repository manifests and validator reports.
 
 | Example | Path | Featured |
 |---|---|---|
+| 3D Viewer | examples/three_d_viewer | no |
 | Agent Counter | examples/agent_counter | no |
 | Counter | examples/counter | no |
 | Multi Window | examples/multi_window | no |
@@ -120,14 +125,14 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 47.
+Published documents: 48.
 
 | Group | Documents |
 |---|---:|
 | Get Started (get-started) | 5 |
 | Guides (guides) | 9 |
 | Examples (examples) | 4 |
-| Platforms (platforms) | 15 |
+| Platforms (platforms) | 16 |
 | Architecture & API (architecture-api) | 5 |
 | Contributing (contributing) | 5 |
 | Status & Roadmap (status-roadmap) | 4 |

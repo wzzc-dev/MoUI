@@ -465,6 +465,19 @@
       ]
     },
     {
+      "group": "platforms",
+      "slug": "3d-capability-report",
+      "title": "3D Capability Report",
+      "path": "docs/3d-capability-report.md",
+      "summary": "Experimental 3D viewer capabilities, renderer routes, and current presentation evidence.",
+      "keywords": [
+        "3D",
+        "WebGPU",
+        "WGPU",
+        "capabilities"
+      ]
+    },
+    {
       "group": "architecture-api",
       "slug": "architecture",
       "title": "Architecture",
@@ -1110,6 +1123,19 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/renderer-capability-report.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "3d-capability-report",
+          "title": "3D 能力报告",
+          "summary": "实验性 3D viewer 能力、渲染路线和当前呈现证据。",
+          "keywords": [
+            "3D 能力报告",
+            "WebGPU",
+            "WGPU",
+            "能力"
+          ],
+          "localizedPath": "docs/zh-Hans/3d-capability-report.md"
         },
         {
           "group": "architecture-api",
