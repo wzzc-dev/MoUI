@@ -21,7 +21,7 @@ pub fn Pty::fd(Self) -> Int
 pub fn Pty::pid(Self) -> Int
 pub async fn Pty::read_output(Self, FixedArray[Byte]) -> Int
 pub fn Pty::resize(Self, Int, Int) -> Unit
-pub fn Pty::spawn(String, Int, Int) -> Self?
+pub async fn Pty::spawn(String, Int, Int) -> Self?
 pub async fn Pty::write_input(Self, Bytes) -> Int
 
 // Type aliases

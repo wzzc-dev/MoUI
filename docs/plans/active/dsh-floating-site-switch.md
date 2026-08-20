@@ -1,5 +1,7 @@
 # DeepSeek Floating Site Switch
 
+- **Status**: active
+
 ## Product behavior
 
 `deepseek_harness_desktop` starts on the configured Harness URL and can switch
