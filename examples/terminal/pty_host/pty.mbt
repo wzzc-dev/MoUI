@@ -28,7 +28,7 @@ pub struct Pty {
 
 ///|
 /// 派生一个运行 shell 的 PTY 会话。
-pub fn Pty::spawn(shell : String, cols : Int, rows : Int) -> Pty? {
+pub async fn Pty::spawn(shell : String, cols : Int, rows : Int) -> Pty? {
   let bytes = @utf8.encode(shell)
   let arr : Array[Byte] = []
   for i in 0..<bytes.length() {

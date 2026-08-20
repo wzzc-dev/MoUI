@@ -58,6 +58,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | Plan | Summary |
 |------|---------|
 | [dsh-desktop-settings-menu](active/dsh-desktop-settings-menu.md) | Add the macOS Settings command and a persisted MoUI request-URL dialog above WKWebView |
+| [dsh-floating-site-switch](active/dsh-floating-site-switch.md) | DeepSeek Harness Desktop floating site-switch overlay button and URL handling |
 | [linux-riscv64-support](active/linux-riscv64-support.md) | Add non-blocking Linux Skia Raster L0-L2 cross-build evidence for `riscv64-linux-gnu` |
 | [mo-workbench-message-windowing](active/mo-workbench-message-windowing.md) | Mo Workbench 消息列表窗口化与重建优化 |
 | [release-module-dependency-closures](done/release-module-dependency-closures.md) | Split concrete renderers and integration tests out of the base publication closure |
