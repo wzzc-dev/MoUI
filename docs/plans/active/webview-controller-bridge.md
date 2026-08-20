@@ -31,7 +31,7 @@
 | Date | Decision |
 |------|----------|
 | 2026-08-20 | Keep the complete feature in the independent `moui_webview` addon; `moui/core` retains only generic platform-view transport. |
-| 2026-08-20 | Use a breaking 0.2 controller contract with no deprecated compatibility layer. |
+| 2026-08-20 | Use a breaking 0.1.10 controller contract with no deprecated compatibility layer. |
 | 2026-08-20 | Controller work enters applications as cancellable `WebViewTask` effects; controllers are captured by Program closures and never stored in business models. |
 | 2026-08-20 | Exact native-derived origins and channel direction policies guard schema-v1 JSON messages; page-supplied origin data is never trusted. |
 | 2026-08-20 | Raw JavaScript evaluation is removed; DSH uses a configuration-time, origin-scoped HostPatch bundle. |
@@ -41,5 +41,6 @@
 | Date | Note |
 |------|------|
 | 2026-08-20 | Plan and ADR created after auditing the addon host/views packages, all three native bridges, WebView Demo, and DSH Desktop. |
-| 2026-08-20 | Host/controller/codec/view migration, three desktop plugin adapters, DSH, and WebView Demo compile under the 0.2 contract; native callbacks retain the existing FFI envelope while bridge handling is upgraded inside each platform adapter. |
+| 2026-08-20 | Host/controller/codec/view migration, three desktop plugin adapters, DSH, and WebView Demo compile under the 0.1.10 contract; native callbacks retain the existing FFI envelope while bridge handling is upgraded inside each platform adapter. |
 | 2026-08-20 | Focused native tests cover FIFO IDs, stale generations, request timeout, HostPatch origin validation, placement appearance-only semantics, and DSH/WebView Demo TEA behavior. |
+| 2026-08-20 | DSH HostPatch CSS and MutationObserver sources are embedded in the composition root; the obsolete runtime `patch.js` file and old documentation examples were removed. |

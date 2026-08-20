@@ -37,7 +37,8 @@ to interoperate over a shared abstraction.
   `moui/runtime`.
 - An app-service implementation: app-facing file, clipboard, URL, settings,
   appearance, menu, timer, and route contracts belong in `moui/services`;
-  host wire protocol and platform channels belong in `moui/backend`.
+  host wire protocols belong in `moui/backend` or an independent platform addon
+  such as `moui_webview`.
 - A renderer implementation: Skia, WGPU, and browser WebGPU details belong in
   `moui/render/*`.
 - A design-system addon: Material, Fluent, Carbon, Primer, and their component
@@ -73,16 +74,17 @@ an existing domain facade can own it.
 The current target placement is:
 
 - App-facing capabilities and concrete control behavior belong in `moui/views`:
-  control styles, form helpers, routing/history, picker items, WebView
-  constructors, the rich-text facade that ordinary apps need to see, and
-  low-level custom-view implementations for buttons, text fields, pickers, and
-  similar controls.
+  control styles, form helpers, routing/history, picker items, the rich-text
+  facade that ordinary apps need to see, and low-level custom-view
+  implementations for buttons, text fields, pickers, and similar controls.
+  WebView constructors and bridge types belong to `moui_webview/views` and
+  `moui_webview/host`.
 - Runtime and diagnostics belong in `moui/runtime`: runtime inspector,
   program-lifecycle snapshots, view/render-diagnostic snapshots, and
   `ComponentContext` runtime-construction details.
-- App-facing platform capabilities belong in `moui/services`. WebView wire
-  commands/events, host capabilities, and host-service protocol stay in
-  `moui/backend`.
+- App-facing platform capabilities belong in `moui/services`. Generic host
+  capabilities and host-service protocols stay in `moui/backend`; WebView wire
+  commands/events and policies stay in `moui_webview`.
 - Renderer and backend implementations remain in `moui/render/*` and
   `moui/backend/*`.
 
@@ -115,13 +117,13 @@ must not be reversed by moving them back into `core`.
   `@style.views_ambient_control_theme(theme)` and use `@views.*Style` /
   `light_theme`/`theme`. See `docs/plans/done/core-component-theme-to-views.md`
   (superseded by ADR 0017).
-- **WebView ownership has moved out**: `WebViewSpec`, `WebViewCommand`,
-  `WebViewEvent`, and `WebViewNavigationPolicy` are owned by
-  `moui/backend`. `core` retains only renderer-neutral
+- **WebView ownership has moved out**: WebView-specific controller, bridge,
+  policy, request, and event types are owned by the independent
+  `wzzc-dev/moui_webview` addon. `core` retains only renderer-neutral
   `PlatformViewPlacement`, `PlatformViewProperty`, `PlatformViewEvent`, and
-  `AppEvent::PlatformView`. Ordinary apps use the `moui/views.web_view` and
-  `@views.WebViewEvent` / `@views.WebViewNavigationPolicy` facades; platform
-  entrypoints and backends use `@host.WebView*`.
+  `AppEvent::PlatformView`. Composition roots create `@host.WebViewHost` and
+  `@host.WebViewController`; views receive only the controller identity and
+  native appearance fields.
 - **Form-model ownership has moved out**: `FormFieldState`,
   `FormValidationRule`, `FormController`, `validate_form`, and `required_field`
   are owned by the form-support layer in `moui/views`. `core` no longer carries
@@ -181,9 +183,10 @@ This specification describes the target boundary of the current API. Place new
 dependencies or public APIs directly in their owning packages; do not retain
 compatibility aliases or deprecated transition entrypoints.
 
-- App-facing controls, control semantics, default themes, form/routing/WebView/
-  rich-text facades, and concrete custom-view control behavior belong in
-  `moui/views`.
+- App-facing controls, control semantics, default themes, form/routing/rich-text
+  facades, and concrete custom-view control behavior belong in `moui/views`.
+  WebView views and controller/bridge types belong in the independent
+  `moui_webview` addon.
 - Runtime lifecycle, component-runtime input, effect/subscription diagnostic
   summaries, and inspector snapshots belong in `moui/runtime`.
 - App-facing service protocols belong in `moui/services`; host wire protocols
@@ -232,8 +235,8 @@ should depend by default on:
 
 - `wzzc-dev/moui/views` — the entrypoint for app-facing UI constructors. The
   application layer should preferentially use its functions to compose buttons,
-  text, layouts, forms, lists, dialogs, WebView wrappers, theme helpers, and so
-  on. It also forwards command/menu types (`ActionCommand`, `CommandIntent`,
+  text, layouts, forms, lists, dialogs, theme helpers, and so on. WebView
+  wrappers use `wzzc-dev/moui_webview/views`. It also forwards command/menu types (`ActionCommand`, `CommandIntent`,
   `KeyboardShortcut`, and others), default-theme helpers, control styles, and
   form/navigation/data helpers through its facade. `DateValue` temporarily
   remains available through the `@views.DateValue` facade because the date-picker
@@ -437,10 +440,11 @@ longer exports diagnostics/runtime types such as `EffectPlanSummary`,
 `ProgramRuntimeSnapshot`, or `RenderInspectorSnapshot`, and domain facades do
 not re-export them.
 
-The owning package for WebView types is `wzzc-dev/moui/backend`. `core` no
-longer exports `WebViewSpec`, `WebViewCommand`, `WebViewEvent`, or
-`WebViewNavigationPolicy`, nor does it provide WebView-specific helpers such as
-`PlatformViewPlacement::web_view`; domain facades do not re-export them.
+The owning package for WebView types is the independent
+`wzzc-dev/moui_webview` addon. `core` no longer exports WebView-specific
+controller, bridge, policy, or event types, nor does it provide WebView
+helpers such as `PlatformViewPlacement::web_view`; domain facades do not
+re-export them.
 
 ### Extending a Domain Facade
 
@@ -480,8 +484,9 @@ customize one of the following behaviors:
 - focus
 
 If merely composing existing controls such as buttons, forms, lists, layouts,
-dialogs, menus, or WebView wrappers, the application layer should use the
-app-facing constructors in `wzzc-dev/moui/views`.
+dialogs, or menus, the application layer should use the app-facing constructors
+in `wzzc-dev/moui/views`. WebView composition uses the corresponding
+`wzzc-dev/moui_webview/views` constructors and host controller tasks.
 
 Place a new control as follows:
 
