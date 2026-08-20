@@ -559,7 +559,7 @@ fn floating_button(
     })
     .on_secondary_tap(FloatingSecondaryTap)
     .on_tap(SwitchSite)
-    .accessibility_label("Switch DeepSeek site")
+    .accessibility_label("Switch Chat/DSH site")
   let surface = @views.stack([
     button,
     @views.overlay_marker(
@@ -688,7 +688,7 @@ pub fn settings_action_command() -> @views.ActionCommand {
 pub fn switch_site_action_command() -> @views.ActionCommand {
   @views.ActionCommand::new(
     intent=@views.CommandIntent::SwitchSite,
-    label="Switch DeepSeek Site",
+    label="Switch Chat/DSH Site",
     group="View",
     description="Switch between the Harness and Chat roots.",
   )
