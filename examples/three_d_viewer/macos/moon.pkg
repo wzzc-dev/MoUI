@@ -1,0 +1,18 @@
+import {
+  "wzzc-dev/moui/backend/macos" @macos_backend,
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "wzzc-dev/moui_3d_wgpu_renderer" @three_d_wgpu,
+  "wzzc-dev/moui_3d/backend/macos" @three_d_macos,
+  "wzzc-dev/moui_3d/render" @three_d_render,
+  "examples/three_d_viewer/app" @viewer_app,
+  "wzzc-dev/moui_3d",
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  targets: { "main.mbt": [ "native" ] },
+)

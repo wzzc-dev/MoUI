@@ -1,0 +1,10 @@
+import {
+  "wzzc-dev/moui_3d",
+  "wzzc-dev/moui_3d/render",
+}
+
+supported_targets = "wasm-gc"
+
+options(
+  targets: { },
+)

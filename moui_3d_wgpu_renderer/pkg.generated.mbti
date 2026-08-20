@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_3d_wgpu_renderer"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui_3d/render",
+}
+
+// Values
+pub fn create_provider(platform? : WgpuNative3DPlatform) -> @render.ThreeDRendererProvider
+
+pub fn descriptor() -> @render.ThreeDRendererDescriptor
+
+pub fn linux_provider() -> @render.ThreeDRendererProvider
+
+pub fn macos_provider() -> @render.ThreeDRendererProvider
+
+pub fn windows_provider() -> @render.ThreeDRendererProvider
+
+// Errors
+
+// Types and methods
+pub enum WgpuNative3DPlatform {
+  MacOS
+  Windows
+  Linux
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits

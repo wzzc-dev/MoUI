@@ -17,6 +17,7 @@ struct WebApp {
   images : @window_image.WindowImageTaskStates
   input : @window_input.WindowInputState
   renderer_providers : Array[@render.RendererProvider]
+  platform_view_plugins : Array[@host.PlatformViewPlugin]
   platform_slots : WebWindowPlatformSlots
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
@@ -34,6 +35,7 @@ pub(all) struct WebAppOptions {
   scene_resolver : @runtime.WindowSceneResolver
   event_sources : @runtime.HostPlatformEventSources?
   route_source : @services.RouteSource?
+  platform_view_plugins : Array[@host.PlatformViewPlugin]
 }
 
 ///|
@@ -96,11 +98,22 @@ fn run_app_internal(
       event_sources=options.event_sources,
     ),
     renderer_providers,
+    platform_view_plugins: options.platform_view_plugins,
     platform_slots: WebWindowPlatformSlots::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
   web_active_app.val = Some(app)
+  @runtime.install_platform_view_plugins(options.platform_view_plugins, (
+    _window_ptr,
+    id,
+    event,
+  ) => {
+    match app.lifecycle.active_runtime_slot() {
+      Some(slot) => slot.driver.dispatch_platform_view(id, event)
+      None => ()
+    }
+  })
   app.driver.set_redraw_scheduler(() => ())
   event_loop.spawn_app(app)
 }
@@ -125,8 +138,9 @@ pub fn WebAppOptions::new(
   scene_resolver? : @runtime.WindowSceneResolver = @runtime.WindowSceneResolver::unavailable(),
   event_sources? : @runtime.HostPlatformEventSources? = None,
   route_source? : @services.RouteSource? = None,
+  platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> WebAppOptions {
-  { scene_resolver, event_sources, route_source }
+  { scene_resolver, event_sources, route_source, platform_view_plugins }
 }
 
 ///|
@@ -238,6 +252,11 @@ fn WebApp::redraw_window(self : WebApp, window_id : @host.WindowId) -> Unit {
       self.input,
       window_id,
       render=(renderer, _runtime_slot, submission) => {
+        @runtime.sync_platform_view_plugins(
+          self.platform_view_plugins,
+          window_id.value.to_uint64(),
+          submission.frame(),
+        )
         renderer.render_frame(submission)
       },
     ),
@@ -351,6 +370,9 @@ fn WebApp::web_surface_actions(
     drop=fn() { window.drop() },
     native_view_handle=fn() { None },
     dispose_platform_views=fn() {
+      for plugin in _self.platform_view_plugins {
+        (plugin.dispose_platform_views)(window.id().into_raw().to_uint64())
+      }
       unregister_web_semantics_runtime(window.id().into_raw())
     },
   )

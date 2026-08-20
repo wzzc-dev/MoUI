@@ -1,0 +1,8 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend" @host,
+  "wzzc-dev/moui_3d",
+  "moonbitlang/core/ref",
+}
+
+supported_targets = "wasm-gc"

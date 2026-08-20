@@ -1,0 +1,384 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_3d"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/ref",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn decode_viewport_event(@core.PlatformViewEvent) -> ViewportEvent?
+
+pub fn load_gltf_scene(String, binary? : Bytes?, resolve? : ((String) -> Bytes?)?) -> Scene raise GltfError
+
+pub fn parse_glb(Bytes) -> GltfDocument raise GltfError
+
+pub fn parse_gltf_json(String, binary? : Bytes?) -> GltfDocument raise GltfError
+
+pub fn[Msg] three_d_viewport(binding~ : ThreeDViewportBinding, snapshot~ : ViewportSnapshot, semantics_label? : String, on_event? : ((ViewportEvent) -> Msg)?) -> @core.View[Msg]
+
+// Errors
+pub(all) suberror GltfError {
+  EmptyInput
+  InvalidMagic
+  UnsupportedVersion(Int)
+  InvalidDeclaredLength
+  TruncatedChunk
+  MissingJsonChunk
+  InvalidJson(String)
+  UnsupportedAssetVersion(String)
+  MissingBuffer(Int)
+  MissingBufferView(Int)
+  MissingAccessor(Int)
+  MissingAttribute(String)
+  InvalidAccessor(Int)
+  UnsupportedComponentType(Int)
+  UnsupportedAccessorType(String)
+  UnsupportedPrimitiveMode(Int)
+  UnsupportedExtension(String)
+  ExternalResourceUnavailable(String)
+  InvalidTexture(Int)
+} derive(Eq, ToJson, @debug.Debug)
+
+// Types and methods
+pub(all) struct Aabb {
+  min : Vec3
+  max : Vec3
+  valid : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Aabb::center(Self) -> Vec3
+pub fn Aabb::empty() -> Self
+pub fn Aabb::extent(Self) -> Vec3
+pub fn Aabb::from_points(Array[Vec3]) -> Self
+pub fn Aabb::include_point(Self, Vec3) -> Self
+pub fn Aabb::is_valid(Self) -> Bool
+pub fn Aabb::max(Self) -> Vec3
+pub fn Aabb::min(Self) -> Vec3
+pub fn Aabb::radius(Self) -> Double
+pub fn Aabb::transformed(Self, Mat4) -> Self
+pub fn Aabb::union(Self, Self) -> Self
+
+pub(all) struct GltfDocument {
+  json : String
+  binary : Bytes?
+  mesh_count : Int
+  node_count : Int
+  material_count : Int
+  texture_count : Int
+} derive(@debug.Debug)
+pub fn GltfDocument::binary(Self) -> Bytes?
+pub fn GltfDocument::json(Self) -> String
+pub fn GltfDocument::material_count(Self) -> Int
+pub fn GltfDocument::mesh_count(Self) -> Int
+pub fn GltfDocument::node_count(Self) -> Int
+pub fn GltfDocument::texture_count(Self) -> Int
+
+pub(all) struct Mat4 {
+  values : Array[Double]
+} derive(@debug.Debug)
+pub fn Mat4::at(Self, Int, Int) -> Double
+pub fn Mat4::from_values(Array[Double]) -> Self
+pub fn Mat4::identity() -> Self
+pub fn Mat4::look_at(eye~ : Vec3, target~ : Vec3, up~ : Vec3) -> Self
+pub fn Mat4::mul(Self, Self) -> Self
+pub fn Mat4::perspective(fov_y_radians~ : Double, aspect~ : Double, near~ : Double, far~ : Double) -> Self
+pub fn Mat4::scale_uniform(Double) -> Self
+pub fn Mat4::transform_point(Self, Vec3) -> Vec3
+pub fn Mat4::translation(Vec3) -> Self
+pub fn Mat4::values(Self) -> Array[Double]
+
+pub(all) struct Material {
+  base_color : Vec4
+  metallic : Double
+  roughness : Double
+  base_color_texture : TextureId?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Material::base_color(Self) -> Vec4
+pub fn Material::base_color_texture(Self) -> TextureId?
+pub fn Material::metallic(Self) -> Double
+pub fn Material::pbr(base_color? : Vec4, metallic? : Double, roughness? : Double, base_color_texture? : TextureId?) -> Self
+pub fn Material::roughness(Self) -> Double
+
+pub(all) struct MaterialId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MaterialId::new(Int) -> Self
+pub fn MaterialId::value(Self) -> Int
+
+pub(all) struct Mesh {
+  name : String
+  primitives : Array[Primitive]
+  bounds : Aabb
+} derive(@debug.Debug)
+pub fn Mesh::bounds(Self) -> Aabb
+pub fn Mesh::name(Self) -> String
+pub fn Mesh::new(name? : String, primitives~ : Array[Primitive]) -> Self
+pub fn Mesh::primitives(Self) -> Array[Primitive]
+
+pub(all) struct MeshId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MeshId::new(Int) -> Self
+pub fn MeshId::value(Self) -> Int
+
+pub(all) struct Node {
+  name : String
+  parent : NodeId?
+  children : Array[NodeId]
+  local_transform : Mat4
+  mesh : MeshId?
+} derive(@debug.Debug)
+pub fn Node::children(Self) -> Array[NodeId]
+pub fn Node::local_transform(Self) -> Mat4
+pub fn Node::mesh(Self) -> MeshId?
+pub fn Node::name(Self) -> String
+pub fn Node::new(name? : String, parent? : NodeId?, local_transform? : Mat4, mesh? : MeshId?) -> Self
+pub fn Node::parent(Self) -> NodeId?
+pub fn Node::with_child(Self, NodeId) -> Self
+
+pub(all) struct NodeId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NodeId::new(Int) -> Self
+pub fn NodeId::value(Self) -> Int
+
+pub(all) struct OrbitCamera {
+  target : Vec3
+  radius : Double
+  azimuth : Double
+  polar : Double
+  perspective : PerspectiveCamera
+} derive(Eq, ToJson, @debug.Debug)
+pub fn OrbitCamera::azimuth(Self) -> Double
+pub fn OrbitCamera::fit(Self, Aabb, padding? : Double) -> Self
+pub fn OrbitCamera::new(target? : Vec3, radius? : Double, azimuth? : Double, polar? : Double, perspective? : PerspectiveCamera) -> Self
+pub fn OrbitCamera::orbit(Self, Double, Double) -> Self
+pub fn OrbitCamera::pan(Self, Vec2) -> Self
+pub fn OrbitCamera::perspective(Self) -> PerspectiveCamera
+pub fn OrbitCamera::polar(Self) -> Double
+pub fn OrbitCamera::position(Self) -> Vec3
+pub fn OrbitCamera::projection(Self) -> Mat4
+pub fn OrbitCamera::radius(Self) -> Double
+pub fn OrbitCamera::ray_for_viewport(Self, Vec2, Vec2) -> Ray
+pub fn OrbitCamera::target(Self) -> Vec3
+pub fn OrbitCamera::view(Self) -> Mat4
+pub fn OrbitCamera::with_aspect(Self, Double) -> Self
+pub fn OrbitCamera::zoom(Self, Double) -> Self
+
+pub(all) struct PerspectiveCamera {
+  fov_y_radians : Double
+  aspect : Double
+  near : Double
+  far : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PerspectiveCamera::far(Self) -> Double
+pub fn PerspectiveCamera::fov_y_radians(Self) -> Double
+pub fn PerspectiveCamera::near(Self) -> Double
+pub fn PerspectiveCamera::new(fov_y_radians? : Double, aspect? : Double, near? : Double, far? : Double) -> Self
+pub fn PerspectiveCamera::projection(Self) -> Mat4
+pub fn PerspectiveCamera::with_aspect(Self, Double) -> Self
+
+pub(all) struct PickHit {
+  node : NodeId
+  primitive_index : Int
+  distance : Double
+  position : Vec3
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PickHit::distance(Self) -> Double
+pub fn PickHit::node(Self) -> NodeId
+pub fn PickHit::position(Self) -> Vec3
+pub fn PickHit::primitive_index(Self) -> Int
+
+pub(all) struct Primitive {
+  vertices : Array[Vertex]
+  indices : Array[Int]
+  material : MaterialId?
+  bounds : Aabb
+} derive(@debug.Debug)
+pub fn Primitive::bounds(Self) -> Aabb
+pub fn Primitive::indices(Self) -> Array[Int]
+pub fn Primitive::material(Self) -> MaterialId?
+pub fn Primitive::new(vertices~ : Array[Vertex], indices~ : Array[Int], material? : MaterialId?) -> Self
+pub fn Primitive::vertices(Self) -> Array[Vertex]
+
+pub(all) struct Quat {
+  x : Double
+  y : Double
+  z : Double
+  w : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Quat::from_axis_angle(axis~ : Vec3, angle~ : Double) -> Self
+pub fn Quat::identity() -> Self
+pub fn Quat::mul(Self, Self) -> Self
+pub fn Quat::new(x~ : Double, y~ : Double, z~ : Double, w~ : Double) -> Self
+pub fn Quat::rotate(Self, Vec3) -> Vec3
+pub fn Quat::to_mat4(Self) -> Mat4
+
+pub(all) struct Ray {
+  origin : Vec3
+  direction : Vec3
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Ray::at(Self, Double) -> Vec3
+pub fn Ray::direction(Self) -> Vec3
+pub fn Ray::intersect_aabb(Self, Aabb) -> Bool
+pub fn Ray::intersect_triangle(Self, Vec3, Vec3, Vec3) -> Double?
+pub fn Ray::new(origin~ : Vec3, direction~ : Vec3) -> Self
+pub fn Ray::origin(Self) -> Vec3
+
+pub(all) struct Scene {
+  meshes : Array[Mesh]
+  materials : Array[Material]
+  textures : Array[Texture]
+  nodes : Array[Node]
+} derive(@debug.Debug)
+pub fn Scene::add_material(Self, Material) -> MaterialId
+pub fn Scene::add_mesh(Self, Mesh) -> MeshId
+pub fn Scene::add_node(Self, Node) -> NodeId
+pub fn Scene::add_texture(Self, Texture) -> TextureId
+pub fn Scene::bounds(Self) -> Aabb
+pub fn Scene::empty() -> Self
+pub fn Scene::materials(Self) -> Array[Material]
+pub fn Scene::mesh(Self, MeshId) -> Mesh?
+pub fn Scene::meshes(Self) -> Array[Mesh]
+pub fn Scene::node(Self, NodeId) -> Node?
+pub fn Scene::nodes(Self) -> Array[Node]
+pub fn Scene::pick(Self, Ray) -> PickHit?
+pub fn Scene::textures(Self) -> Array[Texture]
+pub fn Scene::world_transform(Self, NodeId) -> Mat4
+
+pub(all) struct Texture {
+  source : TextureSource
+  mime_type : String?
+} derive(@debug.Debug)
+pub fn Texture::embedded(Bytes, mime_type? : String?) -> Self
+pub fn Texture::mime_type(Self) -> String?
+pub fn Texture::source(Self) -> TextureSource
+pub fn Texture::uri(String, mime_type? : String?) -> Self
+
+pub(all) struct TextureId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextureId::new(Int) -> Self
+pub fn TextureId::value(Self) -> Int
+
+pub(all) enum TextureSource {
+  Uri(String)
+  Embedded(Bytes)
+} derive(@debug.Debug)
+
+pub struct ThreeDViewportBinding {
+  latest : @ref.Ref[ViewportSnapshot?]
+  status : @ref.Ref[ViewportStatus]
+}
+pub fn ThreeDViewportBinding::new() -> Self
+pub fn ThreeDViewportBinding::publish(Self, ViewportSnapshot) -> Bool
+pub fn ThreeDViewportBinding::set_status(Self, ViewportStatus) -> Unit
+pub fn ThreeDViewportBinding::snapshot(Self) -> ViewportSnapshot?
+pub fn ThreeDViewportBinding::status(Self) -> ViewportStatus
+
+pub struct ThreeDViewportHost {
+  binding : ThreeDViewportBinding
+  surface_handler : @ref.Ref[(UInt64, Int, Int, Double) -> Unit]
+  frame_handler : @ref.Ref[(ViewportSnapshot, Int, Int, Double) -> Unit]
+  dispose_handler : @ref.Ref[(UInt64) -> Unit]
+  invalidate_handler : @ref.Ref[() -> Unit]
+}
+pub fn ThreeDViewportHost::binding(Self) -> ThreeDViewportBinding
+pub fn ThreeDViewportHost::dispose_platform_views(Self, UInt64) -> Unit
+pub fn ThreeDViewportHost::invalidate(Self) -> Unit
+pub fn ThreeDViewportHost::new(binding~ : ThreeDViewportBinding) -> Self
+pub fn ThreeDViewportHost::set_dispose_handler(Self, (UInt64) -> Unit) -> Unit
+pub fn ThreeDViewportHost::set_frame_handler(Self, (ViewportSnapshot, Int, Int, Double) -> Unit) -> Unit
+pub fn ThreeDViewportHost::set_invalidate_handler(Self, () -> Unit) -> Unit
+pub fn ThreeDViewportHost::set_surface_handler(Self, (UInt64, Int, Int, Double) -> Unit) -> Unit
+pub fn ThreeDViewportHost::sync_platform_view(Self, UInt64, @core.PlatformViewPlacement, UInt64, @core.DrawFrame, Double, scale_factor? : Double) -> Unit
+pub fn ThreeDViewportHost::sync_platform_views(Self, UInt64, @core.DrawFrame, Double) -> Unit
+
+pub(all) struct Vec2 {
+  x : Double
+  y : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Vec2::new(x~ : Double, y~ : Double) -> Self
+pub fn Vec2::x(Self) -> Double
+pub fn Vec2::y(Self) -> Double
+pub fn Vec2::zero() -> Self
+
+pub(all) struct Vec3 {
+  x : Double
+  y : Double
+  z : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Vec3::add(Self, Self) -> Self
+pub fn Vec3::cross(Self, Self) -> Self
+pub fn Vec3::dot(Self, Self) -> Double
+pub fn Vec3::length(Self) -> Double
+pub fn Vec3::length_squared(Self) -> Double
+pub fn Vec3::lerp(Self, Self, Double) -> Self
+pub fn Vec3::new(x~ : Double, y~ : Double, z~ : Double) -> Self
+pub fn Vec3::normalized(Self) -> Self
+pub fn Vec3::scale(Self, Double) -> Self
+pub fn Vec3::sub(Self, Self) -> Self
+pub fn Vec3::x(Self) -> Double
+pub fn Vec3::y(Self) -> Double
+pub fn Vec3::z(Self) -> Double
+pub fn Vec3::zero() -> Self
+
+pub(all) struct Vec4 {
+  x : Double
+  y : Double
+  z : Double
+  w : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Vec4::new(x~ : Double, y~ : Double, z~ : Double, w~ : Double) -> Self
+pub fn Vec4::scale(Self, Double) -> Self
+pub fn Vec4::w(Self) -> Double
+pub fn Vec4::x(Self) -> Double
+pub fn Vec4::y(Self) -> Double
+pub fn Vec4::z(Self) -> Double
+pub fn Vec4::zero() -> Self
+
+pub(all) struct Vertex {
+  position : Vec3
+  normal : Vec3
+  texcoord : Vec2
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Vertex::new(position~ : Vec3, normal? : Vec3, texcoord? : Vec2) -> Self
+pub fn Vertex::normal(Self) -> Vec3
+pub fn Vertex::position(Self) -> Vec3
+pub fn Vertex::texcoord(Self) -> Vec2
+
+pub(all) enum ViewportEvent {
+  PointerDown(@core.Point)
+  PointerMove(@core.Point)
+  PointerUp(@core.Point)
+  Wheel(Double)
+  Resize(@core.Size)
+  Focus(Bool)
+  Pick(NodeId)
+  RendererStatus
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ViewportSnapshot {
+  scene_revision : Int64
+  scene : Scene
+  camera : OrbitCamera
+  bounds : Aabb
+} derive(@debug.Debug)
+pub fn ViewportSnapshot::bounds(Self) -> Aabb
+pub fn ViewportSnapshot::camera(Self) -> OrbitCamera
+pub fn ViewportSnapshot::new(scene_revision~ : Int64, scene~ : Scene, camera~ : OrbitCamera) -> Self
+pub fn ViewportSnapshot::scene(Self) -> Scene
+pub fn ViewportSnapshot::scene_revision(Self) -> Int64
+
+pub(all) enum ViewportStatus {
+  Loading
+  Ready
+  Unavailable(String)
+  Failed(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+pub type GltfResourceResolver = (String) -> Bytes?
+
+// Traits
