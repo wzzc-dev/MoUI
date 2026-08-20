@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 typedef void (*moui_macos_webview_event_trampoline_t)(
@@ -120,15 +121,28 @@ static BOOL moui_macos_webview_covers_parent(NSView *view, NSView *parent) {
          NSMaxY(frame) >= NSMaxY(bounds);
 }
 
-// Keep the native surface aligned with DSH's dark shell while WKWebView is
-// waiting for the first page commit. Without an explicit under-page color,
-// AppKit/WebKit paints its default white background for the duration of the
-// loopback page load, which is visible because the native view is above Skia.
-static NSColor *moui_macos_webview_startup_background(void) {
-  return [NSColor colorWithCalibratedRed:0.055
-                                   green:0.059
-                                    blue:0.071
-                                   alpha:1.0];
+// Keep a deterministic fallback for hosts that do not provide a background
+// color. DSH always supplies its resolved MoUI theme color through placement.
+static NSColor *moui_macos_webview_default_background(void) {
+  return [NSColor whiteColor];
+}
+
+static NSColor *moui_macos_webview_background_from_string(NSString *value) {
+  if (value.length == 0) {
+    return moui_macos_webview_default_background();
+  }
+  double red = 0.0;
+  double green = 0.0;
+  double blue = 0.0;
+  double alpha = 1.0;
+  if (sscanf(value.UTF8String, "%lf,%lf,%lf,%lf", &red, &green, &blue,
+             &alpha) != 4) {
+    return moui_macos_webview_default_background();
+  }
+  return [NSColor colorWithCalibratedRed:MAX(0.0, MIN(1.0, red))
+                                   green:MAX(0.0, MIN(1.0, green))
+                                    blue:MAX(0.0, MIN(1.0, blue))
+                                   alpha:MAX(0.0, MIN(1.0, alpha))];
 }
 
 static NSString *moui_macos_webview_drag_regions_script(void) {
@@ -210,8 +224,14 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
 @property(nonatomic, assign) BOOL seen;
 @property(nonatomic, assign) BOOL allowNextNavigation;
 @property(nonatomic, assign) BOOL overlayActive;
-- (instancetype)initWithParent:(NSView *)parent identifier:(NSString *)identifier;
-- (void)syncURL:(NSString *)url frame:(NSRect)frame policy:(int32_t)policy;
+- (instancetype)initWithParent:(NSView *)parent
+                     identifier:(NSString *)identifier
+                     background:(NSString *)background;
+- (void)syncURL:(NSString *)url
+          frame:(NSRect)frame
+         policy:(int32_t)policy
+     background:(NSString *)background
+        scheme:(NSString *)scheme;
 - (void)syncOverlayMask:(BOOL)hasBounds rect:(NSRect)rect;
 - (void)updateNoDragRegions:(id)body;
 - (void)reportStartup:(id)body;
@@ -366,7 +386,9 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
 }
 
 @implementation MOUIMacosWebViewRecord
-- (instancetype)initWithParent:(NSView *)parent identifier:(NSString *)identifier {
+- (instancetype)initWithParent:(NSView *)parent
+                     identifier:(NSString *)identifier
+                     background:(NSString *)background {
   self = [super init];
   if (self != nil) {
     _parent = parent;
@@ -391,7 +413,8 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
        forMainFrameOnly:YES] autorelease]];
     configuration.userContentController = controller;
     _webView = [[MOUIMaskedWebView alloc] initWithFrame:NSZeroRect configuration:configuration];
-    NSColor *startup_background = moui_macos_webview_startup_background();
+    NSColor *startup_background =
+        moui_macos_webview_background_from_string(background);
     // `underPageBackgroundColor` is the WKWebView surface shown before the
     // document has painted. Keep a layer fallback for older macOS versions
     // and for transparent document backgrounds.
@@ -544,9 +567,26 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
   }
 }
 
-- (void)syncURL:(NSString *)url frame:(NSRect)frame policy:(int32_t)policy {
+- (void)syncURL:(NSString *)url
+          frame:(NSRect)frame
+         policy:(int32_t)policy
+     background:(NSString *)background
+        scheme:(NSString *)scheme {
   self.seen = YES;
   self.navigationPolicy = policy;
+  if ([scheme isEqualToString:@"dark"]) {
+    self.webView.appearance =
+        [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+  } else if ([scheme isEqualToString:@"light"]) {
+    self.webView.appearance =
+        [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+  }
+  NSColor *nativeBackground =
+      moui_macos_webview_background_from_string(background);
+  if (@available(macOS 12.0, *)) {
+    self.webView.underPageBackgroundColor = nativeBackground;
+  }
+  self.webView.layer.backgroundColor = nativeBackground.CGColor;
   self.webView.frame = frame;
   self.webView.hidden = frame.size.width <= 0 || frame.size.height <= 0;
   if (url.length > 0 && self.desiredURL == nil) {
@@ -727,7 +767,8 @@ int32_t moui_macos_webview_overlay_composition_test(void) {
 
     MOUIMacosWebViewRecord *record = [[MOUIMacosWebViewRecord alloc]
         initWithParent:parent
-            identifier:@"test-webview"];
+            identifier:@"test-webview"
+            background:@""];
     record.webView.frame = parent.bounds;
 
     NSView *presenter =
@@ -767,7 +808,8 @@ int32_t moui_macos_webview_overlay_composition_test(void) {
 
     record = [[MOUIMacosWebViewRecord alloc]
         initWithParent:parent
-            identifier:@"test-partial-webview"];
+            identifier:@"test-partial-webview"
+            background:@""];
     record.webView.frame = NSMakeRect(20.0, 20.0, 160.0, 100.0);
     [parent addSubview:presenter
               positioned:NSWindowBelow
@@ -828,8 +870,9 @@ void moui_macos_webview_platform_views_begin(uint64_t raw_content_view_handle) {
 MOONBIT_FFI_EXPORT
 void moui_macos_webview_sync(uint64_t raw_content_view_handle, moonbit_bytes_t id,
                              moonbit_bytes_t url, moonbit_bytes_t title,
-                             int32_t policy, double x, double y, double width,
-                             double height) {
+                             moonbit_bytes_t background, moonbit_bytes_t scheme,
+                             int32_t policy,
+                             double x, double y, double width, double height) {
   (void)title;
   NSView *parent = (__bridge NSView *)(void *)raw_content_view_handle;
   if (parent == nil) {
@@ -838,8 +881,10 @@ void moui_macos_webview_sync(uint64_t raw_content_view_handle, moonbit_bytes_t i
   NSString *identifier = moui_macos_webview_string_from_bytes(id);
   MOUIMacosWebViewRecord *record = moui_macos_webview_find(parent, identifier);
   if (record == nil) {
-    record = [[[MOUIMacosWebViewRecord alloc] initWithParent:parent
-                                                  identifier:identifier] autorelease];
+    record = [[[MOUIMacosWebViewRecord alloc]
+        initWithParent:parent
+             identifier:identifier
+             background:moui_macos_webview_string_from_bytes(background)] autorelease];
     [g_records addObject:record];
   }
   // The window content view (MBWContentView) overrides `isFlipped` to return
@@ -849,7 +894,9 @@ void moui_macos_webview_sync(uint64_t raw_content_view_handle, moonbit_bytes_t i
   // to the bottom edge fixed across vertical resizes.
   [record syncURL:moui_macos_webview_string_from_bytes(url)
             frame:NSMakeRect(x, y, width, height)
-           policy:policy];
+           policy:policy
+       background:moui_macos_webview_string_from_bytes(background)
+          scheme:moui_macos_webview_string_from_bytes(scheme)];
 }
 
 MOONBIT_FFI_EXPORT

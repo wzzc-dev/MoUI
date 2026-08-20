@@ -235,7 +235,13 @@ moon check examples/webview_demo/macos_skia --target native
 DSH Desktop 是已有 DeepSeek Harness Web UI 的薄原生宿主，默认加载
 `http://127.0.0.1:3080`。系统应用菜单中的 `Settings…`（`Cmd+,`）打开 MoUI
 模态层，只编辑要加载的 DSH 根地址，不复制网页内部的 profile、导航或 API 设置。
-地址在 macOS settings 持久化成功后才应用；保存相同地址会显式刷新。
+地址和主题模式在 macOS settings 持久化成功后才应用；保存相同地址不会刷新。
+主题模式提供“跟随系统 / 深色 / 浅色”三种选择。解析后的主题背景会随 platform placement
+传给原生 WebView，并在导航开始前设置 WebView 承载面的背景色，避免浅色系统配深色 Chat
+时出现白色闪屏，或深色系统配浅色页面时出现黑色闪屏。网页内容不会通过注入 JavaScript
+强制改主题。
+在 macOS 上还会把解析后的模式设置为 WKWebView 原生的 Aqua / Dark Aqua 外观，因此应用
+显式选择深色时，即使系统是浅色，WebKit 自己的加载承载面也会使用深色。
 
 共享 app 只提供 WebView surface 和 native-unavailable fallback；macOS、Windows、Linux
 composition root 分别接入 WKWebView、WebView2、WebKitGTK plugin，并选择 Skia provider

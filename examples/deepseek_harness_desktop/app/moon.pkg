@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui/services",
+  "wzzc-dev/moui/state" @state,
   "wzzc-dev/moui/views",
   "wzzc-dev/moui/graphics",
   "wzzc-dev/moui_webview/host" @webview_host,

@@ -27,6 +27,8 @@ pub fn settings_action_command() -> @core.ActionCommand
 
 pub fn switch_site_action_command() -> @core.ActionCommand
 
+pub let theme_mode_settings_key : String
+
 pub fn toggle_floating_action_command() -> @core.ActionCommand
 
 pub fn update(Model, Msg) -> Model
@@ -48,10 +50,14 @@ pub struct Model {
   web_view_description : String
   harness_settings_ready : Bool
   chat_settings_ready : Bool
+  theme_settings_ready : Bool
   settings_ready : Bool
   settings_presented : Bool
   request_url_input : String
   chat_url_input : String
+  theme_mode : ThemeMode
+  theme_mode_input : ThemeMode
+  system_color_scheme : @core.ColorScheme
   settings_error : String
   settings_saving : Bool
   settings_writes_pending : Int
@@ -67,15 +73,19 @@ pub(all) enum Msg {
   WebViewEvent(@host.WebViewEvent)
   SettingsLoaded(@services.ServiceTaskResult[String?])
   ChatSettingsLoaded(@services.ServiceTaskResult[String?])
+  ThemeModeLoaded(@services.ServiceTaskResult[String?])
+  SystemColorSchemeLoaded(@services.ServiceTaskResult[@core.ColorScheme])
   OpenSettings
   RequestUrlChanged(String)
   ChatUrlChanged(String)
+  ThemeModeChanged(String)
   SaveSettings
   CancelSettings
   SettingsBackdropPressed
   SettingsSaved(String, @services.ServiceTaskResult[Unit])
   HarnessSettingsSaved(String, @services.ServiceTaskResult[Unit])
   ChatSettingsSaved(String, @services.ServiceTaskResult[Unit])
+  ThemeModeSaved(ThemeMode, @services.ServiceTaskResult[Unit])
   SwitchSite
   ToggleFloating
   FloatingSecondaryTap
@@ -87,6 +97,16 @@ pub(all) enum Site {
   Harness
   Chat
 } derive(Eq, @debug.Debug)
+
+pub(all) enum ThemeMode {
+  System
+  Dark
+  Light
+} derive(Eq, @debug.Debug)
+pub fn ThemeMode::id(Self) -> String
+pub fn ThemeMode::label(Self) -> String
+pub fn ThemeMode::resolve_scheme(Self, @core.ColorScheme) -> @core.ColorScheme
+pub fn ThemeMode::resolve_theme(Self, @core.ColorScheme) -> @core.Theme
 
 pub(all) struct WebViewCapability {
   available : Bool

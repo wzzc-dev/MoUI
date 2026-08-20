@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn web_view_color_wire_value(@core.Color) -> String
+
 pub fn webview_decode_ffi_string(Bytes) -> String
 
 pub fn webview_decode_native_event(Int, Bytes, Bytes, Int) -> WebViewEvent
@@ -91,13 +93,14 @@ pub(all) struct WebViewSpec {
   height : Double?
   title : String
   policy : WebViewNavigationPolicy
+  background_color : @core.Color?
+  color_scheme : @core.ColorScheme?
   on_event : ((WebViewEvent) -> Unit)?
 }
 pub fn WebViewSpec::allows_url(Self, String) -> Bool
-pub fn WebViewSpec::new(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Unit)?) -> Self
+pub fn WebViewSpec::new(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, background_color? : @core.Color?, color_scheme? : @core.ColorScheme?, on_event? : ((WebViewEvent) -> Unit)?) -> Self
 pub fn WebViewSpec::platform_view_placement(Self, frame~ : @core.Rect, clip? : @core.Rect?) -> @core.PlatformViewPlacement
 
 // Type aliases
 
 // Traits
-

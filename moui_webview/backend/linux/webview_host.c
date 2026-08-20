@@ -1,6 +1,7 @@
 #include <moonbit.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
@@ -68,9 +69,33 @@ typedef struct MOUILinuxWebView {
   int navigation_pending;
   int width;   // Track current size for rendering
   int height;
+  double background_red;
+  double background_green;
+  double background_blue;
+  double background_alpha;
   char *cancelled_url;  // URL of the navigation replaced by a newer one
   struct MOUILinuxWebView *next;
 } MOUILinuxWebView;
+
+static void parse_background_color(const char *text, double *red,
+                                   double *green, double *blue,
+                                   double *alpha) {
+  *red = 1.0;
+  *green = 1.0;
+  *blue = 1.0;
+  *alpha = 1.0;
+  if (text != NULL && sscanf(text, "%lf,%lf,%lf,%lf", red, green, blue,
+                              alpha) == 4) {
+    if (*red < 0.0) *red = 0.0;
+    if (*red > 1.0) *red = 1.0;
+    if (*green < 0.0) *green = 0.0;
+    if (*green > 1.0) *green = 1.0;
+    if (*blue < 0.0) *blue = 0.0;
+    if (*blue > 1.0) *blue = 1.0;
+    if (*alpha < 0.0) *alpha = 0.0;
+    if (*alpha > 1.0) *alpha = 1.0;
+  }
+}
 
 static MOUILinuxWebView *g_views = NULL;
 static int g_gtk_initialized = 0;
@@ -348,7 +373,8 @@ static void on_javascript_finished(GObject *object, GAsyncResult *result,
   javascript_request_free(request);
 }
 
-static MOUILinuxWebView *ensure_view(uint64_t surface, const char *id) {
+static MOUILinuxWebView *ensure_view(uint64_t surface, const char *id,
+                                     const char *background) {
   MOUILinuxWebView *view = find_view(surface, id);
   if (view != NULL) {
     return view;
@@ -367,6 +393,12 @@ static MOUILinuxWebView *ensure_view(uint64_t surface, const char *id) {
   view->offscreen_window = gtk_offscreen_window_new();
   view->webview = WEBKIT_WEB_VIEW(webkit_web_view_new());
   gtk_container_add(GTK_CONTAINER(view->offscreen_window), GTK_WIDGET(view->webview));
+  parse_background_color(background, &view->background_red, &view->background_green,
+                         &view->background_blue, &view->background_alpha);
+  webkit_web_view_set_background_color(
+      view->webview,
+      &(GdkRGBA){view->background_red, view->background_green,
+                 view->background_blue, view->background_alpha});
 
   // Show the widget hierarchy (but window stays offscreen)
   gtk_widget_show_all(view->offscreen_window);
@@ -473,7 +505,8 @@ void moui_linux_webview_platform_views_begin(uint64_t wl_surface) {
 MOONBIT_FFI_EXPORT
 void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
                              moonbit_bytes_t id, moonbit_bytes_t url,
-                             moonbit_bytes_t title, int32_t policy, double x,
+                             moonbit_bytes_t title, moonbit_bytes_t background,
+                             moonbit_bytes_t scheme, int32_t policy, double x,
                              double y, double width, double height) {
 #if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
   (void)wl_display;
@@ -483,15 +516,25 @@ void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
 
   char *id_text = moui_linux_webview_bytes_to_cstr(id);
   char *url_text = moui_linux_webview_bytes_to_cstr(url);
+  char *background_text = moui_linux_webview_bytes_to_cstr(background);
+  (void)scheme;
   if (id_text == NULL || url_text == NULL) {
     free(id_text);
     free(url_text);
+    free(background_text);
     return;
   }
-  MOUILinuxWebView *view = ensure_view(wl_surface, id_text);
+  MOUILinuxWebView *view = ensure_view(wl_surface, id_text, background_text);
   if (view != NULL) {
     view->seen = 1;
     view->policy = policy;
+    parse_background_color(background_text, &view->background_red,
+                           &view->background_green, &view->background_blue,
+                           &view->background_alpha);
+    webkit_web_view_set_background_color(
+        view->webview,
+        &(GdkRGBA){view->background_red, view->background_green,
+                   view->background_blue, view->background_alpha});
     view->visible = width > 0.0 && height > 0.0;
 
     // Update size for offscreen rendering
@@ -515,12 +558,15 @@ void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
   }
   free(id_text);
   free(url_text);
+  free(background_text);
 #else
   (void)wl_display;
   (void)wl_surface;
   (void)id;
   (void)url;
   (void)title;
+  (void)background;
+  (void)scheme;
   (void)policy;
   (void)x;
   (void)y;
