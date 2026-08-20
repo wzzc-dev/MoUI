@@ -32,13 +32,15 @@ extern "C" fn linux_webview_next_tick_ms(delay_ms : Int) -> Int64 = "moui_linux_
 extern "C" fn linux_webview_platform_views_begin(wl_surface : UInt64) -> Unit = "moui_linux_webview_platform_views_begin"
 
 ///|
-#borrow(id, url, title)
+#borrow(id, url, title, background, scheme)
 extern "C" fn linux_webview_sync(
   wl_display : UInt64,
   wl_surface : UInt64,
   id : Bytes,
   url : Bytes,
   title : Bytes,
+  background : Bytes,
+  scheme : Bytes,
   policy : Int,
   x : Double,
   y : Double,
@@ -182,6 +184,10 @@ pub fn sync_linux_platform_views(
         @host.webview_encode_ffi_string(placement.id),
         @host.webview_encode_ffi_string(placement.property_or("url", "")),
         @host.webview_encode_ffi_string(placement.property_or("title", "")),
+        @host.webview_encode_ffi_string(
+          placement.property_or("background-color", ""),
+        ),
+        @host.webview_encode_ffi_string(placement.property_or("color-scheme", "")),
         @host.webview_native_policy_code(
           @host.WebViewNavigationPolicy::from_wire_value(
             placement.property_or("policy", "http-https-file"),

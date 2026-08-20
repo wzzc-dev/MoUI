@@ -18,6 +18,9 @@ pub let request_url_settings_key = "dsh-desktop/request-url"
 pub let chat_url_settings_key = "dsh-desktop/chat-url"
 
 ///|
+pub let theme_mode_settings_key = "dsh-desktop/theme-mode"
+
+///|
 let web_view_id = "dsh-desktop-surface"
 
 ///|
@@ -41,6 +44,73 @@ pub(all) enum Site {
 } derive(Eq, Debug)
 
 ///|
+/// DSH's host appearance preference. `System` resolves against the current
+/// desktop color scheme; the explicit modes keep the native WebView surface
+/// and the MoUI settings surface on the same background.
+pub(all) enum ThemeMode {
+  System
+  Dark
+  Light
+} derive(Eq, Debug)
+
+///|
+pub fn ThemeMode::id(self : ThemeMode) -> String {
+  match self {
+    System => "system"
+    Dark => "dark"
+    Light => "light"
+  }
+}
+
+///|
+pub fn ThemeMode::label(self : ThemeMode) -> String {
+  match self {
+    System => "System"
+    Dark => "Dark"
+    Light => "Light"
+  }
+}
+
+///|
+fn theme_mode_from_id(id : String) -> ThemeMode {
+  match id {
+    "dark" => ThemeMode::Dark
+    "light" => ThemeMode::Light
+    _ => ThemeMode::System
+  }
+}
+
+///|
+pub fn ThemeMode::resolve_scheme(
+  self : ThemeMode,
+  system_scheme : @state.ColorScheme,
+) -> @state.ColorScheme {
+  match self {
+    ThemeMode::System => system_scheme
+    ThemeMode::Dark => @state.ColorScheme::Dark
+    ThemeMode::Light => @state.ColorScheme::Light
+  }
+}
+
+///|
+pub fn ThemeMode::resolve_theme(
+  self : ThemeMode,
+  system_scheme : @state.ColorScheme,
+) -> @moui.Theme {
+  match self.resolve_scheme(system_scheme) {
+    @state.ColorScheme::Dark => @views.dark_theme()
+    @state.ColorScheme::Light => @views.light_theme()
+  }
+}
+
+fn theme_for_mode(
+  mode : ThemeMode,
+  system_scheme : @state.ColorScheme,
+) -> @moui.Theme {
+  mode.resolve_theme(system_scheme)
+}
+
+///|
 pub struct Model {
   url : String
   /// Kept as the compatibility name for the original Harness setting.
@@ -54,10 +124,14 @@ pub struct Model {
   web_view_description : String
   harness_settings_ready : Bool
   chat_settings_ready : Bool
+  theme_settings_ready : Bool
   settings_ready : Bool
   settings_presented : Bool
   request_url_input : String
   chat_url_input : String
+  theme_mode : ThemeMode
+  theme_mode_input : ThemeMode
+  system_color_scheme : @state.ColorScheme
   settings_error : String
   settings_saving : Bool
   settings_writes_pending : Int
@@ -79,15 +153,19 @@ pub(all) enum Msg {
   WebViewEvent(@webview_host.WebViewEvent)
   SettingsLoaded(@services.ServiceTaskResult[String?])
   ChatSettingsLoaded(@services.ServiceTaskResult[String?])
+  ThemeModeLoaded(@services.ServiceTaskResult[String?])
+  SystemColorSchemeLoaded(@services.ServiceTaskResult[@state.ColorScheme])
   OpenSettings
   RequestUrlChanged(String)
   ChatUrlChanged(String)
+  ThemeModeChanged(String)
   SaveSettings
   CancelSettings
   SettingsBackdropPressed
   SettingsSaved(String, @services.ServiceTaskResult[Unit])
   HarnessSettingsSaved(String, @services.ServiceTaskResult[Unit])
   ChatSettingsSaved(String, @services.ServiceTaskResult[Unit])
+  ThemeModeSaved(ThemeMode, @services.ServiceTaskResult[Unit])
   SwitchSite
   ToggleFloating
   FloatingSecondaryTap
@@ -119,10 +197,14 @@ pub fn Model::new(
     web_view_description: capability.description,
     harness_settings_ready: false,
     chat_settings_ready: false,
+    theme_settings_ready: false,
     settings_ready: false,
     settings_presented: false,
     request_url_input: initial_url,
     chat_url_input: default_chat_url,
+    theme_mode: ThemeMode::System,
+    theme_mode_input: ThemeMode::System,
+    system_color_scheme: @state.ColorScheme::Light,
     settings_error: "",
     settings_saving: false,
     settings_writes_pending: 0,
@@ -161,7 +243,10 @@ pub fn update(model : Model, msg : Msg) -> Model {
         @webview_host.WebViewEvent::NavigationFinished(url) =>
           { ..model, url, status: "ready" }
         @webview_host.WebViewEvent::NavigationFailed(_url, reason) =>
-          { ..model, status: "failed: " + reason }
+          {
+            ..model,
+            status: "failed: " + reason,
+          }
         @webview_host.WebViewEvent::TitleChanged(title) => { ..model, title, }
         @webview_host.WebViewEvent::CanGoBackChanged(_)
         | @webview_host.WebViewEvent::CanGoForwardChanged(_)
@@ -184,8 +269,31 @@ pub fn update(model : Model, msg : Msg) -> Model {
         harness_url: harness,
         request_url_input: harness,
         harness_settings_ready: true,
-        settings_ready: model.chat_settings_ready,
+        settings_ready: model.chat_settings_ready && model.theme_settings_ready,
         settings_error: "",
+      }
+    }
+    ThemeModeLoaded(result) => {
+      let mode = match result {
+        @services.ServiceTaskResult::Success(Some(value)) => theme_mode_from_id(value)
+        _ => model.theme_mode
+      }
+      {
+        ..model,
+        theme_mode: mode,
+        theme_mode_input: mode,
+        theme_settings_ready: true,
+        settings_ready: model.harness_settings_ready && model.chat_settings_ready,
+        settings_error: "",
+      }
+    }
+    SystemColorSchemeLoaded(result) => {
+      match result {
+        @services.ServiceTaskResult::Success(value) => {
+          ..model,
+          system_color_scheme: value,
+        }
+        _ => model
       }
     }
     ChatSettingsLoaded(result) => {
@@ -204,7 +312,7 @@ pub fn update(model : Model, msg : Msg) -> Model {
         chat_url: chat,
         chat_url_input: chat,
         chat_settings_ready: true,
-        settings_ready: model.harness_settings_ready,
+        settings_ready: model.harness_settings_ready && model.theme_settings_ready,
         settings_error: "",
       }
     }
@@ -214,6 +322,7 @@ pub fn update(model : Model, msg : Msg) -> Model {
         settings_presented: true,
         request_url_input: model.harness_url,
         chat_url_input: model.chat_url,
+        theme_mode_input: model.theme_mode,
         settings_error: "",
         settings_saving: false,
         settings_writes_pending: 0,
@@ -222,7 +331,9 @@ pub fn update(model : Model, msg : Msg) -> Model {
       { ..model, request_url_input: value, settings_error: "" }
     ChatUrlChanged(value) if !model.settings_saving =>
       { ..model, chat_url_input: value, settings_error: "" }
-    RequestUrlChanged(_) | ChatUrlChanged(_) => model
+    ThemeModeChanged(value) if !model.settings_saving =>
+      { ..model, theme_mode_input: theme_mode_from_id(value), settings_error: "" }
+    RequestUrlChanged(_) | ChatUrlChanged(_) | ThemeModeChanged(_) => model
     SaveSettings => {
       let harness_ok = normalize_request_url(model.request_url_input) is Some(_)
       let chat_ok = normalize_request_url(model.chat_url_input) is Some(_)
@@ -241,9 +352,10 @@ pub fn update(model : Model, msg : Msg) -> Model {
           chat_url_input: normalize_request_url(model.chat_url_input).unwrap_or(
             model.chat_url,
           ),
+          theme_mode_input: model.theme_mode_input,
           settings_error: "",
           settings_saving: true,
-          settings_writes_pending: 2,
+          settings_writes_pending: 3,
         }
       }
     }
@@ -253,6 +365,7 @@ pub fn update(model : Model, msg : Msg) -> Model {
         settings_presented: false,
         request_url_input: model.harness_url,
         chat_url_input: model.chat_url,
+        theme_mode_input: model.theme_mode,
         settings_error: "",
         settings_saving: false,
         settings_writes_pending: 0,
@@ -288,6 +401,7 @@ pub fn update(model : Model, msg : Msg) -> Model {
       apply_settings_result(model, Harness, value, result)
     ChatSettingsSaved(value, result) =>
       apply_settings_result(model, Chat, value, result)
+    ThemeModeSaved(mode, result) => apply_theme_mode_result(model, mode, result)
     // Kept for callers/tests using the original single-setting message.
     SettingsSaved(value, result) =>
       apply_settings_result(
@@ -463,6 +577,59 @@ fn apply_settings_result(
 }
 
 ///|
+fn apply_theme_mode_result(
+  model : Model,
+  mode : ThemeMode,
+  result : @services.ServiceTaskResult[Unit],
+) -> Model {
+  if !model.settings_presented || !model.settings_saving {
+    return model
+  }
+  match result {
+    @services.ServiceTaskResult::Failure(error) =>
+      {
+        ..model,
+        settings_error: error.message,
+        settings_saving: false,
+        settings_writes_pending: 0,
+      }
+    @services.ServiceTaskResult::Cancelled =>
+      {
+        ..model,
+        settings_error: "Saving was cancelled.",
+        settings_saving: false,
+        settings_writes_pending: 0,
+      }
+    @services.ServiceTaskResult::Success(_) => {
+      let pending = if model.settings_writes_pending > 0 {
+        model.settings_writes_pending - 1
+      } else {
+        0
+      }
+      let next = {
+        ..model,
+        theme_mode: mode,
+        theme_mode_input: mode,
+        settings_writes_pending: pending,
+      }
+      if pending > 0 {
+        next
+      } else {
+        {
+          ..next,
+          request_url_input: next.harness_url,
+          chat_url_input: next.chat_url,
+          settings_presented: false,
+          settings_error: "",
+          settings_saving: false,
+          settings_writes_pending: 0,
+        }
+      }
+    }
+  }
+}
+
+///|
 pub fn normalize_request_url(value : String) -> String? {
   let trimmed = value.trim().to_owned()
   let lower = trimmed.to_lower()
@@ -483,7 +650,7 @@ pub fn normalize_request_url(value : String) -> String? {
 /// environment. Native composition roots use `view_with_environment` below so
 /// the floating control can clamp itself to the actual window size.
 pub fn view(model : Model) -> @moui.View[Msg] {
-  view_with_viewport(model, 1280.0, 820.0)
+  view_with_viewport(model, 1280.0, 820.0, model.system_color_scheme)
 }
 
 ///|
@@ -492,7 +659,12 @@ fn view_with_environment(
   view_environment : @moui.ViewEnvironment,
 ) -> @moui.View[Msg] {
   let viewport = view_environment.viewport_size()
-  view_with_viewport(model, viewport.width, viewport.height)
+  view_with_viewport(
+    model,
+    viewport.width,
+    viewport.height,
+    view_environment.environment().system_scheme,
+  )
 }
 
 ///|
@@ -500,14 +672,24 @@ fn view_with_viewport(
   model : Model,
   viewport_width : Double,
   viewport_height : Double,
+  system_color_scheme : @state.ColorScheme,
 ) -> @moui.View[Msg] {
-  let theme = @views.default_theme()
+  // Preview the selected mode while Settings is open so the native WebView
+  // surface and MoUI dialog use the same appearance before Save.
+  let selected_mode = if model.settings_presented {
+    model.theme_mode_input
+  } else {
+    model.theme_mode
+  }
+  let theme = theme_for_mode(selected_mode, system_color_scheme)
   let content = if model.web_view_available && model.settings_ready {
     web_view(
       id=web_view_id,
       url=model.url,
       title=model.title,
       policy=@webview_host.WebViewNavigationPolicy::AllowHttpHttps,
+      background_color=Some(theme.palette.background),
+      color_scheme=Some(theme.scheme),
       on_event=Some(event => WebViewEvent(event)),
     )
   } else if model.web_view_available {
@@ -520,13 +702,14 @@ fn view_with_viewport(
   } else {
     floating_button(model, theme, viewport_width, viewport_height)
   }
+  let body = @views.overlay(content, floating)
   let root = @views.dialog_host(
-    @views.overlay(content, floating),
+    body,
     dialog=Some(settings_dialog(model, theme)),
     presented=model.settings_presented,
     on_backdrop=Some(SettingsBackdropPressed),
   )
-  root
+  root.theme(theme)
 }
 
 ///|
@@ -630,6 +813,18 @@ fn settings_dialog(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
           width=416.0,
           height=40.0,
         ),
+        text("Theme").caption(),
+        @views.segmented_control(
+          [
+            @views.choice_item("system", "System"),
+            @views.choice_item("dark", "Dark"),
+            @views.choice_item("light", "Light"),
+          ],
+          selected=model.theme_mode_input.id(),
+          on_select=value => ThemeModeChanged(value),
+          theme~,
+          width=416.0,
+        ),
         support.frame(width=416.0, height=28.0),
       ],
       spacing=8.0,
@@ -646,7 +841,7 @@ fn settings_dialog(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
     ),
     theme~,
     width=480.0,
-    height=340.0,
+    height=404.0,
   )
 }
 
@@ -788,6 +983,14 @@ fn request_settings_load(services : @services.AppServices) -> @moui.Effect[Msg] 
     .settings()
     .read(chat_url_settings_key)
     .effect(map=result => ChatSettingsLoaded(result)),
+    services
+    .settings()
+    .read(theme_mode_settings_key)
+    .effect(map=result => ThemeModeLoaded(result)),
+    services
+    .appearance()
+    .system_color_scheme()
+    .effect(map=result => SystemColorSchemeLoaded(result)),
   ])
 }
 
@@ -805,6 +1008,7 @@ fn update_with_services(
     SaveSettings if next.settings_saving => {
       let harness = next.request_url_input
       let chat = next.chat_url_input
+      let theme_mode = next.theme_mode_input.id()
       (
         next,
         @moui.Effect::batch([
@@ -816,6 +1020,12 @@ fn update_with_services(
           .settings()
           .write(chat_url_settings_key, chat)
           .effect(map=result => ChatSettingsSaved(chat, result)),
+          services
+          .settings()
+          .write(theme_mode_settings_key, theme_mode)
+          .effect(map=result => {
+            ThemeModeSaved(next.theme_mode_input, result)
+          }),
         ]),
       )
     }

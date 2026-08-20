@@ -28,11 +28,14 @@ native WebView is unavailable, the app shows its capability fallback instead of
 embedding a substitute surface.
 
 Use `Settings…` in the standard macOS application menu, or press `Cmd+,`, to
-change the DSH root URL. The native setting accepts trimmed `http://` and
-`https://` URLs, persists the value through `NSUserDefaults`, and applies it
-only after persistence succeeds. Saving the current URL only closes the dialog;
-it does not reload the WebView. This setting chooses which DSH Web UI to load;
-it is not a duplicate of DSH's own profile or API-endpoint settings.
+change the DSH root URLs and appearance. The Theme control offers `System`,
+`Dark`, and `Light`; it is persisted as `dsh-desktop/theme-mode` and drives both
+the MoUI surface and the native WebView background. The native URL settings accept
+trimmed `http://` and `https://` URLs, persist through `NSUserDefaults`, and
+apply only after persistence succeeds. Saving the current URL only closes the
+dialog; it does not reload the WebView. These settings choose which DSH Web UI
+to load and how the desktop shell hosts it; they are not duplicates of DSH's
+own profile or API-endpoint settings.
 
 On macOS, the settings dialog is a MoUI modal above the full-window WKWebView.
 While it is open, the active Skia presenter moves above the WebView, uses a
@@ -47,6 +50,13 @@ The first 32 points of the WebView are also a drag/no-drag strip: blank space
 moves the native window, while links, buttons, inputs, editable controls, and
 elements marked `data-moui-no-drag` remain clickable. DSH can add that
 attribute to any custom interactive control in its top bar.
+
+When switching between Harness and Chat, the resolved Theme background is applied
+to the native WebView before navigation starts. This prevents a
+system-light/Chat-dark or system-dark/Chat-light switch from exposing the
+native WebView's default white or black startup surface; the webpage itself is
+not changed by injected theme JavaScript. On macOS the resolved mode is also
+applied as the WKWebView's native Aqua/Dark Aqua appearance.
 
 After each DSH navigation completes, every native composition root reads and
 executes [`patch.js`](patch.js). The patch increases the expanded sidebar's top

@@ -10,6 +10,12 @@ test "dsh desktop emits native placement for the local Harness surface" {
   inspect(frame.platform_views[0].id, content="dsh-desktop-surface")
   inspect(frame.platform_views[0].property_or("url", ""), content=default_url)
   assert_true(
+    frame.platform_views[0].property_or("background-color", "").contains(
+      "1",
+    ),
+  )
+  inspect(frame.platform_views[0].property_or("color-scheme", ""), content="light")
+  assert_true(
     frame.commands.any(command => {
       match command {
         @core.DrawCommand::FillRoundedRect(_, color) =>
@@ -75,6 +81,77 @@ test "dsh desktop switches between Harness and Chat roots" {
 }
 
 ///|
+test "dsh desktop resolves system dark and light theme modes" {
+  let model = Model::new(capability=WebViewCapability::available())
+  assert_true(model.theme_mode == ThemeMode::System)
+  assert_true(
+    ThemeMode::System.resolve_scheme(@state.ColorScheme::Dark) ==
+      @state.ColorScheme::Dark,
+  )
+  assert_true(
+    ThemeMode::Dark.resolve_scheme(@state.ColorScheme::Light) ==
+      @state.ColorScheme::Dark,
+  )
+  assert_true(
+    ThemeMode::Light.resolve_scheme(@state.ColorScheme::Dark) ==
+      @state.ColorScheme::Light,
+  )
+  assert_true(ThemeMode::Dark.resolve_theme(@state.ColorScheme::Light).scheme == @state.ColorScheme::Dark)
+  assert_true(ThemeMode::Light.resolve_theme(@state.ColorScheme::Dark).scheme == @state.ColorScheme::Light)
+  assert_true(
+    @webview_host.web_view_color_wire_value(
+      @core.Color::rgba(r=0.1, g=0.2, b=0.3, a=1.0),
+    ).contains("0.1,0.2,0.3,1"),
+  )
+}
+
+///|
+test "dsh desktop loads and edits the persisted theme mode" {
+  let initial = Model::new(capability=WebViewCapability::available())
+  let loaded = update(
+    initial,
+    ThemeModeLoaded(@services.ServiceTaskResult::Success(Some("dark"))),
+  )
+  assert_true(loaded.theme_mode == ThemeMode::Dark)
+  assert_true(loaded.theme_mode_input == ThemeMode::Dark)
+  let opened = update(loaded, OpenSettings)
+  let edited = update(opened, ThemeModeChanged("light"))
+  assert_true(edited.theme_mode == ThemeMode::Dark)
+  assert_true(edited.theme_mode_input == ThemeMode::Light)
+  let saving = update(edited, SaveSettings)
+  assert_true(saving.settings_saving)
+  inspect(saving.settings_writes_pending, content="3")
+}
+
+///|
+test "dsh desktop sends explicit dark appearance to a light-system WebView" {
+  let settings = @services.SettingsServices::new(read=key => {
+    @services.ServiceTask::succeed(
+      key="settings:read",
+      value=if key == theme_mode_settings_key { Some("dark") } else { None },
+    )
+  })
+  let appearance = @services.AppearanceServices::new(system_color_scheme=() => {
+    @services.ServiceTask::succeed(
+      key="appearance:system-color-scheme",
+      value=@state.ColorScheme::Light,
+    )
+  })
+  let environment = @services.AppEnvironment::new(
+    services=@services.AppServices::new(settings~, appearance~),
+  )
+  let runtime = test_runtime(
+    program(capability=WebViewCapability::available(), environment~),
+    width=1280.0,
+    height=820.0,
+  )
+  let placement = runtime.draw_frame().platform_views[0]
+  inspect(placement.property_or("color-scheme", ""), content="dark")
+  assert_false(placement.property_or("background-color", "").has_prefix("1,"))
+}
+
+
+///|
 test "dsh desktop secondary floating tap opens settings" {
   let model = update(
     Model::new(capability=WebViewCapability::available()),
@@ -109,6 +186,21 @@ test "dsh desktop floating button receives primary pointer input" {
   inspect(
     switched_frame.platform_views[0].property_or("url", ""),
     content=default_chat_url,
+  )
+  match switched_frame.overlay_bounds {
+    Some(bounds) => assert_true(bounds.origin.x > 1200.0)
+    None => fail("expected floating button overlay")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::PlatformView(
+      "dsh-desktop-surface",
+      @core.PlatformViewEvent::Named(
+        name="navigation-finished",
+        value=default_chat_url,
+        detail="",
+        flag=false,
+      ),
+    ),
   )
   // A click must release the drag recognizer. A later hover move must not
   // move the button or leave the native WebView exclusion rectangle behind.
@@ -539,6 +631,17 @@ test "dsh desktop menu bar exposes site switch and floating toggle" {
   inspect(
     switched.platform_views[0].property_or("url", ""),
     content=default_chat_url,
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::PlatformView(
+      "dsh-desktop-surface",
+      @core.PlatformViewEvent::Named(
+        name="navigation-finished",
+        value=default_chat_url,
+        detail="",
+        flag=false,
+      ),
+    ),
   )
   // Toggle Floating removes the button overlay without touching the WebView.
   assert_true(runtime.dispatch_action_command(toggle_floating_action_command()))

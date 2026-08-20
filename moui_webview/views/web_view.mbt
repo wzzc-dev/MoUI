@@ -6,10 +6,12 @@ pub fn[Msg] web_view(
   height? : Double? = None,
   title? : String = "",
   policy? : @host.WebViewNavigationPolicy = @host.WebViewNavigationPolicy::AllowHttpHttpsFile,
+  background_color? : @core.Color? = None,
+  color_scheme? : @core.ColorScheme? = None,
   on_event? : ((@host.WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    WebViewNode::{ id, url, width, height, title, policy },
+    WebViewNode::{ id, url, width, height, title, policy, background_color, color_scheme },
     event=(node, ctx) => {
       match (ctx.event, on_event) {
         (@core.AppEvent::PlatformView(event_id, event), Some(handler)) =>
@@ -36,6 +38,8 @@ priv struct WebViewNode {
   height : Double?
   title : String
   policy : @host.WebViewNavigationPolicy
+  background_color : @core.Color?
+  color_scheme : @core.ColorScheme?
 }
 
 ///|
@@ -67,6 +71,25 @@ impl @core.ViewNode for WebViewNode with fn declaration(self) {
           @host.WebViewNavigationPolicy::AllowAll => 0
           @host.WebViewNavigationPolicy::AllowHttpHttps => 1
           @host.WebViewNavigationPolicy::AllowHttpHttpsFile => 2
+        },
+      ),
+    ),
+    (
+      "background-color",
+      @core.DeclarationKey::string(
+        match self.background_color {
+          Some(color) => @host.web_view_color_wire_value(color)
+          None => ""
+        },
+      ),
+    ),
+    (
+      "color-scheme",
+      @core.DeclarationKey::string(
+        match self.color_scheme {
+          Some(@core.ColorScheme::Dark) => "dark"
+          Some(@core.ColorScheme::Light) => "light"
+          None => ""
         },
       ),
     ),
@@ -108,6 +131,8 @@ impl @core.ViewNode for WebViewNode with fn platform_views(self, ctx) {
       height=self.height,
       title=self.title,
       policy=self.policy,
+      background_color=self.background_color,
+      color_scheme=self.color_scheme,
     )
     [spec.platform_view_placement(frame=ctx.frame)]
   }

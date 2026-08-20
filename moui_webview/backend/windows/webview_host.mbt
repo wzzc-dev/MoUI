@@ -23,12 +23,14 @@ extern "C" fn windows_webview_native_available() -> Int = "moui_windows_webview_
 extern "C" fn windows_webview_platform_views_begin(hwnd : UInt64) -> Unit = "moui_windows_webview_platform_views_begin"
 
 ///|
-#borrow(id, url, title)
+#borrow(id, url, title, background, scheme)
 extern "C" fn windows_webview_sync(
   hwnd : UInt64,
   id : Bytes,
   url : Bytes,
   title : Bytes,
+  background : Bytes,
+  scheme : Bytes,
   policy : Int,
   x : Double,
   y : Double,
@@ -107,6 +109,8 @@ pub fn sync_windows_platform_views(
         @host.webview_encode_ffi_string(placement.id),
         @host.webview_encode_ffi_string(placement.property_or("url", "")),
         @host.webview_encode_ffi_string(placement.property_or("title", "")),
+        @host.webview_encode_ffi_string(placement.property_or("background-color", "")),
+        @host.webview_encode_ffi_string(placement.property_or("color-scheme", "")),
         @host.webview_native_policy_code(
           @host.WebViewNavigationPolicy::from_wire_value(
             placement.property_or("policy", "http-https-file"),

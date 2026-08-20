@@ -103,6 +103,7 @@ struct MOUWindowsWebView {
   std::wstring current_url;
   std::wstring title;
   int32_t policy = 0;
+  uint32_t background_color = 0xFFFFFFFF;
   bool seen = false;
   bool creating = false;
   bool allow_next_navigation = false;
@@ -110,6 +111,27 @@ struct MOUWindowsWebView {
   ComPtr<ICoreWebView2Controller> controller;
   ComPtr<ICoreWebView2> webview;
 };
+
+static uint32_t parse_background_color(moonbit_bytes_t bytes) {
+  char *text = moui_webview_bytes_to_cstr(bytes);
+  if (text == nullptr || text[0] == '\0') {
+    free(text);
+    return 0xFFFFFFFF;
+  }
+  double red = 0.0, green = 0.0, blue = 0.0, alpha = 1.0;
+  int count = sscanf(text, "%lf,%lf,%lf,%lf", &red, &green, &blue, &alpha);
+  free(text);
+  if (count != 4) {
+    return 0xFFFFFFFF;
+  }
+  auto channel = [](double value) -> uint32_t {
+    if (value < 0.0) value = 0.0;
+    if (value > 1.0) value = 1.0;
+    return (uint32_t)(value * 255.0 + 0.5);
+  };
+  return (channel(alpha) << 24) | (channel(red) << 16) |
+         (channel(green) << 8) | channel(blue);
+}
 
 static std::vector<MOUWindowsWebView *> g_views;
 static ComPtr<ICoreWebView2Environment> g_environment;
@@ -433,6 +455,13 @@ static void create_controller(MOUWindowsWebView *view) {
             }
             view->controller = controller;
             view->controller->get_CoreWebView2(&view->webview);
+            {
+              ComPtr<ICoreWebView2Controller2> controller2;
+              if (SUCCEEDED(view->controller.As(&controller2))) {
+                controller2->put_DefaultBackgroundColor(
+                    (COREWEBVIEW2_COLOR)view->background_color);
+              }
+            }
             install_handlers(view);
             navigate_controlled(view, view->desired_url);
             return S_OK;
@@ -528,15 +557,25 @@ void moui_windows_webview_platform_views_begin(uint64_t hwnd) {
 extern "C" MOONBIT_FFI_EXPORT
 void moui_windows_webview_sync(uint64_t hwnd, moonbit_bytes_t id,
                                moonbit_bytes_t url, moonbit_bytes_t title,
-                               int32_t policy, double x, double y,
+                               moonbit_bytes_t background, moonbit_bytes_t scheme,
+                               int32_t policy,
+                               double x, double y,
                                double width, double height) {
 #if defined(_WIN32) && defined(MOUI_WINDOWS_ENABLE_WEBVIEW2)
-  (void)policy;
   MOUWindowsWebView *view =
       ensure_view((HWND)(uintptr_t)hwnd, mb_bytes_to_wide(id));
   view->seen = true;
   view->policy = policy;
+  view->background_color = parse_background_color(background);
+  {
+    ComPtr<ICoreWebView2Controller2> controller2;
+    if (view->controller && SUCCEEDED(view->controller.As(&controller2))) {
+      controller2->put_DefaultBackgroundColor(
+          (COREWEBVIEW2_COLOR)view->background_color);
+    }
+  }
   view->title = mb_bytes_to_wide(title);
+  (void)scheme;
   apply_bounds(view, x, y, width, height);
   navigate_controlled(view, mb_bytes_to_wide(url));
 #else
@@ -544,6 +583,8 @@ void moui_windows_webview_sync(uint64_t hwnd, moonbit_bytes_t id,
   (void)id;
   (void)url;
   (void)title;
+  (void)background;
+  (void)scheme;
   (void)policy;
   (void)x;
   (void)y;

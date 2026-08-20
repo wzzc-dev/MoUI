@@ -23,6 +23,15 @@ WebView is placed, validated as HTTP(S), and independently written on Save.
 The app closes Settings only after both writes succeed; the visible site
 navigates immediately when its corresponding value changes.
 
+The Settings dialog also persists `dsh-desktop/theme-mode` with `system`,
+`dark`, or `light`. The resolved theme background is serialized into the
+WebView platform placement and applied by the native WebView before a URL
+navigation starts, so the WebView surface itself has the selected color during
+startup. The webpage is not modified by injected theme JavaScript.
+On macOS the same value selects the WKWebView's native Aqua or Dark Aqua
+appearance, so WebKit's own loading surface follows the explicit mode even when
+the desktop system appearance differs.
+
 ## Overlay ownership
 
 The button is an app-local ViewNode. Its transparent overlay marker contributes

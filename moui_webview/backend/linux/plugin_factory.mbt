@@ -52,6 +52,8 @@ pub fn create_linux_webview_plugin(
             @host.webview_encode_ffi_string(placement.id),
             @host.webview_encode_ffi_string(placement.property_or("url", "")),
             @host.webview_encode_ffi_string(placement.property_or("title", "")),
+            @host.webview_encode_ffi_string(placement.property_or("background-color", "")),
+            @host.webview_encode_ffi_string(placement.property_or("color-scheme", "")),
             @host.webview_native_policy_code(
               @host.WebViewNavigationPolicy::from_wire_value(
                 placement.property_or("policy", "http-https-file"),

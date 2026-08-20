@@ -37,6 +37,8 @@ pub(all) struct WebViewSpec {
   height : Double?
   title : String
   policy : WebViewNavigationPolicy
+  background_color : @core.Color?
+  color_scheme : @core.ColorScheme?
   on_event : ((WebViewEvent) -> Unit)?
 }
 
@@ -98,9 +100,22 @@ pub fn WebViewSpec::new(
   height? : Double? = None,
   title? : String = "",
   policy? : WebViewNavigationPolicy = WebViewNavigationPolicy::AllowHttpHttpsFile,
+  background_color? : @core.Color? = None,
+  color_scheme? : @core.ColorScheme? = None,
   on_event? : ((WebViewEvent) -> Unit)? = None,
 ) -> WebViewSpec {
-  { key: None, id, url, width, height, title, policy, on_event }
+  {
+    key: None,
+    id,
+    url,
+    width,
+    height,
+    title,
+    policy,
+    background_color,
+    color_scheme,
+    on_event,
+  }
 }
 
 ///|
@@ -126,7 +141,28 @@ pub fn WebViewSpec::platform_view_placement(
       key="policy",
       value=self.policy.wire_value(),
     ),
+    @core.PlatformViewProperty::new(
+      key="background-color",
+      value=match self.background_color {
+        Some(color) => web_view_color_wire_value(color)
+        None => ""
+      },
+    ),
+    @core.PlatformViewProperty::new(
+      key="color-scheme",
+      value=match self.color_scheme {
+        Some(@core.ColorScheme::Dark) => "dark"
+        Some(@core.ColorScheme::Light) => "light"
+        None => ""
+      },
+    ),
   ])
+}
+
+///|
+/// Serialize normalized RGBA channels for native WebView hosts.
+pub fn web_view_color_wire_value(color : @core.Color) -> String {
+  color.r.to_string() + "," + color.g.to_string() + "," + color.b.to_string() + "," + color.a.to_string()
 }
 
 ///|

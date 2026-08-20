@@ -271,10 +271,13 @@ The DSH Web UI owns navigation, sessions, profiles, settings, and plugin UI.
 The shared app only supplies the WebView surface and a native-unavailable
 fallback. The macOS, Windows, and Linux composition roots select the matching
 WKWebView, WebView2, or WebKitGTK plugin together with the Skia provider route.
-The default surface is `http://127.0.0.1:3080`. `Settings…` (`Cmd+,`) edits that
-root URL in a MoUI modal and persists it through macOS settings before applying
-it. Saving the current value leaves the existing page intact. The modal uses the
-targeted full-window WKWebView overlay path and restores WebView input when
+The default surface is `http://127.0.0.1:3080`. `Settings…` (`Cmd+,`) edits both
+root URLs and the `System`/`Dark`/`Light` theme mode in a MoUI modal. URL and
+theme values persist through macOS settings before applying. Saving the current
+URL leaves the existing page intact. The resolved theme background is applied to
+the native WebView before navigation, so a light host and dark Chat page (or the
+reverse) do not flash white or black. The modal uses
+the targeted full-window WKWebView overlay path and restores WebView input when
 closed. macOS also reserves a 32-point top drag region;
 interactive DOM controls and `[data-moui-no-drag]` elements remain clickable
 inside it.
