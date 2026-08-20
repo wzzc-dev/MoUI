@@ -33,11 +33,6 @@ import {
 supported_targets = "native"
 
 options(
-  link: {
-    "native": {
-      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz",
-    },
-  },
   "native-stub": [
     "macos_application_menu.m",
     "macos_service_host.m",

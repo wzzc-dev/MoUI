@@ -32,12 +32,6 @@ import {
 supported_targets = "native"
 
 options(
-  link: {
-    "native": {
-      "stub-cc-flags": "${build.MOUI_LINUX_GLIB_STUB_CC_FLAGS}",
-      "cc-link-flags": "-lz ${build.MOUI_LINUX_GLIB_CC_LINK_FLAGS}",
-    },
-  },
   "native-stub": [ "linux_service_host.c", "linux_timer_host.c" ],
   targets: { },
 )
