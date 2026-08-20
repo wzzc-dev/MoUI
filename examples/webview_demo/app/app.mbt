@@ -17,7 +17,6 @@ using @webview_views {web_view}
 pub let default_url = "https://wzzc-dev.github.io/MoUI"
 
 ///|
-let web_view_id = "webview-demo-main"
 
 ///|
 pub struct Model {
@@ -40,14 +39,6 @@ pub(all) struct WebViewCapability {
 }
 
 ///|
-pub(all) enum WebViewCommand {
-  LoadUrl(String)
-  Reload
-  Stop
-  GoBack
-  GoForward
-  EvaluateJavaScript(String, String)
-}
 
 ///|
 pub(all) enum WebViewAppEvent {
@@ -59,7 +50,6 @@ pub(all) enum WebViewAppEvent {
   TitleChanged(String)
   CanGoBackChanged(Bool)
   CanGoForwardChanged(Bool)
-  JavaScriptResult(String, String)
 }
 
 ///|
@@ -70,7 +60,9 @@ pub(all) enum Msg {
   Stop
   GoBack
   GoForward
-  EvaluateLocation
+  CommandCompleted(
+    @webview_host.WebViewTaskResult[@webview_host.WebViewCommandReceipt]
+  )
   WebViewEvent(WebViewAppEvent)
 }
 
@@ -121,26 +113,12 @@ pub fn update(model : Model, msg : Msg) -> Model {
     Stop => model.with_log("stop")
     GoBack => model.with_log("back")
     GoForward => model.with_log("forward")
-    EvaluateLocation => model.with_log("eval location")
+    CommandCompleted(_) => model
     WebViewEvent(event) => model.apply_web_view_event(event)
   }
 }
 
 ///|
-fn Msg::web_view_command(self : Msg) -> WebViewCommand? {
-  match self {
-    LoadAddress => Some(WebViewCommand::LoadUrl(""))
-    Reload => Some(WebViewCommand::Reload)
-    Stop => Some(WebViewCommand::Stop)
-    GoBack => Some(WebViewCommand::GoBack)
-    GoForward => Some(WebViewCommand::GoForward)
-    EvaluateLocation =>
-      Some(
-        WebViewCommand::EvaluateJavaScript("window.location.href", "location"),
-      )
-    _ => None
-  }
-}
 
 ///|
 fn Model::with_url(self : Model, url : String) -> Model {
@@ -176,24 +154,24 @@ fn Model::apply_web_view_event(self : Model, event : WebViewAppEvent) -> Model {
     WebViewAppEvent::CanGoBackChanged(value) => { ..self, can_go_back: value }
     WebViewAppEvent::CanGoForwardChanged(value) =>
       { ..self, can_go_forward: value }
-    WebViewAppEvent::JavaScriptResult(request_id, value) =>
-      {
-        ..self.with_log("js " + request_id),
-        js_result: value,
-        status: "script result",
-      }
   }
 }
 
 ///|
-pub fn view(model : Model) -> @moui.View[Msg] {
+pub fn view(
+  model : Model,
+  controller : @webview_host.WebViewController?,
+) -> @moui.View[Msg] {
   let theme = @views.default_theme()
   column(
     [
       header(model, theme),
       toolbar(model),
       row(
-        [expanded(browser_surface(model, theme)), status_panel(model, theme)],
+        [
+          expanded(browser_surface(model, theme, controller)),
+          status_panel(model, theme),
+        ],
         spacing=14.0,
       ).expanded(),
     ],
@@ -248,11 +226,6 @@ fn toolbar(model : Model) -> @moui.View[Msg] {
         command_button("Forward", GoForward, enabled=model.can_go_forward),
         button("Reload", on_click=Reload, variant=@views.ButtonVariant::Tonal),
         button("Stop", on_click=Stop, variant=@views.ButtonVariant::Ghost),
-        button(
-          "Eval",
-          on_click=EvaluateLocation,
-          variant=@views.ButtonVariant::Outline,
-        ),
       ],
       spacing=8.0,
       align=@views.CrossAlign::Center,
@@ -275,16 +248,19 @@ fn command_button(
 }
 
 ///|
-fn browser_surface(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
-  let child = if model.web_view_available {
-    web_view(
-      id=web_view_id,
-      url=model.url,
-      title=model.title,
-      on_event=Some(event => WebViewEvent(web_view_event(event))),
-    )
-  } else {
-    unavailable_view(model, theme)
+fn browser_surface(
+  model : Model,
+  theme : @moui.Theme,
+  controller : @webview_host.WebViewController?,
+) -> @moui.View[Msg] {
+  let child = match controller {
+    Some(controller) if model.web_view_available =>
+      web_view(
+        controller~,
+        title=model.title,
+        on_event=Some(event => WebViewEvent(web_view_event(event))),
+      )
+    _ => unavailable_view(model, theme)
   }
   container(child, padding=8.0)
 }
@@ -394,38 +370,41 @@ fn compact_text(value : String) -> String {
 
 ///|
 pub fn program(
-  command_sink~ : (WebViewCommand) -> Unit,
+  controller? : @webview_host.WebViewController? = None,
   capability~ : WebViewCapability,
 ) -> @moui.Program[Model, Msg] {
   @moui.Program::new(
-    init=() => (Model::new(capability~), @moui.Effect::none()),
+    init=() => {
+      let initial = Model::new(capability~)
+      let effect = match controller {
+        Some(controller) =>
+          controller
+          .navigate(initial.url)
+          .effect(map=result => CommandCompleted(result))
+        None => @moui.Effect::none()
+      }
+      (initial, effect)
+    },
     update=(model, message) => {
       let next = update(model, message)
-      let effect = match message.web_view_command() {
-        Some(WebViewCommand::LoadUrl(_)) =>
-          web_view_command_effect(
-            WebViewCommand::LoadUrl(model.address),
-            command_sink,
-          )
-        Some(command) => web_view_command_effect(command, command_sink)
-        None => @moui.Effect::none()
+      let effect = match (controller, message) {
+        (Some(controller), LoadAddress) =>
+          controller
+          .navigate(model.address)
+          .effect(map=result => CommandCompleted(result))
+        (Some(controller), Reload) =>
+          controller.reload().effect(map=result => CommandCompleted(result))
+        (Some(controller), Stop) =>
+          controller.stop().effect(map=result => CommandCompleted(result))
+        (Some(controller), GoBack) =>
+          controller.go_back().effect(map=result => CommandCompleted(result))
+        (Some(controller), GoForward) =>
+          controller.go_forward().effect(map=result => CommandCompleted(result))
+        _ => @moui.Effect::none()
       }
       (next, effect)
     },
-    view~,
-  )
-}
-
-///|
-fn web_view_command_effect(
-  command : WebViewCommand,
-  command_sink : (WebViewCommand) -> Unit,
-) -> @moui.Effect[Msg] {
-  @moui.Effect::run(
-    key="webview-demo:command",
-    kind="webview-command",
-    label="Dispatch WebView command",
-    run=_dispatch => command_sink(command),
+    view=model => view(model, controller),
   )
 }
 
@@ -433,15 +412,15 @@ fn web_view_command_effect(
 fn web_view_event(event : @webview_host.WebViewEvent) -> WebViewAppEvent {
   match event {
     NavigationRequested(value) => WebViewAppEvent::NavigationRequested(value)
-    NavigationStarted(value) => WebViewAppEvent::NavigationStarted(value)
-    NavigationCommitted(value) => WebViewAppEvent::NavigationCommitted(value)
-    NavigationFinished(value) => WebViewAppEvent::NavigationFinished(value)
-    NavigationFailed(url, reason) =>
-      WebViewAppEvent::NavigationFailed(url, reason)
+    NavigationStarted(value) => WebViewAppEvent::NavigationStarted(value.url)
+    NavigationCommitted(value) =>
+      WebViewAppEvent::NavigationCommitted(value.url)
+    NavigationFinished(value) => WebViewAppEvent::NavigationFinished(value.url)
+    NavigationFailed(_, url, reason) =>
+      WebViewAppEvent::NavigationFailed(url, reason.message)
     TitleChanged(value) => WebViewAppEvent::TitleChanged(value)
     CanGoBackChanged(value) => WebViewAppEvent::CanGoBackChanged(value)
     CanGoForwardChanged(value) => WebViewAppEvent::CanGoForwardChanged(value)
-    JavaScriptResult(request_id, value) =>
-      WebViewAppEvent::JavaScriptResult(request_id, value)
+    _ => WebViewAppEvent::NavigationRequested("")
   }
 }

@@ -1,19 +1,11 @@
 ///|
 fn run_windows() -> Unit {
-  let commands = @webview_host.HostWebViewCommandQueue::new()
-  let patch = @fs.read_file_to_string(
-    "examples/deepseek_harness_desktop/patch.js",
-  ) catch {
-    _ => ""
-  }
-  let plugin = @windows_webview.create_windows_webview_plugin(commands)
+  let host = @webview_host.WebViewHost::new()
+  let controller = @harness.create_controller(host)
+  let plugin = @windows_webview.create_windows_webview_plugin(host)
   let capabilities = @windows_webview.windows_webview_capabilities()
   let environment = @windows_backend.app_environment()
-  let runtime = @harness.runtime(capabilities~, environment~, on_navigation_finished=_url => {
-    if !patch.is_empty() {
-      commands.evaluate_javascript(id="dsh-desktop-surface", script=patch)
-    }
-  })
+  let runtime = @harness.runtime(capabilities~, controller~, environment~)
   @runtime.run_app("DSH Desktop", runtime)
   .render(@render_skia.raster())
   // .render_all(

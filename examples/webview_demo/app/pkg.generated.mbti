@@ -3,16 +3,17 @@ package "examples/webview_demo/app"
 
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui_webview/host",
 }
 
 // Values
 pub let default_url : String
 
-pub fn program(command_sink~ : (WebViewCommand) -> Unit, capability~ : WebViewCapability) -> @core.Program[Model, Msg]
+pub fn program(controller? : @host.WebViewController?, capability~ : WebViewCapability) -> @core.Program[Model, Msg]
 
 pub fn update(Model, Msg) -> Model
 
-pub fn view(Model) -> @core.View[Msg]
+pub fn view(Model, @host.WebViewController?) -> @core.View[Msg]
 
 // Errors
 
@@ -38,7 +39,7 @@ pub(all) enum Msg {
   Stop
   GoBack
   GoForward
-  EvaluateLocation
+  CommandCompleted(@host.WebViewTaskResult[@host.WebViewCommandReceipt])
   WebViewEvent(WebViewAppEvent)
 }
 
@@ -51,7 +52,6 @@ pub(all) enum WebViewAppEvent {
   TitleChanged(String)
   CanGoBackChanged(Bool)
   CanGoForwardChanged(Bool)
-  JavaScriptResult(String, String)
 }
 
 pub(all) struct WebViewCapability {
@@ -60,15 +60,6 @@ pub(all) struct WebViewCapability {
 }
 pub fn WebViewCapability::available(description? : String) -> Self
 pub fn WebViewCapability::unavailable(description? : String) -> Self
-
-pub(all) enum WebViewCommand {
-  LoadUrl(String)
-  Reload
-  Stop
-  GoBack
-  GoForward
-  EvaluateJavaScript(String, String)
-}
 
 // Type aliases
 

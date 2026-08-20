@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/env",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/backend" @moui_host,
   "wzzc-dev/moui/render",

@@ -19,7 +19,7 @@ pub let default_url : String
 
 pub fn normalize_request_url(String) -> String?
 
-pub fn program(capability~ : WebViewCapability, environment? : @services.AppEnvironment, url? : String, on_navigation_finished? : (String) -> Unit) -> @core.Program[Model, Msg]
+pub fn program(capability~ : WebViewCapability, controller? : @host.WebViewController?, environment? : @services.AppEnvironment, url? : String, on_navigation_finished? : (String) -> Unit) -> @core.Program[Model, Msg]
 
 pub let request_url_settings_key : String
 

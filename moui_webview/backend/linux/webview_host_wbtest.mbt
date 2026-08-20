@@ -1,8 +1,6 @@
 ///|
-/// WebKitGTK webview codec/queue tests. These moved with the webview host
-/// code from `moui/backend/linux` when webview became a standalone addon;
-/// they exercise `moui_webview/host` codecs and the Linux WebKitGTK FFI
-/// surface that live in this package.
+/// Linux keeps a small host-contract suite so the platform package exercises
+/// the shared controller/bridge state machine without requiring WebKitGTK.
 test "linux webview fallback reports unavailable without WebKitGTK" {
   let capabilities = linux_webview_capabilities()
   if linux_webview_native_available() == 0 {
@@ -12,108 +10,18 @@ test "linux webview fallback reports unavailable without WebKitGTK" {
   } else {
     inspect(capabilities.available, content="true")
     inspect(capabilities.commands, content="true")
-    inspect(capabilities.javascript_evaluation, content="true")
+    inspect(capabilities.messaging, content="true")
   }
 }
 
 ///|
-test "linux webview maps native title history javascript and policy events" {
-  match
-    @host.webview_decode_native_event(
-      5,
-      @host.webview_encode_ffi_string(""),
-      @host.webview_encode_ffi_string("Loaded title"),
-      0,
-    ) {
-    @host.WebViewEvent::TitleChanged("Loaded title") => ()
-    _ => fail("expected Linux WebView title event")
-  }
-  match
-    @host.webview_decode_native_event(
-      6,
-      @host.webview_encode_ffi_string(""),
-      @host.webview_encode_ffi_string(""),
-      1,
-    ) {
-    @host.WebViewEvent::CanGoBackChanged(true) => ()
-    _ => fail("expected Linux WebView back-history event")
-  }
-  match
-    @host.webview_decode_native_event(
-      7,
-      @host.webview_encode_ffi_string(""),
-      @host.webview_encode_ffi_string(""),
-      0,
-    ) {
-    @host.WebViewEvent::CanGoForwardChanged(false) => ()
-    _ => fail("expected Linux WebView forward-history event")
-  }
-  match
-    @host.webview_decode_native_event(
-      8,
-      @host.webview_encode_ffi_string("request-1"),
-      @host.webview_encode_ffi_string("42"),
-      0,
-    ) {
-    @host.WebViewEvent::JavaScriptResult("request-1", "42") => ()
-    _ => fail("expected Linux WebView JavaScript result event")
-  }
-  match
-    @host.webview_decode_native_event(
-      4,
-      @host.webview_encode_ffi_string("ftp://example.test/file"),
-      @host.webview_encode_ffi_string("WebView navigation policy blocked URL"),
-      0,
-    ) {
-    @host.WebViewEvent::NavigationFailed(url, reason) => {
-      inspect(url, content="ftp://example.test/file")
-      inspect(reason, content="WebView navigation policy blocked URL")
-    }
-    _ => fail("expected Linux WebView policy failure event")
-  }
-}
-
-///|
-test "linux webview encodes navigation policies and commands" {
-  inspect(
-    @host.webview_native_policy_code(
-      @host.WebViewNavigationPolicy::AllowHttpHttpsFile,
-    ),
-    content="0",
-  )
-  inspect(
-    @host.webview_native_policy_code(
-      @host.WebViewNavigationPolicy::AllowHttpHttps,
-    ),
-    content="1",
-  )
-  inspect(
-    @host.webview_native_policy_code(@host.WebViewNavigationPolicy::AllowAll),
-    content="2",
-  )
-  let load = @host.webview_encode_native_command(
-    @host.WebViewCommand::LoadUrl("https://example.test"),
-  )
-  inspect(load.0, content="0")
-  inspect(load.1, content="https://example.test")
-  let eval = @host.webview_encode_native_command(
-    @host.WebViewCommand::EvaluateJavaScript("1 + 1", "sum"),
-  )
-  inspect(eval.0, content="5")
-  inspect(eval.1, content="1 + 1")
-  inspect(eval.2, content="sum")
-}
-
-///|
-test "linux webview placement applies client decoration offset" {
-  let spec = @host.WebViewSpec::new(
-    id="main",
-    url="https://example.test",
-    title="Example",
-  )
+test "linux webview placement contains appearance only" {
+  let spec = @host.WebViewSpec::new(id="main", title="Example")
   let placement = spec.platform_view_placement(
     frame=@core.Rect::new(x=12.0, y=24.0, width=320.0, height=180.0),
   )
+  assert_true(placement.property_or("url", "").is_empty())
+  assert_true(placement.property_or("policy", "").is_empty())
   let frame = linux_webview_platform_frame(placement, 32.0)
   inspect(frame.origin.x, content="12")
   inspect(frame.origin.y, content="56")
@@ -122,24 +30,88 @@ test "linux webview placement applies client decoration offset" {
 }
 
 ///|
-test "linux webview command queue drains FIFO through host contract" {
-  let queue = @host.HostWebViewCommandQueue::new()
-  queue.load_url(id="main", url="https://example.test")
-  queue.evaluate_javascript(
-    id="main",
-    script="document.title",
-    request_id="title",
+test "linux webview controller commands preserve FIFO and navigation ids" {
+  let host = @host.WebViewHost::new()
+  let origin = @host.WebViewOrigin::parse("https://example.test")
+  let security = @host.WebViewSecurityPolicy::new(
+    allowed_origins=match origin {
+      Some(value) => [value]
+      None => []
+    },
+    allowed_channels=[@host.WebViewChannelPolicy::new(name="probe")],
   )
-  inspect(queue.pending_count(), content="2")
-  let commands : Array[String] = []
-  let drained = queue.drain_with_handler(command => {
-    let (kind, text, detail) = @host.webview_encode_native_command(
-      command.command,
-    )
-    commands.push("\{command.id}:\{kind}:\{text}:\{detail}")
+  let controller = match
+    host.create_controller(
+      id="main",
+      config=@host.WebViewControllerConfig::new(security~),
+    ) {
+    Ok(value) => value
+    Err(_) => fail("controller creation failed")
+  }
+  let _ = controller.navigate("https://example.test").start(_ => ())
+  let commands : Array[(Int, UInt64, UInt64, String)] = []
+  let drained = host.drain_commands(command => {
+    commands.push(@host.webview_encode_native_command(command))
   })
-  inspect(drained, content="2")
-  inspect(queue.pending_count(), content="0")
-  inspect(commands[0], content="main:0:https://example.test:")
-  inspect(commands[1], content="main:5:document.title:title")
+  inspect(drained, content="1")
+  inspect(commands[0].0, content="0")
+  inspect(commands[0].3, content="https://example.test")
+  assert_true(commands[0].1 > 0UL)
+  assert_true(commands[0].2 > 0UL)
+}
+
+///|
+test "linux webview bridge rejects unsupported versions" {
+  let result = @host.WebViewBridgeEnvelope::parse(
+    "{\"schemaVersion\":2,\"kind\":\"hello\",\"navigationId\":\"1\"}",
+  )
+  match result {
+    Err(error) => inspect(error.code, content="unsupported-version")
+    Ok(_) => fail("unsupported bridge version was accepted")
+  }
+}
+
+///|
+test "linux webview configuration updates the registered controller" {
+  let host = @host.WebViewHost::new()
+  let origin = @host.WebViewOrigin::parse("https://example.test").unwrap()
+  let controller = host
+    .create_controller(
+      id="configured",
+      config=@host.WebViewControllerConfig::new(
+        security=@host.WebViewSecurityPolicy::new(allowed_origins=[origin]),
+      ),
+    )
+    .unwrap()
+  let _ = controller
+    .configure(
+      @host.WebViewControllerConfig::new(
+        security=@host.WebViewSecurityPolicy::new(allowed_origins=[origin]),
+        capabilities=["bridge-v1"],
+      ),
+    )
+    .start(_ => ())
+  let config = host.native_config("configured").unwrap()
+  assert_true(config.document_start_script.contains("mouiBridge"))
+  assert_true(config.revision > 1UL)
+}
+
+///|
+test "linux webview rejects a host patch outside the security origin set" {
+  let origin = @host.WebViewOrigin::parse("https://example.test").unwrap()
+  let other = @host.WebViewOrigin::parse("https://other.test").unwrap()
+  let patch = @host.HostPatchBundle::new(id="invalid", version="1", allowed_origins=[
+    other,
+  ])
+  let result = @host.WebViewHost::new().create_controller(
+    id="main",
+    config=@host.WebViewControllerConfig::new(
+      security=@host.WebViewSecurityPolicy::new(allowed_origins=[origin]),
+      host_patches=[patch],
+    ),
+  )
+  match result {
+    Err(error) => inspect(error.code, content="host-patch-origin-denied")
+    Ok(_) => fail("out-of-policy HostPatch was accepted")
+  }
 }

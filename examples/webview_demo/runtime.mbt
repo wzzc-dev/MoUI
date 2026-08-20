@@ -1,11 +1,11 @@
 ///|
 pub fn runtime(
-  commands~ : @webview_host.HostWebViewCommandQueue,
+  controller~ : @webview_host.WebViewController,
   capabilities~ : @webview_host.HostWebViewCapabilities,
 ) -> @runtime.AppRuntime {
   @runtime.new_program_with_dimensions(
     program=@app.program(
-      command_sink=command => dispatch_command(commands, command),
+      controller=Some(controller),
       capability=if capabilities.available {
         @app.WebViewCapability::available(description=capabilities.description)
       } else {
@@ -20,17 +20,20 @@ pub fn runtime(
 }
 
 ///|
-fn dispatch_command(
-  commands : @webview_host.HostWebViewCommandQueue,
-  command : @app.WebViewCommand,
-) -> Unit {
-  match command {
-    LoadUrl(url) => commands.load_url(id="webview-demo-main", url~)
-    Reload => commands.reload(id="webview-demo-main")
-    Stop => commands.stop(id="webview-demo-main")
-    GoBack => commands.go_back(id="webview-demo-main")
-    GoForward => commands.go_forward(id="webview-demo-main")
-    EvaluateJavaScript(script, request_id) =>
-      commands.evaluate_javascript(id="webview-demo-main", script~, request_id~)
-  }
+pub fn create_controller() -> (
+  @webview_host.WebViewHost,
+  @webview_host.WebViewController,
+) {
+  let host = @webview_host.WebViewHost::new()
+  let origin = @webview_host.WebViewOrigin::parse(@app.default_url).unwrap()
+  let security = @webview_host.WebViewSecurityPolicy::new(allowed_origins=[
+    origin,
+  ])
+  let controller = host
+    .create_controller(
+      id="webview-demo-main",
+      config=@webview_host.WebViewControllerConfig::new(security~),
+    )
+    .unwrap()
+  (host, controller)
 }

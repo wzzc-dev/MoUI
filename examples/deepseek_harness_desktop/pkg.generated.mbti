@@ -10,7 +10,9 @@ import {
 // Values
 pub fn application_menus() -> Array[@services.ApplicationMenu]
 
-pub fn runtime(capabilities~ : @host.HostWebViewCapabilities, environment? : @services.AppEnvironment, url? : String, on_navigation_finished? : (String) -> Unit) -> @runtime.AppRuntime
+pub fn create_controller(@host.WebViewHost) -> @host.WebViewController
+
+pub fn runtime(capabilities~ : @host.HostWebViewCapabilities, controller~ : @host.WebViewController, environment? : @services.AppEnvironment, url? : String, on_navigation_finished? : (String) -> Unit) -> @runtime.AppRuntime
 
 // Errors
 

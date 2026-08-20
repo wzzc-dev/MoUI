@@ -7,7 +7,9 @@ import {
 }
 
 // Values
-pub fn runtime(commands~ : @host.HostWebViewCommandQueue, capabilities~ : @host.HostWebViewCapabilities) -> @runtime.AppRuntime
+pub fn create_controller() -> (@host.WebViewHost, @host.WebViewController)
+
+pub fn runtime(controller~ : @host.WebViewController, capabilities~ : @host.HostWebViewCapabilities) -> @runtime.AppRuntime
 
 // Errors
 
