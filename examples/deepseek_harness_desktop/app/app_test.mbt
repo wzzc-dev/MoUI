@@ -510,6 +510,65 @@ test "dsh desktop exposes standard Edit key equivalents" {
 }
 
 ///|
+test "dsh desktop menu bar exposes site switch and floating toggle" {
+  let menus = application_menus()
+  let view_menu = menus[2]
+  inspect(view_menu.title, content="View")
+  let commands = view_menu.items.filter_map(item => {
+    match item {
+      @services.ApplicationMenuItem::MenuCommand(command) => Some(command)
+      @services.ApplicationMenuItem::MenuSeparator => None
+    }
+  })
+  inspect(commands.length(), content="2")
+  assert_true(
+    commands.any(command => command.intent == @core.CommandIntent::SwitchSite),
+  )
+  assert_true(
+    commands.any(command => command.intent == @core.CommandIntent::ToggleFloating),
+  )
+  let runtime = test_runtime(
+    program(capability=WebViewCapability::available()),
+    width=1280.0,
+    height=820.0,
+  )
+  ignore(runtime.draw_frame())
+  // Switch Site reuses the same command identity as the floating button.
+  assert_true(runtime.dispatch_action_command(switch_site_action_command()))
+  let switched = runtime.draw_frame()
+  inspect(
+    switched.platform_views[0].property_or("url", ""),
+    content=default_chat_url,
+  )
+  // Toggle Floating removes the button overlay without touching the WebView.
+  assert_true(runtime.dispatch_action_command(toggle_floating_action_command()))
+  let hidden = runtime.draw_frame()
+  assert_true(hidden.overlay_bounds is None)
+  assert_true(hidden.platform_views.length() == 1)
+  assert_true(runtime.dispatch_action_command(toggle_floating_action_command()))
+  let shown = runtime.draw_frame()
+  assert_true(shown.overlay_bounds is Some(_))
+}
+
+///|
+test "dsh desktop toggle floating button shows and hides the overlay" {
+  let runtime = test_runtime(
+    program(capability=WebViewCapability::available()),
+    width=1280.0,
+    height=820.0,
+  )
+  let initial = runtime.draw_frame()
+  assert_true(initial.overlay_bounds is Some(_))
+  let hidden = update(
+    Model::new(capability=WebViewCapability::available()),
+    ToggleFloating,
+  )
+  assert_false(hidden.floating_enabled)
+  let visible = update(hidden, ToggleFloating)
+  assert_true(visible.floating_enabled)
+}
+
+///|
 test "settings dialog accepts pointer editing cancel and save" {
   let settings = @services.SettingsServices::new(
     read=_key => @services.ServiceTask::succeed(key="settings:read", value=None),

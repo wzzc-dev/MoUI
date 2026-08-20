@@ -65,6 +65,7 @@ pub struct Model {
   floating_y : Double
   floating_left : Bool
   floating_collapsed : Bool
+  floating_enabled : Bool
 }
 
 ///|
@@ -88,6 +89,7 @@ pub(all) enum Msg {
   HarnessSettingsSaved(String, @services.ServiceTaskResult[Unit])
   ChatSettingsSaved(String, @services.ServiceTaskResult[Unit])
   SwitchSite
+  ToggleFloating
   FloatingSecondaryTap
   FloatingDragged(@views.DragGestureEvent)
   // The environment-aware route lets the app clamp a free position to the
@@ -128,6 +130,7 @@ pub fn Model::new(
     floating_y: 0.0,
     floating_left: false,
     floating_collapsed: false,
+    floating_enabled: true,
   }
 }
 
@@ -274,6 +277,8 @@ pub fn update(model : Model, msg : Msg) -> Model {
       }
     }
     SwitchSite => model
+    ToggleFloating =>
+      { ..model, floating_enabled: !model.floating_enabled }
     FloatingSecondaryTap =>
       update({ ..model, floating_collapsed: false }, OpenSettings)
     FloatingDragged(event) => update_floating_drag(model, event, None, None)
@@ -510,7 +515,7 @@ fn view_with_viewport(
   } else {
     unavailable_view(model, theme)
   }
-  let floating = if model.settings_presented {
+  let floating = if model.settings_presented || !model.floating_enabled {
     @views.empty()
   } else {
     floating_button(model, theme, viewport_width, viewport_height)
@@ -680,6 +685,26 @@ pub fn settings_action_command() -> @views.ActionCommand {
 }
 
 ///|
+pub fn switch_site_action_command() -> @views.ActionCommand {
+  @views.ActionCommand::new(
+    intent=@views.CommandIntent::SwitchSite,
+    label="Switch DeepSeek Site",
+    group="View",
+    description="Switch between the Harness and Chat roots.",
+  )
+}
+
+///|
+pub fn toggle_floating_action_command() -> @views.ActionCommand {
+  @views.ActionCommand::new(
+    intent=@views.CommandIntent::ToggleFloating,
+    label="Toggle Floating Button",
+    group="View",
+    description="Show or hide the floating site-switch button.",
+  )
+}
+
+///|
 fn edit_action_command(
   intent : @views.CommandIntent,
   label : String,
@@ -726,6 +751,11 @@ pub fn application_menus() -> Array[@services.ApplicationMenu] {
         edit_action_command(@views.CommandIntent::SelectAll, "Select All", "a"),
       ),
     ]),
+    @services.ApplicationMenu::new(title="View", items=[
+      @services.ApplicationMenuItem::MenuCommand(switch_site_action_command()),
+      @services.ApplicationMenuItem::MenuSeparator,
+      @services.ApplicationMenuItem::MenuCommand(toggle_floating_action_command()),
+    ]),
   ]
 }
 
@@ -735,6 +765,14 @@ fn program_commands() -> Array[@moui.ProgramCommand[Msg]] {
     @moui.ProgramCommand::new(
       command=settings_action_command(),
       message=OpenSettings,
+    ),
+    @moui.ProgramCommand::new(
+      command=switch_site_action_command(),
+      message=SwitchSite,
+    ),
+    @moui.ProgramCommand::new(
+      command=toggle_floating_action_command(),
+      message=ToggleFloating,
     ),
   ]
 }
