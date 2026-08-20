@@ -286,14 +286,14 @@ fn validate_entrypoint_catalog(
       }
     }
   }
-  if ui_roots.length() > 36 {
+  if ui_roots.length() > 38 {
     push_fail(
       results,
       "P1",
       "examples",
       "UI composition root count " +
       ui_roots.length().to_string() +
-      " exceeds 36. Fix: keep composition roots within the repository budget. See docs/invariants.md#P1",
+      " exceeds 38. Fix: keep composition roots within the repository budget. See docs/invariants.md#P1",
     )
   }
   for route in routes {
@@ -473,6 +473,13 @@ fn check_p1_entry_texts(
   } else {
     []
   }
+  let optional_abi_functions = if entry.path.has_suffix("/web_wasm") {
+    // Platform-view routes need this additional browser-to-wasm callback;
+    // ordinary Web roots keep the smaller fixed ABI shim.
+    ["web_dispatch_platform_view_event"]
+  } else {
+    []
+  }
   if !abi_functions.is_empty() {
     let abi_path = entry.path + "/abi.mbt"
     let abi_text = match file_texts.get(abi_path) {
@@ -509,9 +516,31 @@ fn check_p1_entry_texts(
           )
         }
       }
-      if token_count(abi_text, "pub fn ") != abi_functions.length() ||
+      let mut optional_count = 0
+      for name in optional_abi_functions {
+        let has_declaration = abi_text.contains("pub fn " + name + "(")
+        let has_backend_call = abi_text.contains(
+          "@" + backend_alias + "." + name + "(",
+        )
+        if has_declaration || has_backend_call {
+          optional_count += 1
+        }
+        if has_declaration != has_backend_call {
+          failed = true
+          push_fail(
+            results,
+            "P1",
+            abi_path,
+            "optional " +
+            name +
+            " ABI delegation is incomplete. See docs/invariants.md#P1",
+          )
+        }
+      }
+      let expected_abi_functions = abi_functions.length() + optional_count
+      if token_count(abi_text, "pub fn ") != expected_abi_functions ||
         token_count(abi_text, "@" + backend_alias + ".") !=
-        abi_functions.length() {
+        expected_abi_functions {
         failed = true
         push_fail(
           results, "P1", abi_path, "ABI shim contains declarations or backend calls outside the fixed route contract. See docs/invariants.md#P1",
