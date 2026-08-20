@@ -94,7 +94,7 @@ test "dsh desktop floating button receives primary pointer input" {
   let button = test_semantics_node(
     runtime,
     role=@core.SemanticsRole::Button,
-    label=Some("Switch DeepSeek site"),
+    label=Some("Switch Chat/DSH site"),
   )
   inspect(button.frame.size.width, content="52")
   inspect(button.frame.size.height, content="52")
@@ -213,7 +213,7 @@ test "dsh desktop drag keeps the native overlay at the free position" {
   let button = test_semantics_node(
     runtime,
     role=@core.SemanticsRole::Button,
-    label=Some("Switch DeepSeek site"),
+    label=Some("Switch Chat/DSH site"),
   )
   let start = @core.Point::new(
     x=button.frame.origin.x + button.frame.size.width / 2.0,
@@ -239,7 +239,7 @@ test "dsh desktop drag keeps the native overlay at the free position" {
   let after = test_semantics_node(
     runtime,
     role=@core.SemanticsRole::Button,
-    label=Some("Switch DeepSeek site"),
+    label=Some("Switch Chat/DSH site"),
   )
   inspect(after.frame.origin.x, content="908")
   inspect(after.frame.origin.y, content="180")

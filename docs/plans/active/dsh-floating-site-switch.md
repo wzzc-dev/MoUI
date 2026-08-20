@@ -10,7 +10,7 @@ between that root and `https://chat.deepseek.com/` through a small native MoUI
 and a drag keeps the button at the released in-session position. Releasing
 near either window edge docks it and leaves a small clickable tab visible;
 dragging or clicking that tab expands it again. The View menu bar exposes the
-same actions: "Switch DeepSeek Site" toggles the root and "Toggle Floating
+same actions: "Switch Chat/DSH Site" toggles the root and "Toggle Floating
 Button" shows or hides the floating control. The last position, the visible
 state of the floating button, and the active site are intentionally not
 persisted.
