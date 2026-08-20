@@ -58,6 +58,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [wechat-support.md](wechat-support.md) | `deep` | WeChat Mini Program (微信小程序) Skyline Canvas 2D + wasm-gc host |
 | [window-hosted-moui.md](window-hosted-moui.md) | `canonical` | Embedded-runtime event-loop ownership and route |
 | [renderer-capability-report.md](renderer-capability-report.md) | `canonical` | Renderer capability matrix |
+| [3d-capability-report.md](3d-capability-report.md) | `canonical` | Independent 3D addon capability/status |
 | [gpu-promotion-runbook.md](gpu-promotion-runbook.md) | `deep` | GPU promotion process |
 
 ## Examples, release, maintenance

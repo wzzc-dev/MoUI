@@ -47,9 +47,13 @@ export function createWebGpuImports(options = {}) {
   const strings = new Map();
   const surfaces = new Map();
   const renderers = new Map();
+  const threeDSurfaces = new Map();
+  const threeDRenderers = new Map();
   let nextStringHandle = 1;
   let nextSurfaceHandle = 1;
   let nextRendererHandle = 1;
+  let nextThreeDSurfaceHandle = 1;
+  let nextThreeDRendererHandle = 1;
   const measureCanvas = document.createElement("canvas");
   const measureContext = measureCanvas.getContext("2d");
   const notifyImageResourceChanged =
@@ -2279,6 +2283,9 @@ export function createWebGpuImports(options = {}) {
     can_render() {
       return true;
     },
+    three_d_available() {
+      return true;
+    },
     measure_text_width(text, family, style, size, weight) {
       return measureTextWidth(stringValue(text), stringValue(family), stringValue(style), size, weight);
     },
@@ -2371,6 +2378,118 @@ export function createWebGpuImports(options = {}) {
       const handle = nextRendererHandle++;
       renderers.set(handle, renderer);
       return handle;
+    },
+    // Independent 3D host port. It deliberately uses separate handles and
+    // resources from the 2D DrawCommand renderer above.
+    create_3d_surface(canvasId, width, height, scaleFactor) {
+      try {
+        const canvas = getCanvas(stringValue(canvasId));
+        if (!canvas) return 0;
+        resizeCanvas(canvas, width, height, scaleFactor);
+        const context = contextFor(canvas);
+        if (!context) return 0;
+        context.configure({
+          device,
+          format,
+          usage: GPUTextureUsage.RENDER_ATTACHMENT,
+          alphaMode: "premultiplied",
+        });
+        const handle = nextThreeDSurfaceHandle++;
+        threeDSurfaces.set(handle, { canvas, context, width, height, scaleFactor });
+        return handle;
+      } catch (error) {
+        globalThis.console?.error?.("MoUI 3D WebGPU surface creation failed", error);
+        return 0;
+      }
+    },
+    create_3d_renderer(surfaceHandle) {
+      const surface = threeDSurfaces.get(surfaceHandle);
+      if (!surface) return 0;
+      try {
+        const shader = device.createShaderModule({ code: `
+        struct Out { @builtin(position) position: vec4<f32>, @location(0) color: vec4<f32> };
+        @vertex fn vs_main(@location(0) position: vec3<f32>, @location(1) normal: vec3<f32>, @location(2) color: vec4<f32>) -> Out {
+          var out: Out; out.position = vec4<f32>(position, 1.0); out.color = color; return out;
+        }
+        @fragment fn fs_main(in: Out) -> @location(0) vec4<f32> { return in.color; }
+      ` });
+        const pipeline = device.createRenderPipeline({
+        layout: "auto",
+        vertex: {
+          module: shader,
+          entryPoint: "vs_main",
+          buffers: [{ arrayStride: 40, attributes: [
+            { shaderLocation: 0, offset: 0, format: "float32x3" },
+            { shaderLocation: 1, offset: 12, format: "float32x3" },
+            { shaderLocation: 2, offset: 24, format: "float32x4" },
+          ] }],
+        },
+        fragment: { module: shader, entryPoint: "fs_main", targets: [{ format }] },
+        primitive: { topology: "triangle-list", cullMode: "back" },
+        depthStencil: { format: "depth24plus", depthWriteEnabled: true, depthCompare: "less" },
+      });
+        const renderer = { surface, pipeline, depthTexture: undefined, depthWidth: 0, depthHeight: 0, frame: 0 };
+        const handle = nextThreeDRendererHandle++;
+        threeDRenderers.set(handle, renderer);
+        return handle;
+      } catch (error) {
+        globalThis.console?.error?.("MoUI 3D WebGPU renderer creation failed", error);
+        return 0;
+      }
+    },
+    three_d_surface_resize(surfaceHandle, width, height, scaleFactor) {
+      const surface = threeDSurfaces.get(surfaceHandle);
+      if (!surface) return invalidResource();
+      try {
+        resizeCanvas(surface.canvas, width, height, scaleFactor);
+        surface.context.configure({ device, format, usage: GPUTextureUsage.RENDER_ATTACHMENT, alphaMode: "premultiplied" });
+        surface.width = width; surface.height = height; surface.scaleFactor = scaleFactor;
+        return ok();
+      } catch (error) {
+        globalThis.console?.error?.("MoUI 3D WebGPU surface resize failed", error);
+        return invalidResource();
+      }
+    },
+    three_d_draw_mesh(rendererHandle, payload) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      let values;
+      try { values = JSON.parse(stringValue(payload)); } catch { return 6; }
+      if (!Array.isArray(values)) return invalidResource();
+      try {
+        const surface = renderer.surface;
+        if (!renderer.depthTexture || renderer.depthWidth !== surface.canvas.width || renderer.depthHeight !== surface.canvas.height) {
+          renderer.depthTexture?.destroy?.();
+          renderer.depthTexture = device.createTexture({ size: [surface.canvas.width, surface.canvas.height], format: "depth24plus", usage: GPUTextureUsage.RENDER_ATTACHMENT });
+          renderer.depthWidth = surface.canvas.width; renderer.depthHeight = surface.canvas.height;
+        }
+        const data = new Float32Array(values.map(value => Number(value) || 0));
+        const vertexBuffer = device.createBuffer({ size: Math.max(4, data.byteLength), usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
+        device.queue.writeBuffer(vertexBuffer, 0, data);
+        const texture = surface.context.getCurrentTexture();
+        const encoder = device.createCommandEncoder();
+        const pass = encoder.beginRenderPass({
+          colorAttachments: [{ view: texture.createView(), clearValue: { r: 0.035, g: 0.045, b: 0.07, a: 1 }, loadOp: "clear", storeOp: "store" }],
+          depthStencilAttachment: { view: renderer.depthTexture.createView(), depthClearValue: 1, depthLoadOp: "clear", depthStoreOp: "store" },
+        });
+        pass.setPipeline(renderer.pipeline); pass.setVertexBuffer(0, vertexBuffer); pass.draw(values.length / 10); pass.end();
+        device.queue.submit([encoder.finish()]);
+        vertexBuffer.destroy(); renderer.frame += 1;
+        return ok();
+      } catch (error) {
+        globalThis.console?.error?.("MoUI 3D WebGPU frame failed", error);
+        return invalidResource();
+      }
+    },
+    three_d_renderer_dispose(rendererHandle) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      renderer?.depthTexture?.destroy?.();
+      threeDRenderers.delete(rendererHandle);
+    },
+    three_d_surface_dispose(surfaceHandle) {
+      const surface = threeDSurfaces.get(surfaceHandle);
+      surface?.context?.unconfigure?.();
+      threeDSurfaces.delete(surfaceHandle);
     },
     renderer_is_valid(rendererHandle) {
       return renderers.has(rendererHandle);
@@ -2752,6 +2871,18 @@ export function createWebGpuImports(options = {}) {
           surfaceHandle: [...surfaces.entries()].find(([, surface]) =>
             surface === renderer.surface)?.[0] ?? 0,
         })),
+        threeDSurfaces: [...threeDSurfaces.entries()].map(([handle, surface]) => ({
+          handle,
+          canvasId: surface.canvas?.id ?? "",
+          width: surface.width,
+          height: surface.height,
+          scaleFactor: surface.scaleFactor,
+        })),
+        threeDRenderers: [...threeDRenderers.entries()].map(([handle, renderer]) => ({
+          handle,
+          surfaceHandle: [...threeDSurfaces.entries()].find(([, surface]) =>
+            surface === renderer.surface)?.[0] ?? 0,
+        })),
       };
     },
     __moui_recovery_restore(snapshot = {}) {
@@ -2783,7 +2914,40 @@ export function createWebGpuImports(options = {}) {
         nextRendererHandle = Math.max(nextRendererHandle, Number(record.handle) + 1);
         restoredRenderers += 1;
       }
-      return { restoredSurfaces, restoredRenderers };
+      let restoredThreeDSurfaces = 0;
+      let restoredThreeDRenderers = 0;
+      for (const record of snapshot.threeDSurfaces ?? []) {
+        const canvasId = createStringHandle(record.canvasId ?? "");
+        const actual = imports.create_3d_surface(
+          canvasId,
+          record.width,
+          record.height,
+          record.scaleFactor,
+        );
+        if (!actual) continue;
+        if (actual !== record.handle) {
+          threeDSurfaces.set(record.handle, threeDSurfaces.get(actual));
+          threeDSurfaces.delete(actual);
+        }
+        nextThreeDSurfaceHandle = Math.max(nextThreeDSurfaceHandle, Number(record.handle) + 1);
+        restoredThreeDSurfaces += 1;
+      }
+      for (const record of snapshot.threeDRenderers ?? []) {
+        const actual = imports.create_3d_renderer(record.surfaceHandle);
+        if (!actual) continue;
+        if (actual !== record.handle) {
+          threeDRenderers.set(record.handle, threeDRenderers.get(actual));
+          threeDRenderers.delete(actual);
+        }
+        nextThreeDRendererHandle = Math.max(nextThreeDRendererHandle, Number(record.handle) + 1);
+        restoredThreeDRenderers += 1;
+      }
+      return {
+        restoredSurfaces,
+        restoredRenderers,
+        restoredThreeDSurfaces,
+        restoredThreeDRenderers,
+      };
     },
   };
 

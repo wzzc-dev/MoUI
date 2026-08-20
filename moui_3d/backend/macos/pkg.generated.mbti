@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_3d/backend/macos"
+
+import {
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_3d",
+}
+
+// Values
+pub fn install_macos_3d_event_dispatcher((UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit
+
+pub fn macos_3d_capabilities() -> String
+
+pub fn plugin(host? : @moui_3d.ThreeDViewportHost?) -> @backend.PlatformViewPlugin
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

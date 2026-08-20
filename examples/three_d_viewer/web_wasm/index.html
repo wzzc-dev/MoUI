@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>MoUI 3D Viewer</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #f4f6f8;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      }
+      #canvas-host {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        outline: none;
+        touch-action: none;
+      }
+      #diagnostics {
+        display: none;
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        z-index: 10;
+        width: min(520px, calc(100vw - 24px));
+        max-height: 40vh;
+        overflow: auto;
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.16);
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.96);
+        font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace;
+      }
+      body.debug #diagnostics,
+      body.failed #diagnostics { display: block; }
+      #status { font-weight: 600; margin-bottom: 8px; }
+      #log { margin: 0; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div id="canvas-host" aria-label="MoUI canvas host"></div>
+    <aside id="diagnostics" aria-live="polite">
+      <div id="status">Loading wasm-gc...</div>
+      <pre id="log"></pre>
+    </aside>
+    <script type="module">
+      import { bootMouiWasmGcApp } from "../../../moui_web_renderer/runtime.js";
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("debug") === "1") document.body.classList.add("debug");
+      const forceUnavailable = params.get("force_webgpu_unavailable") === "1";
+      const status = document.querySelector("#status");
+      const log = document.querySelector("#log");
+      let line = "";
+      const append = message => {
+        log.textContent += `${message}\n`;
+        log.scrollTop = log.scrollHeight;
+      };
+      const setStatus = message => {
+        status.textContent = message;
+        append(message);
+      };
+
+      bootMouiWasmGcApp({
+        wasmUrl: new URL(
+          "../../../_build/wasm-gc/debug/build/examples/three_d_viewer/web_wasm/web_wasm.wasm",
+          import.meta.url,
+        ),
+        canvasHost: "#canvas-host",
+        webgpu: { forceUnavailable },
+        onStatus: setStatus,
+        onPrint(ch) {
+          if (ch === "\n") {
+            append(line);
+            line = "";
+          } else {
+            line += ch;
+          }
+        },
+      }).then(() => {
+        status.textContent = "Running";
+        append("MoonBit wasm-gc started.");
+      }).catch(error => {
+        document.body.classList.add("failed");
+        status.textContent = "Failed";
+        append(error.stack || String(error));
+        console.error(error);
+      });
+    </script>
+  </body>
+</html>

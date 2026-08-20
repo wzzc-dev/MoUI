@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/three_d_viewer/app"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_3d",
+}
+
+// Values
+pub fn program() -> @core.Program[Model, Msg]
+
+pub fn program_with_binding(@moui_3d.ThreeDViewportBinding) -> @core.Program[Model, Msg]
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  binding : @moui_3d.ThreeDViewportBinding
+  snapshot : @moui_3d.ViewportSnapshot
+  dragging : Bool
+  last_pointer_x : Double
+  last_pointer_y : Double
+}
+pub fn Model::new() -> Self
+pub fn Model::new_with_binding(@moui_3d.ThreeDViewportBinding) -> Self
+
+pub(all) enum Msg {
+  Noop
+  Viewport(@moui_3d.ViewportEvent)
+}
+
+// Type aliases
+
+// Traits

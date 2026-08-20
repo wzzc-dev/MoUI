@@ -1,0 +1,31 @@
+import {
+  "wzzc-dev/moui/backend/web",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui_web_renderer" @webgpu_adapter,
+  "wzzc-dev/moui_3d_web_renderer" @three_d_web,
+  "wzzc-dev/moui_3d/backend/web" @three_d_web_backend,
+  "wzzc-dev/moui_3d/render" @three_d_render,
+  "wzzc-dev/moui_3d",
+  "examples/three_d_viewer/app" @viewer_app,
+}
+
+supported_targets = "wasm-gc"
+
+pkgtype(kind: "executable")
+
+options(
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "web_dispatch_event",
+        "web_dispatch_pointer_input",
+        "web_dispatch_semantics_action",
+        "web_dispatch_platform_view_event",
+        "web_dispatch_route",
+        "web_complete_async_clipboard_read",
+        "web_complete_async_file_dialog",
+      ],
+    },
+  },
+  targets: { "main.mbt": [ "wasm-gc" ] },
+)

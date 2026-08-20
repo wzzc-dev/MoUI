@@ -667,6 +667,13 @@ export function createCanvas2dImports(options = {}) {
 
     // Report true so the MoonBit adapter's capability check passes.
     webgpu_available() { return true; },
+    three_d_available() { return false; },
+    create_3d_surface() { return 0; },
+    create_3d_renderer() { return 0; },
+    three_d_surface_resize() { return invalidResource(); },
+    three_d_draw_mesh() { return invalidResource(); },
+    three_d_renderer_dispose() {},
+    three_d_surface_dispose() {},
     adapter_ready() { return true; },
     can_render() { return true; },
 

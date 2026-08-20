@@ -1,5 +1,9 @@
 members = [
   "./moui",
+  "./moui_3d",
+  "./moui_3d_wgpu_renderer",
+  "./moui_3d_web_renderer",
+  "./examples/three_d_viewer",
   "./moui_skia_renderer",
   "./moui_web_renderer",
   "./moui_wgpu_renderer",

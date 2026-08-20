@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui_3d",
+}
+
+supported_targets = "+native+wasm-gc+wasm"
+
+import {
+  "wzzc-dev/moui/core",
+} for "test"
+
+options(
+  targets: { },
+)

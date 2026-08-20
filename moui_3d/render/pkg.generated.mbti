@@ -1,0 +1,93 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_3d/render"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui_3d",
+}
+
+// Values
+pub fn connect_viewport_host(ThreeDRendererProvider, @moui_3d.ThreeDViewportHost, unavailable_reason? : String) -> Unit
+
+pub fn resolve_provider(Array[ThreeDRendererProvider]) -> ThreeDRendererSession?
+
+// Errors
+
+// Types and methods
+pub(all) struct ThreeDFrame {
+  revision : Int64
+  snapshot : @moui_3d.ViewportSnapshot
+  size : ThreeDViewportSize
+} derive(@debug.Debug)
+pub fn ThreeDFrame::new(revision~ : Int64, snapshot~ : @moui_3d.ViewportSnapshot, size~ : ThreeDViewportSize) -> Self
+pub fn ThreeDFrame::revision(Self) -> Int64
+pub fn ThreeDFrame::size(Self) -> ThreeDViewportSize
+pub fn ThreeDFrame::snapshot(Self) -> @moui_3d.ViewportSnapshot
+
+pub(all) enum ThreeDRenderResult {
+  Presented
+  Queued
+  Unavailable(String)
+  Failed(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum ThreeDRendererBackend {
+  NativeWgpu
+  WebGpu
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ThreeDRendererDescriptor {
+  id : String
+  backend : ThreeDRendererBackend
+  status : ThreeDRendererStatus
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ThreeDRendererDescriptor::backend(Self) -> ThreeDRendererBackend
+pub fn ThreeDRendererDescriptor::description(Self) -> String
+pub fn ThreeDRendererDescriptor::id(Self) -> String
+pub fn ThreeDRendererDescriptor::new(id~ : String, backend~ : ThreeDRendererBackend, status~ : ThreeDRendererStatus, description? : String) -> Self
+pub fn ThreeDRendererDescriptor::status(Self) -> ThreeDRendererStatus
+
+pub struct ThreeDRendererProvider {
+  descriptor : ThreeDRendererDescriptor
+  bind_fn : () -> ThreeDRendererSession?
+  bind_surface_fn : (UInt64, ThreeDViewportSize) -> ThreeDRendererSession?
+}
+pub fn ThreeDRendererProvider::bind(Self) -> ThreeDRendererSession?
+pub fn ThreeDRendererProvider::bind_surface(Self, UInt64, ThreeDViewportSize) -> ThreeDRendererSession?
+pub fn ThreeDRendererProvider::descriptor(Self) -> ThreeDRendererDescriptor
+pub fn ThreeDRendererProvider::new(descriptor~ : ThreeDRendererDescriptor, bind~ : () -> ThreeDRendererSession?, bind_surface? : (UInt64, ThreeDViewportSize) -> ThreeDRendererSession?) -> Self
+
+pub struct ThreeDRendererSession {
+  descriptor : ThreeDRendererDescriptor
+  resize_fn : (ThreeDViewportSize) -> Unit
+  render_fn : (ThreeDFrame) -> ThreeDRenderResult
+  dispose_fn : () -> Unit
+  mut disposed : Bool
+  mut last_revision : Int64
+}
+pub fn ThreeDRendererSession::descriptor(Self) -> ThreeDRendererDescriptor
+pub fn ThreeDRendererSession::dispose(Self) -> Unit
+pub fn ThreeDRendererSession::new(descriptor~ : ThreeDRendererDescriptor, resize~ : (ThreeDViewportSize) -> Unit, render~ : (ThreeDFrame) -> ThreeDRenderResult, dispose? : () -> Unit) -> Self
+pub fn ThreeDRendererSession::render(Self, ThreeDFrame) -> ThreeDRenderResult
+pub fn ThreeDRendererSession::resize(Self, ThreeDViewportSize) -> Unit
+
+pub(all) enum ThreeDRendererStatus {
+  Available
+  Unavailable(String)
+  Failed(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ThreeDViewportSize {
+  width : Int
+  height : Int
+  scale_factor : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ThreeDViewportSize::height(Self) -> Int
+pub fn ThreeDViewportSize::new(width~ : Int, height~ : Int, scale_factor? : Double) -> Self
+pub fn ThreeDViewportSize::scale_factor(Self) -> Double
+pub fn ThreeDViewportSize::width(Self) -> Int
+
+// Type aliases
+
+// Traits

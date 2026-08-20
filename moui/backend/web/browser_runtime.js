@@ -519,6 +519,7 @@ export function browserRouteUrl(
 export function createWindowWebImports(options = {}) {
   const canvases = new Map();
   const listeners = new Map();
+  const platformCanvasListeners = new Map();
   const textInputs = new Map();
   const stringHandles = new Map();
   const eventTexts = new Map();
@@ -639,6 +640,28 @@ export function createWindowWebImports(options = {}) {
       } finally {
         eventTexts.delete(textId);
       }
+    }
+  };
+
+  const emitPlatformView = (
+    rawId,
+    id,
+    name,
+    value = "",
+    detail = "",
+    flag = false,
+  ) => {
+    const dispatch = wasmExports?.web_dispatch_platform_view_event;
+    if (typeof dispatch !== "function") return;
+    const ids = [id, name, value, detail].map(text => {
+      const textId = nextEventTextId++;
+      eventTexts.set(textId, `${text ?? ""}`);
+      return textId;
+    });
+    try {
+      dispatch(rawId | 0, ids[0], ids[1], ids[2], ids[3], !!flag);
+    } finally {
+      for (const textId of ids) eventTexts.delete(textId);
     }
   };
 
@@ -1088,6 +1111,39 @@ export function createWindowWebImports(options = {}) {
       if (canvas) {
         canvas.style.display = visible ? "block" : "none";
       }
+    },
+    set_canvas_position(handle, x, y, width, height, zIndex = 3) {
+      const canvas = canvasValue(handle);
+      if (!canvas) return;
+      canvas.style.position = "absolute";
+      canvas.style.left = `${Number(x) || 0}px`;
+      canvas.style.top = `${Number(y) || 0}px`;
+      canvas.style.width = `${Math.max(1, Number(width) || 1)}px`;
+      canvas.style.height = `${Math.max(1, Number(height) || 1)}px`;
+      const layer = Number(zIndex);
+      canvas.style.zIndex = `${Number.isFinite(layer) ? layer : 3}`;
+    },
+    set_canvas_layer(handle, zIndex) {
+      const canvas = canvasValue(handle);
+      if (!canvas) return;
+      if (!canvas.style.position || canvas.style.position === "static") {
+        canvas.style.position = "relative";
+      }
+      canvas.style.zIndex = `${Number(zIndex) || 0}`;
+    },
+    canvas_scale_factor(handle) {
+      return canvasValue(handle) ? devicePixelRatio() : 1.0;
+    },
+    destroy_canvas(handle) {
+      const canvas = canvasValue(handle);
+      if (!canvas) return;
+      const handlers = platformCanvasListeners.get(canvas) || [];
+      for (const [target, type, handler, options] of handlers) {
+        target.removeEventListener(type, handler, options);
+      }
+      platformCanvasListeners.delete(canvas);
+      canvases.delete(canvas.id);
+      canvas.remove();
     },
     set_canvas_cursor(handle, cursor) {
       const canvas = canvasValue(handle);
@@ -1934,6 +1990,86 @@ export function createWindowWebImports(options = {}) {
         add(media, "change", event => emit(50, rawId, event.matches ? 1 : 0));
       }
       listeners.set(rawId, handlers);
+    },
+    install_platform_canvas_events(rawId, handle, platformViewId) {
+      const canvas = canvasValue(handle);
+      if (!canvas || platformCanvasListeners.has(canvas)) return;
+      const id = stringValue(platformViewId);
+      const inputTarget = canvas.parentElement ?? canvas;
+      const handlers = [];
+      const activePointers = new Set();
+      let focused = false;
+      const add = (type, handler, options = {}) => {
+        const listenerOptions = { ...options, capture: true };
+        inputTarget.addEventListener(type, handler, listenerOptions);
+        handlers.push([inputTarget, type, handler, listenerOptions]);
+      };
+      const point = event => {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (Number(event.clientX) || 0) - rect.left,
+          y: (Number(event.clientY) || 0) - rect.top,
+          inside:
+            (Number(event.clientX) || 0) >= rect.left &&
+            (Number(event.clientX) || 0) <= rect.right &&
+            (Number(event.clientY) || 0) >= rect.top &&
+            (Number(event.clientY) || 0) <= rect.bottom,
+        };
+      };
+      const pointerValue = current => `${current.x.toFixed(3)},${current.y.toFixed(3)}`;
+      add("pointerdown", event => {
+        const current = point(event);
+        if (!current.inside || event.defaultPrevented) {
+          if (focused && !current.inside) {
+            focused = false;
+            emitPlatformView(rawId, id, "focus", "", "", false);
+          }
+          return;
+        }
+        activePointers.add(Number(event.pointerId) || 1);
+        if (!focused) {
+          focused = true;
+          emitPlatformView(rawId, id, "focus", "", "", true);
+        }
+        emitPlatformView(rawId, id, "pointer_down", pointerValue(current));
+        preventDefaultIfCancelable(event);
+      });
+      add("pointermove", event => {
+        const current = point(event);
+        const pointerId = Number(event.pointerId) || 1;
+        if (!activePointers.has(pointerId) && (!current.inside || event.defaultPrevented)) {
+          return;
+        }
+        emitPlatformView(rawId, id, "pointer_move", pointerValue(current));
+        if (activePointers.has(pointerId)) preventDefaultIfCancelable(event);
+      });
+      const finishPointer = event => {
+        const pointerId = Number(event.pointerId) || 1;
+        if (!activePointers.has(pointerId)) return;
+        activePointers.delete(pointerId);
+        emitPlatformView(rawId, id, "pointer_up", pointerValue(point(event)));
+        preventDefaultIfCancelable(event);
+      };
+      add("pointerup", finishPointer);
+      add("pointercancel", finishPointer);
+      add("wheel", event => {
+        const current = point(event);
+        if (!current.inside || event.defaultPrevented || event.ctrlKey || event.metaKey) {
+          return;
+        }
+        emitPlatformView(rawId, id, "wheel", `${Number(event.deltaY) || 0}`);
+        preventDefaultIfCancelable(event);
+      }, { passive: false });
+      canvas.style.pointerEvents = "none";
+      platformCanvasListeners.set(canvas, handlers);
+    },
+    remove_platform_canvas_events(_rawId, handle) {
+      const canvas = canvasValue(handle);
+      const handlers = platformCanvasListeners.get(canvas) || [];
+      for (const [target, type, handler, options] of handlers) {
+        target.removeEventListener(type, handler, options);
+      }
+      platformCanvasListeners.delete(canvas);
     },
     remove_canvas_events(rawId) {
       const handlers = listeners.get(rawId) || [];

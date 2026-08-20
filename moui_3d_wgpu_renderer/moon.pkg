@@ -1,0 +1,15 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render" @moui_render,
+  "Milky2018/wgpu_mbt",
+  "Milky2018/wgpu_mbt/c" @wgpu_c,
+  "wzzc-dev/moui_3d/render",
+  "wzzc-dev/moui_3d",
+}
+
+supported_targets = "native"
+
+options(
+  "native-stub": [ "binding_surface.c" ],
+  targets: { },
+)

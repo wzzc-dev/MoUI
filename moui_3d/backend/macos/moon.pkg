@@ -1,0 +1,17 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend" @host,
+  "wzzc-dev/moui_3d",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/ref",
+}
+
+supported_targets = "native"
+
+options(
+  link: {
+    "native": { "cc-link-flags": "-framework AppKit -framework QuartzCore" },
+  },
+  "native-stub": [ "native_surface.m" ],
+  targets: { },
+)
