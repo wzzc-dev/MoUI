@@ -103,6 +103,14 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn abo
   self,
   event_loop,
 ) {
+  match
+    @window_host.platform_view_plugins_next_deadline(self.platform_view_plugins) {
+    Some(deadline) =>
+      event_loop.set_control_flow(
+        @window_core.ControlFlow::wait_until(deadline),
+      )
+    None => event_loop.set_control_flow(@window_core.ControlFlow::Wait)
+  }
   self.drain_window_requests(event_loop)
 }
 

@@ -11,7 +11,7 @@
 /// `setup_platform_view_draw` hook that blits each webview's offscreen pixels
 /// into the Skia renderer during `render_frame`.
 pub fn create_linux_webview_plugin(
-  commands : @host.HostWebViewCommandQueue,
+  host : @host.WebViewHost,
 ) -> @moui_host.PlatformViewPlugin {
   let capabilities_summary = if linux_webview_native_available() != 0 {
     "available"
@@ -28,11 +28,19 @@ pub fn create_linux_webview_plugin(
         },
         (wl_surface, kind, id, url, detail, flag) => {
           let id_str = @host.webview_decode_ffi_string(id)
-          let web_event = @host.webview_decode_native_event(
-            kind, url, detail, flag,
-          )
-          let platform_event = @host.WebViewEvent::to_platform_event(web_event)
-          callback(wl_surface, id_str, platform_event)
+          match
+            host.accept_native_event(
+              controller_id=id_str,
+              kind~,
+              navigation_raw=0UL,
+              url=@host.webview_decode_ffi_string(url),
+              detail=@host.webview_decode_ffi_string(detail),
+              flag~,
+            ) {
+            Some(web_event) =>
+              callback(wl_surface, id_str, web_event.to_platform_event())
+            None => ()
+          }
         },
       )
     },
@@ -50,15 +58,15 @@ pub fn create_linux_webview_plugin(
             wl_display,
             wl_surface,
             @host.webview_encode_ffi_string(placement.id),
-            @host.webview_encode_ffi_string(placement.property_or("url", "")),
+            @host.webview_encode_ffi_string(""),
             @host.webview_encode_ffi_string(placement.property_or("title", "")),
-            @host.webview_encode_ffi_string(placement.property_or("background-color", "")),
-            @host.webview_encode_ffi_string(placement.property_or("color-scheme", "")),
-            @host.webview_native_policy_code(
-              @host.WebViewNavigationPolicy::from_wire_value(
-                placement.property_or("policy", "http-https-file"),
-              ),
+            @host.webview_encode_ffi_string(
+              placement.property_or("background-color", ""),
             ),
+            @host.webview_encode_ffi_string(
+              placement.property_or("color-scheme", ""),
+            ),
+            0,
             platform_frame.origin.x,
             platform_frame.origin.y,
             platform_frame.size.width,
@@ -70,16 +78,28 @@ pub fn create_linux_webview_plugin(
     },
     drain_commands=fn(wl_surface) {
       ignore(
-        commands.drain_with_handler(command => {
-          let (kind, text, detail) = @host.webview_encode_native_command(
-            command.command,
+        host.drain_commands(command => {
+          match host.native_config(command.controller_id) {
+            Some(config) =>
+              linux_webview_configure(
+                wl_surface,
+                @host.webview_encode_ffi_string(command.controller_id),
+                config.revision,
+                @host.webview_encode_ffi_string(config.allowed_origins),
+                @host.webview_encode_ffi_string(config.document_start_script),
+                @host.webview_encode_ffi_string(config.document_end_script),
+              )
+            None => ()
+          }
+          let (kind, _command_id, _navigation_id, text) = @host.webview_encode_native_command(
+            command,
           )
           linux_webview_command(
             wl_surface,
-            @host.webview_encode_ffi_string(command.id),
+            @host.webview_encode_ffi_string(command.controller_id),
             kind,
             @host.webview_encode_ffi_string(text),
-            @host.webview_encode_ffi_string(detail),
+            @host.webview_encode_ffi_string(""),
           )
         }),
       )
@@ -103,10 +123,17 @@ pub fn create_linux_webview_plugin(
       // Pump the nested GTK loop and report whether work remains. The host
       // uses the returned deadline to keep spinning instead of `Wait`.
       let _ = pump_linux_webview_runtime()
-      if linux_webview_has_active_work() != 0 {
+      let host_deadline = host.poll_timeouts(@env.now().reinterpret_as_int64())
+      let native_deadline = if linux_webview_has_active_work() != 0 {
         Some(linux_webview_runtime_next_tick_ms(delay_ms=16))
       } else {
         None
+      }
+      match (host_deadline, native_deadline) {
+        (Some(host_deadline), Some(native_deadline)) =>
+          Some(host_deadline.min(native_deadline))
+        (Some(deadline), None) | (None, Some(deadline)) => Some(deadline)
+        (None, None) => None
       }
     }),
   )

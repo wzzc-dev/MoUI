@@ -21,7 +21,6 @@ pub let chat_url_settings_key = "dsh-desktop/chat-url"
 pub let theme_mode_settings_key = "dsh-desktop/theme-mode"
 
 ///|
-let web_view_id = "dsh-desktop-surface"
 
 ///|
 let floating_button_size = 52.0
@@ -103,6 +102,7 @@ pub fn ThemeMode::resolve_theme(
   }
 }
 
+///|
 fn theme_for_mode(
   mode : ThemeMode,
   system_scheme : @state.ColorScheme,
@@ -235,22 +235,25 @@ pub fn update(model : Model, msg : Msg) -> Model {
   match msg {
     WebViewEvent(event) =>
       match event {
-        @webview_host.WebViewEvent::NavigationRequested(url)
-        | @webview_host.WebViewEvent::NavigationStarted(url) =>
+        @webview_host.WebViewEvent::NavigationRequested(url) =>
           { ..model, url, status: "loading" }
-        @webview_host.WebViewEvent::NavigationCommitted(url) =>
-          { ..model, url, status: "loaded" }
-        @webview_host.WebViewEvent::NavigationFinished(url) =>
-          { ..model, url, status: "ready" }
-        @webview_host.WebViewEvent::NavigationFailed(_url, reason) =>
-          {
-            ..model,
-            status: "failed: " + reason,
-          }
+        @webview_host.WebViewEvent::NavigationStarted(navigation) =>
+          { ..model, url: navigation.url, status: "loading" }
+        @webview_host.WebViewEvent::NavigationCommitted(navigation) =>
+          { ..model, url: navigation.url, status: "loaded" }
+        @webview_host.WebViewEvent::NavigationFinished(navigation) =>
+          { ..model, url: navigation.url, status: "ready" }
+        @webview_host.WebViewEvent::NavigationFailed(_, _url, reason) =>
+          { ..model, status: "failed: " + reason.message }
         @webview_host.WebViewEvent::TitleChanged(title) => { ..model, title, }
         @webview_host.WebViewEvent::CanGoBackChanged(_)
         | @webview_host.WebViewEvent::CanGoForwardChanged(_)
-        | @webview_host.WebViewEvent::JavaScriptResult(_, _) => model
+        | @webview_host.WebViewEvent::Message(_)
+        | @webview_host.WebViewEvent::Request(_)
+        | @webview_host.WebViewEvent::Ready(_)
+        | @webview_host.WebViewEvent::HostPatchReported(_)
+        | @webview_host.WebViewEvent::Diagnostic(_)
+        | @webview_host.WebViewEvent::Disposed => model
       }
     SettingsLoaded(result) => {
       let harness = match result {
@@ -275,7 +278,8 @@ pub fn update(model : Model, msg : Msg) -> Model {
     }
     ThemeModeLoaded(result) => {
       let mode = match result {
-        @services.ServiceTaskResult::Success(Some(value)) => theme_mode_from_id(value)
+        @services.ServiceTaskResult::Success(Some(value)) =>
+          theme_mode_from_id(value)
         _ => model.theme_mode
       }
       {
@@ -283,19 +287,17 @@ pub fn update(model : Model, msg : Msg) -> Model {
         theme_mode: mode,
         theme_mode_input: mode,
         theme_settings_ready: true,
-        settings_ready: model.harness_settings_ready && model.chat_settings_ready,
+        settings_ready: model.harness_settings_ready &&
+        model.chat_settings_ready,
         settings_error: "",
       }
     }
-    SystemColorSchemeLoaded(result) => {
+    SystemColorSchemeLoaded(result) =>
       match result {
-        @services.ServiceTaskResult::Success(value) => {
-          ..model,
-          system_color_scheme: value,
-        }
+        @services.ServiceTaskResult::Success(value) =>
+          { ..model, system_color_scheme: value }
         _ => model
       }
-    }
     ChatSettingsLoaded(result) => {
       let chat = match result {
         @services.ServiceTaskResult::Success(Some(value)) =>
@@ -312,7 +314,8 @@ pub fn update(model : Model, msg : Msg) -> Model {
         chat_url: chat,
         chat_url_input: chat,
         chat_settings_ready: true,
-        settings_ready: model.harness_settings_ready && model.theme_settings_ready,
+        settings_ready: model.harness_settings_ready &&
+        model.theme_settings_ready,
         settings_error: "",
       }
     }
@@ -332,7 +335,11 @@ pub fn update(model : Model, msg : Msg) -> Model {
     ChatUrlChanged(value) if !model.settings_saving =>
       { ..model, chat_url_input: value, settings_error: "" }
     ThemeModeChanged(value) if !model.settings_saving =>
-      { ..model, theme_mode_input: theme_mode_from_id(value), settings_error: "" }
+      {
+        ..model,
+        theme_mode_input: theme_mode_from_id(value),
+        settings_error: "",
+      }
     RequestUrlChanged(_) | ChatUrlChanged(_) | ThemeModeChanged(_) => model
     SaveSettings => {
       let harness_ok = normalize_request_url(model.request_url_input) is Some(_)
@@ -390,8 +397,7 @@ pub fn update(model : Model, msg : Msg) -> Model {
       }
     }
     SwitchSite => model
-    ToggleFloating =>
-      { ..model, floating_enabled: !model.floating_enabled }
+    ToggleFloating => { ..model, floating_enabled: !model.floating_enabled }
     FloatingSecondaryTap =>
       update({ ..model, floating_collapsed: false }, OpenSettings)
     FloatingDragged(event) => update_floating_drag(model, event, None, None)
@@ -650,13 +656,14 @@ pub fn normalize_request_url(value : String) -> String? {
 /// environment. Native composition roots use `view_with_environment` below so
 /// the floating control can clamp itself to the actual window size.
 pub fn view(model : Model) -> @moui.View[Msg] {
-  view_with_viewport(model, 1280.0, 820.0, model.system_color_scheme)
+  view_with_viewport(model, 1280.0, 820.0, model.system_color_scheme, None)
 }
 
 ///|
 fn view_with_environment(
   model : Model,
   view_environment : @moui.ViewEnvironment,
+  controller : @webview_host.WebViewController?,
 ) -> @moui.View[Msg] {
   let viewport = view_environment.viewport_size()
   view_with_viewport(
@@ -664,6 +671,7 @@ fn view_with_environment(
     viewport.width,
     viewport.height,
     view_environment.environment().system_scheme,
+    controller,
   )
 }
 
@@ -673,6 +681,7 @@ fn view_with_viewport(
   viewport_width : Double,
   viewport_height : Double,
   system_color_scheme : @state.ColorScheme,
+  controller : @webview_host.WebViewController?,
 ) -> @moui.View[Msg] {
   // Preview the selected mode while Settings is open so the native WebView
   // surface and MoUI dialog use the same appearance before Save.
@@ -683,15 +692,17 @@ fn view_with_viewport(
   }
   let theme = theme_for_mode(selected_mode, system_color_scheme)
   let content = if model.web_view_available && model.settings_ready {
-    web_view(
-      id=web_view_id,
-      url=model.url,
-      title=model.title,
-      policy=@webview_host.WebViewNavigationPolicy::AllowHttpHttps,
-      background_color=Some(theme.palette.background),
-      color_scheme=Some(theme.scheme),
-      on_event=Some(event => WebViewEvent(event)),
-    )
+    match controller {
+      Some(controller) =>
+        web_view(
+          controller~,
+          title=model.title,
+          background_color=Some(theme.palette.background),
+          color_scheme=Some(theme.scheme),
+          on_event=Some(event => WebViewEvent(event)),
+        )
+      None => loading_view(theme)
+    }
   } else if model.web_view_available {
     loading_view(theme)
   } else {
@@ -949,7 +960,9 @@ pub fn application_menus() -> Array[@services.ApplicationMenu] {
     @services.ApplicationMenu::new(title="View", items=[
       @services.ApplicationMenuItem::MenuCommand(switch_site_action_command()),
       @services.ApplicationMenuItem::MenuSeparator,
-      @services.ApplicationMenuItem::MenuCommand(toggle_floating_action_command()),
+      @services.ApplicationMenuItem::MenuCommand(
+        toggle_floating_action_command(),
+      ),
     ]),
   ]
 }
@@ -1023,9 +1036,7 @@ fn update_with_services(
           services
           .settings()
           .write(theme_mode_settings_key, theme_mode)
-          .effect(map=result => {
-            ThemeModeSaved(next.theme_mode_input, result)
-          }),
+          .effect(map=result => ThemeModeSaved(next.theme_mode_input, result)),
         ]),
       )
     }
@@ -1036,24 +1047,77 @@ fn update_with_services(
 ///|
 pub fn program(
   capability~ : WebViewCapability,
+  controller? : @webview_host.WebViewController? = None,
   environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
   url? : String = default_url,
   on_navigation_finished? : (String) -> Unit = _ => (),
 ) -> @moui.Program[Model, Msg] {
+  let controller = match controller {
+    Some(value) => Some(value)
+    None if capability.available => Some(test_or_preview_controller())
+    None => None
+  }
   let services = environment.services()
   @moui.Program::new_with_environment(
-    init=() => (Model::new(capability~, url~), request_settings_load(services)),
+    init=() => {
+      let initial = Model::new(capability~, url~)
+      let settings = request_settings_load(services)
+      let navigation = match controller {
+        Some(controller) =>
+          controller
+          .navigate(initial.url)
+          .effect(map=result => {
+            match result {
+              @webview_host.WebViewTaskResult::Success(_) =>
+                WebViewEvent(@webview_host.WebViewEvent::Ready([]))
+              _ => WebViewEvent(@webview_host.WebViewEvent::Disposed)
+            }
+          })
+        None => @moui.Effect::none()
+      }
+      (initial, @moui.Effect::batch([settings, navigation]))
+    },
     update=(model, msg) => {
       let (next, effect) = update_with_services(model, msg, services)
+      let navigation = match (controller, msg) {
+        (Some(controller), SwitchSite) =>
+          controller
+          .navigate(next.url)
+          .effect(map=result => {
+            match result {
+              @webview_host.WebViewTaskResult::Success(_) =>
+                WebViewEvent(@webview_host.WebViewEvent::Ready([]))
+              _ => WebViewEvent(@webview_host.WebViewEvent::Disposed)
+            }
+          })
+        _ => @moui.Effect::none()
+      }
       match msg {
-        WebViewEvent(@webview_host.WebViewEvent::NavigationFinished(url)) =>
-          on_navigation_finished(url)
+        WebViewEvent(@webview_host.WebViewEvent::NavigationFinished(navigation)) =>
+          on_navigation_finished(navigation.url)
         _ => ()
       }
-      (next, effect)
+      (next, @moui.Effect::batch([effect, navigation]))
     },
     view=(model, view_environment) => {
-      view_with_environment(model, view_environment)
+      view_with_environment(model, view_environment, controller)
     },
   ).with_commands(commands=_model => program_commands())
+}
+
+///|
+/// Preview/test fallback. Native composition roots always inject the shared
+/// controller created by `examples/deepseek_harness_desktop/runtime`.
+fn test_or_preview_controller() -> @webview_host.WebViewController {
+  let host = @webview_host.WebViewHost::new()
+  let security = @webview_host.WebViewSecurityPolicy::new(allowed_origins=[
+    @webview_host.WebViewOrigin::parse(default_url).unwrap(),
+    @webview_host.WebViewOrigin::parse(default_chat_url).unwrap(),
+  ])
+  host
+  .create_controller(
+    id="dsh-desktop-surface",
+    config=@webview_host.WebViewControllerConfig::new(security~),
+  )
+  .unwrap()
 }

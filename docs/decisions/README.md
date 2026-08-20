@@ -47,5 +47,6 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0026 | [Release module dependency closures](0026-release-module-dependency-closures.md) | 2026-08-07 | Accepted |
 | 0027 | [Backend ownership and renderer lifecycle convergence](0027-backend-renderer-lifecycle-convergence.md) | 2026-08-07 | Accepted |
 | 0028 | [Runtime neutrality, state ownership, and render resources](0028-runtime-state-render-ownership-convergence.md) | 2026-08-07 | Accepted |
+| 0029 | [WebView controller, bridge, and HostPatch](0029-webview-controller-bridge.md) | 2026-08-20 | Accepted |
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

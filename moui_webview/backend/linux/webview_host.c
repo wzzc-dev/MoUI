@@ -63,6 +63,8 @@ typedef struct MOUILinuxWebView {
   int32_t policy;
   GtkWidget *offscreen_window;  // Changed from 'window' to 'offscreen_window'
   WebKitWebView *webview;
+  WebKitUserContentManager *content_manager;
+  uint64_t host_patch_revision;
   int seen;
   int visible;
   int allow_next_navigation;
@@ -373,6 +375,24 @@ static void on_javascript_finished(GObject *object, GAsyncResult *result,
   javascript_request_free(request);
 }
 
+#if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
+static void on_bridge_message(WebKitUserContentManager *manager,
+                              WebKitJavascriptResult *result,
+                              gpointer user_data) {
+  (void)manager;
+  MOUILinuxWebView *view = (MOUILinuxWebView *)user_data;
+  if (view == NULL || result == NULL) {
+    return;
+  }
+  JSCValue *value = webkit_javascript_result_get_js_value(result);
+  char *wire = value != NULL ? jsc_value_to_string(value) : NULL;
+  const char *url = webkit_web_view_get_uri(view->webview);
+  moui_linux_webview_emit(view->parent_surface, 8, view->id,
+                          url ? url : "", wire ? wire : "", 0);
+  g_free(wire);
+}
+#endif
+
 static MOUILinuxWebView *ensure_view(uint64_t surface, const char *id,
                                      const char *background) {
   MOUILinuxWebView *view = find_view(surface, id);
@@ -391,7 +411,17 @@ static MOUILinuxWebView *ensure_view(uint64_t surface, const char *id,
 
   // Create offscreen window for rendering to memory
   view->offscreen_window = gtk_offscreen_window_new();
-  view->webview = WEBKIT_WEB_VIEW(webkit_web_view_new());
+  WebKitUserContentManager *content_manager = webkit_user_content_manager_new();
+  webkit_user_content_manager_register_script_message_handler(content_manager,
+                                                               "mouiBridge",
+                                                               NULL);
+  view->webview = WEBKIT_WEB_VIEW(
+      g_object_new(WEBKIT_TYPE_WEB_VIEW,
+                   "web-context", webkit_web_context_get_default(),
+                   "user-content-manager", content_manager, NULL));
+  view->content_manager = content_manager;
+  g_signal_connect(content_manager, "script-message-received::mouiBridge",
+                   G_CALLBACK(on_bridge_message), view);
   gtk_container_add(GTK_CONTAINER(view->offscreen_window), GTK_WIDGET(view->webview));
   parse_background_color(background, &view->background_red, &view->background_green,
                          &view->background_blue, &view->background_alpha);
@@ -576,6 +606,51 @@ void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
 }
 
 MOONBIT_FFI_EXPORT
+void moui_linux_webview_configure(uint64_t wl_surface, moonbit_bytes_t id,
+                                  uint64_t revision,
+                                  moonbit_bytes_t allowed_origins,
+                                  moonbit_bytes_t document_start,
+                                  moonbit_bytes_t document_end) {
+#if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
+  char *id_text = moui_linux_webview_bytes_to_cstr(id);
+  MOUILinuxWebView *view = find_view(wl_surface, id_text ? id_text : "");
+  free(id_text);
+  if (view == NULL || view->content_manager == NULL || revision == 0 ||
+      revision == view->host_patch_revision) {
+    return;
+  }
+  char *start = moui_linux_webview_bytes_to_cstr(document_start);
+  char *end = moui_linux_webview_bytes_to_cstr(document_end);
+  webkit_user_content_manager_remove_all_scripts(view->content_manager);
+  if (start != NULL && start[0] != '\0') {
+    WebKitUserScript *script = webkit_user_script_new(
+        start, WEBKIT_USER_CONTENT_INJECT_TOP_FRAME,
+        WEBKIT_USER_SCRIPT_INJECT_AT_DOCUMENT_START, NULL, NULL);
+    webkit_user_content_manager_add_script(view->content_manager, script);
+    webkit_user_script_unref(script);
+  }
+  if (end != NULL && end[0] != '\0') {
+    WebKitUserScript *script = webkit_user_script_new(
+        end, WEBKIT_USER_CONTENT_INJECT_TOP_FRAME,
+        WEBKIT_USER_SCRIPT_INJECT_AT_DOCUMENT_END, NULL, NULL);
+    webkit_user_content_manager_add_script(view->content_manager, script);
+    webkit_user_script_unref(script);
+  }
+  view->host_patch_revision = revision;
+  free(start);
+  free(end);
+  (void)allowed_origins;
+#else
+  (void)wl_surface;
+  (void)id;
+  (void)revision;
+  (void)allowed_origins;
+  (void)document_start;
+  (void)document_end;
+#endif
+}
+
+MOONBIT_FFI_EXPORT
 void moui_linux_webview_platform_views_end(uint64_t wl_surface) {
 #if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
   // In offscreen mode, just mark unseen views as invisible
@@ -599,6 +674,9 @@ void moui_linux_webview_platform_views_dispose(uint64_t wl_surface) {
       *cursor = view->next;
       if (view->offscreen_window) {
         gtk_widget_destroy(view->offscreen_window);
+      }
+      if (view->content_manager) {
+        g_object_unref(view->content_manager);
       }
       free(view->id);
       free(view->desired_url);
@@ -645,29 +723,17 @@ void moui_linux_webview_command(uint64_t wl_surface, moonbit_bytes_t id,
     webkit_web_view_go_forward(view->webview);
     break;
   case 5: {
-    char *script = moui_linux_webview_bytes_to_cstr(text);
-    char *request_id = moui_linux_webview_bytes_to_cstr(detail);
-    MOUILinuxJavaScriptRequest *request =
-        (MOUILinuxJavaScriptRequest *)calloc(1, sizeof(MOUILinuxJavaScriptRequest));
-    if (request != NULL) {
-      request->parent_surface = view->parent_surface;
-      request->id = strdup(view->id ? view->id : "");
-      request->request_id = strdup(request_id ? request_id : "");
+    char *message = moui_linux_webview_bytes_to_cstr(text);
+    char *script = g_strdup_printf("window.__mouiBridgeReceive(%s)",
+                                   message ? message : "null");
 #if WEBKIT_CHECK_VERSION(2, 40, 0)
-      webkit_web_view_evaluate_javascript(view->webview, script ? script : "",
-                                          -1, NULL, NULL, NULL,
-                                          on_javascript_finished, request);
+    webkit_web_view_evaluate_javascript(view->webview, script ? script : "",
+                                        -1, NULL, NULL, NULL, NULL, NULL);
 #else
-      webkit_web_view_run_javascript(view->webview, script, NULL,
-                                     on_javascript_finished, request);
+    webkit_web_view_run_javascript(view->webview, script, NULL, NULL, NULL);
 #endif
-    } else {
-      moui_linux_webview_emit(view->parent_surface, 8, view->id,
-                              request_id ? request_id : "",
-                              "JavaScript request allocation failed", 1);
-    }
-    free(script);
-    free(request_id);
+    g_free(script);
+    free(message);
     break;
   }
   default:

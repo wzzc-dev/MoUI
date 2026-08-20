@@ -1,17 +1,16 @@
 ///|
 pub fn[Msg] web_view(
-  id~ : String,
-  url~ : String,
+  controller~ : @host.WebViewController,
   width? : Double? = None,
   height? : Double? = None,
   title? : String = "",
-  policy? : @host.WebViewNavigationPolicy = @host.WebViewNavigationPolicy::AllowHttpHttpsFile,
   background_color? : @core.Color? = None,
   color_scheme? : @core.ColorScheme? = None,
   on_event? : ((@host.WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
+  let id = controller.id()
   @core.View::from_node(
-    WebViewNode::{ id, url, width, height, title, policy, background_color, color_scheme },
+    WebViewNode::{ id, width, height, title, background_color, color_scheme },
     event=(node, ctx) => {
       match (ctx.event, on_event) {
         (@core.AppEvent::PlatformView(event_id, event), Some(handler)) =>
@@ -33,11 +32,9 @@ pub fn[Msg] web_view(
 ///|
 priv struct WebViewNode {
   id : String
-  url : String
   width : Double?
   height : Double?
   title : String
-  policy : @host.WebViewNavigationPolicy
   background_color : @core.Color?
   color_scheme : @core.ColorScheme?
 }
@@ -62,18 +59,7 @@ impl @core.ViewNode for WebViewNode with fn declaration(self) {
     ),
   ])
   let content_key = @core.DeclarationKey::record(type_tag="WebView.content", fields=[
-    ("url", @core.DeclarationKey::string(self.url)),
     ("title", @core.DeclarationKey::string(self.title)),
-    (
-      "policy",
-      @core.DeclarationKey::int(
-        match self.policy {
-          @host.WebViewNavigationPolicy::AllowAll => 0
-          @host.WebViewNavigationPolicy::AllowHttpHttps => 1
-          @host.WebViewNavigationPolicy::AllowHttpHttpsFile => 2
-        },
-      ),
-    ),
     (
       "background-color",
       @core.DeclarationKey::string(
@@ -100,7 +86,6 @@ impl @core.ViewNode for WebViewNode with fn declaration(self) {
     semantics=@core.DeclarationChannel::Exact(
       @core.DeclarationKey::record(type_tag="WebView.semantics", fields=[
         ("title", @core.DeclarationKey::string(self.title)),
-        ("url", @core.DeclarationKey::string(self.url)),
       ]),
     ),
     platform=@core.DeclarationChannel::Exact(content_key),
@@ -126,11 +111,9 @@ impl @core.ViewNode for WebViewNode with fn platform_views(self, ctx) {
   } else {
     let spec = @host.WebViewSpec::new(
       id=self.id,
-      url=self.url,
       width=self.width,
       height=self.height,
       title=self.title,
-      policy=self.policy,
       background_color=self.background_color,
       color_scheme=self.color_scheme,
     )
@@ -144,6 +127,6 @@ impl @core.ViewNode for WebViewNode with fn semantics(self) {
     composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::Group,
     label=self.title,
-    value=self.url,
+    value="",
   )
 }

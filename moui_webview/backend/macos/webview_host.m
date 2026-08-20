@@ -218,9 +218,11 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
 @property(nonatomic, assign) NSView *parent;
 @property(nonatomic, copy) NSString *identifier;
 @property(nonatomic, retain) WKWebView *webView;
+@property(nonatomic, retain) WKUserContentController *contentController;
 @property(nonatomic, assign) MOUIMacosWebViewScriptBridge *scriptBridge;
 @property(nonatomic, copy) NSString *desiredURL;
 @property(nonatomic, assign) int32_t navigationPolicy;
+@property(nonatomic, assign) uint64_t hostPatchRevision;
 @property(nonatomic, assign) BOOL seen;
 @property(nonatomic, assign) BOOL allowNextNavigation;
 @property(nonatomic, assign) BOOL overlayActive;
@@ -233,6 +235,10 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
      background:(NSString *)background
         scheme:(NSString *)scheme;
 - (void)syncOverlayMask:(BOOL)hasBounds rect:(NSRect)rect;
+- (void)configureHostPatchRevision:(uint64_t)revision
+                    allowedOrigins:(NSString *)allowedOrigins
+                 documentStartScript:(NSString *)documentStartScript
+                   documentEndScript:(NSString *)documentEndScript;
 - (void)updateNoDragRegions:(id)body;
 - (void)reportStartup:(id)body;
 - (void)runCommand:(int32_t)command text:(NSString *)text detail:(NSString *)detail;
@@ -317,7 +323,14 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
 - (void)userContentController:(WKUserContentController *)userContentController
       didReceiveScriptMessage:(WKScriptMessage *)message {
   (void)userContentController;
-  if ([message.name isEqualToString:@"mouiStartup"]) {
+  if ([message.name isEqualToString:@"mouiBridge"]) {
+    NSString *wire = [message.body isKindOfClass:[NSString class]]
+        ? (NSString *)message.body
+        : @"";
+    NSString *source = self.record.webView.URL.absoluteString ?: @"";
+    moui_macos_webview_emit((uint64_t)(uintptr_t)self.record.parent, 8,
+                            self.record.identifier, source, wire, 0);
+  } else if ([message.name isEqualToString:@"mouiStartup"]) {
     [self.record reportStartup:message.body];
   } else if ([message.name isEqualToString:@"mouiDragRegions"]) {
     [self.record updateNoDragRegions:message.body];
@@ -396,10 +409,12 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
     moui_macos_webview_log(@"record create id=%@", identifier);
     WKWebViewConfiguration *configuration = [[[WKWebViewConfiguration alloc] init] autorelease];
     WKUserContentController *controller = [[[WKUserContentController alloc] init] autorelease];
+    self.contentController = controller;
     MOUIMacosWebViewScriptBridge *bridge = [[[MOUIMacosWebViewScriptBridge alloc] init] autorelease];
     bridge.record = self;
     _scriptBridge = bridge;
     [controller addScriptMessageHandler:bridge name:@"mouiDragRegions"];
+    [controller addScriptMessageHandler:bridge name:@"mouiBridge"];
     if (moui_macos_webview_debug_enabled()) {
       [controller addScriptMessageHandler:bridge name:@"mouiStartup"];
       [controller addUserScript:[[[WKUserScript alloc]
@@ -432,6 +447,42 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
     [parent addSubview:_webView positioned:NSWindowAbove relativeTo:nil];
   }
   return self;
+}
+
+- (void)configureHostPatchRevision:(uint64_t)revision
+                    allowedOrigins:(NSString *)allowedOrigins
+                 documentStartScript:(NSString *)documentStartScript
+                   documentEndScript:(NSString *)documentEndScript {
+  (void)allowedOrigins;
+  if (revision == 0 || revision == self.hostPatchRevision) {
+    return;
+  }
+  // Rebuild the script list on every revision so a tightened policy cannot
+  // leave the previous patch active on a later navigation.
+  [self.contentController removeAllUserScripts];
+  if (moui_macos_webview_debug_enabled()) {
+    [self.contentController addUserScript:[[[WKUserScript alloc]
+        initWithSource:moui_macos_webview_startup_debug_script()
+          injectionTime:WKUserScriptInjectionTimeAtDocumentStart
+       forMainFrameOnly:YES] autorelease]];
+  }
+  [self.contentController addUserScript:[[[WKUserScript alloc]
+      initWithSource:moui_macos_webview_drag_regions_script()
+        injectionTime:WKUserScriptInjectionTimeAtDocumentEnd
+     forMainFrameOnly:YES] autorelease]];
+  if (documentStartScript.length > 0) {
+    [self.contentController addUserScript:[[[WKUserScript alloc]
+        initWithSource:documentStartScript
+          injectionTime:WKUserScriptInjectionTimeAtDocumentStart
+       forMainFrameOnly:YES] autorelease]];
+  }
+  if (documentEndScript.length > 0) {
+    [self.contentController addUserScript:[[[WKUserScript alloc]
+        initWithSource:documentEndScript
+          injectionTime:WKUserScriptInjectionTimeAtDocumentEnd
+       forMainFrameOnly:YES] autorelease]];
+  }
+  self.hostPatchRevision = revision;
 }
 
 - (void)syncOverlayMask:(BOOL)hasBounds rect:(NSRect)rect {
@@ -528,10 +579,11 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
 
 - (void)dealloc {
   self.scriptBridge.record = nil;
-  [_webView.configuration.userContentController
+  [_contentController
       removeScriptMessageHandlerForName:@"mouiDragRegions"];
-  [_webView.configuration.userContentController
+  [_contentController
       removeScriptMessageHandlerForName:@"mouiStartup"];
+  [_contentController removeScriptMessageHandlerForName:@"mouiBridge"];
   @try {
     [_webView removeObserver:self forKeyPath:@"title"];
     [_webView removeObserver:self forKeyPath:@"canGoBack"];
@@ -541,6 +593,7 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
   [_webView removeFromSuperview];
   _webView.navigationDelegate = nil;
   [_webView release];
+  [_contentController release];
   [_identifier release];
   [_desiredURL release];
   [super dealloc];
@@ -896,7 +949,28 @@ void moui_macos_webview_sync(uint64_t raw_content_view_handle, moonbit_bytes_t i
             frame:NSMakeRect(x, y, width, height)
            policy:policy
        background:moui_macos_webview_string_from_bytes(background)
-          scheme:moui_macos_webview_string_from_bytes(scheme)];
+            scheme:moui_macos_webview_string_from_bytes(scheme)];
+}
+
+MOONBIT_FFI_EXPORT
+void moui_macos_webview_configure(uint64_t raw_content_view_handle,
+                                   moonbit_bytes_t id, uint64_t revision,
+                                   moonbit_bytes_t allowed_origins,
+                                   moonbit_bytes_t document_start,
+                                   moonbit_bytes_t document_end) {
+  NSView *parent = (__bridge NSView *)(void *)raw_content_view_handle;
+  if (parent == nil) {
+    return;
+  }
+  MOUIMacosWebViewRecord *record =
+      moui_macos_webview_find(parent, moui_macos_webview_string_from_bytes(id));
+  if (record == nil) {
+    return;
+  }
+  [record configureHostPatchRevision:revision
+                      allowedOrigins:moui_macos_webview_string_from_bytes(allowed_origins)
+                   documentStartScript:moui_macos_webview_string_from_bytes(document_start)
+                     documentEndScript:moui_macos_webview_string_from_bytes(document_end)];
 }
 
 MOONBIT_FFI_EXPORT

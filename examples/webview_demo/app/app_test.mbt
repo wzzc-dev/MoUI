@@ -1,10 +1,7 @@
 ///|
-test "webview demo omits platform view when host reports unavailable" {
+test "webview demo omits platform view without a composition-root controller" {
   let runtime = test_runtime(
-    program(
-      command_sink=_command => (),
-      capability=WebViewCapability::unavailable(),
-    ),
+    program(capability=WebViewCapability::unavailable()),
     width=960.0,
     height=640.0,
   )
@@ -13,56 +10,22 @@ test "webview demo omits platform view when host reports unavailable" {
 }
 
 ///|
-test "webview demo emits native placement with default url when available" {
+test "webview demo keeps pure app tests independent of native controller" {
   let runtime = test_runtime(
-    program(
-      command_sink=_command => (),
-      capability=WebViewCapability::available(),
-    ),
+    program(capability=WebViewCapability::available()),
     width=960.0,
     height=640.0,
   )
   let frame = runtime.draw_frame()
-  inspect(frame.platform_views.length(), content="1")
-  inspect(frame.platform_views[0].id, content="webview-demo-main")
-  inspect(frame.platform_views[0].property_or("url", ""), content=default_url)
+  inspect(frame.platform_views.length(), content="0")
 }
 
 ///|
-/// Regression: `expanded(browser_surface)` must share the row with the
-/// `status_panel` instead of letting the greedy `web_view` consume the full
-/// width. Before the fix `web_view` measured the whole row width (greedy
-/// `unwrap_or(max)`), `expanded` had no slack to grow into, and the
-/// `status_panel` was pushed off-screen.
-test "webview demo keeps web view and status panel side by side" {
-  let runtime = test_runtime(
-    program(
-      command_sink=_command => (),
-      capability=WebViewCapability::available(),
-    ),
-    width=960.0,
-    height=640.0,
-  )
-  let frame = runtime.draw_frame()
-  inspect(frame.platform_views.length(), content="1")
-  let web = frame.platform_views[0].frame
-  // The web view must stay inside the browser surface (left of the status
-  // panel) rather than spanning the whole window width.
-  inspect(web.size.width, content="908")
-  inspect(web.size.height, content="588")
-}
-
-///|
-test "webview commands become structured TEA effects" {
-  let program = program(
-    command_sink=_command => (),
-    capability=WebViewCapability::available(),
-  )
+test "webview commands have no effect without an injected controller" {
+  let program = program(capability=WebViewCapability::available())
   let (model, _effect) = program.runtime_init()
   let (_next, effect) = program.runtime_update(model, Reload)
-  let summary = @runtime.effect_plan_summary(effect)
-  inspect(summary.run_count(), content="1")
-  inspect(summary.descriptors()[0].kind(), content="webview-command")
+  inspect(@runtime.effect_plan_summary(effect).run_count(), content="0")
 }
 
 ///|

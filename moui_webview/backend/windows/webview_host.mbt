@@ -39,6 +39,17 @@ extern "C" fn windows_webview_sync(
 ) -> Unit = "moui_windows_webview_sync"
 
 ///|
+#borrow(id, allowed_origins, document_start, document_end)
+extern "C" fn windows_webview_configure(
+  hwnd : UInt64,
+  id : Bytes,
+  revision : UInt64,
+  allowed_origins : Bytes,
+  document_start : Bytes,
+  document_end : Bytes,
+) -> Unit = "moui_windows_webview_configure"
+
+///|
 extern "C" fn windows_webview_sync_overlay_mask(
   hwnd : UInt64,
   has_bounds : Int,
@@ -79,18 +90,27 @@ pub fn windows_webview_capabilities() -> @host.HostWebViewCapabilities {
 
 ///|
 pub fn install_windows_webview_event_dispatcher(
-  dispatch : (UInt64, String, @host.WebViewEvent) -> Unit,
+  host : @host.WebViewHost,
+  dispatch : (UInt64, String, @core.PlatformViewEvent) -> Unit,
 ) -> Unit {
   windows_webview_install_event_callback(
     fn(callback, hwnd, kind, id, url, detail, flag) {
       callback(hwnd, kind, id, url, detail, flag)
     },
     (hwnd, kind, id, url, detail, flag) => {
-      dispatch(
-        hwnd,
-        @host.webview_decode_ffi_string(id),
-        @host.webview_decode_native_event(kind, url, detail, flag),
-      )
+      let id_str = @host.webview_decode_ffi_string(id)
+      match
+        host.accept_native_event(
+          controller_id=id_str,
+          kind~,
+          navigation_raw=0UL,
+          url=@host.webview_decode_ffi_string(url),
+          detail=@host.webview_decode_ffi_string(detail),
+          flag~,
+        ) {
+        Some(event) => dispatch(hwnd, id_str, event.to_platform_event())
+        None => ()
+      }
     },
   )
 }
@@ -107,15 +127,15 @@ pub fn sync_windows_platform_views(
       windows_webview_sync(
         hwnd,
         @host.webview_encode_ffi_string(placement.id),
-        @host.webview_encode_ffi_string(placement.property_or("url", "")),
+        @host.webview_encode_ffi_string(""),
         @host.webview_encode_ffi_string(placement.property_or("title", "")),
-        @host.webview_encode_ffi_string(placement.property_or("background-color", "")),
-        @host.webview_encode_ffi_string(placement.property_or("color-scheme", "")),
-        @host.webview_native_policy_code(
-          @host.WebViewNavigationPolicy::from_wire_value(
-            placement.property_or("policy", "http-https-file"),
-          ),
+        @host.webview_encode_ffi_string(
+          placement.property_or("background-color", ""),
         ),
+        @host.webview_encode_ffi_string(
+          placement.property_or("color-scheme", ""),
+        ),
+        0,
         placement.frame.origin.x,
         placement.frame.origin.y,
         placement.frame.size.width,
@@ -146,19 +166,31 @@ pub fn dispose_windows_platform_views(window : @win.Window) -> Unit {
 ///|
 pub fn drain_windows_webview_commands(
   window : @win.Window,
-  queue : @host.HostWebViewCommandQueue,
+  host : @host.WebViewHost,
 ) -> Int {
   let hwnd = window.native_window_handle()
-  queue.drain_with_handler(command => {
-    let (kind, text, detail) = @host.webview_encode_native_command(
-      command.command,
+  host.drain_commands(command => {
+    match host.native_config(command.controller_id) {
+      Some(config) =>
+        windows_webview_configure(
+          hwnd,
+          @host.webview_encode_ffi_string(command.controller_id),
+          config.revision,
+          @host.webview_encode_ffi_string(config.allowed_origins),
+          @host.webview_encode_ffi_string(config.document_start_script),
+          @host.webview_encode_ffi_string(config.document_end_script),
+        )
+      None => ()
+    }
+    let (kind, _command_id, _navigation_id, text) = @host.webview_encode_native_command(
+      command,
     )
     windows_webview_command(
       hwnd,
-      @host.webview_encode_ffi_string(command.id),
+      @host.webview_encode_ffi_string(command.controller_id),
       kind,
       @host.webview_encode_ffi_string(text),
-      @host.webview_encode_ffi_string(detail),
+      @host.webview_encode_ffi_string(""),
     )
   })
 }

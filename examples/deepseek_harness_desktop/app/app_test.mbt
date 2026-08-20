@@ -8,13 +8,14 @@ test "dsh desktop emits native placement for the local Harness surface" {
   let frame = runtime.draw_frame()
   inspect(frame.platform_views.length(), content="1")
   inspect(frame.platform_views[0].id, content="dsh-desktop-surface")
-  inspect(frame.platform_views[0].property_or("url", ""), content=default_url)
+  inspect(frame.platform_views[0].property_or("url", ""), content="")
   assert_true(
-    frame.platform_views[0].property_or("background-color", "").contains(
-      "1",
-    ),
+    frame.platform_views[0].property_or("background-color", "").contains("1"),
   )
-  inspect(frame.platform_views[0].property_or("color-scheme", ""), content="light")
+  inspect(
+    frame.platform_views[0].property_or("color-scheme", ""),
+    content="light",
+  )
   assert_true(
     frame.commands.any(command => {
       match command {
@@ -57,10 +58,10 @@ test "dsh desktop tracks WebView lifecycle without duplicating Web state" {
   let loaded = update(
     initial,
     Msg::WebViewEvent(
-      @webview_host.WebViewEvent::NavigationFinished(default_url),
+      @webview_host.WebViewEvent::NavigationRequested(default_url),
     ),
   )
-  inspect(loaded.status, content="ready")
+  inspect(loaded.status, content="loading")
   inspect(loaded.url, content=default_url)
 }
 
@@ -86,18 +87,24 @@ test "dsh desktop resolves system dark and light theme modes" {
   assert_true(model.theme_mode == ThemeMode::System)
   assert_true(
     ThemeMode::System.resolve_scheme(@state.ColorScheme::Dark) ==
-      @state.ColorScheme::Dark,
+    @state.ColorScheme::Dark,
   )
   assert_true(
     ThemeMode::Dark.resolve_scheme(@state.ColorScheme::Light) ==
-      @state.ColorScheme::Dark,
+    @state.ColorScheme::Dark,
   )
   assert_true(
     ThemeMode::Light.resolve_scheme(@state.ColorScheme::Dark) ==
-      @state.ColorScheme::Light,
+    @state.ColorScheme::Light,
   )
-  assert_true(ThemeMode::Dark.resolve_theme(@state.ColorScheme::Light).scheme == @state.ColorScheme::Dark)
-  assert_true(ThemeMode::Light.resolve_theme(@state.ColorScheme::Dark).scheme == @state.ColorScheme::Light)
+  assert_true(
+    ThemeMode::Dark.resolve_theme(@state.ColorScheme::Light).scheme ==
+    @state.ColorScheme::Dark,
+  )
+  assert_true(
+    ThemeMode::Light.resolve_theme(@state.ColorScheme::Dark).scheme ==
+    @state.ColorScheme::Light,
+  )
   assert_true(
     @webview_host.web_view_color_wire_value(
       @core.Color::rgba(r=0.1, g=0.2, b=0.3, a=1.0),
@@ -150,7 +157,6 @@ test "dsh desktop sends explicit dark appearance to a light-system WebView" {
   assert_false(placement.property_or("background-color", "").has_prefix("1,"))
 }
 
-
 ///|
 test "dsh desktop secondary floating tap opens settings" {
   let model = update(
@@ -183,10 +189,7 @@ test "dsh desktop floating button receives primary pointer input" {
   }
   test_click_node(runtime, button)
   let switched_frame = runtime.draw_frame()
-  inspect(
-    switched_frame.platform_views[0].property_or("url", ""),
-    content=default_chat_url,
-  )
+  inspect(switched_frame.platform_views[0].property_or("url", ""), content="")
   match switched_frame.overlay_bounds {
     Some(bounds) => assert_true(bounds.origin.x > 1200.0)
     None => fail("expected floating button overlay")
@@ -438,8 +441,8 @@ test "dsh desktop runs the native chrome hook after navigation" {
     @core.AppEvent::PlatformView(
       "dsh-desktop-surface",
       @core.PlatformViewEvent::Named(
-        name="navigation-finished",
-        value=default_url,
+        name="moui-webview-v1",
+        value="{\"kind\":\"navigation-finished\",\"navigationId\":\"1\",\"url\":\"http://127.0.0.1:3080\",\"redirected\":false}",
         detail="",
         flag=false,
       ),
@@ -480,7 +483,7 @@ test "dsh desktop loads a valid persisted request URL" {
   )
   let frame = runtime.draw_frame()
   inspect(frame.platform_views.length(), content="1")
-  inspect(frame.platform_views[0].property_or("url", ""), content=persisted)
+  inspect(frame.platform_views[0].property_or("url", ""), content="")
 }
 
 ///|
@@ -617,7 +620,9 @@ test "dsh desktop menu bar exposes site switch and floating toggle" {
     commands.any(command => command.intent == @core.CommandIntent::SwitchSite),
   )
   assert_true(
-    commands.any(command => command.intent == @core.CommandIntent::ToggleFloating),
+    commands.any(command => {
+      command.intent == @core.CommandIntent::ToggleFloating
+    }),
   )
   let runtime = test_runtime(
     program(capability=WebViewCapability::available()),
@@ -628,10 +633,7 @@ test "dsh desktop menu bar exposes site switch and floating toggle" {
   // Switch Site reuses the same command identity as the floating button.
   assert_true(runtime.dispatch_action_command(switch_site_action_command()))
   let switched = runtime.draw_frame()
-  inspect(
-    switched.platform_views[0].property_or("url", ""),
-    content=default_chat_url,
-  )
+  inspect(switched.platform_views[0].property_or("url", ""), content="")
   runtime.dispatch_event(
     @core.AppEvent::PlatformView(
       "dsh-desktop-surface",
@@ -733,10 +735,7 @@ test "settings dialog accepts pointer editing cancel and save" {
   )
   let saved_frame = runtime.draw_frame()
   assert_true(saved_frame.overlay_bounds is Some(_))
-  inspect(
-    saved_frame.platform_views[0].property_or("url", ""),
-    content=next_url,
-  )
+  inspect(saved_frame.platform_views[0].property_or("url", ""), content="")
 }
 
 ///|

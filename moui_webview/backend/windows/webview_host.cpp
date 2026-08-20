@@ -108,6 +108,10 @@ struct MOUWindowsWebView {
   bool creating = false;
   bool allow_next_navigation = false;
   bool navigation_pending = false;
+  uint64_t host_patch_revision = 0;
+  size_t host_patch_pending_scripts = 0;
+  std::wstring pending_navigation;
+  std::vector<std::wstring> host_patch_script_ids;
   ComPtr<ICoreWebView2Controller> controller;
   ComPtr<ICoreWebView2> webview;
 };
@@ -414,6 +418,23 @@ static void install_handlers(MOUWindowsWebView *view) {
           })
           .Get(),
       &token);
+  view->webview->add_WebMessageReceived(
+      Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+          [view](ICoreWebView2 *sender,
+                 ICoreWebView2WebMessageReceivedEventArgs *args) -> HRESULT {
+            LPWSTR message = nullptr;
+            args->get_WebMessageAsJson(&message);
+            LPWSTR source = nullptr;
+            sender->get_Source(&source);
+            std::wstring wire = message ? message : L"";
+            std::wstring url = source ? source : L"";
+            CoTaskMemFree(message);
+            CoTaskMemFree(source);
+            emit_wide(view->parent, 8, view->id, url, wire, 0);
+            return S_OK;
+          })
+          .Get(),
+      &token);
 }
 
 static void navigate_controlled(MOUWindowsWebView *view, const std::wstring &url) {
@@ -520,6 +541,68 @@ static MOUWindowsWebView *ensure_view(HWND parent, const std::wstring &id) {
   create_controller(view);
   return view;
 }
+
+static std::wstring host_patch_document_end_wrapper(const std::wstring &source) {
+  return L"(function(){var run=function(){try{" + source +
+         L"}catch(_){}};if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',run,{once:true});}else{run();}})();";
+}
+
+static void flush_host_patch_navigation(MOUWindowsWebView *view) {
+  if (view == nullptr || view->host_patch_pending_scripts != 0 ||
+      view->pending_navigation.empty()) {
+    return;
+  }
+  std::wstring url = view->pending_navigation;
+  view->pending_navigation.clear();
+  navigate_controlled(view, url);
+}
+
+static void configure_host_patch(MOUWindowsWebView *view, uint64_t revision,
+                                 moonbit_bytes_t allowed_origins,
+                                 moonbit_bytes_t document_start,
+                                 moonbit_bytes_t document_end) {
+  if (view == nullptr || view->webview == nullptr || revision == 0 ||
+      revision == view->host_patch_revision) {
+    return;
+  }
+  (void)allowed_origins;
+  std::wstring start = mb_bytes_to_wide(document_start);
+  std::wstring end = mb_bytes_to_wide(document_end);
+  for (const auto &script_id : view->host_patch_script_ids) {
+    view->webview->RemoveScriptToExecuteOnDocumentCreated(script_id.c_str());
+  }
+  view->host_patch_script_ids.clear();
+  view->host_patch_revision = revision;
+  view->host_patch_pending_scripts = 0;
+  auto add_script = [view, revision](const std::wstring &source) {
+    if (source.empty()) {
+      return;
+    }
+    view->host_patch_pending_scripts++;
+    view->webview->AddScriptToExecuteOnDocumentCreated(
+        source.c_str(),
+        Callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler>(
+            [view, revision](HRESULT result, LPCWSTR script_id) -> HRESULT {
+              if (SUCCEEDED(result) && script_id != nullptr) {
+                if (view->host_patch_revision == revision) {
+                  view->host_patch_script_ids.emplace_back(script_id);
+                } else {
+                  view->webview->RemoveScriptToExecuteOnDocumentCreated(script_id);
+                }
+              }
+              if (view->host_patch_revision == revision &&
+                  view->host_patch_pending_scripts > 0) {
+                view->host_patch_pending_scripts--;
+                flush_host_patch_navigation(view);
+              }
+              return S_OK;
+            })
+            .Get());
+  };
+  add_script(start);
+  add_script(host_patch_document_end_wrapper(end));
+  flush_host_patch_navigation(view);
+}
 #endif
 
 extern "C" MOONBIT_FFI_EXPORT
@@ -594,6 +677,27 @@ void moui_windows_webview_sync(uint64_t hwnd, moonbit_bytes_t id,
 }
 
 extern "C" MOONBIT_FFI_EXPORT
+void moui_windows_webview_configure(uint64_t hwnd, moonbit_bytes_t id,
+                                     uint64_t revision,
+                                     moonbit_bytes_t allowed_origins,
+                                     moonbit_bytes_t document_start,
+                                     moonbit_bytes_t document_end) {
+#if defined(_WIN32) && defined(MOUI_WINDOWS_ENABLE_WEBVIEW2)
+  MOUWindowsWebView *view =
+      find_view((HWND)(uintptr_t)hwnd, mb_bytes_to_wide(id));
+  configure_host_patch(view, revision, allowed_origins, document_start,
+                       document_end);
+#else
+  (void)hwnd;
+  (void)id;
+  (void)revision;
+  (void)allowed_origins;
+  (void)document_start;
+  (void)document_end;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT
 void moui_windows_webview_sync_overlay_mask(uint64_t hwnd, int32_t has_bounds,
                                              double x, double y, double width,
                                              double height) {
@@ -656,7 +760,11 @@ void moui_windows_webview_command(uint64_t hwnd, moonbit_bytes_t id,
   }
   switch (command) {
   case 0:
-    navigate_controlled(view, mb_bytes_to_wide(text));
+    if (view->host_patch_pending_scripts != 0) {
+      view->pending_navigation = mb_bytes_to_wide(text);
+    } else {
+      navigate_controlled(view, mb_bytes_to_wide(text));
+    }
     break;
   case 1:
     view->webview->Reload();
@@ -671,18 +779,10 @@ void moui_windows_webview_command(uint64_t hwnd, moonbit_bytes_t id,
     view->webview->GoForward();
     break;
   case 5: {
-    std::wstring script = mb_bytes_to_wide(text);
-    std::wstring request_id = mb_bytes_to_wide(detail);
-    view->webview->ExecuteScript(
-        script.c_str(),
-        Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
-            [view, request_id](HRESULT result, LPCWSTR value) -> HRESULT {
-              std::wstring output = SUCCEEDED(result) && value ? value : L"";
-              emit_wide(view->parent, 8, view->id, request_id, output,
-                        (int32_t)result);
-              return S_OK;
-            })
-            .Get());
+    // Bridge traffic is the only host-to-page communication path. Raw script
+    // execution is intentionally not exposed by the addon controller API.
+    std::wstring message = mb_bytes_to_wide(text);
+    view->webview->PostWebMessageAsJson(message.c_str());
     break;
   }
   default:

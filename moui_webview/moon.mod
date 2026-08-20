@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_webview"
 
-version = "0.1.9"
+version = "0.1.10"
 
 description = "WebView platform view addon for MoUI: wraps platform-native WebView backends (WKWebView, WebKitGTK, WebView2) into MoUI's declarative view tree."
 

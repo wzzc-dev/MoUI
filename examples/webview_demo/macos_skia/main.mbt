@@ -1,13 +1,13 @@
 ///|
 fn main {
-  let commands = @webview_host.HostWebViewCommandQueue::new()
-  let plugin = @macos_webview.create_macos_webview_plugin(commands)
+  let (host, controller) = @webview_demo.create_controller()
+  let plugin = @macos_webview.create_macos_webview_plugin(host)
   let capabilities = @webview_host.HostWebViewCapabilities::native_available(
     description="macOS WKWebView native embedding is available.",
   )
   @runtime.run_app(
     "MoUI WebView Demo",
-    @webview_demo.runtime(commands~, capabilities~),
+    @webview_demo.runtime(controller~, capabilities~),
   )
   .render_all(
     @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS),

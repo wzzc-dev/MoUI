@@ -58,9 +58,10 @@ native WebView's default white or black startup surface; the webpage itself is
 not changed by injected theme JavaScript. On macOS the resolved mode is also
 applied as the WKWebView's native Aqua/Dark Aqua appearance.
 
-After each DSH navigation completes, every native composition root reads and
-executes [`patch.js`](patch.js). The patch increases the expanded sidebar's top
-inset from 6px to 27px, uses 37px for the collapsed rail, widens the collapsed
-rail from 55px to 80px, and centers its compact controls. The DSH grid column,
-sidebar surface, and rail root are widened together, then restored on expand.
-The macOS traffic lights themselves are not resized.
+The native composition root installs the versioned `dsh-shell` HostPatch before
+the first navigation and on every later configuration revision. Its stylesheet
+increases the expanded sidebar's top inset from 6px to 27px, uses 37px for the
+collapsed rail, widens the collapsed rail from 55px to 80px, and centers its
+compact controls. The DSH grid column, sidebar surface, and rail root are
+widened together, then restored on expand. The macOS traffic lights themselves
+are not resized.

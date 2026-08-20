@@ -11,95 +11,253 @@ pub fn web_view_color_wire_value(@core.Color) -> String
 
 pub fn webview_decode_ffi_string(Bytes) -> String
 
-pub fn webview_decode_native_event(Int, Bytes, Bytes, Int) -> WebViewEvent
-
 pub fn webview_encode_ffi_string(String) -> Bytes
 
-pub fn webview_encode_native_command(WebViewCommand) -> (Int, String, String)
+pub fn webview_encode_native_command(HostWebViewQueuedCommand) -> (Int, UInt64, UInt64, String)
 
-pub fn webview_native_policy_code(WebViewNavigationPolicy) -> Int
+pub fn webview_utf8_size(String) -> Int
 
 // Errors
 
 // Types and methods
+pub(all) struct HostPatchBundle {
+  id : String
+  version : String
+  allowed_origins : Array[WebViewOrigin]
+  stylesheet : String?
+  document_start_script : String?
+  document_end_script : String?
+} derive(Eq, @debug.Debug)
+pub fn HostPatchBundle::new(id~ : String, version~ : String, allowed_origins~ : Array[WebViewOrigin], stylesheet? : String?, document_start_script? : String?, document_end_script? : String?) -> Self
+
+pub(all) struct HostPatchReport {
+  bundle_id : String
+  version : String
+  navigation_id : WebViewNavigationId
+  success : Bool
+  detail : String
+} derive(Eq, @debug.Debug)
+
 pub(all) struct HostWebViewCapabilities {
   available : Bool
   controlled_navigation : Bool
   commands : Bool
-  javascript_evaluation : Bool
+  messaging : Bool
+  host_patch : Bool
   native_embedding : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostWebViewCapabilities::native_available(javascript_evaluation? : Bool, description? : String) -> Self
+pub fn HostWebViewCapabilities::native_available(description? : String) -> Self
 pub fn HostWebViewCapabilities::unavailable(description? : String) -> Self
 
-pub struct HostWebViewCommandQueue {
-  // private fields
-}
-pub fn HostWebViewCommandQueue::drain_with_handler(Self, (HostWebViewQueuedCommand) -> Unit) -> Int
-pub fn HostWebViewCommandQueue::enqueue(Self, id~ : String, command~ : WebViewCommand) -> Unit
-pub fn HostWebViewCommandQueue::evaluate_javascript(Self, id~ : String, script~ : String, request_id? : String) -> Unit
-pub fn HostWebViewCommandQueue::go_back(Self, id~ : String) -> Unit
-pub fn HostWebViewCommandQueue::go_forward(Self, id~ : String) -> Unit
-pub fn HostWebViewCommandQueue::load_url(Self, id~ : String, url~ : String) -> Unit
-pub fn HostWebViewCommandQueue::new() -> Self
-pub fn HostWebViewCommandQueue::pending_count(Self) -> Int
-pub fn HostWebViewCommandQueue::reload(Self, id~ : String) -> Unit
-pub fn HostWebViewCommandQueue::stop(Self, id~ : String) -> Unit
-
-pub(all) struct HostWebViewQueuedCommand {
-  id : String
-  command : WebViewCommand
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum WebViewCommand {
-  LoadUrl(String)
+pub(all) enum HostWebViewCommand {
+  Navigate(String)
   Reload
   Stop
   GoBack
   GoForward
-  EvaluateJavaScript(String, String)
+  PostMessage(String)
+  Dispose
+} derive(Eq, @debug.Debug)
+
+pub(all) struct HostWebViewNativeConfig {
+  revision : UInt64
+  allowed_origins : String
+  document_start_script : String
+  document_end_script : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct HostWebViewQueuedCommand {
+  controller_id : String
+  command_id : WebViewCommandId
+  navigation_id : WebViewNavigationId?
+  command : HostWebViewCommand
+} derive(Eq, @debug.Debug)
+
+pub(all) struct WebViewBridgeEnvelope {
+  kind : WebViewBridgeKind
+  channel : String
+  request_id : WebViewRequestId?
+  navigation_id : WebViewNavigationId
+  payload : Json
+  error : WebViewError?
+} derive(Eq, @debug.Debug)
+pub fn WebViewBridgeEnvelope::cancel(request_id~ : WebViewRequestId, navigation_id~ : WebViewNavigationId) -> Self
+pub fn WebViewBridgeEnvelope::event(channel~ : String, navigation_id~ : WebViewNavigationId, payload~ : Json) -> Self
+pub fn WebViewBridgeEnvelope::parse(String) -> Result[Self, WebViewError]
+pub fn WebViewBridgeEnvelope::request(channel~ : String, request_id~ : WebViewRequestId, navigation_id~ : WebViewNavigationId, payload~ : Json) -> Self
+pub fn WebViewBridgeEnvelope::response(request_id~ : WebViewRequestId, navigation_id~ : WebViewNavigationId, result~ : Result[Json, WebViewError]) -> Self
+pub fn WebViewBridgeEnvelope::to_json_string(Self) -> String
+
+pub(all) enum WebViewBridgeKind {
+  Hello
+  Event
+  Request
+  Response
+  Cancel
+} derive(Eq, @debug.Debug)
+
+pub(all) struct WebViewBridgeMessage {
+  channel : String
+  origin : WebViewOrigin
+  navigation_id : WebViewNavigationId
+  payload : Json
+} derive(Eq, @debug.Debug)
+
+pub(all) enum WebViewChannelDirection {
+  PageToHost
+  HostToPage
+  Bidirectional
 } derive(Eq, ToJson, @debug.Debug)
-pub fn WebViewCommand::evaluate_javascript(script~ : String, request_id? : String) -> Self
-pub fn WebViewCommand::load_url(String) -> Self
+
+pub(all) struct WebViewChannelPolicy {
+  name : String
+  direction : WebViewChannelDirection
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WebViewChannelPolicy::new(name~ : String, direction? : WebViewChannelDirection) -> Self
+
+pub struct WebViewCommandId {
+  // private fields
+} derive(Compare, Eq, Hash, @debug.Debug)
+pub fn WebViewCommandId::to_wire(Self) -> String
+pub fn WebViewCommandId::value(Self) -> UInt64
+
+pub(all) struct WebViewCommandReceipt {
+  command_id : WebViewCommandId
+  navigation_id : WebViewNavigationId?
+} derive(Eq, @debug.Debug)
+
+pub struct WebViewController {
+  // private fields
+}
+pub fn WebViewController::configure(Self, WebViewControllerConfig) -> WebViewTask[WebViewCommandReceipt]
+pub fn WebViewController::dispose(Self) -> WebViewTask[WebViewCommandReceipt]
+pub fn WebViewController::go_back(Self) -> WebViewTask[WebViewCommandReceipt]
+pub fn WebViewController::go_forward(Self) -> WebViewTask[WebViewCommandReceipt]
+pub fn WebViewController::id(Self) -> String
+pub fn WebViewController::navigate(Self, String) -> WebViewTask[WebViewCommandReceipt]
+pub fn WebViewController::post_message(Self, channel~ : String, payload~ : Json) -> WebViewTask[WebViewCommandReceipt]
+pub fn WebViewController::reload(Self) -> WebViewTask[WebViewCommandReceipt]
+pub fn WebViewController::request(Self, channel~ : String, payload~ : Json, timeout_ms? : Int) -> WebViewTask[Json]
+pub fn WebViewController::respond(Self, request_id~ : WebViewRequestId, result~ : Result[Json, WebViewError]) -> WebViewTask[WebViewCommandReceipt]
+pub fn WebViewController::stop(Self) -> WebViewTask[WebViewCommandReceipt]
+
+pub(all) struct WebViewControllerConfig {
+  security : WebViewSecurityPolicy
+  capabilities : Array[String]
+  host_patches : Array[HostPatchBundle]
+} derive(Eq, @debug.Debug)
+pub fn WebViewControllerConfig::new(security? : WebViewSecurityPolicy, capabilities? : Array[String], host_patches? : Array[HostPatchBundle]) -> Self
+
+pub(all) struct WebViewDiagnostic {
+  code : String
+  message : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WebViewError {
+  code : String
+  message : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WebViewError::new(code~ : String, message~ : String) -> Self
 
 pub(all) enum WebViewEvent {
+  Ready(Array[String])
   NavigationRequested(String)
-  NavigationStarted(String)
-  NavigationCommitted(String)
-  NavigationFinished(String)
-  NavigationFailed(String, String)
+  NavigationStarted(WebViewNavigation)
+  NavigationCommitted(WebViewNavigation)
+  NavigationFinished(WebViewNavigation)
+  NavigationFailed(WebViewNavigationId?, String, WebViewError)
   TitleChanged(String)
   CanGoBackChanged(Bool)
   CanGoForwardChanged(Bool)
-  JavaScriptResult(String, String)
-} derive(Eq, ToJson, @debug.Debug)
+  Message(WebViewBridgeMessage)
+  Request(WebViewPageRequest)
+  HostPatchReported(HostPatchReport)
+  Diagnostic(WebViewDiagnostic)
+  Disposed
+} derive(Eq, @debug.Debug)
 pub fn WebViewEvent::from_platform_event(@core.PlatformViewEvent) -> Self?
 pub fn WebViewEvent::to_platform_event(Self) -> @core.PlatformViewEvent
 
-pub(all) enum WebViewNavigationPolicy {
-  AllowHttpHttpsFile
-  AllowHttpHttps
-  AllowAll
-} derive(Eq, ToJson, @debug.Debug)
-pub fn WebViewNavigationPolicy::from_wire_value(String) -> Self
-pub fn WebViewNavigationPolicy::wire_value(Self) -> String
+pub struct WebViewHost {
+  // private fields
+}
+pub fn WebViewHost::accept_native_event(Self, controller_id~ : String, kind~ : Int, navigation_raw~ : UInt64, url~ : String, detail~ : String, flag~ : Int) -> WebViewEvent?
+pub fn WebViewHost::create_controller(Self, id~ : String, config? : WebViewControllerConfig) -> Result[WebViewController, WebViewError]
+pub fn WebViewHost::drain_commands(Self, (HostWebViewQueuedCommand) -> Unit) -> Int
+pub fn WebViewHost::native_config(Self, String) -> HostWebViewNativeConfig?
+pub fn WebViewHost::new() -> Self
+pub fn WebViewHost::pending_command_count(Self) -> Int
+pub fn WebViewHost::pending_request_count(Self) -> Int
+pub fn WebViewHost::poll_timeouts(Self, Int64) -> Int64?
+
+pub(all) struct WebViewNavigation {
+  id : WebViewNavigationId
+  url : String
+  redirected : Bool
+} derive(Eq, @debug.Debug)
+
+pub struct WebViewNavigationId {
+  // private fields
+} derive(Compare, Eq, Hash, @debug.Debug)
+pub fn WebViewNavigationId::to_wire(Self) -> String
+pub fn WebViewNavigationId::value(Self) -> UInt64
+
+pub struct WebViewOrigin {
+  // private fields
+} derive(Compare, Eq, Hash, @debug.Debug)
+pub fn WebViewOrigin::parse(String) -> Self?
+pub fn WebViewOrigin::value(Self) -> String
+
+pub(all) struct WebViewPageRequest {
+  id : WebViewRequestId
+  channel : String
+  origin : WebViewOrigin
+  navigation_id : WebViewNavigationId
+  payload : Json
+} derive(Eq, @debug.Debug)
+
+pub struct WebViewRequestId {
+  // private fields
+} derive(Compare, Eq, Hash, @debug.Debug)
+pub fn WebViewRequestId::to_wire(Self) -> String
+pub fn WebViewRequestId::value(Self) -> UInt64
+
+pub(all) struct WebViewSecurityPolicy {
+  allowed_origins : Array[WebViewOrigin]
+  allowed_channels : Array[WebViewChannelPolicy]
+  allow_file_urls : Bool
+  max_message_bytes : Int
+  max_pending_requests : Int
+} derive(Eq, @debug.Debug)
+pub fn WebViewSecurityPolicy::deny_all() -> Self
+pub fn WebViewSecurityPolicy::new(allowed_origins? : Array[WebViewOrigin], allowed_channels? : Array[WebViewChannelPolicy], allow_file_urls? : Bool, max_message_bytes? : Int, max_pending_requests? : Int) -> Self
 
 pub(all) struct WebViewSpec {
-  key : @core.Key?
   id : String
-  url : String
   width : Double?
   height : Double?
   title : String
-  policy : WebViewNavigationPolicy
   background_color : @core.Color?
   color_scheme : @core.ColorScheme?
-  on_event : ((WebViewEvent) -> Unit)?
 }
-pub fn WebViewSpec::allows_url(Self, String) -> Bool
-pub fn WebViewSpec::new(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, background_color? : @core.Color?, color_scheme? : @core.ColorScheme?, on_event? : ((WebViewEvent) -> Unit)?) -> Self
+pub fn WebViewSpec::new(id~ : String, width? : Double?, height? : Double?, title? : String, background_color? : @core.Color?, color_scheme? : @core.ColorScheme?) -> Self
 pub fn WebViewSpec::platform_view_placement(Self, frame~ : @core.Rect, clip? : @core.Rect?) -> @core.PlatformViewPlacement
+
+pub struct WebViewTask[T] {
+  key : String
+  label : String
+  start_fn : ((WebViewTaskResult[T]) -> Unit) -> (() -> Unit)?
+}
+pub fn[T, Msg] WebViewTask::effect(Self[T], map~ : (WebViewTaskResult[T]) -> Msg) -> @core.Effect[Msg]
+pub fn[T] WebViewTask::new(key~ : String, start~ : ((WebViewTaskResult[T]) -> Unit) -> (() -> Unit)?, label? : String) -> Self[T]
+pub fn[T] WebViewTask::start(Self[T], (WebViewTaskResult[T]) -> Unit) -> (() -> Unit)?
+
+pub(all) enum WebViewTaskResult[T] {
+  Success(T)
+  Failure(WebViewError)
+  Cancelled
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

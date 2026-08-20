@@ -1,11 +1,7 @@
 ///|
-/// Build a `PlatformViewPlugin` (kind `"web_view"`) for the Windows WebView2
-/// native bridge. The command queue holds pending LoadUrl/Reload/etc.
-/// commands enqueued by the app; the host passes the window's HWND at call
-/// time. Events are decoded from the native bridge into
-/// `@core.PlatformViewEvent` and handed to the host callback directly.
+/// Build the Windows WebView2 plugin around the shared WebViewHost.
 pub fn create_windows_webview_plugin(
-  commands : @host.HostWebViewCommandQueue,
+  host : @host.WebViewHost,
 ) -> @moui_host.PlatformViewPlugin {
   let capabilities_summary = if windows_webview_native_available() != 0 {
     "available"
@@ -22,11 +18,19 @@ pub fn create_windows_webview_plugin(
         },
         (hwnd, kind, id, url, detail, flag) => {
           let id_str = @host.webview_decode_ffi_string(id)
-          let web_event = @host.webview_decode_native_event(
-            kind, url, detail, flag,
-          )
-          let platform_event = @host.WebViewEvent::to_platform_event(web_event)
-          callback(hwnd, id_str, platform_event)
+          match
+            host.accept_native_event(
+              controller_id=id_str,
+              kind~,
+              navigation_raw=0UL,
+              url=@host.webview_decode_ffi_string(url),
+              detail=@host.webview_decode_ffi_string(detail),
+              flag~,
+            ) {
+            Some(web_event) =>
+              callback(hwnd, id_str, web_event.to_platform_event())
+            None => ()
+          }
         },
       )
     },
@@ -37,15 +41,15 @@ pub fn create_windows_webview_plugin(
           windows_webview_sync(
             hwnd,
             @host.webview_encode_ffi_string(placement.id),
-            @host.webview_encode_ffi_string(placement.property_or("url", "")),
+            @host.webview_encode_ffi_string(""),
             @host.webview_encode_ffi_string(placement.property_or("title", "")),
-            @host.webview_encode_ffi_string(placement.property_or("background-color", "")),
-            @host.webview_encode_ffi_string(placement.property_or("color-scheme", "")),
-            @host.webview_native_policy_code(
-              @host.WebViewNavigationPolicy::from_wire_value(
-                placement.property_or("policy", "http-https-file"),
-              ),
+            @host.webview_encode_ffi_string(
+              placement.property_or("background-color", ""),
             ),
+            @host.webview_encode_ffi_string(
+              placement.property_or("color-scheme", ""),
+            ),
+            0,
             placement.frame.origin.x,
             placement.frame.origin.y,
             placement.frame.size.width,
@@ -70,16 +74,28 @@ pub fn create_windows_webview_plugin(
     },
     drain_commands=fn(hwnd) {
       ignore(
-        commands.drain_with_handler(command => {
-          let (kind, text, detail) = @host.webview_encode_native_command(
-            command.command,
+        host.drain_commands(command => {
+          match host.native_config(command.controller_id) {
+            Some(config) =>
+              windows_webview_configure(
+                hwnd,
+                @host.webview_encode_ffi_string(command.controller_id),
+                config.revision,
+                @host.webview_encode_ffi_string(config.allowed_origins),
+                @host.webview_encode_ffi_string(config.document_start_script),
+                @host.webview_encode_ffi_string(config.document_end_script),
+              )
+            None => ()
+          }
+          let (kind, _command_id, _navigation_id, text) = @host.webview_encode_native_command(
+            command,
           )
           windows_webview_command(
             hwnd,
-            @host.webview_encode_ffi_string(command.id),
+            @host.webview_encode_ffi_string(command.controller_id),
             kind,
             @host.webview_encode_ffi_string(text),
-            @host.webview_encode_ffi_string(detail),
+            @host.webview_encode_ffi_string(""),
           )
         }),
       )
@@ -88,6 +104,8 @@ pub fn create_windows_webview_plugin(
       windows_webview_platform_views_dispose(hwnd)
     },
     setup_platform_view_draw=None,
-    poll_native=None,
+    poll_native=Some(fn() {
+      host.poll_timeouts(@env.now().reinterpret_as_int64())
+    }),
   )
 }
