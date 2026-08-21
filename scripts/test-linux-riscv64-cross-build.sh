@@ -30,7 +30,7 @@ touch \
   "$sysroot/usr/include/fontconfig/fontconfig.h" \
   "$sysroot/usr/include/freetype2/ft2build.h" \
   "$sysroot/usr/include/harfbuzz/hb.h"
-for library in glib-2.0 wayland-client fontconfig freetype harfbuzz z stdc++; do
+for library in gio-2.0 glib-2.0 wayland-client fontconfig freetype harfbuzz z stdc++; do
   touch "$sysroot/usr/lib/riscv64-linux-gnu/lib${library}.so.0"
   ln -s "lib${library}.so.0" "$sysroot/usr/lib/riscv64-linux-gnu/lib${library}.so"
 done

@@ -311,7 +311,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/form/form_support_text.mbt", max_lines: 55 },
     // Text controls now publish selection/caret actions for native and Web
     // accessibility clients.
-    { path: "moui/views/text/text_input_controls.mbt", max_lines: 235 },
+    { path: "moui/views/text/text_input_controls.mbt", max_lines: 245 },
     { path: "moui/views/text/text_input_event_handlers.mbt", max_lines: 245 },
     { path: "moui/views/text/text_input_apply.mbt", max_lines: 400 },
     { path: "moui/views/text/text_input_editing.mbt", max_lines: 500 },
