@@ -24,9 +24,9 @@ runs:
       run: |
         set -euo pipefail
         toolchain_file="$GITHUB_WORKSPACE/${{ inputs.toolchain-file }}"
-        version="$(awk 'NF && $1 !~ /^#/ { print $1; exit }' "$toolchain_file")"
+        version="$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).moonc || "")' "$toolchain_file")"
         if [[ -z "$version" ]]; then
-          echo "::error::MoonBit toolchain file is empty: $toolchain_file" >&2
+          echo "::error::MoonBit toolchain file is missing a valid moonc version: $toolchain_file" >&2
           exit 1
         fi
         echo "Installing MoonBit toolchain $version"
@@ -45,17 +45,11 @@ runs:
       run: |
         $ErrorActionPreference = "Stop"
         $toolchainFile = Join-Path $env:GITHUB_WORKSPACE "${{ inputs.toolchain-file }}"
-        $version = Get-Content -LiteralPath $toolchainFile |
-          Where-Object {
-            $line = $_.Trim()
-            $line.Length -gt 0 -and -not $line.StartsWith("#")
-          } |
-          Select-Object -First 1
-        if ($null -eq $version) {
-          throw "MoonBit toolchain file is empty: $toolchainFile"
+        $toolchain = Get-Content -LiteralPath $toolchainFile -Raw | ConvertFrom-Json
+        $expectedVersion = $toolchain.moonc
+        if ([string]::IsNullOrWhiteSpace($expectedVersion)) {
+          throw "MoonBit toolchain file is missing a valid moonc version: $toolchainFile"
         }
-        $version = $version.Trim()
-        $expectedVersion = $version
         Write-Host "Installing MoonBit toolchain $expectedVersion"
         $env:MOONBIT_INSTALL_VERSION = $expectedVersion
         Invoke-RestMethod https://cli.moonbitlang.com/install/powershell.ps1 | Invoke-Expression

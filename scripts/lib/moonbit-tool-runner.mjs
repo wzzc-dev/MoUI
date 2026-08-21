@@ -1,9 +1,20 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const staticToolsRoot = resolve(repoRoot, "tools");
+
+export const readPinnedToolchain = (toolchainFile = ".moonbit-toolchain") => {
+  const path = resolve(repoRoot, toolchainFile);
+  const data = JSON.parse(readFileSync(path, "utf8"));
+  return {
+    moonc: data.moonc ?? null,
+    mooncWorker: data["moonc-worker"] ?? null,
+    mooncWorkerIntegrity: data["moonc-worker-integrity"] ?? null,
+  };
+};
 
 export const resolveToolPathArgs = (args, pathFlags, defaults = {}, passthroughFlags = []) => {
   const resolvedArgs = [...args];

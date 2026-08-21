@@ -15,7 +15,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  MOUI_SKIA_MBT_REMOTE: https://github.com/wzzc-dev/skia_mbt.git
 
 jobs:
   build:
