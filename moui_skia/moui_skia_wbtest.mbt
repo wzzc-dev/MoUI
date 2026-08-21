@@ -1,9 +1,13 @@
 ///|
 test "geometry default values follow skia empty conventions" {
-  assert_true(IPoint::default().is_zero())
-  assert_true(Size::default().is_empty())
-  assert_true(IRect::default().is_empty())
-  assert_true(Rect::default().is_empty())
+  let point : IPoint = Default::default()
+  let size : Size = Default::default()
+  let irect : IRect = Default::default()
+  let rect : Rect = Default::default()
+  assert_true(point.is_zero())
+  assert_true(size.is_empty())
+  assert_true(irect.is_empty())
+  assert_true(rect.is_empty())
 }
 
 ///|

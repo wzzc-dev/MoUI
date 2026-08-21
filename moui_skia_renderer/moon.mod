@@ -9,7 +9,7 @@ supported_targets = "native"
 import {
   "wzzc-dev/moui@0.1.9",
   "wzzc-dev/moui_skia@0.1.9",
-  "moonbitlang/x@0.4.46",
+  "moonbitlang/x@0.5.1",
 }
 
 readme = "README.mbt.md"

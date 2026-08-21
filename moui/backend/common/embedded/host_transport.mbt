@@ -296,13 +296,13 @@ pub fn EmbeddedRuntimeHostBridge::drain_update_envelope_json(
 fn embedded_host_update_json(update : EmbeddedHostUpdate) -> Json {
   match update {
     EmbeddedHostUpdate::Ime(request) =>
-      ({ "kind": "ime", "payload": request.to_json() } : Json)
+      ({ "kind": "ime", "payload": ToJson::to_json(request) } : Json)
     EmbeddedHostUpdate::Semantics(snapshot) =>
-      ({ "kind": "semantics", "payload": snapshot.to_json() } : Json)
+      ({ "kind": "semantics", "payload": ToJson::to_json(snapshot) } : Json)
     EmbeddedHostUpdate::Diagnostic(message) =>
       ({ "kind": "diagnostic", "payload": message } : Json)
     EmbeddedHostUpdate::PlatformViews(snapshot) =>
-      ({ "kind": "platform-views", "payload": snapshot.to_json() } : Json)
+      ({ "kind": "platform-views", "payload": ToJson::to_json(snapshot) } : Json)
     EmbeddedHostUpdate::PlatformChannel(pending) =>
       match pending.request {
         HostServiceRequest::PlatformChannel(request) =>

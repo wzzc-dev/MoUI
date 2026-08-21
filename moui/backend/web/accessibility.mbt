@@ -136,7 +136,7 @@ fn sync_web_semantics_binding(binding : WebSemanticsRuntimeBinding) -> Unit {
           web_sync_semantics_host(
             binding.raw_id,
             web_host_string(binding.canvas_id),
-            web_host_string((update.to_json() : Json).stringify()),
+            web_host_string((ToJson::to_json(update) : Json).stringify()),
           )
           binding.cursor = Some(update.generation)
         }

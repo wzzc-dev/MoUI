@@ -4,7 +4,7 @@ version = "0.1.9"
 
 import {
   "wzzc-dev/moui@0.1.9",
-  "mizchi/markdown@0.5.0",
+  "mizchi/markdown@0.7.0",
 }
 
 repository = "https://github.com/wzzc-dev/MoUI.git"

@@ -11,7 +11,7 @@ import {
   "Milky2018/wgpu_mbt@0.14.8",
   "mizchi/pixelmatch@0.6.1",
   "moonbitlang/quickcheck@0.14.0",
-  "moonbitlang/x@0.4.46",
+  "moonbitlang/x@0.5.1",
 }
 
 description = "Unpublished MoUI test harnesses, integration tests, benchmarks, and renderer smokes"

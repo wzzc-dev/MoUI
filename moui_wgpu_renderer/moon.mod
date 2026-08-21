@@ -12,7 +12,7 @@ import {
   "Milky2018/moon_swash@0.1.10",
   "Milky2018/wgpu_mbt@0.14.8",
   "mizchi/image@0.4.3",
-  "moonbitlang/x@0.4.46",
+  "moonbitlang/x@0.5.1",
 }
 
 readme = "README.mbt.md"

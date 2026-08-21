@@ -10,7 +10,7 @@ import {
   "Milky2018/moon_zeno@0.1.3",
   "mizchi/svg@0.2.1",
   "moonbitlang/async@0.20.2",
-  "moonbitlang/x@0.4.46",
+  "moonbitlang/x@0.5.1",
 }
 
 readme = "README.mbt.md"

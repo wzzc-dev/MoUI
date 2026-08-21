@@ -22,7 +22,7 @@ pub fn WebDocumentMetadata::new(
 
 ///|
 pub fn web_update_document_metadata(metadata : WebDocumentMetadata) -> Unit {
-  let json = (metadata.to_json() : Json).stringify()
+  let json = (ToJson::to_json(metadata) : Json).stringify()
   web_update_document_metadata_host(web_host_string(json))
 }
 

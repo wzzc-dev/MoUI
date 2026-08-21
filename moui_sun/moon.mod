@@ -3,7 +3,7 @@ name = "wzzc-dev/moui_sun"
 version = "0.1.9"
 
 import {
-  "moonbitlang/x@0.4.46",
+  "moonbitlang/x@0.5.1",
 }
 
 readme = "README.mbt.md"

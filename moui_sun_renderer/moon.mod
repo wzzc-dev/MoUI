@@ -10,7 +10,7 @@ import {
   "wzzc-dev/moui@0.1.9",
   "wzzc-dev/moui_sun@0.1.9",
   "mizchi/image@0.4.3",
-  "moonbitlang/x@0.4.46",
+  "moonbitlang/x@0.5.1",
 }
 
 readme = "README.mbt.md"
