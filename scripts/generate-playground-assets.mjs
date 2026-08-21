@@ -11,10 +11,14 @@ import {
   runtimeAssetPaths,
   wasmArtifactPath,
 } from "./web-bundle-tools.mjs";
-import { repoRoot } from "./lib/moonbit-tool-runner.mjs";
+import { readPinnedToolchain, repoRoot, runCommand } from "./lib/moonbit-tool-runner.mjs";
 
-const COMPILER_VERSION = "0.1.202607062";
-const COMPILER_INTEGRITY = "sha512-+HsW7BZ7Oevx43ZuflZDb0j5+zFtu/AQa4Wgl/FEQOLSJJQ/U++BkFdnraTogUVNQJWWvecTDb/oMT5dn/jKzA==";
+const pinnedToolchain = readPinnedToolchain();
+if (!pinnedToolchain.mooncWorker || !pinnedToolchain.mooncWorkerIntegrity) {
+  throw new Error(".moonbit-toolchain must define moonc-worker and moonc-worker-integrity");
+}
+const COMPILER_VERSION = pinnedToolchain.mooncWorker;
+const COMPILER_INTEGRITY = pinnedToolchain.mooncWorkerIntegrity;
 const ALLOWED_IMPORTS = [
   "wzzc-dev/moui",
   "wzzc-dev/moui/views",
@@ -23,6 +27,22 @@ const ALLOWED_IMPORTS = [
   "wzzc-dev/moui/graphics",
   "wzzc-dev/moui/state",
   "wzzc-dev/moui/text",
+];
+
+// Every package the in-browser compiler must be able to resolve. This is the
+// Playground allowlist plus the packages the fixed Runner imports directly.
+// It is intentionally a superset of the Playground runner's own wasm closure:
+// e.g. wzzc-dev/moui/state is allowed for user code but is not referenced by
+// the runner, so its release .mi/.core would otherwise be missing after a
+// clean build.
+const PLAYGROUND_REQUIRE_PACKAGES = [
+  ...ALLOWED_IMPORTS,
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/web",
+  // The fixed Runner imports the web adapter directly
+  // (compiler-worker.js RUNNER_SOURCE); without its prebuilt asset the
+  // in-browser compile fails with "Package asset is unavailable".
+  "wzzc-dev/moui_web_renderer",
 ];
 
 function parseOut(argv) {
@@ -51,11 +71,32 @@ function collectFiles(root, prefix = "") {
   return result;
 }
 
+function buildPlaygroundReleaseDependencies() {
+  // Build every required package (allowlist + Runner imports) for wasm-gc
+  // release so the generator is self-contained and works right after
+  // `moon clean`, without relying on leftover release .mi/.core artifacts
+  // produced by unrelated website builds. Package id "wzzc-dev/<path>" maps
+  // to the repo-relative directory "<path>".
+  const env = {
+    ...process.env,
+    MOUI_SKIA_DISABLE_PREBUILD_SKIA:
+      process.env.MOUI_SKIA_DISABLE_PREBUILD_SKIA || "1",
+  };
+  for (const id of PLAYGROUND_REQUIRE_PACKAGES) {
+    if (!id.startsWith("wzzc-dev/")) continue;
+    runCommand("moon", ["build", id.slice("wzzc-dev/".length), "--target", "wasm-gc", "--release", "--strip"], {
+      cwd: repoRoot,
+      env,
+    });
+  }
+}
+
 const outDir = parseOut(process.argv.slice(2));
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 
 buildWebPackage("website/playground/web_wasm");
+buildPlaygroundReleaseDependencies();
 const wasmPath = wasmArtifactPath("website/playground/web_wasm");
 copy(wasmPath, join(outDir, "playground.wasm"));
 const wasmRevision = hashFile(wasmPath).slice("sha256-".length, "sha256-".length + 16);
@@ -124,10 +165,11 @@ for (const lesson of readdirSync(lessonRoot).sort()) {
 const releaseRoot = join(repoRoot, "_build/wasm-gc/release/build");
 const packageGraphPath = join(repoRoot, "_build/packages.json");
 if (!existsSync(packageGraphPath)) {
-  // `moon build --target wasm-gc --release` for the playground package may not
-  // materialize the workspace package graph on every CI image. Force a cheap
-  // check first so packages.json exists for dependency collection.
-  execFileSync("moon", ["check", "website/playground/web_wasm", "--target", "wasm-gc"], {
+  // `_build/packages.json` is the full workspace package graph. It is only
+  // materialized by a whole-workspace `moon check`, not by per-package
+  // `moon build`/`moon check` invocations, so after `moon clean` it must be
+  // regenerated explicitly or dependency collection below would fail.
+  execFileSync("moon", ["check", "--target", "wasm-gc"], {
     cwd: repoRoot,
     stdio: "inherit",
     env: {

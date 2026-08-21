@@ -1,1 +1,5 @@
-0.10.9+6e6c44045
+{
+  "moonc": "0.10.9+6e6c44045",
+  "moonc-worker": "0.1.202608195",
+  "moonc-worker-integrity": "sha512-bJjOd/B+60viaVNgUYv7ObEX+eaq/OxEdzr5j/eXXTof/VwvsQwuW3CJr1dUksmCeT0BXClo00ODR7oP1fESPA=="
+}

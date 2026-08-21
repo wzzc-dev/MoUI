@@ -4,9 +4,11 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { readPinnedToolchain } from "./lib/moonbit-tool-runner.mjs";
 
 const rootArg = process.argv.indexOf("--root");
 const root = resolve(rootArg >= 0 ? process.argv[rootArg + 1] : "dist/playground");
+const pinnedToolchain = readPinnedToolchain();
 const required = [
   "index.html",
   "playground.wasm",
@@ -53,7 +55,8 @@ assert.equal(/https?:\/\/(?:cdn\.|unpkg\.|esm\.sh|jsdelivr\.)/i.test(hostSources
 const manifest = JSON.parse(readFileSync(join(root, "assets/manifest.json"), "utf8"));
 assert.equal(manifest.target, "wasm-gc");
 assert.equal(manifest.compiler.package, "@moonbit/moonc-worker");
-assert.ok(manifest.compiler.integrity);
+assert.equal(manifest.compiler.version, pinnedToolchain.mooncWorker, "Playground compiler version must match .moonbit-toolchain");
+assert.equal(manifest.compiler.integrity, pinnedToolchain.mooncWorkerIntegrity, "Playground compiler integrity must match .moonbit-toolchain");
 assert.ok(manifest.allowedImports.includes("wzzc-dev/moui/views"));
 assert.ok(manifest.lessons.lessons.length >= 6);
 for (const asset of manifest.assets) {

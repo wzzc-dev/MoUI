@@ -11,13 +11,11 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
     if (-not (Test-Path $toolchainPath)) {
         throw "Toolchain file not found: $toolchainPath"
     }
-    $versionLine = Get-Content $toolchainPath |
-        Where-Object { $_.Trim() -ne "" -and -not $_.Trim().StartsWith("#") } |
-        Select-Object -First 1
-    if ($null -eq $versionLine) {
-        throw "Toolchain file is empty"
+    $toolchain = Get-Content -LiteralPath $toolchainPath -Raw | ConvertFrom-Json
+    if ([string]::IsNullOrWhiteSpace($toolchain.moonc)) {
+        throw "Toolchain file is missing a valid moonc version: $toolchainPath"
     }
-    $Version = $versionLine.Trim()
+    $Version = $toolchain.moonc
 }
 
 Write-Host "Installing MoonBit toolchain $Version" -ForegroundColor Cyan
