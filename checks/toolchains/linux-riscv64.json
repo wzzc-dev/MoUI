@@ -19,6 +19,7 @@
     "libstdc++-13-dev",
     "libwayland-dev",
     "wayland-protocols",
+    "libglib2.0-0",
     "libglib2.0-dev",
     "zlib1g-dev",
     "libfontconfig1-dev",
