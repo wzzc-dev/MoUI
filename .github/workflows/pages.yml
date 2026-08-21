@@ -14,8 +14,6 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
-env:
-
 jobs:
   build:
     name: Build website
