@@ -51,6 +51,7 @@ const windowsBackendHostLibs = [
   "shell32",
   "ole32",
   "oleaut32",
+  "uiautomationcore",
   "user32",
   "gdi32",
   "kernel32",
