@@ -7,7 +7,7 @@ readme = "README.md"
 preferred_target = "native"
 
 import {
-  "moonbitlang/x@0.4.46",
+  "moonbitlang/x@0.5.1",
 }
 
 repository = "https://github.com/wzzc-dev/MoUI.git"

@@ -135,7 +135,7 @@ test "markdown editor settings round-trip through JSON" {
     files: true,
     document_info: false,
   }
-  let text = original.to_json().stringify(indent=2)
+  let text = ToJson::to_json(original).stringify(indent=2)
   let decoded = markdown_editor_decode_settings(text)
   assert_true(decoded.dark_mode)
   assert_true(decoded.focus_mode)

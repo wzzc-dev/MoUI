@@ -65,9 +65,7 @@ pub fn load_gltf_scene(
         match image.bufferView {
           None => raise GltfError::InvalidTexture(source_index)
           Some(view_index) => {
-            let bytes = read_buffer_view(view_index, buffer_views, buffer_data) catch {
-              err => raise err
-            }
+            let bytes = read_buffer_view(view_index, buffer_views, buffer_data)
             scene.add_texture(
               Texture::embedded(bytes, mime_type=image.mimeType),
             )
@@ -134,22 +132,16 @@ pub fn load_gltf_scene(
       }
       let positions = decode_vec3_accessor(
         position_accessor, accessors, buffer_views, buffer_data,
-      ) catch {
-        err => raise err
-      }
+      )
       let normals = match primitive.attributes.get("NORMAL") {
         None => Array::make(positions.length(), Vec3::new(x=0.0, y=1.0, z=0.0))
         Some(value) =>
-          decode_vec3_accessor(value, accessors, buffer_views, buffer_data) catch {
-            err => raise err
-          }
+          decode_vec3_accessor(value, accessors, buffer_views, buffer_data)
       }
       let texcoords = match primitive.attributes.get("TEXCOORD_0") {
         None => Array::make(positions.length(), Vec2::zero())
         Some(value) =>
-          decode_vec2_accessor(value, accessors, buffer_views, buffer_data) catch {
-            err => raise err
-          }
+          decode_vec2_accessor(value, accessors, buffer_views, buffer_data)
       }
       if normals.length() != positions.length() ||
         texcoords.length() != positions.length() {
@@ -168,9 +160,7 @@ pub fn load_gltf_scene(
       let indices = match primitive.indices {
         None => sequential_indices(vertices.length())
         Some(value) =>
-          decode_indices_accessor(value, accessors, buffer_views, buffer_data) catch {
-            err => raise err
-          }
+          decode_indices_accessor(value, accessors, buffer_views, buffer_data)
       }
       let material = match primitive.material {
         None => None

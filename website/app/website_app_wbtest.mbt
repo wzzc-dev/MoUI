@@ -77,7 +77,7 @@ test "website selects Simplified Chinese route and catalog" {
           requested_paths.push(path)
           @host.HostServiceResponse::TextFileContent(
             path,
-            website_test_catalog().to_json().stringify(),
+            ToJson::to_json(website_test_catalog()).stringify(),
           )
         }
         _ => @host.HostServiceResponse::Unavailable("unexpected request")
@@ -263,7 +263,7 @@ test "website docs portal loads runtime markdown through host text service" {
           if path == "docs/catalog.json" {
             @host.HostServiceResponse::TextFileContent(
               path,
-              website_test_catalog().to_json().stringify(),
+              ToJson::to_json(website_test_catalog()).stringify(),
             )
           } else {
             @host.HostServiceResponse::TextFileContent(
@@ -678,7 +678,7 @@ test "website compact hero switches between source and counter" {
 ///|
 test "website catalog exposes 38 entries and all platform documents" {
   let catalog = website_parse_catalog(
-    website_test_catalog().to_json().stringify(),
+    ToJson::to_json(website_test_catalog()).stringify(),
   ).unwrap()
   inspect(catalog.entries.length(), content="38")
   let platforms = catalog.entries.filter(entry => entry.group == "platforms")
@@ -723,7 +723,7 @@ test "website route host receives deep-link and anchor commands" {
           @host.HostServiceResponse::TextFileContent(
             path,
             if path == "docs/catalog.json" {
-              website_test_catalog().to_json().stringify()
+              ToJson::to_json(website_test_catalog()).stringify()
             } else {
               "# Doc"
             },
@@ -775,7 +775,7 @@ test "website docs metadata refreshes after deep-link catalog load" {
       HostCatalogCompleted(
         1,
         @services.ServiceTaskResult::Success(
-          website_test_catalog().to_json().stringify(),
+          ToJson::to_json(website_test_catalog()).stringify(),
         ),
       ),
       @services.AppServices::unavailable(),

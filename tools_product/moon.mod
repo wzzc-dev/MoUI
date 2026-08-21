@@ -3,7 +3,7 @@ name = "wzzc-dev/moui_product_tools"
 version = "0.1.7"
 
 import {
-  "moonbitlang/x@0.4.46",
+  "moonbitlang/x@0.5.1",
   "wzzc-dev/moui@0.1.9",
   "wzzc-dev/moui_tools@0.1.7",
   "wzzc-dev/moui_skia_renderer@0.1.9",

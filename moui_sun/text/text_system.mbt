@@ -260,7 +260,7 @@ pub fn TextSystem::get_font_data(
   self : TextSystem,
   key : String,
 ) -> Result[FontData, FontLoadError] {
-  self.loader.load_font_data(key)
+  FontLoader::load_font_data(self.loader, key)
 }
 
 ///|

@@ -76,7 +76,7 @@ fn MarkdownEditorApp::request_settings_save(
     files: self.file_sidebar_visible,
     document_info: self.document_info_visible,
   }
-  let text = settings.to_json().stringify(indent=2)
+  let text = ToJson::to_json(settings).stringify(indent=2)
   services
   .settings()
   .write(markdown_editor_settings_key, text)

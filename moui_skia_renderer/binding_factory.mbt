@@ -78,7 +78,7 @@ pub fn gpu(
       }
       if !skia_gpu_runtime_available(platform) {
         return @render.RendererBindResult::Rejected(
-          "skia-hybrid GPU runtime unavailable for \{platform.platform_label()}",
+          "skia-hybrid GPU runtime unavailable for \{NativePlatformSurface::platform_label(platform)}",
         )
       }
       let session = create_skia_gpu_host_renderer(
@@ -142,7 +142,7 @@ fn create_skia_gpu_host_renderer(
   image_source? : @render.HostImageSource = @render.HostImageSource::unavailable(),
   image_decoder? : @render.RendererImageDecoder? = None,
 ) -> @render.RendererSession {
-  let route = platform.surface_route()
+  let route = NativePlatformSurface::surface_route(platform)
   let gpu_target = HostGpuPresentTarget::new(
     description="Skia direct host GPU presenter",
     create_window_surface=(context, next_metrics) => {
