@@ -220,7 +220,7 @@ pkg_flags() {
   "$pkg_config" "$@"
 }
 
-for package in glib-2.0 wayland-client fontconfig freetype2 harfbuzz; do
+for package in gio-2.0 glib-2.0 wayland-client fontconfig freetype2 harfbuzz; do
   if ! pkg_flags --exists "$package"; then
     echo "target pkg-config package is missing: $package" >&2
     echo "  PKG_CONFIG_LIBDIR=$PKG_CONFIG_LIBDIR" >&2
@@ -236,8 +236,8 @@ if [[ -z "$protocol_dir" || ! -d "$protocol_dir" ]]; then
   exit 1
 fi
 
-glib_stub_flags="$(pkg_flags --cflags glib-2.0)"
-glib_link_flags="$(pkg_flags --libs glib-2.0)"
+glib_stub_flags="$(pkg_flags --cflags gio-2.0)"
+glib_link_flags="$(pkg_flags --libs gio-2.0)"
 native_stub_flags="$(pkg_flags --cflags fontconfig freetype2 harfbuzz wayland-client)"
 native_link_flags="$(pkg_flags --libs fontconfig freetype2 harfbuzz wayland-client)"
 if [[ -z "$glib_stub_flags" || -z "$glib_link_flags" || -z "$native_link_flags" ]]; then
@@ -263,7 +263,7 @@ require_target_library() {
   fi
 }
 
-for library in glib-2.0 wayland-client fontconfig freetype harfbuzz z stdc++; do
+for library in gio-2.0 glib-2.0 wayland-client fontconfig freetype harfbuzz z stdc++; do
   require_target_library "$library"
 done
 
