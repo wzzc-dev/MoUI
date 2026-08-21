@@ -65,10 +65,10 @@ This file is generated from repository manifests and validator reports.
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 658 | 366 | 27 |
-| core (moui/core/pkg.generated.mbti) | 1980 | 530 | 178 |
-| views facade (moui/views/pkg.generated.mbti) | 606 | 291 | 0 |
-| backend protocols (moui/backend/pkg.generated.mbti) | 410 | 71 | 38 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 673 | 371 | 28 |
+| core (moui/core/pkg.generated.mbti) | 2110 | 549 | 187 |
+| views facade (moui/views/pkg.generated.mbti) | 612 | 294 | 0 |
+| backend protocols (moui/backend/pkg.generated.mbti) | 416 | 71 | 39 |
 | render protocols (moui/render/pkg.generated.mbti) | 475 | 150 | 31 |
 | render common (moui/render/common/pkg.generated.mbti) | 323 | 95 | 10 |
 | skia renderer (moui_skia_renderer/pkg.generated.mbti) | 233 | 119 | 7 |

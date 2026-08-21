@@ -2,6 +2,12 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#ifndef interface
+// Some MoonBit MSVC invocations do not inherit the COM interface macro from
+// the SDK precompiled headers. UI Automation's generated headers use it for
+// their forward declarations, so provide the C++ spelling when absent.
+#define interface struct
+#endif
 #include <UIAutomation.h>
 #include <Uiautomationcoreapi.h>
 #include <oleauto.h>
