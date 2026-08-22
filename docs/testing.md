@@ -388,6 +388,25 @@ addon diagnostics, and `full` adds full-workspace hotspot scanning, text
 diagnostics, capture scaffolds, theme checks, platform checks, and current-host
 native example builds.
 
+The PR profile validates the checked-in performance budget catalog and its
+MoonBit validator without downloading a renderer. The macOS `benchmark-scaffold`
+job is the canonical measured producer: it runs the native Skia Raster workloads
+for Showcase, Markdown Editor, Excel, a 100k-row virtual list, and four runtime
+windows, then uploads `artifacts/performance/result.json`. Run the same gate
+locally when the locked real Skia provider is available:
+
+```sh
+node scripts/validate-performance-budgets.mjs
+moon test tools/moui/validate_performance_budgets --target native
+node scripts/run-performance-budgets.mjs
+```
+
+The runner records build/layout/paint/present/frame samples plus peak RSS, live
+allocation blocks, cache hit rate, startup time, and executable size. Initial
+catalog values are reviewed guardrails rather than machine-portable claims.
+Change them only with a matching `native-skia-raster` artifact, runner identity,
+and the approval/reason required by `checks/performance-budgets.json`.
+
 Capture scaffolds write local manifests under ignored `artifacts/` paths for
 screenshot or benchmark handoff. They are not checked-in capability
 declarations:

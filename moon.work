@@ -48,5 +48,6 @@ members = [
   "./examples/terminal",
   "./benchmarks/app_cached_layer",
   "./benchmarks/full_cycle",
+  "./benchmarks/performance_budget",
   "./website",
 ]

@@ -20,6 +20,7 @@ priv struct RuntimeState {
   clock : Clock
   mut pending_scroll_request : ScrollRequest?
   mut last_event_hit_path : Array[Int]
+  mut last_frame_timing : RuntimeFrameTiming
   mut closed : Bool
   semantics : SemanticsSubsystem
 }
@@ -82,6 +83,7 @@ fn RuntimeState::new_runtime_view_node(
     clock: Clock::new(),
     pending_scroll_request: None,
     last_event_hit_path: [],
+    last_frame_timing: RuntimeFrameTiming::zero(),
     closed: false,
     semantics: SemanticsSubsystem::new(),
   }

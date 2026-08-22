@@ -1,0 +1,20 @@
+import {
+  "moonbitlang/core/env",
+  "examples/excel/app" @excel,
+  "examples/markdown_editor/app" @markdown,
+  "examples/showcase/app" @showcase,
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui_skia_renderer" @skia_renderer,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  "native-stub": [ "performance_clock.c" ],
+  link: { "native": { "cc-link-flags": "-lz" } },
+  targets: { "main.mbt": [ "native" ] },
+)

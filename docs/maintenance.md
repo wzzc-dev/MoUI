@@ -71,6 +71,14 @@ classification budgets such as `app_constructor`, `advanced_core_protocol`,
 [API surface](api-surface.md) and
 [API surface audit](api-surface-audit.md) before expanding public API.
 
+Application performance guardrails are also separate from source-size and API
+ratchets. `checks/performance-budgets.json` owns the reviewed thresholds and
+update policy; `node scripts/validate-performance-budgets.mjs` validates the
+catalog in the PR profile, while the macOS benchmark job compares real Skia
+Raster samples and uploads the ignored result artifact. Do not weaken a
+threshold to accommodate an unexplained regression or compare artifacts from a
+different runner.
+
 Current `max` values intentionally match today's debt so unrelated changes do
 not need to solve the whole backlog. When a refactor splits a file, moves
 control-level entrypoints into `views`, shrinks public surface area, or removes

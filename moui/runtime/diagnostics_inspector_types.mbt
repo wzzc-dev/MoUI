@@ -24,6 +24,7 @@ pub struct RuntimeInspectorSnapshot {
   priv render_cache_hit_count : Int
   priv render_cache_miss_count : Int
   priv last_event_hit_path : Array[Int]
+  priv last_frame_timing : RuntimeFrameTiming
   priv program_dispatched_count : Int
   priv program_update_count : Int
   priv ignored_program_dispatch_count : Int

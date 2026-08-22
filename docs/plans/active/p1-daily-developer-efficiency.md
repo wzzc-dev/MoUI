@@ -15,7 +15,7 @@
   projects; Web projects expose refresh and a readable compile-error page.
 - [x] `moui_devtools` exposes structured Inspector sections and an overlay that
   can render them without reducing the existing snapshot APIs.
-- [ ] Performance tooling records build/layout/paint/present samples and checks
+- [x] Performance tooling records build/layout/paint/present samples and checks
   percentile budgets from a checked-in baseline format.
 - [ ] Data views provide variable-height virtualization with stable anchors and
   grid-oriented selection/editing/semantics primitives while preserving current
@@ -36,3 +36,4 @@
 |------|------|
 | 2026-08-23 | `moui dev` CLI contract, generated project entrypoint, Node watch/restart runner, Web refresh/error overlay, and optional state-file hook implemented. |
 | 2026-08-23 | Structured Inspector reports now expose View/Layout/Render/Semantics nodes, constraints, paint bounds, cache counters, event hit paths, effect/subscription lifecycle, JSON output, and a multi-line overlay. |
+| 2026-08-23 | Runtime phase profiling, five native Skia workloads, percentile/resource guardrails, a MoonBit validator, PR catalog gates, and CI report upload implemented. |

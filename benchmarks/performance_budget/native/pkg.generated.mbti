@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "benchmarks/performance_budget/native"
+
+// Values
+
+// Errors
+
+// Types and methods
+type ResourceSamples
+
+type RuntimeCacheCounters
+
+type ScenarioResult
+
+type TimingSamples
+
+// Type aliases
+
+// Traits

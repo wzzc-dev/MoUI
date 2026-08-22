@@ -134,6 +134,7 @@ fn runtime_inspector_snapshot_from_state(
     render_cache_hit_count: state.element_tree.root.inspector_render_cache_hits(),
     render_cache_miss_count: state.element_tree.root.inspector_render_cache_misses(),
     last_event_hit_path: state.last_event_hit_path.copy(),
+    last_frame_timing: state.last_frame_timing,
     program_dispatched_count: program.dispatched_count,
     program_update_count: program.update_count,
     ignored_program_dispatch_count: program.ignored_program_dispatch_count,

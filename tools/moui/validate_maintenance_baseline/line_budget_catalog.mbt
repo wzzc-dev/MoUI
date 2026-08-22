@@ -211,7 +211,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/moonbit_tool_wrapper_budget.mbt",
-      max_lines: 144,
+      max_lines: 145,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/repo_scan_helpers.mbt",
@@ -397,8 +397,11 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui_tests/skia_renderer_smoke/native/main.mbt", max_lines: 1887 },
     { path: "moui/runtime/runtime.mbt", max_lines: 470 },
     { path: "moui/runtime/diagnostics.mbt", max_lines: 500 },
-    { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 180 },
-    { path: "moui/runtime/diagnostics_inspector_accessors.mbt", max_lines: 930 },
+    { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 204 },
+    {
+      path: "moui/runtime/diagnostics_inspector_accessors.mbt",
+      max_lines: 1097,
+    },
     { path: "moui/runtime/program_runtime_diagnostics.mbt", max_lines: 265 },
     { path: "moui/runtime/program_runtime_effect_tasks.mbt", max_lines: 130 },
     { path: "moui/runtime/program_runtime_subscriptions.mbt", max_lines: 185 },
