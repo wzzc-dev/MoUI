@@ -41,6 +41,12 @@ priv struct AddPlatformOptions {
 ///|
 priv struct PackageReportOptions {
   project_root : String
+  platforms : Array[String]
+  version : String?
+  output_dir : String?
+  manifest_path : String?
+  build : Bool
+  dry_run : Bool
 }
 
 ///|

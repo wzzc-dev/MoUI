@@ -148,6 +148,31 @@ test "add platform parser accepts positional platforms" {
 }
 
 ///|
+test "package parser accepts manifest planning options" {
+  let parsed = parse_package_args(
+    [
+      "--project-root", "demo", "--platform=web", "--version", "2.0.0", "--output",
+      "dist", "--manifest", "release/moui-package.json", "--build", "--dry-run",
+      "--json",
+    ],
+    "/workspace",
+  )
+  guard parsed is Ok({ options, .. }) else {
+    fail("expected package options to parse")
+  }
+  inspect(options.project_root, content="/workspace/demo")
+  inspect(options.platforms.join(","), content="web")
+  inspect(options.version.unwrap_or(""), content="2.0.0")
+  inspect(options.output_dir.unwrap_or(""), content="/workspace/dist")
+  inspect(
+    options.manifest_path.unwrap_or(""),
+    content="/workspace/release/moui-package.json",
+  )
+  inspect(options.build, content="true")
+  inspect(options.dry_run, content="true")
+}
+
+///|
 test "window-hosted paths use the nested upstream module layout" {
   let workspace = "/workspace"
   inspect(
