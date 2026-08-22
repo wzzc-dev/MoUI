@@ -46,6 +46,24 @@ Checklist:
 - Keep unavailable services capability-gated.
 - Add host and backend tests for success and unavailable paths.
 
+## Third-Party Control Template
+
+Use a package-local `ViewNode` implementation and expose one constructor from
+`moui/views` only when the control is intended for ordinary app code. Register
+the control in `checks/component-quality.json` with one of `stable`, `preview`,
+or `experimental` levels and point `evidence` at focused tests and guidance.
+Keep app state and domain behavior in the consumer app package; the control
+should emit typed messages and remain renderer-neutral.
+
+## Host-Service Extension Template
+
+Add a neutral request/response DTO to `moui/backend`, route it through the
+`PlatformChannel` extension point, and add a typed facade under `moui/services`.
+Concrete OS behavior belongs in the platform backend. The default must return
+`ServiceError::unavailable` until a matching-host implementation and evidence
+exist. Add success, cancellation, and unavailable tests before changing a
+platform capability summary.
+
 ## Renderer Capability Template
 
 Checklist:

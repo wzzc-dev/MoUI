@@ -39,4 +39,6 @@ jobs:
 
       - name: Validate external consumer
         shell: bash
-        run: node scripts/external-consumer-ci.mjs --source "${{ matrix.source }}" --profile "${{ matrix.profile }}"
+        run: |
+          node scripts/validate-ecosystem-metadata.mjs
+          node scripts/external-consumer-ci.mjs --source "${{ matrix.source }}" --profile "${{ matrix.profile }}"

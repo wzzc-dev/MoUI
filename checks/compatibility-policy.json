@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "currentReleaseLine": "0.1.x",
+  "versioning": {
+    "scheme": "semver",
+    "patch": "bug fixes and documentation only",
+    "minor": "backward-compatible app API additions",
+    "major": "breaking API, package, or wire-contract changes",
+    "pre1Policy": "0.x minor releases may still contain breaking changes; migration notes are required"
+  },
+  "deprecation": {
+    "minimumNoticeReleases": 2,
+    "minimumNoticeMonths": 6,
+    "requiredFields": ["symbol", "replacement", "since", "removeAfter", "migration"],
+    "exception": "security or legal removal may shorten notice with an ADR"
+  },
+  "apiTiers": {
+    "stable": ["moui", "moui/views", "moui/geometry", "moui/graphics", "moui/animation", "moui/text", "moui/state"],
+    "integration": ["moui/backend", "moui/render", "moui/runtime"],
+    "diagnostic": ["moui_wgpu_renderer", "moui_sun_renderer", "moui_theme"]
+  },
+  "consumerGate": {
+    "command": "node scripts/external-consumer-ci.mjs --source package --profile base",
+    "requiredChecks": ["moon tree has no monorepo source", "base package closure", "native check", "wasm-gc check", "native test"],
+    "registryProfile": "base"
+  }
+}
