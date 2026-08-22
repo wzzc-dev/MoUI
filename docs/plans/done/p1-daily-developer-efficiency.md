@@ -1,6 +1,6 @@
 # Plan: P1 Daily Developer Efficiency
 
-- **Status**: active
+- **Status**: done
 - **Goal**: Make everyday MoUI development faster and more diagnosable through a
   project-local dev loop, a usable Inspector, measurable performance budgets,
   and data-view primitives that scale beyond fixed-height demos.
@@ -39,3 +39,4 @@
 | 2026-08-23 | Structured Inspector reports now expose View/Layout/Render/Semantics nodes, constraints, paint bounds, cache counters, event hit paths, effect/subscription lifecycle, JSON output, and a multi-line overlay. |
 | 2026-08-23 | Runtime phase profiling, five native Skia workloads, percentile/resource guardrails, a MoonBit validator, PR catalog gates, and CI report upload implemented. |
 | 2026-08-23 | Variable-height keyed list metrics, stable anchors, frozen grid viewport reuse, keyboard range selection, controlled cell editing, incremental keyed data, and committed grid/row/cell semantics implemented without changing fixed-height list APIs. |
+| 2026-08-23 | Completed in four implementation commits: `dce840305`, `75324465f`, `692696e1e`, and `191439fce`. |
