@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui_3d",
+  "moonbitlang/core/encoding/base64",
   "wzzc-dev/moui_3d/render",
 }
 

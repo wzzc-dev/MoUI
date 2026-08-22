@@ -1,27 +1,34 @@
 # 3D Addon Capability Report
 
-This report describes the independent `moui_3d` addon. It is not a promotion
-of the Native Skia route and does not change the product readiness of native
-GPU rendering.
+wzzc-dev/moui_3d is an independent experimental addon. Version 0.1.10 is a
+breaking 3D release and does not alter MoUI's 2D draw contract or Native Skia
+mainline.
 
 | Area | Status | Evidence |
 |---|---|---|
-| CPU math, scene graph, AABB and ray picking | implemented | `moon test moui_3d --target native` |
-| Static glTF/GLB subset | implemented | accessor, POSITION/NORMAL/TEXCOORD_0, indices, TRS, PBR metadata and embedded/URI texture tests |
-| 3D viewport snapshot and latest-wins mailbox | implemented | `ThreeDViewportBinding` tests |
-| Renderer-neutral 3D provider/session protocol | implemented | `moon test moui_3d/render --target native` |
-| Native WGPU surface and depth-tested forward pass | implemented / experimental | `moon build examples/three_d_viewer/macos --target native`; real CAMetalLayer child surface, WGPU device/surface/depth pipeline |
-| WebGPU secondary canvas and depth-tested forward pass | implemented / experimental | `moon build examples/three_d_viewer/web_wasm --target wasm-gc`; independent `webgpu` 3D host imports and depth pipeline |
-| macOS child surface plugin | implemented / experimental | AppKit/QuartzCore child `CAMetalLayer`, resize/dispose and pointer/wheel bridge in `moui_3d/backend/macos` |
-| Web secondary canvas plugin | implemented / experimental | `window_web` canvas placement/visibility bridge and `WebAppOptions` registration in `moui_3d/backend/web` |
+| CPU math, homogeneous transforms, scene graph, AABB and ray picking | implemented | moon test moui_3d --target native |
+| glTF/GLB validation and accessor decoding | implemented for documented subset | focused loader tests; data URI, sparse accessor, sampler/camera/scene, skin and morph coverage |
+| PBR material metadata and texture references | implemented | material-level texture/alpha regression test |
+| STEP/LINEAR/CUBICSPLINE animation ingestion | implemented for CPU channels | animation tests and loader path |
+| Renderer-neutral packet and stable resource residency | implemented | moon test moui_3d/render --target native |
+| Native WGPU depth-tested forward pass | experimental / compiled | native renderer test/build; real pixel evidence pending |
+| WebGPU secondary canvas depth-tested pass | experimental / compiled | wasm-gc renderer test/build; browser pixel evidence pending |
+| macOS 3D child-surface plugin | experimental / compiled | moui_3d/backend/macos |
+| Web 3D secondary-canvas plugin | experimental / compiled | moui_3d/backend/web |
+| Physics neutral contracts | experimental / contract-only | moui_3d_physics tests |
+| Rapier adapter | implemented / experimental | `Milky2018/moon_rapier@0.5.1`; native gravity, collision, transform and ray-query tests |
+| WebXR/OpenXR | experimental / contract-only | moui_3d_xr descriptor tests |
 
-Builds and package tests establish the host wiring and compile-time contracts.
-Real presentation/nonblank/depth pixel smokes still require a matching macOS
-GPU or browser WebGPU runtime; no CPU or Canvas2D fallback is used when those
-hosts are absent.
+The loader now carries skin joints/inverse-bind metadata, vertex joints/weights
+and morph deltas into the CPU scene and packet. Concrete GPU deformation still
+remains an experimental follow-up. Punctual lights, IBL, shadows, tone mapping
+and FXAA are also outside this slice. Native and WebGPU hosts now keep
+session-local vertex buffers,
+apply neutral material/texture/sampler residency notifications, and skip
+repeat-payload uploads; concrete image upload plus browser-pixel gates remain
+release work.
 
-The supported model subset is intentionally static and opaque: triangles,
-node TRS, base-color PBR factors, PNG/JPEG texture references, one directional
-light, and ambient light. Animation, skinning, morph targets, transparency,
-shadows, post-processing, physics, XR, and editor features remain outside this
-phase and require separate RFCs.
+All platform routes report typed unavailable/failure results when a required
+GPU host is absent. No CPU 3D fallback is claimed. Product readiness remains
+ready=false until matching-device nonblank color and depth-occlusion smokes
+are recorded for macOS, Web, Windows and Linux.

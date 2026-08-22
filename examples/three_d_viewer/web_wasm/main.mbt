@@ -11,7 +11,10 @@ fn main {
   @runtime.run_app(
     "MoUI 3D Viewer",
     @runtime.new_program_with_dimensions(
-      program=@viewer_app.program_with_binding(binding),
+      program=@viewer_app.program_with_binding(
+        binding,
+        environment=@web.app_environment(),
+      ),
       width=900.0,
       height=640.0,
     ),

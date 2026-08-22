@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_3d"
 
-version = "0.1.0"
+version = "0.1.10"
 
 preferred_target = "native"
 

@@ -1,0 +1,14 @@
+import {
+  "wzzc-dev/moui_3d_physics",
+  "wzzc-dev/moui_3d",
+  "Milky2018/moon_rapier/collision" @rapier_collision,
+  "Milky2018/moon_rapier/core" @rapier_core,
+  "Milky2018/moon_rapier/dynamics" @rapier_dynamics,
+  "Milky2018/moon_rapier/pipeline" @rapier_pipeline,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

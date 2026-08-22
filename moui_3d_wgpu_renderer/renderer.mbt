@@ -15,6 +15,9 @@ priv struct Native3DRenderer {
   mut depth_view : @wgpu_mbt.TextureView?
   mut shader : @wgpu_mbt.ShaderModule?
   mut pipeline : @wgpu_mbt.RenderPipeline?
+  mut vertex_buffer : @wgpu_mbt.Buffer?
+  mut vertex_payload : Bytes?
+  mut upload_count : Int
   mut disposed : Bool
 }
 
@@ -68,6 +71,9 @@ fn Native3DRenderer::new(
     depth_view: Some(depth_view),
     shader: Some(shader),
     pipeline: Some(pipeline),
+    vertex_buffer: None,
+    vertex_payload: None,
+    upload_count: 0,
     disposed: false,
   }
 }
@@ -161,19 +167,36 @@ fn Native3DRenderer::render(
       let texture = current.take_texture()
       current.release()
       let view = texture.create_view()
-      let bytes = scene_vertices(frame.snapshot(), frame.size())
+      let packet = frame.packet()
+      let bytes = packet_vertices(packet)
       let upload_bytes = if bytes.length() == 0 {
-        Bytes::from_array(Array::make(40, b'\x00'))
+        Bytes::from_array(Array::make(44, b'\x00'))
       } else {
         bytes
       }
-      let buffer = device.create_buffer(
-        size=upload_bytes.length().to_uint64(),
-        usage=@wgpu_mbt.BufferUsage::from_u64(
-          @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
-        ),
-      )
-      queue.write_buffer(buffer, 0UL, upload_bytes)
+      let buffer = match self.vertex_buffer {
+        Some(value) if self.vertex_payload == Some(upload_bytes) => value
+        _ => {
+          match self.vertex_buffer {
+            Some(value) => {
+              value.destroy()
+              value.release()
+            }
+            None => ()
+          }
+          let value = device.create_buffer(
+            size=upload_bytes.length().to_uint64(),
+            usage=@wgpu_mbt.BufferUsage::from_u64(
+              @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
+            ),
+          )
+          queue.write_buffer(value, 0UL, upload_bytes)
+          self.vertex_buffer = Some(value)
+          self.vertex_payload = Some(upload_bytes)
+          self.upload_count = self.upload_count + 1
+          value
+        }
+      }
       let encoder = device.create_command_encoder()
       let pass = encoder.begin_render_pass_color_depth_u32(
         view,
@@ -190,7 +213,7 @@ fn Native3DRenderer::render(
       )
       pass.set_pipeline(pipeline)
       pass.set_vertex_buffer(0U, buffer, 0UL, upload_bytes.length().to_uint64())
-      pass.draw((bytes.length() / 40).reinterpret_as_uint(), 1U, 0U, 0U)
+      pass.draw((bytes.length() / 44).reinterpret_as_uint(), 1U, 0U, 0U)
       pass.end()
       pass.release()
       let command_buffer = encoder.finish()
@@ -198,7 +221,6 @@ fn Native3DRenderer::render(
       ignore(surface.present())
       command_buffer.release()
       encoder.release()
-      buffer.release()
       view.release()
       texture.release()
       @render.ThreeDRenderResult::Presented
@@ -231,6 +253,13 @@ fn Native3DRenderer::dispose(self : Native3DRenderer) -> Unit {
     Some(value) => value.release()
     None => ()
   }
+  match self.vertex_buffer {
+    Some(value) => {
+      value.destroy()
+      value.release()
+    }
+    None => ()
+  }
   match self.shader {
     Some(value) => value.release()
     None => ()
@@ -258,6 +287,8 @@ fn Native3DRenderer::dispose(self : Native3DRenderer) -> Unit {
   self.depth_view = None
   self.depth_texture = None
   self.pipeline = None
+  self.vertex_buffer = None
+  self.vertex_payload = None
   self.shader = None
   self.surface = None
   self.queue = None
@@ -298,71 +329,46 @@ fn Native3DRenderer::to_session(
 }
 
 ///|
-fn scene_vertices(
-  snapshot : @moui_3d.ViewportSnapshot,
-  size : @render.ThreeDViewportSize,
-) -> Bytes {
-  let scene = snapshot.scene()
-  let camera = snapshot
-    .camera()
-    .with_aspect(size.width().to_double() / size.height().to_double())
-  let vp = camera.projection().mul(camera.view())
+fn packet_vertices(packet : @render.ThreeDRenderPacket) -> Bytes {
   let bytes : Array[Byte] = []
-  for node_id in 0..<scene.nodes().length() {
-    let node = scene.node(@moui_3d.NodeId::new(node_id))
-    match node {
-      Some(node) =>
-        match node.mesh() {
-          Some(mesh_id) =>
-            match scene.mesh(mesh_id) {
-              Some(mesh) => {
-                let world = scene.world_transform(@moui_3d.NodeId::new(node_id))
-                for primitive in mesh.primitives() {
-                  let vertices = primitive.vertices()
-                  let indices = primitive.indices()
-                  let material = match primitive.material() {
-                    Some(id) => scene.materials()[id.value()].base_color()
-                    None => @moui_3d.Vec4::new(x=0.72, y=0.78, z=0.95, w=1.0)
-                  }
-                  for index in indices {
-                    match vertices.get(index) {
-                      Some(vertex) => {
-                        let world_position = world.transform_point(
-                          vertex.position(),
-                        )
-                        let clip = vp.transform_point(world_position)
-                        let normal = world
-                          .transform_point(
-                            vertex.position().add(vertex.normal()),
-                          )
-                          .sub(world_position)
-                          .normalized()
-                        let light = normal
-                          .dot(
-                            @moui_3d.Vec3::new(x=0.35, y=0.8, z=0.5).normalized(),
-                          )
-                          .max(0.18)
-                        push_f32(bytes, clip.x())
-                        push_f32(bytes, clip.y())
-                        push_f32(bytes, clip.z() * 0.5 + 0.5)
-                        push_f32(bytes, normal.x())
-                        push_f32(bytes, normal.y())
-                        push_f32(bytes, normal.z())
-                        push_f32(bytes, material.x() * light)
-                        push_f32(bytes, material.y() * light)
-                        push_f32(bytes, material.z() * light)
-                        push_f32(bytes, material.w())
-                      }
-                      None => ()
-                    }
-                  }
-                }
-              }
-              None => ()
-            }
-          None => ()
+  for item in packet.items() {
+    let mvp = packet.projection().mul(packet.view()).mul(item.model())
+    let vertices = item.vertices()
+    for index in item.indices() {
+      match vertices.get(index) {
+        Some(vertex) => {
+          let world_position = item
+            .model()
+            .transform_homogeneous(vertex.position())
+          let clip = mvp.transform_homogeneous(vertex.position())
+          let normal = item
+            .model()
+            .transform_point(vertex.position().add(vertex.normal()))
+            .sub(
+              @moui_3d.Vec3::new(
+                x=world_position.x,
+                y=world_position.y,
+                z=world_position.z,
+              ),
+            )
+            .normalized()
+          let light = normal
+            .dot(@moui_3d.Vec3::new(x=0.35, y=0.8, z=0.5).normalized())
+            .max(0.18)
+          push_f32(bytes, clip.x)
+          push_f32(bytes, clip.y)
+          push_f32(bytes, clip.z)
+          push_f32(bytes, clip.w)
+          push_f32(bytes, normal.x())
+          push_f32(bytes, normal.y())
+          push_f32(bytes, normal.z())
+          push_f32(bytes, item.base_color().x() * light)
+          push_f32(bytes, item.base_color().y() * light)
+          push_f32(bytes, item.base_color().z() * light)
+          push_f32(bytes, item.base_color().w())
         }
-      None => ()
+        None => ()
+      }
     }
   }
   Bytes::from_array(bytes)
@@ -394,10 +400,10 @@ fn create_native_3d_pipeline(
   )
   try! builder.set_cull_mode_u32(@wgpu_mbt.CULL_MODE_BACK)
   try! builder.set_topology_u32(@wgpu_mbt.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-  try! builder.set_vertex_buffer_layout(40UL, @wgpu_mbt.VERTEX_STEP_MODE_VERTEX)
-  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X3, 0UL, 0U)
-  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X3, 12UL, 1U)
-  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 24UL, 2U)
+  try! builder.set_vertex_buffer_layout(44UL, @wgpu_mbt.VERTEX_STEP_MODE_VERTEX)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 0UL, 0U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X3, 16UL, 1U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 28UL, 2U)
   try! builder.create_pipeline(device)
 }
 
@@ -405,9 +411,9 @@ fn create_native_3d_pipeline(
 fn native_3d_shader() -> String {
   (
     #|struct Out { @builtin(position) position: vec4<f32>, @location(0) color: vec4<f32> };
-    #|@vertex fn vs_main(@location(0) position: vec3<f32>, @location(1) normal: vec3<f32>, @location(2) color: vec4<f32>) -> Out {
+    #|@vertex fn vs_main(@location(0) clip_position: vec4<f32>, @location(1) normal: vec3<f32>, @location(2) color: vec4<f32>) -> Out {
     #|  var out: Out;
-    #|  out.position = vec4<f32>(position, 1.0);
+    #|  out.position = clip_position;
     #|  out.color = color;
     #|  return out;
     #|}

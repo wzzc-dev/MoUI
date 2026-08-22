@@ -238,27 +238,46 @@ pub fn Mat4::mul(self : Mat4, other : Mat4) -> Mat4 {
 
 ///|
 pub fn Mat4::transform_point(self : Mat4, point : Vec3) -> Vec3 {
-  let x = self.values[0] * point.x +
-    self.values[1] * point.y +
-    self.values[2] * point.z +
-    self.values[3]
-  let y = self.values[4] * point.x +
-    self.values[5] * point.y +
-    self.values[6] * point.z +
-    self.values[7]
-  let z = self.values[8] * point.x +
-    self.values[9] * point.y +
-    self.values[10] * point.z +
-    self.values[11]
-  let w = self.values[12] * point.x +
-    self.values[13] * point.y +
-    self.values[14] * point.z +
-    self.values[15]
+  let transformed = self.transform_homogeneous(point)
+  let x = transformed.x
+  let y = transformed.y
+  let z = transformed.z
+  let w = transformed.w
   if w.abs() <= 1.0e-12 {
     Vec3::new(x~, y~, z~)
   } else {
     Vec3::new(x=x / w, y=y / w, z=z / w)
   }
+}
+
+///|
+/// Transform an arbitrary homogeneous vector without a perspective divide.
+pub fn Mat4::transform_vec4(self : Mat4, vector : Vec4) -> Vec4 {
+  {
+    x: self.values[0] * vector.x +
+    self.values[1] * vector.y +
+    self.values[2] * vector.z +
+    self.values[3] * vector.w,
+    y: self.values[4] * vector.x +
+    self.values[5] * vector.y +
+    self.values[6] * vector.z +
+    self.values[7] * vector.w,
+    z: self.values[8] * vector.x +
+    self.values[9] * vector.y +
+    self.values[10] * vector.z +
+    self.values[11] * vector.w,
+    w: self.values[12] * vector.x +
+    self.values[13] * vector.y +
+    self.values[14] * vector.z +
+    self.values[15] * vector.w,
+  }
+}
+
+///|
+/// Transform a point without performing the perspective divide. Renderers
+/// must use this form so clip-space `w` survives until the GPU vertex shader.
+pub fn Mat4::transform_homogeneous(self : Mat4, point : Vec3) -> Vec4 {
+  self.transform_vec4(Vec4::new(x=point.x, y=point.y, z=point.z, w=1.0))
 }
 
 ///|
@@ -318,6 +337,26 @@ pub(all) struct Quat {
 ///|
 pub fn Quat::new(x~ : Double, y~ : Double, z~ : Double, w~ : Double) -> Quat {
   { x, y, z, w }
+}
+
+///|
+pub fn Quat::x(self : Quat) -> Double {
+  self.x
+}
+
+///|
+pub fn Quat::y(self : Quat) -> Double {
+  self.y
+}
+
+///|
+pub fn Quat::z(self : Quat) -> Double {
+  self.z
+}
+
+///|
+pub fn Quat::w(self : Quat) -> Double {
+  self.w
 }
 
 ///|

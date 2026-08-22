@@ -3,6 +3,7 @@ package "wzzc-dev/moui_3d/render"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/ref",
   "wzzc-dev/moui_3d",
 }
 
@@ -17,12 +18,60 @@ pub fn resolve_provider(Array[ThreeDRendererProvider]) -> ThreeDRendererSession?
 pub(all) struct ThreeDFrame {
   revision : Int64
   snapshot : @moui_3d.ViewportSnapshot
+  packet : ThreeDRenderPacket
   size : ThreeDViewportSize
 } derive(@debug.Debug)
+pub fn ThreeDFrame::from_packet(revision~ : Int64, snapshot~ : @moui_3d.ViewportSnapshot, packet~ : ThreeDRenderPacket, size~ : ThreeDViewportSize) -> Self
 pub fn ThreeDFrame::new(revision~ : Int64, snapshot~ : @moui_3d.ViewportSnapshot, size~ : ThreeDViewportSize) -> Self
+pub fn ThreeDFrame::packet(Self) -> ThreeDRenderPacket
 pub fn ThreeDFrame::revision(Self) -> Int64
 pub fn ThreeDFrame::size(Self) -> ThreeDViewportSize
 pub fn ThreeDFrame::snapshot(Self) -> @moui_3d.ViewportSnapshot
+pub fn ThreeDFrame::with_packet(Self, ThreeDRenderPacket) -> Self
+
+pub(all) struct ThreeDRenderItem {
+  node : @moui_3d.NodeId
+  primitive_index : Int
+  model : @moui_3d.Mat4
+  vertices : Array[@moui_3d.Vertex]
+  indices : Array[Int]
+  base_color : @moui_3d.Vec4
+  metallic : Double
+  roughness : Double
+  skin : Int?
+  morph_targets : Array[Array[@moui_3d.VertexDelta]]
+} derive(@debug.Debug)
+pub fn ThreeDRenderItem::base_color(Self) -> @moui_3d.Vec4
+pub fn ThreeDRenderItem::indices(Self) -> Array[Int]
+pub fn ThreeDRenderItem::metallic(Self) -> Double
+pub fn ThreeDRenderItem::model(Self) -> @moui_3d.Mat4
+pub fn ThreeDRenderItem::morph_targets(Self) -> Array[Array[@moui_3d.VertexDelta]]
+pub fn ThreeDRenderItem::node(Self) -> @moui_3d.NodeId
+pub fn ThreeDRenderItem::primitive_index(Self) -> Int
+pub fn ThreeDRenderItem::roughness(Self) -> Double
+pub fn ThreeDRenderItem::skin(Self) -> Int?
+pub fn ThreeDRenderItem::vertices(Self) -> Array[@moui_3d.Vertex]
+
+pub(all) struct ThreeDRenderPacket {
+  revision : Int64
+  view : @moui_3d.Mat4
+  projection : @moui_3d.Mat4
+  camera_position : @moui_3d.Vec3
+  items : Array[ThreeDRenderItem]
+  resources : ThreeDResourceDiff
+} derive(@debug.Debug)
+pub fn ThreeDRenderPacket::camera_position(Self) -> @moui_3d.Vec3
+pub fn ThreeDRenderPacket::from_snapshot(@moui_3d.ViewportSnapshot, ThreeDViewportSize) -> Self
+pub fn ThreeDRenderPacket::items(Self) -> Array[ThreeDRenderItem]
+pub fn ThreeDRenderPacket::new(revision~ : Int64, view~ : @moui_3d.Mat4, projection~ : @moui_3d.Mat4, camera_position~ : @moui_3d.Vec3, items~ : Array[ThreeDRenderItem], resources~ : ThreeDResourceDiff) -> Self
+pub fn ThreeDRenderPacket::projection(Self) -> @moui_3d.Mat4
+pub fn ThreeDRenderPacket::resource_payload(Self) -> String
+pub fn ThreeDRenderPacket::resources(Self) -> ThreeDResourceDiff
+pub fn ThreeDRenderPacket::revision(Self) -> Int64
+pub fn ThreeDRenderPacket::vertex_payload(Self) -> String
+pub fn ThreeDRenderPacket::vertex_payload_bytes(Self) -> Bytes
+pub fn ThreeDRenderPacket::view(Self) -> @moui_3d.Mat4
+pub fn ThreeDRenderPacket::with_resources(Self, ThreeDResourceDiff) -> Self
 
 pub(all) enum ThreeDRenderResult {
   Presented
@@ -65,6 +114,7 @@ pub struct ThreeDRendererSession {
   dispose_fn : () -> Unit
   mut disposed : Bool
   mut last_revision : Int64
+  residency : ThreeDResourceGraph
 }
 pub fn ThreeDRendererSession::descriptor(Self) -> ThreeDRendererDescriptor
 pub fn ThreeDRendererSession::dispose(Self) -> Unit
@@ -76,6 +126,45 @@ pub(all) enum ThreeDRendererStatus {
   Available
   Unavailable(String)
   Failed(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum ThreeDResourceChange {
+  Create(ThreeDResourceKey)
+  Update(ThreeDResourceKey)
+  Remove(ThreeDResourceKey)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ThreeDResourceDiff {
+  revision : Int64
+  changes : Array[ThreeDResourceChange]
+} derive(@debug.Debug)
+pub fn ThreeDResourceDiff::changes(Self) -> Array[ThreeDResourceChange]
+pub fn ThreeDResourceDiff::new(revision~ : Int64, changes~ : Array[ThreeDResourceChange]) -> Self
+pub fn ThreeDResourceDiff::revision(Self) -> Int64
+
+pub struct ThreeDResourceGraph {
+  resident : @ref.Ref[Array[ThreeDResourceKey]]
+  revisions : @ref.Ref[Array[Int64]]
+}
+pub fn ThreeDResourceGraph::new() -> Self
+pub fn ThreeDResourceGraph::resident(Self) -> Array[ThreeDResourceKey]
+pub fn ThreeDResourceGraph::sync(Self, ThreeDResourceDiff) -> ThreeDResourceDiff
+
+pub(all) struct ThreeDResourceKey {
+  kind : ThreeDResourceKind
+  value : Int64
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ThreeDResourceKey::kind(Self) -> ThreeDResourceKind
+pub fn ThreeDResourceKey::new(kind~ : ThreeDResourceKind, value~ : Int64) -> Self
+pub fn ThreeDResourceKey::value(Self) -> Int64
+
+pub(all) enum ThreeDResourceKind {
+  Mesh
+  Material
+  Texture
+  Sampler
+  Skin
+  Pipeline
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ThreeDViewportSize {

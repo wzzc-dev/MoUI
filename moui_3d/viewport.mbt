@@ -273,10 +273,14 @@ impl @core.ViewNode for ThreeDViewportNode with fn layout(_self, context) {
   } else {
     context.constraints.max.width
   }
+  // A viewport is an intrinsically sized platform surface. Letting a leaf use
+  // the column's full max height pushes the status row below a small window.
+  // Keep a stable 16:9 presentation with a bounded desktop height instead.
+  let aspect_height = width * 0.5625
   let height = if context.constraints.max.height > 1.0e8 {
-    240.0
+    aspect_height.min(360.0)
   } else {
-    context.constraints.max.height
+    aspect_height.min(360.0).min(context.constraints.max.height)
   }
   @core.ViewLayoutResult::new(
     size=context.constraints.constrain(@core.Size::new(width~, height~)),

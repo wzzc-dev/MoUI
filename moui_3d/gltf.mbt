@@ -25,17 +25,22 @@ priv struct GltfPrimitiveJson {
   indices : Int?
   material : Int?
   mode : Int?
+  targets : Array[Map[String, Int]]?
 }
 
 ///|
 priv struct GltfMeshJson {
   primitives : Array[GltfPrimitiveJson]
   name : String?
+  weights : Array[Double]?
 }
 
 ///|
 priv struct GltfNodeJson {
   mesh : Int?
+  camera : Int?
+  skin : Int?
+  weights : Array[Double]?
   children : Array[Int]?
   name : String?
   matrix : Array[Double]?
@@ -60,6 +65,13 @@ priv struct GltfPbrJson {
 ///|
 priv struct GltfMaterialJson {
   pbrMetallicRoughness : GltfPbrJson?
+  normalTexture : GltfTextureInfo?
+  occlusionTexture : GltfTextureInfo?
+  emissiveTexture : GltfTextureInfo?
+  emissiveFactor : Array[Double]?
+  alphaMode : String?
+  alphaCutoff : Double?
+  doubleSided : Bool?
 }
 
 ///|
@@ -72,6 +84,91 @@ priv struct GltfImageJson {
 ///|
 priv struct GltfTextureJson {
   source : Int?
+  sampler : Int?
+}
+
+///|
+priv struct GltfSamplerJson {
+  magFilter : Int?
+  minFilter : Int?
+  wrapS : Int?
+  wrapT : Int?
+}
+
+///|
+priv struct GltfPerspectiveJson {
+  aspectRatio : Double?
+  yfov : Double
+  zfar : Double?
+  znear : Double
+}
+
+///|
+priv struct GltfOrthographicJson {
+  xmag : Double
+  ymag : Double
+  zfar : Double
+  znear : Double
+}
+
+///|
+priv struct GltfCameraJson {
+  camera_type : String
+  perspective : GltfPerspectiveJson?
+  orthographic : GltfOrthographicJson?
+  name : String?
+}
+
+///|
+priv struct GltfSceneJson {
+  nodes : Array[Int]?
+  name : String?
+}
+
+///|
+priv struct GltfSparseIndicesJson {
+  bufferView : Int
+  byteOffset : Int?
+  componentType : Int
+}
+
+///|
+priv struct GltfSparseValuesJson {
+  bufferView : Int
+  byteOffset : Int?
+}
+
+///|
+priv struct GltfAccessorSparseJson {
+  count : Int
+  indices : GltfSparseIndicesJson
+  values : GltfSparseValuesJson
+}
+
+///|
+priv struct GltfAnimationSamplerJson {
+  input : Int
+  output : Int
+  interpolation : String?
+}
+
+///|
+priv struct GltfAnimationTargetJson {
+  node : Int?
+  path : String
+}
+
+///|
+priv struct GltfAnimationChannelJson {
+  sampler : Int
+  target : GltfAnimationTargetJson
+}
+
+///|
+priv struct GltfAnimationJson {
+  samplers : Array[GltfAnimationSamplerJson]
+  channels : Array[GltfAnimationChannelJson]
+  name : String?
 }
 
 ///|
@@ -85,7 +182,22 @@ priv struct GltfRoot {
   materials : Array[GltfMaterialJson]?
   images : Array[GltfImageJson]?
   textures : Array[GltfTextureJson]?
+  samplers : Array[GltfSamplerJson]?
+  cameras : Array[GltfCameraJson]?
+  scenes : Array[GltfSceneJson]?
+  scene : Int?
+  skins : Array[GltfSkinJson]?
+  animations : Array[GltfAnimationJson]?
   extensionsUsed : Array[String]?
+  extensionsRequired : Array[String]?
+}
+
+///|
+priv struct GltfSkinJson {
+  inverseBindMatrices : Int?
+  skeleton : Int?
+  joints : Array[Int]
+  name : String?
 }
 
 ///|
@@ -96,6 +208,7 @@ priv struct GltfAccessorJson {
   normalized : Bool?
   count : Int
   accessor_kind : String
+  sparse : GltfAccessorSparseJson?
 }
 
 ///|
@@ -114,6 +227,7 @@ impl @json.FromJson for GltfAccessorJson with fn from_json(json, path) {
     normalized: optional_field(fields, "normalized", path),
     count: required_field(fields, "count", path),
     accessor_kind: @json.from_json(kind_json, path~),
+    sparse: optional_field(fields, "sparse", path),
   }
 }
 
@@ -181,6 +295,7 @@ impl @json.FromJson for GltfPrimitiveJson with fn from_json(json, path) {
     indices: optional_field(fields, "indices", path),
     material: optional_field(fields, "material", path),
     mode: optional_field(fields, "mode", path),
+    targets: optional_field(fields, "targets", path),
   }
 }
 
@@ -190,6 +305,7 @@ impl @json.FromJson for GltfMeshJson with fn from_json(json, path) {
   {
     primitives: required_field(fields, "primitives", path),
     name: optional_field(fields, "name", path),
+    weights: optional_field(fields, "weights", path),
   }
 }
 
@@ -198,6 +314,9 @@ impl @json.FromJson for GltfNodeJson with fn from_json(json, path) {
   let fields = object_fields(json, path)
   {
     mesh: optional_field(fields, "mesh", path),
+    camera: optional_field(fields, "camera", path),
+    skin: optional_field(fields, "skin", path),
+    weights: optional_field(fields, "weights", path),
     children: optional_field(fields, "children", path),
     name: optional_field(fields, "name", path),
     matrix: optional_field(fields, "matrix", path),
@@ -221,7 +340,16 @@ impl @json.FromJson for GltfPbrJson with fn from_json(json, path) {
 ///|
 impl @json.FromJson for GltfMaterialJson with fn from_json(json, path) {
   let fields = object_fields(json, path)
-  { pbrMetallicRoughness: optional_field(fields, "pbrMetallicRoughness", path) }
+  {
+    pbrMetallicRoughness: optional_field(fields, "pbrMetallicRoughness", path),
+    normalTexture: optional_field(fields, "normalTexture", path),
+    occlusionTexture: optional_field(fields, "occlusionTexture", path),
+    emissiveTexture: optional_field(fields, "emissiveTexture", path),
+    emissiveFactor: optional_field(fields, "emissiveFactor", path),
+    alphaMode: optional_field(fields, "alphaMode", path),
+    alphaCutoff: optional_field(fields, "alphaCutoff", path),
+    doubleSided: optional_field(fields, "doubleSided", path),
+  }
 }
 
 ///|
@@ -237,7 +365,141 @@ impl @json.FromJson for GltfImageJson with fn from_json(json, path) {
 ///|
 impl @json.FromJson for GltfTextureJson with fn from_json(json, path) {
   let fields = object_fields(json, path)
-  { source: optional_field(fields, "source", path) }
+  {
+    source: optional_field(fields, "source", path),
+    sampler: optional_field(fields, "sampler", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfSamplerJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    magFilter: optional_field(fields, "magFilter", path),
+    minFilter: optional_field(fields, "minFilter", path),
+    wrapS: optional_field(fields, "wrapS", path),
+    wrapT: optional_field(fields, "wrapT", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfPerspectiveJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    aspectRatio: optional_field(fields, "aspectRatio", path),
+    yfov: required_field(fields, "yfov", path),
+    zfar: optional_field(fields, "zfar", path),
+    znear: required_field(fields, "znear", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfOrthographicJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    xmag: required_field(fields, "xmag", path),
+    ymag: required_field(fields, "ymag", path),
+    zfar: required_field(fields, "zfar", path),
+    znear: required_field(fields, "znear", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfCameraJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    camera_type: required_field(fields, "type", path),
+    perspective: optional_field(fields, "perspective", path),
+    orthographic: optional_field(fields, "orthographic", path),
+    name: optional_field(fields, "name", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfSceneJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    nodes: optional_field(fields, "nodes", path),
+    name: optional_field(fields, "name", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfSkinJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    inverseBindMatrices: optional_field(fields, "inverseBindMatrices", path),
+    skeleton: optional_field(fields, "skeleton", path),
+    joints: required_field(fields, "joints", path),
+    name: optional_field(fields, "name", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfSparseIndicesJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    bufferView: required_field(fields, "bufferView", path),
+    byteOffset: optional_field(fields, "byteOffset", path),
+    componentType: required_field(fields, "componentType", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfSparseValuesJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    bufferView: required_field(fields, "bufferView", path),
+    byteOffset: optional_field(fields, "byteOffset", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfAccessorSparseJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    count: required_field(fields, "count", path),
+    indices: required_field(fields, "indices", path),
+    values: required_field(fields, "values", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfAnimationSamplerJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    input: required_field(fields, "input", path),
+    output: required_field(fields, "output", path),
+    interpolation: optional_field(fields, "interpolation", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfAnimationTargetJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    node: optional_field(fields, "node", path),
+    path: required_field(fields, "path", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfAnimationChannelJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    sampler: required_field(fields, "sampler", path),
+    target: required_field(fields, "target", path),
+  }
+}
+
+///|
+impl @json.FromJson for GltfAnimationJson with fn from_json(json, path) {
+  let fields = object_fields(json, path)
+  {
+    samplers: required_field(fields, "samplers", path),
+    channels: required_field(fields, "channels", path),
+    name: optional_field(fields, "name", path),
+  }
 }
 
 ///|
@@ -253,7 +515,14 @@ impl @json.FromJson for GltfRoot with fn from_json(json, path) {
     materials: optional_field(fields, "materials", path),
     images: optional_field(fields, "images", path),
     textures: optional_field(fields, "textures", path),
+    samplers: optional_field(fields, "samplers", path),
+    cameras: optional_field(fields, "cameras", path),
+    scenes: optional_field(fields, "scenes", path),
+    scene: optional_field(fields, "scene", path),
+    skins: optional_field(fields, "skins", path),
+    animations: optional_field(fields, "animations", path),
     extensionsUsed: optional_field(fields, "extensionsUsed", path),
+    extensionsRequired: optional_field(fields, "extensionsRequired", path),
   }
 }
 
@@ -276,8 +545,17 @@ pub(all) suberror GltfError {
   UnsupportedAccessorType(String)
   UnsupportedPrimitiveMode(Int)
   UnsupportedExtension(String)
+  UnsupportedRequiredExtension(String)
   ExternalResourceUnavailable(String)
   InvalidTexture(Int)
+  InvalidSampler(Int)
+  InvalidCamera(Int)
+  InvalidScene(Int)
+  InvalidSkin(Int)
+  InvalidAnimation(Int)
+  UnsupportedAnimationPath(String)
+  InvalidNode(Int)
+  InvalidNodeCycle(Int)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -292,6 +570,9 @@ pub(all) struct GltfDocument {
   node_count : Int
   material_count : Int
   texture_count : Int
+  sampler_count : Int
+  camera_count : Int
+  scene_count : Int
 } derive(Debug)
 
 ///|
@@ -322,6 +603,21 @@ pub fn GltfDocument::material_count(self : GltfDocument) -> Int {
 ///|
 pub fn GltfDocument::texture_count(self : GltfDocument) -> Int {
   self.texture_count
+}
+
+///|
+pub fn GltfDocument::sampler_count(self : GltfDocument) -> Int {
+  self.sampler_count
+}
+
+///|
+pub fn GltfDocument::camera_count(self : GltfDocument) -> Int {
+  self.camera_count
+}
+
+///|
+pub fn GltfDocument::scene_count(self : GltfDocument) -> Int {
+  self.scene_count
 }
 
 ///|
@@ -399,6 +695,9 @@ pub fn parse_gltf_json(
     node_count: root.nodes.unwrap_or([]).length(),
     material_count: root.materials.unwrap_or([]).length(),
     texture_count: root.textures.unwrap_or([]).length(),
+    sampler_count: root.samplers.unwrap_or([]).length(),
+    camera_count: root.cameras.unwrap_or([]).length(),
+    scene_count: root.scenes.unwrap_or([]).length(),
   }
 }
 
