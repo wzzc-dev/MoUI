@@ -166,3 +166,87 @@ test "app service adapter preserves application menu placement" {
     _ => fail("expected one application-menu host request")
   }
 }
+
+///|
+test "app service adapter routes platform services through typed operations" {
+  let requests : Array[@backend_host.PlatformChannelRequest] = []
+  let services = app_services(
+    bridge=@backend_host.HostServiceBridge::new(
+      capabilities=@backend_host.HostServiceCapabilities::none(),
+      handle=request => {
+        match request {
+          @backend_host.HostServiceRequest::PlatformChannel(value) => {
+            requests.push(value)
+            match value.operation {
+              "permission.request" =>
+                @backend_host.HostServiceResponse::PlatformChannel(
+                  @backend_host.PlatformChannelResponse::Ok("granted"),
+                )
+              _ =>
+                @backend_host.HostServiceResponse::PlatformChannel(
+                  @backend_host.PlatformChannelResponse::Ok("ok"),
+                )
+            }
+          }
+          _ => @backend_host.HostServiceResponse::Unavailable("unexpected")
+        }
+      },
+    ),
+  )
+  let notification = @app_services.NotificationRequest::new(
+    id="ready",
+    title="Ready",
+    body="Done",
+  )
+  let permission : Ref[
+    @app_services.ServiceTaskResult[@app_services.PermissionStatus]?,
+  ] = Ref(None)
+  ignore(
+    services.platform().notifications().notify(notification).start(_ => ()),
+  )
+  ignore(
+    services
+    .platform()
+    .permissions()
+    .request(@app_services.PermissionKind::Notifications)
+    .start(result => permission.val = Some(result)),
+  )
+  assert_eq(requests.length(), 2)
+  assert_eq(requests[0].channel, "moui.platform")
+  assert_eq(requests[0].operation, "notification.send")
+  assert_true(requests[0].payload.contains("\"ready\""))
+  assert_eq(requests[1].operation, "permission.request")
+  assert_eq(
+    permission.val,
+    Some(Success(@app_services.PermissionStatus::Granted)),
+  )
+}
+
+///|
+test "app service adapter preserves platform unavailable responses" {
+  let services = app_services(
+    bridge=@backend_host.HostServiceBridge::unavailable(),
+  )
+  let results : Array[@app_services.ServiceTaskResult[Unit]] = []
+  ignore(
+    services
+    .platform()
+    .printing()
+    .print(@app_services.PrintRequest::new(title="Export", text="hello"))
+    .start(result => results.push(result)),
+  )
+  match results {
+    [Failure(error)] => assert_eq(error.code, "unavailable")
+    _ => fail("expected unavailable platform service")
+  }
+}
+
+///|
+test "app environment accepts a host lifecycle source" {
+  let lifecycle = @app_services.AppLifecycleSource::new()
+  let environment = app_environment(
+    bridge=@backend_host.HostServiceBridge::unavailable(),
+    lifecycle=Some(lifecycle),
+  )
+  assert_true(environment.services().platform().lifecycle() is Some(_))
+}

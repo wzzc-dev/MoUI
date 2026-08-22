@@ -64,6 +64,7 @@ pub struct AppServices {
   settings_value : SettingsServices
   appearance_value : AppearanceServices
   menus_value : MenuServices
+  platform_value : PlatformServices
 }
 
 ///|
@@ -243,6 +244,7 @@ pub fn AppServices::new(
   settings? : SettingsServices = SettingsServices::new(),
   appearance? : AppearanceServices = AppearanceServices::new(),
   menus? : MenuServices = MenuServices::new(),
+  platform? : PlatformServices = PlatformServices::unavailable(),
 ) -> AppServices {
   {
     files_value: files,
@@ -251,6 +253,7 @@ pub fn AppServices::new(
     settings_value: settings,
     appearance_value: appearance,
     menus_value: menus,
+    platform_value: platform,
   }
 }
 
@@ -287,4 +290,9 @@ pub fn AppServices::appearance(self : AppServices) -> AppearanceServices {
 ///|
 pub fn AppServices::menus(self : AppServices) -> MenuServices {
   self.menus_value
+}
+
+///|
+pub fn AppServices::platform(self : AppServices) -> PlatformServices {
+  self.platform_value
 }
