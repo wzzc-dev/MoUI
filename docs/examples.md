@@ -720,6 +720,24 @@ The bundle includes and validates a schema version 1
 `Contents/Resources/moui-package.json` manifest so local packaging output can be
 inspected without parsing `Info.plist`.
 
+### Unified package planning
+
+Every generated project can produce the same release-oriented manifest before
+invoking a platform toolchain:
+
+```sh
+moui package --platform macos --platform web \
+  --version 0.2.0 --output dist/moui --manifest dist/moui/moui-package.json \
+  --dry-run --json
+```
+
+The manifest records the artifact kind and output path for each selected
+platform, plus explicit `host-required` signing/notarization status and
+host-specific installer/update-manifest slots. `--build` marks a build request
+for CI orchestration; it does not claim an artifact exists. Platform scripts
+remain responsible for native compilation, signing, notarization, installers,
+and update publication, and can consume the manifest as their input contract.
+
 ## Windows Native
 
 Windows native examples use the MSVC toolchain and vcpkg `zlib:x64-windows`.

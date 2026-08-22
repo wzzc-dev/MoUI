@@ -95,7 +95,16 @@ test "package report includes project inventory" {
       fail(message)
     }
   }
-  let text = match package_report_text({ project_root: root }) {
+  let text = match
+    package_report_text({
+      project_root: root,
+      platforms: [],
+      version: None,
+      output_dir: None,
+      manifest_path: None,
+      build: false,
+      dry_run: false,
+    }) {
     Ok(value) => value
     Err(message) => {
       remove_tree(root)
@@ -104,5 +113,42 @@ test "package report includes project inventory" {
   }
   inspect(text.contains("module: example/sample_app"), content="true")
   inspect(text.contains("platforms: web, macos"), content="true")
+  remove_tree(root)
+}
+
+///|
+test "package manifest is deterministic and records host release gaps" {
+  let root = test_temp_path("package-manifest")
+  remove_tree(root)
+  let options = { ..test_project_options(["web", "macos"]), target: root }
+  match generate_project_with_validator(options, _ => Ok(())) {
+    Ok(_) => ()
+    Err(message) => {
+      remove_tree(root)
+      fail(message)
+    }
+  }
+  let result = match
+    package_manifest_json({
+      project_root: root,
+      platforms: ["macos"],
+      version: Some("2.0.0"),
+      output_dir: Some(join_path(root, "dist")),
+      manifest_path: None,
+      build: false,
+      dry_run: true,
+    }) {
+    Ok(value) => value.stringify(indent=2)
+    Err(message) => {
+      remove_tree(root)
+      fail(message)
+    }
+  }
+  inspect(result.contains("\"status\": \"dry-run\""), content="true")
+  inspect(result.contains("\"outputKind\": \"app-bundle\""), content="true")
+  inspect(
+    result.contains("\"notarization\": \"host-required\""),
+    content="true",
+  )
   remove_tree(root)
 }

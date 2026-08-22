@@ -56,7 +56,7 @@ fn root_usage() -> String {
     #|  new             Create an independent MoUI project.
     #|  add platform    Add platforms to an existing project.
     #|  doctor          Check the selected platform toolchains.
-    #|  package         Print project package inventory.
+    #|  package         Validate and plan a unified package manifest.
     #|  dev             Build, watch, and restart a MoUI project.
     #|  build           Build a mobile app artifact (APK / .app / .hap) without installing.
     #|  run             Build, install, and launch a mobile app on a device or emulator.
@@ -127,11 +127,17 @@ fn package_usage() -> String {
   (
     #|Usage: moui package [options]
     #|
-    #|Print package inventory for the selected project. This does not upload or
-    #|publish artifacts.
+    #|Validate project metadata and plan platform artifacts. The default keeps
+    #|the legacy inventory report; --manifest or --output emits schema 1 JSON.
     #|
     #|Options:
     #|  --project-root PATH  Project root. Defaults to the current directory.
+    #|  --platform PLATFORM  Package one platform; may be repeated.
+    #|  --version VERSION    Release version override.
+    #|  --output DIR         Artifact output directory.
+    #|  --manifest PATH      Write the unified moui-package.json manifest.
+    #|  --build              Mark the plan for a host build (never claims built).
+    #|  --dry-run            Validate and print the plan without writing files.
     #|  --json               Emit machine-readable output.
     #|  -h, --help           Show this help.
   )
@@ -399,11 +405,50 @@ fn parse_package_args(
   let project_root = Ref(cwd)
   let help = Ref(false)
   let json = Ref(false)
+  let platforms : Ref[Array[String]] = Ref([])
+  let version : Ref[String?] = Ref(None)
+  let output_dir : Ref[String?] = Ref(None)
+  let manifest_path : Ref[String?] = Ref(None)
+  let build = Ref(false)
+  let dry_run = Ref(false)
   let mut index = 0
   while index < args.length() {
     let argument = args[index]
     let (name, inline) = option_parts(argument)
     match name {
+      "--platform" => {
+        let (value, next) = match option_value(args, index, inline, name) {
+          Ok(result) => result
+          Err(message) => return Err(message)
+        }
+        platforms.val.push(value)
+        index = next
+      }
+      "--version" | "--output" | "--manifest" => {
+        let (value, next) = match option_value(args, index, inline, name) {
+          Ok(result) => result
+          Err(message) => return Err(message)
+        }
+        match name {
+          "--version" => version.val = Some(value)
+          "--output" => output_dir.val = Some(resolve_path(cwd, value))
+          "--manifest" => manifest_path.val = Some(resolve_path(cwd, value))
+          _ => ()
+        }
+        index = next
+      }
+      "--build" | "--dry-run" => {
+        match flag_without_value(inline, name) {
+          Ok(_) => ()
+          Err(message) => return Err(message)
+        }
+        if name == "--build" {
+          build.val = true
+        } else {
+          dry_run.val = true
+        }
+        index += 1
+      }
       "--project-root" => {
         let (value, next) = match option_value(args, index, inline, name) {
           Ok(result) => result
@@ -430,7 +475,15 @@ fn parse_package_args(
   Ok({
     help: help.val,
     json: json.val,
-    options: { project_root: project_root.val },
+    options: {
+      project_root: project_root.val,
+      platforms: platforms.val,
+      version: version.val,
+      output_dir: output_dir.val,
+      manifest_path: manifest_path.val,
+      build: build.val,
+      dry_run: dry_run.val,
+    },
   })
 }
 
@@ -594,6 +647,17 @@ fn run_package_command(args : Array[String], cwd : String) -> CliOutcome {
   }
   if parsed.help {
     return stdout_outcome(package_usage())
+  }
+  if parsed.options.manifest_path is Some(_) ||
+    parsed.options.output_dir is Some(_) ||
+    parsed.options.build ||
+    parsed.options.dry_run ||
+    !parsed.options.platforms.is_empty() ||
+    parsed.options.version is Some(_) {
+    match package_manifest_outcome(parsed.options, parsed.json) {
+      Ok(outcome) => return outcome
+      Err(message) => return failed_outcome(message, parsed.json, "")
+    }
   }
   if parsed.json {
     match package_report_json(parsed.options) {
