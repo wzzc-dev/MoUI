@@ -45,6 +45,11 @@ back to CPU 3D.
   fallback, and exposes play, pause, seek, clip selection and pick state with
   app tests. Animation samples are applied to a copied scene before each
   snapshot publish.
+- A separate native-only `examples/three_d_physics_viewer` example now owns
+  the Rapier integration. It demonstrates a dynamic sphere falling onto a fixed
+  ground collider, fixed-step simulation controls, transform synchronization
+  into `moui_3d.Scene`, and a neutral ray-cast readout without adding physics
+  state to the glTF viewer.
 
 ## Remaining release gates
 

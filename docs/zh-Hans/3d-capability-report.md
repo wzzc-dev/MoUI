@@ -16,6 +16,7 @@ MoUI 的 2D draw contract，也不改变 Native Skia 主线。
 | Web 3D secondary-canvas plugin | 实验性/已编译 | moui_3d/backend/web |
 | Physics neutral contracts | 实验性/仅契约 | moui_3d_physics tests |
 | Rapier adapter | 已实现/实验性 | `Milky2018/moon_rapier@0.5.1`；native gravity、碰撞、变换与 ray-query 测试 |
+| Rapier viewer example | 已实现/实验性 | `examples/three_d_physics_viewer`；native Play/Pause/Step/Reset、场景同步与 ray-query 状态 |
 | WebXR/OpenXR | 实验性/仅契约 | moui_3d_xr descriptor tests |
 
 loader 现在会把 skin joints/inverse-bind、vertex joints/weights 与 morph delta
