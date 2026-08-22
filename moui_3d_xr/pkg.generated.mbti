@@ -1,0 +1,90 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_3d_xr"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui_3d",
+}
+
+// Values
+pub fn openxr_descriptor() -> XrProviderDescriptor
+
+pub fn webxr_descriptor() -> XrProviderDescriptor
+
+// Errors
+
+// Types and methods
+pub(all) enum XrBackend {
+  WebXr
+  OpenXr
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct XrFrame {
+  timestamp : Double
+  views : Array[XrView]
+  input_sources : Array[XrInputSource]
+} derive(@debug.Debug)
+pub fn XrFrame::input_sources(Self) -> Array[XrInputSource]
+pub fn XrFrame::new(timestamp~ : Double, views~ : Array[XrView], input_sources? : Array[XrInputSource]) -> Self
+pub fn XrFrame::timestamp(Self) -> Double
+pub fn XrFrame::views(Self) -> Array[XrView]
+
+pub(all) struct XrInputSource {
+  id : String
+  handedness : String
+  grip : XrPose?
+  target_ray : XrPose?
+} derive(@debug.Debug)
+pub fn XrInputSource::grip(Self) -> XrPose?
+pub fn XrInputSource::handedness(Self) -> String
+pub fn XrInputSource::id(Self) -> String
+pub fn XrInputSource::new(id~ : String, handedness? : String, grip? : XrPose?, target_ray? : XrPose?) -> Self
+pub fn XrInputSource::target_ray(Self) -> XrPose?
+
+pub(all) struct XrPose {
+  position : @moui_3d.Vec3
+  orientation : @moui_3d.Quat
+} derive(Eq, ToJson, @debug.Debug)
+pub fn XrPose::new(position~ : @moui_3d.Vec3, orientation~ : @moui_3d.Quat) -> Self
+pub fn XrPose::orientation(Self) -> @moui_3d.Quat
+pub fn XrPose::position(Self) -> @moui_3d.Vec3
+
+pub(all) struct XrProviderDescriptor {
+  backend : XrBackend
+  id : String
+  status : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn XrProviderDescriptor::backend(Self) -> XrBackend
+pub fn XrProviderDescriptor::id(Self) -> String
+pub fn XrProviderDescriptor::new(backend~ : XrBackend, id~ : String, status~ : String) -> Self
+pub fn XrProviderDescriptor::status(Self) -> String
+
+pub(all) enum XrResult {
+  Presented
+  Unavailable(String)
+  Failed(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum XrSessionMode {
+  Inline
+  ImmersiveVr
+  ImmersiveAr
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct XrView {
+  view : @moui_3d.Mat4
+  projection : @moui_3d.Mat4
+  viewport_x : Int
+  viewport_y : Int
+  viewport_width : Int
+  viewport_height : Int
+} derive(@debug.Debug)
+pub fn XrView::new(view~ : @moui_3d.Mat4, projection~ : @moui_3d.Mat4, viewport_x~ : Int, viewport_y~ : Int, viewport_width~ : Int, viewport_height~ : Int) -> Self
+pub fn XrView::projection(Self) -> @moui_3d.Mat4
+pub fn XrView::view(Self) -> @moui_3d.Mat4
+pub fn XrView::viewport_height(Self) -> Int
+pub fn XrView::viewport_width(Self) -> Int
+
+// Type aliases
+
+// Traits

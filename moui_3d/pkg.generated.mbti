@@ -10,11 +10,15 @@ import {
 // Values
 pub fn decode_viewport_event(@core.PlatformViewEvent) -> ViewportEvent?
 
+pub fn load_asset(AssetByteSource, TextureSource) -> AssetLoadResult
+
 pub fn load_gltf_scene(String, binary? : Bytes?, resolve? : ((String) -> Bytes?)?) -> Scene raise GltfError
 
 pub fn parse_glb(Bytes) -> GltfDocument raise GltfError
 
 pub fn parse_gltf_json(String, binary? : Bytes?) -> GltfDocument raise GltfError
+
+pub fn sample_animation_channel(AnimationChannel, Double) -> Array[Double]
 
 pub fn[Msg] three_d_viewport(binding~ : ThreeDViewportBinding, snapshot~ : ViewportSnapshot, semantics_label? : String, on_event? : ((ViewportEvent) -> Msg)?) -> @core.View[Msg]
 
@@ -37,8 +41,17 @@ pub(all) suberror GltfError {
   UnsupportedAccessorType(String)
   UnsupportedPrimitiveMode(Int)
   UnsupportedExtension(String)
+  UnsupportedRequiredExtension(String)
   ExternalResourceUnavailable(String)
   InvalidTexture(Int)
+  InvalidSampler(Int)
+  InvalidCamera(Int)
+  InvalidScene(Int)
+  InvalidSkin(Int)
+  InvalidAnimation(Int)
+  UnsupportedAnimationPath(String)
+  InvalidNode(Int)
+  InvalidNodeCycle(Int)
 } derive(Eq, ToJson, @debug.Debug)
 
 // Types and methods
@@ -59,6 +72,110 @@ pub fn Aabb::radius(Self) -> Double
 pub fn Aabb::transformed(Self, Mat4) -> Self
 pub fn Aabb::union(Self, Self) -> Self
 
+pub(all) enum AlphaMode {
+  Opaque
+  Mask
+  Blend
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct AnimationChannel {
+  node : NodeId
+  path : AnimationPath
+  interpolation : AnimationInterpolation
+  keyframes : Array[AnimationKeyframe]
+} derive(@debug.Debug)
+pub fn AnimationChannel::interpolation(Self) -> AnimationInterpolation
+pub fn AnimationChannel::keyframes(Self) -> Array[AnimationKeyframe]
+pub fn AnimationChannel::new(node~ : NodeId, path~ : AnimationPath, interpolation~ : AnimationInterpolation, keyframes~ : Array[AnimationKeyframe]) -> Self
+pub fn AnimationChannel::node(Self) -> NodeId
+pub fn AnimationChannel::path(Self) -> AnimationPath
+
+pub(all) struct AnimationClip {
+  name : String
+  channels : Array[AnimationChannel]
+  duration : Double
+} derive(@debug.Debug)
+pub fn AnimationClip::channels(Self) -> Array[AnimationChannel]
+pub fn AnimationClip::duration(Self) -> Double
+pub fn AnimationClip::name(Self) -> String
+pub fn AnimationClip::new(name? : String, channels~ : Array[AnimationChannel]) -> Self
+
+pub(all) enum AnimationInterpolation {
+  Step
+  Linear
+  CubicSpline
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct AnimationKeyframe {
+  time : Double
+  value : Array[Double]
+  in_tangent : Array[Double]
+  out_tangent : Array[Double]
+} derive(@debug.Debug)
+pub fn AnimationKeyframe::in_tangent(Self) -> Array[Double]
+pub fn AnimationKeyframe::new(time~ : Double, value~ : Array[Double], in_tangent? : Array[Double], out_tangent? : Array[Double]) -> Self
+pub fn AnimationKeyframe::out_tangent(Self) -> Array[Double]
+pub fn AnimationKeyframe::time(Self) -> Double
+pub fn AnimationKeyframe::value(Self) -> Array[Double]
+
+pub(all) enum AnimationPath {
+  Translation
+  Rotation
+  Scale
+  Weights
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct AnimationPlayer {
+  mut clip : AnimationClip?
+  mut time : Double
+  mut playing : Bool
+}
+pub fn AnimationPlayer::advance(Self, Double) -> Unit
+pub fn AnimationPlayer::clear_clip(Self) -> Unit
+pub fn AnimationPlayer::new() -> Self
+pub fn AnimationPlayer::pause(Self) -> Unit
+pub fn AnimationPlayer::play(Self) -> Unit
+pub fn AnimationPlayer::playing(Self) -> Bool
+pub fn AnimationPlayer::sample(Self) -> Array[AnimationSample]
+pub fn AnimationPlayer::seek(Self, Double) -> Unit
+pub fn AnimationPlayer::set_clip(Self, AnimationClip) -> Unit
+pub fn AnimationPlayer::time(Self) -> Double
+
+pub(all) struct AnimationSample {
+  node : NodeId
+  path : AnimationPath
+  value : Array[Double]
+} derive(@debug.Debug)
+pub fn AnimationSample::new(node~ : NodeId, path~ : AnimationPath, value~ : Array[Double]) -> Self
+pub fn AnimationSample::node(Self) -> NodeId
+pub fn AnimationSample::path(Self) -> AnimationPath
+pub fn AnimationSample::value(Self) -> Array[Double]
+
+pub(all) struct AssetByteSource {
+  read_fn : (String) -> Bytes?
+}
+pub fn AssetByteSource::new((String) -> Bytes?) -> Self
+pub fn AssetByteSource::read(Self, String) -> Bytes?
+
+pub(all) enum AssetLoadResult {
+  Bytes(Bytes)
+  Missing(String)
+  Invalid(String)
+} derive(@debug.Debug)
+
+pub(all) struct Camera {
+  name : String
+  projection : CameraProjection
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Camera::name(Self) -> String
+pub fn Camera::new(name? : String, projection~ : CameraProjection) -> Self
+pub fn Camera::projection(Self) -> CameraProjection
+
+pub(all) enum CameraProjection {
+  Perspective(Double, Double, Double, Double)
+  Orthographic(Double, Double, Double, Double)
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct GltfDocument {
   json : String
   binary : Bytes?
@@ -66,12 +183,18 @@ pub(all) struct GltfDocument {
   node_count : Int
   material_count : Int
   texture_count : Int
+  sampler_count : Int
+  camera_count : Int
+  scene_count : Int
 } derive(@debug.Debug)
 pub fn GltfDocument::binary(Self) -> Bytes?
+pub fn GltfDocument::camera_count(Self) -> Int
 pub fn GltfDocument::json(Self) -> String
 pub fn GltfDocument::material_count(Self) -> Int
 pub fn GltfDocument::mesh_count(Self) -> Int
 pub fn GltfDocument::node_count(Self) -> Int
+pub fn GltfDocument::sampler_count(Self) -> Int
+pub fn GltfDocument::scene_count(Self) -> Int
 pub fn GltfDocument::texture_count(Self) -> Int
 
 pub(all) struct Mat4 {
@@ -84,7 +207,9 @@ pub fn Mat4::look_at(eye~ : Vec3, target~ : Vec3, up~ : Vec3) -> Self
 pub fn Mat4::mul(Self, Self) -> Self
 pub fn Mat4::perspective(fov_y_radians~ : Double, aspect~ : Double, near~ : Double, far~ : Double) -> Self
 pub fn Mat4::scale_uniform(Double) -> Self
+pub fn Mat4::transform_homogeneous(Self, Vec3) -> Vec4
 pub fn Mat4::transform_point(Self, Vec3) -> Vec3
+pub fn Mat4::transform_vec4(Self, Vec4) -> Vec4
 pub fn Mat4::translation(Vec3) -> Self
 pub fn Mat4::values(Self) -> Array[Double]
 
@@ -93,11 +218,25 @@ pub(all) struct Material {
   metallic : Double
   roughness : Double
   base_color_texture : TextureId?
+  normal_texture : TextureId?
+  occlusion_texture : TextureId?
+  emissive_texture : TextureId?
+  emissive_factor : Vec3
+  alpha_mode : AlphaMode
+  alpha_cutoff : Double
+  double_sided : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Material::alpha_cutoff(Self) -> Double
+pub fn Material::alpha_mode(Self) -> AlphaMode
 pub fn Material::base_color(Self) -> Vec4
 pub fn Material::base_color_texture(Self) -> TextureId?
+pub fn Material::double_sided(Self) -> Bool
+pub fn Material::emissive_factor(Self) -> Vec3
+pub fn Material::emissive_texture(Self) -> TextureId?
 pub fn Material::metallic(Self) -> Double
-pub fn Material::pbr(base_color? : Vec4, metallic? : Double, roughness? : Double, base_color_texture? : TextureId?) -> Self
+pub fn Material::normal_texture(Self) -> TextureId?
+pub fn Material::occlusion_texture(Self) -> TextureId?
+pub fn Material::pbr(base_color? : Vec4, metallic? : Double, roughness? : Double, base_color_texture? : TextureId?, normal_texture? : TextureId?, occlusion_texture? : TextureId?, emissive_texture? : TextureId?, emissive_factor? : Vec3, alpha_mode? : AlphaMode, alpha_cutoff? : Double, double_sided? : Bool) -> Self
 pub fn Material::roughness(Self) -> Double
 
 pub(all) struct MaterialId {
@@ -109,12 +248,14 @@ pub fn MaterialId::value(Self) -> Int
 pub(all) struct Mesh {
   name : String
   primitives : Array[Primitive]
+  weights : Array[Double]
   bounds : Aabb
 } derive(@debug.Debug)
 pub fn Mesh::bounds(Self) -> Aabb
 pub fn Mesh::name(Self) -> String
-pub fn Mesh::new(name? : String, primitives~ : Array[Primitive]) -> Self
+pub fn Mesh::new(name? : String, primitives~ : Array[Primitive], weights? : Array[Double]) -> Self
 pub fn Mesh::primitives(Self) -> Array[Primitive]
+pub fn Mesh::weights(Self) -> Array[Double]
 
 pub(all) struct MeshId {
   value : Int
@@ -128,14 +269,21 @@ pub(all) struct Node {
   children : Array[NodeId]
   local_transform : Mat4
   mesh : MeshId?
+  camera : Int?
+  skin : Int?
+  weights : Array[Double]?
 } derive(@debug.Debug)
+pub fn Node::camera(Self) -> Int?
 pub fn Node::children(Self) -> Array[NodeId]
 pub fn Node::local_transform(Self) -> Mat4
 pub fn Node::mesh(Self) -> MeshId?
 pub fn Node::name(Self) -> String
-pub fn Node::new(name? : String, parent? : NodeId?, local_transform? : Mat4, mesh? : MeshId?) -> Self
+pub fn Node::new(name? : String, parent? : NodeId?, local_transform? : Mat4, mesh? : MeshId?, camera? : Int?, skin? : Int?, weights? : Array[Double]?) -> Self
 pub fn Node::parent(Self) -> NodeId?
+pub fn Node::skin(Self) -> Int?
+pub fn Node::weights(Self) -> Array[Double]?
 pub fn Node::with_child(Self, NodeId) -> Self
+pub fn Node::with_local_transform(Self, Mat4) -> Self
 
 pub(all) struct NodeId {
   value : Int
@@ -195,11 +343,13 @@ pub(all) struct Primitive {
   indices : Array[Int]
   material : MaterialId?
   bounds : Aabb
+  morph_targets : Array[Array[VertexDelta]]
 } derive(@debug.Debug)
 pub fn Primitive::bounds(Self) -> Aabb
 pub fn Primitive::indices(Self) -> Array[Int]
 pub fn Primitive::material(Self) -> MaterialId?
-pub fn Primitive::new(vertices~ : Array[Vertex], indices~ : Array[Int], material? : MaterialId?) -> Self
+pub fn Primitive::morph_targets(Self) -> Array[Array[VertexDelta]]
+pub fn Primitive::new(vertices~ : Array[Vertex], indices~ : Array[Int], material? : MaterialId?, morph_targets? : Array[Array[VertexDelta]]) -> Self
 pub fn Primitive::vertices(Self) -> Array[Vertex]
 
 pub(all) struct Quat {
@@ -214,6 +364,10 @@ pub fn Quat::mul(Self, Self) -> Self
 pub fn Quat::new(x~ : Double, y~ : Double, z~ : Double, w~ : Double) -> Self
 pub fn Quat::rotate(Self, Vec3) -> Vec3
 pub fn Quat::to_mat4(Self) -> Mat4
+pub fn Quat::w(Self) -> Double
+pub fn Quat::x(Self) -> Double
+pub fn Quat::y(Self) -> Double
+pub fn Quat::z(Self) -> Double
 
 pub(all) struct Ray {
   origin : Vec3
@@ -226,17 +380,66 @@ pub fn Ray::intersect_triangle(Self, Vec3, Vec3, Vec3) -> Double?
 pub fn Ray::new(origin~ : Vec3, direction~ : Vec3) -> Self
 pub fn Ray::origin(Self) -> Vec3
 
+pub(all) struct Sampler {
+  mag_filter : SamplerFilter
+  min_filter : SamplerFilter
+  wrap_s : SamplerWrap
+  wrap_t : SamplerWrap
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Sampler::mag_filter(Self) -> SamplerFilter
+pub fn Sampler::min_filter(Self) -> SamplerFilter
+pub fn Sampler::new(mag_filter? : SamplerFilter, min_filter? : SamplerFilter, wrap_s? : SamplerWrap, wrap_t? : SamplerWrap) -> Self
+pub fn Sampler::wrap_s(Self) -> SamplerWrap
+pub fn Sampler::wrap_t(Self) -> SamplerWrap
+
+pub(all) enum SamplerFilter {
+  Nearest
+  Linear
+  NearestMipmapNearest
+  LinearMipmapNearest
+  NearestMipmapLinear
+  LinearMipmapLinear
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SamplerId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SamplerId::new(Int) -> Self
+pub fn SamplerId::value(Self) -> Int
+
+pub(all) enum SamplerWrap {
+  Repeat
+  MirroredRepeat
+  ClampToEdge
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct Scene {
   meshes : Array[Mesh]
   materials : Array[Material]
   textures : Array[Texture]
+  samplers : Array[Sampler]
+  cameras : Array[Camera]
+  definitions : Array[SceneDefinition]
+  skins : Array[Skin]
+  mut default_scene : Int?
   nodes : Array[Node]
+  animations : Array[AnimationClip]
 } derive(@debug.Debug)
+pub fn Scene::add_animation(Self, AnimationClip) -> Int
+pub fn Scene::add_camera(Self, Camera) -> Int
 pub fn Scene::add_material(Self, Material) -> MaterialId
 pub fn Scene::add_mesh(Self, Mesh) -> MeshId
 pub fn Scene::add_node(Self, Node) -> NodeId
+pub fn Scene::add_sampler(Self, Sampler) -> SamplerId
+pub fn Scene::add_scene_definition(Self, SceneDefinition) -> Int
+pub fn Scene::add_skin(Self, Skin) -> Int
 pub fn Scene::add_texture(Self, Texture) -> TextureId
+pub fn Scene::animations(Self) -> Array[AnimationClip]
+pub fn Scene::apply_animation_samples(Self, Array[AnimationSample]) -> Self
 pub fn Scene::bounds(Self) -> Aabb
+pub fn Scene::cameras(Self) -> Array[Camera]
+pub fn Scene::copy(Self) -> Self
+pub fn Scene::default_scene(Self) -> Int?
 pub fn Scene::empty() -> Self
 pub fn Scene::materials(Self) -> Array[Material]
 pub fn Scene::mesh(Self, MeshId) -> Mesh?
@@ -244,17 +447,43 @@ pub fn Scene::meshes(Self) -> Array[Mesh]
 pub fn Scene::node(Self, NodeId) -> Node?
 pub fn Scene::nodes(Self) -> Array[Node]
 pub fn Scene::pick(Self, Ray) -> PickHit?
+pub fn Scene::samplers(Self) -> Array[Sampler]
+pub fn Scene::scene_definitions(Self) -> Array[SceneDefinition]
+pub fn Scene::set_default_scene(Self, Int?) -> Unit
+pub fn Scene::skins(Self) -> Array[Skin]
 pub fn Scene::textures(Self) -> Array[Texture]
 pub fn Scene::world_transform(Self, NodeId) -> Mat4
+
+pub(all) struct SceneDefinition {
+  name : String
+  roots : Array[NodeId]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SceneDefinition::name(Self) -> String
+pub fn SceneDefinition::new(name? : String, roots~ : Array[NodeId]) -> Self
+pub fn SceneDefinition::roots(Self) -> Array[NodeId]
+
+pub(all) struct Skin {
+  name : String
+  joints : Array[NodeId]
+  inverse_bind_matrices : Array[Mat4]
+  skeleton : NodeId?
+} derive(@debug.Debug)
+pub fn Skin::inverse_bind_matrices(Self) -> Array[Mat4]
+pub fn Skin::joints(Self) -> Array[NodeId]
+pub fn Skin::name(Self) -> String
+pub fn Skin::new(name? : String, joints~ : Array[NodeId], inverse_bind_matrices? : Array[Mat4], skeleton? : NodeId?) -> Self
+pub fn Skin::skeleton(Self) -> NodeId?
 
 pub(all) struct Texture {
   source : TextureSource
   mime_type : String?
+  sampler : SamplerId?
 } derive(@debug.Debug)
-pub fn Texture::embedded(Bytes, mime_type? : String?) -> Self
+pub fn Texture::embedded(Bytes, mime_type? : String?, sampler? : SamplerId?) -> Self
 pub fn Texture::mime_type(Self) -> String?
+pub fn Texture::sampler(Self) -> SamplerId?
 pub fn Texture::source(Self) -> TextureSource
-pub fn Texture::uri(String, mime_type? : String?) -> Self
+pub fn Texture::uri(String, mime_type? : String?, sampler? : SamplerId?) -> Self
 
 pub(all) struct TextureId {
   value : Int
@@ -342,11 +571,25 @@ pub(all) struct Vertex {
   position : Vec3
   normal : Vec3
   texcoord : Vec2
+  joints : (Int, Int, Int, Int)
+  weights : Vec4
 } derive(Eq, ToJson, @debug.Debug)
-pub fn Vertex::new(position~ : Vec3, normal? : Vec3, texcoord? : Vec2) -> Self
+pub fn Vertex::joints(Self) -> (Int, Int, Int, Int)
+pub fn Vertex::new(position~ : Vec3, normal? : Vec3, texcoord? : Vec2, joints? : (Int, Int, Int, Int), weights? : Vec4) -> Self
 pub fn Vertex::normal(Self) -> Vec3
 pub fn Vertex::position(Self) -> Vec3
 pub fn Vertex::texcoord(Self) -> Vec2
+pub fn Vertex::weights(Self) -> Vec4
+
+pub(all) struct VertexDelta {
+  position : Vec3
+  normal : Vec3
+  tangent : Vec3
+} derive(Eq, ToJson, @debug.Debug)
+pub fn VertexDelta::new(position? : Vec3, normal? : Vec3, tangent? : Vec3) -> Self
+pub fn VertexDelta::normal(Self) -> Vec3
+pub fn VertexDelta::position(Self) -> Vec3
+pub fn VertexDelta::tangent(Self) -> Vec3
 
 pub(all) enum ViewportEvent {
   PointerDown(@core.Point)

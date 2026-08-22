@@ -1,0 +1,97 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_3d_physics"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui_3d",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct BodyDesc {
+  body_type : BodyType
+  position : @moui_3d.Vec3
+  rotation : @moui_3d.Quat
+  gravity_scale : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn BodyDesc::body_type(Self) -> BodyType
+pub fn BodyDesc::gravity_scale(Self) -> Double
+pub fn BodyDesc::new(body_type? : BodyType, position? : @moui_3d.Vec3, rotation? : @moui_3d.Quat, gravity_scale? : Double) -> Self
+pub fn BodyDesc::position(Self) -> @moui_3d.Vec3
+pub fn BodyDesc::rotation(Self) -> @moui_3d.Quat
+
+pub(all) struct BodyId {
+  value : Int64
+} derive(Eq, Hash, ToJson, @debug.Debug)
+pub fn BodyId::new(Int64) -> Self
+pub fn BodyId::value(Self) -> Int64
+
+pub(all) enum BodyType {
+  Dynamic
+  Fixed
+  Kinematic
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ColliderDesc {
+  shape : Shape
+  body : BodyId?
+  sensor : Bool
+  friction : Double
+  restitution : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ColliderDesc::body(Self) -> BodyId?
+pub fn ColliderDesc::friction(Self) -> Double
+pub fn ColliderDesc::new(shape~ : Shape, body? : BodyId?, sensor? : Bool, friction? : Double, restitution? : Double) -> Self
+pub fn ColliderDesc::restitution(Self) -> Double
+pub fn ColliderDesc::sensor(Self) -> Bool
+pub fn ColliderDesc::shape(Self) -> Shape
+
+pub(all) struct ColliderId {
+  value : Int64
+} derive(Eq, Hash, ToJson, @debug.Debug)
+pub fn ColliderId::new(Int64) -> Self
+pub fn ColliderId::value(Self) -> Int64
+
+pub(all) struct PhysicsWorld {
+  gravity : @moui_3d.Vec3
+  mut next_body : Int64
+  mut next_collider : Int64
+  bodies : Map[BodyId, BodyDesc]
+  colliders : Map[ColliderId, ColliderDesc]
+} derive(@debug.Debug)
+pub fn PhysicsWorld::body(Self, BodyId) -> BodyDesc?
+pub fn PhysicsWorld::collider(Self, ColliderId) -> ColliderDesc?
+pub fn PhysicsWorld::create_body(Self, BodyDesc) -> BodyId
+pub fn PhysicsWorld::create_collider(Self, ColliderDesc) -> ColliderId
+pub fn PhysicsWorld::gravity(Self) -> @moui_3d.Vec3
+pub fn PhysicsWorld::new(gravity? : @moui_3d.Vec3) -> Self
+pub fn PhysicsWorld::step(Self, Double) -> Int
+
+pub(all) struct RayHit {
+  collider : ColliderId
+  distance : Double
+  position : @moui_3d.Vec3
+  normal : @moui_3d.Vec3
+} derive(@debug.Debug)
+pub fn RayHit::collider(Self) -> ColliderId
+pub fn RayHit::distance(Self) -> Double
+pub fn RayHit::new(collider~ : ColliderId, distance~ : Double, position~ : @moui_3d.Vec3, normal~ : @moui_3d.Vec3) -> Self
+pub fn RayHit::normal(Self) -> @moui_3d.Vec3
+pub fn RayHit::position(Self) -> @moui_3d.Vec3
+
+pub(all) enum Shape {
+  Ball(Double)
+  Cuboid(@moui_3d.Vec3)
+  CapsuleX(Double, Double)
+  CapsuleY(Double, Double)
+  CapsuleZ(Double, Double)
+  Triangle(@moui_3d.Vec3, @moui_3d.Vec3, @moui_3d.Vec3)
+  Trimesh(Array[@moui_3d.Vec3], Array[(Int, Int, Int)])
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits

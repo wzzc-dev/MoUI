@@ -51,7 +51,16 @@ fn host_resize_3d_surface(
 ) -> Int = "webgpu" "three_d_surface_resize"
 
 ///|
-fn host_draw_3d_mesh(renderer : Host3DRenderer, payload : Host3DString) -> Int = "webgpu" "three_d_draw_mesh"
+fn host_draw_3d_mesh_binary(
+  renderer : Host3DRenderer,
+  payload : Host3DString,
+) -> Int = "webgpu" "three_d_draw_mesh_binary"
+
+///|
+fn host_update_3d_resources(
+  renderer : Host3DRenderer,
+  payload : Host3DString,
+) -> Int = "webgpu" "three_d_update_resources"
 
 ///|
 fn host_dispose_3d_renderer(renderer : Host3DRenderer) -> Unit = "webgpu" "three_d_renderer_dispose"
@@ -99,8 +108,21 @@ fn create_webgpu_3d_session(
           "WebGPU device is unavailable",
         )
       }
-      let payload = web_scene_payload(frame.snapshot(), frame.size())
-      let status = host_draw_3d_mesh(renderer, host_string(payload))
+      let resource_status = host_update_3d_resources(
+        renderer,
+        host_string(frame.packet().resource_payload()),
+      )
+      if resource_status != 0 {
+        return @render.ThreeDRenderResult::Failed(
+          "WebGPU 3D resource residency error {resource_status}",
+        )
+      }
+      let status = host_draw_3d_mesh_binary(
+        renderer,
+        host_string(
+          @base64.encode(frame.packet().vertex_payload_bytes(), padding=true),
+        ),
+      )
       if status == 0 {
         @render.ThreeDRenderResult::Presented
       } else {
@@ -116,83 +138,3 @@ fn create_webgpu_3d_session(
 }
 
 ///|
-fn web_scene_payload(
-  snapshot : @moui_3d.ViewportSnapshot,
-  size : @render.ThreeDViewportSize,
-) -> String {
-  let scene = snapshot.scene()
-  let camera = snapshot
-    .camera()
-    .with_aspect(size.width().to_double() / size.height().to_double())
-  let vp = camera.projection().mul(camera.view())
-  let output = StringBuilder::new()
-  output.write_char('[')
-  let mut first = true
-  for node_id in 0..<scene.nodes().length() {
-    match scene.node(@moui_3d.NodeId::new(node_id)) {
-      Some(node) =>
-        match node.mesh() {
-          Some(mesh_id) =>
-            match scene.mesh(mesh_id) {
-              Some(mesh) => {
-                let world = scene.world_transform(@moui_3d.NodeId::new(node_id))
-                for primitive in mesh.primitives() {
-                  let vertices = primitive.vertices()
-                  let color = match primitive.material() {
-                    Some(id) => scene.materials()[id.value()].base_color()
-                    None => @moui_3d.Vec4::new(x=0.72, y=0.78, z=0.95, w=1.0)
-                  }
-                  for index in primitive.indices() {
-                    match vertices.get(index) {
-                      Some(vertex) => {
-                        let world_position = world.transform_point(
-                          vertex.position(),
-                        )
-                        let clip = vp.transform_point(world_position)
-                        let normal = world
-                          .transform_point(
-                            vertex.position().add(vertex.normal()),
-                          )
-                          .sub(world_position)
-                          .normalized()
-                        let light = normal
-                          .dot(
-                            @moui_3d.Vec3::new(x=0.35, y=0.8, z=0.5).normalized(),
-                          )
-                          .max(0.18)
-                        for
-                          value in [
-                            clip.x(),
-                            clip.y(),
-                            clip.z() * 0.5 + 0.5,
-                            normal.x(),
-                            normal.y(),
-                            normal.z(),
-                            color.x() * light,
-                            color.y() * light,
-                            color.z() * light,
-                            color.w(),
-                          ] {
-                          if first {
-                            first = false
-                          } else {
-                            output.write_char(',')
-                          }
-                          output.write_string(value.to_string())
-                        }
-                      }
-                      None => ()
-                    }
-                  }
-                }
-              }
-              None => ()
-            }
-          None => ()
-        }
-      None => ()
-    }
-  }
-  output.write_char(']')
-  output.to_string()
-}

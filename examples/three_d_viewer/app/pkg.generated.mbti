@@ -3,13 +3,14 @@ package "examples/three_d_viewer/app"
 
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui_3d",
 }
 
 // Values
 pub fn program() -> @core.Program[Model, Msg]
 
-pub fn program_with_binding(@moui_3d.ThreeDViewportBinding) -> @core.Program[Model, Msg]
+pub fn program_with_binding(@moui_3d.ThreeDViewportBinding, environment? : @services.AppEnvironment) -> @core.Program[Model, Msg]
 
 pub fn update(Model, Msg) -> Model
 
@@ -20,7 +21,12 @@ pub fn view(Model) -> @core.View[Msg]
 // Types and methods
 pub struct Model {
   binding : @moui_3d.ThreeDViewportBinding
+  base_scene : @moui_3d.Scene
   snapshot : @moui_3d.ViewportSnapshot
+  player : @moui_3d.AnimationPlayer
+  selected_clip : Int
+  picked_node : @moui_3d.NodeId?
+  fixture_loaded : Bool
   dragging : Bool
   last_pointer_x : Double
   last_pointer_y : Double
@@ -31,6 +37,10 @@ pub fn Model::new_with_binding(@moui_3d.ThreeDViewportBinding) -> Self
 pub(all) enum Msg {
   Noop
   Viewport(@moui_3d.ViewportEvent)
+  TogglePlayback
+  SeekStart
+  SelectClip(Int)
+  Advance(Double)
 }
 
 // Type aliases

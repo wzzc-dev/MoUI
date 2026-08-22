@@ -100,6 +100,34 @@
       "releaseStage": "addons"
     },
     {
+      "name": "wzzc-dev/moui_3d",
+      "directory": "moui_3d",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
+      "name": "wzzc-dev/moui_3d_physics",
+      "directory": "moui_3d_physics",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
+      "name": "wzzc-dev/moui_3d_physics_rapier",
+      "directory": "moui_3d_physics_rapier",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
+      "name": "wzzc-dev/moui_3d_xr",
+      "directory": "moui_3d_xr",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
       "name": "wzzc-dev/moui_agent_mcp",
       "directory": "moui_agent_mcp",
       "publication": "public",

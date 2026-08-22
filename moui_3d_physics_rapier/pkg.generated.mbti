@@ -1,0 +1,44 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_3d_physics_rapier"
+
+import {
+  "Milky2018/moon_rapier/collision",
+  "Milky2018/moon_rapier/dynamics",
+  "Milky2018/moon_rapier/pipeline",
+  "wzzc-dev/moui_3d",
+  "wzzc-dev/moui_3d_physics",
+}
+
+// Values
+pub fn backend_id() -> String
+
+pub fn supports_native_world() -> Bool
+
+// Errors
+
+// Types and methods
+pub struct RapierWorld {
+  gravity : @moui_3d.Vec3
+  bodies : @dynamics.RigidBodySet3D
+  colliders : @collision.ColliderSet3D
+  pipeline : @pipeline.PhysicsPipeline3DReal
+  islands : @dynamics.IslandManager3D
+  broad_phase : @collision.BroadPhase3D
+  narrow_phase : @collision.NarrowPhase3D
+  body_handles : Map[@moui_3d_physics.BodyId, @dynamics.RigidBodyHandle]
+  collider_handles : Map[@moui_3d_physics.ColliderId, @collision.ColliderHandle3D]
+  mut next_body : Int64
+  mut next_collider : Int64
+}
+pub fn RapierWorld::body_rotation(Self, @moui_3d_physics.BodyId) -> @moui_3d.Quat?
+pub fn RapierWorld::body_translation(Self, @moui_3d_physics.BodyId) -> @moui_3d.Vec3?
+pub fn RapierWorld::cast_ray(Self, @moui_3d.Ray, Double) -> @moui_3d_physics.RayHit?
+pub fn RapierWorld::create_body(Self, @moui_3d_physics.BodyDesc) -> @moui_3d_physics.BodyId
+pub fn RapierWorld::create_collider(Self, @moui_3d_physics.ColliderDesc) -> @moui_3d_physics.ColliderId?
+pub fn RapierWorld::gravity(Self) -> @moui_3d.Vec3
+pub fn RapierWorld::new(gravity? : @moui_3d.Vec3) -> Self
+pub fn RapierWorld::step(Self, Double) -> Int
+
+// Type aliases
+
+// Traits

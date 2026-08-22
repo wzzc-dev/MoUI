@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_3d_web_renderer"
 
-version = "0.1.0"
+version = "0.1.10"
 
 preferred_target = "wasm-gc"
 
@@ -8,7 +8,7 @@ supported_targets = "wasm-gc"
 
 import {
   "wzzc-dev/moui@0.1.9",
-  "wzzc-dev/moui_3d@0.1.0",
+  "wzzc-dev/moui_3d@0.1.10",
 }
 
 license = "Apache-2.0"

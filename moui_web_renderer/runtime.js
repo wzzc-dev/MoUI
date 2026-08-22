@@ -2408,8 +2408,8 @@ export function createWebGpuImports(options = {}) {
       try {
         const shader = device.createShaderModule({ code: `
         struct Out { @builtin(position) position: vec4<f32>, @location(0) color: vec4<f32> };
-        @vertex fn vs_main(@location(0) position: vec3<f32>, @location(1) normal: vec3<f32>, @location(2) color: vec4<f32>) -> Out {
-          var out: Out; out.position = vec4<f32>(position, 1.0); out.color = color; return out;
+        @vertex fn vs_main(@location(0) clipPosition: vec4<f32>, @location(1) normal: vec3<f32>, @location(2) color: vec4<f32>) -> Out {
+          var out: Out; out.position = clipPosition; out.color = color; return out;
         }
         @fragment fn fs_main(in: Out) -> @location(0) vec4<f32> { return in.color; }
       ` });
@@ -2418,17 +2418,27 @@ export function createWebGpuImports(options = {}) {
         vertex: {
           module: shader,
           entryPoint: "vs_main",
-          buffers: [{ arrayStride: 40, attributes: [
-            { shaderLocation: 0, offset: 0, format: "float32x3" },
-            { shaderLocation: 1, offset: 12, format: "float32x3" },
-            { shaderLocation: 2, offset: 24, format: "float32x4" },
+          buffers: [{ arrayStride: 44, attributes: [
+            { shaderLocation: 0, offset: 0, format: "float32x4" },
+            { shaderLocation: 1, offset: 16, format: "float32x3" },
+            { shaderLocation: 2, offset: 28, format: "float32x4" },
           ] }],
         },
         fragment: { module: shader, entryPoint: "fs_main", targets: [{ format }] },
         primitive: { topology: "triangle-list", cullMode: "back" },
         depthStencil: { format: "depth24plus", depthWriteEnabled: true, depthCompare: "less" },
       });
-        const renderer = { surface, pipeline, depthTexture: undefined, depthWidth: 0, depthHeight: 0, frame: 0 };
+        const renderer = {
+          surface,
+          pipeline,
+          depthTexture: undefined,
+          depthWidth: 0,
+          depthHeight: 0,
+          vertexBuffer: undefined,
+          vertexPayload: undefined,
+          uploadCount: 0,
+          frame: 0,
+        };
         const handle = nextThreeDRendererHandle++;
         threeDRenderers.set(handle, renderer);
         return handle;
@@ -2450,40 +2460,59 @@ export function createWebGpuImports(options = {}) {
         return invalidResource();
       }
     },
-    three_d_draw_mesh(rendererHandle, payload) {
+        three_d_draw_mesh_binary(rendererHandle, payload) {
       const renderer = threeDRenderers.get(rendererHandle);
       if (!renderer) return invalidResource();
-      let values;
-      try { values = JSON.parse(stringValue(payload)); } catch { return 6; }
-      if (!Array.isArray(values)) return invalidResource();
       try {
+        const encoded = String(stringValue(payload) ?? "");
+        const decoded = atob(encoded);
+        const bytes = new Uint8Array(decoded.length);
+        for (let index = 0; index < decoded.length; index += 1) {
+          bytes[index] = decoded.charCodeAt(index);
+        }
+        if (!bytes || bytes.byteLength % 44 !== 0) return invalidResource();
+        const data = new Float32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4);
         const surface = renderer.surface;
         if (!renderer.depthTexture || renderer.depthWidth !== surface.canvas.width || renderer.depthHeight !== surface.canvas.height) {
           renderer.depthTexture?.destroy?.();
           renderer.depthTexture = device.createTexture({ size: [surface.canvas.width, surface.canvas.height], format: "depth24plus", usage: GPUTextureUsage.RENDER_ATTACHMENT });
           renderer.depthWidth = surface.canvas.width; renderer.depthHeight = surface.canvas.height;
         }
-        const data = new Float32Array(values.map(value => Number(value) || 0));
-        const vertexBuffer = device.createBuffer({ size: Math.max(4, data.byteLength), usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
-        device.queue.writeBuffer(vertexBuffer, 0, data);
+        let vertexBuffer = renderer.vertexBuffer;
+        const samePayload = renderer.vertexPayload &&
+          renderer.vertexPayload.byteLength === bytes.byteLength &&
+          renderer.vertexPayload.every((value, index) => value === bytes[index]);
+        if (!vertexBuffer || !samePayload) {
+          renderer.vertexBuffer?.destroy?.();
+          vertexBuffer = device.createBuffer({ size: Math.max(4, data.byteLength), usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
+          device.queue.writeBuffer(vertexBuffer, 0, data);
+          renderer.vertexBuffer = vertexBuffer;
+          renderer.vertexPayload = bytes.slice();
+          renderer.uploadCount += 1;
+        }
         const texture = surface.context.getCurrentTexture();
         const encoder = device.createCommandEncoder();
         const pass = encoder.beginRenderPass({
           colorAttachments: [{ view: texture.createView(), clearValue: { r: 0.035, g: 0.045, b: 0.07, a: 1 }, loadOp: "clear", storeOp: "store" }],
           depthStencilAttachment: { view: renderer.depthTexture.createView(), depthClearValue: 1, depthLoadOp: "clear", depthStoreOp: "store" },
         });
-        pass.setPipeline(renderer.pipeline); pass.setVertexBuffer(0, vertexBuffer); pass.draw(values.length / 10); pass.end();
+        pass.setPipeline(renderer.pipeline); pass.setVertexBuffer(0, vertexBuffer); pass.draw(data.length / 11); pass.end();
         device.queue.submit([encoder.finish()]);
-        vertexBuffer.destroy(); renderer.frame += 1;
+        renderer.frame += 1;
         return ok();
       } catch (error) {
-        globalThis.console?.error?.("MoUI 3D WebGPU frame failed", error);
+        globalThis.console?.error?.("MoUI 3D binary WebGPU frame failed", error);
         return invalidResource();
       }
     },
     three_d_renderer_dispose(rendererHandle) {
       const renderer = threeDRenderers.get(rendererHandle);
       renderer?.depthTexture?.destroy?.();
+      renderer?.vertexBuffer?.destroy?.();
+      if (renderer) {
+        renderer.vertexBuffer = undefined;
+        renderer.vertexPayload = undefined;
+      }
       threeDRenderers.delete(rendererHandle);
     },
     three_d_surface_dispose(surfaceHandle) {
@@ -2742,6 +2771,30 @@ export function createWebGpuImports(options = {}) {
           height: Number(maskHeight) || 0,
           radius: Number(maskRadius) || 0,
         },
+    three_d_update_resources(rendererHandle, payload) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      try {
+        const encoded = `${stringValue(payload) ?? ""}`;
+        const next = renderer.resourceResidency ?? new Map();
+        if (encoded.length > 0) {
+          for (const entry of encoded.split(";")) {
+            const [operation, kind, value] = entry.split(":");
+            if (!operation || !kind || value === undefined) return invalidResource();
+            const key = `${kind}:${value}`;
+            if (operation === "remove") next.delete(key);
+            else if (operation === "create" || operation === "update") next.set(key, operation);
+            else return invalidResource();
+          }
+        }
+        renderer.resourceResidency = next;
+        renderer.resourceRevision = (renderer.resourceRevision || 0) + 1;
+        return ok();
+      } catch (error) {
+        globalThis.console?.error?.("MoUI 3D resource residency update failed", error);
+        return invalidResource();
+      }
+    },
         clip: rendererState(renderer).clip ? { ...rendererState(renderer).clip } : undefined,
         filter: undefined,
         offscreen: !!offscreen,
