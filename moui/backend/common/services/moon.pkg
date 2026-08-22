@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/services" @app_services,
   "wzzc-dev/moui/backend" @backend_host,

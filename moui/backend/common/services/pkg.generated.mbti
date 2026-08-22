@@ -6,9 +6,9 @@ import {
 }
 
 // Values
-pub fn app_environment(bridge~ : @backend.HostServiceBridge, async_queue? : ServiceAsyncQueue?, timer? : @wzzc-dev/moui/services.TimerSource?, routes? : @wzzc-dev/moui/services.RouteSource?) -> @wzzc-dev/moui/services.AppEnvironment
+pub fn app_environment(bridge~ : @backend.HostServiceBridge, async_queue? : ServiceAsyncQueue?, timer? : @wzzc-dev/moui/services.TimerSource?, routes? : @wzzc-dev/moui/services.RouteSource?, lifecycle? : @wzzc-dev/moui/services.AppLifecycleSource?) -> @wzzc-dev/moui/services.AppEnvironment
 
-pub fn app_services(bridge~ : @backend.HostServiceBridge, async_queue? : ServiceAsyncQueue?) -> @wzzc-dev/moui/services.AppServices
+pub fn app_services(bridge~ : @backend.HostServiceBridge, async_queue? : ServiceAsyncQueue?, lifecycle? : @wzzc-dev/moui/services.AppLifecycleSource?) -> @wzzc-dev/moui/services.AppServices
 
 // Errors
 

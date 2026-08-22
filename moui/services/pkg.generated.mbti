@@ -22,6 +22,19 @@ pub fn AppEnvironment::routes(Self) -> RouteSource?
 pub fn AppEnvironment::services(Self) -> AppServices
 pub fn AppEnvironment::timer(Self) -> TimerSource?
 
+pub(all) enum AppLifecycleEvent {
+  Foreground
+  Background
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct AppLifecycleSource {
+  // private fields
+}
+pub fn AppLifecycleSource::active_handler_count(Self) -> Int
+pub fn AppLifecycleSource::new() -> Self
+pub fn AppLifecycleSource::publish(Self, AppLifecycleEvent) -> Int
+pub fn[Msg] AppLifecycleSource::subscription(Self, map~ : (AppLifecycleEvent) -> Msg, key? : String, label? : String) -> @core.Subscription[Msg]
+
 pub struct AppServices {
   files_value : FileServices
   clipboard_value : ClipboardServices
@@ -29,12 +42,14 @@ pub struct AppServices {
   settings_value : SettingsServices
   appearance_value : AppearanceServices
   menus_value : MenuServices
+  platform_value : PlatformServices
 }
 pub fn AppServices::appearance(Self) -> AppearanceServices
 pub fn AppServices::clipboard(Self) -> ClipboardServices
 pub fn AppServices::files(Self) -> FileServices
 pub fn AppServices::menus(Self) -> MenuServices
-pub fn AppServices::new(files? : FileServices, clipboard? : ClipboardServices, urls? : UrlServices, settings? : SettingsServices, appearance? : AppearanceServices, menus? : MenuServices) -> Self
+pub fn AppServices::new(files? : FileServices, clipboard? : ClipboardServices, urls? : UrlServices, settings? : SettingsServices, appearance? : AppearanceServices, menus? : MenuServices, platform? : PlatformServices) -> Self
+pub fn AppServices::platform(Self) -> PlatformServices
 pub fn AppServices::settings(Self) -> SettingsServices
 pub fn AppServices::unavailable() -> Self
 pub fn AppServices::urls(Self) -> UrlServices
@@ -62,6 +77,16 @@ pub(all) enum ApplicationMenuPlacement {
   MenuBar
   ApplicationMenu
 } derive(Eq, @debug.Debug)
+
+pub struct AssociationServices {
+  register_protocol_fn : (ProtocolRegistration) -> ServiceTask[Unit]
+  register_file_fn : (FileAssociation) -> ServiceTask[Unit]
+  unregister_fn : (String) -> ServiceTask[Unit]
+}
+pub fn AssociationServices::new(register_protocol? : (ProtocolRegistration) -> ServiceTask[Unit], register_file? : (FileAssociation) -> ServiceTask[Unit], unregister? : (String) -> ServiceTask[Unit]) -> Self
+pub fn AssociationServices::register_file(Self, FileAssociation) -> ServiceTask[Unit]
+pub fn AssociationServices::register_protocol(Self, ProtocolRegistration) -> ServiceTask[Unit]
+pub fn AssociationServices::unregister(Self, String) -> ServiceTask[Unit]
 
 pub(all) struct ClipboardImage {
   mime_type : String
@@ -95,17 +120,39 @@ pub struct FakeAppServices {
   open_file_value : @ref.Ref[String?]
   save_file_value : @ref.Ref[String?]
   directory_value : @ref.Ref[String?]
+  notifications : Map[String, NotificationRequest]
+  tray_items : Map[String, TrayItem]
+  permission_values : Map[PermissionKind, PermissionStatus]
+  share_requests : Array[ShareRequest]
+  print_requests : Array[PrintRequest]
+  protocol_associations : Map[String, ProtocolRegistration]
+  file_associations : Map[String, FileAssociation]
+  window_states : Map[String, String]
+  lifecycle_source : AppLifecycleSource
   calls_value : Array[String]
 }
 pub fn FakeAppServices::calls(Self) -> Array[String]
 pub fn FakeAppServices::clipboard_text(Self) -> String
 pub fn FakeAppServices::new() -> Self
+pub fn FakeAppServices::notification(Self, String) -> NotificationRequest?
+pub fn FakeAppServices::print_requests(Self) -> Array[PrintRequest]
+pub fn FakeAppServices::publish_lifecycle(Self, AppLifecycleEvent) -> Int
 pub fn FakeAppServices::services(Self) -> AppServices
 pub fn FakeAppServices::set_directory_selection(Self, String?) -> Unit
 pub fn FakeAppServices::set_open_file_selection(Self, String?) -> Unit
+pub fn FakeAppServices::set_permission_status(Self, PermissionKind, PermissionStatus) -> Unit
 pub fn FakeAppServices::set_save_file_selection(Self, String?) -> Unit
 pub fn FakeAppServices::set_system_color_scheme(Self, @core.ColorScheme) -> Unit
 pub fn FakeAppServices::set_text_file(Self, String, String) -> Unit
+pub fn FakeAppServices::share_requests(Self) -> Array[ShareRequest]
+pub fn FakeAppServices::tray_item(Self, String) -> TrayItem?
+
+pub(all) struct FileAssociation {
+  extension : String
+  mime_type : String
+  handler : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FileAssociation::new(extension~ : String, mime_type~ : String, handler~ : String) -> Self
 
 pub(all) struct FileDialogOptions {
   title : String
@@ -142,6 +189,82 @@ pub struct MenuServices {
 pub fn MenuServices::install_application(Self, Array[ApplicationMenu]) -> ServiceTask[Unit]
 pub fn MenuServices::new(show_context? : (Array[@core.ActionCommand]) -> ServiceTask[@core.ActionCommand], install_application? : (Array[ApplicationMenu]) -> ServiceTask[Unit]) -> Self
 pub fn MenuServices::show_context(Self, Array[@core.ActionCommand]) -> ServiceTask[@core.ActionCommand]
+
+pub(all) struct NotificationRequest {
+  id : String
+  title : String
+  body : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NotificationRequest::new(id~ : String, title~ : String, body~ : String) -> Self
+
+pub struct NotificationServices {
+  notify_fn : (NotificationRequest) -> ServiceTask[Unit]
+  cancel_fn : (String) -> ServiceTask[Unit]
+}
+pub fn NotificationServices::cancel(Self, String) -> ServiceTask[Unit]
+pub fn NotificationServices::new(notify? : (NotificationRequest) -> ServiceTask[Unit], cancel? : (String) -> ServiceTask[Unit]) -> Self
+pub fn NotificationServices::notify(Self, NotificationRequest) -> ServiceTask[Unit]
+
+pub(all) enum PermissionKind {
+  Notifications
+  Camera
+  Microphone
+  Location
+  Photos
+  Files
+} derive(Eq, Hash, ToJson, @debug.Debug)
+
+pub struct PermissionServices {
+  request_fn : (PermissionKind) -> ServiceTask[PermissionStatus]
+}
+pub fn PermissionServices::new(request? : (PermissionKind) -> ServiceTask[PermissionStatus]) -> Self
+pub fn PermissionServices::request(Self, PermissionKind) -> ServiceTask[PermissionStatus]
+
+pub(all) enum PermissionStatus {
+  Granted
+  Denied
+  Restricted
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct PlatformServices {
+  notifications_value : NotificationServices
+  tray_value : TrayServices
+  permissions_value : PermissionServices
+  sharing_value : ShareServices
+  printing_value : PrintServices
+  associations_value : AssociationServices
+  window_state_value : WindowStateServices
+  lifecycle_value : AppLifecycleSource?
+}
+pub fn PlatformServices::associations(Self) -> AssociationServices
+pub fn PlatformServices::lifecycle(Self) -> AppLifecycleSource?
+pub fn PlatformServices::new(notifications? : NotificationServices, tray? : TrayServices, permissions? : PermissionServices, sharing? : ShareServices, printing? : PrintServices, associations? : AssociationServices, window_state? : WindowStateServices, lifecycle? : AppLifecycleSource?) -> Self
+pub fn PlatformServices::notifications(Self) -> NotificationServices
+pub fn PlatformServices::permissions(Self) -> PermissionServices
+pub fn PlatformServices::printing(Self) -> PrintServices
+pub fn PlatformServices::sharing(Self) -> ShareServices
+pub fn PlatformServices::tray(Self) -> TrayServices
+pub fn PlatformServices::unavailable() -> Self
+pub fn PlatformServices::window_state(Self) -> WindowStateServices
+
+pub(all) struct PrintRequest {
+  title : String
+  text : String
+  mime_type : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PrintRequest::new(title~ : String, text~ : String, mime_type? : String) -> Self
+
+pub struct PrintServices {
+  print_fn : (PrintRequest) -> ServiceTask[Unit]
+}
+pub fn PrintServices::new(print? : (PrintRequest) -> ServiceTask[Unit]) -> Self
+pub fn PrintServices::print(Self, PrintRequest) -> ServiceTask[Unit]
+
+pub(all) struct ProtocolRegistration {
+  scheme : String
+  handler : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ProtocolRegistration::new(scheme~ : String, handler~ : String) -> Self
 
 pub(all) struct RouteEvent {
   location : RouteLocation
@@ -213,6 +336,19 @@ pub fn SettingsServices::read(Self, String) -> ServiceTask[String?]
 pub fn SettingsServices::remove(Self, String) -> ServiceTask[Unit]
 pub fn SettingsServices::write(Self, String, String) -> ServiceTask[Unit]
 
+pub(all) struct ShareRequest {
+  title : String
+  text : String
+  url : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ShareRequest::new(title~ : String, text~ : String, url? : String?) -> Self
+
+pub struct ShareServices {
+  share_fn : (ShareRequest) -> ServiceTask[Unit]
+}
+pub fn ShareServices::new(share? : (ShareRequest) -> ServiceTask[Unit]) -> Self
+pub fn ShareServices::share(Self, ShareRequest) -> ServiceTask[Unit]
+
 pub struct TimerSource {
   start_fn : (Double, (@core.Frame) -> Unit) -> (() -> Unit)?
 }
@@ -220,11 +356,36 @@ pub fn TimerSource::from_native_timer(start~ : (FuncRef[(() -> Unit) -> Unit], D
 pub fn TimerSource::new(start~ : (Double, (@core.Frame) -> Unit) -> (() -> Unit)?) -> Self
 pub fn[Msg] TimerSource::subscription(Self, interval_ms~ : Double, map~ : (@core.Frame) -> Msg, key? : String, label? : String) -> @core.Subscription[Msg]
 
+pub(all) struct TrayItem {
+  id : String
+  label : String
+  tooltip : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TrayItem::new(id~ : String, label~ : String, tooltip? : String) -> Self
+
+pub struct TrayServices {
+  set_fn : (TrayItem) -> ServiceTask[Unit]
+  remove_fn : (String) -> ServiceTask[Unit]
+}
+pub fn TrayServices::new(set? : (TrayItem) -> ServiceTask[Unit], remove? : (String) -> ServiceTask[Unit]) -> Self
+pub fn TrayServices::remove(Self, String) -> ServiceTask[Unit]
+pub fn TrayServices::set(Self, TrayItem) -> ServiceTask[Unit]
+
 pub struct UrlServices {
   open_fn : (String) -> ServiceTask[Unit]
 }
 pub fn UrlServices::new(open? : (String) -> ServiceTask[Unit]) -> Self
 pub fn UrlServices::open(Self, String) -> ServiceTask[Unit]
+
+pub struct WindowStateServices {
+  read_fn : (String) -> ServiceTask[String?]
+  write_fn : (String, String) -> ServiceTask[Unit]
+  remove_fn : (String) -> ServiceTask[Unit]
+}
+pub fn WindowStateServices::new(read? : (String) -> ServiceTask[String?], write? : (String, String) -> ServiceTask[Unit], remove? : (String) -> ServiceTask[Unit]) -> Self
+pub fn WindowStateServices::read(Self, String) -> ServiceTask[String?]
+pub fn WindowStateServices::remove(Self, String) -> ServiceTask[Unit]
+pub fn WindowStateServices::write(Self, String, String) -> ServiceTask[Unit]
 
 // Type aliases
 

@@ -231,7 +231,13 @@ input. Web semantics-only commits are synchronized independently of redraw.
 
 Typed wire services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
-system-theme requests. Backends can report unavailable services without
+system-theme requests. The app-facing `@services.PlatformServices` facade adds
+neutral contracts for notifications, tray items, permission prompts, sharing,
+printing, protocol/file associations, window-state persistence, and an
+optional foreground/background lifecycle source. These operations use the
+`PlatformChannel` extension point (`channel="moui.platform"`) so concrete
+platform backends can add native behavior without importing platform types into
+the app package. Backends can report unavailable services without
 pretending that app code can call platform APIs directly.
 `HostCapabilitySummary` folds those service flags together with input,
 window-lifecycle, text-input, IME, drag/drop, async-service, and native
@@ -243,6 +249,10 @@ source of truth for actual behavior.
 Apps do not consume this bridge. `@backend_common.app_services(...)` adapts it to
 `@services.AppServices`, and `@backend_common.app_environment(...)` combines those
 services with optional `@services.TimerSource` and `@services.RouteSource`.
+`PlatformServices::unavailable()` is the default, so a host must opt into each
+new operation and may return an explicit `ServiceError::unavailable` when the
+matching OS capability or permission is absent. `AppLifecycleSource` follows
+the same subscription ownership and cancellation rules as route sources.
 Platform backends expose `app_environment()` to composition roots; Program
 closures capture the environment without placing it in business `Model` data.
 Services that cannot finish synchronously, especially browser clipboard reads

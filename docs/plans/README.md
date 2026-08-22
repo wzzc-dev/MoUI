@@ -72,6 +72,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [crater-browser-integration](active/crater-browser-integration.md) | Pure-MoonBit browser demo: crater HTML engine + js_engine scripts rendered through MoUI canvas |
 | [moui-tier-tea-debt-convergence](active/moui-tier-tea-debt-convergence.md) | Converge platform tiers, strict TEA boundaries, entrypoints, and documentation debt |
 | [3d-moui-viewer](active/3d-moui-viewer.md) | Independent static glTF/GLB viewer addon with explicit GPU capability status |
+| [p2-platform-ecosystem](active/p2-platform-ecosystem.md) | Expand platform services, deterministic packaging, and compatibility governance |
 
 ## Done (recent)
 

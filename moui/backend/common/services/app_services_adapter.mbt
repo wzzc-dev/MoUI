@@ -67,6 +67,213 @@ fn[T] host_failure(
 }
 
 ///|
+fn[T] HostServicesAdapter::platform_task(
+  self : HostServicesAdapter,
+  operation~ : String,
+  payload~ : String,
+  decode~ : (@backend_host.PlatformChannelResponse) -> @app_services.ServiceTaskResult[
+    T,
+  ],
+) -> @app_services.ServiceTask[T] {
+  self.service_task(
+    key="platform:" + operation,
+    label="Platform " + operation,
+    request=@backend_host.HostServiceRequest::PlatformChannel(
+      @backend_host.PlatformChannelRequest::new(
+        channel="moui.platform",
+        operation~,
+        payload~,
+      ),
+    ),
+    decode=response => {
+      match response {
+        @backend_host.HostServiceResponse::PlatformChannel(platform_response) =>
+          decode(platform_response)
+        other => host_failure(other)
+      }
+    },
+  )
+}
+
+///|
+fn platform_unit_result(
+  response : @backend_host.PlatformChannelResponse,
+) -> @app_services.ServiceTaskResult[Unit] {
+  match response {
+    @backend_host.PlatformChannelResponse::Ok(_) =>
+      @app_services.ServiceTaskResult::Success(())
+    @backend_host.PlatformChannelResponse::Unavailable(message) =>
+      @app_services.ServiceTaskResult::Failure(
+        @app_services.ServiceError::unavailable(message),
+      )
+    @backend_host.PlatformChannelResponse::Error(message) =>
+      @app_services.ServiceTaskResult::Failure(
+        @app_services.ServiceError::new(code="platform-error", message~),
+      )
+  }
+}
+
+///|
+fn platform_permission_result(
+  response : @backend_host.PlatformChannelResponse,
+) -> @app_services.ServiceTaskResult[@app_services.PermissionStatus] {
+  match response {
+    @backend_host.PlatformChannelResponse::Ok("granted") =>
+      @app_services.ServiceTaskResult::Success(
+        @app_services.PermissionStatus::Granted,
+      )
+    @backend_host.PlatformChannelResponse::Ok("denied") =>
+      @app_services.ServiceTaskResult::Success(
+        @app_services.PermissionStatus::Denied,
+      )
+    @backend_host.PlatformChannelResponse::Ok("restricted") =>
+      @app_services.ServiceTaskResult::Success(
+        @app_services.PermissionStatus::Restricted,
+      )
+    @backend_host.PlatformChannelResponse::Ok(_) =>
+      @app_services.ServiceTaskResult::Failure(
+        @app_services.ServiceError::new(
+          code="invalid-platform-response",
+          message="permission service returned an unknown status",
+        ),
+      )
+    @backend_host.PlatformChannelResponse::Unavailable(message) =>
+      @app_services.ServiceTaskResult::Failure(
+        @app_services.ServiceError::unavailable(message),
+      )
+    @backend_host.PlatformChannelResponse::Error(message) =>
+      @app_services.ServiceTaskResult::Failure(
+        @app_services.ServiceError::new(code="platform-error", message~),
+      )
+  }
+}
+
+///|
+fn HostServicesAdapter::app_platform_services(
+  self : HostServicesAdapter,
+  lifecycle? : @app_services.AppLifecycleSource? = None,
+) -> @app_services.PlatformServices {
+  @app_services.PlatformServices::new(
+    notifications=@app_services.NotificationServices::new(
+      notify=request => {
+        self.platform_task(
+          operation="notification.send",
+          payload=@json.to_json(request).stringify(),
+          decode=platform_unit_result,
+        )
+      },
+      cancel=id => {
+        self.platform_task(
+          operation="notification.cancel",
+          payload=@json.to_json(id).stringify(),
+          decode=platform_unit_result,
+        )
+      },
+    ),
+    tray=@app_services.TrayServices::new(
+      set=item => {
+        self.platform_task(
+          operation="tray.set",
+          payload=@json.to_json(item).stringify(),
+          decode=platform_unit_result,
+        )
+      },
+      remove=id => {
+        self.platform_task(
+          operation="tray.remove",
+          payload=@json.to_json(id).stringify(),
+          decode=platform_unit_result,
+        )
+      },
+    ),
+    permissions=@app_services.PermissionServices::new(request=kind => {
+      self.platform_task(
+        operation="permission.request",
+        payload=@json.to_json(kind).stringify(),
+        decode=platform_permission_result,
+      )
+    }),
+    sharing=@app_services.ShareServices::new(share=request => {
+      self.platform_task(
+        operation="share.open",
+        payload=@json.to_json(request).stringify(),
+        decode=platform_unit_result,
+      )
+    }),
+    printing=@app_services.PrintServices::new(print=request => {
+      self.platform_task(
+        operation="print.document",
+        payload=@json.to_json(request).stringify(),
+        decode=platform_unit_result,
+      )
+    }),
+    associations=@app_services.AssociationServices::new(
+      register_protocol=registration => {
+        self.platform_task(
+          operation="association.protocol.register",
+          payload=@json.to_json(registration).stringify(),
+          decode=platform_unit_result,
+        )
+      },
+      register_file=association => {
+        self.platform_task(
+          operation="association.file.register",
+          payload=@json.to_json(association).stringify(),
+          decode=platform_unit_result,
+        )
+      },
+      unregister=value => {
+        self.platform_task(
+          operation="association.remove",
+          payload=@json.to_json(value).stringify(),
+          decode=platform_unit_result,
+        )
+      },
+    ),
+    window_state=@app_services.WindowStateServices::new(
+      read=window_id => {
+        self.platform_task(
+          operation="window-state.read",
+          payload=@json.to_json(window_id).stringify(),
+          decode=response => {
+            match response {
+              @backend_host.PlatformChannelResponse::Ok(snapshot) =>
+                @app_services.ServiceTaskResult::Success(Some(snapshot))
+              @backend_host.PlatformChannelResponse::Unavailable(message) =>
+                @app_services.ServiceTaskResult::Failure(
+                  @app_services.ServiceError::unavailable(message),
+                )
+              @backend_host.PlatformChannelResponse::Error(message) =>
+                @app_services.ServiceTaskResult::Failure(
+                  @app_services.ServiceError::new(
+                    code="platform-error",
+                    message~,
+                  ),
+                )
+            }
+          },
+        )
+      },
+      write=(window_id, snapshot) => {
+        self.platform_task(
+          operation="window-state.write",
+          payload=@json.to_json({ "windowId": window_id, "snapshot": snapshot }).stringify(),
+          decode=platform_unit_result,
+        )
+      },
+      remove=window_id => {
+        self.platform_task(
+          operation="window-state.remove",
+          payload=@json.to_json(window_id).stringify(),
+          decode=platform_unit_result,
+        )
+      },
+    ),
+    lifecycle~,
+  )
+}
+
+///|
 fn HostServicesAdapter::app_file_services(
   self : HostServicesAdapter,
 ) -> @app_services.FileServices {
@@ -382,6 +589,7 @@ fn HostServicesAdapter::app_menu_services(
 ///|
 fn HostServicesAdapter::as_app_services(
   self : HostServicesAdapter,
+  lifecycle? : @app_services.AppLifecycleSource? = None,
 ) -> @app_services.AppServices {
   @app_services.AppServices::new(
     files=self.app_file_services(),
@@ -462,6 +670,7 @@ fn HostServicesAdapter::as_app_services(
       )
     }),
     menus=self.app_menu_services(),
+    platform=self.app_platform_services(lifecycle~),
   )
 }
 
@@ -470,9 +679,10 @@ fn HostServicesAdapter::app_environment(
   self : HostServicesAdapter,
   timer? : @app_services.TimerSource? = None,
   routes? : @app_services.RouteSource? = None,
+  lifecycle? : @app_services.AppLifecycleSource? = None,
 ) -> @app_services.AppEnvironment {
   @app_services.AppEnvironment::new(
-    services=self.as_app_services(),
+    services=self.as_app_services(lifecycle~),
     timer~,
     routes~,
   )
@@ -484,8 +694,9 @@ fn HostServicesAdapter::app_environment(
 pub fn app_services(
   bridge~ : @backend_host.HostServiceBridge,
   async_queue? : ServiceAsyncQueue? = None,
+  lifecycle? : @app_services.AppLifecycleSource? = None,
 ) -> @app_services.AppServices {
-  HostServicesAdapter::new(bridge~, async_queue~).as_app_services()
+  HostServicesAdapter::new(bridge~, async_queue~).as_app_services(lifecycle~)
 }
 
 ///|
@@ -495,9 +706,11 @@ pub fn app_environment(
   async_queue? : ServiceAsyncQueue? = None,
   timer? : @app_services.TimerSource? = None,
   routes? : @app_services.RouteSource? = None,
+  lifecycle? : @app_services.AppLifecycleSource? = None,
 ) -> @app_services.AppEnvironment {
   HostServicesAdapter::new(bridge~, async_queue~).app_environment(
     timer~,
     routes~,
+    lifecycle~,
   )
 }
