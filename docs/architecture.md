@@ -323,6 +323,8 @@ moui_tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
 moui_tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
 examples/counter/{macos_skia,web_wasm}/ retained Counter platform entrypoints
+examples/three_d_physics_viewer/app/ native-only Rapier physics and 3D scene synchronization example
+examples/three_d_physics_viewer/macos/ macOS native WGPU physics viewer composition root
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
 examples/showcase/harmonyos_window_hosted/ Showcase HarmonyOS window-hosted entrypoint
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)

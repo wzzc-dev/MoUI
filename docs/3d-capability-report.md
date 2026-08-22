@@ -17,6 +17,7 @@ mainline.
 | Web 3D secondary-canvas plugin | experimental / compiled | moui_3d/backend/web |
 | Physics neutral contracts | experimental / contract-only | moui_3d_physics tests |
 | Rapier adapter | implemented / experimental | `Milky2018/moon_rapier@0.5.1`; native gravity, collision, transform and ray-query tests |
+| Rapier viewer example | implemented / experimental | `examples/three_d_physics_viewer`; native Play/Pause/Step/Reset, scene sync and ray-query readout |
 | WebXR/OpenXR | experimental / contract-only | moui_3d_xr descriptor tests |
 
 The loader now carries skin joints/inverse-bind metadata, vertex joints/weights

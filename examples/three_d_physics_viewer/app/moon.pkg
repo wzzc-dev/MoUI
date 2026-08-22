@@ -1,0 +1,15 @@
+import {
+  "moonbitlang/core/math",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui_3d",
+  "wzzc-dev/moui_3d_physics",
+  "wzzc-dev/moui_3d_physics_rapier",
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

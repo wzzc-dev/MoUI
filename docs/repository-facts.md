@@ -12,7 +12,11 @@ This file is generated from repository manifests and validator reports.
 | ./moui_3d |
 | ./moui_3d_wgpu_renderer |
 | ./moui_3d_web_renderer |
+| ./moui_3d_physics |
+| ./moui_3d_physics_rapier |
+| ./moui_3d_xr |
 | ./examples/three_d_viewer |
+| ./examples/three_d_physics_viewer |
 | ./moui_skia_renderer |
 | ./moui_web_renderer |
 | ./moui_wgpu_renderer |
@@ -88,6 +92,7 @@ This file is generated from repository manifests and validator reports.
 | Example | Path | Featured |
 |---|---|---|
 | 3D Viewer | examples/three_d_viewer | no |
+| 3D Physics Viewer | examples/three_d_physics_viewer | no |
 | Agent Counter | examples/agent_counter | no |
 | Counter | examples/counter | no |
 | Multi Window | examples/multi_window | no |
