@@ -52,7 +52,7 @@ fn ElementNode::view_tree_inspector_snapshot(
   self : ElementNode,
 ) -> ViewTreeInspectorSnapshot {
   let nodes : Array[ViewInspectorSummary] = []
-  self.collect_view_summaries(nodes)
+  self.collect_view_summaries(nodes, depth=0)
   {
     root_kind: runtime_view_node_inspector_kind_label(self.view_node),
     node_count: nodes.length(),
@@ -66,9 +66,67 @@ fn ElementNode::view_tree_inspector_snapshot(
 }
 
 ///|
+fn ElementNode::inspector_layout_cache_hits(self : ElementNode) -> Int {
+  let mut total = self.layout_cache.hit_count
+  for child in self.children {
+    total = total + child.inspector_layout_cache_hits()
+  }
+  total
+}
+
+///|
+fn ElementNode::inspector_layout_cache_misses(self : ElementNode) -> Int {
+  let mut total = self.layout_cache.miss_count
+  for child in self.children {
+    total = total + child.inspector_layout_cache_misses()
+  }
+  total
+}
+
+///|
+fn ElementNode::inspector_render_cache_hits(self : ElementNode) -> Int {
+  let mut total = self.render_cache.hit_count
+  for child in self.children {
+    total = total + child.inspector_render_cache_hits()
+  }
+  total
+}
+
+///|
+fn ElementNode::inspector_render_cache_misses(self : ElementNode) -> Int {
+  let mut total = self.render_cache.miss_count
+  for child in self.children {
+    total = total + child.inspector_render_cache_misses()
+  }
+  total
+}
+
+///|
+fn ElementNode::inspector_hit_path(
+  self : ElementNode,
+  point : @core.Point,
+  render : RenderNode,
+) -> Array[Int] {
+  let path = [self.id.value()]
+  let mut index = self.children.length() - 1
+  while index >= 0 {
+    if index < render.children.length() &&
+      render.children[index].hit_bounds().contains(point) {
+      path.append(
+        self.children[index].inspector_hit_path(point, render.children[index]),
+      )
+      return path
+    }
+    index = index - 1
+  }
+  path
+}
+
+///|
 fn ElementNode::collect_view_summaries(
   self : ElementNode,
   nodes : Array[ViewInspectorSummary],
+  depth~ : Int,
 ) -> Unit {
   nodes.push({
     element_id: self.id.value(),
@@ -77,13 +135,14 @@ fn ElementNode::collect_view_summaries(
       Some(key) => key.value()
       None => ""
     },
+    depth,
     child_count: self.children.length(),
     needs_build: self.dirty.needs_build,
     needs_layout: self.dirty.needs_layout,
     needs_paint: self.dirty.needs_paint,
   })
   for child in self.children {
-    child.collect_view_summaries(nodes)
+    child.collect_view_summaries(nodes, depth=depth + 1)
   }
 }
 

@@ -132,6 +132,41 @@ pub fn RuntimeInspectorSnapshot::draw_command_build_count(
 }
 
 ///|
+pub fn RuntimeInspectorSnapshot::layout_cache_hit_count(
+  self : RuntimeInspectorSnapshot,
+) -> Int {
+  self.layout_cache_hit_count
+}
+
+///|
+pub fn RuntimeInspectorSnapshot::layout_cache_miss_count(
+  self : RuntimeInspectorSnapshot,
+) -> Int {
+  self.layout_cache_miss_count
+}
+
+///|
+pub fn RuntimeInspectorSnapshot::render_cache_hit_count(
+  self : RuntimeInspectorSnapshot,
+) -> Int {
+  self.render_cache_hit_count
+}
+
+///|
+pub fn RuntimeInspectorSnapshot::render_cache_miss_count(
+  self : RuntimeInspectorSnapshot,
+) -> Int {
+  self.render_cache_miss_count
+}
+
+///|
+pub fn RuntimeInspectorSnapshot::last_event_hit_path(
+  self : RuntimeInspectorSnapshot,
+) -> Array[Int] {
+  self.last_event_hit_path.copy()
+}
+
+///|
 pub fn RuntimeInspectorSnapshot::program_dispatched_count(
   self : RuntimeInspectorSnapshot,
 ) -> Int {
@@ -553,6 +588,11 @@ pub fn ViewInspectorSummary::key(self : ViewInspectorSummary) -> String {
 }
 
 ///|
+pub fn ViewInspectorSummary::depth(self : ViewInspectorSummary) -> Int {
+  self.depth
+}
+
+///|
 pub fn ViewInspectorSummary::child_count(self : ViewInspectorSummary) -> Int {
   self.child_count
 }
@@ -643,6 +683,13 @@ pub fn LayoutBoundsInspectorEntry::frame(
 }
 
 ///|
+pub fn LayoutBoundsInspectorEntry::constraints(
+  self : LayoutBoundsInspectorEntry,
+) -> @core.Constraints {
+  self.constraints
+}
+
+///|
 pub fn LayoutBoundsInspectorEntry::depth(
   self : LayoutBoundsInspectorEntry,
 ) -> Int {
@@ -689,6 +736,57 @@ pub fn LayoutInspectorSnapshot::bounds(
   self : LayoutInspectorSnapshot,
 ) -> Array[LayoutBoundsInspectorEntry] {
   self.bounds
+}
+
+///|
+pub fn RenderInspectorEntry::element_id(self : RenderInspectorEntry) -> Int {
+  self.element_id
+}
+
+///|
+pub fn RenderInspectorEntry::frame(self : RenderInspectorEntry) -> @core.Rect {
+  self.frame
+}
+
+///|
+pub fn RenderInspectorEntry::paint_bounds(
+  self : RenderInspectorEntry,
+) -> @core.Rect {
+  self.paint_bounds
+}
+
+///|
+pub fn RenderInspectorEntry::depth(self : RenderInspectorEntry) -> Int {
+  self.depth
+}
+
+///|
+pub fn RenderInspectorEntry::child_count(self : RenderInspectorEntry) -> Int {
+  self.child_count
+}
+
+///|
+pub fn RenderInspectorEntry::command_count(self : RenderInspectorEntry) -> Int {
+  self.command_count
+}
+
+///|
+pub fn RenderInspectorEntry::overlay_command_count(
+  self : RenderInspectorEntry,
+) -> Int {
+  self.overlay_command_count
+}
+
+///|
+pub fn RenderInspectorEntry::repaint_boundary(
+  self : RenderInspectorEntry,
+) -> Bool {
+  self.repaint_boundary
+}
+
+///|
+pub fn RenderInspectorEntry::cache_key(self : RenderInspectorEntry) -> String {
+  self.cache_key
 }
 
 ///|
@@ -776,6 +874,96 @@ pub fn RenderInspectorSnapshot::unbalanced_pop_count(
 }
 
 ///|
+pub fn RenderInspectorSnapshot::nodes(
+  self : RenderInspectorSnapshot,
+) -> Array[RenderInspectorEntry] {
+  self.nodes.copy()
+}
+
+///|
+pub fn SemanticsInspectorEntry::node_id(
+  self : SemanticsInspectorEntry,
+) -> String {
+  self.node_id
+}
+
+///|
+pub fn SemanticsInspectorEntry::role(
+  self : SemanticsInspectorEntry,
+) -> @core.SemanticsRole {
+  self.role
+}
+
+///|
+pub fn SemanticsInspectorEntry::label(self : SemanticsInspectorEntry) -> String {
+  self.label
+}
+
+///|
+pub fn SemanticsInspectorEntry::value(self : SemanticsInspectorEntry) -> String {
+  self.value
+}
+
+///|
+pub fn SemanticsInspectorEntry::frame(
+  self : SemanticsInspectorEntry,
+) -> @core.Rect {
+  self.frame
+}
+
+///|
+pub fn SemanticsInspectorEntry::depth(self : SemanticsInspectorEntry) -> Int {
+  self.depth
+}
+
+///|
+pub fn SemanticsInspectorEntry::child_count(
+  self : SemanticsInspectorEntry,
+) -> Int {
+  self.child_count
+}
+
+///|
+pub fn SemanticsInspectorEntry::action_count(
+  self : SemanticsInspectorEntry,
+) -> Int {
+  self.action_count
+}
+
+///|
+pub fn SemanticsInspectorEntry::focusable(
+  self : SemanticsInspectorEntry,
+) -> Bool {
+  self.focusable
+}
+
+///|
+pub fn SemanticsInspectorEntry::selected(
+  self : SemanticsInspectorEntry,
+) -> Bool {
+  self.selected
+}
+
+///|
+pub fn SemanticsInspectorEntry::checked(self : SemanticsInspectorEntry) -> Bool {
+  self.checked
+}
+
+///|
+pub fn SemanticsInspectorEntry::expanded(
+  self : SemanticsInspectorEntry,
+) -> Bool {
+  self.expanded
+}
+
+///|
+pub fn SemanticsInspectorEntry::disabled(
+  self : SemanticsInspectorEntry,
+) -> Bool {
+  self.disabled
+}
+
+///|
 pub fn SemanticsInspectorSnapshot::root_role(
   self : SemanticsInspectorSnapshot,
 ) -> @core.SemanticsRole {
@@ -850,6 +1038,13 @@ pub fn SemanticsInspectorSnapshot::described_count(
   self : SemanticsInspectorSnapshot,
 ) -> Int {
   self.described_count
+}
+
+///|
+pub fn SemanticsInspectorSnapshot::nodes(
+  self : SemanticsInspectorSnapshot,
+) -> Array[SemanticsInspectorEntry] {
+  self.nodes.copy()
 }
 
 ///|

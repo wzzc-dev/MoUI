@@ -15,10 +15,14 @@ fn ElementNode::render_with_environment(
     self.render_cache.cached_render_frame == Some(bounds) &&
     self.render_cache.cached_render_focused == focused {
     match self.render_cache.cached_render {
-      Some(render) => return render
+      Some(render) => {
+        self.render_cache.hit_count = self.render_cache.hit_count + 1
+        return render
+      }
       None => ()
     }
   }
+  self.render_cache.miss_count = self.render_cache.miss_count + 1
   let children : Array[RenderNode] = []
   let commands : Array[DrawCommand] = []
   let post_commands : Array[DrawCommand] = []

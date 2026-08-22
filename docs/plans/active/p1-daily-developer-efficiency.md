@@ -13,7 +13,7 @@
 
 - [x] `moui dev` can run a one-shot build and a watch/restart loop for generated
   projects; Web projects expose refresh and a readable compile-error page.
-- [ ] `moui_devtools` exposes structured Inspector sections and an overlay that
+- [x] `moui_devtools` exposes structured Inspector sections and an overlay that
   can render them without reducing the existing snapshot APIs.
 - [ ] Performance tooling records build/layout/paint/present samples and checks
   percentile budgets from a checked-in baseline format.
@@ -35,3 +35,4 @@
 | Date | Note |
 |------|------|
 | 2026-08-23 | `moui dev` CLI contract, generated project entrypoint, Node watch/restart runner, Web refresh/error overlay, and optional state-file hook implemented. |
+| 2026-08-23 | Structured Inspector reports now expose View/Layout/Render/Semantics nodes, constraints, paint bounds, cache counters, event hit paths, effect/subscription lifecycle, JSON output, and a multi-line overlay. |

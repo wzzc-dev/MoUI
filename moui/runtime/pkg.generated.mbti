@@ -251,6 +251,7 @@ pub struct LayoutBoundsInspectorEntry {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LayoutBoundsInspectorEntry::child_count(Self) -> Int
+pub fn LayoutBoundsInspectorEntry::constraints(Self) -> @core.Constraints
 pub fn LayoutBoundsInspectorEntry::depth(Self) -> Int
 pub fn LayoutBoundsInspectorEntry::element_id(Self) -> Int
 pub fn LayoutBoundsInspectorEntry::frame(Self) -> @core.Rect
@@ -341,6 +342,19 @@ pub(all) enum RedrawSchedulerState {
   RedrawFollowUpScheduled
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct RenderInspectorEntry {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RenderInspectorEntry::cache_key(Self) -> String
+pub fn RenderInspectorEntry::child_count(Self) -> Int
+pub fn RenderInspectorEntry::command_count(Self) -> Int
+pub fn RenderInspectorEntry::depth(Self) -> Int
+pub fn RenderInspectorEntry::element_id(Self) -> Int
+pub fn RenderInspectorEntry::frame(Self) -> @core.Rect
+pub fn RenderInspectorEntry::overlay_command_count(Self) -> Int
+pub fn RenderInspectorEntry::paint_bounds(Self) -> @core.Rect
+pub fn RenderInspectorEntry::repaint_boundary(Self) -> Bool
+
 pub struct RenderInspectorSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
@@ -350,6 +364,7 @@ pub fn RenderInspectorSnapshot::filter_depth(Self) -> Int
 pub fn RenderInspectorSnapshot::from_commands(Array[@core.DrawCommand]) -> Self
 pub fn RenderInspectorSnapshot::image_count(Self) -> Int
 pub fn RenderInspectorSnapshot::layer_depth(Self) -> Int
+pub fn RenderInspectorSnapshot::nodes(Self) -> Array[RenderInspectorEntry]
 pub fn RenderInspectorSnapshot::open_clip_depth(Self) -> Int
 pub fn RenderInspectorSnapshot::open_filter_depth(Self) -> Int
 pub fn RenderInspectorSnapshot::open_layer_depth(Self) -> Int
@@ -463,8 +478,11 @@ pub fn RuntimeInspectorSnapshot::ignored_effect_task_dispatch_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::ignored_program_dispatch_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::ignored_subscription_dispatch_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::last_effect_summary(Self) -> EffectPlanSummary
+pub fn RuntimeInspectorSnapshot::last_event_hit_path(Self) -> Array[Int]
 pub fn RuntimeInspectorSnapshot::last_scheduled_effect_summary(Self) -> EffectPlanSummary
 pub fn RuntimeInspectorSnapshot::last_subscription_plan_summary(Self) -> SubscriptionPlanSummary
+pub fn RuntimeInspectorSnapshot::layout_cache_hit_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::layout_cache_miss_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::layout_pass_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::needs_layout(Self) -> Bool
 pub fn RuntimeInspectorSnapshot::needs_paint(Self) -> Bool
@@ -488,6 +506,8 @@ pub fn RuntimeInspectorSnapshot::program_subscription_plan_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::program_update_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::rebuild_pass_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::rebuild_reason(Self) -> String
+pub fn RuntimeInspectorSnapshot::render_cache_hit_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::render_cache_miss_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::reused_subscription_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::size(Self) -> @core.Size
 pub fn RuntimeInspectorSnapshot::started_effect_task_count(Self) -> Int
@@ -529,6 +549,23 @@ pub(all) enum SemanticsGenerationPrecondition {
   Latest
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct SemanticsInspectorEntry {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsInspectorEntry::action_count(Self) -> Int
+pub fn SemanticsInspectorEntry::checked(Self) -> Bool
+pub fn SemanticsInspectorEntry::child_count(Self) -> Int
+pub fn SemanticsInspectorEntry::depth(Self) -> Int
+pub fn SemanticsInspectorEntry::disabled(Self) -> Bool
+pub fn SemanticsInspectorEntry::expanded(Self) -> Bool
+pub fn SemanticsInspectorEntry::focusable(Self) -> Bool
+pub fn SemanticsInspectorEntry::frame(Self) -> @core.Rect
+pub fn SemanticsInspectorEntry::label(Self) -> String
+pub fn SemanticsInspectorEntry::node_id(Self) -> String
+pub fn SemanticsInspectorEntry::role(Self) -> @core.SemanticsRole
+pub fn SemanticsInspectorEntry::selected(Self) -> Bool
+pub fn SemanticsInspectorEntry::value(Self) -> String
+
 pub struct SemanticsInspectorSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
@@ -540,6 +577,7 @@ pub fn SemanticsInspectorSnapshot::focusable_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::invalid_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::max_depth(Self) -> Int
 pub fn SemanticsInspectorSnapshot::node_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::nodes(Self) -> Array[SemanticsInspectorEntry]
 pub fn SemanticsInspectorSnapshot::required_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::root_role(Self) -> @core.SemanticsRole
 pub fn SemanticsInspectorSnapshot::selected_count(Self) -> Int
@@ -619,6 +657,7 @@ pub struct ViewInspectorSummary {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ViewInspectorSummary::child_count(Self) -> Int
+pub fn ViewInspectorSummary::depth(Self) -> Int
 pub fn ViewInspectorSummary::element_id(Self) -> Int
 pub fn ViewInspectorSummary::key(Self) -> String
 pub fn ViewInspectorSummary::kind(Self) -> String

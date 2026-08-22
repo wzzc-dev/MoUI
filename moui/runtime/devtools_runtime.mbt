@@ -129,6 +129,11 @@ fn runtime_inspector_snapshot_from_state(
     layout_pass_count: state.stats.layout_pass_count,
     paint_pass_count: state.stats.paint_pass_count,
     draw_command_build_count: state.stats.draw_command_build_count,
+    layout_cache_hit_count: state.element_tree.root.inspector_layout_cache_hits(),
+    layout_cache_miss_count: state.element_tree.root.inspector_layout_cache_misses(),
+    render_cache_hit_count: state.element_tree.root.inspector_render_cache_hits(),
+    render_cache_miss_count: state.element_tree.root.inspector_render_cache_misses(),
+    last_event_hit_path: state.last_event_hit_path.copy(),
     program_dispatched_count: program.dispatched_count,
     program_update_count: program.update_count,
     ignored_program_dispatch_count: program.ignored_program_dispatch_count,
@@ -182,7 +187,11 @@ fn layout_inspector_snapshot_from_state(
     node_count: layout_node_count(layout),
     leaf_count: layout_leaf_count(layout),
     max_depth: layout_max_depth(layout),
-    bounds: layout_bounds_entries(state.cached_layout_tree_root(), depth=0),
+    bounds: layout_bounds_entries(
+      state.cached_layout_tree_root(),
+      state.element_tree.root,
+      depth=0,
+    ),
   }
 }
 
@@ -190,7 +199,10 @@ fn layout_inspector_snapshot_from_state(
 fn render_inspector_snapshot_from_state(
   state : RuntimeState,
 ) -> RenderInspectorSnapshot {
-  render_inspector_from_commands(state.cached_draw_commands())
+  {
+    ..render_inspector_from_commands(state.cached_draw_commands()),
+    nodes: render_inspector_entries(state.render_tree.root, depth=0),
+  }
 }
 
 ///|
@@ -260,6 +272,10 @@ fn semantics_inspector_snapshot_from_state(
     invalid_count,
     required_count,
     described_count,
+    nodes: match semantics.root() {
+      Some(root) => semantics_inspector_entries(root, nodes_by_id, depth=0)
+      None => []
+    },
   }
 }
 
@@ -297,18 +313,81 @@ fn layout_max_depth(node : LayoutResult) -> Int {
 ///|
 fn layout_bounds_entries(
   node : PlacedNode,
+  element : ElementNode,
   depth~ : Int,
 ) -> Array[LayoutBoundsInspectorEntry] {
   let entries : Array[LayoutBoundsInspectorEntry] = [
     LayoutBoundsInspectorEntry::{
       element_id: node.element_id.value(),
       frame: node.frame,
+      constraints: element.layout_cache.cached_measure_constraints.unwrap_or(
+        @core.Constraints::tight(node.frame.size),
+      ),
       depth,
       child_count: node.children.length(),
     },
   ]
+  for index, child in node.children {
+    if index < element.children.length() {
+      entries.append(
+        layout_bounds_entries(child, element.children[index], depth=depth + 1),
+      )
+    }
+  }
+  entries
+}
+
+///|
+fn render_inspector_entries(
+  node : RenderNode,
+  depth~ : Int,
+) -> Array[RenderInspectorEntry] {
+  let entries : Array[RenderInspectorEntry] = [
+    {
+      element_id: node.element_id.value(),
+      frame: node.frame,
+      paint_bounds: node.paint_bounds,
+      depth,
+      child_count: node.children.length(),
+      command_count: node.paint_commands.length() +
+      node.post_paint_commands.length(),
+      overlay_command_count: node.overlay_paint_commands.length(),
+      repaint_boundary: node.is_repaint_boundary,
+      cache_key: node.layer_cache_key.unwrap_or(""),
+    },
+  ]
   for child in node.children {
-    entries.append(layout_bounds_entries(child, depth=depth + 1))
+    entries.append(render_inspector_entries(child, depth=depth + 1))
+  }
+  entries
+}
+
+///|
+fn semantics_inspector_entries(
+  id : SemanticsNodeId,
+  nodes : Map[SemanticsNodeId, SemanticsNode],
+  depth~ : Int,
+) -> Array[SemanticsInspectorEntry] {
+  guard nodes.get(id) is Some(node) else { return [] }
+  let entries : Array[SemanticsInspectorEntry] = [
+    {
+      node_id: node.node_id.to_wire(),
+      role: node.role,
+      label: node.label,
+      value: node.value,
+      frame: node.frame,
+      depth,
+      child_count: node.children.length(),
+      action_count: node.actions.length(),
+      focusable: node.focus_order is Some(_),
+      selected: node.state.selected,
+      checked: node.state.checked == Some(SemanticsCheckedState::Checked),
+      expanded: node.state.expanded,
+      disabled: node.state.disabled,
+    },
+  ]
+  for child in node.children {
+    entries.append(semantics_inspector_entries(child, nodes, depth=depth + 1))
   }
   entries
 }
@@ -382,6 +461,7 @@ fn render_inspector_from_commands(
     path_count,
     shader_count,
     unbalanced_pop_count,
+    nodes: [],
   }
 }
 

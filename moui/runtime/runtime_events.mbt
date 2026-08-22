@@ -274,6 +274,10 @@ fn RuntimeState::dispatch_pointer_event(
   event : PointerEvent,
 ) -> InputDispatchResult {
   self.ensure_render_tree()
+  self.last_event_hit_path = self.element_tree.root.inspector_hit_path(
+    event.position,
+    self.render_tree.root,
+  )
   let release_pointer = match self.animfocus.active_pointer_capture {
     Some(_) =>
       event.phase == PointerPhase::Up || event.phase == PointerPhase::Cancel

@@ -19,6 +19,11 @@ pub struct RuntimeInspectorSnapshot {
   priv layout_pass_count : Int
   priv paint_pass_count : Int
   priv draw_command_build_count : Int
+  priv layout_cache_hit_count : Int
+  priv layout_cache_miss_count : Int
+  priv render_cache_hit_count : Int
+  priv render_cache_miss_count : Int
+  priv last_event_hit_path : Array[Int]
   priv program_dispatched_count : Int
   priv program_update_count : Int
   priv ignored_program_dispatch_count : Int
@@ -88,6 +93,7 @@ pub struct ViewInspectorSummary {
   priv element_id : Int
   priv kind : String
   priv key : String
+  priv depth : Int
   priv child_count : Int
   priv needs_build : Bool
   priv needs_layout : Bool
@@ -110,6 +116,7 @@ pub struct ViewTreeInspectorSnapshot {
 pub struct LayoutBoundsInspectorEntry {
   priv element_id : Int
   priv frame : @core.Rect
+  priv constraints : @core.Constraints
   priv depth : Int
   priv child_count : Int
 } derive(Eq, Debug, ToJson)
@@ -121,6 +128,19 @@ pub struct LayoutInspectorSnapshot {
   priv leaf_count : Int
   priv max_depth : Int
   priv bounds : Array[LayoutBoundsInspectorEntry]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub struct RenderInspectorEntry {
+  priv element_id : Int
+  priv frame : @core.Rect
+  priv paint_bounds : @core.Rect
+  priv depth : Int
+  priv child_count : Int
+  priv command_count : Int
+  priv overlay_command_count : Int
+  priv repaint_boundary : Bool
+  priv cache_key : String
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -137,6 +157,24 @@ pub struct RenderInspectorSnapshot {
   priv path_count : Int
   priv shader_count : Int
   priv unbalanced_pop_count : Int
+  priv nodes : Array[RenderInspectorEntry]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub struct SemanticsInspectorEntry {
+  priv node_id : String
+  priv role : @core.SemanticsRole
+  priv label : String
+  priv value : String
+  priv frame : @core.Rect
+  priv depth : Int
+  priv child_count : Int
+  priv action_count : Int
+  priv focusable : Bool
+  priv selected : Bool
+  priv checked : Bool
+  priv expanded : Bool
+  priv disabled : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -152,6 +190,7 @@ pub struct SemanticsInspectorSnapshot {
   priv invalid_count : Int
   priv required_count : Int
   priv described_count : Int
+  priv nodes : Array[SemanticsInspectorEntry]
 } derive(Eq, Debug, ToJson)
 
 ///|
