@@ -87,6 +87,17 @@ test "hello template emits greet app instead of counter" {
 }
 
 ///|
+test "generated project includes a local dev entrypoint" {
+  let files = match build_project_file_plan(test_project_options(["web"])) {
+    Ok(files) => files
+    Err(message) => fail(message)
+  }
+  let dev = test_planned_text(files, ".moui/dev.mjs")
+  assert_true(dev.contains("MOUI_DEV_STATE_FILE"))
+  assert_true(dev.contains("__moui/status"))
+}
+
+///|
 test "project names and validation reject unsafe identifiers" {
   inspect(
     project_id_from_path("/tmp/123 Hello-app"),

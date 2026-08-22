@@ -47,6 +47,7 @@ fn root_usage() -> String {
     #|  moui add platform <platform> [options]
     #|  moui doctor [options]
     #|  moui package [options]
+    #|  moui dev [package] [options]
     #|  moui build <platform> <app> [options]
     #|  moui run <platform> <app> [options]
     #|  moui devices [options]
@@ -59,6 +60,7 @@ fn root_usage() -> String {
     #|  add platform    Add platforms to an existing project.
     #|  doctor          Check the selected platform toolchains.
     #|  package         Print project package inventory.
+    #|  dev             Build, watch, and restart a MoUI project.
     #|  build           Build a mobile app artifact (APK / .app / .hap) without installing.
     #|  run             Build, install, and launch a mobile app on a device or emulator.
     #|  devices         List connected mobile devices and emulators.
@@ -673,6 +675,12 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
       }
     "doctor" => run_doctor_command(args[1:].to_owned(), cwd)
     "package" => run_package_command(args[1:].to_owned(), cwd)
+    "dev" =>
+      match parse_dev_args(args[1:].to_owned(), cwd) {
+        Ok(parsed) => run_dev(parsed)
+        Err(message) =>
+          failed_outcome(message, json_requested(args), dev_usage())
+      }
     "run" =>
       match parse_run_args(args[1:].to_owned(), cwd, detect_host_platform()) {
         Ok(parsed) => run_run(parsed, cwd, detect_host_platform())

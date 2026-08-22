@@ -12,6 +12,7 @@ CLI does not create a separate mobile runtime layer.
 | `moui add platform <platform>` | Add a desktop, web, or mobile platform. |
 | `moui doctor` | Check selected platform toolchains. |
 | `moui package` | Print the project package inventory. |
+| `moui dev [package]` | Build, watch, restart, and serve a project during development. |
 | `moui build <platform> <app>` | Build Android, iOS, or HarmonyOS artifacts. |
 | `moui run <platform> <app>` | Build, install, and launch a mobile artifact. |
 | `moui devices` | List connected mobile devices and emulators. |
@@ -19,6 +20,19 @@ CLI does not create a separate mobile runtime layer.
 | `moui config <action>` | Read or update CLI configuration. |
 
 Use `moui --help` or `moui <command> --help` for current options.
+
+## Develop With A Watch Loop
+
+From a generated project, run a one-shot build with `moui dev --once`. Without
+`--once`, native packages are rebuilt and restarted after source changes. Web
+packages use `--web` (or infer it from `web_wasm`) and serve the project at
+`http://127.0.0.1:3000/`; successful rebuilds refresh the page and failed builds
+appear in the injected error overlay while the watcher keeps running. Use
+`--interval-ms`, `--port`, and `--state PATH` to tune the loop.
+
+The `--state` path is passed to the app as `MOUI_DEV_STATE_FILE` for optional
+file-based model handoff during a restart. V1 restarts processes and does not
+preserve in-process runtime state.
 
 ## Create A Project
 
