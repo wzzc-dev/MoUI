@@ -14,9 +14,9 @@ fn pub_all_budgets() -> Array[CountBudget] {
     // live announcements, and typed actions) is intentionally public because
     // it is the cross-runtime wire contract. Keep the new ratchet explicit.
     { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 188 },
-    // 56 = 39 (ADR 0017 control theme tokens) + 17 growth: control theme
-    // structs and style records added during view sub-package extraction.
-    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 56 },
+    // 57 = 39 (ADR 0017 control theme tokens) + 17 control-theme/style
+    // records + 1 externally constructed incremental-data change enum.
+    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 57 },
     {
       kind: "pub(all)",
       label: "moui/runtime",

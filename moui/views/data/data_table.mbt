@@ -35,6 +35,7 @@ pub fn[Msg] table(
         sortable_columns~,
         theme=resolved_theme,
         row_height~,
+        row_count=rows.length() + 1,
       ),
     ]
     for row_index, row_values in rows {
@@ -48,16 +49,22 @@ pub fn[Msg] table(
           cell~,
           theme=resolved_theme,
           row_height~,
+          row_count=rows.length() + 1,
         ),
       )
     }
-    @container.container(
+    let base = @container.container(
       @layout.column(rendered_rows, spacing=0.0, align=@style.CrossAlign::Start),
       width=table_width,
       height=row_height * (rows.length() + 1).to_double(),
       variant=@style.ContainerVariant::Base,
       theme=resolved_theme,
       padding=0.0,
-    ).semantics_role(@core.SemanticsRole::Grid)
+    )
+    data_grid_semantics(
+      base,
+      row_count=rows.length() + 1,
+      column_count=columns.length(),
+    )
   }
 }

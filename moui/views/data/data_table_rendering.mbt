@@ -7,9 +7,10 @@ fn[Msg] table_header(
   sortable_columns~ : Array[String],
   theme~ : @core.Theme,
   row_height~ : Double,
+  row_count~ : Int,
 ) -> @core.View[Msg] {
   let cells : Array[@core.View[Msg]] = []
-  for column in columns {
+  for column_index, column in columns {
     let sorted = sort_column == column.id
     let label = table_header_label(column, sorted~, sort_ascending~)
     let content : @core.View[Msg] = match on_sort {
@@ -45,19 +46,31 @@ fn[Msg] table_header(
           height=row_height - 8.0,
         )
     }
+    let cell_view = @container.container(
+      content,
+      width=column.width,
+      height=row_height,
+      background=theme.palette.surface_variant.multiply_alpha(0.72),
+      corner_radius=0.0,
+      theme~,
+      padding=4.0,
+    )
     cells.push(
-      @container.container(
-        content,
-        width=column.width,
-        height=row_height,
-        background=theme.palette.surface_variant.multiply_alpha(0.72),
-        corner_radius=0.0,
-        theme~,
-        padding=4.0,
+      data_grid_cell_semantics(
+        cell_view,
+        row_index=0,
+        column_index~,
+        row_count~,
+        column_count=columns.length(),
       ),
     )
   }
-  @layout.row(cells, spacing=0.0, align=@style.CrossAlign::Start)
+  data_grid_row_semantics(
+    @layout.row(cells, spacing=0.0, align=@style.CrossAlign::Start),
+    row_index=0,
+    row_count~,
+    column_count=columns.length(),
+  )
 }
 
 ///|
@@ -70,6 +83,7 @@ fn[Msg] table_row(
   cell~ : ((Int, TableColumn, String) -> @core.View[Msg])?,
   theme~ : @core.Theme,
   row_height~ : Double,
+  row_count~ : Int,
 ) -> @core.View[Msg] {
   let cells : Array[@core.View[Msg]] = []
   for column_index, column in columns {
@@ -89,30 +103,41 @@ fn[Msg] table_row(
           height=row_height - 8.0,
         )
     }
+    let cell_view = @container.container(
+      content,
+      width=column.width,
+      height=row_height,
+      background=if selected {
+        theme.palette.primary.multiply_alpha(0.12)
+      } else {
+        theme.palette.surface.multiply_alpha(0.0)
+      },
+      corner_radius=0.0,
+      theme~,
+      padding=4.0,
+    ).border(
+      @core.BorderStyle::new(
+        brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.48)),
+        width=1.0,
+      ),
+    )
     cells.push(
-      @container.container(
-        content,
-        width=column.width,
-        height=row_height,
-        background=if selected {
-          theme.palette.primary.multiply_alpha(0.12)
-        } else {
-          theme.palette.surface.multiply_alpha(0.0)
-        },
-        corner_radius=0.0,
-        theme~,
-        padding=4.0,
-      ).border(
-        @core.BorderStyle::new(
-          brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.48)),
-          width=1.0,
-        ),
+      data_grid_cell_semantics(
+        cell_view,
+        row_index=row_index + 1,
+        column_index~,
+        row_count~,
+        column_count=columns.length(),
+        selected~,
       ),
     )
   }
-  let base = @layout.row(cells, spacing=0.0, align=@style.CrossAlign::Start)
-    .semantics_role(@core.SemanticsRole::ListItem)
-    .semantics_selected(selected~)
+  let base = data_grid_row_semantics(
+    @layout.row(cells, spacing=0.0, align=@style.CrossAlign::Start),
+    row_index=row_index + 1,
+    row_count~,
+    column_count=columns.length(),
+  ).semantics_selected(selected~)
   match on_row_select {
     Some(handler) => base.on_tap(handler(row_index))
     None => base
@@ -126,45 +151,4 @@ fn table_columns_width(columns : Array[TableColumn]) -> Double {
     width = width + column.width
   }
   width
-}
-
-///|
-fn table_header_label(
-  column : TableColumn,
-  sorted~ : Bool,
-  sort_ascending~ : Bool,
-) -> String {
-  if sorted {
-    let marker = if sort_ascending { " ^" } else { " v" }
-    column.label + marker
-  } else {
-    column.label
-  }
-}
-
-///|
-fn table_header_accessibility_label(
-  column : TableColumn,
-  sorted~ : Bool,
-  sort_ascending~ : Bool,
-) -> String {
-  if sorted {
-    let suffix = if sort_ascending {
-      ", sorted ascending"
-    } else {
-      ", sorted descending"
-    }
-    column.label + suffix
-  } else {
-    "Sort by " + column.label
-  }
-}
-
-///|
-fn table_column_is_sortable(
-  column : TableColumn,
-  sortable_columns : Array[String],
-) -> Bool {
-  sortable_columns.length() == 0 ||
-  @controls.string_array_contains(sortable_columns, column.id)
 }
