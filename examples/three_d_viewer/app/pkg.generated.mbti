@@ -27,6 +27,7 @@ pub struct Model {
   selected_clip : Int
   picked_node : @moui_3d.NodeId?
   fixture_loaded : Bool
+  orbit_time : Double
   dragging : Bool
   last_pointer_x : Double
   last_pointer_y : Double
