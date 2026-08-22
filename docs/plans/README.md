@@ -72,13 +72,13 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [crater-browser-integration](active/crater-browser-integration.md) | Pure-MoonBit browser demo: crater HTML engine + js_engine scripts rendered through MoUI canvas |
 | [moui-tier-tea-debt-convergence](active/moui-tier-tea-debt-convergence.md) | Converge platform tiers, strict TEA boundaries, entrypoints, and documentation debt |
 | [3d-moui-viewer](active/3d-moui-viewer.md) | Independent static glTF/GLB viewer addon with explicit GPU capability status |
-| [p2-platform-ecosystem](active/p2-platform-ecosystem.md) | Expand platform services, deterministic packaging, and compatibility governance |
 
 ## Done (recent)
 
 | Plan | Summary |
 |------|---------|
 | [p1-daily-developer-efficiency](done/p1-daily-developer-efficiency.md) | Add the dev loop, structured Inspector, performance budgets, and scalable data-view primitives |
+| [p2-platform-ecosystem](done/p2-platform-ecosystem.md) | Expand platform services, deterministic packaging, and compatibility governance |
 | [macos-first-present-visibility](done/macos-first-present-visibility.md) | Reveal Mo Desktop and Mo Workbench only after their first successful macOS presentation |
 | [webview-window-drag](done/webview-window-drag.md) | Preserve clickable WKWebView top-bar controls while blank space drags the macOS window |
 | [webview-moui-overlay](done/webview-moui-overlay.md) | Expose MoUI overlay pixels and pointer input above macOS WKWebView siblings |

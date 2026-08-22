@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "levels": {
+    "stable": "Public app API with focused tests, documentation, and a maintained example or consumer.",
+    "preview": "Public API with focused tests, but behavior or host coverage is still app-owned or incomplete.",
+    "experimental": "Diagnostic or platform-specific API without a product readiness commitment."
+  },
+  "components": [
+    {
+      "id": "button",
+      "package": "moui/views",
+      "level": "stable",
+      "status": "ready",
+      "evidence": ["moui/views/button/button_test.mbt", "docs/view-catalog.md"]
+    },
+    {
+      "id": "text-field",
+      "package": "moui/views",
+      "level": "stable",
+      "status": "ready",
+      "evidence": ["moui/views/text/text_input_pointer_wbtest.mbt", "docs/view-catalog.md"]
+    },
+    {
+      "id": "table",
+      "package": "moui/views",
+      "level": "preview",
+      "status": "partial",
+      "evidence": ["moui/views/tests/smoke/smoke_data_test.mbt", "docs/view-catalog.md"]
+    },
+    {
+      "id": "platform-services",
+      "package": "moui/services",
+      "level": "preview",
+      "status": "contract-only",
+      "evidence": ["moui/services/platform_services.mbt", "docs/platform-host-contract.md"]
+    }
+  ]
+}

@@ -29,6 +29,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 |---|---|---|
 | [moui-app-package-boundary.md](moui-app-package-boundary.md) | `canonical` | App imports and owning-package rules |
 | [api-surface.md](api-surface.md) | `canonical` | Public API tiers and guards |
+| [compatibility-policy.md](compatibility-policy.md) | `canonical` | SemVer, deprecation, quality levels, and external consumers |
 | [view-catalog.md](view-catalog.md) | `canonical` | Public controls coverage |
 | [views-api-guide.md](views-api-guide.md) | `deep` | Views API usage |
 | [tea-program-model.md](tea-program-model.md) | `canonical` | Program / Effect / Subscription model |

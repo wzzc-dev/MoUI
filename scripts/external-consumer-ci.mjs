@@ -201,6 +201,14 @@ const extractPackage = (packageZip, destination) => {
 };
 
 const options = parseArgs(process.argv.slice(2));
+// Keep package-mode consumers tied to the checked-in compatibility contract.
+if (options.source === "package") {
+  const metadata = spawnSync("node", ["scripts/validate-ecosystem-metadata.mjs"], {
+    cwd: repoRoot,
+    stdio: "inherit",
+  });
+  if (metadata.status !== 0) process.exit(metadata.status ?? 1);
+}
 const temporaryRoot = mkdtempSync(join(tmpdir(), "moui-external-consumer-"));
 const consumerRoot = join(temporaryRoot, "consumer");
 const stagedPackagesRoot = join(temporaryRoot, "packages");
