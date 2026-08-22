@@ -54,6 +54,31 @@ test "RuntimeViewNode: direct mount leaves no pending build" {
 }
 
 ///|
+test "Inspector: records cache reuse and pointer hit paths" {
+  let app = AppRuntime::new_view(
+    root=runtime_state_probe_view(kind="inspector", declaration_token="one"),
+    size=@core.Size::new(width=40.0, height=20.0),
+  )
+  let initial = app.inspector_snapshot().runtime()
+  assert_true(initial.layout_cache_miss_count() > 0)
+  assert_true(initial.render_cache_miss_count() > 0)
+  app.state.layout_current_tree()
+  app.state.render_current_tree()
+  ignore(
+    app.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  let snapshot = app.inspector_snapshot().runtime()
+  assert_true(snapshot.layout_cache_hit_count() > 0)
+  assert_true(snapshot.render_cache_hit_count() > 0)
+  inspect(snapshot.last_event_hit_path().length(), content="1")
+}
+
+///|
 test "RuntimeViewNode: same identity preserves state and remount resets it" {
   let current = adapt_view_for_runtime(
     runtime_state_probe_view(kind="probe", declaration_token="one"),

@@ -7,15 +7,35 @@ import {
 }
 
 // Values
+pub fn inspector_report(@runtime.InspectorSnapshot) -> InspectorReport
+
+pub fn inspector_report_text(@runtime.InspectorSnapshot) -> String
+
 pub fn snapshot_debug_text(@runtime.InspectorSnapshot) -> String
 
 pub fn snapshot_json(@runtime.InspectorSnapshot, indent? : Int) -> String
+
+pub fn snapshot_report_json(@runtime.InspectorSnapshot, indent? : Int) -> String
 
 pub fn snapshot_summary(@runtime.InspectorSnapshot) -> SnapshotSummary
 
 // Errors
 
 // Types and methods
+pub(all) struct InspectorReport {
+  runtime : @runtime.RuntimeInspectorSnapshot
+  view_tree : @runtime.ViewTreeInspectorSnapshot
+  layout : @runtime.LayoutInspectorSnapshot
+  render : @runtime.RenderInspectorSnapshot
+  semantics : @runtime.SemanticsInspectorSnapshot
+} derive(Eq, ToJson, @debug.Debug)
+pub fn InspectorReport::from_snapshot(@runtime.InspectorSnapshot) -> Self
+pub fn InspectorReport::layout(Self) -> @runtime.LayoutInspectorSnapshot
+pub fn InspectorReport::render(Self) -> @runtime.RenderInspectorSnapshot
+pub fn InspectorReport::runtime(Self) -> @runtime.RuntimeInspectorSnapshot
+pub fn InspectorReport::semantics(Self) -> @runtime.SemanticsInspectorSnapshot
+pub fn InspectorReport::view_tree(Self) -> @runtime.ViewTreeInspectorSnapshot
+
 pub struct SnapshotHistory {
   // private fields
 }
@@ -42,4 +62,3 @@ pub fn SnapshotSummary::text(Self) -> String
 // Type aliases
 
 // Traits
-

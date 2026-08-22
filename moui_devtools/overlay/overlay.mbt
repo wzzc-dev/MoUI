@@ -2,12 +2,34 @@
 pub fn snapshot_overlay(
   snapshot : @runtime.InspectorSnapshot,
   theme? : @core.Theme = @views.default_theme(),
+  max_lines? : Int = 12,
 ) -> @core.View[Unit] {
-  @views.text(
-    @devtools.snapshot_debug_text(snapshot),
-    role=@views.TextRole::Caption,
-    theme~,
-    width=520.0,
-    height=24.0,
+  let lines = @devtools.inspector_report_text(snapshot)
+    .split("\n")
+    .map(line => line.to_owned())
+    .to_array()
+  let views : Array[@core.View[Unit]] = []
+  let count = if max_lines < lines.length() {
+    max_lines.max(1)
+  } else {
+    lines.length()
+  }
+  for index in 0..<count {
+    views.push(
+      @views.text(
+        lines[index],
+        role=if index == 0 { Body } else { Caption },
+        theme~,
+        width=720.0,
+        height=22.0,
+      ),
+    )
+  }
+  @views.padding(
+    @views.column(views, spacing=2.0).frame(
+      width=744.0,
+      height=count.to_double() * 24.0,
+    ),
+    12.0,
   )
 }

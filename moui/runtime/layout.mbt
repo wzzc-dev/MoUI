@@ -34,10 +34,14 @@ fn ElementNode::measure_with_text_system(
     self.layout_cache.cached_measure_environment == Some(environment) &&
     self.layout_cache.cached_measure_style == Some(style) {
     match self.layout_cache.cached_measured {
-      Some(measured) => return measured
+      Some(measured) => {
+        self.layout_cache.hit_count = self.layout_cache.hit_count + 1
+        return measured
+      }
       None => ()
     }
   }
+  self.layout_cache.miss_count = self.layout_cache.miss_count + 1
   let child_constraints = self.view_node.child_constraints(constraints)
   let child_environment = self.view_node.child_environment(environment)
   let child_style = self.view_node.child_style(style)
@@ -90,7 +94,10 @@ fn ElementNode::place_with_text_system(
     self.layout_cache.cached_place_environment == Some(environment) &&
     self.layout_cache.cached_place_style == Some(style) {
     match self.layout_cache.cached_placed {
-      Some(placed) => return placed
+      Some(placed) => {
+        self.layout_cache.hit_count = self.layout_cache.hit_count + 1
+        return placed
+      }
       None => ()
     }
   }

@@ -62,6 +62,8 @@ priv struct ElementLayoutCache {
   mut cached_place_environment : Environment?
   mut cached_place_style : ViewStyle?
   mut cached_placed : PlacedNode?
+  mut hit_count : Int
+  mut miss_count : Int
 }
 
 ///|
@@ -71,6 +73,8 @@ priv struct ElementRenderCache {
   mut cached_plan : ViewPaintPlan?
   mut cached_render : RenderNode?
   mut content_revision : Int
+  mut hit_count : Int
+  mut miss_count : Int
 }
 
 ///|
@@ -253,6 +257,8 @@ fn ElementLayoutCache::empty() -> ElementLayoutCache {
     cached_place_environment: None,
     cached_place_style: None,
     cached_placed: None,
+    hit_count: 0,
+    miss_count: 0,
   }
 }
 
@@ -277,6 +283,8 @@ fn ElementRenderCache::empty() -> ElementRenderCache {
     cached_plan: None,
     cached_render: None,
     content_revision: 0,
+    hit_count: 0,
+    miss_count: 0,
   }
 }
 

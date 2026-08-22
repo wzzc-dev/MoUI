@@ -7,7 +7,7 @@ import {
 }
 
 // Values
-pub fn snapshot_overlay(@runtime.InspectorSnapshot, theme? : @core.Theme) -> @core.View[Unit]
+pub fn snapshot_overlay(@runtime.InspectorSnapshot, theme? : @core.Theme, max_lines? : Int) -> @core.View[Unit]
 
 // Errors
 
@@ -16,4 +16,3 @@ pub fn snapshot_overlay(@runtime.InspectorSnapshot, theme? : @core.Theme) -> @co
 // Type aliases
 
 // Traits
-
