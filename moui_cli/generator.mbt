@@ -156,6 +156,41 @@ fn app_pkg_text() -> String {
 }
 
 ///|
+fn dev_runner_text() -> String {
+  (
+    #|#!/usr/bin/env node
+    #|
+    #|import fs from "node:fs";
+    #|import http from "node:http";
+    #|import path from "node:path";
+    #|import { spawn } from "node:child_process";
+    #|const args = process.argv.slice(2);
+    #|const value = (name, fallback) => { const i = args.findIndex((a) => a === name || a.startsWith(name + "=")); if (i < 0) return fallback; return args[i].includes("=") ? args[i].slice(args[i].indexOf("=") + 1) : (args[i + 1] || fallback); };
+    #|const has = (name) => args.includes(name) || args.some((a) => a.startsWith(name + "="));
+    #|const root = path.resolve(value("--project-root", process.cwd()));
+    #|const pkg = value("--package", fs.existsSync(path.join(root, "web_wasm", "moon.pkg")) ? "web_wasm" : "app");
+    #|const target = value("--target", pkg.endsWith("web_wasm") ? "wasm-gc" : "native");
+    #|const once = has("--once") || has("--build-only");
+    #|const web = has("--web") || target.startsWith("wasm");
+    #|const interval = Math.max(150, Number(value("--interval-ms", "500")) || 500);
+    #|const port = Math.max(1, Number(value("--port", "3000")) || 3000);
+    #|const stateFile = value("--state", path.join(root, ".moui", "dev-state.json"));
+    #|const status = { schemaVersion: 1, ok: true, phase: "starting", generation: 0, package: pkg, target, error: "" };
+    #|const update = (patch) => { Object.assign(status, patch, { updatedAt: Date.now() }); fs.mkdirSync(path.join(root, ".moui"), { recursive: true }); fs.writeFileSync(path.join(root, ".moui", "dev-status.json"), JSON.stringify(status, null, 2)); };
+    #|const log = (message) => console.log("[moui dev] " + message);
+    #|const run = (command, argv, env = {}) => new Promise((resolve) => { const child = spawn(command, argv, { cwd: root, env: { ...process.env, ...env }, stdio: ["ignore", "pipe", "pipe"] }); let output = ""; child.stdout.on("data", (x) => { process.stdout.write(x); output += x; }); child.stderr.on("data", (x) => { process.stderr.write(x); output += x; }); child.on("error", () => resolve({ code: 1, output })); child.on("exit", (code) => resolve({ code: code || 0, output })); });
+    #|const files = (dir, out = []) => { if (!fs.existsSync(dir)) return out; for (const e of fs.readdirSync(dir, { withFileTypes: true })) { if ([".git", ".moui", "_build", "node_modules"].includes(e.name)) continue; const f = path.join(dir, e.name); if (e.isDirectory()) files(f, out); else if (/\.(mbt|mbti|json|md|html|css|js|mjs)$/.test(e.name)) { const s = fs.statSync(f); out.push(f + ":" + s.mtimeMs + ":" + s.size); } } return out.sort().join("\n"); };
+    #|const build = async () => { update({ phase: "building", error: "" }); log("building " + pkg + " (" + target + ")"); const result = await run(process.env.MOON || "moon", ["build", pkg, "--target", target]); if (result.code) { update({ ok: false, phase: "error", error: result.output.trim() || "build failed" }); return false; } update({ ok: true, phase: web ? "ready" : "built", generation: status.generation + 1 }); log("build ready (generation " + status.generation + ")"); return true; };
+    #|const client = "(() => { let generation = null; const box = document.createElement('pre'); Object.assign(box.style, {position:'fixed',inset:'12px',zIndex:2147483647,padding:'16px',background:'#2b1111',color:'#ffd6d6',whiteSpace:'pre-wrap',display:'none'}); document.body.appendChild(box); async function poll(){try{const s=await (await fetch('/__moui/status',{cache:'no-store'})).json(); if(generation!==null&&s.ok&&s.generation!==generation) location.reload(); generation=s.generation; box.textContent=s.error||''; box.style.display=s.error?'block':'none';}catch(_){} setTimeout(poll,700)} poll()})();";
+    #|const server = web ? http.createServer((req, res) => { const u = new URL(req.url, "http://localhost"); if (u.pathname === "/__moui/status") { res.setHeader("content-type", "application/json"); res.end(JSON.stringify(status)); return; } if (u.pathname === "/__moui/client.js") { res.setHeader("content-type", "text/javascript"); res.end(client); return; } const rel = decodeURIComponent(u.pathname).replace(/^\/+/, "") || "web_wasm/index.html"; const file = path.resolve(root, rel); if ((file !== root && !file.startsWith(root + path.sep)) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; res.end("Not found"); return; } let data = fs.readFileSync(file); if (file.endsWith(".html")) { data = Buffer.from(data.toString().replace(/<head>/i, '<head><script src="/__moui/client.js"></script>')); res.setHeader("content-type", "text/html; charset=utf-8"); } res.end(data); }).listen(port, "127.0.0.1", () => log("web server: http://127.0.0.1:" + port + "/")) : null;
+    #|let child = null; let stopping = false; const stop = async () => { if (!child || child.exitCode !== null) return; child.kill("SIGTERM"); await new Promise((resolve) => { const timer = setTimeout(() => { child.kill("SIGKILL"); resolve(); }, 1500); child.once("exit", () => { clearTimeout(timer); resolve(); }); }); child = null; };
+    #|const initial = await build(); if (once) { if (server) server.close(); process.exit(initial ? 0 : 1); } if (initial && !web) { child = spawn(process.env.MOON || "moon", ["run", pkg, "--target", target], { cwd: root, env: { ...process.env, MOUI_DEV_STATE_FILE: stateFile, MOUI_DEV_GENERATION: String(status.generation) }, stdio: "inherit" }); }
+    #|let last = files(root); log("watching " + root + " every " + interval + "ms"); const timer = setInterval(async () => { const next = files(root); if (next === last || stopping) return; last = next; await stop(); if (await build() && !web) child = spawn(process.env.MOON || "moon", ["run", pkg, "--target", target], { cwd: root, env: { ...process.env, MOUI_DEV_STATE_FILE: stateFile, MOUI_DEV_GENERATION: String(status.generation) }, stdio: "inherit" }); }, interval);
+    #|const shutdown = async () => { if (stopping) return; stopping = true; clearInterval(timer); await stop(); if (server) server.close(); process.exit(0); }; process.once("SIGINT", shutdown); process.once("SIGTERM", shutdown);
+  )
+}
+
+///|
 fn app_text(title : String, template_id? : String = "counter") -> String {
   let title = moon_string(title)
   if template_id == "hello" {
@@ -667,6 +702,7 @@ fn build_project_file_plan(
   let files = [
     text_file(".gitignore", gitignore_text()),
     text_file("README.md", readme_text(options)),
+    text_file(".moui/dev.mjs", dev_runner_text()),
     text_file("moon.mod", moon_mod_text(options)),
     text_file("moon.work", moon_work_text()),
     text_file("moui.project.json", manifest.to_json_text()),

@@ -249,6 +249,23 @@ moui devices --json           # machine-readable
 moui devices --platform android
 ```
 
+### `moui dev`
+
+Use the development loop for incremental builds and local feedback:
+
+```sh
+moui dev --once                         # build once
+moui dev --package web_wasm --web       # watch and serve Web
+moui dev --interval-ms 250 --port 4173  # tune polling and Web port
+```
+
+Native targets restart after a successful rebuild. Web targets expose a status
+endpoint, refresh the page after a successful build, and display compiler
+diagnostics in an injected overlay while continuing to watch for the fix. The
+optional `--state PATH` value is exported as `MOUI_DEV_STATE_FILE`; applications
+may use it for file-based model handoff during a restart. This is deliberately
+not an in-process, state-preserving hot reload.
+
 ### Build, install, and launch
 
 `moui run` orchestrates `moui build-*` → install (`adb` / `xcrun simctl` /

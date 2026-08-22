@@ -104,6 +104,37 @@ test "help and version routes succeed" {
 }
 
 ///|
+test "dev parser forwards watch options to the runner" {
+  let parsed = parse_dev_args(
+    [
+      "web_wasm", "--target=wasm-gc", "--interval-ms", "250", "--port=4173", "--state",
+      ".moui/state.json", "--web", "--once", "--json",
+    ],
+    "/workspace/demo",
+  )
+  guard parsed is Ok(parsed) else { fail("expected dev arguments to parse") }
+  inspect(parsed.project_root, content="/workspace/demo")
+  inspect(
+    parsed.runner_args.join("|"),
+    content="--target=wasm-gc|--interval-ms=250|--port=4173|--state=.moui/state.json|--web|--once|--json|--package=web_wasm",
+  )
+}
+
+///|
+test "dev parser rejects duplicate package paths and invalid intervals" {
+  match parse_dev_args(["app", "--package", "other"], "/workspace") {
+    Err(message) =>
+      inspect(message, content="moui dev accepts at most one package path")
+    Ok(_) => fail("expected duplicate package paths to fail")
+  }
+  match parse_dev_args(["--interval-ms", "0"], "/workspace") {
+    Err(message) =>
+      inspect(message, content="--interval-ms must be a positive integer")
+    Ok(_) => fail("expected invalid interval to fail")
+  }
+}
+
+///|
 test "add platform parser accepts positional platforms" {
   let parsed = parse_add_platform_args(
     ["android", "--platform=ios", "--bundle-id=dev.example.demo"],
