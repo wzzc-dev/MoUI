@@ -17,10 +17,11 @@
   can render them without reducing the existing snapshot APIs.
 - [x] Performance tooling records build/layout/paint/present samples and checks
   percentile budgets from a checked-in baseline format.
-- [ ] Data views provide variable-height virtualization with stable anchors and
+- [x] Data views provide variable-height virtualization with stable anchors and
   grid-oriented selection/editing/semantics primitives while preserving current
   fixed-height APIs.
-- [ ] Each slice is validated and committed before the next slice begins.
+- [x] Each implementation slice is validated and committed before the next
+  slice begins.
 
 ## Decision log
 
@@ -37,3 +38,4 @@
 | 2026-08-23 | `moui dev` CLI contract, generated project entrypoint, Node watch/restart runner, Web refresh/error overlay, and optional state-file hook implemented. |
 | 2026-08-23 | Structured Inspector reports now expose View/Layout/Render/Semantics nodes, constraints, paint bounds, cache counters, event hit paths, effect/subscription lifecycle, JSON output, and a multi-line overlay. |
 | 2026-08-23 | Runtime phase profiling, five native Skia workloads, percentile/resource guardrails, a MoonBit validator, PR catalog gates, and CI report upload implemented. |
+| 2026-08-23 | Variable-height keyed list metrics, stable anchors, frozen grid viewport reuse, keyboard range selection, controlled cell editing, incremental keyed data, and committed grid/row/cell semantics implemented without changing fixed-height list APIs. |

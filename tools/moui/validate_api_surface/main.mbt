@@ -400,8 +400,10 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 630,
-      max_pub_lines: 310,
+      // Variable-height list and data-grid primitives add six app-facing
+      // declarations plus their explicit type re-exports.
+      max_lines: 656,
+      max_pub_lines: 316,
       max_pub_all_lines: 0,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [

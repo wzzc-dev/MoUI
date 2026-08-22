@@ -50,7 +50,9 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/views/pkg.generated.mbti",
       category: "app_constructor",
-      max_count: 134,
+      // Variable list rendering and grid semantics add three view-returning
+      // app entrypoints; the remaining data-grid API is state-helper surface.
+      max_count: 137,
     },
     {
       path: "moui/views/pkg.generated.mbti",

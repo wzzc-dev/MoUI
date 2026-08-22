@@ -102,6 +102,20 @@ pub fn[Msg] data_filter(id~ : String, label~ : String, selected~ : Bool, message
 
 pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[@data.DataFilter[Msg]], result_count? : Int, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn data_grid_cell(row~ : Int, column~ : Int) -> @data.DataGridCell
+
+pub fn data_grid_cell_key(String, String) -> String
+
+pub fn[Msg] data_grid_cell_semantics(@core.View[Msg], row_index~ : Int, column_index~ : Int, row_count~ : Int, column_count~ : Int, selected? : Bool, read_only? : Bool) -> @core.View[Msg]
+
+pub fn data_grid_freeze_panes(rows? : Int, columns? : Int) -> @data.DataGridFreezePanes
+
+pub fn[Msg] data_grid_row_semantics(@core.View[Msg], row_index~ : Int, row_count~ : Int, column_count~ : Int) -> @core.View[Msg]
+
+pub fn[Msg] data_grid_semantics(@core.View[Msg], row_count~ : Int, column_count~ : Int) -> @core.View[Msg]
+
+pub fn data_grid_viewport(first_row~ : Int, last_row~ : Int, first_column~ : Int, last_column~ : Int, row_count~ : Int, column_count~ : Int, overscan_rows? : Int, overscan_columns? : Int, freeze? : @data.DataGridFreezePanes) -> @data.DataGridViewport
+
 pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @style.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
 pub fn default_theme() -> @core.Theme
@@ -296,6 +310,8 @@ pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : @style.Mai
 
 pub fn scroll_to_index(request_id~ : Int, index~ : Int, item_height? : Double, spacing? : Double) -> @core.ScrollRequest
 
+pub fn scroll_to_key(request_id~ : Int, metrics~ : @data.VariableListMetrics, key~ : String, inset? : Double) -> @core.ScrollRequest?
+
 pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] searchbar(query~ : String, on_input~ : (String) -> Msg, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
@@ -380,6 +396,10 @@ pub fn[Msg] tree_view(Array[@data.TreeItem], expanded~ : Array[String], selected
 
 pub fn validate_form(Array[@form.FormFieldState]) -> @form.FormValidationResult
 
+pub fn[T] variable_list_metrics(Array[T], (T) -> String, (T) -> Double, spacing? : Double) -> @data.VariableListMetrics
+
+pub fn[T, Msg] variable_virtual_list(Array[T], metrics~ : @data.VariableListMetrics, (T) -> String, (T) -> @core.View[Msg], viewport_height? : Double, overscan? : Int, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
+
 pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 pub fn[Msg] wizard(Array[@controls.WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
@@ -453,6 +473,20 @@ pub using @style {type CrossAlign}
 
 pub using @data {type DataFilter}
 
+pub using @data {type DataGridCell}
+
+pub using @data {type DataGridEditCommit}
+
+pub using @data {type DataGridEditState}
+
+pub using @data {type DataGridFreezePanes}
+
+pub using @data {type DataGridSelectionRange}
+
+pub using @data {type DataGridSelectionState}
+
+pub using @data {type DataGridViewport}
+
 pub using @data {type DataSortState}
 
 pub using @style {type DatePickerMode}
@@ -500,6 +534,10 @@ pub using @form {type FormValidationSummary}
 pub using @style {type FormValidationTheme}
 
 pub using @style {type IconName}
+
+pub using @data {type IncrementalData}
+
+pub using @data {type IncrementalDataChange}
 
 pub using @core {type KeyModifiers}
 
@@ -606,6 +644,12 @@ pub using @style {type ToneTokens}
 pub using @data {type TreeItem}
 
 pub using @core {type TypographyScale}
+
+pub using @data {type VariableListAnchor}
+
+pub using @data {type VariableListMetrics}
+
+pub using @data {type VariableListRange}
 
 pub using @controls {type WizardStep}
 

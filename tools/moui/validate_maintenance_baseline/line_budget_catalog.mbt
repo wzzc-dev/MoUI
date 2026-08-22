@@ -203,7 +203,8 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 417,
+      // Complex-data files are individually ratcheted below.
+      max_lines: 421,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -376,7 +377,18 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 175,
     },
     { path: "moui/views/data/data_table.mbt", max_lines: 70 },
-    { path: "moui/views/data/data_table_rendering.mbt", max_lines: 190 },
+    { path: "moui/views/data/data_table_header.mbt", max_lines: 40 },
+    { path: "moui/views/data/data_table_rendering.mbt", max_lines: 154 },
+    { path: "moui/views/data/data_grid_state.mbt", max_lines: 201 },
+    { path: "moui/views/data/data_grid_viewport_state.mbt", max_lines: 116 },
+    { path: "moui/views/data/data_grid_edit_state.mbt", max_lines: 82 },
+    { path: "moui/views/data/data_incremental_state.mbt", max_lines: 71 },
+    { path: "moui/views/data/data_grid_semantics.mbt", max_lines: 57 },
+    { path: "moui/views/data/data_variable_list_metrics.mbt", max_lines: 189 },
+    { path: "moui/views/data/data_variable_list_anchor.mbt", max_lines: 61 },
+    { path: "moui/views/data/data_variable_virtual_list.mbt", max_lines: 91 },
+    { path: "moui/views/complex_data_test.mbt", max_lines: 178 },
+    { path: "moui/runtime/complex_data_semantics_test.mbt", max_lines: 102 },
     {
       path: "examples/pdf_workbench/app/pdf_workbench_app_wbtest.mbt",
       max_lines: 25,

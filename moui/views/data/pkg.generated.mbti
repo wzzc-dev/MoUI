@@ -2,6 +2,7 @@
 package "wzzc-dev/moui/views/data"
 
 import {
+  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/controls",
 }
@@ -17,6 +18,20 @@ pub fn[Msg] data_filter(id~ : String, label~ : String, selected~ : Bool, message
 
 pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[DataFilter[Msg]], result_count? : Int, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn data_grid_cell(row~ : Int, column~ : Int) -> DataGridCell
+
+pub fn data_grid_cell_key(String, String) -> String
+
+pub fn[Msg] data_grid_cell_semantics(@core.View[Msg], row_index~ : Int, column_index~ : Int, row_count~ : Int, column_count~ : Int, selected? : Bool, read_only? : Bool) -> @core.View[Msg]
+
+pub fn data_grid_freeze_panes(rows? : Int, columns? : Int) -> DataGridFreezePanes
+
+pub fn[Msg] data_grid_row_semantics(@core.View[Msg], row_index~ : Int, row_count~ : Int, column_count~ : Int) -> @core.View[Msg]
+
+pub fn[Msg] data_grid_semantics(@core.View[Msg], row_count~ : Int, column_count~ : Int) -> @core.View[Msg]
+
+pub fn data_grid_viewport(first_row~ : Int, last_row~ : Int, first_column~ : Int, last_column~ : Int, row_count~ : Int, column_count~ : Int, overscan_rows? : Int, overscan_columns? : Int, freeze? : DataGridFreezePanes) -> DataGridViewport
+
 pub fn description_item(String, String) -> DescriptionItem
 
 pub fn[Msg] description_list(Array[DescriptionItem], theme? : @core.Theme, width? : Double, term_width? : Double, row_height? : Double) -> @core.View[Msg]
@@ -24,6 +39,8 @@ pub fn[Msg] description_list(Array[DescriptionItem], theme? : @core.Theme, width
 pub fn[Msg] detail_panel(String, Array[DescriptionItem], subtitle? : String, action? : @controls.StateViewAction[Msg]?, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] pagination(page~ : Int, page_count~ : Int, on_previous~ : Msg, on_next~ : Msg, theme? : @core.Theme, width? : Double, previous_label? : String, next_label? : String) -> @core.View[Msg]
+
+pub fn scroll_to_key(request_id~ : Int, metrics~ : VariableListMetrics, key~ : String, inset? : Double) -> @core.ScrollRequest?
 
 pub fn[Msg] selectable_list(Array[SelectableListItem[Msg]], selected? : String, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, row_height? : Double) -> @core.View[Msg]
 
@@ -38,6 +55,10 @@ pub fn table_column(id~ : String, label~ : String, width? : Double) -> TableColu
 pub fn tree_item(id~ : String, label~ : String, children? : Array[TreeItem]) -> TreeItem
 
 pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[T] variable_list_metrics(Array[T], (T) -> String, (T) -> Double, spacing? : Double) -> VariableListMetrics
+
+pub fn[T, Msg] variable_virtual_list(Array[T], metrics~ : VariableListMetrics, (T) -> String, (T) -> @core.View[Msg], viewport_height? : Double, overscan? : Int, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 // Errors
 
@@ -77,6 +98,74 @@ pub struct DataFilter[Msg] {
   enabled : Bool
 }
 
+pub struct DataGridCell {
+  row : Int
+  column : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DataGridCell::column(Self) -> Int
+pub fn DataGridCell::row(Self) -> Int
+
+pub struct DataGridEditCommit {
+  cell : DataGridCell
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DataGridEditCommit::cell(Self) -> DataGridCell
+pub fn DataGridEditCommit::value(Self) -> String
+
+pub struct DataGridEditState {
+  active : DataGridCell?
+  original : String
+  draft : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DataGridEditState::active_cell(Self) -> DataGridCell?
+pub fn DataGridEditState::begin(Self, DataGridCell, String) -> Self
+pub fn DataGridEditState::cancel(Self) -> Self
+pub fn DataGridEditState::commit(Self) -> DataGridEditCommit?
+pub fn DataGridEditState::draft(Self) -> String
+pub fn DataGridEditState::idle() -> Self
+pub fn DataGridEditState::is_dirty(Self) -> Bool
+pub fn DataGridEditState::update(Self, String) -> Self
+
+pub struct DataGridFreezePanes {
+  rows : Int
+  columns : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DataGridFreezePanes::columns(Self) -> Int
+pub fn DataGridFreezePanes::rows(Self) -> Int
+
+pub struct DataGridSelectionRange {
+  first : DataGridCell
+  last : DataGridCell
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DataGridSelectionRange::cell_count(Self) -> Int
+pub fn DataGridSelectionRange::contains(Self, DataGridCell) -> Bool
+pub fn DataGridSelectionRange::first(Self) -> DataGridCell
+pub fn DataGridSelectionRange::last(Self) -> DataGridCell
+
+pub struct DataGridSelectionState {
+  anchor : DataGridCell
+  focus : DataGridCell
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DataGridSelectionState::anchor(Self) -> DataGridCell
+pub fn DataGridSelectionState::focus(Self) -> DataGridCell
+pub fn DataGridSelectionState::handle_key(Self, @core.KeyboardEvent, row_count~ : Int, column_count~ : Int, page_rows? : Int) -> Self
+pub fn DataGridSelectionState::move_by(Self, row_delta~ : Int, column_delta~ : Int, row_count~ : Int, column_count~ : Int, extending? : Bool) -> Self
+pub fn DataGridSelectionState::new(row? : Int, column? : Int) -> Self
+pub fn DataGridSelectionState::range(Self) -> DataGridSelectionRange
+pub fn DataGridSelectionState::select(Self, DataGridCell, extending? : Bool) -> Self
+
+pub struct DataGridViewport {
+  first_row : Int
+  last_row : Int
+  first_column : Int
+  last_column : Int
+  row_count : Int
+  column_count : Int
+  freeze : DataGridFreezePanes
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DataGridViewport::cells(Self) -> Array[DataGridCell]
+pub fn DataGridViewport::contains(Self, DataGridCell) -> Bool
+
 pub struct DataSortState {
   column : String
   ascending : Bool
@@ -89,6 +178,22 @@ pub fn DataSortState::toggle(Self, String) -> Self
 pub struct DescriptionItem {
   term : String
   detail : String
+}
+
+pub struct IncrementalData[T] {
+  items : Array[T]
+  revision : Int
+}
+pub fn[T] IncrementalData::apply(Self[T], Array[IncrementalDataChange[T]], (T) -> String) -> Self[T]
+pub fn[T] IncrementalData::items(Self[T]) -> Array[T]
+pub fn[T] IncrementalData::new(items? : Array[T]) -> Self[T]
+pub fn[T] IncrementalData::revision(Self[T]) -> Int
+
+pub(all) enum IncrementalDataChange[T] {
+  Append(T)
+  Upsert(T)
+  Remove(String)
+  Reset(Array[T])
 }
 
 pub struct PaginationState {
@@ -137,6 +242,41 @@ pub struct TreeItem {
   label : String
   children : Array[TreeItem]
 }
+
+pub struct VariableListAnchor {
+  key : String
+  inset : Double
+}
+pub fn VariableListAnchor::inset(Self) -> Double
+pub fn VariableListAnchor::key(Self) -> String
+
+pub struct VariableListMetrics {
+  keys : Array[String]
+  heights : Array[Double]
+  offsets : Array[Double]
+  spacing : Double
+  total_extent : Double
+}
+pub fn VariableListMetrics::anchor_for_offset(Self, Double) -> VariableListAnchor?
+pub fn VariableListMetrics::count(Self) -> Int
+pub fn VariableListMetrics::height_at(Self, Int) -> Double?
+pub fn VariableListMetrics::offset_at(Self, Int) -> Double?
+pub fn VariableListMetrics::offset_for_anchor(Self, VariableListAnchor, fallback? : Double) -> Double
+pub fn VariableListMetrics::offset_for_key(Self, String) -> Double?
+pub fn VariableListMetrics::total_extent(Self) -> Double
+pub fn VariableListMetrics::visible_range(Self, offset_y~ : Double, viewport_height~ : Double, overscan? : Int) -> VariableListRange?
+pub fn VariableListMetrics::with_height(Self, String, Double) -> Self
+
+pub struct VariableListRange {
+  first_index : Int
+  last_index : Int
+  before_extent : Double
+  after_extent : Double
+}
+pub fn VariableListRange::after_extent(Self) -> Double
+pub fn VariableListRange::before_extent(Self) -> Double
+pub fn VariableListRange::first_index(Self) -> Int
+pub fn VariableListRange::last_index(Self) -> Int
 
 // Type aliases
 
