@@ -564,6 +564,8 @@ Focused checks:
 ```sh
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-maintenance-baseline.mjs
+node scripts/validate-performance-budgets.mjs
+moon test tools/moui/validate_performance_budgets --target native
 node scripts/validate-api-surface.mjs
 node scripts/validate-release-module-closures.mjs
 node scripts/validate-core-theme-no-control-surface.mjs
@@ -627,6 +629,12 @@ tools, and runner logic that is clearer in JavaScript. Keep sh/PowerShell thin
 for environment variables, platform setup, and OS command dispatch. Windows
 MSVC, vcpkg, and zlib setup remains PowerShell-owned; MoonBit may validate
 related manifests or docs but must not install machine tools.
+
+Performance budget catalog validation stays MoonBit-backed through
+`tools/moui/validate_performance_budgets`. The long-running native Skia workload
+orchestration remains in `scripts/run-performance-budgets.mjs`; its report is an
+ignored artifact, not checked-in evidence. Threshold changes require a matching
+runner artifact and the review policy in `checks/performance-budgets.json`.
 
 Use `.mbtx` only for short standalone developer scripts; promote maintained CI
 behavior to a `tools/...` package. Use `rule`/`dev_build` only for deterministic

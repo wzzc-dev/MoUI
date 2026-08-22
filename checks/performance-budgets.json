@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "description": "Initial reviewed MoUI performance guardrails for the canonical native Skia Raster runner. Timings are milliseconds; byte and allocation metrics are per scenario process.",
+  "runner": "native-skia-raster",
+  "updatePolicy": {
+    "owner": "runtime-maintainers",
+    "requiredApprovals": 1,
+    "reasonRequired": true,
+    "instructions": "Update a baseline only with a matching benchmark artifact, runner identity, and a review note explaining the expected regression or improvement."
+  },
+  "scenarios": {
+    "showcase-runtime-scroll": {
+      "minimumSamples": 30,
+      "timings": {
+        "buildMs": { "p50": 8, "p95": 16, "p99": 24, "maxRegressionPercent": 25 },
+        "layoutMs": { "p50": 8, "p95": 20, "p99": 30, "maxRegressionPercent": 25 },
+        "paintMs": { "p50": 10, "p95": 24, "p99": 36, "maxRegressionPercent": 25 },
+        "presentMs": { "p50": 12, "p95": 24, "p99": 36, "maxRegressionPercent": 25 },
+        "frameMs": { "p50": 25, "p95": 50, "p99": 75, "maxRegressionPercent": 20 }
+      },
+      "resources": {
+        "peakRssBytes": { "baseline": 536870912, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "allocationCount": { "baseline": 1500000, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "cacheHitRate": { "baseline": 0.7, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "startupMs": { "baseline": 1200, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "packageBytes": { "baseline": 83886080, "maxRegressionPercent": 10, "higherIsBetter": false }
+      }
+    },
+    "markdown-editor-text-input": {
+      "minimumSamples": 30,
+      "timings": {
+        "buildMs": { "p50": 10, "p95": 20, "p99": 30, "maxRegressionPercent": 25 },
+        "layoutMs": { "p50": 12, "p95": 28, "p99": 42, "maxRegressionPercent": 25 },
+        "paintMs": { "p50": 14, "p95": 30, "p99": 45, "maxRegressionPercent": 25 },
+        "presentMs": { "p50": 14, "p95": 28, "p99": 42, "maxRegressionPercent": 25 },
+        "frameMs": { "p50": 32, "p95": 64, "p99": 96, "maxRegressionPercent": 20 }
+      },
+      "resources": {
+        "peakRssBytes": { "baseline": 671088640, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "allocationCount": { "baseline": 2500000, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "cacheHitRate": { "baseline": 0.65, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "startupMs": { "baseline": 1600, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "packageBytes": { "baseline": 94371840, "maxRegressionPercent": 10, "higherIsBetter": false }
+      }
+    },
+    "excel-grid-navigation": {
+      "minimumSamples": 30,
+      "timings": {
+        "buildMs": { "p50": 10, "p95": 22, "p99": 33, "maxRegressionPercent": 25 },
+        "layoutMs": { "p50": 14, "p95": 32, "p99": 48, "maxRegressionPercent": 25 },
+        "paintMs": { "p50": 16, "p95": 34, "p99": 51, "maxRegressionPercent": 25 },
+        "presentMs": { "p50": 16, "p95": 32, "p99": 48, "maxRegressionPercent": 25 },
+        "frameMs": { "p50": 36, "p95": 72, "p99": 108, "maxRegressionPercent": 20 }
+      },
+      "resources": {
+        "peakRssBytes": { "baseline": 805306368, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "allocationCount": { "baseline": 3500000, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "cacheHitRate": { "baseline": 0.6, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "startupMs": { "baseline": 1800, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "packageBytes": { "baseline": 104857600, "maxRegressionPercent": 10, "higherIsBetter": false }
+      }
+    },
+    "virtual-list-100k": {
+      "minimumSamples": 30,
+      "timings": {
+        "buildMs": { "p50": 6, "p95": 14, "p99": 21, "maxRegressionPercent": 20 },
+        "layoutMs": { "p50": 8, "p95": 18, "p99": 27, "maxRegressionPercent": 20 },
+        "paintMs": { "p50": 8, "p95": 18, "p99": 27, "maxRegressionPercent": 20 },
+        "presentMs": { "p50": 10, "p95": 22, "p99": 33, "maxRegressionPercent": 20 },
+        "frameMs": { "p50": 24, "p95": 48, "p99": 72, "maxRegressionPercent": 15 }
+      },
+      "resources": {
+        "peakRssBytes": { "baseline": 536870912, "maxRegressionPercent": 15, "higherIsBetter": false },
+        "allocationCount": { "baseline": 1200000, "maxRegressionPercent": 15, "higherIsBetter": false },
+        "cacheHitRate": { "baseline": 0.75, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "startupMs": { "baseline": 1000, "maxRegressionPercent": 15, "higherIsBetter": false },
+        "packageBytes": { "baseline": 73400320, "maxRegressionPercent": 10, "higherIsBetter": false }
+      }
+    },
+    "multi-window-4": {
+      "minimumSamples": 30,
+      "timings": {
+        "buildMs": { "p50": 20, "p95": 42, "p99": 63, "maxRegressionPercent": 25 },
+        "layoutMs": { "p50": 24, "p95": 52, "p99": 78, "maxRegressionPercent": 25 },
+        "paintMs": { "p50": 28, "p95": 60, "p99": 90, "maxRegressionPercent": 25 },
+        "presentMs": { "p50": 32, "p95": 64, "p99": 96, "maxRegressionPercent": 25 },
+        "frameMs": { "p50": 72, "p95": 144, "p99": 216, "maxRegressionPercent": 20 }
+      },
+      "resources": {
+        "peakRssBytes": { "baseline": 1073741824, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "allocationCount": { "baseline": 5000000, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "cacheHitRate": { "baseline": 0.6, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "startupMs": { "baseline": 3000, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "packageBytes": { "baseline": 104857600, "maxRegressionPercent": 10, "higherIsBetter": false }
+      }
+    }
+  }
+}

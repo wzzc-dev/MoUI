@@ -167,6 +167,13 @@ pub fn RuntimeInspectorSnapshot::last_event_hit_path(
 }
 
 ///|
+pub fn RuntimeInspectorSnapshot::last_frame_timing(
+  self : RuntimeInspectorSnapshot,
+) -> RuntimeFrameTiming {
+  self.last_frame_timing
+}
+
+///|
 pub fn RuntimeInspectorSnapshot::program_dispatched_count(
   self : RuntimeInspectorSnapshot,
 ) -> Int {

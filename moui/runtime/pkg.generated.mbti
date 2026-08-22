@@ -92,6 +92,7 @@ pub fn AppRuntime::needs_redraw(Self) -> Bool
 pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> Self
 pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> Self
 pub fn AppRuntime::perform_semantics_action(Self, PerformSemanticsActionRequest) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError]
+pub fn AppRuntime::profile_draw_frame(Self, () -> Double) -> ProfiledDrawFrame
 pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
 pub fn AppRuntime::read_semantics(Self, since? : @core.SemanticsGeneration) -> Result[SemanticsRead, SemanticsReadError]
 pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
@@ -281,6 +282,12 @@ pub fn PlatformEntry::launch(Self, AppLaunchRequest) -> Unit
 pub async fn PlatformEntry::launch_async_pump(Self, AppLaunchRequest, Int) -> Unit
 pub fn PlatformEntry::new(id~ : String, launch~ : (AppLaunchRequest) -> Unit, launch_async? : (async (AppLaunchRequest, Int) -> Unit)?) -> Self
 
+pub struct ProfiledDrawFrame {
+  // private fields
+}
+pub fn ProfiledDrawFrame::frame(Self) -> @core.DrawFrame
+pub fn ProfiledDrawFrame::timing(Self) -> RuntimeFrameTiming
+
 pub struct ProgramRuntimeSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
@@ -446,6 +453,15 @@ pub fn RuntimeDirtyStateSummary::needs_redraw(Self) -> Bool
 pub fn RuntimeDirtyStateSummary::reason(Self) -> String
 pub fn RuntimeDirtyStateSummary::reasons(Self) -> Array[String]
 
+pub struct RuntimeFrameTiming {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RuntimeFrameTiming::build_ms(Self) -> Double
+pub fn RuntimeFrameTiming::draw_ms(Self) -> Double
+pub fn RuntimeFrameTiming::layout_ms(Self) -> Double
+pub fn RuntimeFrameTiming::paint_ms(Self) -> Double
+pub fn RuntimeFrameTiming::total_ms(Self) -> Double
+
 pub struct RuntimeInspectorSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
@@ -479,6 +495,7 @@ pub fn RuntimeInspectorSnapshot::ignored_program_dispatch_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::ignored_subscription_dispatch_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::last_effect_summary(Self) -> EffectPlanSummary
 pub fn RuntimeInspectorSnapshot::last_event_hit_path(Self) -> Array[Int]
+pub fn RuntimeInspectorSnapshot::last_frame_timing(Self) -> RuntimeFrameTiming
 pub fn RuntimeInspectorSnapshot::last_scheduled_effect_summary(Self) -> EffectPlanSummary
 pub fn RuntimeInspectorSnapshot::last_subscription_plan_summary(Self) -> SubscriptionPlanSummary
 pub fn RuntimeInspectorSnapshot::layout_cache_hit_count(Self) -> Int

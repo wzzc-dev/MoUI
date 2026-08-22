@@ -136,6 +136,7 @@ pub fn inspector_report_text(snapshot : @runtime.InspectorSnapshot) -> String {
     .last_event_hit_path()
     .map(id => id.to_string())
     .join(" > ")
+  let timing = runtime.last_frame_timing()
   [
     "[runtime] size=\{size.width}x\{size.height}; rebuild=\{runtime.rebuild_pass_count()}; layout=\{runtime.layout_pass_count()}; paint=\{runtime.paint_pass_count()}; commands=\{runtime.draw_command_count()}",
     "[view] root=\{view.root_kind()}; nodes=\{view.node_count()}; controls=\{view.control_count()}; modified=\{view.modified_count()}; dirty(build/layout/paint)=\{view.dirty_build_count()}/\{view.dirty_layout_count()}/\{view.dirty_paint_count()}",
@@ -147,7 +148,7 @@ pub fn inspector_report_text(snapshot : @runtime.InspectorSnapshot) -> String {
     "[subscriptions] active=\{runtime.active_subscription_count()}; started=\{runtime.started_subscription_count()}; reused=\{runtime.reused_subscription_count()}; cancelled=\{runtime.cancelled_subscription_count()}; lifecycle=\{runtime.subscription_lifecycle().length()}",
     "[cache] layout(hit/miss)=\{runtime.layout_cache_hit_count()}/\{runtime.layout_cache_miss_count()}; render(hit/miss)=\{runtime.render_cache_hit_count()}/\{runtime.render_cache_miss_count()}",
     "[event] hit_path=\{hit_path}",
-    "[timing] frame_timing=runtime-host; presentation=renderer-session (query the owning host/session for wall-clock samples)",
+    "[timing] build/layout/paint/draw/total=\{timing.build_ms()}/\{timing.layout_ms()}/\{timing.paint_ms()}/\{timing.draw_ms()}/\{timing.total_ms()}ms; presentation=renderer-session",
   ].join("\n")
 }
 

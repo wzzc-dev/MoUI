@@ -57,6 +57,7 @@ This file is generated from repository manifests and validator reports.
 | ./examples/terminal |
 | ./benchmarks/app_cached_layer |
 | ./benchmarks/full_cycle |
+| ./benchmarks/performance_budget |
 | ./website |
 
 ## API Surface
@@ -69,7 +70,7 @@ This file is generated from repository manifests and validator reports.
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 673 | 371 | 28 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 729 | 415 | 28 |
 | core (moui/core/pkg.generated.mbti) | 2110 | 549 | 187 |
 | views facade (moui/views/pkg.generated.mbti) | 612 | 294 | 0 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 416 | 71 | 39 |

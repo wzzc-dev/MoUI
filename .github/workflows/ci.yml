@@ -167,6 +167,17 @@ jobs:
       - name: Build benchmark targets
         run: node scripts/conformance-capture-scaffold.mjs --mode benchmark
 
+      - name: Run performance budgets
+        run: node scripts/run-performance-budgets.mjs
+
+      - name: Upload performance report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-performance-budgets
+          path: artifacts/performance/result.json
+          if-no-files-found: error
+
   windows-native:
     name: Windows MSVC native smoke
     runs-on: windows-2022

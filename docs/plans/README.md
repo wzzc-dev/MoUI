@@ -57,6 +57,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [p1-daily-developer-efficiency](active/p1-daily-developer-efficiency.md) | Add the dev loop, structured Inspector, performance budgets, and scalable data-view primitives |
 | [native-accessibility](active/native-accessibility.md) | Complete native accessibility adapters and matching-host evidence for the Showcase Probe |
 | [webview-controller-bridge](active/webview-controller-bridge.md) | Replace the WebView command queue with controller-owned navigation, JSON bridge security, and HostPatch across desktop hosts |
 | [dsh-desktop-settings-menu](active/dsh-desktop-settings-menu.md) | Add the macOS Settings command and a persisted MoUI request-URL dialog above WKWebView |
