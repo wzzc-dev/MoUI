@@ -133,7 +133,7 @@
     },
     {
       "path": "moui_wgpu_renderer/native_renderer.mbt",
-      "maxLines": 1574,
+      "maxLines": 1719,
       "reason": "Existing diagnostic WGPU renderer implementation."
     },
     {

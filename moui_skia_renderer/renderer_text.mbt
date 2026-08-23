@@ -7,6 +7,9 @@ fn SkiaRasterRenderer::draw_text(
   if !skia_text_frame_can_draw(run.frame) {
     return ()
   }
+  if run.text == "" {
+    return ()
+  }
   match
     skia_resolved_text_layout_for_resolution(
       run.font,
