@@ -75,7 +75,7 @@ local workspace members 从 `moon.work` 解析。确切列表会生成到
 ```moonbit
 import {
   "wzzc-dev/window@0.5.4-0.1.5",
-  "wzzc-dev/moui@0.1.10",
+  "wzzc-dev/moui@0.1.11",
   "wzzc-dev/moui_skia@0.1.10",
 }
 ```

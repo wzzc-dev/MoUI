@@ -130,7 +130,7 @@ async fn one_request(
   client.close()
   let headers : Map[String, String] = Map([])
   for k, v in response.headers {
-    headers[k.to_lower()] = v
+    headers[k.to_string().to_lower()] = v
   }
   { status: response.code, headers, body }
 }

@@ -6,44 +6,64 @@ pub fn entry(
   options? : LinuxHostAppOptions = LinuxHostAppOptions::new(),
   smoke_options? : LinuxHostSmokeOptions = LinuxHostSmokeOptions::new(),
 ) -> @runtime.PlatformEntry {
-  @runtime.PlatformEntry::new(id="linux", launch=request => {
-    let providers = request.renderer_providers()
-    let image_source = @host_image_native.filesystem_image_source()
-    let binding = LinuxSurfaceBinding::new(create_renderer=(window, metrics) => {
-      let renderer_metrics = metrics
-      let host_present = @render.PresentTarget::new(
-        description="Linux host CPU presenter",
-        present=frame => {
-          window.present_rgba_pixels(
-            frame.width(),
-            frame.height(),
-            frame.row_bytes(),
-            frame.pixels(),
-          ) ==
-          0
-        },
+  @runtime.PlatformEntry::new(
+    id="linux",
+    launch=request => {
+      let binding = linux_surface_binding(request.renderer_providers())
+      launch_linux_app(
+        request.title(),
+        request.runtime(),
+        binding~,
+        options~,
+        smoke_options~,
+        window_requests=request.window_requests(),
       )
-      let native_surface = @render.NativeSurface::new(
-        surface_handle=window.wl_surface(),
-        display_handle=Some(window.wl_display()),
-        present=_ => true,
+    },
+    launch_async=Some(async fn(request, frame_interval_ms) {
+      let binding = linux_surface_binding(request.renderer_providers())
+      launch_linux_app_async_pump(
+        request.title(),
+        request.runtime(),
+        binding~,
+        options~,
+        window_requests=request.window_requests(),
+        frame_interval_ms~,
       )
-      let surface = @render.HostSurface::new(
-        metrics=renderer_metrics,
-        cpu_present=Some(host_present),
-        native_surface~,
-        image_source=Some(image_source),
-      )
-      @render_common.resolve_renderer(providers, surface)
-    })
-    launch_linux_app(
-      request.title(),
-      request.runtime(),
-      binding~,
-      options~,
-      smoke_options~,
-      window_requests=request.window_requests(),
+    }),
+  )
+}
+
+///|
+fn linux_surface_binding(
+  providers : Array[@render.RendererProvider],
+) -> LinuxSurfaceBinding {
+  let image_source = @host_image_native.filesystem_image_source()
+  LinuxSurfaceBinding::new(create_renderer=(window, metrics) => {
+    let renderer_metrics = metrics
+    let host_present = @render.PresentTarget::new(
+      description="Linux host CPU presenter",
+      present=frame => {
+        window.present_rgba_pixels(
+          frame.width(),
+          frame.height(),
+          frame.row_bytes(),
+          frame.pixels(),
+        ) ==
+        0
+      },
     )
+    let native_surface = @render.NativeSurface::new(
+      surface_handle=window.wl_surface(),
+      display_handle=Some(window.wl_display()),
+      present=_ => true,
+    )
+    let surface = @render.HostSurface::new(
+      metrics=renderer_metrics,
+      cpu_present=Some(host_present),
+      native_surface~,
+      image_source=Some(image_source),
+    )
+    @render_common.resolve_renderer(providers, surface)
   })
 }
 
@@ -56,6 +76,52 @@ fn launch_linux_app(
   smoke_options~ : LinuxHostSmokeOptions,
   window_requests~ : @host.WindowRequests,
 ) -> Unit {
+  let (event_loop, app) = create_linux_app(
+    title,
+    runtime,
+    binding~,
+    options~,
+    smoke_options~,
+    window_requests~,
+  )
+  event_loop.run_app(app)
+}
+
+///|
+async fn launch_linux_app_async_pump(
+  title : String,
+  runtime : @runtime.AppRuntime,
+  binding~ : LinuxSurfaceBinding,
+  options~ : LinuxHostAppOptions,
+  window_requests~ : @host.WindowRequests,
+  frame_interval_ms~ : Int,
+) -> Unit {
+  let (event_loop, app) = create_linux_app(
+    title,
+    runtime,
+    binding~,
+    options~,
+    smoke_options=LinuxHostSmokeOptions::new(),
+    window_requests~,
+  )
+  while !event_loop.exiting() {
+    match event_loop.pump_app_events(Some(0), app) {
+      @window_core.PumpStatus::Exit(_) => return ()
+      @window_core.PumpStatus::Continue => ()
+    }
+    @async.sleep(frame_interval_ms)
+  }
+}
+
+///|
+fn create_linux_app(
+  title : String,
+  runtime : @runtime.AppRuntime,
+  binding~ : LinuxSurfaceBinding,
+  options~ : LinuxHostAppOptions,
+  smoke_options~ : LinuxHostSmokeOptions,
+  window_requests~ : @host.WindowRequests,
+) -> (@window_linux.EventLoop, LinuxNativeHostBackend) {
   let event_loop = @window_linux.EventLoop::new()
   let services = linux_service_bridge(
     system_theme=linux_color_scheme_from_theme(event_loop.system_theme()),
@@ -95,7 +161,7 @@ fn launch_linux_app(
     id,
     event,
   ) => app.dispatch_platform_view_event_from_plugin(window_ptr, id, event))
-  event_loop.run_app(app)
+  (event_loop, app)
 }
 
 ///|

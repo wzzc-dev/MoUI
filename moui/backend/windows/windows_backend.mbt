@@ -139,45 +139,65 @@ pub fn entry(
   options? : WindowsHostAppOptions = WindowsHostAppOptions::new(),
   smoke_options? : WindowsHostSmokeOptions = WindowsHostSmokeOptions::new(),
 ) -> @runtime.PlatformEntry {
-  @runtime.PlatformEntry::new(id="windows", launch=request => {
-    let providers = request.renderer_providers()
-    let image_source = @host_image_native.filesystem_image_source()
-    let binding = WindowsSurfaceBinding::new(create_renderer=(window, metrics) => {
-      let renderer_metrics = metrics
-      let host_present = @render.PresentTarget::new(
-        description="Windows host CPU presenter",
-        present=frame => {
-          windows_present_pixels_to_hwnd(
-            window.native_window_handle(),
-            frame.width(),
-            frame.height(),
-            frame.row_bytes(),
-            frame.pixels(),
-            frame.pixels().length(),
-          ) ==
-          0
-        },
+  @runtime.PlatformEntry::new(
+    id="windows",
+    launch=request => {
+      let binding = windows_surface_binding(request.renderer_providers())
+      launch_windows_app(
+        request.title(),
+        request.runtime(),
+        binding~,
+        options~,
+        smoke_options~,
+        window_requests=request.window_requests(),
       )
-      let native_surface = @render.NativeSurface::new(
-        surface_handle=window.native_window_handle(),
-        present=_ => true,
+    },
+    launch_async=Some(async fn(request, frame_interval_ms) {
+      let binding = windows_surface_binding(request.renderer_providers())
+      launch_windows_app_async_pump(
+        request.title(),
+        request.runtime(),
+        binding~,
+        options~,
+        window_requests=request.window_requests(),
+        frame_interval_ms~,
       )
-      let surface = @render.HostSurface::new(
-        metrics=renderer_metrics,
-        cpu_present=Some(host_present),
-        native_surface~,
-        image_source=Some(image_source),
-      )
-      @render_common.resolve_renderer(providers, surface)
-    })
-    launch_windows_app(
-      request.title(),
-      request.runtime(),
-      binding~,
-      options~,
-      smoke_options~,
-      window_requests=request.window_requests(),
+    }),
+  )
+}
+
+///|
+fn windows_surface_binding(
+  providers : Array[@render.RendererProvider],
+) -> WindowsSurfaceBinding {
+  let image_source = @host_image_native.filesystem_image_source()
+  WindowsSurfaceBinding::new(create_renderer=(window, metrics) => {
+    let renderer_metrics = metrics
+    let host_present = @render.PresentTarget::new(
+      description="Windows host CPU presenter",
+      present=frame => {
+        windows_present_pixels_to_hwnd(
+          window.native_window_handle(),
+          frame.width(),
+          frame.height(),
+          frame.row_bytes(),
+          frame.pixels(),
+          frame.pixels().length(),
+        ) ==
+        0
+      },
     )
+    let native_surface = @render.NativeSurface::new(
+      surface_handle=window.native_window_handle(),
+      present=_ => true,
+    )
+    let surface = @render.HostSurface::new(
+      metrics=renderer_metrics,
+      cpu_present=Some(host_present),
+      native_surface~,
+      image_source=Some(image_source),
+    )
+    @render_common.resolve_renderer(providers, surface)
   })
 }
 
@@ -190,6 +210,52 @@ fn launch_windows_app(
   smoke_options~ : WindowsHostSmokeOptions,
   window_requests~ : @host.WindowRequests,
 ) -> Unit {
+  let (event_loop, app) = create_windows_app(
+    title,
+    runtime,
+    binding~,
+    options~,
+    smoke_options~,
+    window_requests~,
+  )
+  event_loop.run_app(app)
+}
+
+///|
+async fn launch_windows_app_async_pump(
+  title : String,
+  runtime : @runtime.AppRuntime,
+  binding~ : WindowsSurfaceBinding,
+  options~ : WindowsHostAppOptions,
+  window_requests~ : @host.WindowRequests,
+  frame_interval_ms~ : Int,
+) -> Unit {
+  let (event_loop, app) = create_windows_app(
+    title,
+    runtime,
+    binding~,
+    options~,
+    smoke_options=WindowsHostSmokeOptions::new(),
+    window_requests~,
+  )
+  while !event_loop.exiting() {
+    match event_loop.pump_app_events(Some(0), app) {
+      @window_core.PumpStatus::Exit(_) => return ()
+      @window_core.PumpStatus::Continue => ()
+    }
+    @async.sleep(frame_interval_ms)
+  }
+}
+
+///|
+fn create_windows_app(
+  title : String,
+  runtime : @runtime.AppRuntime,
+  binding~ : WindowsSurfaceBinding,
+  options~ : WindowsHostAppOptions,
+  smoke_options~ : WindowsHostSmokeOptions,
+  window_requests~ : @host.WindowRequests,
+) -> (@win.EventLoop, WindowsNativeHostBackend) {
   let event_loop = @win.EventLoop::new()
   let services = windows_service_bridge()
   runtime.set_environment(
@@ -223,7 +289,7 @@ fn launch_windows_app(
     id,
     event,
   ) => app.dispatch_platform_view_event_from_plugin(window_ptr, id, event))
-  event_loop.run_app(app)
+  (event_loop, app)
 }
 
 ///|

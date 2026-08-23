@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui"
 
-version = "0.1.10"
+version = "0.1.11"
 
 preferred_target = "native"
 
@@ -9,7 +9,7 @@ import {
   "Milky2018/moon_accesskit@0.3.0",
   "Milky2018/moon_zeno@0.1.3",
   "mizchi/svg@0.2.1",
-  "moonbitlang/async@0.20.2",
+  "moonbitlang/async@0.21.0",
   "moonbitlang/x@0.5.1",
 }
 
