@@ -6,8 +6,7 @@ test "cli_version_from_manifest parses the version line" {
     #|version = "0.1.9"
     #|
     #|description = "Standalone project generator and environment doctor for MoUI"
-  )
-  .to_string()
+  ).to_string()
   inspect(cli_version_from_manifest(manifest), content="0.1.9")
 }
 
@@ -17,8 +16,7 @@ test "cli_version_from_manifest falls back without a version line" {
     #|name = "wzzc-dev/moui_cli"
     #|
     #|readme = "README.md"
-  )
-  .to_string()
+  ).to_string()
   inspect(cli_version_from_manifest(manifest), content="0.0.0")
 }
 

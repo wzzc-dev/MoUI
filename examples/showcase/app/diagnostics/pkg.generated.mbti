@@ -48,13 +48,21 @@ pub(all) enum ShowcaseCapabilityPriority {
   Complete
 } derive(Eq, @debug.Debug)
 
+pub struct ShowcaseDevToolsReport {
+  summary_text : String
+  report_text : String
+  json_text : String
+}
+pub fn ShowcaseDevToolsReport::new(summary_text~ : String, report_text~ : String, json_text~ : String) -> Self
+
 pub struct ShowcaseDiagnosticsInput {
   host : ShowcaseHostDiagnostics
   renderer_features : Array[ShowcaseRendererFeatureDiagnostic]
   inspector : ShowcaseInspectorDiagnostics
+  devtools : ShowcaseDevToolsReport
 }
 pub fn ShowcaseDiagnosticsInput::fallback() -> Self
-pub fn ShowcaseDiagnosticsInput::new(host~ : ShowcaseHostDiagnostics, renderer_features~ : Array[ShowcaseRendererFeatureDiagnostic], inspector~ : ShowcaseInspectorDiagnostics) -> Self
+pub fn ShowcaseDiagnosticsInput::new(host~ : ShowcaseHostDiagnostics, renderer_features~ : Array[ShowcaseRendererFeatureDiagnostic], inspector~ : ShowcaseInspectorDiagnostics, devtools~ : ShowcaseDevToolsReport) -> Self
 
 pub(all) struct ShowcaseHostDiagnostics {
   label : String
@@ -107,6 +115,7 @@ pub(all) struct ShowcaseModel {
   last_drop_label : String
   gesture_label : String
   diagnostics_input : ShowcaseDiagnosticsInput
+  diagnostics_panel_scroll : @core.Point
 }
 pub fn ShowcaseModel::new() -> Self
 pub fn ShowcaseModel::open(Self, String) -> Self
@@ -156,6 +165,7 @@ pub(all) enum ShowcaseMsg {
   RecordFileDrop(Array[String])
   RecordGesture(String)
   ResizePanel(Double)
+  DiagnosticsPanelScrolled(@core.Point)
 }
 
 pub(all) struct ShowcaseRendererFeatureDiagnostic {

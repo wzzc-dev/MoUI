@@ -8,6 +8,4 @@ import {
 
 description = "Repo-local MoUI inspector snapshot summaries and debug formatters"
 
-options(
-  "preferred-target": "wasm-gc",
-)
+preferred_target = "wasm-gc"

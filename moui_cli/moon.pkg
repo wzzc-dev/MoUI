@@ -13,7 +13,7 @@ options(
     {
       "input": "moon.mod",
       "output": "version_manifest.mbt",
-      "command": ":embed -i $input -o $output --name embedded_module_manifest --text"
-    }
+      "command": ":embed -i $input -o $output --name embedded_module_manifest --text",
+    },
   ],
 )
