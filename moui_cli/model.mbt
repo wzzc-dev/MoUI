@@ -1,5 +1,11 @@
 ///|
-let default_moui_dependency_version : String = "0.1.10"
+let default_moui_dependency_version : String = "0.1.11"
+
+///|
+/// The web renderer releases independently from the framework; generated
+/// projects pin it separately so a framework bump does not force a matching
+/// renderer release.
+let default_web_renderer_dependency_version : String = "0.1.10"
 
 ///|
 priv struct PlannedFile {

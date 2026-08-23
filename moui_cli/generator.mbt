@@ -116,7 +116,9 @@ fn moon_mod_text(options : ProjectOptions) -> String {
   let renderer_imports : Array[String] = []
   if options.platforms.contains("web") {
     renderer_imports.push(
-      "  \"wzzc-dev/moui_web_renderer@" + options.moui_version + "\",",
+      "  \"wzzc-dev/moui_web_renderer@" +
+      default_web_renderer_dependency_version +
+      "\",",
     )
   }
   if options.platforms.any(platform => platform != "web") {
