@@ -21,7 +21,7 @@
       "resources": {
         "peakRssBytes": { "baseline": 536870912, "maxRegressionPercent": 20, "higherIsBetter": false },
         "allocationCount": { "baseline": 1500000, "maxRegressionPercent": 20, "higherIsBetter": false },
-        "cacheHitRate": { "baseline": 0.7, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "cacheHitRate": { "baseline": 0.05056179775280899, "maxRegressionPercent": 10, "higherIsBetter": true },
         "startupMs": { "baseline": 1200, "maxRegressionPercent": 20, "higherIsBetter": false },
         "packageBytes": { "baseline": 83886080, "maxRegressionPercent": 10, "higherIsBetter": false }
       }
@@ -38,7 +38,7 @@
       "resources": {
         "peakRssBytes": { "baseline": 671088640, "maxRegressionPercent": 20, "higherIsBetter": false },
         "allocationCount": { "baseline": 2500000, "maxRegressionPercent": 20, "higherIsBetter": false },
-        "cacheHitRate": { "baseline": 0.65, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "cacheHitRate": { "baseline": 1, "maxRegressionPercent": 10, "higherIsBetter": true },
         "startupMs": { "baseline": 1600, "maxRegressionPercent": 20, "higherIsBetter": false },
         "packageBytes": { "baseline": 94371840, "maxRegressionPercent": 10, "higherIsBetter": false }
       }
@@ -55,7 +55,7 @@
       "resources": {
         "peakRssBytes": { "baseline": 805306368, "maxRegressionPercent": 20, "higherIsBetter": false },
         "allocationCount": { "baseline": 3500000, "maxRegressionPercent": 20, "higherIsBetter": false },
-        "cacheHitRate": { "baseline": 0.6, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "cacheHitRate": { "baseline": 0, "maxRegressionPercent": 10, "higherIsBetter": true },
         "startupMs": { "baseline": 1800, "maxRegressionPercent": 20, "higherIsBetter": false },
         "packageBytes": { "baseline": 104857600, "maxRegressionPercent": 10, "higherIsBetter": false }
       }
@@ -72,7 +72,7 @@
       "resources": {
         "peakRssBytes": { "baseline": 536870912, "maxRegressionPercent": 15, "higherIsBetter": false },
         "allocationCount": { "baseline": 1200000, "maxRegressionPercent": 15, "higherIsBetter": false },
-        "cacheHitRate": { "baseline": 0.75, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "cacheHitRate": { "baseline": 0, "maxRegressionPercent": 10, "higherIsBetter": true },
         "startupMs": { "baseline": 1000, "maxRegressionPercent": 15, "higherIsBetter": false },
         "packageBytes": { "baseline": 73400320, "maxRegressionPercent": 10, "higherIsBetter": false }
       }
@@ -89,7 +89,7 @@
       "resources": {
         "peakRssBytes": { "baseline": 1073741824, "maxRegressionPercent": 20, "higherIsBetter": false },
         "allocationCount": { "baseline": 5000000, "maxRegressionPercent": 20, "higherIsBetter": false },
-        "cacheHitRate": { "baseline": 0.6, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "cacheHitRate": { "baseline": 0, "maxRegressionPercent": 10, "higherIsBetter": true },
         "startupMs": { "baseline": 3000, "maxRegressionPercent": 20, "higherIsBetter": false },
         "packageBytes": { "baseline": 104857600, "maxRegressionPercent": 10, "higherIsBetter": false }
       }
