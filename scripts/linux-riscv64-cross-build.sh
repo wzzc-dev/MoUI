@@ -382,10 +382,15 @@ if [[ \$has_c -eq 0 && \$has_o -eq 1 ]]; then
 fi
 # Use the sysroot libstdc++ (matching the Skia archive) instead of zig's
 # bundled libc++, disable zig's default UBSan instrumentation, and expose
-# the sysroot include layout (libstdc++ before /usr/include so that
-# include_next resolves against the target glibc headers).
+# the sysroot include layout following clang's native Linux ordering:
+# the GCC installation include dir comes first because glibc stopped
+# shipping <stdatomic.h> (Ubuntu noble); it is provided by the
+# libgcc-13-dev headers instead. Native clang auto-detects that directory,
+# but zig cc with an external sysroot does not. libstdc++ stays before
+# /usr/include so that include_next resolves against the target glibc.
 exec "$zig_bin" cc -target "\$target_triple" --sysroot "\$sysroot" \
   -fno-sanitize=all \
+  -isystem "\$sysroot/usr/lib/gcc/riscv64-linux-gnu/\$cxx_ver/include" \
   -isystem "\$sysroot/usr/include/c++/\$cxx_ver" \
   -isystem "\$sysroot/usr/include/riscv64-linux-gnu/c++/\$cxx_ver" \
   -isystem "\$sysroot/usr/include/backward" \

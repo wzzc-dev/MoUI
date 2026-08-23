@@ -143,4 +143,19 @@ expect_failure vulkan-enabled \
   "MOUI_SKIA_ENABLE_GPU_VULKAN must be disabled" \
   env "${common_env[@]}" MOUI_SKIA_ENABLE_GPU_VULKAN=1 bash "${common_args[@]}"
 
+# Include-order contract: the GCC installation include dir must be injected
+# before the libstdc++ dirs. glibc (Ubuntu noble) no longer ships
+# <stdatomic.h>, so the libgcc-13-dev header directory is the only C-mode
+# provider; native clang auto-detects it, the zig cc wrapper must add it.
+gcc_include_line="$(grep -n 'isystem.*usr/lib/gcc/riscv64-linux-gnu' "$helper" | head -1 | cut -d: -f1)"
+cxx_include_line="$(grep -n 'isystem.*usr/include/c++' "$helper" | head -1 | cut -d: -f1)"
+if [[ -z "$gcc_include_line" || -z "$cxx_include_line" ]]; then
+  echo "cross-build wrapper is missing the sysroot include layout injections" >&2
+  exit 1
+fi
+if (( gcc_include_line >= cxx_include_line )); then
+  echo "cross-build wrapper must inject the GCC include dir before libstdc++ headers" >&2
+  exit 1
+fi
+
 echo "Linux RISC-V64 cross-build helper self-test passed"
