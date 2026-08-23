@@ -539,6 +539,8 @@ fn gitignore_text() -> String {
     #|/target/
     #|/artifacts/
     #|/.skia-cache/
+    #|.moui/dev-state.json
+    #|.moui/dev-status.json
     #|*.log
     #|*.tmp
     #|.DS_Store

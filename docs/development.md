@@ -259,6 +259,12 @@ moui dev --package web_wasm --web       # watch and serve Web
 moui dev --interval-ms 250 --port 4173  # tune polling and Web port
 ```
 
+Inside the MoUI monorepo, run from any example directory (`--package web_wasm`)
+or from the repository root (`--package examples/<name>/web_wasm`). The Web
+server serves `<package>/index.html` at `/` and resolves shared assets such as
+`moui_web_renderer/runtime.js` and `_build/.../*.wasm` against the workspace
+root when they are not under the current directory.
+
 Native targets restart after a successful rebuild. Web targets expose a status
 endpoint, refresh the page after a successful build, and display compiler
 diagnostics in an injected overlay while continuing to watch for the fix. The
