@@ -77,6 +77,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [dsh-desktop-async-lifecycle](done/dsh-desktop-async-lifecycle.md) | Replace the DSH native C process bridge with async structured lifecycle ownership |
 | [p1-daily-developer-efficiency](done/p1-daily-developer-efficiency.md) | Add the dev loop, structured Inspector, performance budgets, and scalable data-view primitives |
 | [p2-platform-ecosystem](done/p2-platform-ecosystem.md) | Expand platform services, deterministic packaging, and compatibility governance |
 | [macos-first-present-visibility](done/macos-first-present-visibility.md) | Reveal Mo Desktop and Mo Workbench only after their first successful macOS presentation |
