@@ -38,6 +38,7 @@ extern "C" fn macos_webview_sync(
   background : Bytes,
   scheme : Bytes,
   policy : Int,
+  visible : Int,
   x : Double,
   y : Double,
   width : Double,
@@ -134,6 +135,10 @@ pub fn sync_macos_platform_views(
 ) -> Unit {
   match macos_content_view_handle(window) {
     Some(raw_content_view_handle) => {
+      let has_visible_webview = frame.platform_views.any(placement => {
+        placement.kind == "web_view" &&
+        placement.property_or("visible", "true") == "true"
+      })
       macos_webview_platform_views_begin(raw_content_view_handle)
       for placement in frame.platform_views {
         if placement.kind == "web_view" {
@@ -149,13 +154,19 @@ pub fn sync_macos_platform_views(
               placement.property_or("color-scheme", ""),
             ),
             0,
+            if placement.property_or("visible", "true") == "true" {
+              1
+            } else {
+              0
+            },
             placement.frame.origin.x,
             placement.frame.origin.y,
             placement.frame.size.width,
             placement.frame.size.height,
           )
-          match frame.overlay_bounds {
-            Some(bounds) =>
+          match
+            (placement.property_or("visible", "true"), frame.overlay_bounds) {
+            ("true", Some(bounds)) =>
               macos_webview_sync_overlay_mask(
                 raw_content_view_handle,
                 @host.webview_encode_ffi_string(placement.id),
@@ -165,7 +176,7 @@ pub fn sync_macos_platform_views(
                 bounds.size.width,
                 bounds.size.height,
               )
-            None =>
+            ("true", None) =>
               macos_webview_sync_overlay_mask(
                 raw_content_view_handle,
                 @host.webview_encode_ffi_string(placement.id),
@@ -175,6 +186,22 @@ pub fn sync_macos_platform_views(
                 0.0,
                 0.0,
               )
+            _ => ()
+          }
+        }
+      }
+      if !has_visible_webview {
+        for placement in frame.platform_views {
+          if placement.kind == "web_view" {
+            macos_webview_sync_overlay_mask(
+              raw_content_view_handle,
+              @host.webview_encode_ffi_string(placement.id),
+              0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+            )
           }
         }
       }

@@ -232,6 +232,7 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
 - (void)syncURL:(NSString *)url
           frame:(NSRect)frame
          policy:(int32_t)policy
+        visible:(BOOL)visible
      background:(NSString *)background
         scheme:(NSString *)scheme;
 - (void)syncOverlayMask:(BOOL)hasBounds rect:(NSRect)rect;
@@ -623,6 +624,7 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
 - (void)syncURL:(NSString *)url
           frame:(NSRect)frame
          policy:(int32_t)policy
+        visible:(BOOL)visible
      background:(NSString *)background
         scheme:(NSString *)scheme {
   self.seen = YES;
@@ -641,7 +643,7 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
   }
   self.webView.layer.backgroundColor = nativeBackground.CGColor;
   self.webView.frame = frame;
-  self.webView.hidden = frame.size.width <= 0 || frame.size.height <= 0;
+  self.webView.hidden = !visible || frame.size.width <= 0 || frame.size.height <= 0;
   if (url.length > 0 && self.desiredURL == nil) {
     moui_macos_webview_log(@"first sync id=%@ frame=(%.0f,%.0f %.0fx%.0f) url=%@",
                            self.identifier, frame.origin.x, frame.origin.y,
@@ -924,7 +926,7 @@ MOONBIT_FFI_EXPORT
 void moui_macos_webview_sync(uint64_t raw_content_view_handle, moonbit_bytes_t id,
                              moonbit_bytes_t url, moonbit_bytes_t title,
                              moonbit_bytes_t background, moonbit_bytes_t scheme,
-                             int32_t policy,
+                             int32_t policy, int32_t visible,
                              double x, double y, double width, double height) {
   (void)title;
   NSView *parent = (__bridge NSView *)(void *)raw_content_view_handle;
@@ -948,6 +950,7 @@ void moui_macos_webview_sync(uint64_t raw_content_view_handle, moonbit_bytes_t i
   [record syncURL:moui_macos_webview_string_from_bytes(url)
             frame:NSMakeRect(x, y, width, height)
            policy:policy
+          visible:visible != 0
        background:moui_macos_webview_string_from_bytes(background)
             scheme:moui_macos_webview_string_from_bytes(scheme)];
 }

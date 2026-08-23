@@ -536,7 +536,8 @@ MOONBIT_FFI_EXPORT
 void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
                              moonbit_bytes_t id, moonbit_bytes_t url,
                              moonbit_bytes_t title, moonbit_bytes_t background,
-                             moonbit_bytes_t scheme, int32_t policy, double x,
+                             moonbit_bytes_t scheme, int32_t policy,
+                             int32_t visible, double x,
                              double y, double width, double height) {
 #if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
   (void)wl_display;
@@ -565,7 +566,7 @@ void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
         view->webview,
         &(GdkRGBA){view->background_red, view->background_green,
                    view->background_blue, view->background_alpha});
-    view->visible = width > 0.0 && height > 0.0;
+    view->visible = visible != 0 && width > 0.0 && height > 0.0;
 
     // Update size for offscreen rendering
     int new_width = (int)width;
@@ -598,6 +599,7 @@ void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
   (void)background;
   (void)scheme;
   (void)policy;
+  (void)visible;
   (void)x;
   (void)y;
   (void)width;

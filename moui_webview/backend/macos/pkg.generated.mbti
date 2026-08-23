@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_webview/backend/macos"
+
+import {
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_webview/host",
+}
+
+// Values
+pub fn create_macos_webview_plugin(@host.WebViewHost) -> @backend.PlatformViewPlugin
+
+pub fn dispose_macos_platform_views(@wzzc-dev/window/macos.Window) -> Unit
+
+pub fn drain_macos_webview_commands(@wzzc-dev/window/macos.Window, @host.WebViewHost) -> Int
+
+pub fn install_macos_webview_event_dispatcher(@host.WebViewHost, (UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit
+
+pub fn macos_webview_capabilities() -> @host.HostWebViewCapabilities
+
+pub fn sync_macos_platform_views(@wzzc-dev/window/macos.Window, @core.DrawFrame) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

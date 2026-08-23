@@ -1,0 +1,44 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_webview/backend/linux"
+
+import {
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui_webview/host",
+}
+
+// Values
+pub fn create_linux_webview_plugin(@host.WebViewHost) -> @backend.PlatformViewPlugin
+
+pub fn dispose_linux_platform_views(@wzzc-dev/window/linux.Window) -> Unit
+
+pub fn drain_linux_webview_commands(@wzzc-dev/window/linux.Window, @host.WebViewHost) -> Int
+
+pub fn draw_linux_webview_to_renderer(@wzzc-dev/window/linux.Window, @render.RendererSession, @core.DrawFrame, content_offset_y? : Double) -> Unit
+
+pub fn install_linux_webview_event_dispatcher(@host.WebViewHost, (UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit
+
+pub fn linux_webview_capabilities() -> @host.HostWebViewCapabilities
+
+pub fn linux_webview_get_surface_data(UInt64, Bytes) -> WebViewSurfaceData
+
+pub fn linux_webview_runtime_next_tick_ms(delay_ms? : Int) -> Int64
+
+pub fn pump_linux_webview_runtime(max_iterations? : Int) -> Bool
+
+pub fn sync_linux_platform_views(@wzzc-dev/window/linux.Window, @core.DrawFrame, content_offset_y? : Double) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct WebViewSurfaceData {
+  surface_ptr : UInt64
+  width : Int
+  height : Int
+  stride : Int
+}
+
+// Type aliases
+
+// Traits

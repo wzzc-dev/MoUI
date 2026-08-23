@@ -32,6 +32,7 @@ extern "C" fn windows_webview_sync(
   background : Bytes,
   scheme : Bytes,
   policy : Int,
+  visible : Int,
   x : Double,
   y : Double,
   width : Double,
@@ -136,24 +137,29 @@ pub fn sync_windows_platform_views(
           placement.property_or("color-scheme", ""),
         ),
         0,
+        if placement.property_or("visible", "true") == "true" {
+          1
+        } else {
+          0
+        },
         placement.frame.origin.x,
         placement.frame.origin.y,
         placement.frame.size.width,
         placement.frame.size.height,
       )
-      match frame.overlay_bounds {
-        Some(bounds) =>
-          windows_webview_sync_overlay_mask(
-            hwnd,
-            1,
-            bounds.origin.x,
-            bounds.origin.y,
-            bounds.size.width,
-            bounds.size.height,
-          )
-        None => windows_webview_sync_overlay_mask(hwnd, 0, 0.0, 0.0, 0.0, 0.0)
-      }
     }
+  }
+  match frame.overlay_bounds {
+    Some(bounds) =>
+      windows_webview_sync_overlay_mask(
+        hwnd,
+        1,
+        bounds.origin.x,
+        bounds.origin.y,
+        bounds.size.width,
+        bounds.size.height,
+      )
+    None => windows_webview_sync_overlay_mask(hwnd, 0, 0.0, 0.0, 0.0, 0.0)
   }
   windows_webview_platform_views_end(hwnd)
 }

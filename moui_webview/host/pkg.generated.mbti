@@ -238,10 +238,11 @@ pub(all) struct WebViewSpec {
   width : Double?
   height : Double?
   title : String
+  visible : Bool
   background_color : @core.Color?
   color_scheme : @core.ColorScheme?
 }
-pub fn WebViewSpec::new(id~ : String, width? : Double?, height? : Double?, title? : String, background_color? : @core.Color?, color_scheme? : @core.ColorScheme?) -> Self
+pub fn WebViewSpec::new(id~ : String, width? : Double?, height? : Double?, title? : String, visible? : Bool, background_color? : @core.Color?, color_scheme? : @core.ColorScheme?) -> Self
 pub fn WebViewSpec::platform_view_placement(Self, frame~ : @core.Rect, clip? : @core.Rect?) -> @core.PlatformViewPlacement
 
 pub struct WebViewTask[T] {

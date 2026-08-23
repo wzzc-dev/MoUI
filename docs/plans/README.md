@@ -59,8 +59,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 |------|---------|
 | [native-accessibility](active/native-accessibility.md) | Complete native accessibility adapters and matching-host evidence for the Showcase Probe |
 | [webview-controller-bridge](active/webview-controller-bridge.md) | Replace the WebView command queue with controller-owned navigation, JSON bridge security, and HostPatch across desktop hosts |
-| [dsh-desktop-settings-menu](active/dsh-desktop-settings-menu.md) | Add the macOS Settings command and a persisted MoUI request-URL dialog above WKWebView |
-| [dsh-floating-site-switch](active/dsh-floating-site-switch.md) | DeepSeek Harness Desktop floating site-switch overlay button and URL handling |
 | [linux-riscv64-support](active/linux-riscv64-support.md) | Add non-blocking Linux Skia Raster L0-L2 cross-build evidence for `riscv64-linux-gnu` |
 | [mo-workbench-message-windowing](active/mo-workbench-message-windowing.md) | Mo Workbench 消息列表窗口化与重建优化 |
 | [release-module-dependency-closures](done/release-module-dependency-closures.md) | Split concrete renderers and integration tests out of the base publication closure |
@@ -77,7 +75,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
-| [dsh-desktop-async-lifecycle](done/dsh-desktop-async-lifecycle.md) | Replace the DSH native C process bridge with async structured lifecycle ownership |
 | [p1-daily-developer-efficiency](done/p1-daily-developer-efficiency.md) | Add the dev loop, structured Inspector, performance budgets, and scalable data-view primitives |
 | [p2-platform-ecosystem](done/p2-platform-ecosystem.md) | Expand platform services, deterministic packaging, and compatibility governance |
 | [macos-first-present-visibility](done/macos-first-present-visibility.md) | Reveal Mo Desktop and Mo Workbench only after their first successful macOS presentation |

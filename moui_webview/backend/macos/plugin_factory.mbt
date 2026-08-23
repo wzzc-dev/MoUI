@@ -36,6 +36,10 @@ pub fn create_macos_webview_plugin(
       )
     },
     sync_platform_views=fn(handle, frame, _offset_y) {
+      let has_visible_webview = frame.platform_views.any(placement => {
+        placement.kind == "web_view" &&
+        placement.property_or("visible", "true") == "true"
+      })
       macos_webview_platform_views_begin(handle)
       for placement in frame.platform_views {
         if placement.kind == "web_view" {
@@ -51,13 +55,19 @@ pub fn create_macos_webview_plugin(
               placement.property_or("color-scheme", ""),
             ),
             0,
+            if placement.property_or("visible", "true") == "true" {
+              1
+            } else {
+              0
+            },
             placement.frame.origin.x,
             placement.frame.origin.y,
             placement.frame.size.width,
             placement.frame.size.height,
           )
-          match frame.overlay_bounds {
-            Some(bounds) =>
+          match
+            (placement.property_or("visible", "true"), frame.overlay_bounds) {
+            ("true", Some(bounds)) =>
               macos_webview_sync_overlay_mask(
                 handle,
                 @host.webview_encode_ffi_string(placement.id),
@@ -67,7 +77,7 @@ pub fn create_macos_webview_plugin(
                 bounds.size.width,
                 bounds.size.height,
               )
-            None =>
+            ("true", None) =>
               macos_webview_sync_overlay_mask(
                 handle,
                 @host.webview_encode_ffi_string(placement.id),
@@ -77,6 +87,22 @@ pub fn create_macos_webview_plugin(
                 0.0,
                 0.0,
               )
+            _ => ()
+          }
+        }
+      }
+      if !has_visible_webview {
+        for placement in frame.platform_views {
+          if placement.kind == "web_view" {
+            macos_webview_sync_overlay_mask(
+              handle,
+              @host.webview_encode_ffi_string(placement.id),
+              0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+            )
           }
         }
       }
