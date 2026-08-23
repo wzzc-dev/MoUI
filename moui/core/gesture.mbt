@@ -222,8 +222,6 @@ pub(all) enum CommandIntent {
   Redo
   SelectAll
   OpenContextMenu
-  SwitchSite
-  ToggleFloating
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -623,8 +621,6 @@ pub fn CommandIntent::display_label(self : CommandIntent) -> String {
     Redo => "Redo"
     SelectAll => "Select All"
     OpenContextMenu => "Open Context Menu"
-    SwitchSite => "Switch Site"
-    ToggleFloating => "Toggle Floating"
   }
 }
 
