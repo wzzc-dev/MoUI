@@ -7,7 +7,7 @@ preferred_target = "wasm-gc"
 supported_targets = "wasm-gc"
 
 import {
-  "wzzc-dev/moui@0.1.9",
+  "wzzc-dev/moui@0.1.10",
   "wzzc-dev/moui_3d@0.1.10",
 }
 

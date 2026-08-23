@@ -5,8 +5,8 @@ version = "0.1.0"
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.1.9",
-  "wzzc-dev/moui_skia_renderer@0.1.9",
+  "wzzc-dev/moui@0.1.10",
+  "wzzc-dev/moui_skia_renderer@0.1.10",
   "mizchi/crater-renderer@0.19.0",
   "mizchi/crater-layout@0.19.0",
   "mizchi/crater-painter@0.19.0",

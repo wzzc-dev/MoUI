@@ -79,7 +79,7 @@ test "hello template emits greet app instead of counter" {
       let test_src = test_planned_text(files, "app/app_test.mbt")
       assert_true(test_src.contains("hello greet flips greeted"))
       let root_mod = test_planned_text(files, "moon.mod")
-      assert_true(root_mod.contains("wzzc-dev/moui_web_renderer@0.1.9"))
+      assert_true(root_mod.contains("wzzc-dev/moui_web_renderer@0.1.10"))
       assert_false(root_mod.contains("wzzc-dev/moui_skia_renderer"))
     }
     Err(message) => fail(message)
@@ -163,7 +163,7 @@ test "default macOS project file plan is exact" {
       #|  "id": "sample_app",
       #|  "title": "Sample App",
       #|  "module": "example/sample_app",
-      #|  "mouiVersion": "0.1.9",
+      #|  "mouiVersion": "0.1.10",
       #|  "platforms": [
       #|    "web",
       #|    "macos"
@@ -173,9 +173,9 @@ test "default macOS project file plan is exact" {
     ),
   )
   let root_mod = test_planned_text(files, "moon.mod")
-  assert_true(root_mod.contains("wzzc-dev/moui@0.1.9"))
-  assert_true(root_mod.contains("wzzc-dev/moui_web_renderer@0.1.9"))
-  assert_true(root_mod.contains("wzzc-dev/moui_skia_renderer@0.1.9"))
+  assert_true(root_mod.contains("wzzc-dev/moui@0.1.10"))
+  assert_true(root_mod.contains("wzzc-dev/moui_web_renderer@0.1.10"))
+  assert_true(root_mod.contains("wzzc-dev/moui_skia_renderer@0.1.10"))
   let web_pkg = test_planned_text(files, "web_wasm/moon.pkg")
   assert_true(web_pkg.contains("wzzc-dev/moui_web_renderer"))
   assert_true(web_pkg.contains("@webgpu_adapter"))
@@ -220,10 +220,13 @@ test "mobile config contains window-hosted platform defaults" {
   let mobile = test_planned_text(files, "moui.mobile.json")
   let root_mod = test_planned_text(files, "moon.mod")
   inspect(
-    root_mod.contains("wzzc-dev/moui_skia_renderer@0.1.9"),
+    root_mod.contains("wzzc-dev/moui_skia_renderer@0.1.10"),
     content="true",
   )
-  inspect(root_mod.contains("wzzc-dev/moui_web_renderer@0.1.9"), content="true")
+  inspect(
+    root_mod.contains("wzzc-dev/moui_web_renderer@0.1.10"),
+    content="true",
+  )
   for platform in ["android", "ios", "harmonyos"] {
     let package_text = test_planned_text(
       files,

@@ -3,11 +3,11 @@ test "cli_version_from_manifest parses the version line" {
   let manifest = (
     #|name = "wzzc-dev/moui_cli"
     #|
-    #|version = "0.1.9"
+    #|version = "0.1.10"
     #|
     #|description = "Standalone project generator and environment doctor for MoUI"
   ).to_string()
-  inspect(cli_version_from_manifest(manifest), content="0.1.9")
+  inspect(cli_version_from_manifest(manifest), content="0.1.10")
 }
 
 ///|
