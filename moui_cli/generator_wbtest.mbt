@@ -131,6 +131,7 @@ test "default macOS project file plan is exact" {
     files.map(file => file.path).join("\n"),
     content=(
       #|.gitignore
+      #|.moui/dev.mjs
       #|README.md
       #|app/app.mbt
       #|app/app_test.mbt

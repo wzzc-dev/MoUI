@@ -1,7 +1,4 @@
 ///|
-let version : String = "0.1.3"
-
-///|
 pub(all) struct CliOutcome {
   exit_code : Int
   stdout : String
@@ -618,7 +615,7 @@ fn version_output(json : Bool) -> CliOutcome {
       "schemaVersion": 1,
       "ok": true,
       "command": "version",
-      "version": version,
+      "version": cli_version(),
       "defaultMouiDependencyVersion": default_moui_dependency_version,
       "note": "CLI version and default wzzc-dev/moui dependency version are independent.",
     }
@@ -626,7 +623,7 @@ fn version_output(json : Bool) -> CliOutcome {
   } else {
     stdout_outcome(
       "moui " +
-      version +
+      cli_version() +
       "\ndefault moui dependency: wzzc-dev/moui@" +
       default_moui_dependency_version +
       "\n(CLI version and dependency version are independent)\n",

@@ -95,7 +95,7 @@ test "help and version routes succeed" {
   inspect(version_result.exit_code, content="0")
   let parsed = @json.parse(version_result.stdout)
   guard parsed is Object(root) else { fail("expected version JSON") }
-  inspect(root.get("version") == Some("0.1.3".to_json()), content="true")
+  inspect(root.get("version") == Some(cli_version().to_json()), content="true")
   inspect(
     root.get("defaultMouiDependencyVersion") ==
     Some(default_moui_dependency_version.to_json()),
@@ -116,7 +116,7 @@ test "dev parser forwards watch options to the runner" {
   inspect(parsed.project_root, content="/workspace/demo")
   inspect(
     parsed.runner_args.join("|"),
-    content="--target=wasm-gc|--interval-ms=250|--port=4173|--state=.moui/state.json|--web|--once|--json|--package=web_wasm",
+    content="--target=wasm-gc|--interval-ms=250|--port=4173|--state=.moui/state.json|--web|--once|--package=web_wasm|--json",
   )
 }
 
