@@ -98,8 +98,8 @@ and local workspace members resolve from `moon.work`. The exact list is generate
 ```moonbit
 import {
   "wzzc-dev/window@0.5.4-0.1.5",
-  "wzzc-dev/moui@0.1.9",
-  "wzzc-dev/moui_skia@0.1.9",
+  "wzzc-dev/moui@0.1.10",
+  "wzzc-dev/moui_skia@0.1.10",
 }
 ```
 

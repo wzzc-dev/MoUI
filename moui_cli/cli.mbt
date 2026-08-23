@@ -81,7 +81,7 @@ fn new_usage() -> String {
     #|  --title TITLE           Display title. Defaults from the project id.
     #|  --template NAME         App skeleton: counter (default) or hello.
     #|  --moui-version VERSION  MoUI dependency version written into moon.mod.
-    #|                          Defaults to 0.1.9. Independent from CLI version.
+    #|                          Defaults to 0.1.10. Independent from CLI version.
     #|  --platform PLATFORM     Add a target platform; may be repeated.
     #|                          Values: web, macos, windows, linux, android,
     #|                          ios, harmonyos, or all.

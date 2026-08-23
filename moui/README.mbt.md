@@ -83,8 +83,8 @@ surface, written in MoUI itself.
   source-mapped design-system models, package-local Material/Carbon/Primer/
   Fluent entrypoints, and custom theme builders; core MoUI apps do not need
   it.
-- `moui_skia/` (`wzzc-dev/moui_skia@0.1.9` in this checkout) is the native
-  Skia binding workspace; `moui_sun/` (`wzzc-dev/moui_sun@0.1.9`) is an
+- `moui_skia/` (`wzzc-dev/moui_skia@0.1.10` in this checkout) is the native
+  Skia binding workspace; `moui_sun/` (`wzzc-dev/moui_sun@0.1.10`) is an
   experimental native raster stack. Their `moui_{skia,sun}_renderer` modules own the
   corresponding MoUI renderer implementation; base `moui` depends on neither.
 - `backend/` defines shared host contracts; platform backends normalize

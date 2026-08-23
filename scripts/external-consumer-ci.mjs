@@ -19,7 +19,7 @@ import { spawnSync } from "node:child_process";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureRoot = join(repoRoot, "checks/external-consumer");
 const registryBaseVersion = "0.1.7";
-const headVersion = "0.1.9";
+const headVersion = "0.1.10";
 
 const usage = [
   "Usage: node scripts/external-consumer-ci.mjs --source registry|package --profile base|skia|web",
