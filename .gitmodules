@@ -6,7 +6,3 @@
 	path = window
 	url = https://github.com/wzzc-dev/window.git
 	branch = moui-support
-[submodule ".agents/skills/osc2026-guide"]
-	path = .agents/skills/osc2026-guide
-	url = https://gitlink.org.cn/MilkyNatas/osc2026-guide.git
-	branch = main
