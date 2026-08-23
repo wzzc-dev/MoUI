@@ -9,4 +9,11 @@ supported_targets = "+native"
 
 options(
   "native-stub": [ "native_fs.c", "native_process.c" ],
+  "pre-build": [
+    {
+      "input": "moon.mod",
+      "output": "version_manifest.mbt",
+      "command": ":embed -i $input -o $output --name embedded_module_manifest --text"
+    }
+  ],
 )
