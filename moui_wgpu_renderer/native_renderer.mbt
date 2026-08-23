@@ -112,6 +112,149 @@ fn RendererHandle::create_with_host_surface_and_text_engine(
 }
 
 ///|
+
+///|
+/// Prefer non-sRGB surface formats so sRGB palette bytes (e.g. `ColorPalette::light()`
+/// primary `0.145`) are presented verbatim. `configure_default` picks
+/// `caps.formats[0]` which is `BGRA8UnormSrgb` on macOS/Metal; the fragment
+/// shaders output sRGB directly (`visual_shader_wgsl` / `text_shader_wgsl`)
+/// and a Srgb target would then apply a spurious `linear->sRGB` encode
+/// (`0.145 -> ~0.39`) washing the UI as seen in the Skia vs WGPU showcase
+/// comparison. Keep blending in sRGB (matching Skia's `raster_n32_premul` +
+/// `NSImageView` path) by forcing `BGRA8Unorm`/`RGBA8Unorm`.
+fn wgpu_is_srgb_format(format : @wgpu_mbt.TextureFormat) -> Bool {
+  format.raw == @wgpu_mbt.TEXTURE_FORMAT_BGRA8_UNORM_SRGB ||
+  format.raw == @wgpu_mbt.TEXTURE_FORMAT_RGBA8_UNORM_SRGB
+}
+
+///|
+fn wgpu_contains_format(
+  formats : Array[@wgpu_mbt.TextureFormat],
+  target : @wgpu_mbt.TextureFormat,
+) -> Bool {
+  for fmt in formats {
+    if fmt.raw == target.raw {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn wgpu_contains_u32(values : Array[UInt], target : UInt) -> Bool {
+  for v in values {
+    if v == target {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn wgpu_pick_preferred_surface_format(
+  surface : @wgpu_mbt.Surface,
+  adapter : @wgpu_mbt.Adapter,
+) -> @wgpu_mbt.TextureFormat {
+  let formats = surface.capabilities_formats(adapter)
+  let prefs = [
+    @wgpu_mbt.TextureFormat::from_u32(@wgpu_mbt.TEXTURE_FORMAT_BGRA8_UNORM),
+    @wgpu_mbt.TextureFormat::from_u32(@wgpu_mbt.TEXTURE_FORMAT_RGBA8_UNORM),
+  ]
+  for pref in prefs {
+    if wgpu_contains_format(formats, pref) {
+      return pref
+    }
+  }
+  for fmt in formats {
+    if !wgpu_is_srgb_format(fmt) {
+      return fmt
+    }
+  }
+  if formats.length() > 0 {
+    let first = formats[0]
+    if wgpu_is_srgb_format(first) {
+      if first.raw == @wgpu_mbt.TEXTURE_FORMAT_BGRA8_UNORM_SRGB {
+        let alt = @wgpu_mbt.TextureFormat::from_u32(
+          @wgpu_mbt.TEXTURE_FORMAT_BGRA8_UNORM,
+        )
+        if wgpu_contains_format(formats, alt) {
+          return alt
+        }
+      } else if first.raw == @wgpu_mbt.TEXTURE_FORMAT_RGBA8_UNORM_SRGB {
+        let alt = @wgpu_mbt.TextureFormat::from_u32(
+          @wgpu_mbt.TEXTURE_FORMAT_RGBA8_UNORM,
+        )
+        if wgpu_contains_format(formats, alt) {
+          return alt
+        }
+      }
+    }
+    return first
+  }
+  @wgpu_mbt.TextureFormat::from_u32(@wgpu_mbt.TEXTURE_FORMAT_BGRA8_UNORM)
+}
+
+///|
+fn wgpu_configure_surface_preferred(
+  surface : @wgpu_mbt.Surface,
+  adapter : @wgpu_mbt.Adapter,
+  device : @wgpu_mbt.Device,
+  width : UInt,
+  height : UInt,
+  usage : @wgpu_mbt.TextureUsage,
+) -> @wgpu_mbt.TextureFormat {
+  let format = wgpu_pick_preferred_surface_format(surface, adapter)
+  let present_modes = surface.capabilities_present_modes(adapter)
+  let alpha_modes = surface.capabilities_alpha_modes(adapter)
+  let mut present_mode = @wgpu_mbt.PRESENT_MODE_FIFO
+  let present_prefs = [
+    @wgpu_mbt.PRESENT_MODE_FIFO,
+    @wgpu_mbt.PRESENT_MODE_FIFO_RELAXED,
+  ]
+  for pref in present_prefs {
+    if wgpu_contains_u32(present_modes, pref) {
+      present_mode = pref
+      break
+    }
+  }
+  if !wgpu_contains_u32(present_modes, present_mode) &&
+    present_modes.length() > 0 {
+    present_mode = present_modes[0]
+  }
+  let mut alpha_mode = @wgpu_mbt.COMPOSITE_ALPHA_MODE_AUTO
+  let alpha_prefs = [
+    @wgpu_mbt.COMPOSITE_ALPHA_MODE_AUTO,
+    @wgpu_mbt.COMPOSITE_ALPHA_MODE_OPAQUE,
+    @wgpu_mbt.COMPOSITE_ALPHA_MODE_PREMULTIPLIED,
+    @wgpu_mbt.COMPOSITE_ALPHA_MODE_UNPREMULTIPLIED,
+    @wgpu_mbt.COMPOSITE_ALPHA_MODE_INHERIT,
+  ]
+  for pref in alpha_prefs {
+    if wgpu_contains_u32(alpha_modes, pref) {
+      alpha_mode = pref
+      break
+    }
+  }
+  if !wgpu_contains_u32(alpha_modes, alpha_mode) && alpha_modes.length() > 0 {
+    alpha_mode = alpha_modes[0]
+  }
+  let supported_usage = surface.capabilities_usages_u64(adapter)
+  let actual_usage_raw = if (usage.raw & supported_usage.raw) == 0UL {
+    supported_usage.raw
+  } else {
+    usage.raw & supported_usage.raw
+  }
+  let actual_usage = @wgpu_mbt.TextureUsage::from_u64(actual_usage_raw)
+  let ok = surface.configure_u32(
+    adapter, device, width, height, actual_usage, format, present_mode, alpha_mode,
+  )
+  if ok {
+    return format
+  }
+  surface.configure_default(adapter, device, width, height, usage)
+}
+
+///|
 fn create_with_surface(
   metrics : @core.SurfaceMetrics,
   instance : @wgpu_mbt.Instance,
@@ -124,7 +267,8 @@ fn create_with_surface(
   let usage = @wgpu_mbt.TextureUsage::from_u64(
     @wgpu_mbt.TEXTURE_USAGE_RENDER_ATTACHMENT | @wgpu_mbt.TEXTURE_USAGE_COPY_SRC,
   )
-  let format = surface.configure_default(
+  let format = wgpu_configure_surface_preferred(
+    surface,
     adapter,
     device,
     @render.size_dim_to_uint(metrics.physical_size.width),
@@ -312,7 +456,8 @@ fn RendererHandle::resize(
         @wgpu_mbt.TEXTURE_USAGE_RENDER_ATTACHMENT |
         @wgpu_mbt.TEXTURE_USAGE_COPY_SRC,
       )
-      self.surface_format = surface.configure_default(
+      self.surface_format = wgpu_configure_surface_preferred(
+        surface,
         adapter,
         device,
         @render.size_dim_to_uint(physical_size.width),
