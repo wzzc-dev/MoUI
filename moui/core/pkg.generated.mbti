@@ -304,8 +304,6 @@ pub(all) enum CommandIntent {
   Redo
   SelectAll
   OpenContextMenu
-  SwitchSite
-  ToggleFloating
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CommandIntent::display_label(Self) -> String
 
