@@ -20,14 +20,30 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureRoot = join(repoRoot, "checks/external-consumer");
 const registryBaseVersion = "0.1.7";
 
-// The head version must track the published module version. Read it from the
-// canonical module manifest instead of hardcoding it so version bumps cannot
-// leave this script behind.
-const headVersion = readFileSync(join(repoRoot, "moui/moon.mod"), "utf8")
-  .match(/^version\s*=\s*"([^"]+)"/m)?.[1];
-if (!headVersion) {
-  throw new Error("unable to resolve wzzc-dev/moui version from moui/moon.mod");
-}
+// Head versions must track the published module versions. Read them from each
+// module manifest instead of hardcoding so version bumps cannot leave this
+// script behind. Modules release independently (e.g. moui_skia and
+// moui_web_renderer may lag the framework), so there is no single version.
+const readModuleVersion = packageName => {
+  const manifest = readFileSync(join(repoRoot, packageName, "moon.mod"), "utf8");
+  const version = manifest.match(/^version\s*=\s*"([^"]+)"/m)?.[1];
+  if (!version) {
+    throw new Error(
+      "unable to resolve wzzc-dev/" +
+        packageName + " version from " + packageName + "/moon.mod",
+    );
+  }
+  return version;
+};
+
+const headVersions = Object.fromEntries(
+  [
+    "moui",
+    "moui_skia",
+    "moui_skia_renderer",
+    "moui_web_renderer",
+  ].map(packageName => [packageName, readModuleVersion(packageName)]),
+);
 
 const usage = [
   "Usage: node scripts/external-consumer-ci.mjs --source registry|package --profile base|skia|web",
@@ -73,31 +89,32 @@ const profilePackageNames = profile => {
 };
 
 const packageSpecs = (profile, source) => {
-  const version = source === "registry" ? registryBaseVersion : headVersion;
   return profilePackageNames(profile).map(packageName => ({
     directory: packageName,
     packageName,
-    version,
+    version: source === "registry"
+      ? registryBaseVersion
+      : headVersions[packageName],
   }));
 };
 
-const profilePackageImport = (profile, version) => {
+const profilePackageImport = (profile, versions) => {
   if (profile === "skia") {
     return [
-      `  "wzzc-dev/moui@${version}",`,
-      `  "wzzc-dev/moui_skia_renderer@${version}",`,
+      `  "wzzc-dev/moui@${versions.moui}",`,
+      `  "wzzc-dev/moui_skia_renderer@${versions.moui_skia_renderer}",`,
     ];
   }
   if (profile === "web") {
     return [
-      `  "wzzc-dev/moui@${version}",`,
-      `  "wzzc-dev/moui_web_renderer@${version}",`,
+      `  "wzzc-dev/moui@${versions.moui}",`,
+      `  "wzzc-dev/moui_web_renderer@${versions.moui_web_renderer}",`,
     ];
   }
-  return [`  "wzzc-dev/moui@${version}",`];
+  return [`  "wzzc-dev/moui@${versions.moui}",`];
 };
 
-const writeConsumerManifest = (consumerRoot, profile, version) => {
+const writeConsumerManifest = (consumerRoot, profile, versions) => {
   writeFileSync(
     join(consumerRoot, "moon.mod"),
     [
@@ -106,7 +123,7 @@ const writeConsumerManifest = (consumerRoot, profile, version) => {
       'version = "0.0.1"',
       "",
       "import {",
-      ...profilePackageImport(profile, version),
+      ...profilePackageImport(profile, versions),
       "}",
       "",
     ].join("\n"),
@@ -136,7 +153,10 @@ const assertPackageTreeClosure = (tree, profile) => {
   };
   const required = profile === "base"
     ? []
-    : ["wzzc-dev/moui_" + profile + "_renderer@" + headVersion];
+    : [
+      "wzzc-dev/moui_" + profile + "_renderer@" +
+        headVersions["moui_" + profile + "_renderer"],
+    ];
   for (const token of required) {
     if (!tree.includes(token)) {
       throw new Error(profile + " package tree is missing " + token);
@@ -223,8 +243,11 @@ const stagedPackagesRoot = join(temporaryRoot, "packages");
 const packageSha256s = [];
 const expectedVersion = options.source === "registry"
   ? registryBaseVersion
-  : headVersion;
+  : headVersions.moui;
 const packagedModules = packageSpecs(options.profile, options.source);
+const importVersions = Object.fromEntries(
+  packagedModules.map(spec => [spec.packageName, spec.version]),
+);
 
 try {
   mkdirSync(consumerRoot, { recursive: true });
@@ -234,7 +257,7 @@ try {
   cpSync(join(profileFixture, "app"), join(consumerRoot, "app"), {
     recursive: true,
   });
-  writeConsumerManifest(consumerRoot, options.profile, expectedVersion);
+  writeConsumerManifest(consumerRoot, options.profile, importVersions);
 
   if (options.source === "registry") {
     run("moon", ["update"], { cwd: consumerRoot });
