@@ -7,6 +7,8 @@
 .DS_Store
 .mooncakes/
 _build/
+**/.moui/dev-state.json
+**/.moui/dev-status.json
 artifacts/
 .skia-cache/
 dist/

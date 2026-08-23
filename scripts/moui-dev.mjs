@@ -120,7 +120,22 @@ async function startNative(pkg, buildTarget) {
 
 const clientScript = `(() => { let generation = null; let error = null; const box = document.createElement('pre'); box.id = '__moui_dev_error'; Object.assign(box.style, { position: 'fixed', inset: '12px', zIndex: 2147483647, margin: 0, padding: '16px', background: '#2b1111', color: '#ffd6d6', font: '13px/1.5 monospace', whiteSpace: 'pre-wrap', display: 'none' }); document.body.appendChild(box); async function poll() { try { const response = await fetch('/__moui/status', { cache: 'no-store' }); const status = await response.json(); if (generation !== null && status.generation !== generation && status.ok) location.reload(); generation = status.generation; error = status.error || null; box.textContent = error ? '[moui dev] ' + error + '\\n\\nFix the source and save to retry.' : ''; box.style.display = error ? 'block' : 'none'; } catch (_) {} setTimeout(poll, 700); } poll(); })();`;
 
+function findWorkspaceRoot(start) {
+  let dir = start;
+  for (let i = 0; i < 64; i += 1) {
+    if (fs.existsSync(path.join(dir, "moon.work"))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+  return null;
+}
+
 function serve() {
+  const defaultPage = /(^|\/)web_wasm$/.test(pkg) ? `${pkg}/index.html` : "web_wasm/index.html";
+  const staticRoots = [projectRoot];
+  const workspaceRoot = findWorkspaceRoot(projectRoot);
+  if (workspaceRoot && workspaceRoot !== projectRoot) staticRoots.push(workspaceRoot);
   const server = http.createServer((request, response) => {
     const url = new URL(request.url, "http://localhost");
     if (url.pathname === "/__moui/status") {
@@ -133,20 +148,22 @@ function serve() {
       response.end(clientScript);
       return;
     }
-    let relative = decodeURIComponent(url.pathname).replace(/^\/+/, "") || "web_wasm/index.html";
-    const requested = path.resolve(projectRoot, relative);
-    if ((requested !== projectRoot && !requested.startsWith(projectRoot + path.sep)) || !fs.existsSync(requested) || fs.statSync(requested).isDirectory()) {
-      response.writeHead(404); response.end("Not found"); return;
+    let relative = decodeURIComponent(url.pathname).replace(/^\/+/, "") || defaultPage;
+    for (const staticRoot of staticRoots) {
+      const requested = path.resolve(staticRoot, relative);
+      if ((requested !== staticRoot && !requested.startsWith(staticRoot + path.sep)) || !fs.existsSync(requested) || fs.statSync(requested).isDirectory()) continue;
+      let content = fs.readFileSync(requested);
+      if (path.extname(requested) === ".html") {
+        content = Buffer.from(content.toString().replace(/<head>/i, '<head><script src="/__moui/client.js"></script>'));
+        response.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+      } else {
+        const types = { ".wasm": "application/wasm", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json" };
+        response.writeHead(200, { "content-type": types[path.extname(requested)] || "application/octet-stream", "cache-control": "no-store" });
+      }
+      response.end(content);
+      return;
     }
-    let content = fs.readFileSync(requested);
-    if (path.extname(requested) === ".html") {
-      content = Buffer.from(content.toString().replace(/<head>/i, '<head><script src="/__moui/client.js"></script>'));
-      response.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
-    } else {
-      const types = { ".wasm": "application/wasm", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json" };
-      response.writeHead(200, { "content-type": types[path.extname(requested)] || "application/octet-stream", "cache-control": "no-store" });
-    }
-    response.end(content);
+    response.writeHead(404); response.end("Not found");
   });
   server.listen(port, "127.0.0.1", () => log(`web server listening at http://127.0.0.1:${port}/`));
   return server;
