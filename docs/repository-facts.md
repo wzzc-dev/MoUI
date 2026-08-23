@@ -131,7 +131,7 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 48.
+Published documents: 49.
 
 | Group | Documents |
 |---|---:|
@@ -139,6 +139,6 @@ Published documents: 48.
 | Guides (guides) | 9 |
 | Examples (examples) | 4 |
 | Platforms (platforms) | 16 |
-| Architecture & API (architecture-api) | 5 |
+| Architecture & API (architecture-api) | 6 |
 | Contributing (contributing) | 5 |
 | Status & Roadmap (status-roadmap) | 4 |

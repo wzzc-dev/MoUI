@@ -93,7 +93,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/common/services/app_services_adapter_test.mbt",
-      max_lines: 168,
+      max_lines: 260,
     },
     {
       path: "moui/backend/common/services/service_async_queue_test.mbt",

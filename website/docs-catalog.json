@@ -531,6 +531,19 @@
     },
     {
       "group": "architecture-api",
+      "slug": "compatibility-policy",
+      "title": "Compatibility Policy",
+      "path": "docs/compatibility-policy.md",
+      "summary": "SemVer, deprecation, quality levels, and external consumer validation for published MoUI packages.",
+      "keywords": [
+        "compatibility",
+        "SemVer",
+        "deprecation",
+        "quality levels"
+      ]
+    },
+    {
+      "group": "architecture-api",
       "slug": "moui-skia-readme",
       "title": "MoUI Skia README",
       "path": "docs/moui-skia-readme.md",
@@ -1185,6 +1198,18 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/api-surface.md"
+        },
+        {
+          "group": "architecture-api",
+          "slug": "compatibility-policy",
+          "title": "兼容性策略",
+          "summary": "MoUI 已发布包的 SemVer、废弃、质量等级与外部消费者校验。",
+          "keywords": [
+            "兼容性策略",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/compatibility-policy.md"
         },
         {
           "group": "architecture-api",
