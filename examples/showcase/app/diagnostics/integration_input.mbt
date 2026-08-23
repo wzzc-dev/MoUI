@@ -43,10 +43,29 @@ pub(all) struct ShowcaseInspectorDiagnostics {
 }
 
 ///|
+
+///|
+pub struct ShowcaseDevToolsReport {
+  summary_text : String
+  report_text : String
+  json_text : String
+}
+
+///|
+pub fn ShowcaseDevToolsReport::new(
+  summary_text~ : String,
+  report_text~ : String,
+  json_text~ : String,
+) -> ShowcaseDevToolsReport {
+  { summary_text, report_text, json_text }
+}
+
+///|
 pub struct ShowcaseDiagnosticsInput {
   host : ShowcaseHostDiagnostics
   renderer_features : Array[ShowcaseRendererFeatureDiagnostic]
   inspector : ShowcaseInspectorDiagnostics
+  devtools : ShowcaseDevToolsReport
 }
 
 ///|
@@ -54,8 +73,9 @@ pub fn ShowcaseDiagnosticsInput::new(
   host~ : ShowcaseHostDiagnostics,
   renderer_features~ : Array[ShowcaseRendererFeatureDiagnostic],
   inspector~ : ShowcaseInspectorDiagnostics,
+  devtools~ : ShowcaseDevToolsReport,
 ) -> ShowcaseDiagnosticsInput {
-  { host, renderer_features, inspector }
+  { host, renderer_features, inspector, devtools }
 }
 
 ///|
@@ -80,6 +100,11 @@ pub fn ShowcaseDiagnosticsInput::fallback() -> ShowcaseDiagnosticsInput {
       subscription_source_count: 2,
       active_subscription_label: "Inspector tick",
       duplicate_subscription_keys: ["diagnostics:tick"],
+    },
+    devtools: {
+      summary_text: "320x240, dirty 0, commands 0",
+      report_text: "[view]\n[layout]\n[render]\n[semantics]",
+      json_text: "{}",
     },
   }
 }

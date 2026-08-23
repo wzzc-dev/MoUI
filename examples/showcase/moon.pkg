@@ -4,10 +4,13 @@ import {
   "examples/showcase/app/diagnostics",
   "wzzc-dev/moui",
   "wzzc-dev/moui/backend" @host,
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/common" @render_common,
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui_devtools",
 }
 
 supported_targets = "+native+wasm-gc+wasm"

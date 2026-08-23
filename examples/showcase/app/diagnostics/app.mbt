@@ -34,6 +34,7 @@ pub(all) struct ShowcaseModel {
   last_drop_label : String
   gesture_label : String
   diagnostics_input : ShowcaseDiagnosticsInput
+  diagnostics_panel_scroll : @geometry.Point
 }
 
 ///|
@@ -82,6 +83,7 @@ pub(all) enum ShowcaseMsg {
   RecordFileDrop(Array[String])
   RecordGesture(String)
   ResizePanel(Double)
+  DiagnosticsPanelScrolled(@geometry.Point)
 }
 
 ///|
@@ -151,6 +153,7 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     last_drop_label: "No files dropped",
     gesture_label: "No gesture yet",
     diagnostics_input: ShowcaseDiagnosticsInput::fallback(),
+    diagnostics_panel_scroll: @geometry.Point::new(x=0.0, y=0.0),
   }
 }
 
@@ -358,6 +361,8 @@ pub fn ShowcaseModel::update(
       { ..self, last_drop_label: "Dropped \{paths.length()} file(s)" }
     RecordGesture(label) => { ..self, gesture_label: label }
     ResizePanel(size) => { ..self, slider_value: size / 520.0 }
+    DiagnosticsPanelScrolled(point) =>
+      { ..self, diagnostics_panel_scroll: point }
   }
 }
 
@@ -522,12 +527,28 @@ pub fn ShowcaseModel::view_body(
     @state.ColorScheme::Light => @views.light_theme()
     @state.ColorScheme::Dark => @views.dark_theme()
   }
-  let viewport = if width > 0.0 {
-    @geometry.Size::new(width~, height=env.viewport_size().height.max(320.0))
+  let metrics = if width > 0.0 {
+    let panel_width = width.max(320.0)
+    let panel_height = max_showcase_double(
+      280.0,
+      env.viewport_size().height.max(320.0) - 108.0,
+    )
+    let body_width = max_showcase_double(
+      220.0,
+      panel_width - theme.spacing_scale.md * 2.0,
+    )
+    let body_height = max_showcase_double(120.0, panel_height - 96.0)
+    {
+      panel_width,
+      panel_height,
+      body_width,
+      body_height,
+      compact: body_width < 620.0,
+    }
   } else {
-    env.viewport_size()
+    let viewport = env.viewport_size()
+    showcase_metrics(viewport, theme)
   }
-  let metrics = showcase_metrics(viewport, theme)
   let offset = if self.active { 18.0 } else { 0.0 }
   let opacity = if self.active { 1.0 } else { 0.68 }
   let content = self.current_destination(theme, metrics, offset, opacity)

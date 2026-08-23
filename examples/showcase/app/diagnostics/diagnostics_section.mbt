@@ -86,13 +86,14 @@ fn ShowcaseModel::diagnostics_section(
     card_columns,
     theme.spacing_scale.md,
   )
-  self.section_panel(
+  section_panel(
     theme,
     "Diagnostics",
     "Input, text, renderer, and reusable example diagnostics stay grouped away from the main catalog.",
     column(
       [
         self.inspector_snapshot_card(theme, metrics.body_width),
+        self.devtools_inspector_card(theme, metrics.body_width),
         grid(
           [
             self.diagnostics_route_card(
@@ -149,6 +150,8 @@ fn ShowcaseModel::diagnostics_section(
       align=@views.CrossAlign::Start,
     ),
     metrics~,
+    scroll_offset=self.diagnostics_panel_scroll,
+    on_scroll=Some(offset => DiagnosticsPanelScrolled(offset)),
   )
 }
 
