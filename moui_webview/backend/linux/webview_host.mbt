@@ -42,6 +42,7 @@ extern "C" fn linux_webview_sync(
   background : Bytes,
   scheme : Bytes,
   policy : Int,
+  visible : Int,
   x : Double,
   y : Double,
   width : Double,
@@ -211,6 +212,11 @@ pub fn sync_linux_platform_views(
           placement.property_or("color-scheme", ""),
         ),
         0,
+        if placement.property_or("visible", "true") == "true" {
+          1
+        } else {
+          0
+        },
         platform_frame.origin.x,
         platform_frame.origin.y,
         platform_frame.size.width,

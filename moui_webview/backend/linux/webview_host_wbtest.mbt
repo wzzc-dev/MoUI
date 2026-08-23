@@ -27,6 +27,11 @@ test "linux webview placement contains appearance only" {
   inspect(frame.origin.y, content="56")
   inspect(frame.size.width, content="320")
   inspect(frame.size.height, content="180")
+  inspect(placement.property_or("visible", ""), content="true")
+  let hidden = @host.WebViewSpec::new(id="hidden", visible=false).platform_view_placement(
+    frame=@core.Rect::new(x=0.0, y=0.0, width=320.0, height=180.0),
+  )
+  inspect(hidden.property_or("visible", ""), content="false")
 }
 
 ///|

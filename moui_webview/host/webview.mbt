@@ -350,6 +350,7 @@ pub(all) struct WebViewSpec {
   width : Double?
   height : Double?
   title : String
+  visible : Bool
   background_color : @core.Color?
   color_scheme : @core.ColorScheme?
 }
@@ -360,10 +361,11 @@ pub fn WebViewSpec::new(
   width? : Double? = None,
   height? : Double? = None,
   title? : String = "",
+  visible? : Bool = true,
   background_color? : @core.Color? = None,
   color_scheme? : @core.ColorScheme? = None,
 ) -> WebViewSpec {
-  { id, width, height, title, background_color, color_scheme }
+  { id, width, height, title, visible, background_color, color_scheme }
 }
 
 ///|
@@ -374,6 +376,10 @@ pub fn WebViewSpec::platform_view_placement(
 ) -> @core.PlatformViewPlacement {
   @core.PlatformViewPlacement::new(id=self.id, kind="web_view", frame~, clip~, properties=[
     @core.PlatformViewProperty::new(key="title", value=self.title),
+    @core.PlatformViewProperty::new(
+      key="visible",
+      value=if self.visible { "true" } else { "false" },
+    ),
     @core.PlatformViewProperty::new(
       key="background-color",
       value=match self.background_color {

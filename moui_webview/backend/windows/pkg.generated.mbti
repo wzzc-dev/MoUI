@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_webview/backend/windows"
+
+import {
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_webview/host",
+}
+
+// Values
+pub fn create_windows_webview_plugin(@host.WebViewHost) -> @backend.PlatformViewPlugin
+
+pub fn dispose_windows_platform_views(@wzzc-dev/window/windows.Window) -> Unit
+
+pub fn drain_windows_webview_commands(@wzzc-dev/window/windows.Window, @host.WebViewHost) -> Int
+
+pub fn install_windows_webview_event_dispatcher(@host.WebViewHost, (UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit
+
+pub fn sync_windows_platform_views(@wzzc-dev/window/windows.Window, @core.DrawFrame) -> Unit
+
+pub fn windows_webview_capabilities() -> @host.HostWebViewCapabilities
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

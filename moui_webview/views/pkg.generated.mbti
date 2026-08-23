@@ -7,7 +7,7 @@ import {
 }
 
 // Values
-pub fn[Msg] web_view(controller~ : @host.WebViewController, width? : Double?, height? : Double?, title? : String, background_color? : @core.Color?, color_scheme? : @core.ColorScheme?, on_event? : ((@host.WebViewEvent) -> Msg)?) -> @core.View[Msg]
+pub fn[Msg] web_view(controller~ : @host.WebViewController, width? : Double?, height? : Double?, title? : String, visible? : Bool, background_color? : @core.Color?, color_scheme? : @core.ColorScheme?, on_event? : ((@host.WebViewEvent) -> Msg)?) -> @core.View[Msg]
 
 // Errors
 

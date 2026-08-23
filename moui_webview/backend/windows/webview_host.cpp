@@ -105,6 +105,7 @@ struct MOUWindowsWebView {
   int32_t policy = 0;
   uint32_t background_color = 0xFFFFFFFF;
   bool seen = false;
+  bool visible = true;
   bool creating = false;
   bool allow_next_navigation = false;
   bool navigation_pending = false;
@@ -261,7 +262,7 @@ static double window_dpi_scale(HWND hwnd) {
 }
 
 static void apply_bounds(MOUWindowsWebView *view, double x, double y,
-                         double width, double height) {
+                         double width, double height, bool visible) {
   if (view == nullptr || !view->controller) {
     return;
   }
@@ -276,7 +277,7 @@ static void apply_bounds(MOUWindowsWebView *view, double x, double y,
   bounds.right = (LONG)(x + width);
   bounds.bottom = (LONG)(y + height);
   view->controller->put_Bounds(bounds);
-  view->controller->put_IsVisible(width > 0.0 && height > 0.0);
+  view->controller->put_IsVisible(visible && width > 0.0 && height > 0.0);
 }
 
 static BOOL CALLBACK find_webview_child(HWND child, LPARAM data) {
@@ -475,6 +476,7 @@ static void create_controller(MOUWindowsWebView *view) {
               return S_OK;
             }
             view->controller = controller;
+            view->controller->put_IsVisible(view->visible ? TRUE : FALSE);
             view->controller->get_CoreWebView2(&view->webview);
             {
               ComPtr<ICoreWebView2Controller2> controller2;
@@ -641,13 +643,14 @@ extern "C" MOONBIT_FFI_EXPORT
 void moui_windows_webview_sync(uint64_t hwnd, moonbit_bytes_t id,
                                moonbit_bytes_t url, moonbit_bytes_t title,
                                moonbit_bytes_t background, moonbit_bytes_t scheme,
-                               int32_t policy,
+                               int32_t policy, int32_t visible,
                                double x, double y,
                                double width, double height) {
 #if defined(_WIN32) && defined(MOUI_WINDOWS_ENABLE_WEBVIEW2)
   MOUWindowsWebView *view =
       ensure_view((HWND)(uintptr_t)hwnd, mb_bytes_to_wide(id));
   view->seen = true;
+  view->visible = visible != 0;
   view->policy = policy;
   view->background_color = parse_background_color(background);
   {
@@ -659,7 +662,7 @@ void moui_windows_webview_sync(uint64_t hwnd, moonbit_bytes_t id,
   }
   view->title = mb_bytes_to_wide(title);
   (void)scheme;
-  apply_bounds(view, x, y, width, height);
+  apply_bounds(view, x, y, width, height, view->visible);
   navigate_controlled(view, mb_bytes_to_wide(url));
 #else
   (void)hwnd;
@@ -669,6 +672,7 @@ void moui_windows_webview_sync(uint64_t hwnd, moonbit_bytes_t id,
   (void)background;
   (void)scheme;
   (void)policy;
+  (void)visible;
   (void)x;
   (void)y;
   (void)width;

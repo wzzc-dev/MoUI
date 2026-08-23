@@ -4,13 +4,22 @@ pub fn[Msg] web_view(
   width? : Double? = None,
   height? : Double? = None,
   title? : String = "",
+  visible? : Bool = true,
   background_color? : @core.Color? = None,
   color_scheme? : @core.ColorScheme? = None,
   on_event? : ((@host.WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let id = controller.id()
   @core.View::from_node(
-    WebViewNode::{ id, width, height, title, background_color, color_scheme },
+    WebViewNode::{
+      id,
+      width,
+      height,
+      title,
+      visible,
+      background_color,
+      color_scheme,
+    },
     event=(node, ctx) => {
       match (ctx.event, on_event) {
         (@core.AppEvent::PlatformView(event_id, event), Some(handler)) =>
@@ -35,6 +44,7 @@ priv struct WebViewNode {
   width : Double?
   height : Double?
   title : String
+  visible : Bool
   background_color : @core.Color?
   color_scheme : @core.ColorScheme?
 }
@@ -60,6 +70,7 @@ impl @core.ViewNode for WebViewNode with fn declaration(self) {
   ])
   let content_key = @core.DeclarationKey::record(type_tag="WebView.content", fields=[
     ("title", @core.DeclarationKey::string(self.title)),
+    ("visible", @core.DeclarationKey::bool(self.visible)),
     (
       "background-color",
       @core.DeclarationKey::string(
@@ -114,6 +125,7 @@ impl @core.ViewNode for WebViewNode with fn platform_views(self, ctx) {
       width=self.width,
       height=self.height,
       title=self.title,
+      visible=self.visible,
       background_color=self.background_color,
       color_scheme=self.color_scheme,
     )

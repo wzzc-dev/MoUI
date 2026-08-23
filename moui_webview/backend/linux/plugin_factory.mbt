@@ -67,6 +67,11 @@ pub fn create_linux_webview_plugin(
               placement.property_or("color-scheme", ""),
             ),
             0,
+            if placement.property_or("visible", "true") == "true" {
+              1
+            } else {
+              0
+            },
             platform_frame.origin.x,
             platform_frame.origin.y,
             platform_frame.size.width,
