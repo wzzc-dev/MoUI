@@ -19,7 +19,15 @@ import { spawnSync } from "node:child_process";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureRoot = join(repoRoot, "checks/external-consumer");
 const registryBaseVersion = "0.1.7";
-const headVersion = "0.1.10";
+
+// The head version must track the published module version. Read it from the
+// canonical module manifest instead of hardcoding it so version bumps cannot
+// leave this script behind.
+const headVersion = readFileSync(join(repoRoot, "moui/moon.mod"), "utf8")
+  .match(/^version\s*=\s*"([^"]+)"/m)?.[1];
+if (!headVersion) {
+  throw new Error("unable to resolve wzzc-dev/moui version from moui/moon.mod");
+}
 
 const usage = [
   "Usage: node scripts/external-consumer-ci.mjs --source registry|package --profile base|skia|web",

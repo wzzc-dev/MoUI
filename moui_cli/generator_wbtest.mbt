@@ -163,7 +163,7 @@ test "default macOS project file plan is exact" {
       #|  "id": "sample_app",
       #|  "title": "Sample App",
       #|  "module": "example/sample_app",
-      #|  "mouiVersion": "0.1.10",
+      #|  "mouiVersion": "0.1.11",
       #|  "platforms": [
       #|    "web",
       #|    "macos"
