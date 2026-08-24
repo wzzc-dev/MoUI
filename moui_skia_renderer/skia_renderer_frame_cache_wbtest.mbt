@@ -745,7 +745,13 @@ test "skia render_frame resize clears renderer-local cached layers" {
     ]),
   )
   inspect(update.cache_update_count, content="1")
-  renderer.resize(metrics) catch {
+  // Resize to a substantially larger surface to verify cache invalidation.
+  // Small incremental resizes during live drag preserve the cache for
+  // performance, so use a large delta that exceeds the live-resize threshold.
+  let large = @core.SurfaceMetrics::from_logical(
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  renderer.resize(large) catch {
     err => fail("expected Skia renderer resize: \{err.message()}")
   }
   let miss = renderer.render_frame(
