@@ -420,8 +420,9 @@ Moon `0.1.20260724` 不会把 `pub using` alias 物化为 wasm export；linker �
 executable package 自己定义的 public function。因此 Web 或 WeChat 入口可以把
 `abi.mbt` 作为第二个生产文件。该文件只能包含固定 callback，并直接委托给
 `backend/web` 或 `backend/wechat`；不得包含 app state、routing、service、renderer
-或 lifecycle logic。`validate-harness-invariants.mjs` 校验封闭的 shim 集合，Web
-handoff 校验则检查实际编译出的 wasm exports。
+或 lifecycle logic。`tools/moui/validate_harness_invariants` 工具校验封闭的 shim
+集合（仓库包装脚本传入 `--skip-examples`；完整扫描 examples 请直接运行该工具），
+Web handoff 校验则检查实际编译出的 wasm exports。
 
 三个嵌入运行时路径使用匹配的 `wzzc-dev/window` template 和 `*_window_hosted` 入口。
 它们的 `main.mbt` 创建 program，并通过 AppBuilder 显式组合 renderer provider 与

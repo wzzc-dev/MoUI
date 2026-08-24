@@ -35,6 +35,24 @@ test "linux webview placement contains appearance only" {
 }
 
 ///|
+test "webview placement carries explicit native no-drag regions" {
+  let region = @host.WebViewNoDragRegion::new(
+    left=1035.0,
+    top=0.0,
+    right=1128.0,
+    bottom=32.0,
+  )
+  let spec = @host.WebViewSpec::new(id="main", no_drag_regions=[region])
+  let placement = spec.platform_view_placement(
+    frame=@core.Rect::new(x=0.0, y=0.0, width=1280.0, height=820.0),
+  )
+  inspect(
+    placement.property_or("no-drag-regions", ""),
+    content="[[1035,0,1128,32]]",
+  )
+}
+
+///|
 test "linux webview controller commands preserve FIFO and navigation ids" {
   let host = @host.WebViewHost::new()
   let origin = @host.WebViewOrigin::parse("https://example.test")

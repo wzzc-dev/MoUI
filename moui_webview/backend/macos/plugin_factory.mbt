@@ -65,6 +65,13 @@ pub fn create_macos_webview_plugin(
             placement.frame.size.width,
             placement.frame.size.height,
           )
+          macos_webview_set_no_drag_regions(
+            handle,
+            @host.webview_encode_ffi_string(placement.id),
+            @host.webview_encode_ffi_string(
+              placement.property_or("no-drag-regions", "[]"),
+            ),
+          )
           match
             (placement.property_or("visible", "true"), frame.overlay_bounds) {
             ("true", Some(bounds)) =>

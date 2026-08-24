@@ -532,9 +532,11 @@ linker exports public definitions owned by the executable package only. A Web
 or WeChat entrypoint may therefore use `abi.mbt` as its second production file.
 That file contains only the fixed callbacks which delegate directly to
 `backend/web` or `backend/wechat`; it must not contain app state, routing,
-service, renderer, or lifecycle logic. `validate-harness-invariants.mjs`
-enforces the closed shim surface, while Web handoff validation inspects the
-compiled wasm exports.
+service, renderer, or lifecycle logic. The
+`tools/moui/validate_harness_invariants` tool enforces the closed shim surface
+(the repository wrapper passes `--skip-examples`; run the tool directly for the
+full example scan), while Web handoff validation inspects the compiled wasm
+exports.
 
 The three embedded runtime routes use the matching `wzzc-dev/window` template and a
 `*_window_hosted` entrypoint. Their `main.mbt` files construct the program and

@@ -353,6 +353,27 @@ pub(all) struct WebViewSpec {
   visible : Bool
   background_color : @core.Color?
   color_scheme : @core.ColorScheme?
+  no_drag_regions : Array[WebViewNoDragRegion]
+}
+
+///|
+/// A WebView-local rectangle that stays interactive inside the native top
+/// drag strip. Coordinates use the WebView's top-left origin.
+pub(all) struct WebViewNoDragRegion {
+  left : Double
+  top : Double
+  right : Double
+  bottom : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn WebViewNoDragRegion::new(
+  left~ : Double,
+  top~ : Double,
+  right~ : Double,
+  bottom~ : Double,
+) -> WebViewNoDragRegion {
+  { left, top, right, bottom }
 }
 
 ///|
@@ -364,8 +385,18 @@ pub fn WebViewSpec::new(
   visible? : Bool = true,
   background_color? : @core.Color? = None,
   color_scheme? : @core.ColorScheme? = None,
+  no_drag_regions? : Array[WebViewNoDragRegion] = [],
 ) -> WebViewSpec {
-  { id, width, height, title, visible, background_color, color_scheme }
+  {
+    id,
+    width,
+    height,
+    title,
+    visible,
+    background_color,
+    color_scheme,
+    no_drag_regions,
+  }
 }
 
 ///|
@@ -395,7 +426,32 @@ pub fn WebViewSpec::platform_view_placement(
         None => ""
       },
     ),
+    @core.PlatformViewProperty::new(
+      key="no-drag-regions",
+      value=web_view_no_drag_regions_wire_value(self.no_drag_regions),
+    ),
   ])
+}
+
+///|
+pub fn web_view_no_drag_regions_wire_value(
+  regions : Array[WebViewNoDragRegion],
+) -> String {
+  "[" +
+  regions
+  .map(region => {
+    "[" +
+    region.left.to_string() +
+    "," +
+    region.top.to_string() +
+    "," +
+    region.right.to_string() +
+    "," +
+    region.bottom.to_string() +
+    "]"
+  })
+  .join(",") +
+  "]"
 }
 
 ///|
