@@ -130,7 +130,7 @@ fn[Msg] selectable_list_row(
       width=1.0,
     ),
   )
-  overlay(
+  @common.stack_layout(children=[
     @button.button(
       "",
       on_click=item.message,
@@ -140,7 +140,7 @@ fn[Msg] selectable_list_row(
       height=row_height,
     ).disabled(disabled=!item.enabled),
     content,
-  )
+  ])
   .disabled(disabled=!item.enabled)
   .semantics_role(@core.SemanticsRole::ListItem)
   .semantics_selected(selected~)

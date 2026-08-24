@@ -2,6 +2,7 @@
 package "wzzc-dev/moui/views"
 
 import {
+  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/common",
   "wzzc-dev/moui/views/controls",
@@ -128,8 +129,6 @@ pub fn[Msg] detail_panel(String, Array[@data.DescriptionItem], subtitle? : Strin
 
 pub fn[Msg] dialog(String, content~ : @core.View[Msg], subtitle? : String, primary_action? : @controls.StateViewAction[Msg]?, secondary_action? : @controls.StateViewAction[Msg]?, dismiss_action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool, on_backdrop? : Msg?, trap_focus? : Bool) -> @core.View[Msg]
-
 pub fn[Msg] disclosure(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] divider(axis? : @core.Axis, theme? : @core.Theme, thickness? : Double, color? : @core.Color, inset? : Double) -> @core.View[Msg]
@@ -234,7 +233,7 @@ pub fn new_control_state_style(foreground~ : @core.Color, background~ : @core.Br
 
 pub fn[Msg] number_field(String, on_input~ : (String) -> Msg, on_step? : ((Double) -> Msg)?, step? : Double, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] overlay(@core.View[Msg], @core.View[Msg]) -> @core.View[Msg]
+pub fn[Msg] overlay_host(@core.View[Msg], Array[PresentationSpec[Msg]]) -> @core.View[Msg]
 
 pub fn[Msg] overlay_marker(width~ : Double, height~ : Double) -> @core.View[Msg]
 
@@ -265,8 +264,6 @@ pub fn pop_opacity(@common.PaintContext) -> Unit
 pub fn pop_rounded_clip(@common.PaintContext) -> Unit
 
 pub fn pop_transform(@common.PaintContext) -> Unit
-
-pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expanded~ : Bool, placement? : @popover.PopoverPlacement, theme? : @core.Theme, width? : Double, height? : Double, trap_focus? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] presence_dot(@presence_dot.PresenceStatus, size? : Double, theme? : @core.Theme, on_surface? : @core.Color) -> @core.View[Msg]
 
@@ -331,8 +328,6 @@ pub fn[Msg] selectable_list_item(id~ : String, title~ : String, message~ : Msg, 
 pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions? : Array[@controls.ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @style.SheetPresentationMode, theme? : @core.Theme, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
-
-pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : @style.SheetPresentationMode, theme? : @core.Theme, on_dismiss? : Msg?, trap_focus? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardShortcut, variant? : @style.ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double, shortcut_width? : Double) -> @core.View[Msg]
 
@@ -409,6 +404,107 @@ pub fn[Msg] wizard_step(@controls.WizardStep[Msg]) -> @core.View[Msg]
 // Errors
 
 // Types and methods
+pub(all) enum PresentationAnchor {
+  StableKey(String)
+  Viewport(@core.Point)
+} derive(Eq, @debug.Debug)
+pub fn PresentationAnchor::stable_key(String) -> Self
+pub fn PresentationAnchor::viewport_point(@core.Point) -> Self
+
+pub(all) struct PresentationDismissPolicy[Msg] {
+  outside_tap : Bool
+  escape : Bool
+  system_back : Bool
+  host_close : Bool
+  message : Msg?
+}
+pub fn[Msg] PresentationDismissPolicy::allows_escape(Self[Msg]) -> Bool
+pub fn[Msg] PresentationDismissPolicy::allows_host_close(Self[Msg]) -> Bool
+pub fn[Msg] PresentationDismissPolicy::allows_outside_tap(Self[Msg]) -> Bool
+pub fn[Msg] PresentationDismissPolicy::allows_system_back(Self[Msg]) -> Bool
+pub fn[Msg] PresentationDismissPolicy::message(Self[Msg]) -> Msg?
+pub fn[Msg] PresentationDismissPolicy::new(outside_tap? : Bool, escape? : Bool, system_back? : Bool, host_close? : Bool, message? : Msg?) -> Self[Msg]
+pub fn[Msg] PresentationDismissPolicy::none() -> Self[Msg]
+
+pub(all) enum PresentationHostPolicy {
+  ViewOnly
+  PreferNative
+  NativeRequired
+} derive(Eq, @debug.Debug)
+pub fn PresentationHostPolicy::requests_native(Self, Bool) -> Bool
+pub fn PresentationHostPolicy::shows_view_surface(Self, Bool) -> Bool
+
+pub(all) enum PresentationKind {
+  Popover
+  Dialog
+  Sheet
+  Tooltip
+  ContextMenu
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PresentationModality {
+  NonModal
+  Modal
+} derive(Eq, @debug.Debug)
+
+pub(all) struct PresentationPlacement {
+  anchor : PresentationAnchor
+  candidates : Array[PresentationPlacementCandidate]
+  viewport_insets : @core.Insets
+  clamp_to_viewport : Bool
+} derive(Eq, @debug.Debug)
+pub fn PresentationPlacement::at(PresentationAnchor) -> Self
+pub fn PresentationPlacement::new(anchor~ : PresentationAnchor, candidates? : Array[PresentationPlacementCandidate], viewport_insets? : @core.Insets, clamp_to_viewport? : Bool) -> Self
+pub fn PresentationPlacement::resolve(Self, @core.Rect, @core.Rect, @core.Size) -> @core.Rect
+pub fn PresentationPlacement::viewport(candidates? : Array[PresentationPlacementCandidate], viewport_insets? : @core.Insets) -> Self
+
+pub(all) enum PresentationPlacementCandidate {
+  AboveStart
+  AboveCenter
+  AboveEnd
+  BelowStart
+  BelowCenter
+  BelowEnd
+  LeftStart
+  LeftCenter
+  LeftEnd
+  RightStart
+  RightCenter
+  RightEnd
+  Center
+} derive(Eq, @debug.Debug)
+
+pub struct PresentationSpec[Msg] {
+  id : String
+  kind : PresentationKind
+  anchor : PresentationAnchor
+  placement : PresentationPlacement
+  content : @core.View[Msg]
+  modality : PresentationModality
+  dismiss : PresentationDismissPolicy[Msg]
+  host_policy : PresentationHostPolicy
+  transition : PresentationTransition
+  presented : Bool
+}
+pub fn[Msg] PresentationSpec::anchor(Self[Msg]) -> PresentationAnchor
+pub fn[Msg] PresentationSpec::content(Self[Msg]) -> @core.View[Msg]
+pub fn[Msg] PresentationSpec::dismiss_policy(Self[Msg]) -> PresentationDismissPolicy[Msg]
+pub fn[Msg] PresentationSpec::host_policy(Self[Msg]) -> PresentationHostPolicy
+pub fn[Msg] PresentationSpec::id(Self[Msg]) -> String
+pub fn[Msg] PresentationSpec::kind(Self[Msg]) -> PresentationKind
+pub fn[Msg] PresentationSpec::modality(Self[Msg]) -> PresentationModality
+pub fn[Msg] PresentationSpec::new(id~ : String, kind~ : PresentationKind, content~ : @core.View[Msg], anchor? : PresentationAnchor, placement? : PresentationPlacement?, modality? : PresentationModality, dismiss? : PresentationDismissPolicy[Msg], host_policy? : PresentationHostPolicy, transition? : PresentationTransition, presented? : Bool) -> Self[Msg]
+pub fn[Msg] PresentationSpec::placement(Self[Msg]) -> PresentationPlacement
+pub fn[Msg] PresentationSpec::presented(Self[Msg]) -> Bool
+pub fn[Msg] PresentationSpec::transition(Self[Msg]) -> PresentationTransition
+
+pub(all) enum PresentationTransition {
+  Fade
+  Scale
+  Slide
+  None
+} derive(Eq, @debug.Debug)
+pub fn PresentationTransition::spec(Self) -> @core.TransitionSpec
 
 // Type aliases
 pub using @core {type ActionCommand}

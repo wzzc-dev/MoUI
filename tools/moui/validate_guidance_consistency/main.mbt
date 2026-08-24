@@ -66,8 +66,8 @@ fn validate_guidance_consistency(repo_root : String) -> Array[String] {
   for path in guidance_no_workflow_file_rules() {
     push_no_workflow_files_check(repo_root, path, failures)
   }
-  for rule in guidance_symlink_rules() {
-    push_symlink_target_check(repo_root, rule, failures)
+  for path in guidance_regular_file_rules() {
+    push_regular_file_check(repo_root, path, failures)
   }
   failures
 }

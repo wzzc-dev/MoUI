@@ -3,10 +3,15 @@
 
 ///|
 test "popover smoke" {
-  let view : @core.View[Unit] = @views.popover(
-    anchor=@views.button("Open", on_click=()),
-    content=@views.text("Menu content"),
-    expanded=true,
+  let view : @core.View[Unit] = @views.overlay_host(
+    @views.button("Open", on_click=()),
+    [
+      @views.PresentationSpec::new(
+        id="menu",
+        kind=@views.PresentationKind::Popover,
+        content=@views.text("Menu content"),
+      ),
+    ],
   )
   @common.assert_layouts(view)
   @common.assert_paints(view)

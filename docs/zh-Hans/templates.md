@@ -70,7 +70,7 @@ pub fn platform_service_bridge() -> @host.HostServiceBridge {
 
 检查清单：
 
-- 保持根 `README.md` 作为简短入口；它的源文件是根 `README.mbt.md`。
+- 保持根 `README.md` 作为简短入口和唯一源文件。
 - 将设置和命令循环放在 `docs/development.md`。
 - 将平台注意事项放在 `docs/platform-notes-<platform>.md`
   （例如 `platform-notes-linux.md`）。跨平台宿主契约放在 `docs/platform-notes.md`。

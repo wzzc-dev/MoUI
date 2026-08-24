@@ -340,7 +340,6 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/controls/stack.mbt", max_lines: 50 },
     { path: "moui/views/form/layout_baseline_form.mbt", max_lines: 165 },
     { path: "moui/views/common/paint_context.mbt", max_lines: 175 },
-    { path: "moui/views/popover/sheet_host.mbt", max_lines: 55 },
     { path: "moui/views/popover/popover_overlay.mbt", max_lines: 50 },
     { path: "moui/views/popover/popover_selectors.mbt", max_lines: 120 },
     { path: "moui/views/popover/popover_menu.mbt", max_lines: 60 },

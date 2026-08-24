@@ -9,6 +9,10 @@ pub(all) struct ViewLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
   child_flex_weights : Array[Double]
+  /// Frames from the previous completed layout pass keyed by stable view key.
+  /// Runtime-owned layout code supplies this snapshot so presentation nodes can
+  /// resolve anchors without depending on the runtime package.
+  anchor_frames : Array[(String, Rect)]
   state : ViewStateContext
   text_system : TextSystem
   environment : Environment

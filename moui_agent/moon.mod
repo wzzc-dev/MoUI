@@ -3,7 +3,7 @@ name = "wzzc-dev/moui_agent"
 version = "0.1.10"
 
 import {
-  "wzzc-dev/moui@0.1.11",
+  "wzzc-dev/moui@0.1.12",
 }
 
 description = "MoUI agent protocol layer: observable/controllable runtime surface for external agents"

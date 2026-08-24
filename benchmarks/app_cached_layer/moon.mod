@@ -3,7 +3,7 @@ name = "benchmarks/app_cached_layer"
 version = "0.1.0"
 
 import {
-  "wzzc-dev/moui@0.1.11",
+  "wzzc-dev/moui@0.1.12",
   "examples/showcase@0.1.0",
   "examples/markdown_editor@0.1.0",
   "wzzc-dev/moui_skia_renderer@0.1.11",

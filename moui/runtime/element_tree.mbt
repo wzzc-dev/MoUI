@@ -57,11 +57,14 @@ priv struct ElementLayoutCache {
   mut cached_measure_constraints : Constraints?
   mut cached_measure_environment : Environment?
   mut cached_measure_style : ViewStyle?
+  mut cached_measure_anchor_frames : Array[(String, Rect)]?
   mut cached_measured : MeasuredNode?
   mut cached_place_frame : Rect?
   mut cached_place_environment : Environment?
   mut cached_place_style : ViewStyle?
+  mut cached_place_anchor_frames : Array[(String, Rect)]?
   mut cached_placed : PlacedNode?
+  mut cached_intrinsic_anchor_frames : Array[(String, Rect)]?
   mut hit_count : Int
   mut miss_count : Int
 }
@@ -252,11 +255,14 @@ fn ElementLayoutCache::empty() -> ElementLayoutCache {
     cached_measure_constraints: None,
     cached_measure_environment: None,
     cached_measure_style: None,
+    cached_measure_anchor_frames: None,
     cached_measured: None,
     cached_place_frame: None,
     cached_place_environment: None,
     cached_place_style: None,
+    cached_place_anchor_frames: None,
     cached_placed: None,
+    cached_intrinsic_anchor_frames: None,
     hit_count: 0,
     miss_count: 0,
   }
@@ -268,11 +274,14 @@ fn ElementLayoutCache::clear(self : ElementLayoutCache) -> Unit {
   self.cached_measure_constraints = None
   self.cached_measure_environment = None
   self.cached_measure_style = None
+  self.cached_measure_anchor_frames = None
   self.cached_measured = None
   self.cached_place_frame = None
   self.cached_place_environment = None
   self.cached_place_style = None
+  self.cached_place_anchor_frames = None
   self.cached_placed = None
+  self.cached_intrinsic_anchor_frames = None
 }
 
 ///|

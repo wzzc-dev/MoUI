@@ -374,19 +374,26 @@ fn ShowcaseModel::popover_dropdown_card(
           width=width - 32.0,
           max_height=82.0,
         ),
-        popover(
-          anchor=button(
+        overlay_host(
+          button(
             "Inline popover",
             on_click=ToggleActive,
             variant=@views.ButtonVariant::Tonal,
             theme~,
             width=160.0,
           ),
-          content=text("Popover content", width=160.0, height=24.0),
-          expanded=true,
-          theme~,
-          width=190.0,
-          height=54.0,
+          [
+            PresentationSpec::new(
+              id="interaction-popover",
+              kind=PresentationKind::Popover,
+              content=text("Popover content", width=160.0, height=24.0),
+              anchor=PresentationAnchor::Viewport(
+                @core.Point::new(x=0.0, y=0.0),
+              ),
+              placement=Some(PresentationPlacement::viewport()),
+              presented=true,
+            ),
+          ],
         ),
       ],
       spacing=theme.spacing_scale.sm,

@@ -137,13 +137,13 @@ fn workbench_view(
     bottom=0.0,
     right=0.0,
   )
-  let base = @views.overlay(shell, toggle_overlay)
+  let base = @views.stack([shell, toggle_overlay])
   if model.settings_open {
     let settings_theme = workbench_lightweight_theme(
       theme,
       model.settings.font_size,
     )
-    @views.overlay(
+    @views.stack([
       base,
       settings_overlay_view(
         model,
@@ -151,7 +151,7 @@ fn workbench_view(
         viewport.width,
         viewport.height,
       ),
-    )
+    ])
   } else {
     base
   }

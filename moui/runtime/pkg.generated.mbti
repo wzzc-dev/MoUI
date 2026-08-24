@@ -38,6 +38,16 @@ pub(all) struct AccessibilityAnnouncement {
   text : String
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct AnchorFrameRegistry {
+  entries : Array[(String, @core.Rect)]
+}
+pub fn AnchorFrameRegistry::clear(Self) -> Unit
+pub fn AnchorFrameRegistry::frame(Self, String) -> @core.Rect?
+pub fn AnchorFrameRegistry::keys(Self) -> Array[String]
+pub fn AnchorFrameRegistry::new() -> Self
+pub fn AnchorFrameRegistry::register(Self, key~ : String, frame~ : @core.Rect) -> Unit
+pub fn AnchorFrameRegistry::snapshot(Self) -> Array[(String, @core.Rect)]
+
 pub struct AppBuilder {
   title : String
   runtime : AppRuntime
@@ -68,6 +78,8 @@ pub struct AppRuntime {
 }
 pub fn AppRuntime::action_commands(Self) -> Array[@core.ActionCommand]
 pub fn AppRuntime::advance_time(Self, Double) -> Unit
+pub fn AppRuntime::anchor_frame(Self, String) -> @core.Rect?
+pub fn AppRuntime::anchor_keys(Self) -> Array[String]
 pub fn AppRuntime::destroy(Self) -> Unit
 pub fn AppRuntime::dirty_count(Self) -> Int
 pub fn AppRuntime::dirty_element_ids(Self) -> Array[Int]
@@ -76,6 +88,9 @@ pub fn AppRuntime::dispatch_command(Self, @core.CommandIntent) -> Bool
 pub fn AppRuntime::dispatch_event(Self, @core.AppEvent) -> Unit
 pub fn AppRuntime::dispatch_focused_text_command(Self, @core.CommandIntent, paste_text? : String?) -> @core.TextCommandResult
 pub fn AppRuntime::dispatch_pointer_input(Self, @core.PointerEvent) -> InputDispatchResult
+pub fn AppRuntime::dispatch_presentation_back(Self) -> Bool
+pub fn AppRuntime::dispatch_presentation_escape(Self) -> Bool
+pub fn AppRuntime::dispatch_presentation_host_close(Self) -> Bool
 pub fn AppRuntime::draw_commands(Self) -> Array[@core.DrawCommand]
 pub fn AppRuntime::draw_frame(Self) -> @core.DrawFrame
 pub fn AppRuntime::environment(Self) -> @core.Environment
@@ -187,9 +202,11 @@ pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::dispatch(Self, @backend.Event) -> @backend.EventResult
 pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @core.ActionCommand, @backend.HostServiceBridge) -> @backend.EventResult
 pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @core.CommandIntent, @backend.HostServiceBridge) -> @backend.EventResult
+pub fn HostRuntimeDriver::dispatch_escape(Self) -> @backend.EventResult
 pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @core.KeyboardEvent, @backend.HostServiceBridge) -> @backend.EventResult
 pub fn HostRuntimeDriver::dispatch_platform_view(Self, String, @core.PlatformViewEvent) -> Unit
 pub fn HostRuntimeDriver::dispatch_service_completion(Self, @backend.HostCompletedServiceResponse, @backend.HostServiceBridge) -> @backend.EventResult
+pub fn HostRuntimeDriver::dispatch_system_back(Self) -> @backend.EventResult
 pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@core.DrawCommand]
 pub fn HostRuntimeDriver::draw_frame(Self) -> @core.DrawFrame
 pub fn HostRuntimeDriver::environment(Self) -> @core.Environment

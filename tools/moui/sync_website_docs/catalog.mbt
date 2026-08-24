@@ -87,7 +87,7 @@ struct ValidatedCatalog {
 ///|
 fn readme_source_for(path : String) -> String {
   if path == "docs/moui-readme.md" {
-    "README.mbt.md"
+    "README.md"
   } else if path == "docs/moui-skia-readme.md" {
     "moui_skia/README.mbt.md"
   } else {
@@ -619,7 +619,7 @@ fn validate_catalog_against_repo(
     }
   }
   let expected_sources = root_docs.copy()
-  expected_sources.push("README.mbt.md")
+  expected_sources.push("README.md")
   expected_sources.push("moui_skia/README.mbt.md")
   expected_sources.sort_by((left, right) => left.lexical_compare(right))
   let unclassified : Array[String] = []

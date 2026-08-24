@@ -105,10 +105,10 @@ fn[Msg] command_palette_row(
     width~,
     height=if meta == "" { 36.0 } else { 58.0 },
   )
-  @layout.overlay(
+  @layout.stack([
     base,
     @layout.column(rows, spacing=0.0, align=@style.CrossAlign::Start),
-  )
+  ])
   .disabled(disabled=!command.enabled)
   .accessibility_label(command.display_label())
 }

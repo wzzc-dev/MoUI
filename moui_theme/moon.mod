@@ -3,7 +3,7 @@ name = "wzzc-dev/moui_theme"
 version = "0.1.10"
 
 import {
-  "wzzc-dev/moui@0.1.11",
+  "wzzc-dev/moui@0.1.12",
 }
 
 readme = "README.mbt.md"

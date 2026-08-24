@@ -29,7 +29,7 @@ fn usage() -> String {
   (
     #|Usage: tools/moui/validate_doc_references [--repo-root PATH]
     #|
-    #|Checks that path references in docs/**/*.md and README.mbt.md resolve.
+    #|Checks that path references in docs/**/*.md and README.md resolve.
     #|
   )
 }
@@ -534,7 +534,7 @@ fn run(repo_root : String) -> Int {
   let docs_root = @tools.resolve_path(repo_root, "docs")
   let files : Array[String] = []
   collect_md_files(docs_root, "docs", files)
-  files.push("README.mbt.md")
+  files.push("README.md")
   files.sort()
   let failures : Array[RefFailure] = []
   for rel in files {

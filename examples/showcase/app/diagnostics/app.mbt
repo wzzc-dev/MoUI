@@ -553,10 +553,11 @@ pub fn ShowcaseModel::view_body(
   let opacity = if self.active { 1.0 } else { 0.68 }
   let content = self.current_destination(theme, metrics, offset, opacity)
   if self.dialog_visible {
-    @views.dialog_host(
-      content,
-      dialog=Some(
-        @views.dialog(
+    @views.overlay_host(content, [
+      @views.PresentationSpec::new(
+        id="showcase-dialog",
+        kind=@views.PresentationKind::Dialog,
+        content=@views.dialog(
           "Showcase dialog",
           content=text("Custom modal content here", width=300.0, height=48.0),
           primary_action=Some(
@@ -564,9 +565,10 @@ pub fn ShowcaseModel::view_body(
           ),
           theme~,
         ),
+        modality=@views.PresentationModality::Modal,
+        presented=true,
       ),
-      presented=true,
-    )
+    ])
   } else {
     content
   }

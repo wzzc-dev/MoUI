@@ -187,6 +187,56 @@ pub(all) struct HostInputContract {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostInputContract::new(capabilities? : HostInputCapabilities, coordinates? : HostCoordinatePolicy) -> Self
 
+pub(all) struct HostModalCapabilities {
+  native_modal : Bool
+  surface_attach : Bool
+  input_transform : Bool
+  semantics_bridge : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostModalCapabilities::full() -> Self
+pub fn HostModalCapabilities::supports_input_transform(Self) -> Bool
+pub fn HostModalCapabilities::supports_native_modal(Self) -> Bool
+pub fn HostModalCapabilities::supports_semantics_bridge(Self) -> Bool
+pub fn HostModalCapabilities::supports_surface_attach(Self) -> Bool
+pub fn HostModalCapabilities::unavailable() -> Self
+
+pub(all) enum HostModalEvent {
+  Pending(Int, String, Int)
+  Accepted(Int, String, Int)
+  Rejected(Int, String, Int, String)
+  Closed(Int, String, Int)
+  SurfaceAttached(Int, String, Int, String)
+  SurfaceDetached(Int, String, Int, String)
+  Input(Int, String, Int, @core.PointerEvent)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum HostModalModality {
+  NonModal
+  Modal
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostModalRequest {
+  request_id : Int
+  presentation_id : String
+  generation : Int
+  bounds : @core.Rect
+  modality : HostModalModality
+  semantics_generation : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostModalRequest::bounds(Self) -> @core.Rect
+pub fn HostModalRequest::generation(Self) -> Int
+pub fn HostModalRequest::modality(Self) -> HostModalModality
+pub fn HostModalRequest::new(request_id~ : Int, presentation_id~ : String, generation~ : Int, bounds~ : @core.Rect, modality? : HostModalModality, semantics_generation? : Int) -> Self
+pub fn HostModalRequest::presentation_id(Self) -> String
+pub fn HostModalRequest::request_id(Self) -> Int
+pub fn HostModalRequest::semantics_generation(Self) -> Int
+
+pub(all) enum HostModalResult {
+  Accepted
+  Rejected(String)
+  Closed
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct HostPendingServiceRequest {
   id : HostServiceRequestId
   request : HostServiceRequest

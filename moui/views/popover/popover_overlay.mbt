@@ -1,5 +1,5 @@
 ///|
-pub fn[Msg] popover(
+fn[Msg] popover_surface(
   anchor~ : @core.View[Msg],
   content~ : @core.View[Msg],
   expanded~ : Bool,

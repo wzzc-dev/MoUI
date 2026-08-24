@@ -3,7 +3,7 @@
 // Prefer: node scripts/sync-website-docs.mjs
 
 export const README_SOURCES = new Map([
-  ["docs/moui-readme.md", "README.mbt.md"],
+  ["docs/moui-readme.md", "README.md"],
   ["docs/moui-skia-readme.md", "moui_skia/README.mbt.md"],
 ]);
 

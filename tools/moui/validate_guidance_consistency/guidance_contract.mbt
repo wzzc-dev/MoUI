@@ -207,7 +207,7 @@ fn guidance_window_dependency_paths() -> Array[String] {
 ///|
 fn guidance_file_exists_rules() -> Array[String] {
   [
-    "AGENTS.md", "docs/architecture.md", "docs/development.md", "docs/testing.md",
+    "README.md", "AGENTS.md", "docs/architecture.md", "docs/development.md", "docs/testing.md",
     "docs/window-hosted-moui.md", "scripts/check.mjs", "scripts/check.sh", "scripts/windows/check.ps1",
     "scripts/validate-guidance-consistency.mjs", ".github/workflows/moui-renderer-real-skia-ci.yml",
     ".github/workflows/moui-macos-app-real-skia-manual.yml", ".github/workflows/moui-runtime-gates.yml",
@@ -228,6 +228,6 @@ fn guidance_no_workflow_file_rules() -> Array[String] {
 }
 
 ///|
-fn guidance_symlink_rules() -> Array[SymlinkRule] {
-  [{ path: "README.md", target: "README.mbt.md" }]
+fn guidance_regular_file_rules() -> Array[String] {
+  ["README.md"]
 }

@@ -56,6 +56,7 @@ fn downstream_layout_context() -> @core.ViewLayoutContext {
     ),
     child_sizes: [],
     child_flex_weights: [],
+    anchor_frames: [],
     state: {
       focused: false,
       hovered: false,

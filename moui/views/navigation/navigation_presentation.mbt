@@ -69,38 +69,6 @@ pub fn[Msg] wizard(
 }
 
 ///|
-pub fn[Msg] dialog_host(
-  child : @core.View[Msg],
-  dialog? : @core.View[Msg]? = None,
-  presented? : Bool = false,
-  on_backdrop? : Msg? = None,
-  trap_focus? : Bool = true,
-) -> @core.View[Msg] {
-  if presented {
-    match dialog {
-      Some(dialog) => {
-        let scrim = match on_backdrop {
-          Some(message) => modal_scrim(alpha=0.22).on_tap(message)
-          None => modal_scrim(alpha=0.22)
-        }
-        let presented_dialog = dialog
-          .semantics_role(@core.SemanticsRole::Dialog)
-          .align(alignment=@core.Alignment::center())
-        let presented_dialog = if trap_focus {
-          presented_dialog.focus_trap()
-        } else {
-          presented_dialog
-        }
-        @layout.stack([child, scrim, presented_dialog])
-      }
-      None => child
-    }
-  } else {
-    child
-  }
-}
-
-///|
 fn wizard_visible_step_count(count : Int) -> Int {
   if count > 1 {
     count

@@ -125,7 +125,7 @@ pub fn[Msg] context_menu_region(
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let content = if visible {
-    @layout.overlay(
+    @layout.stack([
       child,
       @container.container(
         menu,
@@ -139,10 +139,10 @@ pub fn[Msg] context_menu_region(
         @style.views_ambient_control_theme(resolved_theme).surface.overlay_shadow.unwrap_or(
           resolved_theme.shadow_scale.lg,
         ),
-      )
-      .semantics_role(@core.SemanticsRole::Menu)
-      .align(alignment=@core.Alignment::bottom_trailing()),
-    )
+      ),
+    ])
+    .semantics_role(@core.SemanticsRole::Menu)
+    .align(alignment=@core.Alignment::bottom_trailing())
   } else {
     child
   }
@@ -182,7 +182,7 @@ fn[Msg] command_menu_row(
     spacing=theme.spacing_scale.xs,
     align=@style.CrossAlign::Center,
   )
-  @layout.overlay(
+  @layout.stack([
     @button.button(
       "",
       on_click=on_select(command.intent),
@@ -192,7 +192,7 @@ fn[Msg] command_menu_row(
       height=34.0,
     ),
     row_view,
-  )
+  ])
   .disabled(disabled=!command.enabled)
   .accessibility_label(command.display_label())
 }

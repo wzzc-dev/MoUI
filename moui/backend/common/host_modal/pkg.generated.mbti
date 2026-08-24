@@ -1,0 +1,60 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/common/host_modal"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct HostModalInputTransform {
+  offset : @core.Point
+  scale : @core.Point
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostModalSession {
+  request : @backend.HostModalRequest
+  mut state : HostModalSessionState
+  mut surface : HostModalSurface?
+  mut close_emitted : Bool
+  mut transform : HostModalInputTransform
+}
+pub fn HostModalSession::accept(Self, Int, Int) -> @backend.HostModalEvent?
+pub fn HostModalSession::apply_result(Self, Int, Int, @backend.HostModalResult) -> @backend.HostModalEvent?
+pub fn HostModalSession::attach_surface(Self, String, Int) -> Bool
+pub fn HostModalSession::attach_surface_event(Self, String, Int) -> @backend.HostModalEvent?
+pub fn HostModalSession::begin(Self) -> @backend.HostModalEvent
+pub fn HostModalSession::close(Self, Int, Int) -> @backend.HostModalEvent?
+pub fn HostModalSession::detach_surface(Self, String, Int) -> Bool
+pub fn HostModalSession::detach_surface_event(Self, String, Int) -> @backend.HostModalEvent?
+pub fn HostModalSession::is_current(Self, Int, Int) -> Bool
+pub fn HostModalSession::is_native_only(Self) -> Bool
+pub fn HostModalSession::new(@backend.HostModalRequest) -> Self
+pub fn HostModalSession::reject(Self, Int, Int, String) -> @backend.HostModalEvent?
+pub fn HostModalSession::request(Self) -> @backend.HostModalRequest
+pub fn HostModalSession::route_input(Self, Int, Int, @core.PointerEvent) -> @backend.HostModalEvent?
+pub fn HostModalSession::set_input_transform(Self, offset~ : @core.Point, scale~ : @core.Point) -> Unit
+pub fn HostModalSession::state(Self) -> HostModalSessionState
+pub fn HostModalSession::surface(Self) -> HostModalSurface?
+pub fn HostModalSession::transform_input(Self, @core.Point) -> @core.Point
+
+pub(all) enum HostModalSessionState {
+  Pending
+  Accepted
+  Rejected
+  Closed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostModalSurface {
+  token : String
+  generation : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits

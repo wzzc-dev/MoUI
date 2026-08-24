@@ -6,23 +6,33 @@ fn Model::website_overlay_hosts(
   metrics : Metrics,
 ) -> @moui.View[Msg] {
   let mobile_menu = self.mobile_menu_sheet(theme, metrics)
-  let with_mobile_menu = @views.sheet_host(
-    child=shell,
-    sheet=Some(mobile_menu),
-    presented=self.mobile_menu_open,
-    presentation_mode=@views.SheetPresentationMode::BottomSheet,
-    theme~,
-    on_dismiss=Some(CloseMobileMenu),
-  )
+  let with_mobile_menu = @views.overlay_host(shell, [
+    @views.PresentationSpec::new(
+      id="mobile-menu",
+      kind=@views.PresentationKind::Sheet,
+      content=mobile_menu,
+      modality=@views.PresentationModality::Modal,
+      dismiss=@views.PresentationDismissPolicy::new(
+        outside_tap=true,
+        message=Some(CloseMobileMenu),
+      ),
+      presented=self.mobile_menu_open,
+    ),
+  ])
   let docs_sheet = self.docs_drawer_sheet(theme, metrics)
-  @views.sheet_host(
-    child=with_mobile_menu,
-    sheet=Some(docs_sheet),
-    presented=self.docs_drawer_open,
-    presentation_mode=@views.SheetPresentationMode::BottomSheet,
-    theme~,
-    on_dismiss=Some(CloseDocsDrawer),
-  )
+  @views.overlay_host(with_mobile_menu, [
+    @views.PresentationSpec::new(
+      id="docs-drawer",
+      kind=@views.PresentationKind::Sheet,
+      content=docs_sheet,
+      modality=@views.PresentationModality::Modal,
+      dismiss=@views.PresentationDismissPolicy::new(
+        outside_tap=true,
+        message=Some(CloseDocsDrawer),
+      ),
+      presented=self.docs_drawer_open,
+    ),
+  ])
 }
 
 ///|
