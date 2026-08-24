@@ -226,6 +226,11 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
 @property(nonatomic, assign) BOOL seen;
 @property(nonatomic, assign) BOOL allowNextNavigation;
 @property(nonatomic, assign) BOOL overlayActive;
+@property(nonatomic, assign) NSRect lastFrame;
+@property(nonatomic, assign) BOOL lastVisible;
+@property(nonatomic, copy) NSString *lastBackground;
+@property(nonatomic, copy) NSString *lastScheme;
+@property(nonatomic, copy) NSString *lastManualNoDragRegions;
 - (instancetype)initWithParent:(NSView *)parent
                      identifier:(NSString *)identifier
                      background:(NSString *)background;
@@ -466,6 +471,11 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
     [_webView addObserver:self forKeyPath:@"canGoBack" options:NSKeyValueObservingOptionNew context:NULL];
     [_webView addObserver:self forKeyPath:@"canGoForward" options:NSKeyValueObservingOptionNew context:NULL];
     [parent addSubview:_webView positioned:NSWindowAbove relativeTo:nil];
+    _lastFrame = NSZeroRect;
+    _lastVisible = NO;
+    _lastBackground = [@"" copy];
+    _lastScheme = [@"" copy];
+    _lastManualNoDragRegions = [@"" copy];
   }
   return self;
 }
@@ -606,9 +616,17 @@ static NSArray<NSValue *> *moui_macos_webview_rects_from_body(id body) {
 }
 
 - (void)updateManualNoDragRegions:(id)body {
+  if (![body isKindOfClass:[NSString class]]) {
+    return;
+  }
+  NSString *value = (NSString *)body;
+  if ([value isEqualToString:self.lastManualNoDragRegions]) {
+    return;
+  }
   NSArray<NSValue *> *rects = moui_macos_webview_rects_from_body(body);
   if (rects != nil) {
     [(MOUIMaskedWebView *)self.webView setManualNoDragRects:rects];
+    self.lastManualNoDragRegions = [value copy];
   }
 }
 
@@ -631,6 +649,9 @@ static NSArray<NSValue *> *moui_macos_webview_rects_from_body(id body) {
   [_contentController release];
   [_identifier release];
   [_desiredURL release];
+  [_lastBackground release];
+  [_lastScheme release];
+  [_lastManualNoDragRegions release];
   [super dealloc];
 }
 
@@ -663,21 +684,42 @@ static NSArray<NSValue *> *moui_macos_webview_rects_from_body(id body) {
         scheme:(NSString *)scheme {
   self.seen = YES;
   self.navigationPolicy = policy;
-  if ([scheme isEqualToString:@"dark"]) {
-    self.webView.appearance =
-        [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
-  } else if ([scheme isEqualToString:@"light"]) {
-    self.webView.appearance =
-        [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+  // Cache appearance/background to avoid redundant AppKit work during live
+  // resize. Frame changes are frequent while dragging; appearance/background
+  // rarely change and touching them forces layer reconfiguration.
+  if (![scheme isEqualToString:self.lastScheme]) {
+    if ([scheme isEqualToString:@"dark"]) {
+      self.webView.appearance =
+          [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+    } else if ([scheme isEqualToString:@"light"]) {
+      self.webView.appearance =
+          [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    }
+    self.lastScheme = [scheme copy];
   }
-  NSColor *nativeBackground =
-      moui_macos_webview_background_from_string(background);
-  if (@available(macOS 12.0, *)) {
-    self.webView.underPageBackgroundColor = nativeBackground;
+  if (![background isEqualToString:self.lastBackground]) {
+    NSColor *nativeBackground =
+        moui_macos_webview_background_from_string(background);
+    if (@available(macOS 12.0, *)) {
+      self.webView.underPageBackgroundColor = nativeBackground;
+    }
+    self.webView.layer.backgroundColor = nativeBackground.CGColor;
+    self.lastBackground = [background copy];
   }
-  self.webView.layer.backgroundColor = nativeBackground.CGColor;
-  self.webView.frame = frame;
-  self.webView.hidden = !visible || frame.size.width <= 0 || frame.size.height <= 0;
+  // Early-out for redundant geometry updates during live resize: setting
+  // WKWebView.frame triggers AppKit layout and WK content layout, so avoid
+  // touching it when the rect is effectively unchanged.
+  BOOL frameChanged = !NSEqualRects(frame, self.lastFrame);
+  BOOL visibilityChanged = visible != self.lastVisible;
+  if (frameChanged) {
+    self.webView.frame = frame;
+    self.lastFrame = frame;
+  }
+  BOOL shouldHide = !visible || frame.size.width <= 0 || frame.size.height <= 0;
+  if (frameChanged || visibilityChanged) {
+    self.webView.hidden = shouldHide;
+    self.lastVisible = visible;
+  }
   if (url.length > 0 && self.desiredURL == nil) {
     moui_macos_webview_log(@"first sync id=%@ frame=(%.0f,%.0f %.0fx%.0f) url=%@",
                            self.identifier, frame.origin.x, frame.origin.y,

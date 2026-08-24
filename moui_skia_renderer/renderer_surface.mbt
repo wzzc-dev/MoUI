@@ -552,6 +552,12 @@ pub fn SkiaRasterRenderer::resize(
   self : SkiaRasterRenderer,
   metrics : @core.SurfaceMetrics,
 ) -> Unit raise SkiaRendererError {
+  // Skip no-op resizes that the host emits redundantly during layout
+  // (e.g. duplicate SurfaceResized from viewFrameDidChange + windowDidResize).
+  if self.metrics == metrics {
+    return
+  }
+  let previous = self.metrics
   self.metrics = metrics
   self.surface = match self.gpu_target {
     Some(gpu_target) =>
@@ -568,7 +574,18 @@ pub fn SkiaRasterRenderer::resize(
       }
     None => create_surface(metrics, self.surface_route, self.gpu_context)
   }
-  self.clear_layer_cache()
+  // Preserve cached layers during live resize. Clearing the entire cache on
+  // every intermediate pixel forces a full raster of even static content
+  // (e.g. floating button) each frame. Only flush when the surface grows
+  // substantially or the scale factor changes – the cache key already
+  // invalidates entries whose physical size no longer matches.
+  let delta_w = (metrics.physical_size.width - previous.physical_size.width).abs()
+  let delta_h = (metrics.physical_size.height - previous.physical_size.height).abs()
+  let scale_changed = metrics.scale_factor != previous.scale_factor
+  let large_resize = delta_w > 64.0 || delta_h > 64.0
+  if scale_changed || large_resize {
+    self.clear_layer_cache()
+  }
 }
 
 ///|
