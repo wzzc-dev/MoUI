@@ -241,6 +241,7 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
                  documentStartScript:(NSString *)documentStartScript
                    documentEndScript:(NSString *)documentEndScript;
 - (void)updateNoDragRegions:(id)body;
+- (void)updateManualNoDragRegions:(id)body;
 - (void)reportStartup:(id)body;
 - (void)runCommand:(int32_t)command text:(NSString *)text detail:(NSString *)detail;
 @end
@@ -252,6 +253,7 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
 @property(nonatomic, assign) BOOL hasOverlayExclusion;
 @property(nonatomic, assign) NSRect overlayExclusionRect;
 @property(nonatomic, retain) NSArray<NSValue *> *noDragRects;
+@property(nonatomic, retain) NSArray<NSValue *> *manualNoDragRects;
 - (void)syncOverlayExclusion:(BOOL)hasBounds rect:(NSRect)rect;
 @end
 
@@ -261,10 +263,15 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
   CGFloat x = point.x - NSMinX(bounds);
   CGFloat top = self.isFlipped ? point.y - NSMinY(bounds)
                                : NSMaxY(bounds) - point.y;
-  for (NSValue *value in self.noDragRects) {
-    NSRect rect = value.rectValue;
-    if (NSPointInRect(NSMakePoint(x, top), rect)) {
-      return YES;
+  NSArray<NSArray<NSValue *> *> *regionSets = @[
+    self.noDragRects ?: @[], self.manualNoDragRects ?: @[]
+  ];
+  for (NSArray<NSValue *> *regions in regionSets) {
+    for (NSValue *value in regions) {
+      NSRect rect = value.rectValue;
+      if (NSPointInRect(NSMakePoint(x, top), rect)) {
+        return YES;
+      }
     }
   }
   return NO;
@@ -279,6 +286,14 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
 }
 
 - (NSView *)hitTest:(NSPoint)point {
+  // NSView's base hitTest: rejects hidden views before descendants run.
+  // Overriding hitTest: replaces that early-out, so a hidden full-window
+  // surface (e.g. the inactive site in a stacked dual-WebView layout) would
+  // otherwise swallow top-strip clicks as window drags above the visible
+  // surface. Replicate the base-class guard explicitly.
+  if (self.hidden || self.alphaValue <= 0.01) {
+    return nil;
+  }
   if (self.hasOverlayExclusion && NSPointInRect(point, self.overlayExclusionRect)) {
     return self.superview;
   }
@@ -289,6 +304,9 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
 }
 
 - (void)mouseDown:(NSEvent *)event {
+  if (self.hidden) {
+    return;
+  }
   NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
   if ([self isInDragRegion:point] && self.window != nil) {
     [self.window performWindowDragWithEvent:event];
@@ -316,6 +334,7 @@ static NSString *moui_macos_webview_startup_debug_script(void) {
 
 - (void)dealloc {
   [_noDragRects release];
+  [_manualNoDragRects release];
   [super dealloc];
 }
 @end
@@ -440,6 +459,7 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
     _webView.wantsLayer = YES;
     _webView.layer.backgroundColor = startup_background.CGColor;
     [(MOUIMaskedWebView *)_webView setNoDragRects:@[]];
+    [(MOUIMaskedWebView *)_webView setManualNoDragRects:@[]];
     _webView.navigationDelegate = self;
     _webView.autoresizingMask = NSViewNotSizable;
     [_webView addObserver:self forKeyPath:@"title" options:NSKeyValueObservingOptionNew context:NULL];
@@ -544,14 +564,14 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
   self.overlayActive = overlayActive;
 }
 
-- (void)updateNoDragRegions:(id)body {
+static NSArray<NSValue *> *moui_macos_webview_rects_from_body(id body) {
   if (![body isKindOfClass:[NSString class]]) {
-    return;
+    return nil;
   }
   NSData *data = [(NSString *)body dataUsingEncoding:NSUTF8StringEncoding];
   NSArray *rows = [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL];
   if (![rows isKindOfClass:[NSArray class]]) {
-    return;
+    return nil;
   }
   NSMutableArray<NSValue *> *rects = [NSMutableArray array];
   for (id row in rows) {
@@ -575,7 +595,21 @@ static NSString *moui_macos_webview_canonical_url(NSString *url) {
           left.doubleValue, top.doubleValue, width, height)]];
     }
   }
-  [(MOUIMaskedWebView *)self.webView setNoDragRects:rects];
+  return rects;
+}
+
+- (void)updateNoDragRegions:(id)body {
+  NSArray<NSValue *> *rects = moui_macos_webview_rects_from_body(body);
+  if (rects != nil) {
+    [(MOUIMaskedWebView *)self.webView setNoDragRects:rects];
+  }
+}
+
+- (void)updateManualNoDragRegions:(id)body {
+  NSArray<NSValue *> *rects = moui_macos_webview_rects_from_body(body);
+  if (rects != nil) {
+    [(MOUIMaskedWebView *)self.webView setManualNoDragRects:rects];
+  }
 }
 
 - (void)dealloc {
@@ -953,6 +987,23 @@ void moui_macos_webview_sync(uint64_t raw_content_view_handle, moonbit_bytes_t i
           visible:visible != 0
        background:moui_macos_webview_string_from_bytes(background)
             scheme:moui_macos_webview_string_from_bytes(scheme)];
+}
+
+MOONBIT_FFI_EXPORT
+void moui_macos_webview_set_no_drag_regions(uint64_t raw_content_view_handle,
+                                             moonbit_bytes_t id,
+                                             moonbit_bytes_t regions) {
+  NSView *parent = (__bridge NSView *)(void *)raw_content_view_handle;
+  if (parent == nil) {
+    return;
+  }
+  MOUIMacosWebViewRecord *record =
+      moui_macos_webview_find(parent, moui_macos_webview_string_from_bytes(id));
+  if (record == nil) {
+    return;
+  }
+  [record updateManualNoDragRegions:
+      moui_macos_webview_string_from_bytes(regions)];
 }
 
 MOONBIT_FFI_EXPORT

@@ -46,6 +46,14 @@ extern "C" fn macos_webview_sync(
 ) -> Unit = "moui_macos_webview_sync"
 
 ///|
+#borrow(id, regions)
+extern "C" fn macos_webview_set_no_drag_regions(
+  raw_content_view_handle : UInt64,
+  id : Bytes,
+  regions : Bytes,
+) -> Unit = "moui_macos_webview_set_no_drag_regions"
+
+///|
 #borrow(id, allowed_origins, document_start, document_end)
 extern "C" fn macos_webview_configure(
   raw_content_view_handle : UInt64,
@@ -163,6 +171,13 @@ pub fn sync_macos_platform_views(
             placement.frame.origin.y,
             placement.frame.size.width,
             placement.frame.size.height,
+          )
+          macos_webview_set_no_drag_regions(
+            raw_content_view_handle,
+            @host.webview_encode_ffi_string(placement.id),
+            @host.webview_encode_ffi_string(
+              placement.property_or("no-drag-regions", "[]"),
+            ),
           )
           match
             (placement.property_or("visible", "true"), frame.overlay_bounds) {

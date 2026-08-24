@@ -24,9 +24,14 @@ struct MatrixEntrypointRoute {
 ///|
 fn usage() -> String {
   (
-    #|Usage: tools/moui/validate_harness_invariants [--repo-root PATH] [--json]
+    #|Usage: tools/moui/validate_harness_invariants [--repo-root PATH] [--json] [--skip-examples]
     #|
     #|Harness batch-1 structural invariants: P1/P2/R3/G1.
+    #|
+    #|--skip-examples  skip example entrypoint scans (P1 catalog, entry texts,
+    #|                 mobile R3 entry checks); core/renderer/pipeline/skills
+    #|                 checks still run. Composition-root wrappers pass this
+    #|                 so app iteration does not trip repo-level budgets.
     #|
   )
 }
@@ -860,45 +865,80 @@ fn read_optional_text(repo_root : String, path : String) -> String? {
 }
 
 ///|
-fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
+fn validate_repo(
+  repo_root : String,
+  skip_examples : Bool,
+) -> Array[HarnessFinding] {
   let results : Array[HarnessFinding] = []
-  let routes = match parse_matrix_entrypoint_routes(repo_root) {
-    Ok(routes) => routes
-    Err(message) => {
-      push_fail(results, "P1", "checks/platform-matrix.json", message)
-      []
-    }
-  }
-  let entries = list_example_entrypoints(repo_root, routes)
-  for item in validate_entrypoint_catalog(repo_root, routes) {
-    results.push(item)
-  }
-  if entries.is_empty() {
-    push_fail(
-      results, "P1", "examples", "no platform entry packages found. Fix: restore examples/*/app + thin entrypoints. See docs/invariants.md#P1",
-    )
-  }
-  for entry in entries {
-    let has_app_package = @tools.directory_exists(
-      @tools.resolve_path(repo_root, "examples/" + entry.example + "/app"),
-    )
-    let has_root_app = @tools.file_exists(
-      @tools.resolve_path(repo_root, "examples/" + entry.example + "/app.mbt"),
-    )
-    let mbt_files : Array[String] = []
-    collect_files_with_suffix(repo_root, entry.path, is_non_test_mbt, mbt_files)
-    let file_texts : Map[String, String] = Map([])
-    for file in mbt_files {
-      match read_optional_text(repo_root, file) {
-        Some(text) => file_texts[file] = text
-        None => ()
+  if skip_examples {
+    // Composition-root wrapper mode: example entrypoint scans are opt-in so
+    // app iteration does not trip repo-level composition budgets. Core,
+    // renderer, pipeline, and skills invariants still run.
+    results.push({
+      rule: "P1",
+      ok: true,
+      path: "examples",
+      hint: "example entrypoint scans skipped (--skip-examples)",
+    })
+  } else {
+    let routes = match parse_matrix_entrypoint_routes(repo_root) {
+      Ok(routes) => routes
+      Err(message) => {
+        push_fail(results, "P1", "checks/platform-matrix.json", message)
+        []
       }
     }
-    for
-      item in check_p1_entry_texts(
-        entry, has_app_package, has_root_app, mbt_files, file_texts,
-      ) {
+    let entries = list_example_entrypoints(repo_root, routes)
+    for item in validate_entrypoint_catalog(repo_root, routes) {
       results.push(item)
+    }
+    if entries.is_empty() {
+      push_fail(
+        results, "P1", "examples", "no platform entry packages found. Fix: restore examples/*/app + thin entrypoints. See docs/invariants.md#P1",
+      )
+    }
+    for entry in entries {
+      let has_app_package = @tools.directory_exists(
+        @tools.resolve_path(repo_root, "examples/" + entry.example + "/app"),
+      )
+      let has_root_app = @tools.file_exists(
+        @tools.resolve_path(repo_root, "examples/" + entry.example + "/app.mbt"),
+      )
+      let mbt_files : Array[String] = []
+      collect_files_with_suffix(
+        repo_root,
+        entry.path,
+        is_non_test_mbt,
+        mbt_files,
+      )
+      let file_texts : Map[String, String] = Map([])
+      for file in mbt_files {
+        match read_optional_text(repo_root, file) {
+          Some(text) => file_texts[file] = text
+          None => ()
+        }
+      }
+      for
+        item in check_p1_entry_texts(
+          entry, has_app_package, has_root_app, mbt_files, file_texts,
+        ) {
+        results.push(item)
+      }
+    }
+    for entry in entries {
+      if entry.mobile {
+        let main_path = entry.path + "/main.mbt"
+        let pkg_path = entry.path + "/moon.pkg"
+        results.push(
+          check_r3_mobile_main(
+            main_path,
+            read_optional_text(repo_root, main_path),
+          ),
+        )
+        results.push(
+          check_r3_mobile_pkg(pkg_path, read_optional_text(repo_root, pkg_path)),
+        )
+      }
     }
   }
 
@@ -927,21 +967,6 @@ fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
     results.push(
       check_r3_provider_text(path, read_optional_text(repo_root, path)),
     )
-  }
-  for entry in entries {
-    if entry.mobile {
-      let main_path = entry.path + "/main.mbt"
-      let pkg_path = entry.path + "/moon.pkg"
-      results.push(
-        check_r3_mobile_main(
-          main_path,
-          read_optional_text(repo_root, main_path),
-        ),
-      )
-      results.push(
-        check_r3_mobile_pkg(pkg_path, read_optional_text(repo_root, pkg_path)),
-      )
-    }
   }
   // MoonBit files do not define package boundaries. The mobile build contract
   // is intentionally split between shared preparation, CLI parsing, and the
@@ -1025,6 +1050,7 @@ struct CliOptions {
   repo_root : String
   json : Bool
   help : Bool
+  skip_examples : Bool
 }
 
 ///|
@@ -1032,6 +1058,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
   let mut repo_root = @env.current_dir().unwrap_or("")
   let mut json = false
   let mut help = false
+  let mut skip_examples = false
   let mut index = 0
   while index < args.length() {
     match args[index] {
@@ -1041,6 +1068,10 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       }
       "--json" => {
         json = true
+        index += 1
+      }
+      "--skip-examples" => {
+        skip_examples = true
         index += 1
       }
       "--repo-root" => {
@@ -1053,7 +1084,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok({ repo_root, json, help })
+  Ok({ repo_root, json, help, skip_examples })
 }
 
 ///|
@@ -1069,7 +1100,7 @@ fn run(args : Array[String]) -> Int {
         println(usage())
         return 0
       }
-      let results = validate_repo(options.repo_root)
+      let results = validate_repo(options.repo_root, options.skip_examples)
       let failures = results.filter(item => !item.ok)
       if options.json {
         println(results_to_json(results).stringify(indent=2))

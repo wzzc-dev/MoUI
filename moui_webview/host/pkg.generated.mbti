@@ -9,6 +9,8 @@ import {
 // Values
 pub fn web_view_color_wire_value(@core.Color) -> String
 
+pub fn web_view_no_drag_regions_wire_value(Array[WebViewNoDragRegion]) -> String
+
 pub fn webview_decode_ffi_string(Bytes) -> String
 
 pub fn webview_encode_ffi_string(String) -> Bytes
@@ -203,6 +205,14 @@ pub struct WebViewNavigationId {
 pub fn WebViewNavigationId::to_wire(Self) -> String
 pub fn WebViewNavigationId::value(Self) -> UInt64
 
+pub(all) struct WebViewNoDragRegion {
+  left : Double
+  top : Double
+  right : Double
+  bottom : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WebViewNoDragRegion::new(left~ : Double, top~ : Double, right~ : Double, bottom~ : Double) -> Self
+
 pub struct WebViewOrigin {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
@@ -241,8 +251,9 @@ pub(all) struct WebViewSpec {
   visible : Bool
   background_color : @core.Color?
   color_scheme : @core.ColorScheme?
+  no_drag_regions : Array[WebViewNoDragRegion]
 }
-pub fn WebViewSpec::new(id~ : String, width? : Double?, height? : Double?, title? : String, visible? : Bool, background_color? : @core.Color?, color_scheme? : @core.ColorScheme?) -> Self
+pub fn WebViewSpec::new(id~ : String, width? : Double?, height? : Double?, title? : String, visible? : Bool, background_color? : @core.Color?, color_scheme? : @core.ColorScheme?, no_drag_regions? : Array[WebViewNoDragRegion]) -> Self
 pub fn WebViewSpec::platform_view_placement(Self, frame~ : @core.Rect, clip? : @core.Rect?) -> @core.PlatformViewPlacement
 
 pub struct WebViewTask[T] {

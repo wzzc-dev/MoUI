@@ -7,6 +7,7 @@ pub fn[Msg] web_view(
   visible? : Bool = true,
   background_color? : @core.Color? = None,
   color_scheme? : @core.ColorScheme? = None,
+  no_drag_regions? : Array[@host.WebViewNoDragRegion] = [],
   on_event? : ((@host.WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let id = controller.id()
@@ -19,6 +20,7 @@ pub fn[Msg] web_view(
       visible,
       background_color,
       color_scheme,
+      no_drag_regions,
     },
     event=(node, ctx) => {
       match (ctx.event, on_event) {
@@ -47,6 +49,7 @@ priv struct WebViewNode {
   visible : Bool
   background_color : @core.Color?
   color_scheme : @core.ColorScheme?
+  no_drag_regions : Array[@host.WebViewNoDragRegion]
 }
 
 ///|
@@ -90,6 +93,12 @@ impl @core.ViewNode for WebViewNode with fn declaration(self) {
         },
       ),
     ),
+    (
+      "no-drag-regions",
+      @core.DeclarationKey::string(
+        @host.web_view_no_drag_regions_wire_value(self.no_drag_regions),
+      ),
+    ),
   ])
   @core.ViewDeclaration::channels(
     layout=@core.DeclarationChannel::Exact(size_key),
@@ -128,6 +137,7 @@ impl @core.ViewNode for WebViewNode with fn platform_views(self, ctx) {
       visible=self.visible,
       background_color=self.background_color,
       color_scheme=self.color_scheme,
+      no_drag_regions=self.no_drag_regions,
     )
     [spec.platform_view_placement(frame=ctx.frame)]
   }
