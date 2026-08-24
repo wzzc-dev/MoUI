@@ -123,7 +123,9 @@ fn moon_mod_text(options : ProjectOptions) -> String {
   }
   if options.platforms.any(platform => platform != "web") {
     renderer_imports.push(
-      "  \"wzzc-dev/moui_skia_renderer@" + options.moui_version + "\",",
+      "  \"wzzc-dev/moui_skia_renderer@" +
+      options.moui_skia_renderer_version +
+      "\",",
     )
   }
   let template =
