@@ -27,6 +27,7 @@ fn ensure_readme_file(project_root : String) -> Result[String?, String] {
     module_name: manifest.module_name,
     title: manifest.title,
     moui_version: manifest.moui_version,
+    moui_skia_renderer_version: default_moui_skia_renderer_dependency_version,
     template: "counter",
     platforms: manifest.platforms.copy(),
     bundle_id: manifest.bundle_id,
