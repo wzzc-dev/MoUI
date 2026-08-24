@@ -26,13 +26,13 @@ fn ExcelApp::view(self : ExcelApp) -> @moui.View[ExcelMsg] {
     padding=0.0,
   )
   if model.context_menu_visible {
-    @views.overlay(
+    @views.stack([
       base,
       @views.align(
         build_more_menu_overlay(theme),
         alignment=@geometry.Alignment::new(x=1.0, y=0.0),
       ),
-    )
+    ])
   } else {
     base
   }

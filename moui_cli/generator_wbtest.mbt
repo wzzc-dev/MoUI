@@ -173,7 +173,7 @@ test "default macOS project file plan is exact" {
     ),
   )
   let root_mod = test_planned_text(files, "moon.mod")
-  assert_true(root_mod.contains("wzzc-dev/moui@0.1.11"))
+  assert_true(root_mod.contains("wzzc-dev/moui@0.1.12"))
   assert_true(root_mod.contains("wzzc-dev/moui_web_renderer@0.1.10"))
   assert_true(root_mod.contains("wzzc-dev/moui_skia_renderer@0.1.11"))
   let web_pkg = test_planned_text(files, "web_wasm/moon.pkg")

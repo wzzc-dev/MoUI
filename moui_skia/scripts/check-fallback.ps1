@@ -955,7 +955,7 @@ try {
 
     $fakeBadAcceptanceStatePatch = Join-Path $dryRunRoot "fake-linux-acceptance-state-bad.patch"
     (Get-Content -LiteralPath $fakeAcceptanceStatePatch) `
-      -replace 'skia-revision\.txt', 'README.mbt.md' `
+      -replace 'skia-revision\.txt', 'README.md' `
       | Set-Content -LiteralPath $fakeBadAcceptanceStatePatch
     Assert-CommandFailsWith `
       -Command { & (Join-Path $repoRoot "scripts/verify-acceptance-state-patch.ps1") -PatchFile $fakeBadAcceptanceStatePatch } `

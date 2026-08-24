@@ -2,12 +2,6 @@
 // with other view sub-packages (row/column live in @style).
 
 ///|
-fn[Msg] overlay(
-  base : @core.View[Msg],
-  overlay : @core.View[Msg],
-) -> @core.View[Msg] {
-  @common.stack_layout(children=[base, overlay])
-}
 
 // === Empty state (simplified local version) ===
 

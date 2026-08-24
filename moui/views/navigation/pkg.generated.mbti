@@ -22,8 +22,6 @@ pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_sele
 
 pub fn[Msg] context_menu_region(child~ : @core.View[Msg], menu~ : @core.View[Msg], visible~ : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
-pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool, on_backdrop? : Msg?, trap_focus? : Bool) -> @core.View[Msg]
-
 pub fn[Msg] master_detail(master~ : @core.View[Msg], detail~ : @core.View[Msg], master_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] menu_bar(Array[@controls.MenuItem[Msg]], active? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]

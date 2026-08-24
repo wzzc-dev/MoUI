@@ -1900,6 +1900,7 @@ pub(all) struct ViewLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
   child_flex_weights : Array[Double]
+  anchor_frames : Array[(String, Rect)]
   state : ViewStateContext
   text_system : TextSystem
   environment : Environment

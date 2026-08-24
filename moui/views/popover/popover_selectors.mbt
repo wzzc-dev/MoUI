@@ -30,7 +30,7 @@ pub fn[Msg] dropdown(
     state.expanded,
     on_toggle,
   )
-  popover(
+  popover_surface(
     anchor~,
     content=dropdown_menu(
       items,
@@ -92,7 +92,7 @@ pub fn[Msg] combobox(
   let anchor = @controls.semantic_toggle_action_control(
     anchor_view, expanded, on_toggle,
   )
-  popover(
+  popover_surface(
     anchor~,
     content=dropdown_menu(
       items,

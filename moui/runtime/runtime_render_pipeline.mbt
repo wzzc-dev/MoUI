@@ -76,16 +76,32 @@ fn RuntimeState::ensure_layout_tree(self : RuntimeState) -> Unit {
 fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
   self.rebuild_if_possible()
   self.stats.layout_pass_count = self.stats.layout_pass_count + 1
+  let previous_anchor_frames = self.anchor_registry.snapshot()
   self.layout_tree = {
     root: self.element_tree.root.place_with_text_system(
       Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
       environment=self.environment,
       text_system=self.text_system,
       layout_direction=self.environment.layout_direction,
+      anchor_frames=self.anchor_registry.snapshot(),
     ),
   }
+  self.anchor_registry.clear()
+  self.element_tree.root.collect_anchor_frames(
+    self.layout_tree.root,
+    self.anchor_registry,
+  )
+  // A presentation can only consume anchor frames after the base tree has
+  // been placed. If this pass produced a different registry, run one bounded
+  // follow-up pass with the fresh snapshot. The normal layout stabilizer stops
+  // as soon as the registry is unchanged.
+  let anchor_frames_changed = previous_anchor_frames !=
+    self.anchor_registry.snapshot()
   self.dirty.needs_rebuild = false
   self.dirty.needs_layout = false
+  if anchor_frames_changed {
+    self.dirty.needs_layout = true
+  }
   self.dirty.dirty_layout_elements.clear()
   self.refresh_dirty_element_queue()
   ignore(self.try_pending_scroll_from_current_layout())

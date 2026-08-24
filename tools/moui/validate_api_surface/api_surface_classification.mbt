@@ -233,6 +233,10 @@ fn classify_api_surface_line(path : String, line : String) -> String? {
       // control-theme records, so classify those as styles rather than debt.
       if line.has_prefix("pub(all) enum") {
         // Fall through to semantic classification below
+      } else if line.contains("Presentation") {
+        // Presentation declarations are app-owned state/configuration, not a
+        // migration shim or control theme token.
+        return Some("app_state_helper")
       } else if line_has_any_token(line, views_style_tokens()) {
         return Some("app_style")
       } else {

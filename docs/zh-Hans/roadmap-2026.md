@@ -165,7 +165,7 @@ sh scripts/check.sh --profile platform
 
 计划文档集：
 
-- `README.md`：短入口、quick start、example commands、docs index。它的源文件是根目录 `README.mbt.md`。
+- `README.md`：短入口、quick start、example commands 和 docs index，也是根目录的唯一源文件。
 - `docs/architecture.md`：package model 和 runtime mental model。
 - `docs/development.md`：setup、focused checks、platform validation commands。
 - `docs/platform-notes.md`：平台特定要求和 troubleshooting。

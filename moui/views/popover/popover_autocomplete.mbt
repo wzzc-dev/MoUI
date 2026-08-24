@@ -10,7 +10,7 @@ pub fn[Msg] autocomplete(
   max_height? : Double = 180.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  popover(
+  popover_surface(
     anchor=@text.text_field(
       query,
       on_input~,

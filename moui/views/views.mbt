@@ -73,7 +73,7 @@ pub using @common {
 pub using @layout {row, column}
 
 ///|
-pub using @layout {stack, overlay}
+pub using @layout {stack}
 
 ///|
 pub using @navigation {overlay_marker}
@@ -291,7 +291,6 @@ pub using @navigation {
   breadcrumb,
   breadcrumb_item,
   command_menu_section,
-  dialog_host,
   master_detail,
   menu_item,
   navigation_destination,
@@ -340,9 +339,7 @@ pub using @popover {
   autocomplete,
   combobox,
   dropdown,
-  popover,
   sheet,
-  sheet_host,
   type DropdownState,
   type PopoverPlacement,
 }

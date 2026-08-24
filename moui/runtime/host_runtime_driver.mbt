@@ -78,7 +78,9 @@ pub fn HostRuntimeDriver::dispatch(
       self.finish_redraw()
     }
     CloseRequested => {
-      self.close_requested = true
+      if !self.runtime.dispatch_presentation_host_close() {
+        self.close_requested = true
+      }
       self.request_redraw_if_needed()
     }
   }
@@ -217,6 +219,30 @@ pub fn HostRuntimeDriver::dispatch_keyboard_with_services(
     Some(intent) => self.dispatch_command_with_services(intent, services)
     None => self.dispatch(@backend_host.Event::Keyboard(event))
   }
+}
+
+///|
+/// Route Escape and platform Back through the same top-most presentation
+/// dismissal path. Enter remains owned by the focused/default action.
+pub fn HostRuntimeDriver::dispatch_escape(
+  self : HostRuntimeDriver,
+) -> @backend_host.EventResult {
+  ignore(
+    self.runtime.dispatch_event(
+      @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Escape")),
+    ),
+  )
+  self.request_redraw_if_needed()
+  self.event_result()
+}
+
+///|
+pub fn HostRuntimeDriver::dispatch_system_back(
+  self : HostRuntimeDriver,
+) -> @backend_host.EventResult {
+  ignore(self.runtime.dispatch_presentation_back())
+  self.request_redraw_if_needed()
+  self.event_result()
 }
 
 ///|

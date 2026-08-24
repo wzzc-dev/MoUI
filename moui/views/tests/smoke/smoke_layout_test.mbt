@@ -1,5 +1,5 @@
 ///|
-/// Smoke tests for layout primitives: row, column, stack, spacer, empty, overlay, flex, flow, grid, wrap, responsive_grid, list
+/// Smoke tests for layout primitives: row, column, stack, spacer, empty, flex, flow, grid, wrap, responsive_grid, list
 
 ///|
 test "row smoke" {
@@ -32,12 +32,15 @@ test "stack smoke" {
 }
 
 ///|
-test "overlay smoke" {
-  let view : @core.View[Unit] = @views.overlay(
-    @views.text("base"),
-    @views.text("over"),
-  )
-  assert_eq(view.identity().kind, "Stack")
+test "overlay host smoke" {
+  let view : @core.View[Unit] = @views.overlay_host(@views.text("base"), [
+    @views.PresentationSpec::new(
+      id="over",
+      kind=@views.PresentationKind::Tooltip,
+      content=@views.text("over"),
+    ),
+  ])
+  assert_eq(view.identity().kind, "OverlayHost")
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }
