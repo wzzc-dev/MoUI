@@ -252,21 +252,21 @@ fn code_editor_surface(
     background=editor_surface_background(),
   )
   let with_completion = if model.completion_visible {
-    overlay(
+    stack([
       base,
       completion_overlay(model, theme).offset(
         dx=completion_overlay_x(model),
         dy=completion_overlay_y(model),
       ),
-    )
+    ])
   } else {
     base
   }
   if model.find_visible {
-    overlay(
+    stack([
       with_completion,
       find_overlay(model, theme).offset(dx=430.0, dy=14.0),
-    )
+    ])
   } else {
     with_completion
   }

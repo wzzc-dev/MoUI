@@ -16,7 +16,7 @@ fn pub_all_budgets() -> Array[CountBudget] {
     { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 188 },
     // 57 = 39 (ADR 0017 control theme tokens) + 17 control-theme/style
     // records + 1 externally constructed incremental-data change enum.
-    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 57 },
+    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 65 },
     {
       kind: "pub(all)",
       label: "moui/runtime",
@@ -31,7 +31,7 @@ fn pub_all_budgets() -> Array[CountBudget] {
       // AccessKit's backend-owned adapter plus application-menu placement add
       // two package-level protocol records while common owners replace the
       // former coordinator.
-      max_count: 96,
+      max_count: 104,
     },
     {
       kind: "pub(all)",

@@ -5,12 +5,6 @@ struct TextRule {
 }
 
 ///|
-struct SymlinkRule {
-  path : String
-  target : String
-}
-
-///|
 fn read_repo_text(repo_root : String, path : String) -> Result[String, String] {
   @tools.read_required_text(@tools.resolve_path(repo_root, path), path)
 }

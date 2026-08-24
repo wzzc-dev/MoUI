@@ -39,8 +39,6 @@ pub fn min_double(Double, Double) -> Double
 
 pub fn min_int(Int, Int) -> Int
 
-pub fn[Msg] overlay(@core.View[Msg], @core.View[Msg]) -> @core.View[Msg]
-
 pub fn[Msg] padding(@core.View[Msg], Double) -> @core.View[Msg]
 
 pub fn[Msg] padding_edges(@core.View[Msg], top? : Double, right? : Double, bottom? : Double, left? : Double) -> @core.View[Msg]

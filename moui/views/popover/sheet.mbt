@@ -1,5 +1,5 @@
-// SheetPresentationMode lives in @style; sheet_host remains in the root package
-// because it depends on the private root helper modal_scrim.
+// SheetPresentationMode lives in @style. Presentation composition is owned by
+// the root `overlay_host` entrypoint.
 
 ///|
 pub fn[Msg] sheet(

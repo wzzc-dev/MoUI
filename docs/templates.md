@@ -91,8 +91,7 @@ Checklist:
 
 Checklist:
 
-- Keep the root `README.md` as the short entrypoint; its source is
-  root `README.mbt.md`.
+- Keep the root `README.md` as the short entrypoint and canonical source.
 - Put setup and command loops in `docs/development.md`.
 - Put platform caveats in `docs/platform-notes-<platform>.md` (e.g., `platform-notes-linux.md`).
   Cross-platform host contracts go in `docs/platform-notes.md`.

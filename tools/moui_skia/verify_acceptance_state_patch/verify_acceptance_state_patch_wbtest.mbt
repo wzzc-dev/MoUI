@@ -39,7 +39,7 @@ test "accepts valid acceptance state patch text" {
 test "rejects acceptance state patch touching unexpected file" {
   let patch = valid_patch.replace(
     old="diff --git a/skia-revision.txt b/skia-revision.txt",
-    new="diff --git a/README.mbt.md b/README.mbt.md",
+    new="diff --git a/README.md b/README.md",
   )
   inspect(
     match validate_acceptance_state_patch_text(patch) {

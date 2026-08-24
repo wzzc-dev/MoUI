@@ -2,6 +2,7 @@
 priv struct RuntimeState {
   mut element_tree : ElementTree
   mut layout_tree : LayoutTree
+  anchor_registry : AnchorFrameRegistry
   mut render_tree : RenderTree
   mut platform_tree : PlatformTree
   mut size : Size
@@ -65,6 +66,7 @@ fn RuntimeState::new_runtime_view_node(
   let state = {
     element_tree: ElementTree::new(initial.node),
     layout_tree: LayoutTree::empty(),
+    anchor_registry: AnchorFrameRegistry::new(),
     render_tree: RenderTree::empty(),
     platform_tree: PlatformTree::empty(),
     size,
@@ -186,6 +188,7 @@ fn RuntimeState::complete_semantics_destroy_request(
 fn RuntimeState::destroy_now(self : RuntimeState) -> Unit {
   self.element_tree = ElementTree::empty()
   self.layout_tree = LayoutTree::empty()
+  self.anchor_registry.clear()
   self.render_tree = RenderTree::empty()
   self.platform_tree = PlatformTree::empty()
   self.next_element_id = 1

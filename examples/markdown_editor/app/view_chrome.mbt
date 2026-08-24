@@ -311,7 +311,7 @@ fn MarkdownEditorApp::bottom_status_bar(
     tree_button,
     alignment=@geometry.Alignment::new(x=-1.0, y=0.0),
   )
-  @views.overlay(status_frame, tree_aligned)
+  @views.stack([status_frame, tree_aligned])
 }
 
 ///|

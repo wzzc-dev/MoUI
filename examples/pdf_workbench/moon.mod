@@ -5,7 +5,7 @@ version = "0.1.0"
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.1.11",
+  "wzzc-dev/moui@0.1.12",
   "bobzhang/pdflite@0.1.38",
   "moonbitlang/async@0.20.2",
   "moonbitlang/x@0.5.1",

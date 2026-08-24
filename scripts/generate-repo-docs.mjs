@@ -38,6 +38,15 @@ const run = (command, args) => {
   }
 };
 
+const reportsMatch = (leftPath, rightPath) => {
+  try {
+    return JSON.stringify(JSON.parse(readFileSync(leftPath, "utf8"))) ===
+      JSON.stringify(JSON.parse(readFileSync(rightPath, "utf8")));
+  } catch {
+    return false;
+  }
+};
+
 const report = mode === "--write" ? committedReport : checkReport;
 try {
   run(process.execPath, [
@@ -47,7 +56,7 @@ try {
   ]);
   if (mode === "--check") {
     if (!existsSync(committedReport) ||
-      readFileSync(committedReport, "utf8") !== readFileSync(checkReport, "utf8")) {
+      !reportsMatch(committedReport, checkReport)) {
       throw new Error(
         "checks/api-surface-report.json is stale; run generate_repo_docs --write",
       );
@@ -73,4 +82,3 @@ try {
 } finally {
   rmSync(checkReport, { force: true });
 }
-

@@ -151,7 +151,8 @@ must not be reversed by moving them back into `core`.
   constructor performs the conversion.
 - **Sheet control semantics have moved out**: `SheetPresentationMode` is sheet
   control semantics and belongs in `moui/views`. `core` does not export it;
-  sheet / sheet_host constructors use `@views.SheetPresentationMode` directly.
+  sheet content uses `@views.SheetPresentationMode`; presentation ordering and
+  dismissal are declared with `@views.PresentationSpec` and `overlay_host`.
 - **The theme schema and default aesthetics are separated**: `core.Theme` /
   `core.Environment` retain the token schema and `neutral()` fallback/testing
   values; app-facing default aesthetics such as `default_theme()`,

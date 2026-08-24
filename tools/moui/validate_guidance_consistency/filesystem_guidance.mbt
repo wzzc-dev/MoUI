@@ -66,33 +66,14 @@ fn native_readlink(path : String) -> String? {
 }
 
 ///|
-fn push_symlink_target_check(
+fn push_regular_file_check(
   repo_root : String,
-  rule : SymlinkRule,
+  path : String,
   failures : Array[String],
 ) -> Unit {
-  let resolved = @tools.resolve_path(repo_root, rule.path)
+  let resolved = @tools.resolve_path(repo_root, path)
   match native_readlink(resolved) {
-    Some(actual) =>
-      if actual != rule.target {
-        failures.push(
-          rule.path +
-          ": expected symlink target '" +
-          rule.target +
-          "', got '" +
-          actual +
-          "'",
-        )
-      }
-    None =>
-      match read_repo_text(repo_root, rule.path) {
-        Ok(text) =>
-          if text.trim().to_owned() != rule.target {
-            failures.push(
-              rule.path + ": expected to be a symlink to " + rule.target,
-            )
-          }
-        Err(message) => failures.push(message)
-      }
+    Some(_) => failures.push(path + ": expected a regular file, not a symlink")
+    None => ()
   }
 }

@@ -54,6 +54,7 @@ fn center_layout_context(
     constraints,
     child_sizes: [child_size],
     child_flex_weights: [0.0],
+    anchor_frames: [],
     state: center_test_state(),
     text_system: @core.TextSystem::fallback(),
     environment: @core.Environment::neutral(),

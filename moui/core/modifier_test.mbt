@@ -40,6 +40,7 @@ fn ctx_child(child_size~ : @core.Size) -> @core.ViewLayoutContext {
     constraints: loose_constraints(200.0, 200.0),
     child_sizes: [child_size],
     child_flex_weights: [0.0],
+    anchor_frames: [],
     state: {
       focused: false,
       hovered: false,

@@ -76,10 +76,5 @@ fn view_return_rules() -> Array[ViewReturnRule] {
       signature_prefix: "pub fn[Msg] sheet(",
       return_token: "-> @core.View[Msg]",
     },
-    {
-      name: "sheet_host",
-      signature_prefix: "pub fn[Msg] sheet_host(",
-      return_token: "-> @core.View[Msg]",
-    },
   ]
 }
