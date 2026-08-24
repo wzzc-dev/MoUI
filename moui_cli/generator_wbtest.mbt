@@ -10,6 +10,7 @@ fn test_project_options(
     module_name: "example/sample_app",
     title: "Sample App",
     moui_version: default_moui_dependency_version,
+    moui_skia_renderer_version: default_moui_skia_renderer_dependency_version,
     template,
     platforms,
     bundle_id,
@@ -163,7 +164,7 @@ test "default macOS project file plan is exact" {
       #|  "id": "sample_app",
       #|  "title": "Sample App",
       #|  "module": "example/sample_app",
-      #|  "mouiVersion": "0.1.11",
+      #|  "mouiVersion": "0.1.12",
       #|  "platforms": [
       #|    "web",
       #|    "macos"

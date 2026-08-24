@@ -81,7 +81,7 @@ fn new_usage() -> String {
     #|  --title TITLE           Display title. Defaults from the project id.
     #|  --template NAME         App skeleton: counter (default) or hello.
     #|  --moui-version VERSION  MoUI dependency version written into moon.mod.
-    #|                          Defaults to 0.1.11. Independent from CLI version.
+    #|                          Defaults to 0.1.12. Independent from CLI version.
     #|  --platform PLATFORM     Add a target platform; may be repeated.
     #|                          Values: web, macos, windows, linux, android,
     #|                          ios, harmonyos, or all.
@@ -269,6 +269,7 @@ fn parse_new_args(
     module_name: module_name.val.unwrap_or("local/" + project_id),
     title: title.val.unwrap_or_else(() => default_title(project_id)),
     moui_version: moui_version.val.unwrap_or(default_moui_dependency_version),
+    moui_skia_renderer_version: default_moui_skia_renderer_dependency_version,
     template: template_name,
     platforms: selected,
     bundle_id: bundle_id.val,
