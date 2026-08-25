@@ -71,6 +71,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [moui-tier-tea-debt-convergence](active/moui-tier-tea-debt-convergence.md) | Converge platform tiers, strict TEA boundaries, entrypoints, and documentation debt |
 | [3d-moui-viewer](active/3d-moui-viewer.md) | Independent static glTF/GLB viewer addon with explicit GPU capability status |
 | [overlay-system-redesign](done/overlay-system-redesign.md) | Ordered `OverlayHost + PresentationSpec` with runtime placement/input/focus and neutral host-modal transport |
+| [ai-native-ui](active/ai-native-ui.md) | Agent Runtime, Agent Inspector and enterprise data-workbench QA evidence |
 
 ## Done (recent)
 

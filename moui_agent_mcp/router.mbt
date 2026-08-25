@@ -5,10 +5,54 @@ let mcp_protocol_version : String = "2024-11-05"
 priv enum ToolInvocation {
   ReadSemantics(@core.SemanticsGeneration?)
   PerformAction(@agent.AgentActionRequest)
+  AgentReadTrace(UInt64)
+  AgentReplayTrace(@agent.AgentReplayRequest)
+  AgentReadPolicyState
   DiagnosticsReadState
   DiagnosticsReadPaint
   DiagnosticsDispatchEvent(@core.AppEvent)
   DiagnosticsDispatchCommand(@core.CommandIntent)
+}
+
+///|
+/// Agent observability tools are opt-in. Keeping this registry separate from
+/// the default semantic registry preserves compatibility for existing MCP
+/// clients that expect exactly two tools.
+fn[Host : @agent.AgentTraceHost] agent_tool_registry(
+  _host : Host,
+) -> Array[ToolSpec[Host]] {
+  [
+    {
+      name: "agent_read_trace",
+      description: "Read Agent action trace entries from an explicit cursor.",
+      input: agent_read_trace_input_codec(),
+      output: {
+        schema: tool_output_schema(({ "type": "object" } : Json)),
+        dispatch: dispatch_agent_read_trace_tool,
+      },
+    },
+    {
+      name: "agent_replay_trace",
+      description: "Replay trace entries with Generation and policy checks.",
+      input: agent_replay_trace_input_codec(),
+      output: {
+        schema: tool_output_schema(({ "type": "object" } : Json)),
+        dispatch: dispatch_agent_replay_trace_tool,
+      },
+    },
+    {
+      name: "agent_read_policy_state",
+      description: "Read pending confirmations and trace counters.",
+      input: {
+        schema: object_schema(Json::empty_object()),
+        decode: decode_agent_read_policy_state_invocation,
+      },
+      output: {
+        schema: tool_output_schema(({ "type": "object" } : Json)),
+        dispatch: dispatch_agent_read_policy_state_tool,
+      },
+    },
+  ]
 }
 
 ///|
@@ -266,6 +310,12 @@ fn agent_action_error_details(error : @agent.AgentActionError) -> Json {
   match error {
     @agent.AgentActionError::HostClosed
     | @agent.AgentActionError::ReentrantDispatch => Json::empty_object()
+    @agent.AgentActionError::PolicyDenied(reason)
+    | @agent.AgentActionError::ConfirmationRejected(reason) =>
+      ({ "reason": reason } : Json)
+    @agent.AgentActionError::ConfirmationRequired(request_id)
+    | @agent.AgentActionError::ConfirmationExpired(request_id) =>
+      ({ "request_id": request_id } : Json)
     @agent.AgentActionError::StaleGeneration(expected, current) =>
       ({ "expected": expected, "current": current } : Json)
     @agent.AgentActionError::TargetNotFound(target)
@@ -320,6 +370,27 @@ pub fn[Host : @agent.AgentHost + @agent.AgentDiagnosticsHost] route_with_diagnos
 ) -> Json {
   let id = rpc_id(request)
   let registry = full_tool_registry(host)
+  match rpc_method(request) {
+    None => rpc_error(id, -32600, "Invalid Request: missing method")
+    Some("initialize") => rpc_result(id, initialize_result())
+    Some("tools/list") => list_tools(id, registry)
+    Some("tools/call") => route_tool_call(host, id, request, registry)
+    Some(method_name) =>
+      rpc_error(id, -32601, "Method not found: \{method_name}")
+  }
+}
+
+///|
+/// Route semantic tools plus the explicit Agent Inspector surface. This is a
+/// separate entrypoint by design: callers must opt in before trace, replay or
+/// policy state becomes visible to an MCP client.
+pub fn[Host : @agent.AgentHost + @agent.AgentTraceHost] route_with_agent_tools(
+  host : Host,
+  request : Json,
+) -> Json {
+  let id = rpc_id(request)
+  let registry = semantic_tool_registry(host)
+  registry.append(agent_tool_registry(host))
   match rpc_method(request) {
     None => rpc_error(id, -32600, "Invalid Request: missing method")
     Some("initialize") => rpc_result(id, initialize_result())
@@ -409,6 +480,58 @@ fn[Host : @agent.AgentHost] dispatch_perform_action_tool(
             details=agent_action_error_details(error),
           )
       }
+    _ => tool_registry_mismatch(id)
+  }
+}
+
+///|
+fn[Host : @agent.AgentTraceHost] dispatch_agent_read_trace_tool(
+  host : Host,
+  id : Json,
+  invocation : ToolInvocation,
+) -> Json {
+  match invocation {
+    ToolInvocation::AgentReadTrace(cursor) =>
+      match @agent.AgentTraceHost::read_trace(host, cursor) {
+        Ok(value) => tool_success(id, value.to_json())
+        Err(error) =>
+          tool_failure(id, error.code(), "Agent trace host is closed.")
+      }
+    _ => tool_registry_mismatch(id)
+  }
+}
+
+///|
+fn[Host : @agent.AgentTraceHost] dispatch_agent_replay_trace_tool(
+  host : Host,
+  id : Json,
+  invocation : ToolInvocation,
+) -> Json {
+  match invocation {
+    ToolInvocation::AgentReplayTrace(request) =>
+      match @agent.AgentTraceHost::replay_trace(host, request) {
+        Ok(value) => tool_success(id, value.to_json())
+        Err(error) =>
+          tool_failure(
+            id,
+            error.code(),
+            "Agent trace replay was rejected.",
+            details=agent_action_error_details(error),
+          )
+      }
+    _ => tool_registry_mismatch(id)
+  }
+}
+
+///|
+fn[Host : @agent.AgentTraceHost] dispatch_agent_read_policy_state_tool(
+  host : Host,
+  id : Json,
+  invocation : ToolInvocation,
+) -> Json {
+  match invocation {
+    ToolInvocation::AgentReadPolicyState =>
+      tool_success(id, @agent.AgentTraceHost::read_policy_state(host).to_json())
     _ => tool_registry_mismatch(id)
   }
 }

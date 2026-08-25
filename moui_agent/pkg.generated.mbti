@@ -12,6 +12,14 @@ import {
 // Errors
 
 // Types and methods
+pub(all) struct AgentAccessibilityAnnouncement {
+  node_id : @core.SemanticsNodeId
+  generation : @core.SemanticsGeneration
+  live : @core.SemanticsLive
+  is_atomic : Bool
+  text : String
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum AgentActionError {
   HostClosed
   StaleGeneration(@core.SemanticsGeneration, @core.SemanticsGeneration)
@@ -21,8 +29,18 @@ pub(all) enum AgentActionError {
   ActionUnavailable(@core.SemanticsTarget, @core.SemanticsActionKind)
   HandlerRejected(@core.SemanticsTarget, @core.SemanticsActionKind)
   ReentrantDispatch
+  PolicyDenied(String)
+  ConfirmationRequired(String)
+  ConfirmationRejected(String)
+  ConfirmationExpired(String)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn AgentActionError::code(Self) -> String
+
+pub(all) enum AgentActionPolicy {
+  Allow
+  Deny(String)
+  RequireConfirmation(String)
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct AgentActionReceipt {
   before : @core.SemanticsGeneration
@@ -36,6 +54,22 @@ pub(all) struct AgentActionRequest {
   precondition : AgentGenerationPrecondition
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) enum AgentConfirmationDecision {
+  Approved
+  Rejected(String)
+  Expired
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct AgentConfirmationRequest {
+  request_id : String
+  request : AgentActionRequest
+  generation : @core.SemanticsGeneration?
+  reason : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentConfirmationRequest::reason(Self) -> String
+pub fn AgentConfirmationRequest::request(Self) -> AgentActionRequest
+pub fn AgentConfirmationRequest::request_id(Self) -> String
+
 pub(all) enum AgentDiagnosticsError {
   HostClosed
 } derive(Eq, ToJson, @debug.Debug)
@@ -46,10 +80,72 @@ pub(all) enum AgentGenerationPrecondition {
   Latest
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct AgentPolicyState {
+  pending : Array[AgentConfirmationRequest]
+  trace_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentPolicyState::new(pending? : Array[AgentConfirmationRequest], trace_count? : Int) -> Self
+pub fn AgentPolicyState::pending(Self) -> Array[AgentConfirmationRequest]
+pub fn AgentPolicyState::trace_count(Self) -> Int
+
 pub(all) enum AgentReadError {
   HostClosed
 } derive(Eq, ToJson, @debug.Debug)
 pub fn AgentReadError::code(Self) -> String
+
+pub struct AgentReplay {
+}
+pub fn AgentReplay::new() -> Self
+pub fn[Host : AgentHost] AgentReplay::run(Host, Array[AgentTraceEntry], require_confirmation? : Bool) -> AgentReplayResult
+
+pub(all) struct AgentReplayRequest {
+  cursor : UInt64
+  require_confirmation : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentReplayRequest::cursor(Self) -> UInt64
+pub fn AgentReplayRequest::new(cursor? : UInt64, require_confirmation? : Bool) -> Self
+pub fn AgentReplayRequest::require_confirmation(Self) -> Bool
+
+pub(all) struct AgentReplayResult {
+  success : Bool
+  completed : Int
+  stopped_at : Int?
+  failure : AgentActionError?
+  receipts : Array[AgentActionReceipt]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentReplayResult::completed(Self) -> Int
+pub fn AgentReplayResult::failure(Self) -> AgentActionError?
+pub fn AgentReplayResult::receipts(Self) -> Array[AgentActionReceipt]
+pub fn AgentReplayResult::stopped_at(Self) -> Int?
+pub fn AgentReplayResult::success(Self) -> Bool
+
+pub(all) struct AgentScenario {
+  name : String
+  steps : Array[AgentScenarioStep]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentScenario::name(Self) -> String
+pub fn AgentScenario::new(name~ : String, steps~ : Array[AgentScenarioStep]) -> Self
+pub fn[Host : AgentHost] AgentScenario::run(Self, Host) -> AgentScenarioResult
+pub fn AgentScenario::steps(Self) -> Array[AgentScenarioStep]
+
+pub(all) struct AgentScenarioResult {
+  name : String
+  passed : Bool
+  completed_steps : Int
+  failure : String?
+  final_generation : @core.SemanticsGeneration?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentScenarioResult::completed_steps(Self) -> Int
+pub fn AgentScenarioResult::failure(Self) -> String?
+pub fn AgentScenarioResult::passed(Self) -> Bool
+
+pub(all) enum AgentScenarioStep {
+  ReadSemantics
+  Perform(AgentActionRequest)
+  AssertTarget(@core.SemanticId)
+  AssertAction(@core.SemanticId, @core.SemanticsActionKind)
+  AssertGenerationChanged
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct AgentSemanticsDelta {
   from : @core.SemanticsGeneration
@@ -59,10 +155,15 @@ pub(all) struct AgentSemanticsDelta {
   upserted : Array[@core.SemanticsNode]
   removed : Array[@core.SemanticsNodeId]
   issues : Array[AgentSemanticsIssue]
+  announcements : Array[AgentAccessibilityAnnouncement]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AgentSemanticsDelta::to(Self) -> @core.SemanticsGeneration
+pub fn AgentSemanticsDelta::upserted(Self) -> Array[@core.SemanticsNode]
 
 pub(all) enum AgentSemanticsIssue {
   DuplicateSemanticId(@core.SemanticId, Array[@core.SemanticsNodeId])
+  MissingRelationTarget(@core.SemanticsNodeId, @core.SemanticsRelationKind, @core.SemanticId)
+  AmbiguousRelationTarget(@core.SemanticsNodeId, @core.SemanticsRelationKind, @core.SemanticId, Array[@core.SemanticsNodeId])
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum AgentSemanticsRead {
@@ -78,6 +179,39 @@ pub(all) struct AgentSemanticsSnapshot {
   nodes : Array[@core.SemanticsNode]
   issues : Array[AgentSemanticsIssue]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AgentSemanticsSnapshot::focused(Self) -> @core.SemanticsNodeId?
+pub fn AgentSemanticsSnapshot::generation(Self) -> @core.SemanticsGeneration
+pub fn AgentSemanticsSnapshot::nodes(Self) -> Array[@core.SemanticsNode]
+
+pub(all) struct AgentTraceEntry {
+  trace_id : UInt64
+  target : @core.SemanticsTarget
+  action : AgentActionRequest
+  policy : String
+  confirmation : String?
+  execution : String
+  before : @core.SemanticsGeneration?
+  after : @core.SemanticsGeneration?
+  sensitive : Bool
+} derive(Eq, @debug.Debug)
+pub fn AgentTraceEntry::action(Self) -> AgentActionRequest
+pub fn AgentTraceEntry::after(Self) -> @core.SemanticsGeneration?
+pub fn AgentTraceEntry::before(Self) -> @core.SemanticsGeneration?
+pub fn AgentTraceEntry::confirmation(Self) -> String?
+pub fn AgentTraceEntry::execution(Self) -> String
+pub fn AgentTraceEntry::is_sensitive(Self) -> Bool
+pub fn AgentTraceEntry::policy(Self) -> String
+pub fn AgentTraceEntry::target(Self) -> @core.SemanticsTarget
+pub fn AgentTraceEntry::trace_id(Self) -> UInt64
+pub impl ToJson for AgentTraceEntry
+
+pub(all) struct AgentTraceRead {
+  cursor : UInt64
+  entries : Array[AgentTraceEntry]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentTraceRead::cursor(Self) -> UInt64
+pub fn AgentTraceRead::entries(Self) -> Array[AgentTraceEntry]
+pub fn AgentTraceRead::new(cursor~ : UInt64, entries~ : Array[AgentTraceEntry]) -> Self
 
 pub(all) struct DiagnosticsDispatchResult {
   accepted : Bool
@@ -88,6 +222,28 @@ pub(all) struct PaintSummary {
   texts : Array[String]
   draw_command_count : Int
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct PolicyAgentHost[Host] {
+  inner : Host
+  policy : (AgentActionRequest) -> AgentActionPolicy
+  pending : Array[AgentConfirmationRequest]
+  trace : Array[AgentTraceEntry]
+  mut next_request : UInt64
+  mut next_trace : UInt64
+}
+pub fn[Host : AgentHost] PolicyAgentHost::approve(Self[Host], String) -> Result[AgentActionReceipt, AgentActionError]
+pub fn[Host] PolicyAgentHost::clear_expired(Self[Host]) -> Int
+pub fn[Host] PolicyAgentHost::expire(Self[Host], String) -> Result[Unit, AgentActionError]
+pub fn[Host] PolicyAgentHost::inner(Self[Host]) -> Host
+pub fn[Host] PolicyAgentHost::new(Host) -> Self[Host]
+pub fn[Host] PolicyAgentHost::pending(Self[Host]) -> Array[AgentConfirmationRequest]
+pub fn[Host] PolicyAgentHost::reject(Self[Host], String, reason? : String) -> Result[Unit, AgentActionError]
+pub fn[Host] PolicyAgentHost::trace(Self[Host]) -> Array[AgentTraceEntry]
+pub fn[Host] PolicyAgentHost::with_default_policy(Host) -> Self[Host]
+pub fn[Host] PolicyAgentHost::with_policy(Host, (AgentActionRequest) -> AgentActionPolicy) -> Self[Host]
+pub impl[Host : AgentDiagnosticsHost] AgentDiagnosticsHost for PolicyAgentHost[Host]
+pub impl[Host : AgentHost] AgentHost for PolicyAgentHost[Host]
+pub impl[Host : AgentHost] AgentTraceHost for PolicyAgentHost[Host]
 
 pub struct RuntimeAgentHost {
   runtime : @runtime.AppRuntime
@@ -119,3 +275,8 @@ pub(open) trait AgentHost {
   fn perform_action(Self, AgentActionRequest) -> Result[AgentActionReceipt, AgentActionError]
 }
 
+pub(open) trait AgentTraceHost {
+  fn read_trace(Self, UInt64) -> Result[AgentTraceRead, AgentReadError]
+  fn replay_trace(Self, AgentReplayRequest) -> Result[AgentReplayResult, AgentActionError]
+  fn read_policy_state(Self) -> AgentPolicyState
+}

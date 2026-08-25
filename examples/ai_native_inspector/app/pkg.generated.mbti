@@ -1,0 +1,52 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/ai_native_inspector/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn program() -> @core.Program[Model, Msg]
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub(all) struct Model {
+  query : String
+  selected_status : String
+  selected_record : Int?
+  editor_value : String
+  submitted : Bool
+  exported : Bool
+  last_event : String
+  records : Array[Record]
+}
+pub fn Model::new() -> Self
+
+pub(all) enum Msg {
+  QueryChanged(String)
+  RunSearch
+  StatusChanged(String)
+  SelectRecord(Int)
+  EditorChanged(String)
+  Submit
+  ConfirmSubmit
+  Export
+}
+
+pub(all) struct Record {
+  id : Int
+  name : String
+  owner : String
+  status : String
+  amount : String
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits

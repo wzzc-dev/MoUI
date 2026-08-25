@@ -273,6 +273,74 @@ fn read_semantics_input_codec() -> ToolInputCodec {
 }
 
 ///|
+fn agent_read_trace_input_codec() -> ToolInputCodec {
+  let cursor = decimal_u64_codec()
+  {
+    schema: object_schema(({ "cursor": cursor.schema } : Json)),
+    decode: arguments => {
+      if !fields_are_exact(arguments, ["cursor"]) {
+        return Err("agent_read_trace contains unknown arguments.")
+      }
+      let value = arguments.get("cursor").unwrap_or("0".to_json())
+      match (cursor.decode)(value) {
+        Ok(number) => Ok(ToolInvocation::AgentReadTrace(number))
+        Err(message) => Err(message)
+      }
+    },
+  }
+}
+
+///|
+fn agent_replay_trace_input_codec() -> ToolInputCodec {
+  let cursor = decimal_u64_codec()
+  {
+    schema: object_schema(
+      (
+        {
+          "cursor": cursor.schema,
+          "require_confirmation": { "type": "boolean" },
+        } : Json),
+      required=["cursor"],
+    ),
+    decode: arguments => {
+      if !fields_are_exact(arguments, ["cursor", "require_confirmation"]) {
+        return Err("agent_replay_trace contains unknown arguments.")
+      }
+      let cursor_value = arguments.get("cursor").unwrap_or("0".to_json())
+      let require_confirmation = match arguments.get("require_confirmation") {
+        None => true
+        Some(Json::True) => true
+        Some(Json::False) => false
+        Some(_) => return Err("'require_confirmation' must be boolean.")
+      }
+      match (cursor.decode)(cursor_value) {
+        Ok(number) =>
+          Ok(
+            ToolInvocation::AgentReplayTrace(
+              @agent.AgentReplayRequest::new(
+                cursor=number,
+                require_confirmation~,
+              ),
+            ),
+          )
+        Err(message) => Err(message)
+      }
+    },
+  }
+}
+
+///|
+fn decode_agent_read_policy_state_invocation(
+  arguments : Map[String, Json],
+) -> Result[ToolInvocation, String] {
+  if arguments.length() == 0 {
+    Ok(ToolInvocation::AgentReadPolicyState)
+  } else {
+    Err("agent_read_policy_state does not accept arguments.")
+  }
+}
+
+///|
 fn perform_action_input_codec() -> ToolInputCodec {
   let target = semantics_target_codec()
   let action = semantics_action_codec()

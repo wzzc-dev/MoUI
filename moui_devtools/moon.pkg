@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui_agent" @agent,
 }
 
 import {

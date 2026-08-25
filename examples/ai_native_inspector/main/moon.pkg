@@ -1,0 +1,15 @@
+import {
+  "examples/ai_native_inspector" @app,
+  "wzzc-dev/moui_agent_mcp" @mcp,
+  "moonbitlang/core/json",
+  "moonbitlang/async",
+  "moonbitlang/async/stdio",
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  targets: { "main.mbt": [ "native" ] },
+)

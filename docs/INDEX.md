@@ -1,5 +1,7 @@
 # Docs Index
 
+Active implementation plan: [AI-Native UI](plans/active/ai-native-ui.md).
+
 Progressive-disclosure catalog for MoUI. Start here after `AGENTS.md`.
 Statuses are editorial signals for agents (not CI evidence grades).
 

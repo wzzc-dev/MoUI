@@ -3,10 +3,20 @@ package "wzzc-dev/moui_devtools"
 
 import {
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui_agent",
 }
 
 // Values
+pub fn agent_inspector_report(@moui_agent.AgentSemanticsSnapshot?, policy? : @moui_agent.AgentPolicyState, trace? : Array[@moui_agent.AgentTraceEntry], replay? : @moui_agent.AgentReplayResult, mcp_result? : String) -> AgentInspectorReport
+
+pub fn agent_inspector_report_json(AgentInspectorReport, indent? : Int) -> String
+
+pub fn agent_inspector_report_text(AgentInspectorReport) -> String
+
+pub fn agent_inspector_workspace_text(AgentInspectorReport, AgentInspectorWorkspace) -> String
+
 pub fn inspector_report(@runtime.InspectorSnapshot) -> InspectorReport
 
 pub fn inspector_report_text(@runtime.InspectorSnapshot) -> String
@@ -22,6 +32,48 @@ pub fn snapshot_summary(@runtime.InspectorSnapshot) -> SnapshotSummary
 // Errors
 
 // Types and methods
+pub(all) struct AgentActionSummary {
+  node_id : @core.SemanticsNodeId
+  semantic_id : @core.SemanticId?
+  actions : Array[@core.SemanticsActionKind]
+  high_risk : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum AgentAuditIssue {
+  MissingSemanticId(@core.SemanticsNodeId)
+  DuplicateSemanticId(@core.SemanticId)
+  MissingAction(@core.SemanticsNodeId, @core.SemanticsActionKind)
+  DisabledTarget(@core.SemanticsNodeId)
+  SensitiveActionWithoutPolicy(@core.SemanticsNodeId)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct AgentAuditSummary {
+  checked_nodes : Int
+  issue_count : Int
+  issues : Array[AgentAuditIssue]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct AgentInspectorReport {
+  semantics : @moui_agent.AgentSemanticsSnapshot?
+  actions : Array[AgentActionSummary]
+  policy : @moui_agent.AgentPolicyState?
+  trace : Array[@moui_agent.AgentTraceEntry]
+  replay : @moui_agent.AgentReplayResult?
+  mcp_result : String?
+  audit : AgentAuditSummary
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentInspectorReport::audit(Self) -> AgentAuditSummary
+pub fn AgentInspectorReport::semantics(Self) -> @moui_agent.AgentSemanticsSnapshot?
+pub fn AgentInspectorReport::trace(Self) -> Array[@moui_agent.AgentTraceEntry]
+
+pub(all) enum AgentInspectorWorkspace {
+  Semantics
+  Actions
+  Trace
+  Replay
+  AIReadyAudit
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct InspectorReport {
   runtime : @runtime.RuntimeInspectorSnapshot
   view_tree : @runtime.ViewTreeInspectorSnapshot

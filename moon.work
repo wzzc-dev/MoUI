@@ -20,6 +20,7 @@ members = [
   "./moui_agent",
   "./moui_agent_mcp",
   "./examples/agent_counter",
+  "./examples/ai_native_inspector",
   "./tools",
   "./tools_product",
   "./moui_cli",

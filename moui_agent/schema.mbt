@@ -26,6 +26,27 @@ pub(all) struct AgentSemanticsSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub fn AgentSemanticsSnapshot::generation(
+  self : AgentSemanticsSnapshot,
+) -> @core.SemanticsGeneration {
+  self.generation
+}
+
+///|
+pub fn AgentSemanticsSnapshot::nodes(
+  self : AgentSemanticsSnapshot,
+) -> Array[@core.SemanticsNode] {
+  self.nodes.copy()
+}
+
+///|
+pub fn AgentSemanticsSnapshot::focused(
+  self : AgentSemanticsSnapshot,
+) -> @core.SemanticsNodeId? {
+  self.focused
+}
+
+///|
 /// Incremental semantics projection between two committed generations.
 pub(all) struct AgentSemanticsDelta {
   from : @core.SemanticsGeneration
@@ -37,6 +58,20 @@ pub(all) struct AgentSemanticsDelta {
   issues : Array[AgentSemanticsIssue]
   announcements : Array[AgentAccessibilityAnnouncement]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn AgentSemanticsDelta::to(
+  self : AgentSemanticsDelta,
+) -> @core.SemanticsGeneration {
+  self.to
+}
+
+///|
+pub fn AgentSemanticsDelta::upserted(
+  self : AgentSemanticsDelta,
+) -> Array[@core.SemanticsNode] {
+  self.upserted.copy()
+}
 
 ///|
 /// Agent-facing projection of one live-region change.
@@ -91,6 +126,10 @@ pub(all) enum AgentActionError {
   ActionUnavailable(@core.SemanticsTarget, @core.SemanticsActionKind)
   HandlerRejected(@core.SemanticsTarget, @core.SemanticsActionKind)
   ReentrantDispatch
+  PolicyDenied(String)
+  ConfirmationRequired(String)
+  ConfirmationRejected(String)
+  ConfirmationExpired(String)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -111,6 +150,10 @@ pub fn AgentActionError::code(self : AgentActionError) -> String {
     ActionUnavailable(_, _) => "action_unavailable"
     HandlerRejected(_, _) => "handler_rejected"
     ReentrantDispatch => "reentrant_dispatch"
+    PolicyDenied(_) => "policy_denied"
+    ConfirmationRequired(_) => "confirmation_required"
+    ConfirmationRejected(_) => "confirmation_rejected"
+    ConfirmationExpired(_) => "confirmation_expired"
   }
 }
 

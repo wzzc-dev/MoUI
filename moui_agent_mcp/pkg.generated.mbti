@@ -8,6 +8,8 @@ import {
 // Values
 pub fn[Host : @moui_agent.AgentHost] route(Host, Json) -> Json
 
+pub fn[Host : @moui_agent.AgentHost + @moui_agent.AgentTraceHost] route_with_agent_tools(Host, Json) -> Json
+
 pub fn[Host : @moui_agent.AgentHost + @moui_agent.AgentDiagnosticsHost] route_with_diagnostics(Host, Json) -> Json
 
 pub fn rpc_error(Json, Int, String) -> Json
@@ -21,4 +23,3 @@ pub fn rpc_error_no_id(Int, String) -> Json
 // Type aliases
 
 // Traits
-

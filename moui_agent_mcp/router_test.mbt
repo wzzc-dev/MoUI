@@ -724,3 +724,73 @@ test "diagnostics tools stay unavailable on the default router" {
   assert_true(response.contains("\"isError\":true"))
   assert_true(response.contains("unknown_tool"))
 }
+
+///|
+struct TraceHost {}
+
+///|
+pub impl @agent.AgentHost for TraceHost with fn read_semantics(_self, _since) {
+  Ok(@agent.AgentSemanticsRead::Unchanged(@core.SemanticsGeneration::new(2UL)))
+}
+
+///|
+pub impl @agent.AgentHost for TraceHost with fn perform_action(_self, _request) {
+  Ok({
+    before: @core.SemanticsGeneration::new(2UL),
+    after: @core.SemanticsGeneration::new(3UL),
+    pending_work: false,
+  })
+}
+
+///|
+pub impl @agent.AgentTraceHost for TraceHost with fn read_trace(_self, cursor) {
+  Ok(@agent.AgentTraceRead::new(cursor~, entries=[]))
+}
+
+///|
+pub impl @agent.AgentTraceHost for TraceHost with fn replay_trace(
+  _self,
+  _request,
+) {
+  Ok({
+    success: true,
+    completed: 0,
+    stopped_at: None,
+    failure: None,
+    receipts: [],
+  })
+}
+
+///|
+pub impl @agent.AgentTraceHost for TraceHost with fn read_policy_state(_self) {
+  @agent.AgentPolicyState::new()
+}
+
+///|
+test "agent tools require explicit opt-in route" {
+  let host = TraceHost::{  }
+  let default_response = route(
+    host,
+    request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
+  ).stringify()
+  assert_false(default_response.contains("agent_read_trace"))
+  let response = route_with_agent_tools(
+    host,
+    request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
+  ).stringify()
+  assert_true(response.contains("agent_read_trace"))
+  assert_true(response.contains("agent_replay_trace"))
+  assert_true(response.contains("agent_read_policy_state"))
+}
+
+///|
+test "agent trace calls return structured tool content" {
+  let response = route_with_agent_tools(
+    TraceHost::{  },
+    tool_call("agent_read_trace", ({ "cursor": "0" } : Json)),
+  )
+  let text = response.stringify()
+  assert_true(text.contains("structuredContent"))
+  assert_true(text.contains("\"isError\":false"))
+  assert_true(text.contains("\"cursor\":\"0\""))
+}

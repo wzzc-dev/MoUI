@@ -93,3 +93,22 @@ malformed JSON-RPC or `tools/call` envelopes.
 
 Stable addressing is not authorization. Applications still implement
 confirmation and high-risk business rules in their UI and TEA `update`.
+
+## AI-Native QA Surface
+
+`moui_agent` provides `PolicyAgentHost` for application-defined action policy.
+It records policy decisions, confirmation outcomes, execution errors and
+before/after semantic Generations in `AgentTraceEntry`. SetText payloads are
+available to in-memory replay but are redacted when a trace is serialized.
+
+`AgentTraceHost` is separate from the default AgentHost contract. Applications
+and MCP composition roots must explicitly opt in to cursor-based trace reads,
+replay and policy-state inspection. Replay stops on stale Generation, missing
+or ambiguous targets, unavailable actions, runtime closure or a confirmation
+requirement; it never falls back to coordinates.
+
+`moui_devtools` converts these values into `AgentInspectorReport` for the
+Semantics, Actions, Trace, Replay and AI-Ready Audit workspaces. The report is
+a diagnostic DTO and can be exported as text or JSON for CI release
+acceptance. It does not invoke a model and does not move Agent data into
+`moui/core`.

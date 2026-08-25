@@ -1,0 +1,15 @@
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/windows" @windows,
+  "wzzc-dev/moui_skia_renderer" @skia,
+  "examples/ai_native_inspector" @app,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { "main.mbt": [ "native" ] },
+)
