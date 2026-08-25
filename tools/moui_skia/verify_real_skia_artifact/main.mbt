@@ -147,7 +147,7 @@ fn ascii_lower_char(char : Char) -> Char {
 
 ///|
 fn ascii_lower(value : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for char in value {
     builder.write_char(ascii_lower_char(char))
   }
@@ -156,7 +156,7 @@ fn ascii_lower(value : String) -> String {
 
 ///|
 fn compact_whitespace(text : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let mut in_space = false
   for char in text {
     if char == ' ' || char == '\t' || char == '\n' || char == '\r' {

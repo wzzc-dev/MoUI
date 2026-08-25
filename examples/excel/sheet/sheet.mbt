@@ -891,7 +891,7 @@ fn parse_tsv_rows(text : String) -> Array[Array[String]] {
   let rows : Array[Array[String]] = []
   let chars = text.to_array()
   let mut row : Array[String] = []
-  let cell = StringBuilder::new()
+  let cell = StringBuilder()
   let mut quoted = false
   let mut ended_with_row_separator = false
   let mut index = 0
@@ -958,7 +958,7 @@ fn tsv_escape_cell(value : String) -> String {
     value.contains("\"")) {
     return value
   }
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   builder.write_char('"')
   for ch in value {
     if ch == '"' {
@@ -1627,7 +1627,7 @@ fn rewrite_formula_refs(
     return raw
   }
   let chars = raw.to_array()
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let mut i = 0
   while i < chars.length() {
     if is_ascii_letter(chars[i]) || chars[i] == '$' {
@@ -1678,7 +1678,7 @@ fn format_ref_token(token : FormulaRefToken, row : Int, col : Int) -> String {
 
 ///|
 fn chars_to_string(chars : ArrayView[Char]) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for ch in chars {
     builder.write_char(ch)
   }

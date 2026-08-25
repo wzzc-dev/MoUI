@@ -137,7 +137,7 @@ fn ascii_lower_char(char : Char) -> Char {
 
 ///|
 fn ascii_lower(value : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for char in value {
     builder.write_char(ascii_lower_char(char))
   }
@@ -146,7 +146,7 @@ fn ascii_lower(value : String) -> String {
 
 ///|
 fn normalize_slashes(path : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for char in path {
     if char == '\\' {
       builder.write_char('/')
@@ -337,7 +337,7 @@ fn sorted_missing(
 
 ///|
 fn compact_whitespace(text : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let in_space = Ref(false)
   for char in text {
     let is_space = char == ' ' || char == '\n' || char == '\r' || char == '\t'
@@ -536,7 +536,7 @@ fn build_ci_gate_context(
       "CI gate evidence is missing files: " + @tools.comma_join(missing),
     )
   }
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for index in 0..<parts.length() {
     if index > 0 {
       builder.write_char('\n')
@@ -586,7 +586,7 @@ fn strip_leading_dot_slash(value : String) -> String {
 ///|
 fn split_command_tokens(command : String) -> Array[String] {
   let tokens : Array[String] = []
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let flush = fn() {
     let token = builder.to_string().trim().to_owned()
     if token != "" {
@@ -627,7 +627,7 @@ fn ci_gate_script_paths(command : String) -> Array[String] {
 ///|
 fn split_command_parts(command : String) -> Array[String] {
   let parts : Array[String] = []
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let flush = fn() {
     let part = compact_whitespace(builder.to_string()).trim().to_owned()
     if part != "" {
@@ -1379,7 +1379,7 @@ fn verify_status_doc(
       Some(value) => value
       None => continue
     }
-    let row_text_builder = StringBuilder::new()
+    let row_text_builder = StringBuilder()
     for index in 1..<cells.length() {
       if index > 1 {
         row_text_builder.write_char(' ')

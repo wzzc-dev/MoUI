@@ -418,7 +418,7 @@ pub fn ThreeDRenderPacket::resources(
 pub fn ThreeDRenderPacket::resource_payload(
   self : ThreeDRenderPacket,
 ) -> String {
-  let output = StringBuilder::new()
+  let output = StringBuilder()
   let mut first = true
   for change in self.resources().changes() {
     if first {
@@ -474,7 +474,7 @@ pub fn ThreeDRenderPacket::with_resources(
 ///|
 /// Compact host payload: each vertex is clip xyzw, normal xyz and color rgba.
 pub fn ThreeDRenderPacket::vertex_payload(self : ThreeDRenderPacket) -> String {
-  let output = StringBuilder::new()
+  let output = StringBuilder()
   let mut first = true
   for item in self.items() {
     let mvp = self.projection().mul(self.view()).mul(item.model())

@@ -430,7 +430,7 @@ fn markdown_editor_toggle_image_center(source : String, wrap : Bool) -> String {
   match img_idx {
     Some(idx) =>
       if wrap {
-        let result = StringBuilder::new()
+        let result = StringBuilder()
         for j in 0..<idx {
           if j > 0 {
             result.write_char('\n')
@@ -457,7 +457,7 @@ fn markdown_editor_toggle_image_center(source : String, wrap : Bool) -> String {
           let next_chars = line_views[idx + 1].to_array()
           if String::from_array(prev_chars).trim().to_owned() == "<center>" &&
             String::from_array(next_chars).trim().to_owned() == "</center>" {
-            let result = StringBuilder::new()
+            let result = StringBuilder()
             for j in 0..<(idx - 1) {
               if j > 0 {
                 result.write_char('\n')

@@ -291,7 +291,7 @@ fn split_once(value : String, delimiter : Char) -> (String, String)? {
 
 ///|
 fn chars_to_string(chars : ArrayView[Char]) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for ch in chars {
     builder.write_char(ch)
   }

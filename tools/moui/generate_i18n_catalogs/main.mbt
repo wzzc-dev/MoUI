@@ -254,7 +254,7 @@ fn json_scan_string(scanner : JsonKeyScanner) -> String? {
     return None
   }
   scanner.cursor += 1
-  let raw = StringBuilder::new()
+  let raw = StringBuilder()
   while scanner.cursor < scanner.chars.length() {
     let char = scanner.chars[scanner.cursor]
     scanner.cursor += 1
@@ -752,7 +752,7 @@ fn validate_catalogs(catalogs : Array[SourceCatalog]) -> Result[Unit, String] {
 
 ///|
 fn moon_string(text : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for char in text {
     match char {
       '"' => builder.write_string("\\\"")

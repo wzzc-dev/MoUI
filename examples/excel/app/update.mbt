@@ -452,7 +452,7 @@ fn display_file_name(path : String) -> String {
 
 ///|
 fn chars_to_string(chars : ArrayView[Char]) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for ch in chars {
     builder.write_char(ch)
   }

@@ -161,7 +161,7 @@ pub fn extract_script_entries(html : String) -> Array[ScriptEntry] {
   fn visit(e : @html.Element) -> Unit {
     if e.tag == "script" {
       let has_src = e.attributes.contains("src")
-      let buf = StringBuilder::new()
+      let buf = StringBuilder()
       for child in e.children {
         match child {
           @html.Node::Text(text) => buf.write_string(text)

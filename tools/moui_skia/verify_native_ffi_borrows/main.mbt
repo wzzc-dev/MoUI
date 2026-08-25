@@ -103,7 +103,7 @@ fn find_substring(
 
 ///|
 fn chars_to_string(chars : Array[Char], start : Int, end : Int) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for index in start..<end {
     builder.write_char(chars[index])
   }
@@ -264,7 +264,7 @@ fn parse_params(
 
 ///|
 fn normalized_type(typ : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for char in typ {
     if !ascii_whitespace(char) {
       builder.write_char(char)

@@ -717,7 +717,7 @@ fn is_alnum(c : Char) -> Bool {
 
 ///|
 fn chars_to_string(chars : ArrayView[Char]) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for ch in chars {
     builder.write_char(ch)
   }

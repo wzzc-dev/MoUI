@@ -788,7 +788,7 @@ fn check_r3_mobile_build_pipeline(
   path : String,
   texts : Array[String?],
 ) -> HarnessFinding {
-  let body = StringBuilder::new()
+  let body = StringBuilder()
   for text in texts {
     match text {
       Some(value) => {

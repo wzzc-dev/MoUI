@@ -67,7 +67,7 @@ fn quoted_strings(text : String) -> Array[String] {
   let mut index = 0
   while index < text.length() {
     if text[index] == '"' {
-      let builder = StringBuilder::new()
+      let builder = StringBuilder()
       index += 1
       while index < text.length() && text[index] != '"' {
         builder.write_char(Int::unsafe_to_char(text[index].to_int()))

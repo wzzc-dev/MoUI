@@ -94,7 +94,7 @@ fn read_quoted(chars : Array[Char], start : Int) -> (String, Int)? {
   if start >= chars.length() || chars[start] != '"' {
     return None
   }
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let mut index = start + 1
   let mut escaped = false
   while index < chars.length() {

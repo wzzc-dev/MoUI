@@ -124,7 +124,7 @@ pub fn render_page_with_resources(
     }
     round = round + 1
   }
-  let style_html = StringBuilder::new()
+  let style_html = StringBuilder()
   for css in style_bodies {
     if css.length() > 0 {
       style_html.write_string("<style>")

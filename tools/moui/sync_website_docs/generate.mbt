@@ -1,6 +1,6 @@
 ///|
 fn escape_xml(value : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for ch in value {
     if ch == '&' {
       builder.write_string("&amp;")
@@ -22,7 +22,7 @@ fn escape_xml(value : String) -> String {
 ///|
 fn encode_uri_component(value : String) -> String {
   // slug is already URL-safe (a-z0-9-); only encode '/' for docs/<slug>
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for ch in value {
     if (ch >= 'a' && ch <= 'z') ||
       (ch >= 'A' && ch <= 'Z') ||

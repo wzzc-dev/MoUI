@@ -366,7 +366,7 @@ fn web_host_string_from_id(id : Int) -> String {
 
 ///|
 fn web_host_string_to_string(handle : WebHostString) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   while true {
     let ch = web_string_read_char(handle)
     if ch == -1 {

@@ -234,7 +234,7 @@ fn version_list(versions : Array[String]) -> String {
 
 ///|
 fn mismatch_detail(entries : Array[ConsumerVersions]) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for index in 0..<entries.length() {
     if index > 0 {
       builder.write_char('\n')
