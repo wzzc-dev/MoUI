@@ -11,7 +11,7 @@ fn ascii_is_digit(unit : UInt16) -> Bool {
 ///|
 fn project_id_from_path(path : String) -> String {
   let source = base_name(path).to_lower()
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let previous_separator = Ref(false)
   for index in 0..<source.length() {
     let char = source[index]
@@ -40,7 +40,7 @@ fn project_id_from_path(path : String) -> String {
 
 ///|
 fn product_name(id : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let capitalize = Ref(true)
   for index in 0..<id.length() {
     let char = id[index]

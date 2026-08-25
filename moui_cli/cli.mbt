@@ -584,7 +584,7 @@ fn doctor_report_outcome(
     fields["fixes"] = fixes.to_json()
     Json::object(fields).stringify(indent=2) + "\n"
   } else {
-    let builder = StringBuilder::new()
+    let builder = StringBuilder()
     builder.write_string(report.to_human_text())
     if !fixes.is_empty() {
       builder.write_string("Applied fixes:\n")

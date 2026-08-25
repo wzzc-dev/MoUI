@@ -33,7 +33,7 @@ priv struct BuildHarmonyosOptions {
 ///   - line comments `// ...` (but not `:` URLs like `https://...`)
 ///   - trailing commas before `}` or `]`
 fn strip_json5(text : String) -> String {
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   // `String::op_get` returns `UInt16` (UTF-16 code unit), but we need `Char`
   // for `StringBuilder::write_char` and `Char` literal comparisons. Convert
   // once to `Array[Char]` so all indexing yields `Char` directly. JSON5 source
