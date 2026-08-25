@@ -558,7 +558,7 @@ fn DoctorReport::to_json_text(self : DoctorReport) -> String {
 
 ///|
 fn DoctorReport::to_human_text(self : DoctorReport) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   builder.write_string("MoUI doctor host=" + self.host + "\n")
   for check in self.checks {
     builder.write_string(

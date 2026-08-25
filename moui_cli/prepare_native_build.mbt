@@ -89,7 +89,7 @@ fn split_flags(flags : String) -> Array[String] {
     return []
   }
   let result : Array[String] = []
-  let current = StringBuilder::new()
+  let current = StringBuilder()
   let mut in_token = false
   for ch in trimmed {
     if ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' {

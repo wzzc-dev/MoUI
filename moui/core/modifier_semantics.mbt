@@ -11,7 +11,7 @@ fn sem_decl(key : DeclarationKey) -> ViewDeclaration {
 
 ///|
 fn semantics_info_declaration(info : ViewSemanticsInfo) -> ViewDeclaration {
-  sem_decl(DeclarationKey::string((info.to_json() : Json).stringify()))
+  sem_decl(DeclarationKey::string((ToJson::to_json(info) : Json).stringify()))
 }
 
 ///|

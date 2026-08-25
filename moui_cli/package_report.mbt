@@ -6,7 +6,7 @@ fn package_report_text(
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   builder.write_string("MoUI package report\n")
   builder.write_string("projectRoot: " + options.project_root + "\n")
   builder.write_string("id: " + manifest.id + "\n")
@@ -258,7 +258,7 @@ fn package_manifest_outcome(
         }
       _ => "planned"
     }
-    let builder = StringBuilder::new()
+    let builder = StringBuilder()
     builder.write_string("MoUI package manifest (" + status + ")\n")
     builder.write_string("projectRoot: " + options.project_root + "\n")
     builder.write_string(
