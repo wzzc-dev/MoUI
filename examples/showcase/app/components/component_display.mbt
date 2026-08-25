@@ -47,7 +47,7 @@ fn avatar_demo(
         ),
       ],
       width=inner,
-      min_column_width=if compact { inner } else { 220.0 },
+      min_column_width=sample_width,
       row_spacing=theme.spacing_scale.sm,
       column_spacing=theme.spacing_scale.sm,
     ),

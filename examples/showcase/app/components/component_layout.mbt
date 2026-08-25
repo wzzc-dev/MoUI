@@ -6,6 +6,11 @@ fn surface_demo(
   compact : Bool,
 ) -> @moui.View[ComponentGalleryMsg] {
   let inner = section_inner_width(width)
+  // Align the tile width with the grid's column width so the two-column
+  // layout stays stable during live resize. Using a fixed 220.0 min caused
+  // a spurious 2→3 column pop at ~676px inner (≈1048px window) which
+  // produced a 115px tile-vs-cell mismatch and height jitter perceived as
+  // flicker. The tile now drives the column count.
   let sample_width = tile_width(inner, compact)
   component_demo_section(
     "Surface",
@@ -70,7 +75,7 @@ fn surface_demo(
         ),
       ],
       width=inner,
-      min_column_width=if compact { inner } else { 220.0 },
+      min_column_width=sample_width,
       row_spacing=theme.spacing_scale.sm,
       column_spacing=theme.spacing_scale.sm,
     ),
@@ -157,7 +162,7 @@ fn row_column_demo(
         ),
       ],
       width=inner,
-      min_column_width=if compact { inner } else { 220.0 },
+      min_column_width=sample_width,
       row_spacing=theme.spacing_scale.sm,
       column_spacing=theme.spacing_scale.sm,
     ),
@@ -174,6 +179,11 @@ fn responsive_grid_demo(
   compact : Bool,
 ) -> @moui.View[ComponentGalleryMsg] {
   let inner = section_inner_width(width)
+  // Keep the 4 tiles mapped to at most 2 columns (tile_width is half-width).
+  // A fixed 150.0 min produced a 4-column layout on wide windows (728px inner)
+  // which collapsed to 3→2 columns during resize, causing an 84px height jump
+  // (1 row ↔ 2 rows) perceived as flicker. Using the tile width caps at 2 columns.
+  let sample_width = tile_width(inner, compact)
   component_demo_section(
     "Responsive Grid",
     "Columns collapse automatically as the available width changes.",
@@ -187,24 +197,19 @@ fn responsive_grid_demo(
             "visible"
           },
           theme,
-          tile_width(inner, compact),
+          sample_width,
         ),
-        layout_tile(
-          "Mode",
-          mode_label(model.selected_mode),
-          theme,
-          tile_width(inner, compact),
-        ),
+        layout_tile("Mode", mode_label(model.selected_mode), theme, sample_width),
         layout_tile(
           "Density",
           density_label(model.selected_density),
           theme,
-          tile_width(inner, compact),
+          sample_width,
         ),
-        layout_tile("Scroll", "stateful", theme, tile_width(inner, compact)),
+        layout_tile("Scroll", "stateful", theme, sample_width),
       ],
       width=inner,
-      min_column_width=if compact { inner } else { 150.0 },
+      min_column_width=sample_width,
       row_spacing=component_spacing(model, theme),
       column_spacing=theme.spacing_scale.sm,
     ),

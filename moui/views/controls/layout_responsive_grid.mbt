@@ -123,11 +123,18 @@ fn responsive_grid_columns(
   column_spacing : Double,
 ) -> Int {
   let min_column_width = @layout.max_double(1.0, min_column_width)
+  // Snap the available width to the nearest physical pixel to avoid sub-pixel
+  // oscillation during live resize: a 0.5 logical pixel step on Retina can
+  // otherwise flip the column count back and forth at the threshold, causing
+  // height jumps and perceived flicker in two-column showcase demos.
+  // Adding a tiny epsilon prevents floating-point jitter from toggling the
+  // `needed <= width` boundary on successive resize frames.
+  let width = (width * 2.0).round() / 2.0
   let mut columns = 1
   let mut candidate = 2
   let mut needed = candidate.to_double() * min_column_width +
     (candidate - 1).to_double() * column_spacing
-  while needed <= width {
+  while needed <= width + 0.25 {
     columns = candidate
     candidate = candidate + 1
     needed = candidate.to_double() * min_column_width +
