@@ -18,7 +18,7 @@ fn platform_routes_demo(
             platform_route_card(model, info, theme, card_width)
           }),
           width=inner,
-          min_column_width=if compact { inner } else { 300.0 },
+          min_column_width=card_width,
           row_spacing=theme.spacing_scale.md,
           column_spacing=theme.spacing_scale.md,
         ),
@@ -82,7 +82,7 @@ fn session_runtime_panel(
             ),
           ],
           width=inner,
-          min_column_width=if inner < 420.0 { inner } else { 160.0 },
+          min_column_width=tile_w,
           row_spacing=theme.spacing_scale.sm,
           column_spacing=theme.spacing_scale.sm,
         ),
