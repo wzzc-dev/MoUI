@@ -641,7 +641,7 @@ fn build_gap_report(
   observation : ShortSmokeObservation,
   has_observation : Bool,
 ) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   builder.write_string("# GPU promotion gap report — ")
   builder.write_string(platform)
   builder.write_string("\n\n")

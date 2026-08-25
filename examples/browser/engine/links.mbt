@@ -52,7 +52,7 @@ pub fn render_html_document(
 /// synthetic id suffix.
 fn inject_anchor_ids(html : String) -> (String, Array[String?]) {
   let hrefs : Array[String?] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let len = html.length()
   let mut i = 0
   let mut n = 0

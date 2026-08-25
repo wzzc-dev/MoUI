@@ -460,7 +460,7 @@ fn identifier_start(char : Char) -> Bool {
 
 ///|
 fn chars_to_string(chars : Array[Char], start : Int, end : Int) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for index in start..<end {
     builder.write_char(chars[index])
   }
@@ -654,7 +654,7 @@ fn moonbit_type_body(
 
 ///|
 fn compact_whitespace(text : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let mut in_space = false
   for char in text {
     if is_ascii_whitespace(char) {

@@ -52,7 +52,7 @@ pub fn[V] sorted_map_keys(map : Map[String, V]) -> Array[String] {
 
 ///|
 pub fn comma_join(values : Array[String]) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for index in 0..<values.length() {
     if index > 0 {
       builder.write_string(", ")
@@ -144,7 +144,7 @@ pub fn read_file_or_directory_text(
   if files.is_empty() {
     return Err(empty_directory_message + path)
   }
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for index in 0..<files.length() {
     if index > 0 {
       builder.write_char('\n')

@@ -1148,7 +1148,7 @@ fn truncate_text(text : String, max : Int) -> String {
   if chars.length() <= max {
     text
   } else {
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     for c in chars[0:max] {
       buf.write_char(c)
     }

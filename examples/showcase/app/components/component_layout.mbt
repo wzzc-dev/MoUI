@@ -199,7 +199,12 @@ fn responsive_grid_demo(
           theme,
           sample_width,
         ),
-        layout_tile("Mode", mode_label(model.selected_mode), theme, sample_width),
+        layout_tile(
+          "Mode",
+          mode_label(model.selected_mode),
+          theme,
+          sample_width,
+        ),
         layout_tile(
           "Density",
           density_label(model.selected_density),

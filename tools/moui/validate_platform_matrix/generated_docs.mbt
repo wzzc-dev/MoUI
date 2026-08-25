@@ -17,7 +17,7 @@ fn tier_labels(routes : Array[PlatformRoute], tier : Int) -> String {
 
 ///|
 fn generated_tier_table(matrix : PlatformMatrix) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   builder.write_string("| Tier | Canonical routes | Gate |\n|---|---|---|\n")
   builder.write_string(
     "| Tier 1 | " +

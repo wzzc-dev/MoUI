@@ -140,7 +140,7 @@ fn ascii_lower_char(char : Char) -> Char {
 
 ///|
 fn ascii_lower(value : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for char in value {
     builder.write_char(ascii_lower_char(char))
   }

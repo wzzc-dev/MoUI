@@ -36,7 +36,7 @@ pub fn decode_data_url(url : String) -> String? {
 /// Decode percent-encoded payload (`%XX`). Consecutive `%XX` bytes are
 /// accumulated and decoded as UTF-8 so multi-byte characters survive.
 fn percent_decode(s : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let len = s.length()
   let mut i = 0
   let pending : Array[Byte] = []

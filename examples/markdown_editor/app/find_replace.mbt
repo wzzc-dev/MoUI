@@ -471,7 +471,7 @@ fn markdown_editor_replace_all_matches(
   matches : Array[@text.TextRange],
   replacement : String,
 ) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let source_length = markdown_editor_text_length(source)
   let utf16_length = source.length()
   let mut char_index = 0

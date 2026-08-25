@@ -144,7 +144,7 @@ fn identifier_char(char : Char) -> Bool {
 
 ///|
 fn chars_to_string(chars : Array[Char], start : Int, end : Int) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for index in start..<end {
     builder.write_char(chars[index])
   }
@@ -169,7 +169,7 @@ fn read_quoted(chars : Array[Char], start : Int) -> (String, Int)? {
   if start >= chars.length() || chars[start] != '"' {
     return None
   }
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let mut index = start + 1
   let mut escaped = false
   while index < chars.length() {
@@ -824,7 +824,7 @@ fn read_smoke_source(path : String) -> Result[String, String] {
   if names.is_empty() {
     return Err("native smoke source directory has no .mbt files: " + path)
   }
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for index in 0..<names.length() {
     if index > 0 {
       builder.write_char('\n')

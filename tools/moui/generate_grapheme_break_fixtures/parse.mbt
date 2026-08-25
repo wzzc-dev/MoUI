@@ -275,7 +275,7 @@ fn to_hex_upper(value : Int) -> String {
 
 ///|
 fn escape_moon_string(codepoints : Array[Int]) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for codepoint in codepoints {
     builder.write_string("\\u{")
     builder.write_string(to_hex_upper(codepoint))

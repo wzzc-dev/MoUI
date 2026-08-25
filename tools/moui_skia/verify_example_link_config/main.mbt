@@ -98,7 +98,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 
 ///|
 fn compact_whitespace(text : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for char in text {
     if !(char == ' ' || char == '\n' || char == '\r' || char == '\t') {
       builder.write_char(char)
@@ -254,7 +254,7 @@ fn parent_path(path : String) -> String {
   let mut index = chars.length() - 1
   while index >= 0 {
     if chars[index] == '/' || chars[index] == '\\' {
-      let builder = StringBuilder::new()
+      let builder = StringBuilder()
       for offset in 0..<index {
         builder.write_char(chars[offset])
       }

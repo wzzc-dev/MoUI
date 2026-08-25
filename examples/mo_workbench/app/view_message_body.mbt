@@ -212,7 +212,7 @@ fn chat_message_display_lines_compute(
       out.push("")
     } else {
       let chars = line.to_array()
-      let chunk = StringBuilder::new()
+      let chunk = StringBuilder()
       let mut used_width = 0.0
       for c in chars {
         let advance = chat_message_char_advance(c, font_size)

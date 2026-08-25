@@ -125,7 +125,7 @@ fn verify_valid(status : String) -> Result[String, String] {
 
 ///|
 fn json_escape(value : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for char in value {
     if char == '"' {
       builder.write_string("\\\"")
@@ -301,7 +301,7 @@ fn synthetic_native_smoke_status(
   include_expected_values : Bool,
   wrong_first_expected : Bool,
 ) -> Map[String, Json] {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   builder.write_string("{")
   write_required_capabilities(builder)
   if include_conditionals {

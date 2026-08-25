@@ -20,7 +20,7 @@ fn lowercase_hex_char(char : Char) -> Char {
 
 ///|
 pub fn lowercase_hex(value : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for char in value {
     builder.write_char(lowercase_hex_char(char))
   }

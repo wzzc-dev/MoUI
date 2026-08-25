@@ -447,7 +447,7 @@ fn validate_target(
 
 ///|
 fn json_escape(value : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for char in value {
     match char {
       '"' => builder.write_string("\\\"")
@@ -511,7 +511,7 @@ fn manifest_text(
   targets : Array[TargetManifest],
   checks : Array[HandoffCheck],
 ) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   builder.write_string("{\n")
   builder.write_string("  \"schemaVersion\": 1,\n")
   builder.write_string("  \"mode\": \"web-runtime-handoff\",\n")
