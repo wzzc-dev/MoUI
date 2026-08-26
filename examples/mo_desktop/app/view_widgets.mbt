@@ -48,39 +48,39 @@ fn desktop_widgets(
                   "Cupertino",
                   role=@views.TextRole::Label,
                   theme~,
-                  width=116.0,
+                  width=96.0,
                   height=22.0,
                 ).foreground(palette.foreground),
                 @views.text(
                   "Clear  |  H:83  L:56",
                   role=@views.TextRole::Caption,
                   theme~,
-                  width=150.0,
+                  width=110.0,
                   height=20.0,
                 ).foreground(palette.muted),
               ],
               spacing=2.0,
               align=@views.CrossAlign::Start,
             ),
-            @views.spacer(min_length=4.0),
+            @views.spacer(min_length=2.0),
             @views.container(
-              desktop_icon(@views.IconName::Focus, 28.0, rgba8(255, 180, 40)),
-              width=36.0,
-              height=36.0,
+              desktop_icon(@views.IconName::Focus, 24.0, rgba8(255, 180, 40)),
+              width=32.0,
+              height=32.0,
               padding=4.0,
             ),
             @views.text(
               "68",
               role=@views.TextRole::Display,
               theme~,
-              width=54.0,
-              height=48.0,
+              width=42.0,
+              height=42.0,
               align=@text.TextAlign::TextCenter,
             )
-            .font(@text.FontSpec::new(size=34.0, weight=300))
+            .font(@text.FontSpec::new(size=30.0, weight=300))
             .foreground(palette.foreground),
           ],
-          spacing=6.0,
+          spacing=4.0,
           align=@views.CrossAlign::Center,
         ),
         @views.spacer(min_length=4.0),
@@ -272,7 +272,9 @@ fn widget_panel(
   palette : DesktopPalette,
 ) -> @moui.View[Msg] {
   // More translucent frosted plates so wallpaper shows through like macOS
-  // desktop widgets, with a pale rim instead of a heavy outline.
+  // desktop widgets, with a pale rim instead of a heavy outline. The
+  // panel clips so inner text cannot bleed outside the rounded corners
+  // when a fixed-width label overflows (Cupertino 68° + hourly strip).
   let glass = palette.glass.multiply_alpha(0.72)
   @views.container(
     child,
@@ -287,7 +289,9 @@ fn widget_panel(
       ),
     ),
     padding=14.0,
-  ).shadow(
+  )
+  .clip()
+  .shadow(
     @graphics.ShadowStyle::new(
       color=palette.shadow.multiply_alpha(0.55),
       offset=@geometry.Point::new(x=0.0, y=10.0),
@@ -421,17 +425,32 @@ fn task_preview(
 
 ///|
 fn desktop_files(
+  model : DesktopModel,
   palette : DesktopPalette,
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
+  // Each icon carries its persisted placement offset and a drag surface so
+  // the layout survives relaunch via the desktop snapshot.
+  let tahoe_offset = model.icon_placement("Tahoe Trip")
+  let welcome_offset = model.icon_placement("Welcome.txt")
   @views.column(
     [
-      desktop_file("Tahoe Trip", true, OpenFinder, palette, theme),
+      desktop_file(
+        "Tahoe Trip",
+        true,
+        OpenFinder,
+        tahoe_offset.0,
+        tahoe_offset.1,
+        palette,
+        theme,
+      ),
       desktop_file(
         "Welcome.txt",
         false,
         SelectFinderLocation(Documents),
+        welcome_offset.0,
+        welcome_offset.1,
         palette,
         theme,
       ),
@@ -450,6 +469,8 @@ fn desktop_file(
   label : String,
   is_folder : Bool,
   message : Msg,
+  offset_x : Double,
+  offset_y : Double,
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
@@ -546,5 +567,12 @@ fn desktop_file(
     align=@views.CrossAlign::Center,
   )
   .on_tap(message)
-  .accessibility_label("Open " + label)
+  .on_drag(event => {
+    let name = label
+    MoveDesktopIcon(name, event.delta.x, event.delta.y)
+  })
+  .offset(dx=offset_x, dy=offset_y)
+  .accessibility_label(
+    "Open " + label + ", at \{offset_x.round()}, \{offset_y.round()}",
+  )
 }

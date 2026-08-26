@@ -13,7 +13,7 @@ fn markdown_editor_command_from_action(
   } else if action == "link" {
     Some(Link)
   } else if action == "link-target" {
-    Some(SetLinkTarget("https://moui.dev"))
+    Some(SetLinkTarget("https://wzzc-dev.github.io/MoUI"))
   } else if action == "image" {
     Some(Image)
   } else if action == "image-target" {

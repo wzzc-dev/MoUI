@@ -174,14 +174,14 @@ test "markdown editor snapshot tracks yaml front matter" {
 ///|
 test "markdown editor snapshot resolves reference links and images" {
   let snapshot = MarkdownEditorSnapshot::parse(
-    "See [MoUI][site] and ![Logo][logo]\n\n[site]: https://moui.dev\n[logo]: assets/logo.png",
+    "See [MoUI][site] and ![Logo][logo]\n\n[site]: https://wzzc-dev.github.io/MoUI\n[logo]: assets/logo.png",
   )
   inspect(snapshot.blocks.length(), content="2")
   guard snapshot.blocks[0].block.inlines[1]
     is {
       kind: MarkdownInlineKind::Link,
       text: "MoUI",
-      target: Some("https://moui.dev"),
+      target: Some("https://wzzc-dev.github.io/MoUI"),
     } else {
     fail("expected resolved reference link")
   }
@@ -206,13 +206,13 @@ test "markdown editor snapshot resolves reference links and images" {
 ///|
 test "markdown editor snapshot resolves collapsed whitespace reference labels" {
   let snapshot = MarkdownEditorSnapshot::parse(
-    "See [MoUI][My   Site]\n\n[my site]: https://moui.dev",
+    "See [MoUI][My   Site]\n\n[my site]: https://wzzc-dev.github.io/MoUI",
   )
   guard snapshot.blocks[0].block.inlines[1]
     is {
       kind: MarkdownInlineKind::Link,
       text: "MoUI",
-      target: Some("https://moui.dev"),
+      target: Some("https://wzzc-dev.github.io/MoUI"),
     } else {
     fail("expected collapsed whitespace reference link")
   }

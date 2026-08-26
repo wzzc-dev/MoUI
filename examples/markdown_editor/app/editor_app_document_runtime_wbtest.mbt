@@ -197,7 +197,7 @@ test "markdown editor runtime files shortcuts toggle sidebar" {
 test "markdown editor document info panel shows structural stats" {
   let app = MarkdownEditorApp::new()
   app.set_document(
-    "# Title\n\nParagraph with [link](https://moui.dev), ![alt](img.png), and footnote[^1].\n\n- [x] Done\n- [ ] Todo\n- Bullet\n\n> Quote\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\n```mbt\nlet x = 1\n```\n\n[^1]: note",
+    "# Title\n\nParagraph with [link](https://wzzc-dev.github.io/MoUI), ![alt](img.png), and footnote[^1].\n\n- [x] Done\n- [ ] Todo\n- Bullet\n\n> Quote\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\n```mbt\nlet x = 1\n```\n\n[^1]: note",
   )
   assert_false(app.document_info_visible())
   app.apply_action("document-info")

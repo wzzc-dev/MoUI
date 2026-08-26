@@ -1,14 +1,9 @@
 ///|
 pub(all) enum SessionPhase {
+  Boot
   Locked
+  Login
   Unlocked
-} derive(Eq, Debug)
-
-///|
-pub(all) enum DesktopWindow {
-  NoWindow
-  Finder
-  Safari
 } derive(Eq, Debug)
 
 ///|
@@ -45,6 +40,8 @@ pub(all) enum MenuCommand {
   LockSession
   OpenFinderWindow
   OpenSafariWindow
+  BringFinderForward
+  BringSafariForward
   OpenDocuments
   OpenDownloads
   OpenLauncher
@@ -54,6 +51,9 @@ pub(all) enum MenuCommand {
   CloseFocusedWindow
   MinimizeFocusedWindow
   ZoomFocusedWindow
+  ResetDesktopSettingsCommand
+  LogOutSession
+  ToggleLanguageCommand
 } derive(Eq, Debug)
 
 ///|
@@ -135,14 +135,13 @@ fn default_desktop_clock() -> DesktopClock {
 pub(all) struct DesktopModel {
   wallpaper_source : String
   phase : SessionPhase
-  active_window : DesktopWindow
+  windows : Array[WindowRecord]
+  next_window_serial : Int
+  next_z_order : Int
   overlay : DesktopOverlay
   appearance : AppearanceMode
   dark_mode : Bool
   clock : DesktopClock
-  window_maximized : Bool
-  window_offset_x : Double
-  window_offset_y : Double
   finder_location : FinderLocation
   finder_history : Array[FinderLocation]
   finder_history_index : Int
@@ -166,13 +165,26 @@ pub(all) struct DesktopModel {
   second_task_done : Bool
   third_task_done : Bool
   imported_files : Array[String]
+  icon_placements : Array[DesktopIconPlacement]
+  notes : Array[String]
+  active_note : Int
+  terminal_lines : Array[String]
+  terminal_input : String
+  boot_ticks : Int
+  login_password : String
+  language : AppLanguage
   pending_service : DesktopService?
   last_diagnostic : String
+  settings_loaded : Bool
 }
 
 ///|
 pub(all) enum Msg {
-  UnlockDesktop
+  AdvanceBoot
+  ShowLogin
+  SubmitLogin(String)
+  LoginPasswordChanged(String)
+  SetLanguage(AppLanguage)
   LockDesktop
   OpenFinder
   OpenSafari
@@ -180,6 +192,25 @@ pub(all) enum Msg {
   MinimizeWindow
   ToggleMaximize
   MoveWindowBy(Double, Double)
+  FocusWindow(WindowId)
+  CloseWindowAt(WindowId)
+  MinimizeWindowAt(WindowId)
+  ToggleZoomAt(WindowId)
+  ResizeWindowBy(WindowId, Double, Double)
+  MoveDesktopIcon(String, Double, Double)
+  LoadDesktopSettings
+  DesktopSettingsLoaded(@services.ServiceTaskResult[String?])
+  DesktopSettingsSaved(@services.ServiceTaskResult[Unit])
+  ResetDesktopSettings
+  DesktopSettingsResetCompleted(@services.ServiceTaskResult[Unit])
+  LaunchApp(AppKind)
+  AddNote
+  SelectNote(Int)
+  DeleteNote(Int)
+  NoteBodyChanged(String)
+  TerminalInputChanged(String)
+  RunTerminalCommand
+  ClearTerminal
   ToggleMenu(DesktopMenu)
   RunMenuCommand(MenuCommand)
   ToggleLauncher
@@ -226,15 +257,24 @@ pub fn DesktopModel::new(
 ) -> DesktopModel {
   {
     wallpaper_source,
-    phase: Locked,
-    active_window: Finder,
+    phase: Boot,
+    boot_ticks: 0,
+    login_password: "",
+    language: EnglishLanguage,
+    windows: [
+      {
+        id: { app: FinderApp, serial: 1 },
+        state: NormalWindow,
+        bounds: WindowBounds::default(),
+        z_order: 1,
+      },
+    ],
+    next_window_serial: 2,
+    next_z_order: 2,
     overlay: OverlayNone,
     appearance: SystemAppearance,
     dark_mode: false,
     clock,
-    window_maximized: false,
-    window_offset_x: 0.0,
-    window_offset_y: 0.0,
     finder_location: Documents,
     finder_history: [Documents],
     finder_history_index: 0,
@@ -258,8 +298,14 @@ pub fn DesktopModel::new(
     second_task_done: false,
     third_task_done: false,
     imported_files: [],
+    icon_placements: [],
+    notes: [default_note_body()],
+    active_note: 0,
+    terminal_lines: [terminal_banner()],
+    terminal_input: "",
     pending_service: None,
     last_diagnostic: "Ready",
+    settings_loaded: false,
   }
 }
 
@@ -275,6 +321,10 @@ pub fn DesktopModel::update(self : DesktopModel, message : Msg) -> DesktopModel 
     SystemAppearanceCompleted(_)
     | FileImportCompleted(_)
     | UrlOpenCompleted(_)
+    | DesktopSettingsLoaded(_)
+    | DesktopSettingsSaved(_)
+    | DesktopSettingsResetCompleted(_)
+    | ResetDesktopSettings
     | ClockUpdated(_) => updated
     _ => { ..updated, last_diagnostic: message.diagnostic() }
   }
@@ -283,63 +333,72 @@ pub fn DesktopModel::update(self : DesktopModel, message : Msg) -> DesktopModel 
 ///|
 fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
   match message {
-    UnlockDesktop =>
-      {
-        ..self,
-        phase: Unlocked,
-        active_window: Finder,
-        overlay: OverlayNone,
-        window_offset_x: 0.0,
-        window_offset_y: 0.0,
-      }
-    LockDesktop =>
-      {
-        ..self,
-        phase: Locked,
-        overlay: OverlayNone,
-        window_maximized: false,
-        window_offset_x: 0.0,
-        window_offset_y: 0.0,
-      }
-    OpenFinder =>
-      {
-        ..self,
-        active_window: Finder,
-        overlay: OverlayNone,
-        window_maximized: false,
-      }
-    OpenSafari =>
-      {
-        ..self,
-        active_window: Safari,
-        overlay: OverlayNone,
-        window_maximized: false,
-      }
-    CloseWindow | MinimizeWindow =>
-      { ..self, active_window: NoWindow, window_maximized: false }
-    ToggleMaximize =>
-      if self.active_window == NoWindow {
-        self
+    AdvanceBoot =>
+      if self.phase == Boot {
+        { ..self, phase: Locked, boot_ticks: self.boot_ticks + 1 }
       } else {
-        { ..self, window_maximized: !self.window_maximized }
-      }
-    MoveWindowBy(dx, dy) =>
-      if self.active_window == NoWindow {
         self
-      } else {
-        {
-          ..self
-          // A title-bar drag from a zoomed macOS window restores it before
-          // applying the gesture. Retaining the previous offset makes zoom /
-          // restore stable rather than snapping every window back to center.
-          ,
-          window_maximized: false,
-          // Keep the title bar in reach while allowing a deliberate, natural
-          // desktop-scale reposition instead of a rigid centered mock window.
-          window_offset_x: (self.window_offset_x + dx).max(-360.0).min(360.0),
-          window_offset_y: (self.window_offset_y + dy).max(-220.0).min(220.0),
-        }
       }
+    ShowLogin =>
+      if self.phase == Locked {
+        { ..self, phase: Login, login_password: "", overlay: OverlayNone }
+      } else {
+        self
+      }
+    SubmitLogin(_) =>
+      // Demo account: any password (even empty) signs in; the field keeps
+      // the flow honest without blocking the demo.
+      if self.phase == Login {
+        { ..self, phase: Unlocked, overlay: OverlayNone, login_password: "" }
+      } else {
+        self
+      }
+    LoginPasswordChanged(value) => { ..self, login_password: value }
+    SetLanguage(language) => { ..self, language, }
+    LockDesktop => { ..self, phase: Locked, overlay: OverlayNone }
+    OpenFinder => { ..self, overlay: OverlayNone }.open_or_focus(FinderApp)
+    OpenSafari => { ..self, overlay: OverlayNone }.open_or_focus(SafariApp)
+    CloseWindow => self.close_focused()
+    MinimizeWindow => self.minimize_focused()
+    ToggleMaximize => self.toggle_zoom_focused()
+    MoveWindowBy(dx, dy) => self.move_focused_by(dx, dy)
+    FocusWindow(id) =>
+      match self.window_with_id(id) {
+        Some(record) =>
+          if record.state == MinimizedWindow {
+            self
+          } else {
+            self.raise_window(id)
+          }
+        None => self
+      }
+    CloseWindowAt(id) => self.close_window(id)
+    MinimizeWindowAt(id) => self.minimize_window(id)
+    ToggleZoomAt(id) => self.toggle_zoom_window(id)
+    ResizeWindowBy(id, width, height) => self.resize_window(id, width, height)
+    MoveDesktopIcon(name, dx, dy) => self.move_icon_by(name, dx, dy)
+    LoadDesktopSettings => self
+    DesktopSettingsLoaded(result) => self.apply_settings_load(result)
+    DesktopSettingsSaved(result) =>
+      match result {
+        Failure(error) => { ..self, last_diagnostic: error.message }
+        _ => self
+      }
+    ResetDesktopSettings => self.reset_desktop_settings()
+    DesktopSettingsResetCompleted(result) =>
+      match result {
+        Failure(error) => { ..self, last_diagnostic: error.message }
+        _ => self
+      }
+    LaunchApp(app) => { ..self, overlay: OverlayNone }.open_or_focus(app)
+    AddNote => self.add_note()
+    SelectNote(index) => self.select_note(index)
+    DeleteNote(index) => self.delete_note(index)
+    NoteBodyChanged(body) => self.update_active_note_body(body)
+    TerminalInputChanged(value) => { ..self, terminal_input: value }
+    RunTerminalCommand => self.run_terminal_command()
+    ClearTerminal =>
+      { ..self, terminal_lines: [terminal_banner()], terminal_input: "" }
     ToggleMenu(menu) =>
       {
         ..self,
@@ -365,71 +424,40 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
         ShowAboutThisMac => { ..self, overlay: AboutThisMac }
         ShowSystemSettings => { ..self, overlay: SystemSettings }
         ShowAppStore => { ..self, overlay: AppStore }
-        LockSession =>
-          {
-            ..self,
-            phase: Locked,
-            overlay: OverlayNone,
-            window_maximized: false,
-            window_offset_x: 0.0,
-            window_offset_y: 0.0,
-          }
+        LockSession => { ..self, phase: Locked, overlay: OverlayNone }
+        // "New Window" commands always spawn another instance (macOS File >
+        // New Window), while "Bring … Forward" refocuses an existing one.
         OpenFinderWindow =>
-          {
-            ..self,
-            active_window: Finder,
-            overlay: OverlayNone,
-            window_maximized: false,
-          }
+          { ..self, overlay: OverlayNone }.create_window(FinderApp)
         OpenSafariWindow =>
-          {
-            ..self,
-            active_window: Safari,
-            overlay: OverlayNone,
-            window_maximized: false,
-          }
+          { ..self, overlay: OverlayNone }.create_window(SafariApp)
+        BringFinderForward =>
+          { ..self, overlay: OverlayNone }.open_or_focus(FinderApp)
+        BringSafariForward =>
+          { ..self, overlay: OverlayNone }.open_or_focus(SafariApp)
         OpenDocuments => self.visit_finder_location(Documents)
         OpenDownloads => self.visit_finder_location(Downloads)
         OpenLauncher => { ..self, overlay: Launcher }
         OpenNotificationCenter => { ..self, overlay: NotificationCenter }
         ShowFinderIconView =>
-          {
-            ..self,
-            active_window: Finder,
-            overlay: OverlayNone,
-            finder_view_mode: IconView,
-          }
+          { ..self, overlay: OverlayNone, finder_view_mode: IconView }.open_or_focus(
+            FinderApp,
+          )
         ShowFinderListView =>
-          {
-            ..self,
-            active_window: Finder,
-            overlay: OverlayNone,
-            finder_view_mode: ListView,
-          }
-        CloseFocusedWindow =>
-          {
-            ..self,
-            active_window: NoWindow,
-            overlay: OverlayNone,
-            window_maximized: false,
-          }
+          { ..self, overlay: OverlayNone, finder_view_mode: ListView }.open_or_focus(
+            FinderApp,
+          )
+        CloseFocusedWindow => { ..self, overlay: OverlayNone }.close_focused()
         MinimizeFocusedWindow =>
-          {
-            ..self,
-            active_window: NoWindow,
-            overlay: OverlayNone,
-            window_maximized: false,
-          }
+          { ..self, overlay: OverlayNone }.minimize_focused()
         ZoomFocusedWindow =>
-          {
-            ..self,
-            overlay: OverlayNone,
-            window_maximized: if self.active_window == NoWindow {
-              false
-            } else {
-              !self.window_maximized
-            },
-          }
+          { ..self, overlay: OverlayNone }.toggle_zoom_focused()
+        ResetDesktopSettingsCommand =>
+          { ..self, overlay: OverlayNone }.reset_desktop_settings()
+        LogOutSession =>
+          { ..self, phase: Login, login_password: "", overlay: OverlayNone }
+        ToggleLanguageCommand =>
+          { ..self, overlay: OverlayNone, language: self.language.other() }
       }
     ToggleLauncher =>
       {
@@ -534,12 +562,11 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
     OpenFavorite(value) =>
       {
         ..self,
-        active_window: Safari,
         overlay: OverlayNone,
         browser_query: value,
         browser_page: SearchResults(value),
         pending_service: Some(UrlOpenService),
-      }
+      }.open_or_focus(SafariApp)
     ToggleDarkMode =>
       {
         ..self,
@@ -566,7 +593,16 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
       self.apply_system_appearance_completion(result)
     FileImportCompleted(result) => self.apply_file_import_completion(result)
     UrlOpenCompleted(result) => self.apply_url_open_completion(result)
-    ClockUpdated(clock) => { ..self, clock, }
+    ClockUpdated(clock) => {
+      let model = { ..self, clock, }
+      if model.phase == Boot && model.boot_ticks >= 1 {
+        model.apply(AdvanceBoot)
+      } else if model.phase == Boot {
+        { ..model, boot_ticks: model.boot_ticks + 1 }
+      } else {
+        model
+      }
+    }
     WifiChanged(value) => { ..self, wifi_enabled: value }
     BluetoothChanged(value) => { ..self, bluetooth_enabled: value }
     LowPowerModeChanged(value) => { ..self, low_power_mode: value }
@@ -580,6 +616,249 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
         PlanTahoePhotos => { ..self, third_task_done: true }
       }
   }
+}
+
+///|
+fn DesktopModel::with_diagnostic(
+  self : DesktopModel,
+  diagnostic : String,
+) -> DesktopModel {
+  { ..self, last_diagnostic: diagnostic }
+}
+
+///|
+/// Apply a loaded settings payload. Corrupt or unsupported data degrades to
+/// defaults with a diagnostic instead of failing the session.
+fn DesktopModel::apply_settings_load(
+  self : DesktopModel,
+  result : @services.ServiceTaskResult[String?],
+) -> DesktopModel {
+  let loaded = { ..self, settings_loaded: true }
+  match result {
+    Success(Some(text)) =>
+      match decode_desktop_snapshot(text) {
+        Some(snapshot) =>
+          loaded
+          .restore_snapshot(snapshot)
+          .with_diagnostic(
+            "Restored desktop layout (v\{snapshot.schema_version})",
+          )
+        None =>
+          loaded.with_diagnostic(
+            "Stored desktop data was unusable; using defaults",
+          )
+      }
+    Success(None) =>
+      loaded.with_diagnostic("Starting with default desktop settings")
+    Failure(error) => loaded.with_diagnostic(error.message)
+    Cancelled => loaded.with_diagnostic("Desktop settings load cancelled")
+  }
+}
+
+///|
+/// Restore factory settings for everything the snapshot persists. The
+/// wallpaper source and clock stay as launched; the storage entry itself is
+/// removed by the effect side so stale payloads never resurrect.
+fn DesktopModel::reset_desktop_settings(self : DesktopModel) -> DesktopModel {
+  let fresh_window : WindowRecord = {
+    id: { app: FinderApp, serial: 1 },
+    state: NormalWindow,
+    bounds: WindowBounds::default(),
+    z_order: 1,
+  }
+  {
+    ..self,
+    dark_mode: false,
+    appearance: SystemAppearance,
+    volume: 0.68,
+    brightness: 0.82,
+    wifi_enabled: true,
+    bluetooth_enabled: true,
+    low_power_mode: false,
+    windows: [fresh_window],
+    next_window_serial: 2,
+    next_z_order: 2,
+    imported_files: [],
+    icon_placements: [],
+    notes: [default_note_body()],
+    active_note: 0,
+    terminal_lines: [terminal_banner()],
+    terminal_input: "",
+    finder_location: Documents,
+    finder_history: [Documents],
+    finder_history_index: 0,
+    last_diagnostic: "Restored default desktop settings",
+  }
+}
+
+///|
+fn default_note_body() -> String {
+  "Welcome to Mo Notes\nCapture quick thoughts; they persist with the desktop snapshot."
+}
+
+///|
+fn terminal_banner() -> String {
+  "Mo Terminal - type help for available commands"
+}
+
+///|
+fn DesktopModel::add_note(self : DesktopModel) -> DesktopModel {
+  let notes : Array[String] = ["New note"]
+  for body in self.notes {
+    notes.push(body)
+  }
+  { ..self, notes, active_note: 0 }
+}
+
+///|
+fn DesktopModel::select_note(self : DesktopModel, index : Int) -> DesktopModel {
+  if index >= 0 && index < self.notes.length() {
+    { ..self, active_note: index }
+  } else {
+    self
+  }
+}
+
+///|
+fn DesktopModel::delete_note(self : DesktopModel, index : Int) -> DesktopModel {
+  if index < 0 || index >= self.notes.length() {
+    return self
+  }
+  let notes : Array[String] = []
+  for i, body in self.notes {
+    if i != index {
+      notes.push(body)
+    }
+  }
+  // Keep the selection clamped to the surviving notes.
+  let active = if notes.is_empty() {
+    0
+  } else if index < self.active_note {
+    self.active_note - 1
+  } else if self.active_note >= notes.length() {
+    notes.length() - 1
+  } else {
+    self.active_note
+  }
+  { ..self, notes, active_note: active }
+}
+
+///|
+fn DesktopModel::update_active_note_body(
+  self : DesktopModel,
+  body : String,
+) -> DesktopModel {
+  let updated : Array[String] = []
+  for i, existing in self.notes {
+    if i == self.active_note {
+      updated.push(body)
+    } else {
+      updated.push(existing)
+    }
+  }
+  { ..self, notes: updated }
+}
+
+///|
+pub fn DesktopModel::note_title(self : DesktopModel, index : Int) -> String {
+  match self.notes.get(index) {
+    Some(body) => note_first_line(body)
+    None => "New note"
+  }
+}
+
+///|
+pub fn DesktopModel::active_note_body(self : DesktopModel) -> String {
+  match self.notes.get(self.active_note) {
+    Some(body) => body
+    None => ""
+  }
+}
+
+///|
+fn note_first_line(body : String) -> String {
+  match body.find("\n") {
+    Some(index) => {
+      let line = body[:index].to_owned()
+      if line.is_empty() {
+        "New note"
+      } else {
+        line
+      }
+    }
+    None => if body.is_empty() { "New note" } else { body }
+  }
+}
+
+///|
+fn DesktopModel::run_terminal_command(self : DesktopModel) -> DesktopModel {
+  let input = self.terminal_input.trim(chars=" ").to_owned()
+  if input.is_empty() {
+    return self
+  }
+  let prompt = "mo> " + input
+  let output : Array[String] = match input {
+    "help" =>
+      [
+        "commands: help, apps, open <finder|safari|notes|terminal>, echo <text>, date, clear",
+      ]
+    "apps" => {
+      let names : Array[String] = []
+      for entry in app_registry() {
+        names.push(entry.label)
+      }
+      ["installed: " + names.join(", ")]
+    }
+    "date" =>
+      [
+        desktop_clock_lock_date(self.clock) +
+        " - " +
+        desktop_clock_time(self.clock),
+      ]
+    "clear" => return { ..self, terminal_lines: [], terminal_input: "" }
+    _ =>
+      if input.has_prefix("echo ") {
+        [input[5:].to_owned()]
+      } else if input.has_prefix("open ") {
+        let target = input[5:].trim(chars=" ").to_owned()
+        match target {
+          "finder" | "safari" | "notes" | "terminal" =>
+            return self.launch_from_terminal(target)
+          _ => ["open: unknown app '" + target + "'"]
+        }
+      } else {
+        [input + ": command not found"]
+      }
+  }
+  let lines : Array[String] = []
+  for line in self.terminal_lines {
+    lines.push(line)
+  }
+  lines.push(prompt)
+  for line in output {
+    lines.push(line)
+  }
+  { ..self, terminal_lines: lines, terminal_input: "" }
+}
+
+///|
+fn DesktopModel::launch_from_terminal(
+  self : DesktopModel,
+  target : String,
+) -> DesktopModel {
+  let app = match target {
+    "finder" => FinderApp
+    "safari" => SafariApp
+    "notes" => NotesApp
+    _ => TerminalApp
+  }
+  let lines : Array[String] = []
+  for line in self.terminal_lines {
+    lines.push(line)
+  }
+  lines.push("mo> open " + target)
+  lines.push("Launching " + app.label())
+  { ..self, terminal_lines: lines, terminal_input: "" }.open_or_focus(app)
 }
 
 ///|
@@ -693,13 +972,9 @@ fn DesktopModel::visit_finder_location(
   location : FinderLocation,
 ) -> DesktopModel {
   if self.finder_location == location {
-    return {
-      ..self,
-      active_window: Finder,
-      overlay: OverlayNone,
-      finder_query: "",
-      selected_file: "",
-    }
+    return { ..self, overlay: OverlayNone, finder_query: "", selected_file: "" }.open_or_focus(
+      FinderApp,
+    )
   }
   let history : Array[FinderLocation] = []
   let keep_count = self.finder_history_index + 1
@@ -711,14 +986,13 @@ fn DesktopModel::visit_finder_location(
   history.push(location)
   {
     ..self,
-    active_window: Finder,
     overlay: OverlayNone,
     finder_location: location,
     finder_history: history,
     finder_history_index: history.length() - 1,
     finder_query: "",
     selected_file: "",
-  }
+  }.open_or_focus(FinderApp)
 }
 
 ///|
@@ -730,13 +1004,12 @@ fn DesktopModel::restore_finder_history(
     Some(location) =>
       {
         ..self,
-        active_window: Finder,
         overlay: OverlayNone,
         finder_location: location,
         finder_history_index: index,
         finder_query: "",
         selected_file: "",
-      }
+      }.open_or_focus(FinderApp)
     None => self
   }
 }
@@ -754,7 +1027,11 @@ fn DesktopModel::can_go_finder_forward(self : DesktopModel) -> Bool {
 ///|
 fn Msg::diagnostic(self : Msg) -> String {
   match self {
-    UnlockDesktop => "Unlocked desktop"
+    AdvanceBoot => "Finished booting"
+    ShowLogin => "Showing sign-in"
+    SubmitLogin(_) => "Signed in"
+    LoginPasswordChanged(_) => "Typed password"
+    SetLanguage(_) => "Changed language"
     LockDesktop => "Locked desktop"
     OpenFinder => "Opened Finder"
     OpenSafari => "Opened Safari"
@@ -762,6 +1039,25 @@ fn Msg::diagnostic(self : Msg) -> String {
     MinimizeWindow => "Minimized focused window"
     ToggleMaximize => "Toggled focused window zoom"
     MoveWindowBy(_, _) => "Moved focused window"
+    FocusWindow(_) => "Focused window"
+    CloseWindowAt(_) => "Closed window"
+    MinimizeWindowAt(_) => "Minimized window"
+    ToggleZoomAt(_) => "Toggled window zoom"
+    ResizeWindowBy(_, _, _) => "Resized window"
+    MoveDesktopIcon(_, _, _) => "Moved desktop icon"
+    LoadDesktopSettings => "Requested desktop settings"
+    DesktopSettingsLoaded(_) => "Received desktop settings"
+    DesktopSettingsSaved(_) => "Saved desktop settings"
+    ResetDesktopSettings => "Reset desktop settings"
+    DesktopSettingsResetCompleted(_) => "Received settings reset completion"
+    LaunchApp(_) => "Launched app"
+    AddNote => "Created note"
+    SelectNote(_) => "Selected note"
+    DeleteNote(_) => "Deleted note"
+    NoteBodyChanged(_) => "Edited note"
+    TerminalInputChanged(_) => "Typed terminal command"
+    RunTerminalCommand => "Ran terminal command"
+    ClearTerminal => "Cleared terminal"
     ToggleMenu(_) => "Toggled menu bar menu"
     RunMenuCommand(command) =>
       match command {
@@ -770,8 +1066,10 @@ fn Msg::diagnostic(self : Msg) -> String {
         ShowSystemSettings => "Opened System Settings"
         ShowAppStore => "Opened App Store"
         LockSession => "Locked desktop session"
-        OpenFinderWindow => "Opened Finder window"
-        OpenSafariWindow => "Opened Safari window"
+        OpenFinderWindow => "Opened a new Finder window"
+        OpenSafariWindow => "Opened a new Safari window"
+        BringFinderForward => "Brought Finder forward"
+        BringSafariForward => "Brought Safari forward"
         OpenDocuments => "Opened Documents"
         OpenDownloads => "Opened Downloads"
         OpenLauncher => "Opened app launcher"
@@ -781,6 +1079,9 @@ fn Msg::diagnostic(self : Msg) -> String {
         CloseFocusedWindow => "Closed focused window"
         MinimizeFocusedWindow => "Minimized focused window"
         ZoomFocusedWindow => "Toggled focused window zoom"
+        ResetDesktopSettingsCommand => "Restored default desktop settings"
+        LogOutSession => "Logged out"
+        ToggleLanguageCommand => "Changed language"
       }
     ToggleLauncher => "Toggled app launcher"
     ToggleControlCenter => "Toggled Control Center"
@@ -847,10 +1148,11 @@ fn LauncherTab::id(self : LauncherTab) -> String {
 }
 
 ///|
-fn DesktopModel::active_app_label(self : DesktopModel) -> String {
-  match self.active_window {
-    NoWindow => "Desktop"
-    Finder => "Finder"
-    Safari => "Safari"
+/// Name shown in the menu bar: the focused app, or "Desktop" when no
+/// window holds focus.
+pub fn DesktopModel::active_app_label(self : DesktopModel) -> String {
+  match self.focused_window() {
+    Some(record) => record.id.app.label()
+    None => "Desktop"
   }
 }

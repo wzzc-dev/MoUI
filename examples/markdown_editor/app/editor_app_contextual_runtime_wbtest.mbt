@@ -1,6 +1,6 @@
 ///|
 test "markdown editor toolbar active state follows caret context" {
-  let source = "# Title\n\nText **bold** and [MoUI](https://moui.dev)\n- item\n> quote"
+  let source = "# Title\n\nText **bold** and [MoUI](https://wzzc-dev.github.io/MoUI)\n- item\n> quote"
   inspect(
     markdown_editor_command_active(source, { caret: 17, selection: None }, Bold),
     content="true",
@@ -46,7 +46,7 @@ test "markdown editor toolbar active state follows caret context" {
 ///|
 test "markdown editor floats contextual palette over editor surface" {
   let app = MarkdownEditorApp::new()
-  app.set_document("Visit [MoUI](https://moui.dev)")
+  app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
   let commands = app.runtime(width=980.0, height=700.0).draw_commands()
   guard markdown_editor_text_frame(commands, "Visit ") is Some(editor_text) else {
@@ -63,7 +63,7 @@ test "markdown editor floats contextual palette over editor surface" {
 ///|
 test "markdown editor hides contextual palette in plain writing mode" {
   let app = MarkdownEditorApp::new()
-  app.set_document("Visit [MoUI](https://moui.dev)\n\nTail")
+  app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)\n\nTail")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
   let top_commands = app.runtime(width=980.0, height=700.0).draw_commands()
   guard markdown_editor_text_frame(top_commands, "Link target")
@@ -162,13 +162,13 @@ test "markdown editor app undo and redo target edits" {
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://old.example)")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
-  app.set_link_target("https://moui.dev")
+  app.set_link_target("https://wzzc-dev.github.io/MoUI")
   app.apply_link_target()
-  inspect(app.document(), content="Visit [MoUI](https://moui.dev)")
+  inspect(app.document(), content="Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
   assert_true(app.undo())
   inspect(app.document(), content="Visit [MoUI](https://old.example)")
   assert_true(app.redo())
-  inspect(app.document(), content="Visit [MoUI](https://moui.dev)")
+  inspect(app.document(), content="Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
 }
 
 ///|
@@ -197,11 +197,11 @@ test "markdown editor app target inputs sync from selection and apply edits" {
     fail("expected link target mode")
   }
   inspect(app.link_target(), content="https://old.example")
-  app.set_link_target("https://moui.dev")
+  app.set_link_target("https://wzzc-dev.github.io/MoUI")
   app.apply_link_target()
   inspect(
     app.document(),
-    content="Visit [MoUI](https://moui.dev) and ![logo](old.png)",
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) and ![logo](old.png)",
   )
   app.set_document("Mail <hello@example.dev>")
   app.set_selection(23, Some(@core.TextRange::new(start=6, end=23)))
@@ -212,7 +212,7 @@ test "markdown editor app target inputs sync from selection and apply edits" {
   app.set_link_target("team@example.dev")
   app.apply_link_target()
   inspect(app.document(), content="Mail <team@example.dev>")
-  app.set_document("Visit [MoUI](https://moui.dev) and ![logo](old.png)")
+  app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI) and ![logo](old.png)")
   app.set_selection(41, Some(@core.TextRange::new(start=37, end=41)))
   guard app.target_kind() is ImageTarget else {
     fail("expected image target mode")
@@ -222,7 +222,7 @@ test "markdown editor app target inputs sync from selection and apply edits" {
   app.apply_image_target()
   inspect(
     app.document(),
-    content="Visit [MoUI](https://moui.dev) and ![logo](assets/logo.png)",
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) and ![logo](assets/logo.png)",
   )
   app.set_selection(5, Some(@core.TextRange::new(start=0, end=5)))
   guard app.target_kind() is PlainSelection else {
@@ -261,7 +261,7 @@ test "markdown editor app target inputs sync from selection and apply edits" {
 ///|
 test "markdown editor link and image target bars show open action" {
   let app = MarkdownEditorApp::new()
-  app.set_document("Visit [MoUI](https://moui.dev)")
+  app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
   let link_commands = app.runtime(width=980.0, height=640.0).draw_commands()
   assert_true(
@@ -269,7 +269,7 @@ test "markdown editor link and image target bars show open action" {
       command is @core.DrawCommand::DrawText({ text: "Open", .. })
     }),
   )
-  app.set_document("Logo ![mark](https://moui.dev/logo.png)")
+  app.set_document("Logo ![mark](https://wzzc-dev.github.io/MoUI/logo.png)")
   app.set_selection(9, None)
   let image_commands = app.runtime(width=980.0, height=640.0).draw_commands()
   assert_true(
@@ -288,11 +288,11 @@ test "markdown editor app target inputs sync from caret context" {
     fail("expected link target mode at caret")
   }
   inspect(app.link_target(), content="https://old.example")
-  app.set_link_target("https://moui.dev")
+  app.set_link_target("https://wzzc-dev.github.io/MoUI")
   app.apply_link_target()
   inspect(
     app.document(),
-    content="Visit [MoUI](https://moui.dev) and ![logo](old.png)",
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) and ![logo](old.png)",
   )
 
   app.set_selection(39, None)
@@ -304,7 +304,7 @@ test "markdown editor app target inputs sync from caret context" {
   app.apply_image_target()
   inspect(
     app.document(),
-    content="Visit [MoUI](https://moui.dev) and ![logo](assets/logo.png)",
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) and ![logo](assets/logo.png)",
   )
 
   app.set_document("Mail <hello@example.dev>")

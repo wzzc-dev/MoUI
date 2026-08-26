@@ -16,7 +16,7 @@ fn menu_bar_popup(
 ) -> @moui.View[Msg] {
   let compact = viewport_width < 760.0
   let width = if compact { 224.0 } else { 238.0 }
-  let items = menu_bar_items(model, menu)
+  let items = menu_bar_items(model, menu, model.language)
   let item_height = 28.0
   // Build the column children, inserting a hairline separator after a given
   // index for menus that group their items (e.g. App Menu separates the
@@ -93,59 +93,107 @@ fn menu_bar_popup(
 fn menu_bar_items(
   model : DesktopModel,
   menu : DesktopMenu,
+  language : AppLanguage,
 ) -> Array[MenuBarItem] {
+  let t = language
   match menu {
     SystemMenu =>
       [
-        { label: "About This Mac", shortcut: "", command: ShowAboutThisMac },
+        { label: t.text("item.about"), shortcut: "", command: ShowAboutThisMac },
         {
-          label: "System Settings…",
+          label: t.text("item.settings"),
           shortcut: "",
           command: ShowSystemSettings,
         },
-        { label: "App Store…", shortcut: "", command: ShowAppStore },
-        { label: "Lock Screen", shortcut: "⌃⌘Q", command: LockSession },
+        { label: t.text("item.appstore"), shortcut: "", command: ShowAppStore },
+        {
+          label: t.text("item.reset"),
+          shortcut: "",
+          command: ResetDesktopSettingsCommand,
+        },
+        // Language toggle renders in the target language, per convention.
+        {
+          label: language.toggle_label(),
+          shortcut: "",
+          command: ToggleLanguageCommand,
+        },
+        { label: t.text("item.logout"), shortcut: "", command: LogOutSession },
+        {
+          label: t.text("item.lock"),
+          shortcut: "⌃⌘Q",
+          command: LockSession,
+        },
       ]
     AppMenu =>
       [
         {
-          label: "New Finder Window",
+          label: t.text("item.new_finder"),
           shortcut: "⌘N",
           command: OpenFinderWindow,
         },
         {
-          label: "New Safari Window",
+          label: t.text("item.new_safari"),
           shortcut: "⌘⌥N",
           command: OpenSafariWindow,
         },
         {
-          label: "Close " + model.active_app_label(),
+          label: t.translate("item.close", values=[
+            ("app", model.active_app_label()),
+          ]),
           shortcut: "⌘W",
           command: CloseFocusedWindow,
         },
       ]
     FileMenu =>
       [
-        { label: "Documents", shortcut: "⌘1", command: OpenDocuments },
-        { label: "Downloads", shortcut: "⌘2", command: OpenDownloads },
         {
-          label: "New Safari Window",
+          label: t.text("item.documents"),
+          shortcut: "⌘1",
+          command: OpenDocuments,
+        },
+        {
+          label: t.text("item.downloads"),
+          shortcut: "⌘2",
+          command: OpenDownloads,
+        },
+        {
+          label: t.text("item.new_safari"),
           shortcut: "⌘N",
           command: OpenSafariWindow,
         },
       ]
     EditMenu =>
       [
-        { label: "Undo", shortcut: "⌘Z", command: ShowFinderIconView },
-        { label: "Redo", shortcut: "⇧⌘Z", command: ShowFinderListView },
-        { label: "Select All", shortcut: "⌘A", command: ShowFinderIconView },
+        {
+          label: t.text("item.undo"),
+          shortcut: "⌘Z",
+          command: ShowFinderIconView,
+        },
+        {
+          label: t.text("item.redo"),
+          shortcut: "⇧⌘Z",
+          command: ShowFinderListView,
+        },
+        {
+          label: t.text("item.select_all"),
+          shortcut: "⌘A",
+          command: ShowFinderIconView,
+        },
       ]
     ViewMenu =>
       [
-        { label: "as Icons", shortcut: "⌘1", command: ShowFinderIconView },
-        { label: "as List", shortcut: "⌘2", command: ShowFinderListView },
         {
-          label: "Enter Full Screen",
+          label: t.text("item.as_icons"),
+          shortcut: "⌘1",
+          command: ShowFinderIconView,
+        },
+        {
+          label: t.text("item.as_list"),
+          shortcut: "⌘2",
+          command: ShowFinderListView,
+        },
+        {
+          label: t.text("item.fullscreen"),
           shortcut: "⌃⌘F",
           command: ZoomFocusedWindow,
         },
@@ -154,21 +202,29 @@ fn menu_bar_items(
       [
         { label: "Documents", shortcut: "⇧⌘O", command: OpenDocuments },
         { label: "Downloads", shortcut: "⌥⌘L", command: OpenDownloads },
-        { label: "Applications", shortcut: "⇧⌘A", command: OpenLauncher },
+        {
+          label: t.text("item.applications"),
+          shortcut: "⇧⌘A",
+          command: OpenLauncher,
+        },
       ]
     WindowMenu =>
       [
-        { label: "Minimize", shortcut: "⌘M", command: MinimizeFocusedWindow },
-        { label: "Zoom", shortcut: "", command: ZoomFocusedWindow },
         {
-          label: "Bring Finder Forward",
+          label: t.text("item.minimize"),
+          shortcut: "⌘M",
+          command: MinimizeFocusedWindow,
+        },
+        { label: t.text("item.zoom"), shortcut: "", command: ZoomFocusedWindow },
+        {
+          label: t.text("item.bring_finder"),
           shortcut: "",
-          command: OpenFinderWindow,
+          command: BringFinderForward,
         },
         {
-          label: "Bring Safari Forward",
+          label: t.text("item.bring_safari"),
           shortcut: "",
-          command: OpenSafariWindow,
+          command: BringSafariForward,
         },
       ]
     HelpMenu =>

@@ -1,5 +1,7 @@
 import {
+  "moonbitlang/core/json",
   "wzzc-dev/moui",
+  "wzzc-dev/moui_i18n" @i18n,
   "wzzc-dev/moui/services",
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/graphics",
@@ -13,6 +15,12 @@ import {
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/runtime",
 } for "test"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/runtime",
+} for "wbtest"
 
 supported_targets = "+native+wasm-gc"
 

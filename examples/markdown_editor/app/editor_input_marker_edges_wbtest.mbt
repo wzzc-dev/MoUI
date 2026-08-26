@@ -165,7 +165,7 @@ test "markdown editor backspace removes inline marker pair at content start" {
   inspect(underscore_bold.text, content="bold text")
   inspect(underscore_bold.caret, content="0")
   let link = markdown_editor_transform_input(
-    "Visit [MoUI](https://moui.dev) today",
+    "Visit [MoUI](https://wzzc-dev.github.io/MoUI) today",
     7,
     None,
     "\u{0008}",
@@ -235,7 +235,7 @@ test "markdown editor delete removes inline marker pair at content end" {
   inspect(underscore_bold.text, content="bold text")
   inspect(underscore_bold.caret, content="0")
   let link = markdown_editor_transform_input(
-    "Visit [MoUI](https://moui.dev) today",
+    "Visit [MoUI](https://wzzc-dev.github.io/MoUI) today",
     11,
     None,
     "\u{007f}",

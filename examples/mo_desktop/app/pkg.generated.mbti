@@ -3,11 +3,23 @@ package "examples/mo_desktop/app"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views/style",
 }
 
 // Values
+pub const SETTINGS_STORAGE_KEY : String = "mo_desktop:desktop"
+
+pub const SNAPSHOT_SCHEMA_VERSION : Int = 4
+
+pub fn app_registry() -> Array[AppDescriptor]
+
+pub fn decode_desktop_snapshot(String) -> DesktopSnapshot?
+
+pub fn encode_desktop_snapshot(DesktopSnapshot) -> String
+
 pub fn program(wallpaper_source? : String, environment? : @services.AppEnvironment, wall_clock? : () -> DesktopClock) -> @core.Program[DesktopModel, Msg]
 
 pub fn update(DesktopModel, Msg) -> DesktopModel
@@ -17,6 +29,33 @@ pub fn view(DesktopModel, @core.ViewEnvironment) -> @core.View[Msg]
 // Errors
 
 // Types and methods
+pub(all) struct AppDescriptor {
+  id : AppKind
+  label : String
+  detail : String
+  icon : @style.IconName
+  color : @core.Color
+  default_width : Double
+  default_height : Double
+  dock_priority : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) enum AppKind {
+  FinderApp
+  SafariApp
+  NotesApp
+  TerminalApp
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AppKind::descriptor(Self) -> AppDescriptor
+pub fn AppKind::label(Self) -> String
+
+pub(all) enum AppLanguage {
+  EnglishLanguage
+  ChineseLanguage
+} derive(Eq, @debug.Debug)
+pub fn AppLanguage::text(Self, String) -> String
+pub fn AppLanguage::translate(Self, String, values? : ArrayView[(String, String)]) -> String
+
 pub(all) enum AppearanceMode {
   SystemAppearance
   LightAppearance
@@ -39,6 +78,12 @@ pub(all) struct DesktopClock {
 } derive(Eq, @debug.Debug)
 pub fn DesktopClock::new(Int, Int, Int, Int, Int, Int, second? : Int) -> Self
 
+pub(all) struct DesktopIconPlacement {
+  name : String
+  offset_x : Double
+  offset_y : Double
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
 pub(all) enum DesktopMenu {
   SystemMenu
   AppMenu
@@ -53,14 +98,13 @@ pub(all) enum DesktopMenu {
 pub(all) struct DesktopModel {
   wallpaper_source : String
   phase : SessionPhase
-  active_window : DesktopWindow
+  windows : Array[WindowRecord]
+  next_window_serial : Int
+  next_z_order : Int
   overlay : DesktopOverlay
   appearance : AppearanceMode
   dark_mode : Bool
   clock : DesktopClock
-  window_maximized : Bool
-  window_offset_x : Double
-  window_offset_y : Double
   finder_location : FinderLocation
   finder_history : Array[FinderLocation]
   finder_history_index : Int
@@ -84,13 +128,38 @@ pub(all) struct DesktopModel {
   second_task_done : Bool
   third_task_done : Bool
   imported_files : Array[String]
+  icon_placements : Array[DesktopIconPlacement]
+  notes : Array[String]
+  active_note : Int
+  terminal_lines : Array[String]
+  terminal_input : String
+  boot_ticks : Int
+  login_password : String
+  language : AppLanguage
   pending_service : DesktopService?
   last_diagnostic : String
+  settings_loaded : Bool
 }
+pub fn DesktopModel::active_app_label(Self) -> String
+pub fn DesktopModel::active_note_body(Self) -> String
+pub fn DesktopModel::close_window(Self, WindowId) -> Self
+pub fn DesktopModel::focused_id(Self) -> WindowId?
+pub fn DesktopModel::focused_window(Self) -> WindowRecord?
+pub fn DesktopModel::has_visible_window(Self, AppKind) -> Bool
+pub fn DesktopModel::minimize_window(Self, WindowId) -> Self
+pub fn DesktopModel::move_icon_by(Self, String, Double, Double) -> Self
 pub fn DesktopModel::new(wallpaper_source? : String, clock? : DesktopClock) -> Self
+pub fn DesktopModel::note_title(Self, Int) -> String
+pub fn DesktopModel::open_or_focus(Self, AppKind) -> Self
+pub fn DesktopModel::persisted_snapshot(Self) -> DesktopSnapshot
 pub fn DesktopModel::remaining_tasks(Self) -> Int
+pub fn DesktopModel::resize_window(Self, WindowId, Double, Double) -> Self
+pub fn DesktopModel::restore_snapshot(Self, DesktopSnapshot) -> Self
 pub fn DesktopModel::task_done(Self, DesktopTask) -> Bool
+pub fn DesktopModel::toggle_zoom_window(Self, WindowId) -> Self
 pub fn DesktopModel::update(Self, Msg) -> Self
+pub fn DesktopModel::visible_windows(Self) -> Array[WindowRecord]
+pub fn DesktopModel::window_with_id(Self, WindowId) -> WindowRecord?
 
 pub(all) enum DesktopOverlay {
   OverlayNone
@@ -110,16 +179,32 @@ pub(all) enum DesktopService {
   UrlOpenService
 } derive(Eq, @debug.Debug)
 
+pub(all) struct DesktopSnapshot {
+  schema_version : Int
+  dark_mode : Bool
+  wallpaper_source : String
+  volume : Double
+  brightness : Double
+  wifi_enabled : Bool
+  bluetooth_enabled : Bool
+  low_power_mode : Bool
+  windows : Array[WindowRecord]
+  recent_files : Array[String]
+  notes : Array[String]
+  language : String
+  icon_placements : Array[DesktopIconPlacement]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type DesktopSnapshotV1 derive(@json.FromJson)
+
+type DesktopSnapshotV2 derive(@json.FromJson)
+
+type DesktopSnapshotV3 derive(@json.FromJson)
+
 pub(all) enum DesktopTask {
   ReviewDesktop
   ReplyToMaya
   PlanTahoePhotos
-} derive(Eq, @debug.Debug)
-
-pub(all) enum DesktopWindow {
-  NoWindow
-  Finder
-  Safari
 } derive(Eq, @debug.Debug)
 
 pub(all) enum FinderLocation {
@@ -146,6 +231,8 @@ pub(all) enum MenuCommand {
   LockSession
   OpenFinderWindow
   OpenSafariWindow
+  BringFinderForward
+  BringSafariForward
   OpenDocuments
   OpenDownloads
   OpenLauncher
@@ -155,10 +242,17 @@ pub(all) enum MenuCommand {
   CloseFocusedWindow
   MinimizeFocusedWindow
   ZoomFocusedWindow
+  ResetDesktopSettingsCommand
+  LogOutSession
+  ToggleLanguageCommand
 } derive(Eq, @debug.Debug)
 
 pub(all) enum Msg {
-  UnlockDesktop
+  AdvanceBoot
+  ShowLogin
+  SubmitLogin(String)
+  LoginPasswordChanged(String)
+  SetLanguage(AppLanguage)
   LockDesktop
   OpenFinder
   OpenSafari
@@ -166,6 +260,25 @@ pub(all) enum Msg {
   MinimizeWindow
   ToggleMaximize
   MoveWindowBy(Double, Double)
+  FocusWindow(WindowId)
+  CloseWindowAt(WindowId)
+  MinimizeWindowAt(WindowId)
+  ToggleZoomAt(WindowId)
+  ResizeWindowBy(WindowId, Double, Double)
+  MoveDesktopIcon(String, Double, Double)
+  LoadDesktopSettings
+  DesktopSettingsLoaded(@services.ServiceTaskResult[String?])
+  DesktopSettingsSaved(@services.ServiceTaskResult[Unit])
+  ResetDesktopSettings
+  DesktopSettingsResetCompleted(@services.ServiceTaskResult[Unit])
+  LaunchApp(AppKind)
+  AddNote
+  SelectNote(Int)
+  DeleteNote(Int)
+  NoteBodyChanged(String)
+  TerminalInputChanged(String)
+  RunTerminalCommand
+  ClearTerminal
   ToggleMenu(DesktopMenu)
   RunMenuCommand(MenuCommand)
   ToggleLauncher
@@ -206,9 +319,36 @@ pub(all) enum Msg {
 }
 
 pub(all) enum SessionPhase {
+  Boot
   Locked
+  Login
   Unlocked
 } derive(Eq, @debug.Debug)
+
+pub(all) struct WindowBounds {
+  offset_x : Double
+  offset_y : Double
+  width : Double
+  height : Double
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct WindowId {
+  app : AppKind
+  serial : Int
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct WindowRecord {
+  id : WindowId
+  state : WindowState
+  bounds : WindowBounds
+  z_order : Int
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) enum WindowState {
+  NormalWindow
+  MinimizedWindow
+  MaximizedWindow
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 // Type aliases
 

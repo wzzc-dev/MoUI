@@ -15,7 +15,7 @@ test "markdown editor actions update canonical markdown" {
   app.apply_action("link")
   assert_true(app.document().contains("[link text](https://example.com)"))
   app.apply_action("link-target")
-  assert_true(app.document().contains("[link text](https://moui.dev)"))
+  assert_true(app.document().contains("[link text](https://wzzc-dev.github.io/MoUI)"))
   app.apply_action("image")
   assert_true(app.document().contains("![image alt](image.png)"))
   app.apply_action("image-target")
@@ -55,7 +55,7 @@ test "markdown editor actions seed every supported action from empty document" {
   for
     expected in [
       "**bold text**", "*italic text*", "`code`", "~~old text~~", "[link text](https://example.com)",
-      "[link text](https://moui.dev)", "![image alt](image.png)", "![image alt](assets/image.png)",
+      "[link text](https://wzzc-dev.github.io/MoUI)", "![image alt](image.png)", "![image alt](assets/image.png)",
       "Paragraph", "# Heading", "## Section", "### Detail", "#### Subdetail", "##### Note",
       "###### Caption", "- List item", "- [ ] Task item", "1. List item", "> Quote",
       "---", "| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |", "```\ncode block\n```",
@@ -115,7 +115,7 @@ fn markdown_action_from_seed(expected : String) -> String {
     "strike"
   } else if expected == "[link text](https://example.com)" {
     "link"
-  } else if expected == "[link text](https://moui.dev)" {
+  } else if expected == "[link text](https://wzzc-dev.github.io/MoUI)" {
     "link-target"
   } else if expected == "![image alt](image.png)" {
     "image"

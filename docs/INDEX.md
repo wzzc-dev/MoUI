@@ -42,6 +42,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [internationalization.md](internationalization.md) | `canonical` | Message catalogs, locale selection, and bilingual docs workflow |
 | [visual-theme-system.md](visual-theme-system.md) | `deep` | Theme system |
 | [markdown-editor.md](markdown-editor.md) | `deep` | Markdown editor product behavior |
+| [../examples/mo_desktop/ARCHITECTURE.md](../examples/mo_desktop/ARCHITECTURE.md) | `deep` | Desktop shell example: windows, registry, persistence, session flow |
 
 ## Platforms & readiness
 

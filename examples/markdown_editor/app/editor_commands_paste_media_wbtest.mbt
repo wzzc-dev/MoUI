@@ -4,9 +4,9 @@ test "markdown editor paste url wraps or updates selected link text" {
     "Visit MoUI today",
     10,
     Some(@core.TextRange::new(start=6, end=10)),
-    "https://moui.dev",
+    "https://wzzc-dev.github.io/MoUI",
   ).unwrap()
-  inspect(wrapped.text, content="Visit [MoUI](https://moui.dev) today")
+  inspect(wrapped.text, content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today")
   inspect(wrapped.caret, content="11")
   guard wrapped.selection is Some(wrapped_selection) else {
     fail("expected wrapped link selection")
@@ -17,9 +17,9 @@ test "markdown editor paste url wraps or updates selected link text" {
     wrapped.text,
     11,
     Some(wrapped_selection),
-    "https://docs.moui.dev",
+    "https://docs.https://wzzc-dev.github.io/MoUI",
   ).unwrap()
-  inspect(updated.text, content="Visit [MoUI](https://docs.moui.dev) today")
+  inspect(updated.text, content="Visit [MoUI](https://docs.https://wzzc-dev.github.io/MoUI) today")
   guard updated.selection is Some(updated_selection) else {
     fail("expected updated link selection")
   }
@@ -30,7 +30,7 @@ test "markdown editor paste url wraps or updates selected link text" {
       "Visit MoUI today",
       10,
       Some(@core.TextRange::new(start=6, end=10)),
-      "https://moui.dev/docs page",
+      "https://wzzc-dev.github.io/MoUI/docs page",
     )
     is None,
     content="true",
@@ -57,9 +57,9 @@ test "markdown editor paste markdown link reuses target for selected text" {
     "Visit Docs today",
     10,
     Some(@core.TextRange::new(start=6, end=10)),
-    "[Other](https://moui.dev/docs \"Docs\")",
+    "[Other](https://wzzc-dev.github.io/MoUI/docs \"Docs\")",
   ).unwrap()
-  inspect(titled.text, content="Visit [Docs](https://moui.dev/docs) today")
+  inspect(titled.text, content="Visit [Docs](https://wzzc-dev.github.io/MoUI/docs) today")
 
   let angled = markdown_editor_transform_input(
     "Visit Docs today",
@@ -107,11 +107,11 @@ test "markdown editor paste markdown link reuses target for selected text" {
     "Visit Docs today",
     10,
     Some(@core.TextRange::new(start=6, end=10)),
-    "[site]: https://moui.dev/docs",
+    "[site]: https://wzzc-dev.github.io/MoUI/docs",
   ).unwrap()
   inspect(
     definition.text,
-    content="Visit [Docs][site] today\n\n[site]: https://moui.dev/docs",
+    content="Visit [Docs][site] today\n\n[site]: https://wzzc-dev.github.io/MoUI/docs",
   )
   guard definition.selection is Some(definition_selection) else {
     fail("expected pasted definition link text selection")
@@ -134,9 +134,9 @@ test "markdown editor paste link target updates current link context" {
     "Visit [MoUI](https://old.example) today",
     9,
     None,
-    "https://moui.dev",
+    "https://wzzc-dev.github.io/MoUI",
   ).unwrap()
-  inspect(updated.text, content="Visit [MoUI](https://moui.dev) today")
+  inspect(updated.text, content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today")
   inspect(updated.caret, content="11")
   guard updated.selection is Some(selection) else {
     fail("expected linked text selection")
@@ -177,11 +177,11 @@ test "markdown editor paste link target updates current link context" {
     "Visit [MoUI](https://old.example) today",
     9,
     None,
-    "[site]: https://moui.dev",
+    "[site]: https://wzzc-dev.github.io/MoUI",
   ).unwrap()
   inspect(
     definition.text,
-    content="Visit [MoUI][site] today\n\n[site]: https://moui.dev",
+    content="Visit [MoUI][site] today\n\n[site]: https://wzzc-dev.github.io/MoUI",
   )
   guard definition.selection is Some(definition_selection) else {
     fail("expected pasted definition current link selection")

@@ -15,7 +15,7 @@ test "markdown editor clipboard export writes canonical markdown source" {
 test "markdown editor html export renders document structure" {
   let app = MarkdownEditorApp::new()
   app.set_document(
-    "# Draft\n\nParagraph with **bold** and [MoUI](https://moui.dev?a=1&b=2).\n\n![Alt & logo](assets/logo.png)\n\n- [x] Done\n- [ ] Todo\n\n| Name | Value |\n| :--- | ---: |\n| A | 1 |\n\n```mbt\nlet x = 1 < 2\n```\n\nAT&T > 1",
+    "# Draft\n\nParagraph with **bold** and [MoUI](https://wzzc-dev.github.io/MoUI?a=1&b=2).\n\n![Alt & logo](assets/logo.png)\n\n- [x] Done\n- [ ] Todo\n\n| Name | Value |\n| :--- | ---: |\n| A | 1 |\n\n```mbt\nlet x = 1 < 2\n```\n\nAT&T > 1",
   )
   let html = app.html_export_for_test()
   assert_true(html.contains("<!doctype html>"))
@@ -23,7 +23,7 @@ test "markdown editor html export renders document structure" {
   assert_true(html.contains("<h1>Draft</h1>"))
   assert_true(html.contains("<strong>bold</strong>"))
   assert_true(
-    html.contains("<a href=\"https://moui.dev?a=1&amp;b=2\">MoUI</a>"),
+    html.contains("<a href=\"https://wzzc-dev.github.io/MoUI?a=1&amp;b=2\">MoUI</a>"),
   )
   assert_true(
     html.contains("<img src=\"assets/logo.png\" alt=\"Alt &amp; logo\">"),
@@ -147,11 +147,11 @@ test "markdown editor clipboard transfer reports unavailable fallback" {
 test "markdown editor opens current link target through host service" {
   let opened = Ref("")
   let app = MarkdownEditorApp::new()
-  app.set_document("Visit [Docs](https://moui.dev/docs)")
+  app.set_document("Visit [Docs](https://wzzc-dev.github.io/MoUI/docs)")
   app.set_selection(12, Some(@core.TextRange::new(start=7, end=11)))
   let services = markdown_editor_link_services(opened~)
   app.open_target_for_test(services)
-  inspect(opened.val, content="https://moui.dev/docs")
+  inspect(opened.val, content="https://wzzc-dev.github.io/MoUI/docs")
   inspect(app.transfer_status_label_for_test(), content="Target opened")
 }
 
@@ -162,10 +162,10 @@ test "markdown editor opens link target from current caret context" {
   app.set_document("Visit [Old](https://old.dev)")
   app.set_selection(10, None)
   inspect(app.link_target(), content="https://old.dev")
-  app.edit_document("Visit [Docs](https://moui.dev/docs)")
+  app.edit_document("Visit [Docs](https://wzzc-dev.github.io/MoUI/docs)")
   let services = markdown_editor_link_services(opened~)
   app.open_target_for_test(services)
-  inspect(opened.val, content="https://moui.dev/docs")
+  inspect(opened.val, content="https://wzzc-dev.github.io/MoUI/docs")
   inspect(app.transfer_status_label_for_test(), content="Target opened")
 }
 
@@ -173,7 +173,7 @@ test "markdown editor opens link target from current caret context" {
 test "markdown editor open target prefers edited link field" {
   let opened = Ref("")
   let app = MarkdownEditorApp::new()
-  app.set_document("Visit [Docs](https://moui.dev/docs)")
+  app.set_document("Visit [Docs](https://wzzc-dev.github.io/MoUI/docs)")
   app.set_selection(10, None)
   app.set_link_target("https://edited.dev")
   let services = markdown_editor_link_services(opened~)
@@ -186,14 +186,14 @@ test "markdown editor open target prefers edited link field" {
 test "markdown editor opens image target through host service" {
   let opened = Ref("")
   let app = MarkdownEditorApp::new()
-  app.set_document("Logo ![Mark](https://moui.dev/logo.png)")
+  app.set_document("Logo ![Mark](https://wzzc-dev.github.io/MoUI/logo.png)")
   app.set_selection(9, None)
   guard app.target_kind() is ImageTarget else {
     fail("expected image target mode")
   }
   let services = markdown_editor_link_services(opened~)
   app.open_target_for_test(services)
-  inspect(opened.val, content="https://moui.dev/logo.png")
+  inspect(opened.val, content="https://wzzc-dev.github.io/MoUI/logo.png")
   inspect(app.transfer_status_label_for_test(), content="Target opened")
 }
 
@@ -201,7 +201,7 @@ test "markdown editor opens image target through host service" {
 test "markdown editor open target prefers edited image field" {
   let opened = Ref("")
   let app = MarkdownEditorApp::new()
-  app.set_document("Logo ![Mark](https://moui.dev/logo.png)")
+  app.set_document("Logo ![Mark](https://wzzc-dev.github.io/MoUI/logo.png)")
   app.set_selection(9, None)
   guard app.target_kind() is ImageTarget else {
     fail("expected image target mode")
@@ -216,7 +216,7 @@ test "markdown editor open target prefers edited image field" {
 ///|
 test "markdown editor open target reports unavailable fallback" {
   let app = MarkdownEditorApp::new()
-  app.set_document("Visit [Docs](https://moui.dev/docs)")
+  app.set_document("Visit [Docs](https://wzzc-dev.github.io/MoUI/docs)")
   app.set_selection(12, Some(@core.TextRange::new(start=7, end=11)))
   app.apply_action("open-target")
   assert_true(
@@ -230,7 +230,7 @@ test "markdown editor open target reports unavailable fallback" {
 test "markdown editor runtime open target shortcut uses host services" {
   let opened = Ref("")
   let app = MarkdownEditorApp::new()
-  app.set_document("Visit [Docs](https://moui.dev/docs)")
+  app.set_document("Visit [Docs](https://wzzc-dev.github.io/MoUI/docs)")
   let services = markdown_editor_link_services(opened~)
   let runtime = app.runtime_with_services(services, width=980.0, height=640.0)
   app.set_selection(12, Some(@core.TextRange::new(start=7, end=11)))
@@ -242,7 +242,7 @@ test "markdown editor runtime open target shortcut uses host services" {
       ),
     ),
   )
-  inspect(opened.val, content="https://moui.dev/docs")
+  inspect(opened.val, content="https://wzzc-dev.github.io/MoUI/docs")
   inspect(app.transfer_status_label_for_test(), content="Target opened")
 }
 

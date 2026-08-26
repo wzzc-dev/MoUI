@@ -551,6 +551,9 @@ and query results; Control Center owns appearance, connectivity, brightness,
 volume, and battery preferences; Notification Center owns read state and task
 completion.
 
+Package architecture, window model, and session flow are detailed in
+[`examples/mo_desktop/ARCHITECTURE.md`](../examples/mo_desktop/ARCHITECTURE.md).
+
 Focused checks:
 
 ```sh

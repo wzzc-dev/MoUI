@@ -179,10 +179,10 @@ test "markdown editor image command unwraps image at caret" {
 test "markdown editor link target command updates and wraps selected text" {
   let updated = markdown_editor_apply_command_at(
     "Visit [MoUI](https://example.com) today",
-    SetLinkTarget("https://moui.dev"),
+    SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
   )
-  inspect(updated.source, content="Visit [MoUI](https://moui.dev) today")
+  inspect(updated.source, content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today")
   guard updated.selection is Some(selection) else {
     fail("expected updated link text selection")
   }
@@ -190,20 +190,20 @@ test "markdown editor link target command updates and wraps selected text" {
   inspect(selection.end, content="11")
   let wrapped = markdown_editor_apply_command_at(
     "Visit MoUI today",
-    SetLinkTarget("https://moui.dev"),
+    SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 10, selection: Some(@core.TextRange::new(start=6, end=10)) }),
   )
-  inspect(wrapped.source, content="Visit [MoUI](https://moui.dev) today")
+  inspect(wrapped.source, content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today")
 }
 
 ///|
 test "markdown editor link target command updates target at caret" {
   let inline = markdown_editor_apply_command_at(
     "Visit [MoUI](https://old.example) today",
-    SetLinkTarget("https://moui.dev"),
+    SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 9, selection: None }),
   )
-  inspect(inline.source, content="Visit [MoUI](https://moui.dev) today")
+  inspect(inline.source, content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today")
   guard inline.selection is Some(inline_selection) else {
     fail("expected inline link text selection")
   }
@@ -212,12 +212,12 @@ test "markdown editor link target command updates target at caret" {
 
   let reference = markdown_editor_apply_command_at(
     "Visit [MoUI][site] today\n\n[site]: https://old.example",
-    SetLinkTarget("https://moui.dev"),
+    SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 9, selection: None }),
   )
   inspect(
     reference.source,
-    content="Visit [MoUI][site] today\n\n[site]: https://moui.dev",
+    content="Visit [MoUI][site] today\n\n[site]: https://wzzc-dev.github.io/MoUI",
   )
 
   let autolink = markdown_editor_apply_command_at(
@@ -287,12 +287,12 @@ test "markdown editor link target command updates selected autolink" {
   }
   let updated_url = markdown_editor_apply_command_at(
     source,
-    SetLinkTarget("https://moui.dev"),
+    SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 54, selection: Some(@core.TextRange::new(start=35, end=54)) }),
   )
   inspect(
     updated_url.source,
-    content="Mail <hello@example.dev> or visit <https://moui.dev>",
+    content="Mail <hello@example.dev> or visit <https://wzzc-dev.github.io/MoUI>",
   )
 }
 
@@ -308,12 +308,12 @@ test "markdown editor link target command updates reference definition" {
   }
   let updated = markdown_editor_apply_command_at(
     source,
-    SetLinkTarget("https://moui.dev"),
+    SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
   )
   inspect(
     updated.source,
-    content="Visit [MoUI][site] today\n\n[site]: https://moui.dev",
+    content="Visit [MoUI][site] today\n\n[site]: https://wzzc-dev.github.io/MoUI",
   )
   guard updated.selection is Some(selection) else {
     fail("expected reference link text selection")
@@ -327,12 +327,12 @@ test "markdown editor link target command creates missing reference definition" 
   let source = "Visit [MoUI][site] today"
   let updated = markdown_editor_apply_command_at(
     source,
-    SetLinkTarget("https://moui.dev"),
+    SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
   )
   inspect(
     updated.source,
-    content="Visit [MoUI][site] today\n\n[site]: https://moui.dev",
+    content="Visit [MoUI][site] today\n\n[site]: https://wzzc-dev.github.io/MoUI",
   )
   guard updated.selection is Some(selection) else {
     fail("expected reference link text selection")
@@ -353,12 +353,12 @@ test "markdown editor link target command updates shortcut reference definition"
   }
   let updated = markdown_editor_apply_command_at(
     source,
-    SetLinkTarget("https://moui.dev"),
+    SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
   )
   inspect(
     updated.source,
-    content="Visit [MoUI] today\n\n[MoUI]: https://moui.dev",
+    content="Visit [MoUI] today\n\n[MoUI]: https://wzzc-dev.github.io/MoUI",
   )
   guard updated.selection is Some(selection) else {
     fail("expected shortcut reference link text selection")
@@ -372,12 +372,12 @@ test "markdown editor link target command creates shortcut reference definition"
   let source = "Visit [MoUI] today"
   let updated = markdown_editor_apply_command_at(
     source,
-    SetLinkTarget("https://moui.dev"),
+    SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
   )
   inspect(
     updated.source,
-    content="Visit [MoUI] today\n\n[MoUI]: https://moui.dev",
+    content="Visit [MoUI] today\n\n[MoUI]: https://wzzc-dev.github.io/MoUI",
   )
   guard updated.selection is Some(selection) else {
     fail("expected shortcut reference link text selection")
@@ -388,12 +388,12 @@ test "markdown editor link target command creates shortcut reference definition"
 
 ///|
 test "markdown editor reads selected link and image targets" {
-  let source = "Visit [MoUI](https://moui.dev) and ![logo](assets/logo.png)"
+  let source = "Visit [MoUI](https://wzzc-dev.github.io/MoUI) and ![logo](assets/logo.png)"
   guard markdown_editor_selected_link_target(source, {
       caret: 11,
       selection: Some(@core.TextRange::new(start=7, end=11)),
     })
-    is Some("https://moui.dev") else {
+    is Some("https://wzzc-dev.github.io/MoUI") else {
     fail("expected selected link target")
   }
   guard markdown_editor_selected_image_target(source, {

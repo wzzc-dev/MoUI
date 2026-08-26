@@ -333,9 +333,14 @@ fn RenderNode::overlay_hit_bounds(self : RenderNode) -> Rect? {
 /// Fully transparent overlay fills can carry native-composition bounds without
 /// representing interactive content. Excluding them here keeps a modal scrim's
 /// marker from taking pointer priority over the dialog painted above it.
+/// Drop shadows are pure decoration: their bounds spill far beyond the owning
+/// view (a 42pt-blur window shadow reaches ~60pt out), and treating them as
+/// pointer overlays makes a background window's glow swallow clicks and drags
+/// aimed at the focused window's chrome beneath it.
 fn pointer_overlay_command_bounds(command : DrawCommand) -> Rect? {
   match command {
     FillRect(_, color) if color.a == 0.0 => None
+    DrawShadow(_) => None
     _ => command.bounds()
   }
 }
