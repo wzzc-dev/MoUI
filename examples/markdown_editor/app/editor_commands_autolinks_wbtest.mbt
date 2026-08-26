@@ -14,7 +14,10 @@ test "markdown editor paste and typed space complete autolinks" {
     None,
     "https://wzzc-dev.github.io/MoUI",
   ).unwrap()
-  inspect(unicode_pasted.text, content="前缀 🤣 <https://wzzc-dev.github.io/MoUI>")
+  inspect(
+    unicode_pasted.text,
+    content="前缀 🤣 <https://wzzc-dev.github.io/MoUI>",
+  )
   inspect(unicode_pasted.caret, content="23")
   let punctuated_paste = markdown_editor_transform_input(
     "Visit ",
@@ -22,7 +25,10 @@ test "markdown editor paste and typed space complete autolinks" {
     None,
     "https://wzzc-dev.github.io/MoUI,",
   ).unwrap()
-  inspect(punctuated_paste.text, content="Visit <https://wzzc-dev.github.io/MoUI>,")
+  inspect(
+    punctuated_paste.text,
+    content="Visit <https://wzzc-dev.github.io/MoUI>,",
+  )
   inspect(punctuated_paste.caret, content="25")
   let wrapped_paste = markdown_editor_transform_input(
     "Visit ",
@@ -30,7 +36,10 @@ test "markdown editor paste and typed space complete autolinks" {
     None,
     "(https://wzzc-dev.github.io/MoUI),",
   ).unwrap()
-  inspect(wrapped_paste.text, content="Visit (<https://wzzc-dev.github.io/MoUI>),")
+  inspect(
+    wrapped_paste.text,
+    content="Visit (<https://wzzc-dev.github.io/MoUI>),",
+  )
   inspect(wrapped_paste.caret, content="27")
   let typed = markdown_editor_transform_input(
     "Visit https://wzzc-dev.github.io/MoUI",
@@ -46,7 +55,10 @@ test "markdown editor paste and typed space complete autolinks" {
     None,
     " ",
   ).unwrap()
-  inspect(punctuated_typed.text, content="Visit <https://wzzc-dev.github.io/MoUI>, ")
+  inspect(
+    punctuated_typed.text,
+    content="Visit <https://wzzc-dev.github.io/MoUI>, ",
+  )
   inspect(punctuated_typed.caret, content="26")
   let wrapped_typed = markdown_editor_transform_input(
     "Visit (https://wzzc-dev.github.io/MoUI),",
@@ -54,15 +66,28 @@ test "markdown editor paste and typed space complete autolinks" {
     None,
     " ",
   ).unwrap()
-  inspect(wrapped_typed.text, content="Visit (<https://wzzc-dev.github.io/MoUI>), ")
+  inspect(
+    wrapped_typed.text,
+    content="Visit (<https://wzzc-dev.github.io/MoUI>), ",
+  )
   inspect(wrapped_typed.caret, content="28")
   inspect(
-    markdown_editor_transform_input("Visit <https://wzzc-dev.github.io/MoUI>", 23, None, " ")
+    markdown_editor_transform_input(
+      "Visit <https://wzzc-dev.github.io/MoUI>",
+      23,
+      None,
+      " ",
+    )
     is None,
     content="true",
   )
   inspect(
-    markdown_editor_transform_input("```\nhttps://wzzc-dev.github.io/MoUI\n```", 20, None, " ")
+    markdown_editor_transform_input(
+      "```\nhttps://wzzc-dev.github.io/MoUI\n```",
+      20,
+      None,
+      " ",
+    )
     is None,
     content="true",
   )

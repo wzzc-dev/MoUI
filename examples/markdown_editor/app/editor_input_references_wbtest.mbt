@@ -42,7 +42,10 @@ test "markdown editor removes reference-style markers at caret edges" {
     None,
     "\u{0008}",
   ).unwrap()
-  inspect(shortcut.text, content="Visit MoUI today\n\n[MoUI]: https://wzzc-dev.github.io/MoUI")
+  inspect(
+    shortcut.text,
+    content="Visit MoUI today\n\n[MoUI]: https://wzzc-dev.github.io/MoUI",
+  )
   inspect(shortcut.caret, content="6")
 
   inspect(
@@ -180,7 +183,10 @@ test "markdown editor removes autolink markers at caret edges" {
     None,
     "\u{0008}",
   ).unwrap()
-  inspect(backspace_url.text, content="Visit https://wzzc-dev.github.io/MoUI today")
+  inspect(
+    backspace_url.text,
+    content="Visit https://wzzc-dev.github.io/MoUI today",
+  )
   inspect(backspace_url.caret, content="6")
 
   let delete_url = markdown_editor_transform_input(
@@ -189,7 +195,10 @@ test "markdown editor removes autolink markers at caret edges" {
     None,
     "\u{007f}",
   ).unwrap()
-  inspect(delete_url.text, content="Visit https://wzzc-dev.github.io/MoUI today")
+  inspect(
+    delete_url.text,
+    content="Visit https://wzzc-dev.github.io/MoUI today",
+  )
   inspect(delete_url.caret, content="6")
 
   let backspace_email = markdown_editor_transform_input(
@@ -225,7 +234,10 @@ test "markdown editor removes autolink markers at outside edges" {
     None,
     "\u{0008}",
   ).unwrap()
-  inspect(backspace_url.text, content="Visit https://wzzc-dev.github.io/MoUI today")
+  inspect(
+    backspace_url.text,
+    content="Visit https://wzzc-dev.github.io/MoUI today",
+  )
   inspect(backspace_url.caret, content="6")
 
   let delete_url = markdown_editor_transform_input(
@@ -234,7 +246,10 @@ test "markdown editor removes autolink markers at outside edges" {
     None,
     "\u{007f}",
   ).unwrap()
-  inspect(delete_url.text, content="Visit https://wzzc-dev.github.io/MoUI today")
+  inspect(
+    delete_url.text,
+    content="Visit https://wzzc-dev.github.io/MoUI today",
+  )
   inspect(delete_url.caret, content="6")
 
   let backspace_email = markdown_editor_transform_input(

@@ -23,7 +23,9 @@ test "markdown editor html export renders document structure" {
   assert_true(html.contains("<h1>Draft</h1>"))
   assert_true(html.contains("<strong>bold</strong>"))
   assert_true(
-    html.contains("<a href=\"https://wzzc-dev.github.io/MoUI?a=1&amp;b=2\">MoUI</a>"),
+    html.contains(
+      "<a href=\"https://wzzc-dev.github.io/MoUI?a=1&amp;b=2\">MoUI</a>",
+    ),
   )
   assert_true(
     html.contains("<img src=\"assets/logo.png\" alt=\"Alt &amp; logo\">"),

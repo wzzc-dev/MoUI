@@ -165,7 +165,10 @@ test "SetLinkTarget preserves unicode scalar target ranges" {
     SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 10, selection: Some(@core.TextRange::new(start=6, end=10)) }),
   )
-  inspect(updated.source, content="前缀 🤣 [MoUI](https://wzzc-dev.github.io/MoUI) tail")
+  inspect(
+    updated.source,
+    content="前缀 🤣 [MoUI](https://wzzc-dev.github.io/MoUI) tail",
+  )
   guard updated.selection is Some(selection) else {
     fail("expected link text selection")
   }

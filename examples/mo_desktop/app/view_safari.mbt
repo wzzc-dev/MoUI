@@ -442,8 +442,13 @@ fn safari_start_page(
       .foreground(palette.foreground),
       @views.row(
         [
-          compact_site("m", "https://wzzc-dev.github.io/MoUI", "https://wzzc-dev.github.io/MoUI", palette, theme),
-          compact_site("d", "docs", "docs.https://wzzc-dev.github.io/MoUI", palette, theme),
+          compact_site(
+            "m", "https://wzzc-dev.github.io/MoUI", "https://wzzc-dev.github.io/MoUI",
+            palette, theme,
+          ),
+          compact_site(
+            "d", "docs", "docs.https://wzzc-dev.github.io/MoUI", palette, theme,
+          ),
           compact_site("g", "github", "github.com", palette, theme),
         ],
         spacing=12.0,
@@ -631,7 +636,8 @@ fn safari_search_results(
         align=@views.CrossAlign::Center,
       ),
       browser_result(
-        "MoUI desktop patterns", "https://wzzc-dev.github.io/MoUI/examples/mo-desktop", "Build platform-neutral desktop experiences with typed model, update, and view logic.",
+        "MoUI desktop patterns", "https://wzzc-dev.github.io/MoUI/examples/mo-desktop",
+        "Build platform-neutral desktop experiences with typed model, update, and view logic.",
         inner_width, palette, theme,
       ),
       browser_result(
