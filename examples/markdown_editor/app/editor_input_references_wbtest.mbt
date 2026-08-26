@@ -59,7 +59,7 @@ test "markdown editor removes reference-style markers at caret edges" {
 test "markdown editor removes reference markers at outside edges" {
   let link_backspace = markdown_editor_transform_input(
     "Visit [MoUI](https://wzzc-dev.github.io/MoUI) today",
-    30,
+    45,
     None,
     "\u{0008}",
   ).unwrap()
@@ -191,7 +191,7 @@ test "markdown editor removes autolink markers at caret edges" {
 
   let delete_url = markdown_editor_transform_input(
     "Visit <https://wzzc-dev.github.io/MoUI> today",
-    23,
+    38,
     None,
     "\u{007f}",
   ).unwrap()
@@ -230,7 +230,7 @@ test "markdown editor removes autolink markers at caret edges" {
 test "markdown editor removes autolink markers at outside edges" {
   let backspace_url = markdown_editor_transform_input(
     "Visit <https://wzzc-dev.github.io/MoUI> today",
-    24,
+    39,
     None,
     "\u{0008}",
   ).unwrap()

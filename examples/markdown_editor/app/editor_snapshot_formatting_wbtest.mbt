@@ -275,26 +275,26 @@ test "markdown editor formatter reveals active reference markers" {
       {
         text: "[MoUI](https://wzzc-dev.github.io/MoUI)",
         visual_text: None,
-        source_range: Some({ start: 6, end: 30 }),
+        source_range: Some({ start: 6, end: 45 }),
         ..,
       },
-      { text: ", ", source_range: Some({ start: 30, end: 32 }), .. },
+      { text: ", ", source_range: Some({ start: 45, end: 47 }), .. },
       {
         text: "logo",
         visual_text: Some("logo"),
-        source_range: Some({ start: 34, end: 38 }),
+        source_range: Some({ start: 49, end: 53 }),
         ..,
       },
-      { text: ", ", source_range: Some({ start: 49, end: 51 }), .. },
+      { text: ", ", source_range: Some({ start: 64, end: 66 }), .. },
       {
         text: "https://wzzc-dev.github.io/MoUI",
-        source_range: Some({ start: 52, end: 68 }),
+        source_range: Some({ start: 67, end: 98 }),
         ..,
       },
-      { text: " and ", source_range: Some({ start: 69, end: 74 }), .. },
+      { text: " and ", source_range: Some({ start: 99, end: 104 }), .. },
       {
         text: "hello@example.dev",
-        source_range: Some({ start: 75, end: 92 }),
+        source_range: Some({ start: 105, end: 122 }),
         ..,
       },
     ] else {
@@ -302,39 +302,39 @@ test "markdown editor formatter reveals active reference markers" {
   }
   let image = markdown_editor_format_for_selection(
     "Visit [MoUI](https://wzzc-dev.github.io/MoUI), ![logo](logo.png), <https://wzzc-dev.github.io/MoUI> and <hello@example.dev>",
-    { caret: 36, selection: None },
+    { caret: 51, selection: None },
   )
   guard image.blocks[0].runs[3]
     is {
       text: "![logo](logo.png)",
       visual_text: None,
-      source_range: Some({ start: 32, end: 49 }),
+      source_range: Some({ start: 47, end: 64 }),
       ..,
     } else {
     fail("expected active image to reveal markdown reference markers")
   }
   let autolink = markdown_editor_format_for_selection(
     "Visit [MoUI](https://wzzc-dev.github.io/MoUI), ![logo](logo.png), <https://wzzc-dev.github.io/MoUI> and <hello@example.dev>",
-    { caret: 60, selection: None },
+    { caret: 75, selection: None },
   )
   guard autolink.blocks[0].runs[5]
     is {
       text: "<https://wzzc-dev.github.io/MoUI>",
       visual_text: None,
-      source_range: Some({ start: 51, end: 69 }),
+      source_range: Some({ start: 66, end: 99 }),
       ..,
     } else {
     fail("expected active autolink to reveal angle brackets")
   }
   let email = markdown_editor_format_for_selection(
     "Visit [MoUI](https://wzzc-dev.github.io/MoUI), ![logo](logo.png), <https://wzzc-dev.github.io/MoUI> and <hello@example.dev>",
-    { caret: 82, selection: None },
+    { caret: 112, selection: None },
   )
   guard email.blocks[0].runs[7]
     is {
       text: "<hello@example.dev>",
       visual_text: None,
-      source_range: Some({ start: 74, end: 93 }),
+      source_range: Some({ start: 104, end: 123 }),
       ..,
     } else {
     fail("expected active email autolink to reveal angle brackets")
@@ -351,26 +351,26 @@ test "markdown editor formatter maps link image and strike delimiters" {
     is [
       { text: "Visit ", source_range: Some({ start: 0, end: 6 }), .. },
       { text: "MoUI", source_range: Some({ start: 7, end: 11 }), .. },
-      { text: ", ", source_range: Some({ start: 30, end: 32 }), .. },
+      { text: ", ", source_range: Some({ start: 45, end: 47 }), .. },
       {
         text: "logo",
         visual_text: Some("logo"),
         image_source: Some("logo.png"),
-        source_range: Some({ start: 34, end: 38 }),
+        source_range: Some({ start: 49, end: 53 }),
         ..,
       },
-      { text: ", ", source_range: Some({ start: 49, end: 51 }), .. },
-      { text: "old", source_range: Some({ start: 53, end: 56 }), .. },
-      { text: ", ", source_range: Some({ start: 58, end: 60 }), .. },
+      { text: ", ", source_range: Some({ start: 64, end: 66 }), .. },
+      { text: "old", source_range: Some({ start: 68, end: 71 }), .. },
+      { text: ", ", source_range: Some({ start: 73, end: 75 }), .. },
       {
         text: "https://wzzc-dev.github.io/MoUI",
-        source_range: Some({ start: 61, end: 77 }),
+        source_range: Some({ start: 76, end: 107 }),
         ..,
       },
-      { text: " and ", source_range: Some({ start: 78, end: 83 }), .. },
+      { text: " and ", source_range: Some({ start: 108, end: 113 }), .. },
       {
         text: "hello@example.dev",
-        source_range: Some({ start: 84, end: 101 }),
+        source_range: Some({ start: 114, end: 131 }),
         ..,
       },
     ] else {

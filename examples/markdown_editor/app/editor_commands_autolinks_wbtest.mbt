@@ -7,7 +7,7 @@ test "markdown editor paste and typed space complete autolinks" {
     "https://wzzc-dev.github.io/MoUI",
   ).unwrap()
   inspect(pasted.text, content="Visit <https://wzzc-dev.github.io/MoUI>")
-  inspect(pasted.caret, content="24")
+  inspect(pasted.caret, content="39")
   let unicode_pasted = markdown_editor_transform_input(
     "前缀 🤣 ",
     5,
@@ -18,7 +18,7 @@ test "markdown editor paste and typed space complete autolinks" {
     unicode_pasted.text,
     content="前缀 🤣 <https://wzzc-dev.github.io/MoUI>",
   )
-  inspect(unicode_pasted.caret, content="23")
+  inspect(unicode_pasted.caret, content="38")
   let punctuated_paste = markdown_editor_transform_input(
     "Visit ",
     6,
@@ -29,7 +29,7 @@ test "markdown editor paste and typed space complete autolinks" {
     punctuated_paste.text,
     content="Visit <https://wzzc-dev.github.io/MoUI>,",
   )
-  inspect(punctuated_paste.caret, content="25")
+  inspect(punctuated_paste.caret, content="40")
   let wrapped_paste = markdown_editor_transform_input(
     "Visit ",
     6,
@@ -40,18 +40,18 @@ test "markdown editor paste and typed space complete autolinks" {
     wrapped_paste.text,
     content="Visit (<https://wzzc-dev.github.io/MoUI>),",
   )
-  inspect(wrapped_paste.caret, content="27")
+  inspect(wrapped_paste.caret, content="42")
   let typed = markdown_editor_transform_input(
     "Visit https://wzzc-dev.github.io/MoUI",
-    22,
+    37,
     None,
     " ",
   ).unwrap()
   inspect(typed.text, content="Visit <https://wzzc-dev.github.io/MoUI> ")
-  inspect(typed.caret, content="25")
+  inspect(typed.caret, content="40")
   let punctuated_typed = markdown_editor_transform_input(
     "Visit https://wzzc-dev.github.io/MoUI,",
-    23,
+    38,
     None,
     " ",
   ).unwrap()
@@ -59,10 +59,10 @@ test "markdown editor paste and typed space complete autolinks" {
     punctuated_typed.text,
     content="Visit <https://wzzc-dev.github.io/MoUI>, ",
   )
-  inspect(punctuated_typed.caret, content="26")
+  inspect(punctuated_typed.caret, content="41")
   let wrapped_typed = markdown_editor_transform_input(
     "Visit (https://wzzc-dev.github.io/MoUI),",
-    25,
+    40,
     None,
     " ",
   ).unwrap()
@@ -70,11 +70,11 @@ test "markdown editor paste and typed space complete autolinks" {
     wrapped_typed.text,
     content="Visit (<https://wzzc-dev.github.io/MoUI>), ",
   )
-  inspect(wrapped_typed.caret, content="28")
+  inspect(wrapped_typed.caret, content="43")
   inspect(
     markdown_editor_transform_input(
       "Visit <https://wzzc-dev.github.io/MoUI>",
-      23,
+      38,
       None,
       " ",
     )
@@ -84,7 +84,7 @@ test "markdown editor paste and typed space complete autolinks" {
   inspect(
     markdown_editor_transform_input(
       "```\nhttps://wzzc-dev.github.io/MoUI\n```",
-      20,
+      35,
       None,
       " ",
     )

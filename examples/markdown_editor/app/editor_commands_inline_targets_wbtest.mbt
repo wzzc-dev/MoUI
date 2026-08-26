@@ -406,8 +406,8 @@ test "markdown editor reads selected link and image targets" {
     fail("expected selected link target")
   }
   guard markdown_editor_selected_image_target(source, {
-      caret: 41,
-      selection: Some(@core.TextRange::new(start=37, end=41)),
+      caret: 56,
+      selection: Some(@core.TextRange::new(start=52, end=56)),
     })
     is Some("assets/logo.png") else {
     fail("expected selected image target")

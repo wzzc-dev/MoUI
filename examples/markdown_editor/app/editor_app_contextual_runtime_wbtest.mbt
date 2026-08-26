@@ -20,7 +20,7 @@ test "markdown editor toolbar active state follows caret context" {
   inspect(
     markdown_editor_command_active(
       source,
-      { caret: 55, selection: None },
+      { caret: 70, selection: None },
       BulletList,
     ),
     content="true",
@@ -28,7 +28,7 @@ test "markdown editor toolbar active state follows caret context" {
   inspect(
     markdown_editor_command_active(
       source,
-      { caret: 63, selection: None },
+      { caret: 78, selection: None },
       Quote,
     ),
     content="true",
@@ -221,7 +221,7 @@ test "markdown editor app target inputs sync from selection and apply edits" {
   app.set_document(
     "Visit [MoUI](https://wzzc-dev.github.io/MoUI) and ![logo](old.png)",
   )
-  app.set_selection(41, Some(@core.TextRange::new(start=37, end=41)))
+  app.set_selection(56, Some(@core.TextRange::new(start=52, end=56)))
   guard app.target_kind() is ImageTarget else {
     fail("expected image target mode")
   }
@@ -303,7 +303,7 @@ test "markdown editor app target inputs sync from caret context" {
     content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) and ![logo](old.png)",
   )
 
-  app.set_selection(39, None)
+  app.set_selection(54, None)
   guard app.target_kind() is ImageTarget else {
     fail("expected image target mode at caret")
   }

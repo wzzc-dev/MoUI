@@ -123,21 +123,21 @@ test "markdown editor typed space only completes marker tokens" {
 test "markdown editor enter completes bare autolinks" {
   let plain = markdown_editor_transform_input(
     "Visit https://wzzc-dev.github.io/MoUI",
-    22,
+    37,
     None,
     "\n",
   ).unwrap()
   inspect(plain.text, content="Visit <https://wzzc-dev.github.io/MoUI>\n")
-  inspect(plain.caret, content="25")
+  inspect(plain.caret, content="40")
 
   let wrapped = markdown_editor_transform_input(
     "See (https://wzzc-dev.github.io/MoUI).",
-    23,
+    38,
     None,
     "\n",
   ).unwrap()
   inspect(wrapped.text, content="See (<https://wzzc-dev.github.io/MoUI>).\n")
-  inspect(wrapped.caret, content="26")
+  inspect(wrapped.caret, content="41")
 
   let task = markdown_editor_transform_input(
     "- team@example.dev",
@@ -150,30 +150,30 @@ test "markdown editor enter completes bare autolinks" {
 
   let ordered = markdown_editor_transform_input(
     "3. https://wzzc-dev.github.io/MoUI",
-    19,
+    34,
     None,
     "\n",
   ).unwrap()
   inspect(ordered.text, content="3. <https://wzzc-dev.github.io/MoUI>\n4. ")
-  inspect(ordered.caret, content="25")
+  inspect(ordered.caret, content="40")
 
   let quoted = markdown_editor_transform_input(
     "> https://wzzc-dev.github.io/MoUI",
-    18,
+    33,
     None,
     "\n",
   ).unwrap()
   inspect(quoted.text, content="> <https://wzzc-dev.github.io/MoUI>\n> ")
-  inspect(quoted.caret, content="23")
+  inspect(quoted.caret, content="38")
 
   let code = markdown_editor_transform_input(
     "```\nhttps://wzzc-dev.github.io/MoUI\n```",
-    20,
+    35,
     None,
     "\n",
   ).unwrap()
   inspect(code.text, content="```\nhttps://wzzc-dev.github.io/MoUI\n\n```")
-  inspect(code.caret, content="21")
+  inspect(code.caret, content="36")
 }
 
 ///|
