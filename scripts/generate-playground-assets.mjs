@@ -163,12 +163,25 @@ for (const lesson of readdirSync(lessonRoot).sort()) {
 }
 
 const releaseRoot = join(repoRoot, "_build/wasm-gc/release/build");
-const packageGraphPath = join(repoRoot, "_build/packages.json");
-if (!existsSync(packageGraphPath)) {
-  // `_build/packages.json` is the full workspace package graph. It is only
-  // materialized by a whole-workspace `moon check`, not by per-package
-  // `moon build`/`moon check` invocations, so after `moon clean` it must be
-  // regenerated explicitly or dependency collection below would fail.
+const candidateGraphPaths = [
+  join(repoRoot, "_build/wasm-gc/debug/build/all_pkgs.json"),
+  join(repoRoot, "_build/wasm-gc/release/build/all_pkgs.json"),
+  join(repoRoot, "_build/packages.json"),
+];
+const hasValidGraph = path => {
+  if (!existsSync(path)) return false;
+  try {
+    const data = JSON.parse(readFileSync(path, "utf8"));
+    return Array.isArray(data.packages) && data.packages.length > 0;
+  } catch {
+    return false;
+  }
+};
+let packageGraphPath = candidateGraphPaths.find(hasValidGraph);
+if (!packageGraphPath) {
+  // Package graph is only materialized by a whole-workspace `moon check`,
+  // not by per-package builds, so after `moon clean` it must be regenerated
+  // explicitly. Newer Moon places it at `_build/<target>/debug/build/all_pkgs.json`.
   execFileSync("moon", ["check", "--target", "wasm-gc"], {
     cwd: repoRoot,
     stdio: "inherit",
@@ -178,6 +191,14 @@ if (!existsSync(packageGraphPath)) {
         process.env.MOUI_SKIA_DISABLE_PREBUILD_SKIA || "1",
     },
   });
+  packageGraphPath = candidateGraphPaths.find(hasValidGraph);
+  if (!packageGraphPath) {
+    // Fallback to any existing candidate for error reporting
+    packageGraphPath = candidateGraphPaths.find(path => existsSync(path));
+    if (!packageGraphPath) {
+      throw new Error("package graph not found after `moon check --target wasm-gc`");
+    }
+  }
 }
 const dependencyFiles = existsSync(releaseRoot)
   ? collectFiles(releaseRoot).filter(file => file.rel.endsWith(".mi") || file.rel.endsWith(".core"))
