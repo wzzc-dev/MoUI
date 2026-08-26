@@ -122,21 +122,21 @@ test "markdown editor typed space only completes marker tokens" {
 ///|
 test "markdown editor enter completes bare autolinks" {
   let plain = markdown_editor_transform_input(
-    "Visit https://moui.dev",
+    "Visit https://wzzc-dev.github.io/MoUI",
     22,
     None,
     "\n",
   ).unwrap()
-  inspect(plain.text, content="Visit <https://moui.dev>\n")
+  inspect(plain.text, content="Visit <https://wzzc-dev.github.io/MoUI>\n")
   inspect(plain.caret, content="25")
 
   let wrapped = markdown_editor_transform_input(
-    "See (https://moui.dev).",
+    "See (https://wzzc-dev.github.io/MoUI).",
     23,
     None,
     "\n",
   ).unwrap()
-  inspect(wrapped.text, content="See (<https://moui.dev>).\n")
+  inspect(wrapped.text, content="See (<https://wzzc-dev.github.io/MoUI>).\n")
   inspect(wrapped.caret, content="26")
 
   let task = markdown_editor_transform_input(
@@ -149,30 +149,30 @@ test "markdown editor enter completes bare autolinks" {
   inspect(task.caret, content="23")
 
   let ordered = markdown_editor_transform_input(
-    "3. https://moui.dev",
+    "3. https://wzzc-dev.github.io/MoUI",
     19,
     None,
     "\n",
   ).unwrap()
-  inspect(ordered.text, content="3. <https://moui.dev>\n4. ")
+  inspect(ordered.text, content="3. <https://wzzc-dev.github.io/MoUI>\n4. ")
   inspect(ordered.caret, content="25")
 
   let quoted = markdown_editor_transform_input(
-    "> https://moui.dev",
+    "> https://wzzc-dev.github.io/MoUI",
     18,
     None,
     "\n",
   ).unwrap()
-  inspect(quoted.text, content="> <https://moui.dev>\n> ")
+  inspect(quoted.text, content="> <https://wzzc-dev.github.io/MoUI>\n> ")
   inspect(quoted.caret, content="23")
 
   let code = markdown_editor_transform_input(
-    "```\nhttps://moui.dev\n```",
+    "```\nhttps://wzzc-dev.github.io/MoUI\n```",
     20,
     None,
     "\n",
   ).unwrap()
-  inspect(code.text, content="```\nhttps://moui.dev\n\n```")
+  inspect(code.text, content="```\nhttps://wzzc-dev.github.io/MoUI\n\n```")
   inspect(code.caret, content="21")
 }
 

@@ -9,14 +9,15 @@ priv struct FileEntry {
 }
 
 ///|
-fn finder_window(
+/// Content column of a Finder window (toolbar → content → path bar →
+/// status). The shared window shell (titlebar, shadow, grip) lives in
+/// `app_window` so multiple windows share identical behavior.
+fn finder_body(
   model : DesktopModel,
+  metrics : WindowMetrics,
   palette : DesktopPalette,
   theme : @moui.Theme,
-  viewport_width : Double,
-  viewport_height : Double,
 ) -> @moui.View[Msg] {
-  let metrics = window_metrics(model, viewport_width, viewport_height)
   // Keep the Finder body aligned with the shared 40pt traffic-light titlebar.
   let body_height = metrics.height - 40.0
   let toolbar_height = if metrics.compact { 88.0 } else { 52.0 }
@@ -49,22 +50,13 @@ fn finder_window(
     palette,
     theme,
   )
-  app_window(
-    model,
-    model.finder_location.label(),
-    // macOS Finder stacks: toolbar → content → path bar (bottom) → status.
-    // The path bar lives at the bottom of the content area, just above the
-    // status strip, not under the toolbar.
-    @views.column(
-      [toolbar, content, pathbar, status],
-      spacing=0.0,
-      align=@views.CrossAlign::Stretch,
-    ),
-    metrics,
-    palette,
-    theme,
-    viewport_width,
-    viewport_height,
+  // macOS Finder stacks: toolbar → content → path bar (bottom) → status.
+  // The path bar lives at the bottom of the content area, just above the
+  // status strip, not under the toolbar.
+  @views.column(
+    [toolbar, content, pathbar, status],
+    spacing=0.0,
+    align=@views.CrossAlign::Stretch,
   )
 }
 

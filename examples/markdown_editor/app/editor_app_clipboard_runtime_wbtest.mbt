@@ -169,11 +169,11 @@ test "markdown editor paste command links selected text with url" {
   }
   let pasted = runtime.dispatch_focused_text_command(
     @core.CommandIntent::Paste,
-    paste_text=Some("https://moui.dev"),
+    paste_text=Some("https://wzzc-dev.github.io/MoUI"),
   )
   assert_true(pasted.handled)
   assert_true(pasted.changed)
-  inspect(app.document(), content="Visit [MoUI](https://moui.dev)")
+  inspect(app.document(), content="Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
   let input = runtime.focused_text_input()
   inspect(input.caret, content="11")
   guard input.selection is Some(selection) else {
@@ -298,13 +298,13 @@ test "markdown editor runtime paste and typing complete autolinks" {
   )
   let pasted = runtime.dispatch_focused_text_command(
     @core.CommandIntent::Paste,
-    paste_text=Some("https://moui.dev"),
+    paste_text=Some("https://wzzc-dev.github.io/MoUI"),
   )
   assert_true(pasted.handled)
   assert_true(pasted.changed)
-  inspect(app.document(), content="Visit <https://moui.dev>")
+  inspect(app.document(), content="Visit <https://wzzc-dev.github.io/MoUI>")
 
-  app.set_document("Visit https://moui.dev")
+  app.set_document("Visit https://wzzc-dev.github.io/MoUI")
   runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
@@ -312,7 +312,7 @@ test "markdown editor runtime paste and typing complete autolinks" {
   runtime.dispatch_event(
     @core.AppEvent::TextInput(@core.TextInputEvent::InsertText(" ")),
   )
-  inspect(app.document(), content="Visit <https://moui.dev> ")
+  inspect(app.document(), content="Visit <https://wzzc-dev.github.io/MoUI> ")
 
   app.set_document("Mail ")
   runtime = app.runtime(width=980.0, height=640.0)
@@ -337,7 +337,7 @@ test "markdown editor runtime paste and typing complete autolinks" {
   )
   inspect(app.document(), content="Mail <hello@example.dev> ")
 
-  app.set_document("Visit https://moui.dev")
+  app.set_document("Visit https://wzzc-dev.github.io/MoUI")
   runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
@@ -345,5 +345,5 @@ test "markdown editor runtime paste and typing complete autolinks" {
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Enter")),
   )
-  inspect(app.document(), content="Visit <https://moui.dev>\n")
+  inspect(app.document(), content="Visit <https://wzzc-dev.github.io/MoUI>\n")
 }

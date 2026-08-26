@@ -146,7 +146,7 @@ test "markdown editor runtime backspace removes hidden inline marker" {
 ///|
 test "markdown editor runtime backspace removes hidden link marker" {
   let app = MarkdownEditorApp::new()
-  app.set_document("Visit [MoUI](https://moui.dev)")
+  app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
   let runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
@@ -178,7 +178,7 @@ test "markdown editor runtime backspace removes hidden link marker" {
 ///|
 test "markdown editor runtime delete removes hidden link marker" {
   let app = MarkdownEditorApp::new()
-  app.set_document("Visit [MoUI](https://moui.dev)")
+  app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
   let runtime = app.runtime(width=980.0, height=640.0)
   runtime.dispatch_event(
     @core.AppEvent::Pointer(

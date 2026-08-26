@@ -8,7 +8,14 @@ pub fn program(
   let initial = DesktopModel::new(wallpaper_source~, clock=wall_clock())
   @moui.Program::new_with_environment(
     init=() => {
-      (initial.update(UseSystemAppearance), request_system_appearance(services))
+      let updated = initial
+        .update(UseSystemAppearance)
+        .update(LoadDesktopSettings)
+      let effect = @moui.Effect::batch([
+        request_system_appearance(services),
+        load_desktop_settings(services),
+      ])
+      (updated, effect)
     },
     update=(model, message) => update_with_services(model, message, services),
     view~,
@@ -22,13 +29,32 @@ fn update_with_services(
   message : Msg,
   services : @services.AppServices,
 ) -> (DesktopModel, @moui.Effect[Msg]) {
+  let before = model.persisted_snapshot()
   let effect = match message {
     UseSystemAppearance => request_system_appearance(services)
     RequestFileImport => request_file_import(services)
     OpenFavorite(value) => request_external_url(services, value)
+    LoadDesktopSettings => load_desktop_settings(services)
+    ResetDesktopSettings | RunMenuCommand(ResetDesktopSettingsCommand) =>
+      remove_desktop_settings(services)
     _ => @moui.Effect::none()
   }
-  (model.update(message), effect)
+  let updated = model.update(message)
+  // Persist after the fact: any state change that alters the snapshot issues
+  // a settings write once loading has completed. Load/reset are excluded so
+  // restoration never re-writes and reset actually clears.
+  let save_effect = if updated.settings_loaded &&
+    !(message is (DesktopSettingsLoaded(_) | DesktopSettingsResetCompleted(_))) &&
+    updated.persisted_snapshot() != before {
+    save_desktop_settings(services, updated.persisted_snapshot())
+  } else {
+    @moui.Effect::none()
+  }
+  let combined = match effect {
+    @moui.Effect::NoEffect => save_effect
+    other => @moui.Effect::batch([other, save_effect])
+  }
+  (updated, combined)
 }
 
 ///|
@@ -83,4 +109,33 @@ fn request_external_url(
     "https://" + value
   }
   services.urls().open(url).effect(map=result => UrlOpenCompleted(result))
+}
+
+///|
+fn load_desktop_settings(services : @services.AppServices) -> @moui.Effect[Msg] {
+  services
+  .settings()
+  .read(SETTINGS_STORAGE_KEY)
+  .effect(map=result => DesktopSettingsLoaded(result))
+}
+
+///|
+fn save_desktop_settings(
+  services : @services.AppServices,
+  snapshot : DesktopSnapshot,
+) -> @moui.Effect[Msg] {
+  services
+  .settings()
+  .write(SETTINGS_STORAGE_KEY, encode_desktop_snapshot(snapshot))
+  .effect(map=result => DesktopSettingsSaved(result))
+}
+
+///|
+fn remove_desktop_settings(
+  services : @services.AppServices,
+) -> @moui.Effect[Msg] {
+  services
+  .settings()
+  .remove(SETTINGS_STORAGE_KEY)
+  .effect(map=result => DesktopSettingsResetCompleted(result))
 }

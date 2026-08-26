@@ -71,7 +71,7 @@ pub fn SettingsModel::new() -> SettingsModel {
   {
     selected_section: "profile",
     display_name: "Ada Lovelace",
-    email: "ada@moui.dev",
+    email: "ada@https://wzzc-dev.github.io/MoUI",
     workspace: "Analytical Engine",
     theme_mode: "system",
     notifications: true,

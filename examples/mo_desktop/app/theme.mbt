@@ -44,8 +44,9 @@ fn desktop_palette(dark : Bool) -> DesktopPalette {
       // macOS accent: systemBlue dark ~ #0A84FF.
       accent: rgba8(10, 132, 255),
       accent_soft: rgba8(42, 91, 142, a=0.72),
-      // Lighter, more translucent dock glass so wallpaper shows through like macOS.
-      dock: rgba8(30, 36, 46, a=0.52),
+      // Dark liquid-glass: lower opacity than before to avoid a heavy
+      // solid bar over the lake.
+      dock: rgba8(30, 36, 46, a=0.42),
       scrim: rgba8(4, 10, 18, a=0.28),
     }
   } else {
@@ -67,31 +68,57 @@ fn desktop_palette(dark : Bool) -> DesktopPalette {
       // macOS accent: systemBlue light ~ #007AFF.
       accent: rgba8(0, 122, 255),
       accent_soft: rgba8(180, 216, 255, a=0.92),
-      // Frosted dock plate: pale and translucent rather than chalky opaque.
-      dock: rgba8(255, 255, 255, a=0.42),
+      // Frosted dock plate: Tahoe liquid-glass. Keep it very translucent
+      // so the plate bottom does not read as a solid white shelf over
+      // the lake wallpaper.
+      dock: rgba8(255, 255, 255, a=0.26),
       scrim: rgba8(3, 20, 36, a=0.16),
     }
   }
 }
 
 ///|
+/// Dock plate shadow: soft ambient lift rather than a hard drop. Tahoe
+/// liquid-glass reads as a frosted plate floating just above the wallpaper,
+/// so the shadow is diffuse, centered, and low-opacity. Keep a single
+/// shadow (MoUI exposes one per node) but tune it close to
+/// `0 12px 32px rgba(0,0,0,0.12)` / `0 10px 28px rgba(0,0,0,0.32)`.
 fn dock_shadow(palette : DesktopPalette) -> @graphics.ShadowStyle {
-  @graphics.ShadowStyle::new(
-    color=palette.shadow.multiply_alpha(0.85),
-    offset=@geometry.Point::new(x=0.0, y=10.0),
-    blur_radius=28.0,
-    spread=0.0,
-  )
+  if palette.dark {
+    @graphics.ShadowStyle::new(
+      color=rgba8(0, 0, 0, a=0.32),
+      offset=@geometry.Point::new(x=0.0, y=10.0),
+      blur_radius=32.0,
+      spread=0.0,
+    )
+  } else {
+    @graphics.ShadowStyle::new(
+      color=rgba8(0, 0, 0, a=0.14),
+      offset=@geometry.Point::new(x=0.0, y=8.0),
+      blur_radius=28.0,
+      spread=0.0,
+    )
+  }
 }
 
 ///|
+/// Tile shadow: barely lifted; the icon shell already carries a top sheen.
 fn dock_tile_shadow(palette : DesktopPalette) -> @graphics.ShadowStyle {
-  @graphics.ShadowStyle::new(
-    color=palette.shadow.multiply_alpha(0.55),
-    offset=@geometry.Point::new(x=0.0, y=3.0),
-    blur_radius=8.0,
-    spread=0.0,
-  )
+  if palette.dark {
+    @graphics.ShadowStyle::new(
+      color=rgba8(0, 0, 0, a=0.28),
+      offset=@geometry.Point::new(x=0.0, y=4.0),
+      blur_radius=10.0,
+      spread=0.0,
+    )
+  } else {
+    @graphics.ShadowStyle::new(
+      color=rgba8(0, 0, 0, a=0.12),
+      offset=@geometry.Point::new(x=0.0, y=3.0),
+      blur_radius=8.0,
+      spread=0.0,
+    )
+  }
 }
 
 ///|

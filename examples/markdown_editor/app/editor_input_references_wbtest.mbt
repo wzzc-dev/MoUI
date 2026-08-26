@@ -37,12 +37,12 @@ test "markdown editor removes reference-style markers at caret edges" {
   inspect(delete_image.caret, content="7")
 
   let shortcut = markdown_editor_transform_input(
-    "Visit [MoUI] today\n\n[MoUI]: https://moui.dev",
+    "Visit [MoUI] today\n\n[MoUI]: https://wzzc-dev.github.io/MoUI",
     7,
     None,
     "\u{0008}",
   ).unwrap()
-  inspect(shortcut.text, content="Visit MoUI today\n\n[MoUI]: https://moui.dev")
+  inspect(shortcut.text, content="Visit MoUI today\n\n[MoUI]: https://wzzc-dev.github.io/MoUI")
   inspect(shortcut.caret, content="6")
 
   inspect(
@@ -55,7 +55,7 @@ test "markdown editor removes reference-style markers at caret edges" {
 ///|
 test "markdown editor removes reference markers at outside edges" {
   let link_backspace = markdown_editor_transform_input(
-    "Visit [MoUI](https://moui.dev) today",
+    "Visit [MoUI](https://wzzc-dev.github.io/MoUI) today",
     30,
     None,
     "\u{0008}",
@@ -64,7 +64,7 @@ test "markdown editor removes reference markers at outside edges" {
   inspect(link_backspace.caret, content="6")
 
   let link_delete = markdown_editor_transform_input(
-    "Visit [MoUI](https://moui.dev) today",
+    "Visit [MoUI](https://wzzc-dev.github.io/MoUI) today",
     6,
     None,
     "\u{007f}",
@@ -109,14 +109,14 @@ test "markdown editor removes reference markers at outside edges" {
   inspect(reference_delete.caret, content="6")
 
   let shortcut_backspace = markdown_editor_transform_input(
-    "Visit [MoUI] today\n\n[MoUI]: https://moui.dev",
+    "Visit [MoUI] today\n\n[MoUI]: https://wzzc-dev.github.io/MoUI",
     12,
     None,
     "\u{0008}",
   ).unwrap()
   inspect(
     shortcut_backspace.text,
-    content="Visit MoUI today\n\n[MoUI]: https://moui.dev",
+    content="Visit MoUI today\n\n[MoUI]: https://wzzc-dev.github.io/MoUI",
   )
   inspect(shortcut_backspace.caret, content="6")
 
@@ -175,21 +175,21 @@ test "markdown editor removes footnote reference markers at caret edges" {
 ///|
 test "markdown editor removes autolink markers at caret edges" {
   let backspace_url = markdown_editor_transform_input(
-    "Visit <https://moui.dev> today",
+    "Visit <https://wzzc-dev.github.io/MoUI> today",
     7,
     None,
     "\u{0008}",
   ).unwrap()
-  inspect(backspace_url.text, content="Visit https://moui.dev today")
+  inspect(backspace_url.text, content="Visit https://wzzc-dev.github.io/MoUI today")
   inspect(backspace_url.caret, content="6")
 
   let delete_url = markdown_editor_transform_input(
-    "Visit <https://moui.dev> today",
+    "Visit <https://wzzc-dev.github.io/MoUI> today",
     23,
     None,
     "\u{007f}",
   ).unwrap()
-  inspect(delete_url.text, content="Visit https://moui.dev today")
+  inspect(delete_url.text, content="Visit https://wzzc-dev.github.io/MoUI today")
   inspect(delete_url.caret, content="6")
 
   let backspace_email = markdown_editor_transform_input(
@@ -220,21 +220,21 @@ test "markdown editor removes autolink markers at caret edges" {
 ///|
 test "markdown editor removes autolink markers at outside edges" {
   let backspace_url = markdown_editor_transform_input(
-    "Visit <https://moui.dev> today",
+    "Visit <https://wzzc-dev.github.io/MoUI> today",
     24,
     None,
     "\u{0008}",
   ).unwrap()
-  inspect(backspace_url.text, content="Visit https://moui.dev today")
+  inspect(backspace_url.text, content="Visit https://wzzc-dev.github.io/MoUI today")
   inspect(backspace_url.caret, content="6")
 
   let delete_url = markdown_editor_transform_input(
-    "Visit <https://moui.dev> today",
+    "Visit <https://wzzc-dev.github.io/MoUI> today",
     6,
     None,
     "\u{007f}",
   ).unwrap()
-  inspect(delete_url.text, content="Visit https://moui.dev today")
+  inspect(delete_url.text, content="Visit https://wzzc-dev.github.io/MoUI today")
   inspect(delete_url.caret, content="6")
 
   let backspace_email = markdown_editor_transform_input(

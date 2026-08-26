@@ -112,7 +112,7 @@ test "markdown document rich text window starts near scrolled block" {
     parts.push("## Section " + index.to_string())
     parts.push("")
     parts.push(
-      "Paragraph " + index.to_string() + " with a [link](https://moui.dev).",
+      "Paragraph " + index.to_string() + " with a [link](https://wzzc-dev.github.io/MoUI).",
     )
     parts.push("")
   }

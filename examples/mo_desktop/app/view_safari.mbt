@@ -1,12 +1,13 @@
 ///|
-fn safari_window(
+/// Content column of a Safari window (toolbar → page content). The shared
+/// window shell (titlebar, shadow, grip) lives in `app_window` so multiple
+/// windows share identical behavior.
+fn safari_body(
   model : DesktopModel,
+  metrics : WindowMetrics,
   palette : DesktopPalette,
   theme : @moui.Theme,
-  viewport_width : Double,
-  viewport_height : Double,
 ) -> @moui.View[Msg] {
-  let metrics = window_metrics(model, viewport_width, viewport_height)
   let body_height = metrics.height - 48.0
   let toolbar_height = if metrics.compact { 94.0 } else { 98.0 }
   let content_height = body_height - toolbar_height
@@ -19,22 +20,10 @@ fn safari_window(
     palette,
     theme,
   )
-  app_window(
-    model,
-    match model.browser_page {
-      StartPage => "Start Page"
-      SearchResults(_) => "Mo Browser"
-    },
-    @views.column(
-      [toolbar, content],
-      spacing=0.0,
-      align=@views.CrossAlign::Stretch,
-    ),
-    metrics,
-    palette,
-    theme,
-    viewport_width,
-    viewport_height,
+  @views.column(
+    [toolbar, content],
+    spacing=0.0,
+    align=@views.CrossAlign::Stretch,
   )
 }
 
@@ -357,7 +346,7 @@ fn safari_start_page(
     [
       favorite_card(
         "MoUI",
-        "moui.dev",
+        "https://wzzc-dev.github.io/MoUI",
         @views.IconName::Columns,
         rgba8(39, 110, 241),
         favorite_width,
@@ -375,7 +364,7 @@ fn safari_start_page(
       ),
       favorite_card(
         "Docs",
-        "docs.moui.dev",
+        "docs.https://wzzc-dev.github.io/MoUI",
         @views.IconName::ListBullet,
         rgba8(24, 151, 132),
         favorite_width,
@@ -453,8 +442,8 @@ fn safari_start_page(
       .foreground(palette.foreground),
       @views.row(
         [
-          compact_site("m", "moui.dev", "moui.dev", palette, theme),
-          compact_site("d", "docs", "docs.moui.dev", palette, theme),
+          compact_site("m", "https://wzzc-dev.github.io/MoUI", "https://wzzc-dev.github.io/MoUI", palette, theme),
+          compact_site("d", "docs", "docs.https://wzzc-dev.github.io/MoUI", palette, theme),
           compact_site("g", "github", "github.com", palette, theme),
         ],
         spacing=12.0,
@@ -642,7 +631,7 @@ fn safari_search_results(
         align=@views.CrossAlign::Center,
       ),
       browser_result(
-        "MoUI desktop patterns", "moui.dev/examples/mo-desktop", "Build platform-neutral desktop experiences with typed model, update, and view logic.",
+        "MoUI desktop patterns", "https://wzzc-dev.github.io/MoUI/examples/mo-desktop", "Build platform-neutral desktop experiences with typed model, update, and view logic.",
         inner_width, palette, theme,
       ),
       browser_result(

@@ -1,6 +1,6 @@
 ///|
 test "markdown editor paragraph reference probe avoids unicode boundary drift" {
-  let text = "前缀 🤣 [MoUI](https://moui.dev) tail"
+  let text = "前缀 🤣 [MoUI](https://wzzc-dev.github.io/MoUI) tail"
   inspect(
     markdown_editor_paragraph_reference_probe(text, 9, image=false),
     content="true",

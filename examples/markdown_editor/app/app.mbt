@@ -302,7 +302,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     document,
     document_session: MarkdownDocumentSession::new(document),
     selection: { caret: 0, selection: None },
-    link_target: "https://moui.dev",
+    link_target: "https://wzzc-dev.github.io/MoUI",
     image_target: "assets/image.png",
     footnote_text: "Footnote text",
     html_block_text: "<div>HTML</div>",

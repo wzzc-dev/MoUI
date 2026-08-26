@@ -1,7 +1,7 @@
 ///|
 test "markdown parser recognizes supported block and inline subset" {
   let blocks = parse_markdown(
-    "# Title\n## Section\n### Detail\n#### Fine\n##### Small\n###### Caption\nText with **bold** and *italic* and `code` and [link](https://moui.dev) and ![alt](image.png) and ~~old~~\n- bullet\n- [ ] todo\n- [x] done\n1. one\n> quote\n---\n```\ncode\n```",
+    "# Title\n## Section\n### Detail\n#### Fine\n##### Small\n###### Caption\nText with **bold** and *italic* and `code` and [link](https://wzzc-dev.github.io/MoUI) and ![alt](image.png) and ~~old~~\n- bullet\n- [ ] todo\n- [x] done\n1. one\n> quote\n---\n```\ncode\n```",
   )
   inspect(blocks.length(), content="14")
   guard blocks[0].kind is Heading(1) else { fail("expected h1") }
@@ -123,13 +123,13 @@ test "markdown inline parser emits separated plain and styled spans" {
 ///|
 test "markdown inline parser preserves link image and strike metadata" {
   let spans = parse_markdown_inlines(
-    "[MoUI](https://moui.dev) ![logo](logo.png) ~~old~~ <https://moui.dev>",
+    "[MoUI](https://wzzc-dev.github.io/MoUI) ![logo](logo.png) ~~old~~ <https://wzzc-dev.github.io/MoUI>",
   )
   guard spans[0]
     is {
       kind: MarkdownInlineKind::Link,
       text: "MoUI",
-      target: Some("https://moui.dev"),
+      target: Some("https://wzzc-dev.github.io/MoUI"),
     } else {
     fail("expected link target")
   }
@@ -147,8 +147,8 @@ test "markdown inline parser preserves link image and strike metadata" {
   guard spans[6]
     is {
       kind: MarkdownInlineKind::Autolink,
-      text: "https://moui.dev",
-      target: Some("https://moui.dev"),
+      text: "https://wzzc-dev.github.io/MoUI",
+      target: Some("https://wzzc-dev.github.io/MoUI"),
     } else {
     fail("expected autolink target")
   }
@@ -176,13 +176,13 @@ test "markdown parser preserves footnote metadata" {
 ///|
 test "markdown parser normalizes reference label whitespace" {
   let blocks = parse_markdown(
-    "[MoUI][My   Site]\n\n[my site]: https://moui.dev",
+    "[MoUI][My   Site]\n\n[my site]: https://wzzc-dev.github.io/MoUI",
   )
   guard blocks[0].inlines[0]
     is {
       kind: MarkdownInlineKind::Link,
       text: "MoUI",
-      target: Some("https://moui.dev"),
+      target: Some("https://wzzc-dev.github.io/MoUI"),
     } else {
     fail("expected collapsed whitespace reference label to resolve")
   }

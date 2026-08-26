@@ -264,23 +264,18 @@ fn spotlight_category_header(
 
 ///|
 fn spotlight_entries() -> Array[SpotlightResult] {
-  [
-    {
-      title: "Finder",
+  let entries : Array[SpotlightResult] = []
+  for descriptor in app_registry() {
+    entries.push({
+      title: descriptor.label,
       subtitle: "Application",
       category: "Applications",
-      icon: @views.IconName::FolderOpen,
-      color: rgba8(33, 150, 243),
-      message: OpenFinder,
-    },
-    {
-      title: "Safari",
-      subtitle: "Application",
-      category: "Applications",
-      icon: @views.IconName::Link,
-      color: rgba8(36, 177, 216),
-      message: OpenSafari,
-    },
+      icon: descriptor.icon,
+      color: descriptor.color,
+      message: LaunchApp(descriptor.id),
+    })
+  }
+  let rest : Array[SpotlightResult] = [
     {
       title: "System Settings",
       subtitle: "Application",
@@ -322,6 +317,10 @@ fn spotlight_entries() -> Array[SpotlightResult] {
       message: RunMenuCommand(LockSession),
     },
   ]
+  for entry in rest {
+    entries.push(entry)
+  }
+  entries
 }
 
 ///|
@@ -599,36 +598,32 @@ fn launcher_entries(model : DesktopModel) -> Array[LauncherEntry] {
       },
     ]
   } else {
-    [
-      {
-        label: "Finder",
-        detail: "Browse local files",
-        icon: @views.IconName::FolderOpen,
-        color: rgba8(33, 150, 243),
-        message: OpenFinder,
-      },
-      {
-        label: "Safari",
-        detail: "Search the Web",
-        icon: @views.IconName::Link,
-        color: rgba8(36, 177, 216),
-        message: OpenSafari,
-      },
-      {
-        label: "Control Center",
-        detail: "Display and sound",
-        icon: @views.IconName::Settings,
-        color: rgba8(91, 99, 112),
-        message: ToggleControlCenter,
-      },
-      {
-        label: "Notifications",
-        detail: "Messages and tasks",
-        icon: @views.IconName::Info,
-        color: rgba8(236, 72, 118),
-        message: ToggleNotificationCenter,
-      },
-    ]
+    // Registry-driven app tiles plus the two shell shortcuts.
+    let entries : Array[LauncherEntry] = []
+    for descriptor in app_registry() {
+      entries.push({
+        label: descriptor.label,
+        detail: descriptor.detail,
+        icon: descriptor.icon,
+        color: descriptor.color,
+        message: LaunchApp(descriptor.id),
+      })
+    }
+    entries.push({
+      label: "Control Center",
+      detail: "Display and sound",
+      icon: @views.IconName::Settings,
+      color: rgba8(91, 99, 112),
+      message: ToggleControlCenter,
+    })
+    entries.push({
+      label: "Notifications",
+      detail: "Messages and tasks",
+      icon: @views.IconName::Info,
+      color: rgba8(236, 72, 118),
+      message: ToggleNotificationCenter,
+    })
+    entries
   }
 }
 

@@ -37,12 +37,60 @@ fn menu_bar(
           theme,
           true,
         ),
-        menu_button("File", 36.0, FileMenu, model, palette, theme, false),
-        menu_button("Edit", 36.0, EditMenu, model, palette, theme, false),
-        menu_button("View", 40.0, ViewMenu, model, palette, theme, false),
-        menu_button("Go", 30.0, GoMenu, model, palette, theme, false),
-        menu_button("Window", 60.0, WindowMenu, model, palette, theme, false),
-        menu_button("Help", 40.0, HelpMenu, model, palette, theme, false),
+        menu_button(
+          model.language.text("menu.file"),
+          36.0,
+          FileMenu,
+          model,
+          palette,
+          theme,
+          false,
+        ),
+        menu_button(
+          model.language.text("menu.edit"),
+          36.0,
+          EditMenu,
+          model,
+          palette,
+          theme,
+          false,
+        ),
+        menu_button(
+          model.language.text("menu.view"),
+          40.0,
+          ViewMenu,
+          model,
+          palette,
+          theme,
+          false,
+        ),
+        menu_button(
+          model.language.text("menu.go"),
+          30.0,
+          GoMenu,
+          model,
+          palette,
+          theme,
+          false,
+        ),
+        menu_button(
+          model.language.text("menu.window"),
+          60.0,
+          WindowMenu,
+          model,
+          palette,
+          theme,
+          false,
+        ),
+        menu_button(
+          model.language.text("menu.help"),
+          40.0,
+          HelpMenu,
+          model,
+          palette,
+          theme,
+          false,
+        ),
       ],
       spacing=0.0,
       align=@views.CrossAlign::Center,
@@ -66,6 +114,7 @@ fn menu_bar(
     ]
   } else {
     [
+      spotlight_button(palette, theme),
       menu_icon(
         @views.IconName::Search,
         "Open app launcher",
@@ -296,32 +345,29 @@ fn dock(
   height : Double,
 ) -> @moui.View[Msg] {
   let compact = width < 560.0
-  // Slightly larger tiles + tighter radius read closer to macOS Dock icons.
-  let icon_size = if compact { 46.0 } else { 58.0 }
-  let item_gap = if compact { 10.0 } else { 12.0 }
-  let side_pad = if compact { 12.0 } else { 16.0 }
-  let dock_height = if compact { 74.0 } else { 84.0 }
+  // Tahoe liquid-glass: tight pill, icons sit flush with minimal bottom
+  // shelf so the translucent plate does not read as a white base. Keep
+  // metrics compact: plate height = icon + indicator(4) + vertical
+  // padding, not a tall pre-set.
+  let icon_size = if compact { 44.0 } else { 54.0 }
+  let item_gap = if compact { 8.0 } else { 10.0 }
+  let side_pad = if compact { 10.0 } else { 12.0 }
+  let dock_height = if compact { 62.0 } else { 72.0 }
   // Real macOS Dock uses a translucent frosted plate with a subtle top sheen.
   // Each app tile is a "squircle" (continuous-curve rounded square) and the
   // running app gets a small dot beneath it.
-  let tiles = [
+  // App tiles come straight from the registry in dock-priority order, so a
+  // new AppKind appears here without touching this view.
+  let tiles = app_registry().map(entry => {
     dock_tile(
-      "Finder",
-      OpenFinder,
-      model.active_window == Finder,
+      entry.label,
+      LaunchApp(entry.id),
+      model.has_visible_window(entry.id),
       icon_size,
       palette,
-      dock_finder_glyph,
-    ),
-    dock_tile(
-      "Safari",
-      OpenSafari,
-      model.active_window == Safari,
-      icon_size,
-      palette,
-      dock_safari_glyph,
-    ),
-  ]
+      dock_glyph_for(entry.id),
+    )
+  })
   let utilities = [
     dock_tile(
       "Apps",
@@ -353,7 +399,7 @@ fn dock(
     tiles + [separator] + utilities,
     spacing=item_gap,
     justify=@views.MainAlign::Center,
-    align=@views.CrossAlign::End,
+    align=@views.CrossAlign::Center,
   )
   let content_width = icon_size *
     (tiles.length() + utilities.length()).to_double() +
@@ -364,25 +410,41 @@ fn dock(
   } else {
     content_width
   }
+  // Liquid-glass rim: hairline highlight only at the top edge. A
+  // uniform white stroke around the whole pill read as a white base;
+  // keep the stroke almost invisible on the sides/bottom.
   let rim = @graphics.BorderStyle::new(
     brush=@graphics.Brush::solid(
       if palette.dark {
-        rgba8(255, 255, 255, a=0.18)
+        rgba8(255, 255, 255, a=0.08)
       } else {
-        rgba8(255, 255, 255, a=0.65)
+        rgba8(255, 255, 255, a=0.22)
       },
     ),
-    width=1.0,
+    width=0.7,
+  )
+  // Tight pill: horizontal padding carries the capsule breathing room,
+  // vertical padding is only enough for the indicator dot. The previous
+  // 8.8px uniform padding plus the 7px slot created a white shelf
+  // below every icon on the dark lake.
+  let h_pad = side_pad * 0.5
+  let dock_content = @views.padding_edges(
+    dock_row,
+    left=h_pad,
+    right=h_pad,
+    top=5.0,
+    bottom=4.0,
   )
   @views.container(
-    dock_row,
+    dock_content,
     width=dock_width,
     height=dock_height,
     background=palette.dock,
     corner_radius=dock_height * 0.42,
     border=Some(rim),
-    padding=side_pad * 0.55,
+    padding=0.0,
   )
+  .clip()
   .shadow(dock_shadow(palette))
   .align(alignment=@geometry.Alignment::bottom_leading())
   .offset(dx=(width - dock_width) / 2.0, dy=-10.0)
@@ -426,17 +488,28 @@ fn dock_tile(
   palette : DesktopPalette,
   glyph : (Double, DesktopPalette) -> @moui.View[Msg],
 ) -> @moui.View[Msg] {
-  // Active tile: 8% larger glyph + a deeper shadow so it lifts off the plate.
+  // Active tile: 8% larger glyph + a slightly deeper shadow so it lifts
+  // off the plate. Use neutral black rather than the palette's bluish
+  // shadow so the lift does not tint the dock plate.
   let scaled_size = if active { icon_size * 1.08 } else { icon_size }
   let tile = glyph(scaled_size, palette)
     .shadow(
       if active {
-        @graphics.ShadowStyle::new(
-          color=palette.shadow.multiply_alpha(0.75),
-          offset=@geometry.Point::new(x=0.0, y=5.0),
-          blur_radius=12.0,
-          spread=0.0,
-        )
+        if palette.dark {
+          @graphics.ShadowStyle::new(
+            color=rgba8(0, 0, 0, a=0.34),
+            offset=@geometry.Point::new(x=0.0, y=5.0),
+            blur_radius=12.0,
+            spread=0.0,
+          )
+        } else {
+          @graphics.ShadowStyle::new(
+            color=rgba8(0, 0, 0, a=0.16),
+            offset=@geometry.Point::new(x=0.0, y=5.0),
+            blur_radius=12.0,
+            spread=0.0,
+          )
+        }
       } else {
         dock_tile_shadow(palette)
       },
@@ -459,17 +532,19 @@ fn dock_tile(
   )
   // Keep the overall tile slot height stable so the active tile's larger glyph
   // does not push the dock row around; the glyph grows inside a fixed frame.
+  // Spacing is minimal (2px) so the gap between the squircle bottom and
+  // the indicator does not read as a white shelf.
   @views.container(
     @views.column(
       [
         @views.container(tile, width=icon_size, height=icon_size, padding=0.0),
         indicator,
       ],
-      spacing=3.0,
+      spacing=2.0,
       align=@views.CrossAlign::Center,
     ),
     width=icon_size,
-    height=icon_size + 7.0,
+    height=icon_size + 6.0,
     padding=0.0,
   )
 }
@@ -508,6 +583,100 @@ fn dock_tile_shell(
     .offset(dx=3.0, dy=3.0),
     child.align(alignment=@geometry.Alignment::center()),
   ]).frame(width=size, height=size)
+}
+
+///|
+/// Labeled Spotlight trigger in the menu bar. Spotlight existed as an
+/// overlay but had no entry point before; a text control keeps it reachable
+/// for pointer and assistive-tech users alike.
+fn spotlight_button(
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.text(
+      "Spotlight",
+      role=@views.TextRole::Caption,
+      theme~,
+      width=58.0,
+      height=18.0,
+    ).foreground(palette.foreground),
+    width=64.0,
+    height=22.0,
+    background=rgba8(0, 0, 0, a=0.0),
+    corner_radius=6.0,
+    padding=0.0,
+  )
+  .on_tap(ToggleSpotlight)
+  .accessibility_label("Open Spotlight search")
+}
+
+///|
+fn dock_glyph_for(app : AppKind) -> (Double, DesktopPalette) -> @moui.View[Msg] {
+  match app {
+    FinderApp => dock_finder_glyph
+    SafariApp => dock_safari_glyph
+    NotesApp => dock_notes_glyph
+    TerminalApp => dock_terminal_glyph
+  }
+}
+
+///|
+fn dock_notes_glyph(
+  size : Double,
+  _palette : DesktopPalette,
+) -> @moui.View[Msg] {
+  @views.stack([
+    @views.container(
+      @views.spacer(min_length=0.0, weight=0.0),
+      width=size * 0.56,
+      height=size * 0.68,
+      background=rgba8(252, 253, 255),
+      corner_radius=size * 0.08,
+      border=Some(
+        @graphics.BorderStyle::new(
+          brush=@graphics.Brush::solid(rgba8(210, 218, 228)),
+          width=1.0,
+        ),
+      ),
+      padding=0.0,
+    ),
+    @views.column(
+      [
+        @views.container(
+          @views.spacer(min_length=0.0, weight=0.0),
+          width=size * 0.56,
+          height=size * 0.14,
+          background=rgba8(244, 170, 53),
+          padding=0.0,
+        ),
+        @views.spacer(min_length=0.0, weight=1.0),
+      ],
+      spacing=0.0,
+    ).frame(width=size * 0.56, height=size * 0.68),
+  ]).frame(width=size * 0.56, height=size * 0.68)
+}
+
+///|
+fn dock_terminal_glyph(
+  size : Double,
+  _palette : DesktopPalette,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.text(
+      ">_",
+      role=@views.TextRole::Caption,
+      width=size * 0.6,
+      height=size * 0.5,
+    )
+    .font(@text.FontSpec::new(size=size * 0.26, weight=700))
+    .foreground(rgba8(158, 226, 158)),
+    width=size * 0.64,
+    height=size * 0.54,
+    background=rgba8(16, 20, 26),
+    corner_radius=size * 0.1,
+    padding=size * 0.06,
+  )
 }
 
 ///|

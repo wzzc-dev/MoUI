@@ -7,7 +7,7 @@ fn markdown_editor_end_click_document(blocks : Int) -> String {
     parts.push(
       "Paragraph " +
       index.to_string() +
-      " with **bold** text and a [link](https://moui.dev).",
+      " with **bold** text and a [link](https://wzzc-dev.github.io/MoUI).",
     )
     parts.push("")
   }

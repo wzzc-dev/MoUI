@@ -266,14 +266,14 @@ test "markdown editor formatter reveals active inline marker variants" {
 ///|
 test "markdown editor formatter reveals active reference markers" {
   let document = markdown_editor_format_for_selection(
-    "Visit [MoUI](https://moui.dev), ![logo](logo.png), <https://moui.dev> and <hello@example.dev>",
+    "Visit [MoUI](https://wzzc-dev.github.io/MoUI), ![logo](logo.png), <https://wzzc-dev.github.io/MoUI> and <hello@example.dev>",
     { caret: 9, selection: None },
   )
   guard document.blocks[0].runs
     is [
       { text: "Visit ", source_range: Some({ start: 0, end: 6 }), .. },
       {
-        text: "[MoUI](https://moui.dev)",
+        text: "[MoUI](https://wzzc-dev.github.io/MoUI)",
         visual_text: None,
         source_range: Some({ start: 6, end: 30 }),
         ..,
@@ -287,7 +287,7 @@ test "markdown editor formatter reveals active reference markers" {
       },
       { text: ", ", source_range: Some({ start: 49, end: 51 }), .. },
       {
-        text: "https://moui.dev",
+        text: "https://wzzc-dev.github.io/MoUI",
         source_range: Some({ start: 52, end: 68 }),
         ..,
       },
@@ -301,7 +301,7 @@ test "markdown editor formatter reveals active reference markers" {
     fail("expected active link to reveal markdown reference markers")
   }
   let image = markdown_editor_format_for_selection(
-    "Visit [MoUI](https://moui.dev), ![logo](logo.png), <https://moui.dev> and <hello@example.dev>",
+    "Visit [MoUI](https://wzzc-dev.github.io/MoUI), ![logo](logo.png), <https://wzzc-dev.github.io/MoUI> and <hello@example.dev>",
     { caret: 36, selection: None },
   )
   guard image.blocks[0].runs[3]
@@ -314,12 +314,12 @@ test "markdown editor formatter reveals active reference markers" {
     fail("expected active image to reveal markdown reference markers")
   }
   let autolink = markdown_editor_format_for_selection(
-    "Visit [MoUI](https://moui.dev), ![logo](logo.png), <https://moui.dev> and <hello@example.dev>",
+    "Visit [MoUI](https://wzzc-dev.github.io/MoUI), ![logo](logo.png), <https://wzzc-dev.github.io/MoUI> and <hello@example.dev>",
     { caret: 60, selection: None },
   )
   guard autolink.blocks[0].runs[5]
     is {
-      text: "<https://moui.dev>",
+      text: "<https://wzzc-dev.github.io/MoUI>",
       visual_text: None,
       source_range: Some({ start: 51, end: 69 }),
       ..,
@@ -327,7 +327,7 @@ test "markdown editor formatter reveals active reference markers" {
     fail("expected active autolink to reveal angle brackets")
   }
   let email = markdown_editor_format_for_selection(
-    "Visit [MoUI](https://moui.dev), ![logo](logo.png), <https://moui.dev> and <hello@example.dev>",
+    "Visit [MoUI](https://wzzc-dev.github.io/MoUI), ![logo](logo.png), <https://wzzc-dev.github.io/MoUI> and <hello@example.dev>",
     { caret: 82, selection: None },
   )
   guard email.blocks[0].runs[7]
@@ -344,7 +344,7 @@ test "markdown editor formatter reveals active reference markers" {
 ///|
 test "markdown editor formatter maps link image and strike delimiters" {
   let document = markdown_editor_format(
-    "Visit [MoUI](https://moui.dev), ![logo](logo.png), ~~old~~, <https://moui.dev> and <hello@example.dev>",
+    "Visit [MoUI](https://wzzc-dev.github.io/MoUI), ![logo](logo.png), ~~old~~, <https://wzzc-dev.github.io/MoUI> and <hello@example.dev>",
   )
   inspect(document.blocks.length(), content="1")
   guard document.blocks[0].runs
@@ -363,7 +363,7 @@ test "markdown editor formatter maps link image and strike delimiters" {
       { text: "old", source_range: Some({ start: 53, end: 56 }), .. },
       { text: ", ", source_range: Some({ start: 58, end: 60 }), .. },
       {
-        text: "https://moui.dev",
+        text: "https://wzzc-dev.github.io/MoUI",
         source_range: Some({ start: 61, end: 77 }),
         ..,
       },

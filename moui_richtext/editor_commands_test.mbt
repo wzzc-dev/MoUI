@@ -162,10 +162,10 @@ test "Link and image commands preserve unicode scalar selections" {
 test "SetLinkTarget preserves unicode scalar target ranges" {
   let updated = markdown_editor_apply_command_at(
     "前缀 🤣 [MoUI](old.example) tail",
-    SetLinkTarget("https://moui.dev"),
+    SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 10, selection: Some(@core.TextRange::new(start=6, end=10)) }),
   )
-  inspect(updated.source, content="前缀 🤣 [MoUI](https://moui.dev) tail")
+  inspect(updated.source, content="前缀 🤣 [MoUI](https://wzzc-dev.github.io/MoUI) tail")
   guard updated.selection is Some(selection) else {
     fail("expected link text selection")
   }
