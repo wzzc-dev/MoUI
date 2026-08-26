@@ -182,7 +182,10 @@ test "markdown editor link target command updates and wraps selected text" {
     SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
   )
-  inspect(updated.source, content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today")
+  inspect(
+    updated.source,
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today",
+  )
   guard updated.selection is Some(selection) else {
     fail("expected updated link text selection")
   }
@@ -193,7 +196,10 @@ test "markdown editor link target command updates and wraps selected text" {
     SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 10, selection: Some(@core.TextRange::new(start=6, end=10)) }),
   )
-  inspect(wrapped.source, content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today")
+  inspect(
+    wrapped.source,
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today",
+  )
 }
 
 ///|
@@ -203,7 +209,10 @@ test "markdown editor link target command updates target at caret" {
     SetLinkTarget("https://wzzc-dev.github.io/MoUI"),
     Some({ caret: 9, selection: None }),
   )
-  inspect(inline.source, content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today")
+  inspect(
+    inline.source,
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today",
+  )
   guard inline.selection is Some(inline_selection) else {
     fail("expected inline link text selection")
   }

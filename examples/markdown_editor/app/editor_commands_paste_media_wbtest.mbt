@@ -6,7 +6,10 @@ test "markdown editor paste url wraps or updates selected link text" {
     Some(@core.TextRange::new(start=6, end=10)),
     "https://wzzc-dev.github.io/MoUI",
   ).unwrap()
-  inspect(wrapped.text, content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today")
+  inspect(
+    wrapped.text,
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today",
+  )
   inspect(wrapped.caret, content="11")
   guard wrapped.selection is Some(wrapped_selection) else {
     fail("expected wrapped link selection")
@@ -19,7 +22,10 @@ test "markdown editor paste url wraps or updates selected link text" {
     Some(wrapped_selection),
     "https://docs.https://wzzc-dev.github.io/MoUI",
   ).unwrap()
-  inspect(updated.text, content="Visit [MoUI](https://docs.https://wzzc-dev.github.io/MoUI) today")
+  inspect(
+    updated.text,
+    content="Visit [MoUI](https://docs.https://wzzc-dev.github.io/MoUI) today",
+  )
   guard updated.selection is Some(updated_selection) else {
     fail("expected updated link selection")
   }
@@ -59,7 +65,10 @@ test "markdown editor paste markdown link reuses target for selected text" {
     Some(@core.TextRange::new(start=6, end=10)),
     "[Other](https://wzzc-dev.github.io/MoUI/docs \"Docs\")",
   ).unwrap()
-  inspect(titled.text, content="Visit [Docs](https://wzzc-dev.github.io/MoUI/docs) today")
+  inspect(
+    titled.text,
+    content="Visit [Docs](https://wzzc-dev.github.io/MoUI/docs) today",
+  )
 
   let angled = markdown_editor_transform_input(
     "Visit Docs today",
@@ -136,7 +145,10 @@ test "markdown editor paste link target updates current link context" {
     None,
     "https://wzzc-dev.github.io/MoUI",
   ).unwrap()
-  inspect(updated.text, content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today")
+  inspect(
+    updated.text,
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI) today",
+  )
   inspect(updated.caret, content="11")
   guard updated.selection is Some(selection) else {
     fail("expected linked text selection")

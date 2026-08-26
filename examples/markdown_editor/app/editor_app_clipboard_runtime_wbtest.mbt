@@ -173,7 +173,10 @@ test "markdown editor paste command links selected text with url" {
   )
   assert_true(pasted.handled)
   assert_true(pasted.changed)
-  inspect(app.document(), content="Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
+  inspect(
+    app.document(),
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI)",
+  )
   let input = runtime.focused_text_input()
   inspect(input.caret, content="11")
   guard input.selection is Some(selection) else {

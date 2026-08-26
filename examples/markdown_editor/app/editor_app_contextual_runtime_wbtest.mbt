@@ -164,11 +164,17 @@ test "markdown editor app undo and redo target edits" {
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
   app.set_link_target("https://wzzc-dev.github.io/MoUI")
   app.apply_link_target()
-  inspect(app.document(), content="Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
+  inspect(
+    app.document(),
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI)",
+  )
   assert_true(app.undo())
   inspect(app.document(), content="Visit [MoUI](https://old.example)")
   assert_true(app.redo())
-  inspect(app.document(), content="Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
+  inspect(
+    app.document(),
+    content="Visit [MoUI](https://wzzc-dev.github.io/MoUI)",
+  )
 }
 
 ///|
@@ -212,7 +218,9 @@ test "markdown editor app target inputs sync from selection and apply edits" {
   app.set_link_target("team@example.dev")
   app.apply_link_target()
   inspect(app.document(), content="Mail <team@example.dev>")
-  app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI) and ![logo](old.png)")
+  app.set_document(
+    "Visit [MoUI](https://wzzc-dev.github.io/MoUI) and ![logo](old.png)",
+  )
   app.set_selection(41, Some(@core.TextRange::new(start=37, end=41)))
   guard app.target_kind() is ImageTarget else {
     fail("expected image target mode")
