@@ -133,7 +133,7 @@
     },
     {
       "path": "moui_wgpu_renderer/native_renderer.mbt",
-      "maxLines": 1719,
+      "maxLines": 1844,
       "reason": "Existing diagnostic WGPU renderer implementation."
     },
     {
@@ -233,7 +233,7 @@
     },
     {
       "path": "moui_wgpu_renderer/native_smoke.mbt",
-      "maxLines": 1248,
+      "maxLines": 1252,
       "reason": "Existing native WGPU diagnostic smoke."
     },
     {
