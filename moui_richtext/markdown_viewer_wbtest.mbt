@@ -705,6 +705,9 @@ test "markdown_viewer reuses prepared document until layout inputs change" {
   assert_true(first_prepare_count > 0)
   ignore(cache.prepare(source, 180.0, mv_font(), counted))
   assert_eq(measure_count[0], first_prepare_count)
+  let rebuilt_cache = RichTextDocumentViewCache::new()
+  ignore(rebuilt_cache.prepare(source, 180.0, mv_font(), counted))
+  assert_eq(measure_count[0], first_prepare_count)
   ignore(cache.prepare(source, 160.0, mv_font(), counted))
   assert_true(measure_count[0] > first_prepare_count)
 }

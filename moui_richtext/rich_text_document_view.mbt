@@ -37,6 +37,29 @@ fn RichTextDocumentViewPrepared::new(
 }
 
 ///|
+/// A bounded process-local entry keeps prepared documents alive across view
+/// reconciliation. Scroll position is application state in the virtual-list
+/// API, so the viewer node itself is rebuilt for every scroll update; without
+/// this shared store each rebuilt node would parse and measure its source again.
+priv struct RichTextDocumentViewCacheEntry {
+  source : String
+  width : Double
+  base_font : @core.FontSpec
+  text_system_id : String
+  prepared : RichTextDocumentViewPrepared
+}
+
+///|
+let rich_text_document_view_cache_store : Ref[
+  Array[RichTextDocumentViewCacheEntry],
+] = Ref([])
+
+///|
+fn rich_text_document_view_cache_capacity() -> Int {
+  64
+}
+
+///|
 priv struct RichTextDocumentViewCache {
   mut source : String?
   mut width : Double
@@ -73,6 +96,22 @@ fn RichTextDocumentViewCache::prepare(
       None => ()
     }
   }
+  // View nodes are immutable snapshots and may be recreated by a model
+  // update. Reuse a recent prepared document before doing Markdown parsing or
+  // native text measurement again.
+  for entry in rich_text_document_view_cache_store.val {
+    if entry.source == source &&
+      entry.width == width &&
+      entry.base_font == base_font &&
+      entry.text_system_id == text_system.id() {
+      self.source = Some(source)
+      self.width = width
+      self.base_font = Some(base_font)
+      self.text_system_id = text_system.id()
+      self.prepared = Some(entry.prepared)
+      return entry.prepared
+    }
+  }
   let session = MarkdownDocumentSession::new(source)
   let dummy_selection : MarkdownEditorSelection = { caret: 0, selection: None }
   let document = session.rich_text(
@@ -93,6 +132,17 @@ fn RichTextDocumentViewCache::prepare(
   self.base_font = Some(base_font)
   self.text_system_id = text_system.id()
   self.prepared = Some(prepared)
+  let store = rich_text_document_view_cache_store.val
+  if store.length() >= rich_text_document_view_cache_capacity() {
+    ignore(store.remove(0))
+  }
+  store.push({
+    source,
+    width,
+    base_font,
+    text_system_id: text_system.id(),
+    prepared,
+  })
   prepared
 }
 
