@@ -10,6 +10,8 @@ let atlas_padding : Int = 1
 ///|
 priv struct NativeFontCache {
   text_engine : NativeTextEngine
+  measure_cache : Map[String, @core.TextLayoutResult]
+  layout_cache : Map[String, NativeTextLayout]
 }
 
 ///|
@@ -154,7 +156,7 @@ fn NativeFontCache::new() -> NativeFontCache {
 fn NativeFontCache::new_with_engine(
   text_engine : NativeTextEngine,
 ) -> NativeFontCache {
-  { text_engine, }
+  { text_engine, measure_cache: Map([]), layout_cache: Map([]) }
 }
 
 ///|

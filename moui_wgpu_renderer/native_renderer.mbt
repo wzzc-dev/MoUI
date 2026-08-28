@@ -15,9 +15,11 @@ struct RendererHandle {
   mut visual_shader : @wgpu_mbt.ShaderModule?
   mut visual_pipeline : @wgpu_mbt.RenderPipeline?
   mut visual_vertex_buffer : @wgpu_mbt.Buffer?
+  mut visual_vertex_capacity : UInt64
   mut text_shader : @wgpu_mbt.ShaderModule?
   mut text_pipeline : @wgpu_mbt.RenderPipeline?
   mut text_vertex_buffer : @wgpu_mbt.Buffer?
+  mut text_vertex_capacity : UInt64
   mut text_atlas_texture : @wgpu_mbt.Texture?
   mut text_atlas_view : @wgpu_mbt.TextureView?
   mut text_sampler : @wgpu_mbt.Sampler?
@@ -27,6 +29,7 @@ struct RendererHandle {
   mut image_shader : @wgpu_mbt.ShaderModule?
   mut image_pipeline : @wgpu_mbt.RenderPipeline?
   mut image_vertex_buffer : @wgpu_mbt.Buffer?
+  mut image_vertex_capacity : UInt64
   mut image_sampler : @wgpu_mbt.Sampler?
   mut image_bind_group_layout : @wgpu_mbt.BindGroupLayout?
   mut image_pipeline_layout : @wgpu_mbt.PipelineLayout?
@@ -391,9 +394,11 @@ fn create_with_surface(
     visual_shader: Some(visual_shader),
     visual_pipeline: Some(visual_pipeline),
     visual_vertex_buffer: None,
+    visual_vertex_capacity: 0UL,
     text_shader: Some(text_shader),
     text_pipeline: Some(text_pipeline),
     text_vertex_buffer: None,
+    text_vertex_capacity: 0UL,
     text_atlas_texture: Some(text_atlas_texture),
     text_atlas_view: Some(text_atlas_view),
     text_sampler: Some(text_sampler),
@@ -403,6 +408,7 @@ fn create_with_surface(
     image_shader: Some(image_shader),
     image_pipeline: Some(image_pipeline),
     image_vertex_buffer: None,
+    image_vertex_capacity: 0UL,
     image_sampler: Some(image_sampler),
     image_bind_group_layout: Some(image_bind_group_layout),
     image_pipeline_layout: Some(image_pipeline_layout),
@@ -686,8 +692,11 @@ fn RendererHandle::dispose(self : RendererHandle) -> Unit {
   self.adapter = None
   self.instance = None
   self.visual_vertex_buffer = None
+  self.visual_vertex_capacity = 0UL
   self.text_vertex_buffer = None
+  self.text_vertex_capacity = 0UL
   self.image_vertex_buffer = None
+  self.image_vertex_capacity = 0UL
   self.image_pipeline = None
   self.image_pipeline_layout = None
   self.image_bind_group_layout = None
@@ -776,6 +785,7 @@ fn RendererHandle::render_wgpu(
         self.encode_plan_to_view(
           encoder, device, queue, texture, view, visual_pipeline, root_plan, clear,
           frame_offscreens, frame_backdrops, frame_buffers,
+          true,
         )
         let command_buffer = encoder.finish()
         queue.submit_one(command_buffer)
@@ -810,9 +820,15 @@ fn RendererHandle::encode_plan_to_view(
   frame_offscreens : Array[NativeOffscreenTexture],
   frame_backdrops : Array[NativeBackdropTexture],
   frame_buffers : Array[@wgpu_mbt.Buffer],
+  persistent_buffers : Bool,
 ) -> Unit {
-  let buffers = upload_plan_gpu_buffers(device, queue, plan)
-  buffers.append_to_frame(frame_buffers)
+  let buffers = if persistent_buffers {
+    self.upload_root_gpu_buffers(device, queue, plan)
+  } else {
+    let buffers = upload_plan_gpu_buffers(device, queue, plan)
+    buffers.append_to_frame(frame_buffers)
+    buffers
+  }
   let mut first_pass = true
   let mut span_start = 0
   let mut index = 0
@@ -1007,6 +1023,7 @@ fn RendererHandle::draw_native_layer_to_view(
     frame_offscreens,
     frame_backdrops,
     frame_buffers,
+    false,
   )
   if layer.blend_mode == @core.BlendMode::Overlay {
     return self.draw_overlay_layer_to_view(
@@ -1362,6 +1379,115 @@ fn upload_plan_gpu_buffers(
     )
     queue.write_buffer(buffer, 0UL, bytes)
     image_buffer = Some(buffer)
+  }
+  {
+    visual_buffer,
+    text_buffer,
+    image_buffer,
+    visual_size,
+    text_size,
+    image_size,
+  }
+}
+
+///|
+/// Upload the root draw plan into buffers retained by the renderer. The root
+/// plan is rebuilt for every frame, but its vertex layout is stable during a
+/// scroll; reusing these allocations avoids a native buffer create/write/
+/// release cycle on every display tick. Nested offscreen layers continue to
+/// use frame-owned buffers because their plans can be encoded recursively.
+fn RendererHandle::upload_root_gpu_buffers(
+  self : RendererHandle,
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
+  plan : NativeDrawPlan,
+) -> NativePlanGpuBuffers {
+  let usage = @wgpu_mbt.BufferUsage::from_u64(
+    @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
+  )
+  let mut visual_size = 0UL
+  let mut text_size = 0UL
+  let mut image_size = 0UL
+  let visual_buffer = if plan.visual_vertices.length() > 0 {
+    let bytes = visual_vertices_to_bytes(plan.visual_vertices)
+    let required = bytes.length().to_uint64()
+    visual_size = required
+    match self.visual_vertex_buffer {
+      Some(buffer) if self.visual_vertex_capacity >= required => {
+        queue.write_buffer(buffer, 0UL, bytes)
+        Some(buffer)
+      }
+      _ => {
+        match self.visual_vertex_buffer {
+          Some(buffer) => buffer.release()
+          None => ()
+        }
+        let buffer = device.create_buffer(
+          size=@render.grow_capacity(required),
+          usage~,
+        )
+        queue.write_buffer(buffer, 0UL, bytes)
+        self.visual_vertex_buffer = Some(buffer)
+        self.visual_vertex_capacity = @render.grow_capacity(required)
+        Some(buffer)
+      }
+    }
+  } else {
+    None
+  }
+  let text_buffer = if plan.text_vertices.length() > 0 {
+    let bytes = text_vertices_to_bytes(plan.text_vertices)
+    let required = bytes.length().to_uint64()
+    text_size = required
+    match self.text_vertex_buffer {
+      Some(buffer) if self.text_vertex_capacity >= required => {
+        queue.write_buffer(buffer, 0UL, bytes)
+        Some(buffer)
+      }
+      _ => {
+        match self.text_vertex_buffer {
+          Some(buffer) => buffer.release()
+          None => ()
+        }
+        let buffer = device.create_buffer(
+          size=@render.grow_capacity(required),
+          usage~,
+        )
+        queue.write_buffer(buffer, 0UL, bytes)
+        self.text_vertex_buffer = Some(buffer)
+        self.text_vertex_capacity = @render.grow_capacity(required)
+        Some(buffer)
+      }
+    }
+  } else {
+    None
+  }
+  let image_buffer = if plan.image_vertices.length() > 0 {
+    let bytes = image_vertices_to_bytes(plan.image_vertices)
+    let required = bytes.length().to_uint64()
+    image_size = required
+    match self.image_vertex_buffer {
+      Some(buffer) if self.image_vertex_capacity >= required => {
+        queue.write_buffer(buffer, 0UL, bytes)
+        Some(buffer)
+      }
+      _ => {
+        match self.image_vertex_buffer {
+          Some(buffer) => buffer.release()
+          None => ()
+        }
+        let buffer = device.create_buffer(
+          size=@render.grow_capacity(required),
+          usage~,
+        )
+        queue.write_buffer(buffer, 0UL, bytes)
+        self.image_vertex_buffer = Some(buffer)
+        self.image_vertex_capacity = @render.grow_capacity(required)
+        Some(buffer)
+      }
+    }
+  } else {
+    None
   }
   {
     visual_buffer,

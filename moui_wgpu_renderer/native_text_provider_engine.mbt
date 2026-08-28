@@ -43,15 +43,20 @@ fn NativeTextEngine::layout_run(
   run : @core.TextRun,
   scale_factor : Double,
 ) -> NativeTextLayout? {
-  let _ = cache
-  match (self.provider.layout_run)(run, scale_factor) {
+  let key = run.text + "|" + run.font.to_json().stringify() + "|" +
+    run.frame.size.width.to_string() + "|" + scale_factor.to_string()
+  match cache.layout_cache.get(key) {
+    Some(layout) => Some(layout)
+    None => match (self.provider.layout_run)(run, scale_factor) {
     Some(layout) =>
       if layout.is_valid_for_run(run.text) {
+        cache.layout_cache[key] = layout
         Some(layout)
       } else {
         self.layout_with_fallback(run, scale_factor)
       }
     None => self.layout_with_fallback(run, scale_factor)
+    }
   }
 }
 
@@ -156,7 +161,16 @@ fn native_measure_text_layout(
   cache : NativeFontCache,
   input : @core.TextLayoutInput,
 ) -> @core.TextLayoutResult {
-  cache.text_engine.measure(cache, input)
+  let key = input.text + "|" + input.font.to_json().stringify() + "|" +
+    input.max_width.to_json().stringify()
+  match cache.measure_cache.get(key) {
+    Some(result) => result
+    None => {
+      let result = cache.text_engine.measure(cache, input)
+      cache.measure_cache[key] = result
+      result
+    }
+  }
 }
 
 ///|

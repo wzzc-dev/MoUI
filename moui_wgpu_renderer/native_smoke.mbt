@@ -225,9 +225,11 @@ fn create_headless_proof_renderer(
     visual_shader: Some(visual_shader),
     visual_pipeline: Some(visual_pipeline),
     visual_vertex_buffer: None,
+    visual_vertex_capacity: 0UL,
     text_shader: Some(text_shader),
     text_pipeline: Some(text_pipeline),
     text_vertex_buffer: None,
+    text_vertex_capacity: 0UL,
     text_atlas_texture: Some(text_atlas_texture),
     text_atlas_view: Some(text_atlas_view),
     text_sampler: Some(text_sampler),
@@ -237,6 +239,7 @@ fn create_headless_proof_renderer(
     image_shader: Some(image_shader),
     image_pipeline: Some(image_pipeline),
     image_vertex_buffer: None,
+    image_vertex_capacity: 0UL,
     image_sampler: Some(image_sampler),
     image_bind_group_layout: Some(image_bind_group_layout),
     image_pipeline_layout: Some(image_pipeline_layout),
@@ -358,6 +361,7 @@ fn RendererHandle::render_offscreen_proof_frame(
     frame_offscreens,
     frame_backdrops,
     frame_buffers,
+    false,
   )
   let row_bytes = align_native_smoke_row_bytes(width.reinterpret_as_int() * 4)
   let readback_size = (row_bytes * height.reinterpret_as_int()).to_uint64()
