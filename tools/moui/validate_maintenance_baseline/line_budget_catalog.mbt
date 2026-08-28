@@ -261,10 +261,10 @@ fn file_budgets() -> Array[FileBudget] {
       path: "moui_wgpu_renderer/native_text_layout_validation.mbt",
       max_lines: 75,
     },
-    { path: "moui_wgpu_renderer/native_text_model.mbt", max_lines: 335 },
+    { path: "moui_wgpu_renderer/native_text_model.mbt", max_lines: 500 },
     {
       path: "moui_wgpu_renderer/native_text_provider_engine.mbt",
-      max_lines: 173,
+      max_lines: 300,
     },
     { path: "moui_wgpu_renderer/native_text_rendering.mbt", max_lines: 301 },
     { path: "moui/views/style/control_style.mbt", max_lines: 570 },

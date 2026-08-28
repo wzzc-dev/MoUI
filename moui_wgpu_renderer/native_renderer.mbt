@@ -784,8 +784,7 @@ fn RendererHandle::render_wgpu(
         let frame_buffers : Array[@wgpu_mbt.Buffer] = []
         self.encode_plan_to_view(
           encoder, device, queue, texture, view, visual_pipeline, root_plan, clear,
-          frame_offscreens, frame_backdrops, frame_buffers,
-          true,
+          frame_offscreens, frame_backdrops, frame_buffers, true,
         )
         let command_buffer = encoder.finish()
         queue.submit_one(command_buffer)
