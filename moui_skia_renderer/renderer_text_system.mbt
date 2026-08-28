@@ -5,6 +5,37 @@ priv struct SkiaParagraphClusterBox {
 }
 
 ///|
+priv struct SkiaTextMeasureCacheEntry {
+  input : @core.TextLayoutInput
+  result : @core.TextLayoutResult
+}
+
+///|
+fn skia_text_measure_cache_capacity() -> Int {
+  512
+}
+
+///|
+fn skia_cached_measure_text(
+  input : @core.TextLayoutInput,
+  resolution : SkiaFontResolution,
+  cache : Ref[Array[SkiaTextMeasureCacheEntry]],
+) -> @core.TextLayoutResult {
+  for entry in cache.val {
+    if entry.input == input {
+      return entry.result
+    }
+  }
+  let result = skia_measure_text_for_resolution(input, resolution)
+  let entries = cache.val
+  if entries.length() >= skia_text_measure_cache_capacity() {
+    ignore(entries.remove(0))
+  }
+  entries.push({ input, result })
+  result
+}
+
+///|
 pub fn SkiaRasterRenderer::text_system(
   self : SkiaRasterRenderer,
 ) -> @core.TextSystem {
@@ -15,23 +46,31 @@ pub fn SkiaRasterRenderer::text_system(
 pub fn skia_text_system(
   resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
 ) -> @core.TextSystem {
+  let measure_cache : Ref[Array[SkiaTextMeasureCacheEntry]] = Ref([])
   match resolution {
     SkiaFontResolution::EmptyTypeface =>
       if skia_available() {
-        skia_empty_typeface_text_system()
+        skia_empty_typeface_text_system(measure_cache)
       } else {
         @core.TextSystem::fallback()
       }
-    SkiaFontResolution::SystemFontMgr => skia_system_font_mgr_text_system()
+    SkiaFontResolution::SystemFontMgr =>
+      skia_system_font_mgr_text_system(measure_cache)
   }
 }
 
 ///|
-fn skia_empty_typeface_text_system() -> @core.TextSystem {
+fn skia_empty_typeface_text_system(
+  measure_cache : Ref[Array[SkiaTextMeasureCacheEntry]],
+) -> @core.TextSystem {
   @core.TextSystem::new(
     id="skia-raster-empty-typeface-text-system",
     measure=input => {
-      skia_measure_text_for_resolution(input, SkiaFontResolution::EmptyTypeface)
+      skia_cached_measure_text(
+        input,
+        SkiaFontResolution::EmptyTypeface,
+        measure_cache,
+      )
     },
     paragraph_layout=Some(input => {
       skia_fallback_paragraph_layout_result(
@@ -44,11 +83,17 @@ fn skia_empty_typeface_text_system() -> @core.TextSystem {
 }
 
 ///|
-fn skia_system_font_mgr_text_system() -> @core.TextSystem {
+fn skia_system_font_mgr_text_system(
+  measure_cache : Ref[Array[SkiaTextMeasureCacheEntry]],
+) -> @core.TextSystem {
   @core.TextSystem::new(
     id="skia-raster-text-system",
     measure=input => {
-      skia_measure_text_for_resolution(input, SkiaFontResolution::SystemFontMgr)
+      skia_cached_measure_text(
+        input,
+        SkiaFontResolution::SystemFontMgr,
+        measure_cache,
+      )
     },
     paragraph_layout=Some(input => {
       match skia_native_paragraph_layout_result(input) {
