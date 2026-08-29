@@ -2246,18 +2246,33 @@ moonbit_skia_surface_direct3d_present_and_acquire_next(
   }
   if (swap_chain->width != static_cast<UINT>(width) ||
     swap_chain->height != static_cast<UINT>(height)) {
+    // Drain every holder of the back buffers first: free the resource cache,
+    // then flushAndSubmit so Skia's own fence gates the deferred D3D12
+    // release queue, and retire leftovers with performDeferredCleanup.
     gpu_context->freeGpuResources();
-    // Push deferred D3D12 resource releases through the queue and wait for
-    // the GPU to go idle before touching the swap chain.
-    gpu_context->flush();
-    (void)gpu_context->submit();
+    gpu_context->flushAndSubmit();
+    gpu_context->performDeferredCleanup(std::chrono::milliseconds(0));
     (void)moonbit_skia_d3d12_wait_for_frame(swap_chain);
-    // DXGI allows only one flip-model swap chain per HWND, and ResizeBuffers
-    // keeps failing with DXGI_ERROR_INVALID_CALL while any wrapper still
-    // references a back buffer, so release this swap chain and recreate it at
-    // the new size; by this point every Skia wrapper has dropped its
-    // back-buffer surface and the only COM reference left is ours.
-    swap_chain->swap_chain.Reset();
+    hr = swap_chain->swap_chain->ResizeBuffers(
+      3,
+      static_cast<UINT>(width),
+      static_cast<UINT>(height),
+      DXGI_FORMAT_R8G8B8A8_UNORM,
+      0
+    );
+    if (FAILED(hr)) {
+      // DXGI allows only one flip-model swap chain per HWND, and
+      // ResizeBuffers keeps failing with DXGI_ERROR_INVALID_CALL while any
+      // wrapper still references a back buffer, so release this swap chain
+      // and recreate it at the new size; by this point every Skia wrapper
+      // has dropped its back-buffer surface and the only COM reference left
+      // is ours.
+      gpu_context->freeGpuResources();
+      gpu_context->flushAndSubmit();
+      gpu_context->performDeferredCleanup(std::chrono::milliseconds(0));
+      (void)moonbit_skia_d3d12_wait_for_frame(swap_chain);
+      swap_chain->swap_chain.Reset();
+    }
     HWND hwnd = reinterpret_cast<HWND>(static_cast<uintptr_t>(hwnd_ptr));
     ComPtr<IDXGIFactory4> resize_factory;
     if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&resize_factory)))) {
