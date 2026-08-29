@@ -1,6 +1,9 @@
 #ifdef _WIN32
 
 #define WIN32_LEAN_AND_MEAN
+// windows.h defines min/max macros unless NOMINMAX is set; this translation
+// unit uses std::max/std::min, and not every build path sets the CL flag.
+#define NOMINMAX
 #include <windows.h>
 #ifndef interface
 // Some MoonBit MSVC invocations do not inherit the COM interface macro from

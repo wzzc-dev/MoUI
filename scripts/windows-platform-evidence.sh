@@ -67,6 +67,8 @@ esac
 skia_repo="$REPO_ROOT/moui_skia"
 skia_pkg="$skia_repo/native/moon.pkg"
 skia_pkg_backup="$skia_pkg.moui-evidence.bak"
+showcase_pkg="$REPO_ROOT/examples/showcase/windows_skia/moon.pkg"
+showcase_backup="$showcase_pkg.moui-evidence.bak"
 showcase_log="$resolved_log_dir/showcase-windows-skia-first-frame.log"
 preflight_log="$resolved_log_dir/windows-platform-evidence-preflight.log"
 summary_log="$resolved_log_dir/windows-platform-evidence-summary.log"
@@ -92,13 +94,23 @@ restore_skia_pkg() {
     rm -f "$skia_pkg_backup"
     echo "Restored $skia_pkg"
   fi
+  if [[ -f "$showcase_backup" ]]; then
+    cp "$showcase_backup" "$showcase_pkg"
+    rm -f "$showcase_backup"
+    echo "Restored $showcase_pkg"
+  fi
 }
 
 if [[ -f "$skia_pkg_backup" ]]; then
   echo "stale Skia package backup exists: $skia_pkg_backup" >&2
   exit 1
 fi
+if [[ -f "$showcase_backup" ]]; then
+  echo "stale Showcase package backup exists: $showcase_backup" >&2
+  exit 1
+fi
 cp "$skia_pkg" "$skia_pkg_backup"
+cp "$showcase_pkg" "$showcase_backup"
 trap restore_skia_pkg EXIT
 
 if [[ "$skia_provider" == "release" ]]; then
@@ -145,14 +157,51 @@ powershell -NoProfile -ExecutionPolicy Bypass -File \
   -SkiaLinkMode "$skia_link_mode" \
   -Write 2>&1 | tee -a "$preflight_log"
 
-echo "=== Step 3: Build Showcase Windows Skia ===" | tee -a "$preflight_log"
+echo "=== Step 3: Configure Showcase package link flags ===" | tee -a "$preflight_log"
+# The MSVC final link only sees link flags carried by build.js link_configs;
+# with MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 that carrier is empty, so inject the
+# generated Skia flags into the executable package directly (same pattern as
+# scripts/linux-platform-evidence.sh).
+win_stub_cc_flags="$(sed -n 's/.*"stub-cc-flags": "\(.*\)",/\1/p' "$skia_pkg" | tail -n 1)"
+win_link_flags="$(sed -n 's/.*"cc-link-flags": "\(.*\)",/\1/p' "$skia_pkg" | tail -n 1)"
+if [[ -z "$win_stub_cc_flags" || -z "$win_link_flags" ]]; then
+  echo "Failed to extract Skia link flags from $skia_pkg" >&2
+  exit 1
+fi
+echo "  Skia link flags: $win_link_flags" | tee -a "$preflight_log"
+
+cat > "$showcase_pkg" <<PKGEOF
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/windows" @windows_backend,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "examples/showcase",
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  link: {
+    "native": {
+      "stub-cc-flags": "$win_stub_cc_flags",
+      "cc-link-flags": "$win_link_flags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+PKGEOF
+echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
+
+echo "=== Step 4: Build Showcase Windows Skia ===" | tee -a "$preflight_log"
 cd "$REPO_ROOT"
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
   MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
   moon build examples/showcase/windows_skia --target native 2>&1 \
   | tee -a "$preflight_log"
 
-echo "=== Step 4: Run Showcase first-frame smoke ===" | tee -a "$preflight_log"
+echo "=== Step 5: Run Showcase first-frame smoke ===" | tee -a "$preflight_log"
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
   MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
   MOUI_FIRST_FRAME_EXIT=1 \
