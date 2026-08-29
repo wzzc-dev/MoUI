@@ -223,6 +223,10 @@ fn create_skia_gpu_host_renderer(
     if fallback_active.val {
       return true
     }
+    println(
+      "Skia GPU presenter deactivated; switching to the CPU presenter at " +
+      "\{next_metrics.physical_size.width}x\{next_metrics.physical_size.height}",
+    )
     // Releasing the GPU surface before the CPU presenter locks the native
     // window is required on Android and HarmonyOS (both reuse the same host
     // window for the raster fallback).

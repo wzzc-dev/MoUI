@@ -2247,14 +2247,45 @@ moonbit_skia_surface_direct3d_present_and_acquire_next(
   if (swap_chain->width != static_cast<UINT>(width) ||
     swap_chain->height != static_cast<UINT>(height)) {
     gpu_context->freeGpuResources();
-    hr = swap_chain->swap_chain->ResizeBuffers(
-      3,
-      static_cast<UINT>(width),
-      static_cast<UINT>(height),
-      DXGI_FORMAT_R8G8B8A8_UNORM,
-      0
-    );
-    if (FAILED(hr)) {
+    // Push deferred D3D12 resource releases through the queue and wait for
+    // the GPU to go idle before touching the swap chain.
+    gpu_context->flush();
+    (void)gpu_context->submit();
+    (void)moonbit_skia_d3d12_wait_for_frame(swap_chain);
+    // DXGI allows only one flip-model swap chain per HWND, and ResizeBuffers
+    // keeps failing with DXGI_ERROR_INVALID_CALL while any wrapper still
+    // references a back buffer, so release this swap chain and recreate it at
+    // the new size; by this point every Skia wrapper has dropped its
+    // back-buffer surface and the only COM reference left is ours.
+    swap_chain->swap_chain.Reset();
+    HWND hwnd = reinterpret_cast<HWND>(static_cast<uintptr_t>(hwnd_ptr));
+    ComPtr<IDXGIFactory4> resize_factory;
+    if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&resize_factory)))) {
+      DXGI_SWAP_CHAIN_DESC1 resize_description = {};
+      resize_description.Width = static_cast<UINT>(width);
+      resize_description.Height = static_cast<UINT>(height);
+      resize_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+      resize_description.SampleDesc.Count = 1;
+      resize_description.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+      resize_description.BufferCount = 3;
+      resize_description.Scaling = DXGI_SCALING_STRETCH;
+      resize_description.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+      resize_description.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+      ComPtr<IDXGISwapChain1> recreated;
+      if (SUCCEEDED(resize_factory->CreateSwapChainForHwnd(
+        swap_chain->queue.Get(),
+        hwnd,
+        &resize_description,
+        nullptr,
+        nullptr,
+        &recreated
+      ))) {
+        if (FAILED(recreated.As(&swap_chain->swap_chain))) {
+          swap_chain->swap_chain.Reset();
+        }
+      }
+    }
+    if (swap_chain->swap_chain == nullptr) {
       swap_chain->last_device_removed_reason = swap_chain->device->GetDeviceRemovedReason();
       moonbit_skia_com_release(swap_chain);
       return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
