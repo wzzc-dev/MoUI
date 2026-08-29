@@ -127,7 +127,7 @@ This file is generated from repository manifests and validator reports.
 | macos | passed | passed | passed | native-window | current supported macOS runner | Apple Clang with Metal | metal-direct | metal-direct |
 | web | passed | passed | passed | browser | WebAssembly GC browser | MoonBit wasm-gc | browser-webgpu | browser-webgpu |
 | wechat | partial | partial | partial | wechat-mini-program | WeChat Mini Program Skyline Canvas 2D | MoonBit wasm-gc / WeChat Developer Tools | canvas2d-wasm | unverified |
-| windows | passed | passed | partial | native-window | Windows 10 | MSVC 2022 | d3d12-direct | d3d12-direct |
+| windows | passed | passed | passed | native-window | Windows 10 | MSVC 2022 | d3d12-direct | d3d12-direct |
 
 ## Documentation Catalog
 
