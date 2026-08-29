@@ -5,7 +5,8 @@ fn main {
     environment=@windows_backend.app_environment(),
   )
   @runtime.run_app("MoUI Showcase", runtime)
-  .render(@render_skia.raster())
+  // .render(@render_skia.raster())
+  .render(@render_skia.gpu(platform=@render_skia.NativeGpuPlatform::Windows))
   // .render_all(
   //   @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Windows),
   // )
