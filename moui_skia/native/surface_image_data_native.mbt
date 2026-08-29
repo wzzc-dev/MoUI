@@ -945,7 +945,11 @@ pub fn Surface::direct3d_window_surface(
 ///
 /// The host renderer has already called `Surface::flush_and_submit()` before
 /// this function; this call only asks the swap chain to present and acquires
-/// the next back buffer. Returns:
+/// the next back buffer. `expected_size` is the host window's current physical
+/// size: when it differs from the swap chain extent, the swap chain is resized
+/// via `ResizeBuffers` after the present (an HWND can hold only one flip-model
+/// swap chain, so resizing in place is the only live-resize path on Windows).
+/// Returns:
 /// - `Some(next_surface)` when the swap chain was presented and a next back
 ///   buffer was successfully acquired and wrapped.
 /// - `None` when the swap chain cannot produce a next back buffer (e.g. device
@@ -955,22 +959,38 @@ pub fn Surface::direct3d_present_and_acquire_next(
   surface : Surface,
   context : GpuContext,
   hwnd_ptr : UInt64,
+  expected_size? : @skia.ISize? = None,
 ) -> Surface? {
   if !context.is_available() || hwnd_ptr == 0 {
     return None
   }
   let descriptor = surface.descriptor
+  let size = match expected_size {
+    Some(size) if !size.is_empty() => size
+    _ => descriptor.dimensions()
+  }
+  let next_descriptor = if size == descriptor.dimensions() {
+    descriptor
+  } else {
+    @skia.SurfaceDescriptor::gpu_n32_premul(
+      size,
+      origin=descriptor.origin,
+      sample_count=descriptor.sample_count,
+      stencil_bits=descriptor.stencil_bits,
+      budget=descriptor.budget,
+    )
+  }
   Surface::from_handle(
     native_surface_direct3d_present_and_acquire_next(
       surface.handle,
       hwnd_ptr,
-      descriptor.width(),
-      descriptor.height(),
+      size.width,
+      size.height,
       native_surface_origin_ordinal(descriptor.origin),
       descriptor.sample_count,
       descriptor.stencil_bits,
     ),
-    descriptor,
+    next_descriptor,
   )
 }
 
