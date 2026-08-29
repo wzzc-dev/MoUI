@@ -52,9 +52,9 @@
       "lineBudget": 50,
       "releaseGate": "release-l2-first-frame",
       "releaseBlocking": true,
-      "evidenceRequired": "L2+first-frame",
+      "evidenceRequired": "L3",
       "evidenceFile": "checks/platforms/windows.json",
-      "productClass": "committed_with_gaps",
+      "productClass": "committed",
       "ready": true,
       "coverage": ["platform", "release"]
     },

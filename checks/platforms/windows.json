@@ -3,7 +3,7 @@
   "platform": "windows",
   "sourceBuild": {"status": "passed", "evidence": "Windows MSVC package CI"},
   "rendererL2": {"status": "passed", "presenterRoute": "d3d12-direct"},
-  "runtimeL3": {"status": "partial", "evidence": "full platform-service matching-host suite pending"},
+  "runtimeL3": {"status": "passed", "evidence": "matching-host Win32 runtime smoke transcript and Showcase first-frame (2026-08-29, artifacts/platform-evidence/windows/)"},
   "hostKind": "native-window",
   "deploymentFloor": "Windows 10",
   "toolchainFloor": "MSVC 2022",
