@@ -143,6 +143,20 @@ fn create_skia_gpu_host_renderer(
   image_decoder? : @render.RendererImageDecoder? = None,
 ) -> @render.RendererSession {
   let route = NativePlatformSurface::surface_route(platform)
+  // The host window's current physical size. Direct3D swap chains are resized
+  // in place through the present path (ResizeBuffers); an HWND cannot hold a
+  // second flip-model swap chain while the previous one is still referenced,
+  // so recreating the surface on resize is not an option on Windows.
+  let expected_metrics : Ref[@core.SurfaceMetrics] = Ref(metrics)
+  let expected_size = () => {
+    let metrics = expected_metrics.val
+    Some(
+      @moui_skia.ISize::new(
+        metrics.physical_size.width.ceil().max(1.0).to_int(),
+        metrics.physical_size.height.ceil().max(1.0).to_int(),
+      ),
+    )
+  }
   let gpu_target = HostGpuPresentTarget::new(
     description="Skia direct host GPU presenter",
     create_window_surface=(context, next_metrics) => {
@@ -160,6 +174,7 @@ fn create_skia_gpu_host_renderer(
         Some(context) =>
           skia_gpu_present_and_acquire_next(
             surface, context, platform, native_surface,
+            expected_size=expected_size(),
           )
         None => None
       }
@@ -273,6 +288,7 @@ fn create_skia_gpu_host_renderer(
           None => ()
         }
       } else {
+        expected_metrics.val = next_metrics
         gpu_renderer.resize(next_metrics) catch {
           err => {
             println("error resizing Skia GPU renderer: " + err.message())
@@ -426,6 +442,7 @@ fn skia_gpu_present_and_acquire_next(
   context : @skia_native.GpuContext,
   platform : NativeGpuPlatform,
   native_surface : @render.NativeSurface,
+  expected_size? : @moui_skia.ISize? = None,
 ) -> @skia_native.Surface? {
   match platform {
     NativeGpuPlatform::MacOS | NativeGpuPlatform::IOS =>
@@ -439,6 +456,7 @@ fn skia_gpu_present_and_acquire_next(
         surface,
         context,
         native_surface.surface_handle(),
+        expected_size~,
       )
     NativeGpuPlatform::Linux | NativeGpuPlatform::Android =>
       @skia_native.Surface::vulkan_present_and_acquire_next(

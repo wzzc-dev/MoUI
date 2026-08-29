@@ -564,10 +564,12 @@ pub fn SkiaRasterRenderer::resize(
       if self.gpu_surface_attached {
         match (gpu_target.create_window_surface)(self.gpu_context, metrics) {
           Some(surface) => surface
-          None => {
-            self.gpu_surface_attached = false
-            raise SkiaRendererError::SurfaceUnavailable
-          }
+          // Keep the current surface when the host cannot produce a resized
+          // window surface (Direct3D allows only one flip-model swap chain
+          // per HWND, so live resizes converge through the present path's
+          // ResizeBuffers instead of a recreated swap chain). Present
+          // failures still fall back through render_frame.
+          None => self.surface
         }
       } else {
         create_surface(metrics, self.surface_route, self.gpu_context)
