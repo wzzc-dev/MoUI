@@ -35,7 +35,7 @@ The current mainline is native Skia raster plus the Web `wasm-gc + window/web + 
 | --- | --- | --- |
 | macOS | **committed** | Product mainline (L0–L3 evidence) |
 | Web | **committed** | Product mainline (wasm-gc + WebGPU) |
-| Windows | **committed_with_gaps** | Product L0–L2; full L3 runtime still partial |
+| Windows | **committed** | Product mainline (L0–L3 evidence) |
 | Linux | **committed_with_gaps** | Product L0–L2; interactive L3 still partial |
 | Android | **experimental** | Window-hosted path compiles; no usability/product commitment yet |
 | iOS | **experimental** | Same as Android |

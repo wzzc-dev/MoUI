@@ -7,9 +7,9 @@
 ## 0011: Platform product class and mobile readiness semantics
 
 - **Date**: 2026-07-16
-- **Status**: Accepted (product-class decision superseded in part by ADR 0021 on 2026-08-02)
+- **Status**: Accepted (product-class decision superseded in part by ADR 0021 on 2026-08-02 and by ADR 0031 on 2026-08-29)
 - **Deciders**: Agent-assisted (wzzc-dev)
-- **Related**: `docs/platform-readiness-declaration.md`, ADR 0006, ADR 0010, ADR 0021
+- **Related**: `docs/platform-readiness-declaration.md`, ADR 0006, ADR 0010, ADR 0021, ADR 0031
 
 ### Context
 
@@ -77,6 +77,16 @@ and host-sim tests pass, but no development/demonstration usability or product
 commitment is made without matching-device evidence. Decision points 1, 2, 3,
 and 5 above are superseded in part by ADR 0021. The capability/service wiring
 and host-sim coverage this ADR describes remain intact.
+
+### Amendment (2026-08-29, ADR 0031)
+
+ADR 0031 promotes Windows from **`committed_with_gaps`** to
+**`committed`**: the matching-host Win32 runtime smoke transcript and the
+Showcase first-frame evidence were captured on 2026-08-29, raising
+`checks/platforms/windows.json` `runtimeL3` to `passed`. The `committed_with_gaps`
+classification for Windows in decision point 1 above is superseded; Linux
+remains `committed_with_gaps` and mobile remains `experimental`. See ADR 0031
+for the evidence chain and the repaired evidence-loop defects.
 
 ---
 
