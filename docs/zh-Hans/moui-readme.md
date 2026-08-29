@@ -12,7 +12,7 @@ MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，�
 | --- | --- | --- |
 | macOS | **committed** | 产品主线（L0-L3 证据） |
 | Web | **committed** | 产品主线（wasm-gc + WebGPU） |
-| Windows | **committed_with_gaps** | 产品 L0-L2；完整 L3 runtime 仍不完整 |
+| Windows | **committed** | 产品主线（L0-L3 证据） |
 | Linux | **committed_with_gaps** | 产品 L0-L2；交互式 L3 仍不完整 |
 | Android | **experimental** | window-hosted 路径可编译；尚无可用性/产品承诺 |
 | iOS | **experimental** | 同 Android |

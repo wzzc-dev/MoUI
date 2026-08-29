@@ -1,6 +1,6 @@
 # MoUI Cross-Platform Verifiability Declaration
 
-> Version: 2026-07-16
+> Version: 2026-08-29
 > Every claim below can be independently verified through its referenced CI workflow, run record, artifact name, or test file.
 
 ---
@@ -26,7 +26,7 @@ OS product completeness.
 |------|---------------|-------------------------|----------|----------|
 | **macOS** | **committed** | Usable as a product mainline | L0–L2 PR gates + L3 platform runtime passed (`checks/platforms/macos.json`) | — |
 | **Web** | **committed** | Usable as a product mainline | Daily wasm-gc + browser WebGPU; `checks/platforms/web.json` `runtimeL3=passed` | — |
-| **Windows** | **committed_with_gaps** | Usable as a product mainline (L3 incomplete) | L0–L2 PR/real Skia; `runtimeL3=partial` | Complete IME/service L3 |
+| **Windows** | **committed** | Usable as a product mainline | L0–L2 PR/real Skia; matching-host Win32 runtime smoke + Showcase first-frame (`checks/platforms/windows.json` `runtimeL3=passed`, 2026-08-29, ADR 0031) | — |
 | **Linux** | **committed_with_gaps** | host `ready=true` = implementation path available, **≠** all L3 checks green | L0–L2 + first-frame L3; interactive IME and similar checks are partial | Complete interactive L3 |
 | **Android** | **experimental** | `ready=false`: the window-hosted template + session compile and host-sim tests pass, but no development/demonstration usability or product commitment is made; `status=experimental` | `HostCmd` host-sim and MoUI adapter tests pass | Matching-device presenter/service evidence; GPU seven-gate claim; usability commitment |
 | **iOS** | **experimental** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Matching simulator/device presenter and VoiceOver evidence; GPU seven-gate claim; usability commitment |
@@ -191,40 +191,49 @@ moon run examples/showcase/macos_skia --target native
 | L2: real Skia renderer (Windows) | ✅ Passed | `moui-renderer-real-skia-ci.yml → windows-real-skia` | Every PR |
 | L2: Windows text/emoji | ✅ Passed | `moui-renderer-real-skia-ci.yml → windows-real-skia --run-text-emoji-smoke` | Every PR |
 | L2: Windows async images | ✅ Passed | `moui-renderer-real-skia-ci.yml → windows-real-skia --run-renderer-smoke` | Every PR |
-| L3: Windows platform-runtime evidence | ⏳ **Pending** | Must be produced on an MSVC matching host through the following process: | — |
-| L3: Windows first-frame presentation | ⏳ **Pending** | `MOUI_FIRST_FRAME_EXIT=1 moon run examples/showcase/windows_skia --target native` | — |
-| L3: Windows IME runtime | ⏳ **Pending** | Requires the full platform-evidence recording process on an MSVC environment | — |
+| L3: Windows platform-runtime evidence | ✅ Passed | Matching-host capture (2026-08-29): `window/scripts/capture_moui_runtime_evidence.sh windows` full chain — `check_ci.sh` + runtime smoke + `check_moui_runtime_log.sh windows` transcript verification | Local matching-host run, MSVC 2022 (ADR 0031) |
+| L3: Windows first-frame presentation | ✅ Passed | `scripts/windows-platform-evidence.sh` → `MOUI_FIRST_FRAME_EXIT=1 moon run examples/showcase/windows_skia --target native`; marker `Windows renderer presented first frame; exiting by request; title=MoUI Showcase`; scheduled verification via `MoUI Windows Platform Evidence` workflow | 2026-08-29 (local matching host) |
+| L3: Windows IME runtime | ✅ Passed | Runtime transcript IME probe line `enabled=true hint=true surrounding=true cursor=true updated=true updated_hint=true updated_cursor=true disabled=true`, plus IME text delivery (`ime text=a`) before `ready` | 2026-08-29 (local matching host) |
 
-#### Windows L3 Evidence Completion Plan
+#### Windows L3 Evidence Record
 
-Windows platform-runtime evidence is currently marked `pending` in
-`platform-runtime-evidence.json`; all 22 observations are `pending`. Complete it
-as follows:
+Windows platform-runtime evidence was captured on 2026-08-29 on a Windows
+matching host (MSVC 2022, Windows 10+ deployment floor). The full chain:
 
 ```
-# 1. 在 Windows MSVC 主机上构建 Showcase
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly
+# 1. window repository: matching-host CI branch + runtime smoke transcript
+bash window/scripts/capture_moui_runtime_evidence.sh windows \
+  --log <moui>/artifacts/platform-evidence/windows/moui-windows-runtime.log
 
-# 2. 运行首帧退出测试
-set MOUI_FIRST_FRAME_EXIT=1
-moon run examples/showcase/windows_skia --target native
-
-# 3. 收集运行时日志至 artifacts/platform-evidence/windows/
+# 2. MoUI Showcase first-frame presentation
+bash scripts/windows-platform-evidence.sh
 ```
 
-**Prerequisites**: Windows MSVC toolchain + vcpkg zlib + a real Skia provider.
-The `moui-skia-provider-windows-real-skia-manual.yml` CI workflow provides the
-complete environment and can be manually triggered with `workflow_dispatch`.
+The runtime transcript satisfies the `check_moui_runtime_log.sh windows`
+contract: surface probe, nonzero HWND/HINSTANCE with raw display/window
+identity preserved, monitor/current-monitor probes with native ids, cursor
+`Icon(Text)`, the IME probe line `enabled=true hint=true surrounding=true
+cursor=true updated=true updated_hint=true updated_cursor=true disabled=true`,
+resize delivery with `pre_present_notify` redraw, pointer and
+keyboard `key=a` / IME `text=a` delivery before `ready`, and the
+`ready → destroy requested → destroyed → finished` teardown sequence. Raw
+transcripts and the preflight/summary logs are kept under
+`artifacts/platform-evidence/windows/` (generated evidence stays out of git).
+
+**Prerequisites**: Windows MSVC 2022 toolchain + vcpkg zlib + a real Skia
+provider (release cache is resolved automatically from
+`moui_skia/skia-provider-lock.json`).
 
 #### Windows Evidence References
 
 | Reference | Details |
 |----------|------|
-| CI workflow | `moui-skia-provider-windows-real-skia-manual.yml` — supports both MSVC and MinGW toolchains |
-| Log artifact | `windows-real-skia-smoke-log` — includes preflight/smoke/acceptance logs |
+| CI workflow | `moui-windows-platform-evidence.yml` — scheduled Showcase first-frame evidence |
+| First-frame driver | `scripts/windows-platform-evidence.sh` — resolve Skia, build, run, verify marker |
+| Runtime transcript driver | `window/scripts/capture_moui_runtime_evidence.sh windows` + `check_moui_windows_smoke.sh --run` + `check_moui_runtime_log.sh windows` |
+| Evidence recorder | `window/scripts/record_moui_evidence.sh windows` — standard evidence entry |
+| MSVC toolchain support | `moui-skia-provider-windows-real-skia-manual.yml` — MSVC and MinGW toolchains, artifact `windows-real-skia-smoke-log` |
 | Build artifact | `moui-showcase-windows-msvc-portable` — CI run 28509416649 |
-| Evidence-recording script | `window/scripts/record_moui_evidence.sh` — supports the Windows backend |
-| Runtime-capture script | `window/scripts/capture_moui_runtime_evidence.sh` — end-to-end Windows runtime-evidence capture |
 
 ### 3.3 Linux / Wayland
 
@@ -374,14 +383,19 @@ SHA `91f596e80d5a5f80d30fa94a8510e5ce4653189e`.
 
 ## VI. Missing Evidence and Completion Plan
 
-### 6.1 Windows L3 — Platform Runtime
+### 6.1 Windows L3 — Platform Runtime ✅ Completed (2026-08-29, ADR 0031)
 
-| Missing item | Completion action | Prerequisites | Estimated effort |
-|--------|---------|----------|---------|
-| Showcase Windows first-frame log | Run `moon run examples/showcase/windows_skia --target native` with `MOUI_FIRST_FRAME_EXIT=1` | Windows MSVC environment + real Skia provider | One manual CI trigger |
-| Markdown Editor Windows first-frame log | Same as above, using the Markdown Editor entrypoint | Same as above | One manual CI trigger |
-| Windows IME runtime observations | Windows flow in `window/scripts/capture_moui_runtime_evidence.sh` + `record_moui_evidence.sh` | Windows host + MSVC + real Skia | One local or CI run |
-| Windows full evidence-manifest update | Write results to the Windows entry in `platform-runtime-evidence.json` | Complete the preceding three items | One PR |
+| Item | Status | Evidence |
+|--------|---------|----------|
+| Showcase Windows first-frame log | ✅ Completed | `scripts/windows-platform-evidence.sh` → `MOUI_FIRST_FRAME_EXIT=1 moon run examples/showcase/windows_skia --target native` on the matching MSVC host; marker verified, `showcase_exit_status=0` |
+| Windows IME / platform-service runtime observations | ✅ Completed | `window/scripts/capture_moui_runtime_evidence.sh windows` transcript accepted by `check_moui_runtime_log.sh windows` (IME 8-field probe, pointer/keyboard/IME text delivery, teardown sequence) |
+| Windows status-manifest update | ✅ Completed | `checks/platforms/windows.json` `runtimeL3=passed` + `checks/platform-matrix.json` `productClass=committed` (ADR 0031) |
+
+Note: the earlier "Markdown Editor Windows first-frame log" completion item is
+obsolete — the Markdown Editor example has no Windows entrypoint; the Showcase
+route is the canonical Windows presentation evidence. The retired
+`platform-runtime-evidence.json` manifest (removed in `7b48bd5e`) has been
+replaced by the structured `checks/platforms/*.json` records.
 
 ### 6.2 Linux L3 — Complete Platform Runtime
 
@@ -391,7 +405,7 @@ SHA `91f596e80d5a5f80d30fa94a8510e5ce4653189e`.
 | Linux IME runtime observations (interactive input) | Run `window/scripts/capture_moui_runtime_evidence.sh linux --require-input`, or run `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1 bash window/scripts/check_moui_linux_smoke.sh --run` on a real Wayland desktop and ensure an operator provides input while the window has focus | Wayland desktop host + interactive input | One local run |
 | Linux IME protocol functionality | WSL2 validation passed: all 8 IME probe fields (`enabled/hint/surrounding/cursor/updated/updated_hint/updated_cursor/disabled`) are true | Validated with `capture_moui_runtime_evidence.sh` on WSL2 + WSLg | ✅ Completed (WSL2 2026-07-11) |
 | Complete Linux platform-service observations | Clipboard images, directory listing, font fallback | Directory listing and clipboard images implemented and tested; first-frame rendering verified | ✅ Completed (code level) |
-| Linux full evidence-manifest update | Write the complete service/IME results to the Linux entry in `platform-runtime-evidence.json` | Complete interactive-input IME runtime observation | One PR |
+| Linux full evidence-manifest update | Write the complete service/IME results to the Linux entry in `checks/platforms/linux.json` | Complete interactive-input IME runtime observation | One PR |
 
 ### 6.3 Android / iOS / HarmonyOS — Window-hosted Mainline
 

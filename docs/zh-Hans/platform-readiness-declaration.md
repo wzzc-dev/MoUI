@@ -1,6 +1,6 @@
 # MoUI 跨平台可核验申报书
 
-> 版本: 2026-07-16
+> 版本: 2026-08-29
 > 下文的每一项声明均可通过引用的 CI 工作流、运行记录、制品名称或测试文件独立核验。
 
 ---
@@ -15,7 +15,7 @@ OS 产品完成度。
 |------|---------------|-------------------------|----------|----------|
 | **macOS** | **committed** | 产品主线可用 | L0–L2 PR 门禁 + L3 平台运行时 passed（`checks/platforms/macos.json`） | — |
 | **Web** | **committed** | 产品主线可用 | 每日 wasm-gc + browser WebGPU；`checks/platforms/web.json` runtimeL3=passed | — |
-| **Windows** | **committed_with_gaps** | 产品主线可用（L3 未满） | L0–L2 PR/real Skia；`runtimeL3=partial` | 完整 IME/服务 L3 |
+| **Windows** | **committed** | 产品主线可用 | L0–L2 PR/real Skia；匹配宿主 Win32 运行时 smoke + Showcase 首帧（`checks/platforms/windows.json` `runtimeL3=passed`，2026-08-29，ADR 0031） | — |
 | **Linux** | **committed_with_gaps** | 宿主 `ready=true` = 代码路径可用，**≠** L3 全绿 | L0–L2 + 首帧 L3；交互 IME 等 partial | 完整交互 L3 |
 | **Android** | **experimental** | `ready=false`：window-hosted template + session 可编译且 host-sim tests 通过，但不做任何开发/演示可用性或产品承诺；`status=experimental` | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching-device presenter/service evidence；GPU seven-gate claim；可用性承诺 |
 | **iOS** | **experimental** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching simulator/device presenter 和 VoiceOver evidence；GPU seven-gate claim；可用性承诺 |
@@ -173,36 +173,37 @@ moon run examples/showcase/macos_skia --target native
 | L2: 真实 Skia 渲染器（Windows） | ✅ 通过 | `moui-renderer-real-skia-ci.yml → windows-real-skia` | 每次 PR |
 | L2: Windows 文本/表情符号 | ✅ 通过 | `moui-renderer-real-skia-ci.yml → windows-real-skia --run-text-emoji-smoke` | 每次 PR |
 | L2: Windows 异步图像 | ✅ 通过 | `moui-renderer-real-skia-ci.yml → windows-real-skia --run-renderer-smoke` | 每次 PR |
-| L3: Windows 平台运行时证据 | ⏳ **待补** | 需要 MSVC 匹配宿主上通过以下流程产生: | — |
-| L3: Windows 首帧呈现 | ⏳ **待补** | `MOUI_FIRST_FRAME_EXIT=1 moon run examples/showcase/windows_skia --target native` | — |
-| L3: Windows IME 运行时 | ⏳ **待补** | 需要在 MSVC 环境下运行全长平台证据记录流程 | — |
+| L3: Windows 平台运行时证据 | ✅ 通过 | 匹配宿主采集（2026-08-29）：`window/scripts/capture_moui_runtime_evidence.sh windows` 全链路 —— `check_ci.sh` + 运行时 smoke + `check_moui_runtime_log.sh windows` 转录校验 | 本地匹配宿主运行，MSVC 2022（ADR 0031） |
+| L3: Windows 首帧呈现 | ✅ 通过 | `scripts/windows-platform-evidence.sh` → `MOUI_FIRST_FRAME_EXIT=1 moon run examples/showcase/windows_skia --target native`；标记 `Windows renderer presented first frame; exiting by request; title=MoUI Showcase`；`MoUI Windows Platform Evidence` 工作流按周核验 | 2026-08-29（本地匹配宿主） |
+| L3: Windows IME 运行时 | ✅ 通过 | 运行时转录 IME 探测行 `enabled=true hint=true surrounding=true cursor=true updated=true updated_hint=true updated_cursor=true disabled=true`，且 IME 文本投递（`ime text=a`）先于 `ready` | 2026-08-29（本地匹配宿主） |
 
-#### Windows L3 证据补全方案
+#### Windows L3 证据记录
 
-Windows 平台运行时证据目前在 `platform-runtime-evidence.json` 中标记为 `pending`，22 项观测均为 `pending`。补全路径：
+Windows 平台运行时证据已于 2026-08-29 在 Windows 匹配宿主（MSVC 2022，部署底线 Windows 10）上采集。完整链路：
 
 ```
-# 1. 在 Windows MSVC 主机上构建 Showcase
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly
+# 1. window 仓库：匹配宿主 CI 分支 + 运行时 smoke 转录
+bash window/scripts/capture_moui_runtime_evidence.sh windows \
+  --log <moui>/artifacts/platform-evidence/windows/moui-windows-runtime.log
 
-# 2. 运行首帧退出测试
-set MOUI_FIRST_FRAME_EXIT=1
-moon run examples/showcase/windows_skia --target native
-
-# 3. 收集运行时日志至 artifacts/platform-evidence/windows/
+# 2. MoUI Showcase 首帧呈现
+bash scripts/windows-platform-evidence.sh
 ```
 
-**依赖条件**: Windows MSVC 工具链 + vcpkg zlib + 真实 Skia provider。CI 工作流 `moui-skia-provider-windows-real-skia-manual.yml` 已具备完整环境，可作为 `workflow_dispatch` 手动触发。
+运行时转录满足 `check_moui_runtime_log.sh windows` 契约：surface 探测、非零 HWND/HINSTANCE 且 raw display/window 身份保持一致、monitor/current-monitor 探测含原生 id、cursor `Icon(Text)`、IME 探测行 `enabled=true hint=true surrounding=true cursor=true updated=true updated_hint=true updated_cursor=true disabled=true`、resize 投递与 `pre_present_notify` 重绘、pointer 与键盘 `key=a` / IME `text=a` 投递（均先于 `ready`）、以及 `ready → destroy requested → destroyed → finished` 完整销毁序列。原始转录与 preflight/summary 日志保存在 `artifacts/platform-evidence/windows/`（生成证据不入 git）。
+
+**依赖条件**: Windows MSVC 2022 工具链 + vcpkg zlib + 真实 Skia provider（release 缓存按 `moui_skia/skia-provider-lock.json` 自动解析）。
 
 #### Windows 证据参考
 
 | 可引用项 | 内容 |
 |----------|------|
-| CI 工作流 | `moui-skia-provider-windows-real-skia-manual.yml` — 支持 MSVC/MinGW 两种工具链 |
-| 日志制品 | `windows-real-skia-smoke-log` — 含 preflight/smoke/acceptance 日志 |
+| CI 工作流 | `moui-windows-platform-evidence.yml` — 按周采集 Showcase 首帧证据 |
+| 首帧驱动脚本 | `scripts/windows-platform-evidence.sh` — 解析 Skia、构建、运行并校验标记 |
+| 运行时转录驱动脚本 | `window/scripts/capture_moui_runtime_evidence.sh windows` + `check_moui_windows_smoke.sh --run` + `check_moui_runtime_log.sh windows` |
+| 证据记录脚本 | `window/scripts/record_moui_evidence.sh windows` — 标准证据条目 |
+| MSVC 工具链支持 | `moui-skia-provider-windows-real-skia-manual.yml` — 支持 MSVC/MinGW 两种工具链，制品 `windows-real-skia-smoke-log` |
 | 构建制品 | `moui-showcase-windows-msvc-portable` — CI 运行记录 28509416649 |
-| 证据记录脚本 | `window/scripts/record_moui_evidence.sh` — 支持 windows 后端 |
-| 运行时捕获脚本 | `window/scripts/capture_moui_runtime_evidence.sh` — Windows 运行时证据端到端捕获 |
 
 ### 3.3 Linux / Wayland
 
@@ -329,14 +330,18 @@ bash window/scripts/capture_moui_runtime_evidence.sh linux \
 
 ## 六、缺失证据与补全计划
 
-### 6.1 Windows L3 — 平台运行时
+### 6.1 Windows L3 — 平台运行时 ✅ 已完成（2026-08-29，ADR 0031）
 
-| 缺失项 | 补全动作 | 前置条件 | 预估工期 |
-|--------|---------|----------|---------|
-| Showcase Windows 首帧日志 | `moon run examples/showcase/windows_skia --target native` 加 `MOUI_FIRST_FRAME_EXIT=1` | Windows MSVC 环境 + 真实 Skia provider | 1 次 CI 手动触发 |
-| Markdown Editor Windows 首帧日志 | 同上，Markdown Editor 入口点 | 同上 | 1 次 CI 手动触发 |
-| Windows IME 运行时观测 | `window/scripts/capture_moui_runtime_evidence.sh` windows 流程 + `record_moui_evidence.sh` windows | Windows 主机 + MSVC + 真实 Skia | 1 次本地或 CI 运行 |
-| Windows 全证据清单更新 | 将结果写入 `platform-runtime-evidence.json` windows 条目 | 以上三项完成 | 1 次 PR |
+| 事项 | 状态 | 证据 |
+|--------|---------|----------|
+| Showcase Windows 首帧日志 | ✅ 已完成 | `scripts/windows-platform-evidence.sh` → 匹配 MSVC 宿主运行 `MOUI_FIRST_FRAME_EXIT=1 moon run examples/showcase/windows_skia --target native`；标记已校验，`showcase_exit_status=0` |
+| Windows IME / 平台服务运行时观测 | ✅ 已完成 | `window/scripts/capture_moui_runtime_evidence.sh windows` 转录经 `check_moui_runtime_log.sh windows` 校验通过（IME 8 字段探测、pointer/键盘/IME 文本投递、销毁序列） |
+| Windows 状态清单更新 | ✅ 已完成 | `checks/platforms/windows.json` `runtimeL3=passed` + `checks/platform-matrix.json` `productClass=committed`（ADR 0031） |
+
+说明：此前的 "Markdown Editor Windows 首帧日志" 补全项已作废 —— Markdown Editor
+示例没有 Windows 入口点；Showcase 路由是 Windows 呈现证据的规范来源。已退役的
+`platform-runtime-evidence.json` 清单（移除于 `7b48bd5e`）由结构化的
+`checks/platforms/*.json` 记录取代。
 
 ### 6.2 Linux L3 — 完整平台运行时
 
@@ -346,7 +351,7 @@ bash window/scripts/capture_moui_runtime_evidence.sh linux \
 | Linux IME 运行时观测（交互式输入） | `window/scripts/capture_moui_runtime_evidence.sh linux --require-input` 或在真实 Wayland 桌面运行 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1 bash window/scripts/check_moui_linux_smoke.sh --run` 并确保操作员在窗口聚焦时按键 | Wayland 桌面宿主 + 交互式输入 | 1 次本地运行 |
 | Linux IME 协议功能 | WSL2 验证已通过：全部 8 个 IME 探测字段（enabled/hint/surrounding/cursor/updated/updated_hint/updated_cursor/disabled）均为 true | 在 WSL2 + WSLg 上已用 `capture_moui_runtime_evidence.sh` 验证 | ✅ 已完成（WSL2 2026-07-11） |
 | Linux 完整平台服务观测 | 剪贴板图片、目录列表、字体回退 | 目录列表、剪贴板图片已实现并测试；首帧渲染已验证 | ✅ 已完成（代码级） |
-| Linux 全证据清单更新 | 将完整服务/IME 结果写入 `platform-runtime-evidence.json` linux 条目 | IME 交互式输入运行时观测完成 | 1 次 PR |
+| Linux 全证据清单更新 | 将完整服务/IME 结果写入 `checks/platforms/linux.json` linux 条目 | IME 交互式输入运行时观测完成 | 1 次 PR |
 
 ### 6.3 Android / iOS / HarmonyOS — Window-hosted 主线
 
