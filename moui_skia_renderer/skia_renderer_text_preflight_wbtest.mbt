@@ -170,20 +170,31 @@ test "skia text maturity preflight separates covered baseline from gaps" {
   assert_true(preflight.bidi_reordering_ready)
   assert_true(preflight.paragraph_line_breaking_ready)
   assert_true(preflight.mixed_run_font_fallback_ready)
-  assert_true(preflight.deterministic_color_emoji_ready)
   assert_true(preflight.unicode_17_grapheme_boundary_ready)
   inspect(preflight.ready_count, content="9")
-  inspect(preflight.gap_count, content="0")
   assert_true(preflight.summary().contains("text maturity audit"))
   assert_true(preflight.summary().contains("mixed-run fallback ready"))
   assert_true(preflight.summary().contains("missing-glyph recovery ready"))
-  assert_true(preflight.summary().contains("color emoji confirmed"))
   assert_true(
     preflight.summary().contains("Unicode 17 grapheme boundary contract ready"),
   )
   assert_true(
     preflight.summary().contains("bidi and paragraph line breaking ready"),
   )
+  // Color emoji needs a host color-emoji typeface, which minimal Linux images
+  // and CI hosts often lack. The preflight deliberately reports a missing one
+  // as a pending gap instead of a failure (and `backend_info` already accepts
+  // either label), so assert the branch this host actually supports rather
+  // than hardcoding "confirmed".
+  if skia_emoji_typeface_has_color_glyphs() {
+    assert_true(preflight.deterministic_color_emoji_ready)
+    inspect(preflight.gap_count, content="0")
+    assert_true(preflight.summary().contains("color emoji confirmed"))
+  } else {
+    assert_false(preflight.deterministic_color_emoji_ready)
+    inspect(preflight.gap_count, content="1")
+    assert_true(preflight.summary().contains("color emoji pending"))
+  }
 }
 
 ///|
