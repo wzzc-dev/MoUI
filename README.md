@@ -156,7 +156,7 @@ To try Showcase on a mobile platform, follow the platform-specific setup, build,
 > .\scripts\windows\msvc_env.ps1
 > ```
 >
-> This sets up the MSVC environment required by the native Skia link step and provides the C11 atomics flags (`/experimental:c11atomics /std:c11`) that `wgpu_mbt`'s C stubs require. Run it once per shell before `moon run ... --target native` on Windows.
+> This sets up the MSVC environment required by the native Skia link step with shared C11 atomics support (`/experimental:c11atomics`). Run it once per shell before `moon run ... --target native` on Windows. The `windows_wgpu` diagnostic route additionally needs C11 mode (`/std:c11`) for `wgpu_mbt`'s `<stdatomic.h>` stubs — the Windows build/package helpers enable it for WGPU packages automatically; for a direct `moon run`, dot-source the script and call `Enable-MsvcGlobalC11ModeForCOnlyStubs` first (a shared `/std:c11` default would conflict with `moui_skia`'s `/std:c++20` Skia stub flags).
 
 ### Showcase
 

@@ -266,11 +266,14 @@ function Set-MoonBitMsvcEnvironment {
   $env:CC = $ClPath
   $env:CXX = $ClPath
   $env:MBT_WGPU_LINK_MODE = "dynamic"
-  # /std:c11 is required for <stdatomic.h>: /experimental:c11atomics alone does
-  # not define __STDC_VERSION__, so wgpu_mbt's C stubs still hit
-  # "C atomics require C11 or later" without it (msvc: vcruntime_c11_stdatomic.h).
-  # /utf-8 keeps UTF-8 vendored sources from tripping C4819 on GBK code pages.
-  $env:CL = "/DNOMINMAX /experimental:c11atomics /std:c11 /utf-8 /wd4005 /DMOONBIT_FFI_EXPORT="
+  # /experimental:c11atomics alone does not define __STDC_VERSION__, so the
+  # wgpu_mbt C stubs (<stdatomic.h>) additionally need /std:c11. /std:c11 must
+  # NOT be set unconditionally here: cl rejects it on the same command line as
+  # moui_skia's /std:c++20 Windows Skia stub flags (D8016). WGPU-targeting
+  # consumers add it after sourcing this script via
+  # Enable-MsvcGlobalC11ModeForCOnlyStubs. /utf-8 keeps UTF-8 vendored sources
+  # from tripping C4819 on GBK code pages.
+  $env:CL = "/DNOMINMAX /experimental:c11atomics /utf-8 /wd4005 /DMOONBIT_FFI_EXPORT="
   $env:LINK = "comdlg32.lib shell32.lib advapi32.lib ole32.lib user32.lib gdi32.lib dwrite.lib d2d1.lib $zlibLib /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
   $env:MOUI_MSVC_VCPKG_ROOT = $ZlibLayout.Root
   $env:MOUI_MSVC_ZLIB_TRIPLET_ROOT = $ZlibLayout.TripletRoot
