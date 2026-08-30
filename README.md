@@ -150,13 +150,13 @@ The featured examples — `showcase`, `markdown_editor`, `mo_workbench`, and `ex
 
 To try Showcase on a mobile platform, follow the platform-specific setup, build, and run instructions for [Android](docs/android-support.md), [iOS](docs/ios-support.md), or [HarmonyOS](docs/harmonyos-support.md). Standard examples use the matching `wzzc-dev/window` platform template through `moui build`.
 
-> **Windows prerequisite:** before building or running any Windows native Skia entrypoint (`windows_skia`), initialize the MSVC toolchain in a PowerShell session:
+> **Windows prerequisite:** before building or running any Windows native entrypoint (`windows_skia`, or the `windows_wgpu` diagnostic route), initialize the MSVC toolchain in a PowerShell session:
 >
 > ```powershell
 > .\scripts\windows\msvc_env.ps1
 > ```
 >
-> This sets up the MSVC environment required by the native Skia link step. Run it once per shell before `moon run ... --target native` on Windows.
+> This sets up the MSVC environment required by the native Skia link step and provides the C11 atomics flags (`/experimental:c11atomics /std:c11`) that `wgpu_mbt`'s C stubs require. Run it once per shell before `moon run ... --target native` on Windows.
 
 ### Showcase
 

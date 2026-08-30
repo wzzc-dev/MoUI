@@ -23,9 +23,12 @@
   references `rwh_06_display_handle` or `current_monitor` (masked for years by
   MoonBit dead-code elimination).
 - `validate-renderer-capability-consistency.mjs` cannot compile native C on a
-  bare Windows host (wgpu_mbt shim needs `/experimental:c11atomics`); it runs
-  on Linux/macOS CI. Part of the Windows check-wrapper gap in
-  `docs/testing.md`.
+  bare Windows host (wgpu_mbt shim's `<stdatomic.h>` needs MSVC C11 mode;
+  `/experimental:c11atomics` alone does not define `__STDC_VERSION__`);
+  it runs on Linux/macOS CI. Fixed for sourced shells on 2026-08-29:
+  `moui/scripts/windows/msvc_env.ps1` CL now carries
+  `/experimental:c11atomics /std:c11 /utf-8`, and `moon run
+  examples/showcase/windows_wgpu --target native` builds end to end.
 - `.local_repos/window` was a stale divergent checkout and is deleted; the
   `window` submodule (`moui-support`) is the only canonical window source.
   Toggle local resolution with `scripts/window-dev-mode.sh on|off`

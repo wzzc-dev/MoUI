@@ -3,7 +3,13 @@
 Windows native examples use the MSVC toolchain with Visual Studio C++ build
 tools and vcpkg `zlib:x64-windows`. The Skia entrypoints are the recommended
 native mainline. WGPU diagnostic entrypoints still use `wgpu_mbt` dynamic mode
-with the official `wgpu-windows-x86_64-msvc-release.zip` release.
+with the official `wgpu-windows-x86_64-msvc-release.zip` release. The
+`wgpu_mbt` C stubs include `<stdatomic.h>`, which on MSVC requires C11 mode:
+`scripts/windows/msvc_env.ps1` provides this through the `CL` environment
+(`/experimental:c11atomics /std:c11 /utf-8`), so plain
+`moon run examples/showcase/windows_wgpu --target native` works once that
+script has been sourced. `/std:c11` affects C files only and leaves the C++
+Skia stubs untouched.
 Windows native WebView support is auto-detected by the `moui_webview`
 prebuild from the `.tools/webview2/` cache directory (set up by
 `scripts/windows/setup_msvc_deps.ps1 -InstallWebView2`), matching how Linux

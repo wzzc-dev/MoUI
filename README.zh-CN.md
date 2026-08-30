@@ -158,13 +158,13 @@ node scripts/conformance-capture-scaffold.mjs --mode benchmark
 如需在移动端尝试 Showcase，请按对应平台的安装、构建与运行说明操作：
 [Android](docs/android-support.md)、[iOS](docs/ios-support.md) 或 [HarmonyOS](docs/harmonyos-support.md)。标准示例通过 `moui build` 使用匹配的 `wzzc-dev/window` 平台模板。
 
-> **Windows 前置条件：** 在构建或运行任何 Windows 原生 Skia 入口（`windows_skia`）前，请在 PowerShell 会话中初始化 MSVC 工具链：
+> **Windows 前置条件：** 在构建或运行任何 Windows 原生入口（`windows_skia`，或 `windows_wgpu` 诊断路线）前，请在 PowerShell 会话中初始化 MSVC 工具链：
 >
 > ```powershell
 > .\scripts\windows\msvc_env.ps1
 > ```
 >
-> 该脚本会为原生 Skia 链接步骤配置 MSVC 环境。在 Windows 上执行 `moon run ... --target native` 之前，每个 shell 需运行一次。
+> 该脚本会为原生 Skia 链接步骤配置 MSVC 环境，并提供 `wgpu_mbt` C stub 所需的 C11 atomics 编译选项（`/experimental:c11atomics /std:c11`）。在 Windows 上执行 `moon run ... --target native` 之前，每个 shell 需运行一次。
 
 ### Showcase
 
