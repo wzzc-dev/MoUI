@@ -123,7 +123,7 @@ This file is generated from repository manifests and validator reports.
 | android | partial | partial | partial | window-hosted-android | Android 23 | AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.6.1 / JVM 17 / compile SDK 36 / target SDK 35 / NDK 28.2 / CMake 3.22.1 | vulkan-direct | unverified |
 | harmonyos | partial | partial | partial | window-hosted-harmonyos | HarmonyOS API 20 | HarmonyOS SDK API 21 / target API 21 / model 6.0.1 | egl-direct | unverified |
 | ios | partial | partial | partial | window-hosted-ios | iOS 15.0 | Xcode 15.4 / Swift 5 | metal-direct | unverified |
-| linux | passed | passed | partial | native-wayland | Wayland compositor | Clang/GCC with Wayland and Vulkan | vulkan-wayland-direct | vulkan-wayland-direct |
+| linux | passed | passed | passed | native-wayland | Wayland compositor | Clang/GCC with Wayland and Vulkan | vulkan-wayland-direct | vulkan-wayland-direct |
 | macos | passed | passed | passed | native-window | current supported macOS runner | Apple Clang with Metal | metal-direct | metal-direct |
 | web | passed | passed | passed | browser | WebAssembly GC browser | MoonBit wasm-gc | browser-webgpu | browser-webgpu |
 | wechat | partial | partial | partial | wechat-mini-program | WeChat Mini Program Skyline Canvas 2D | MoonBit wasm-gc / WeChat Developer Tools | canvas2d-wasm | unverified |
