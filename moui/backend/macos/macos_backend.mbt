@@ -30,6 +30,9 @@ pub struct MacosHostAppOptions {
   /// overwritten by the default menu during `did_finish_launching`).
   priv on_ready : (() -> Unit)?
   priv min_window_size : @dpi.LogicalSize?
+  /// Optional monotonic clock used to profile runtime frame phases. Native
+  /// apps leave this disabled; benchmark/devtools hosts may opt in.
+  priv frame_clock : (() -> Double)?
 }
 
 ///|
@@ -131,6 +134,7 @@ pub fn MacosHostAppOptions::new(
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
   on_ready? : (() -> Unit)? = None,
   min_window_size? : @dpi.LogicalSize? = None,
+  frame_clock? : (() -> Double)? = None,
 ) -> MacosHostAppOptions {
   {
     scene_resolver,
@@ -141,6 +145,7 @@ pub fn MacosHostAppOptions::new(
     platform_attributes,
     on_ready,
     min_window_size,
+    frame_clock,
   }
 }
 

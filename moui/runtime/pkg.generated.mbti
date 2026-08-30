@@ -195,6 +195,7 @@ pub fn HostPlatformEventSources::window_events(Self) -> HostWindowEventSource
 pub(all) struct HostRuntimeDriver {
   runtime : AppRuntime
   scheduler : RedrawScheduler
+  frame_clock : (() -> Double)?
   mut close_requested : Bool
   mut frame_time_ms : Double
 }
@@ -213,7 +214,7 @@ pub fn HostRuntimeDriver::environment(Self) -> @core.Environment
 pub fn HostRuntimeDriver::event_result(Self) -> @backend.EventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::focused_text_input(Self) -> @core.TextInputState
-pub fn HostRuntimeDriver::new(runtime~ : AppRuntime, schedule_redraw~ : () -> Unit) -> Self
+pub fn HostRuntimeDriver::new(runtime~ : AppRuntime, schedule_redraw~ : () -> Unit, frame_clock? : (() -> Double)?) -> Self
 pub fn HostRuntimeDriver::perform_semantics_action(Self, PerformSemanticsActionRequest) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError]
 pub fn HostRuntimeDriver::read_semantics(Self, since? : @core.SemanticsGeneration) -> Result[SemanticsRead, SemanticsReadError]
 pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
