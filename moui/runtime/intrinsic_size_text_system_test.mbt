@@ -4,17 +4,14 @@
 /// box. The core fallback estimates advances from font size alone, so it
 /// *underestimates* such runs — that divergence is what this regression pins.
 fn wide_text_system() -> @core.TextSystem {
-  @core.TextSystem::new(
-    id="test-wide-text-system",
-    measure=input => {
-      size: @core.Size::new(
-        width=input.text.length().to_double() * 20.0,
-        height=input.font.size,
-      ),
-      baseline: input.font.size * 0.8,
-      caret_positions: [],
-    },
-  )
+  @core.TextSystem::new(id="test-wide-text-system", measure=input => {
+    size: @core.Size::new(
+      width=input.text.length().to_double() * 20.0,
+      height=input.font.size,
+    ),
+    baseline: input.font.size * 0.8,
+    caret_positions: [],
+  })
 }
 
 ///|
@@ -25,18 +22,20 @@ fn[Msg] measured_text_fixture(label : String) -> @core.View[Msg] {
   let min_size = @core.Size::new(width=160.0, height=32.0)
   runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="MeasuredText"),
-    declaration=() => @core.ViewDeclaration::channels(
-      layout=@core.DeclarationChannel::Uncacheable,
-      paint=@core.DeclarationChannel::Exact(
-        @core.DeclarationKey::string(label),
-      ),
-      semantics=@core.DeclarationChannel::Exact(
-        @core.DeclarationKey::string(label),
-      ),
-      platform=@core.DeclarationChannel::Exact(
-        @core.DeclarationKey::string(label),
-      ),
-    ),
+    declaration=() => {
+      @core.ViewDeclaration::channels(
+        layout=@core.DeclarationChannel::Uncacheable,
+        paint=@core.DeclarationChannel::Exact(
+          @core.DeclarationKey::string(label),
+        ),
+        semantics=@core.DeclarationChannel::Exact(
+          @core.DeclarationKey::string(label),
+        ),
+        platform=@core.DeclarationChannel::Exact(
+          @core.DeclarationKey::string(label),
+        ),
+      )
+    },
     layout=ctx => {
       let measured = ctx.text_system.measure_text(
         @core.TextLayoutInput::new(
@@ -51,7 +50,7 @@ fn[Msg] measured_text_fixture(label : String) -> @core.View[Msg] {
       }
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(
-          @core.Size::new(width=width, height=min_size.height),
+          @core.Size::new(width~, height=min_size.height),
         ),
       )
     },
@@ -69,15 +68,18 @@ fn[Msg] hug_container(child : @core.View[Msg]) -> @core.View[Msg] {
     // The root is placed with tight constraints, so anything the root reports
     // is clamped to the window. Let the child size itself loosely instead; its
     // frame is then the box the renderer would clip glyphs to.
-    child_constraints=_ =>
-      @core.Constraints::loose(@core.Size::new(width=1000.0, height=200.0)),
+    child_constraints=_ => {
+      @core.Constraints::loose(@core.Size::new(width=1000.0, height=200.0))
+    },
     identity=() => @core.ViewIdentity::new(kind="HugContainer"),
-    declaration=() => @core.ViewDeclaration::channels(
-      layout=@core.DeclarationChannel::Uncacheable,
-      paint=@core.DeclarationChannel::Constant,
-      semantics=@core.DeclarationChannel::Constant,
-      platform=@core.DeclarationChannel::Constant,
-    ),
+    declaration=() => {
+      @core.ViewDeclaration::channels(
+        layout=@core.DeclarationChannel::Uncacheable,
+        paint=@core.DeclarationChannel::Constant,
+        semantics=@core.DeclarationChannel::Constant,
+        platform=@core.DeclarationChannel::Constant,
+      )
+    },
     layout=ctx => {
       // Report the child's intrinsic size and hand it back as the child frame.
       // The runtime only places children for which the parent emitted a
@@ -86,17 +88,14 @@ fn[Msg] hug_container(child : @core.View[Msg]) -> @core.View[Msg] {
         Some(size) => size
         None => @core.Size::new(width=0.0, height=0.0)
       }
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(child_size),
-        child_frames=[
-          @core.Rect::new(
-            x=0.0,
-            y=0.0,
-            width=child_size.width,
-            height=child_size.height,
-          ),
-        ],
-      )
+      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(child_size), child_frames=[
+        @core.Rect::new(
+          x=0.0,
+          y=0.0,
+          width=child_size.width,
+          height=child_size.height,
+        ),
+      ])
     },
   )
 }

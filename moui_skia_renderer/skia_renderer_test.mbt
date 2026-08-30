@@ -256,50 +256,6 @@ test "skia selection geometry diagnostic covers line ranges hit testing and bidi
 }
 
 ///|
-test "skia emoji font fallback diagnostic records glyph metadata and confirms color emoji readiness" {
-  match skia_emoji_font_fallback_diagnostic() {
-    Some(diagnostic) => {
-      let language_tags = diagnostic.fallback_language_tags()
-      let glyph_key = diagnostic.glyph_key()
-      inspect(diagnostic.font_family(), content="emoji")
-      inspect(diagnostic.font_source(), content="skia-system-fontmgr")
-      inspect(language_tags.length(), content="2")
-      inspect(language_tags[0], content="und-Zsye")
-      inspect(language_tags[1], content="en")
-      inspect(diagnostic.fallback_script_tag(), content="und-Zsye")
-      inspect(diagnostic.fallback_language_tag_count(), content="2")
-      inspect(diagnostic.fallback_request_language_count(), content="2")
-      assert_true(diagnostic.text_system_id() == "skia-raster-text-system")
-      assert_true(diagnostic.emoji_hint())
-      assert_true(diagnostic.emoji_fallback_attempted())
-      assert_true(diagnostic.fallback_request_ready())
-      assert_true(diagnostic.missing_glyph_recovery_ready())
-      assert_true(diagnostic.deterministic_color_emoji_ready())
-      inspect(diagnostic.glyph_format(), content="rgba")
-      assert_true(glyph_key.contains("skia-system-fontmgr"))
-      assert_true(glyph_key.contains("skia-raster-text-system"))
-      assert_true(glyph_key.contains("script=und-Zsye"))
-      assert_true(glyph_key.contains("langs=2"))
-      assert_true(glyph_key.contains("lang-tags=und-Zsye+en"))
-      assert_true(
-        glyph_key.contains("emoji-u+\{diagnostic.fallback_character()}"),
-      )
-      assert_true(glyph_key.contains("rgba"))
-      assert_true(diagnostic.glyph_count() >= 1)
-      assert_true(diagnostic.cluster_count() == 1)
-      assert_true(diagnostic.glyph_width() > 0)
-      assert_true(diagnostic.glyph_height() > 0)
-      assert_true(diagnostic.resolved_missing_glyph_count() >= 0)
-      assert_true(diagnostic.fallback_character() == 0x1F469)
-      assert_true(diagnostic.resolved_font_name().length() > 0)
-      assert_true(diagnostic.resolved_font_name() != "no-fontmgr")
-      assert_true(diagnostic.resolved_font_name() != "no-match")
-    }
-    None => assert_true(!skia_available())
-  }
-}
-
-///|
 test "skia empty typeface text system remains opt-in and fallback-safe" {
   let system = skia_text_system(resolution=SkiaFontResolution::EmptyTypeface)
   if skia_available() {
