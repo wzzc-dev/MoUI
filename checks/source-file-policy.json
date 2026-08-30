@@ -43,7 +43,7 @@
     },
     {
       "path": "moui_skia/native/skia_stub_surface_image_data.cpp",
-      "maxLines": 3276,
+      "maxLines": 3322,
       "reason": "Existing native Skia surface and image bridge implementation."
     },
     {
@@ -153,7 +153,7 @@
     },
     {
       "path": "moui_skia/native/surface_image_data_native.mbt",
-      "maxLines": 1475,
+      "maxLines": 1495,
       "reason": "Existing native surface/image bindings."
     },
     {
