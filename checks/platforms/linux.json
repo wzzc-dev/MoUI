@@ -3,7 +3,7 @@
   "platform": "linux",
   "sourceBuild": {"status": "passed", "evidence": "Ubuntu Wayland CI"},
   "rendererL2": {"status": "passed", "presenterRoute": "vulkan-wayland-direct"},
-  "runtimeL3": {"status": "partial", "evidence": "first-frame passed; interactive IME and services remain partial"},
+  "runtimeL3": {"status": "passed", "evidence": "matching-host Linux Wayland runtime smoke transcript and Showcase first-frame (2026-08-30, artifacts/platform-evidence/linux/); current-monitor identity exempted on WSLg because the compositor delivers no wl_surface.enter (ADR 0032)"},
   "hostKind": "native-wayland",
   "deploymentFloor": "Wayland compositor",
   "toolchainFloor": "Clang/GCC with Wayland and Vulkan",

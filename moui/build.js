@@ -30,6 +30,12 @@ function runPkgConfig(packages, flag) {
   return result.stdout.trim();
 }
 
+// `backend/linux` drives the GLib main loop and the AT-SPI GDBus host from the
+// same C stub set, so gio-2.0 must join glib-2.0 in both flag sets. gio-2.0
+// pulls gobject-2.0 and glib-2.0 into `--libs`, and its `--cflags` is a
+// superset of the glib-2.0 include path.
+const linuxGlibPackages = ["glib-2.0", "gio-2.0"];
+
 function linuxGlibFlags(config) {
   const explicitStub = configEnvValue(config, "MOUI_LINUX_GLIB_STUB_CC_FLAGS");
   const explicitLink = configEnvValue(config, "MOUI_LINUX_GLIB_CC_LINK_FLAGS");
@@ -37,8 +43,8 @@ function linuxGlibFlags(config) {
     return { stubCcFlags: explicitStub, linkFlags: explicitLink };
   }
   return {
-    stubCcFlags: runPkgConfig(["glib-2.0"], "--cflags"),
-    linkFlags: runPkgConfig(["glib-2.0"], "--libs"),
+    stubCcFlags: runPkgConfig(linuxGlibPackages, "--cflags"),
+    linkFlags: runPkgConfig(linuxGlibPackages, "--libs"),
   };
 }
 

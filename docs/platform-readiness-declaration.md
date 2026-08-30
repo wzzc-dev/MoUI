@@ -27,7 +27,7 @@ OS product completeness.
 | **macOS** | **committed** | Usable as a product mainline | L0–L2 PR gates + L3 platform runtime passed (`checks/platforms/macos.json`) | — |
 | **Web** | **committed** | Usable as a product mainline | Daily wasm-gc + browser WebGPU; `checks/platforms/web.json` `runtimeL3=passed` | — |
 | **Windows** | **committed** | Usable as a product mainline | L0–L2 PR/real Skia; matching-host Win32 runtime smoke + Showcase first-frame (`checks/platforms/windows.json` `runtimeL3=passed`, 2026-08-29, ADR 0031) | — |
-| **Linux** | **committed_with_gaps** | host `ready=true` = implementation path available, **≠** all L3 checks green | L0–L2 + first-frame L3; interactive IME and similar checks are partial | Complete interactive L3 |
+| **Linux** | **committed** | Usable as a product mainline | L0–L2 PR/real Skia; matching-host Wayland runtime smoke + Showcase first-frame (`checks/platforms/linux.json` `runtimeL3=passed`, 2026-08-30, ADR 0032) | — |
 | **Android** | **experimental** | `ready=false`: the window-hosted template + session compile and host-sim tests pass, but no development/demonstration usability or product commitment is made; `status=experimental` | `HostCmd` host-sim and MoUI adapter tests pass | Matching-device presenter/service evidence; GPU seven-gate claim; usability commitment |
 | **iOS** | **experimental** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Matching simulator/device presenter and VoiceOver evidence; GPU seven-gate claim; usability commitment |
 | **HarmonyOS** | **experimental** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Signed-device presenter/service evidence; GPU seven-gate claim; usability commitment |

@@ -72,7 +72,7 @@
       "releaseBlocking": true,
       "evidenceRequired": "L2+first-frame",
       "evidenceFile": "checks/platforms/linux.json",
-      "productClass": "committed_with_gaps",
+      "productClass": "committed",
       "ready": true,
       "coverage": ["platform", "release"]
     },
