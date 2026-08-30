@@ -5,11 +5,14 @@ tools and vcpkg `zlib:x64-windows`. The Skia entrypoints are the recommended
 native mainline. WGPU diagnostic entrypoints still use `wgpu_mbt` dynamic mode
 with the official `wgpu-windows-x86_64-msvc-release.zip` release. The
 `wgpu_mbt` C stubs include `<stdatomic.h>`, which on MSVC requires C11 mode:
-`scripts/windows/msvc_env.ps1` provides this through the `CL` environment
-(`/experimental:c11atomics /std:c11 /utf-8`), so plain
-`moon run examples/showcase/windows_wgpu --target native` works once that
-script has been sourced. `/std:c11` affects C files only and leaves the C++
-Skia stubs untouched.
+`scripts/windows/msvc_env.ps1` provides `/experimental:c11atomics /utf-8`
+through the shared `CL` environment, and the Windows build/package helpers add
+`/std:c11` for packages that import the WGPU provider. For a plain sourced
+shell, call `Enable-MsvcGlobalC11ModeForCOnlyStubs` before running WGPU
+entrypoints. `/std:c11` stays out of the shared `CL` default on purpose: cl
+rejects `/std:c11` on the same command line as `moui_skia`'s `/std:c++20`
+Windows Skia stub flags (D8016), and the Skia route does not compile the
+`wgpu_mbt` stubs.
 Windows native WebView support is auto-detected by the `moui_webview`
 prebuild from the `.tools/webview2/` cache directory (set up by
 `scripts/windows/setup_msvc_deps.ps1 -InstallWebView2`), matching how Linux
@@ -59,6 +62,7 @@ To run an entrypoint directly after setup:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\\scripts\\windows\\msvc_env.ps1; Enable-MsvcGlobalC11ModeForCOnlyStubs; moon run examples/showcase/windows_wgpu --target native }"
 ```
 
 The Showcase Windows Skia route is an interactive app entrypoint. Keep

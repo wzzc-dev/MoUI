@@ -1,6 +1,6 @@
 # Windows 平台说明
 
-Windows 原生示例使用 MSVC 工具链、Visual Studio C++ build tools 和 vcpkg `zlib:x64-windows`。Skia 入口点是推荐的原生主线。WGPU 诊断入口点仍使用 `wgpu_mbt` dynamic 模式和官方 `wgpu-windows-x86_64-msvc-release.zip` release。
+Windows 原生示例使用 MSVC 工具链、Visual Studio C++ build tools 和 vcpkg `zlib:x64-windows`。Skia 入口点是推荐的原生主线。WGPU 诊断入口点仍使用 `wgpu_mbt` dynamic 模式和官方 `wgpu-windows-x86_64-msvc-release.zip` release。`wgpu_mbt` 的 C stub 使用 `<stdatomic.h>`，在 MSVC 上需要 C11 模式：`scripts/windows/msvc_env.ps1` 通过共享 `CL` 环境提供 `/experimental:c11atomics /utf-8`，Windows 构建/打包辅助脚本会对导入 WGPU provider 的包追加 `/std:c11`；在点源脚本后的普通 shell 中直接运行 WGPU 入口前，请先调用 `Enable-MsvcGlobalC11ModeForCOnlyStubs`。共享 `CL` 默认刻意不带 `/std:c11`：cl 拒绝它出现在与 `moui_skia` 的 `/std:c++20` Windows Skia stub 选项相同的命令行上（D8016），而 Skia 路线不编译 `wgpu_mbt` stub。
 Windows 原生 WebView 支持由 `moui_webview` prebuild 从 `.tools/webview2/` 缓存目录自动检测（通过 `scripts/windows/setup_msvc_deps.ps1 -InstallWebView2` 设置），这与 Linux 通过 `pkg-config` 自动检测 WebKitGTK 的方式匹配。fallback 构建在没有 WebView2 SDK 时编译，并报告 `HostWebViewCapabilities.available=false`；带 SDK 的构建使用以应用 HWND 为父级的 WebView2 controller，同步 `DrawFrame.platform_views`，转发受控 navigation 和 title/history/bridge 事件，并在渲染器呈现后 drain `WebViewController` task。可通过设置环境变量覆盖自动检测，例如 `MOUI_WINDOWS_ENABLE_WEBVIEW2=1`、`MOUI_WINDOWS_WEBVIEW2_INCLUDE=<webview2-sdk-include>` 和 `MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS=\"<WebView2Loader link flags>\"`，或设置显式的 `MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS` / `MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS` 对。当 WebView2 标志解析成功时，prebuild 会添加 `-DMOUI_WINDOWS_ENABLE_WEBVIEW2`。
 
 ## MSVC 设置
@@ -22,6 +22,7 @@ MSVC 辅助脚本通过 `vswhere` 导入 `vcvarsall.bat`，把 `CC` 和 `CXX` �
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\\scripts\\windows\\msvc_env.ps1; Enable-MsvcGlobalC11ModeForCOnlyStubs; moon run examples/showcase/windows_wgpu --target native }"
 ```
 
 Showcase Windows Skia 路线是交互式应用入口。匹配宿主的首帧 smoke 应保留在 tester/backend smoke runner 中，而不是向 composition root 添加自动退出逻辑。

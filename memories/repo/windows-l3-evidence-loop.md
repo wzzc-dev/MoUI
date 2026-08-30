@@ -25,10 +25,15 @@
 - `validate-renderer-capability-consistency.mjs` cannot compile native C on a
   bare Windows host (wgpu_mbt shim's `<stdatomic.h>` needs MSVC C11 mode;
   `/experimental:c11atomics` alone does not define `__STDC_VERSION__`);
-  it runs on Linux/macOS CI. Fixed for sourced shells on 2026-08-29:
-  `moui/scripts/windows/msvc_env.ps1` CL now carries
-  `/experimental:c11atomics /std:c11 /utf-8`, and `moon run
-  examples/showcase/windows_wgpu --target native` builds end to end.
+  it runs on Linux/macOS CI. On Windows, source
+  `moui/scripts/windows/msvc_env.ps1` (shared CL carries
+  `/experimental:c11atomics /utf-8`) and call
+  `Enable-MsvcGlobalC11ModeForCOnlyStubs` before WGPU-native builds
+  (`moon run examples/showcase/windows_wgpu --target native` then builds end
+  to end). `/std:c11` must stay OUT of the shared CL default: cl rejects it on
+  the same command line as `moui_skia`'s `/std:c++20` Skia stub flags (D8016),
+  which broke the skia showcase build on 2026-08-30; the build/package helpers
+  add `/std:c11` only for packages that import the WGPU provider.
 - `.local_repos/window` was a stale divergent checkout and is deleted; the
   `window` submodule (`moui-support`) is the only canonical window source.
   Toggle local resolution with `scripts/window-dev-mode.sh on|off`
