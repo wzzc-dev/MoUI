@@ -64,7 +64,7 @@
   its fixed input probe does not hit a text control, so required IME markers are
   absent.
 - Environment limitation: the default macOS GPU smoke requires a missing
-  `libskia_ganesh_ext.dylib`; the published `wzzc-dev/window@0.5.4-0.1.5`
+  `libskia_ganesh_ext.dylib`; the published `wzzc-dev/window@0.5.4-0.1.6`
   dependency is currently unavailable from the configured registry, so the
   standard (local-window-off) daily profile cannot resolve all dependencies.
 

@@ -2,7 +2,7 @@
 
 ## Window Package Dependency
 
-MoUI resolves the modified window host as `wzzc-dev/window@0.5.4-0.1.5` from
+MoUI resolves the modified window host as `wzzc-dev/window@0.5.4-0.1.6` from
 the MoonBit registry. A repo-local window checkout is no longer part of normal
 development. The fork package currently supplies target support that the
 upstream package does not yet cover for MoUI.
