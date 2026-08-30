@@ -27,7 +27,8 @@ runtime evidence, and product promotion.
 
 1. Publish an explicit **product_class** matrix:
    - macOS / Web: `committed`
-   - Windows / Linux: `committed_with_gaps`
+   - Windows / Linux: `committed_with_gaps` (both since promoted to
+     `committed`; see the 2026-08-29 and 2026-08-30 amendments below)
    - Android / iOS / HarmonyOS: `runtime_partial`
 2. Redefine mobile `ready: true` as **window-hosted path usable for
    development and demos**, aligned with Linux host usability.
@@ -87,6 +88,21 @@ Showcase first-frame evidence were captured on 2026-08-29, raising
 classification for Windows in decision point 1 above is superseded; Linux
 remains `committed_with_gaps` and mobile remains `experimental`. See ADR 0031
 for the evidence chain and the repaired evidence-loop defects.
+
+### Amendment (2026-08-30, ADR 0032)
+
+ADR 0032 promotes Linux from **`committed_with_gaps`** to **`committed`**:
+the matching-host Linux Wayland runtime smoke transcript and the Showcase
+first-frame evidence were captured on 2026-08-30, raising
+`checks/platforms/linux.json` `runtimeL3` to `passed`. The `committed_with_gaps`
+classification for Linux in decision point 1 above is therefore superseded, and
+no route remains `committed_with_gaps`; mobile remains `experimental`.
+
+ADR 0032 also records one narrow, opt-in evidence exemption: the
+current-monitor identity assertion is relaxed on compositors that never deliver
+`wl_surface.enter` (the WSLg Weston RDP backend). Monitor enumeration and
+primary monitor identity stay mandatory. See ADR 0032 for the evidence chain,
+the two defects it repaired, and why a silent fallback was rejected.
 
 ---
 

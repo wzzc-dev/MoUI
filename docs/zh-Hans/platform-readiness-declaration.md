@@ -16,7 +16,7 @@ OS 产品完成度。
 | **macOS** | **committed** | 产品主线可用 | L0–L2 PR 门禁 + L3 平台运行时 passed（`checks/platforms/macos.json`） | — |
 | **Web** | **committed** | 产品主线可用 | 每日 wasm-gc + browser WebGPU；`checks/platforms/web.json` runtimeL3=passed | — |
 | **Windows** | **committed** | 产品主线可用 | L0–L2 PR/real Skia；匹配宿主 Win32 运行时 smoke + Showcase 首帧（`checks/platforms/windows.json` `runtimeL3=passed`，2026-08-29，ADR 0031） | — |
-| **Linux** | **committed_with_gaps** | 宿主 `ready=true` = 代码路径可用，**≠** L3 全绿 | L0–L2 + 首帧 L3；交互 IME 等 partial | 完整交互 L3 |
+| **Linux** | **committed** | 产品主线可用 | L0–L2 PR/real Skia；匹配宿主 Wayland 运行时 smoke + Showcase 首帧（`checks/platforms/linux.json` `runtimeL3=passed`，2026-08-30，ADR 0032） | — |
 | **Android** | **experimental** | `ready=false`：window-hosted template + session 可编译且 host-sim tests 通过，但不做任何开发/演示可用性或产品承诺；`status=experimental` | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching-device presenter/service evidence；GPU seven-gate claim；可用性承诺 |
 | **iOS** | **experimental** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching simulator/device presenter 和 VoiceOver evidence；GPU seven-gate claim；可用性承诺 |
 | **HarmonyOS** | **experimental** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | signed-device presenter/service evidence；GPU seven-gate claim；可用性承诺 |
