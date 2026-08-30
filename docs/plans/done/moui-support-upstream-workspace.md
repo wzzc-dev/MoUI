@@ -106,7 +106,7 @@ the legacy MoonBit behavior.
 ## Publication Handoff
 
 The lifecycle-owner follow-up was released as
-`wzzc-dev/window@0.5.4-0.1.6` from commit
+`wzzc-dev/window@0.5.4-0.1.7` from commit
 `b80f2a2b486f4d660745a809df72421f08081850`. All seven MoUI consumers now use
 that registry version, `moon update` and `moon install` resolve it, and
 `sh scripts/window-dev-mode.sh off` restored the default workspace without

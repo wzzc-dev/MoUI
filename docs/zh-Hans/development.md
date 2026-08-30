@@ -74,13 +74,13 @@ local workspace members 从 `moon.work` 解析。确切列表会生成到
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.4-0.1.6",
+  "wzzc-dev/window@0.5.4-0.1.7",
   "wzzc-dev/moui@0.1.12",
   "wzzc-dev/moui_skia@0.1.10",
 }
 ```
 
-MoonBit 包生态仍不如更老的语言生态成熟。失败的 build 可能来自 registry cache state、package publication mistakes 或 dependency regressions，也可能来自 MoUI 代码。当 dependency-related failures 出现时，先运行 `moon update`，检查 resolved package versions，并确认 `wzzc-dev/window@0.5.4-0.1.6` 或其他包是否改变了行为。
+MoonBit 包生态仍不如更老的语言生态成熟。失败的 build 可能来自 registry cache state、package publication mistakes 或 dependency regressions，也可能来自 MoUI 代码。当 dependency-related failures 出现时，先运行 `moon update`，检查 resolved package versions，并确认 `wzzc-dev/window@0.5.4-0.1.7` 或其他包是否改变了行为。
 
 `window` package 仍携带 MoUI smoke helpers 和 evidence docs。使用
 `scripts/run-window-package-smoke.sh <platform>` 将已解析的 registry package 解包到临时目录，并在不创建本地 checkout 的情况下运行这些 helpers。例如在 macOS 上：
