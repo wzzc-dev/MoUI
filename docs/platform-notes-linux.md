@@ -1,7 +1,7 @@
 # Linux Platform Notes
 
 `backend/linux` is a minimal native Wayland host core. It uses the
-`wzzc-dev/window@0.5.4-0.1.6` Linux package for Wayland event-loop and window handles,
+`wzzc-dev/window@0.5.4-0.1.7` Linux package for Wayland event-loop and window handles,
 normalizes window/input events through the shared `Event` contract, and runs
 the Showcase entrypoints through the same renderer/runtime boundary as macOS
 and Windows. Application entrypoints supply ordered
@@ -55,7 +55,7 @@ Linux runtime requirements are intentionally native:
   validation can use Mesa llvmpipe through `vulkan-swrast`/Lavapipe when
   hardware Vulkan is not available.
 - Wayland development headers and generated xdg-shell protocol sources for the
-  `wzzc-dev/window@0.5.4-0.1.6` native stub.
+  `wzzc-dev/window@0.5.4-0.1.7` native stub.
 - `wl_data_device_manager` from the compositor for native clipboard selection
   and file drag/drop runtime behavior.
 - XDG desktop integration for Linux services: OpenURI goes through
@@ -263,7 +263,7 @@ writes, desktop URL opening, IME composition/cursor geometry, and file
 drag/drop are implemented host-service/input paths, but they remain
 matching-host runtime evidence boundaries: cite only logs that exercised the
 actual desktop/compositor service, not the package preflight summary alone.
-Record dependency-level facts from the `wzzc-dev/window@0.5.4-0.1.6`
+Record dependency-level facts from the `wzzc-dev/window@0.5.4-0.1.7`
 package smoke artifacts; keep the MoUI Showcase
 `linux_skia` run as the mainline application observation. Keep `linux_wgpu` as
 a WGPU diagnostic observation when a Vulkan/WGPU stack is configured.

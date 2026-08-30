@@ -47,7 +47,7 @@
 | 2026-08-04 | Plan and RFC accepted; registry dependency baseline restored. |
 | 2026-08-04 | Archived six completed/superseded plans and added active/done status plus README index consistency validation. |
 | 2026-08-04 | Isolated static MoonBit tools in `tools/moon.work`; moved the product-coupled renderer capability validator to `tools_product`. |
-| 2026-08-04 | Replaced the four-path window dependency allowlist with recursive discovery of every repository-owned `moon.mod`; seven consumers now resolve `wzzc-dev/window@0.5.4-0.1.6`. |
+| 2026-08-04 | Replaced the four-path window dependency allowlist with recursive discovery of every repository-owned `moon.mod`; seven consumers now resolve `wzzc-dev/window@0.5.4-0.1.7`. |
 | 2026-08-04 | Added the 14-route matrix, generated Tier tables, matrix-driven entrypoint discovery, composition-root/two-file/50-or-40-line budgets, and fixed Web/WeChat ABI-shim validation. |
 | 2026-08-04 | Added `moui/services`, typed Program commands, backend adapters/fakes, and strict TEA migrations; removed root `run_app`, app-facing host bridge APIs, and direct action mutation paths. |
 | 2026-08-04 | Converged Showcase, Markdown Editor, Multi Window, and WebView Demo through module-root integration facades, removed duplicate WGPU Cosmic roots, and reduced retained entrypoint `main.mbt` files to their platform budgets. |

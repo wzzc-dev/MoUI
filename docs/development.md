@@ -97,7 +97,7 @@ and local workspace members resolve from `moon.work`. The exact list is generate
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.4-0.1.6",
+  "wzzc-dev/window@0.5.4-0.1.7",
   "wzzc-dev/moui@0.1.12",
   "wzzc-dev/moui_skia@0.1.10",
 }
@@ -107,7 +107,7 @@ The MoonBit package ecosystem is still not as mature as older language
 ecosystems. A failing build can come from registry cache state, package
 publication mistakes, or dependency regressions as well as from MoUI code. When
 dependency-related failures appear, first run `moon update`, inspect the
-resolved package versions, and check whether `wzzc-dev/window@0.5.4-0.1.6` or
+resolved package versions, and check whether `wzzc-dev/window@0.5.4-0.1.7` or
 another package changed behavior.
 
 The `window` package still carries MoUI smoke helpers and evidence docs. Use
