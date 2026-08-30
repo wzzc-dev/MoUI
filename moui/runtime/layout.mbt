@@ -147,7 +147,9 @@ fn ElementNode::place_measured_with_text_system(
 ) -> PlacedNode {
   let result = self.view_node.layout({
     constraints: Constraints::tight(frame.size),
-    child_sizes: self.children.map(child => child.intrinsic_size(anchor_frames~)),
+    child_sizes: self.children.map(child => {
+      child.intrinsic_size(anchor_frames~, text_system~)
+    }),
     child_flex_weights: measured.children.map(child => child.flex_weight),
     state: self.control.view_state,
     text_system,
@@ -183,6 +185,7 @@ fn ElementNode::place_measured_with_text_system(
 fn ElementNode::intrinsic_size(
   self : ElementNode,
   anchor_frames? : Array[(String, Rect)] = [],
+  text_system~ : TextSystem,
 ) -> Size {
   if !self.has_dirty_layout() &&
     self.layout_cache.cached_intrinsic_anchor_frames == Some(anchor_frames) {
@@ -198,13 +201,19 @@ fn ElementNode::intrinsic_size(
   let size = self.view_node.layout({
       constraints: Constraints::unbounded(),
       child_sizes: self.children.map(child => {
-        child.intrinsic_size(anchor_frames~)
+        child.intrinsic_size(anchor_frames~, text_system~)
       }),
       child_flex_weights: self.children.map(child => {
         child.view_node.flex_weight()
       }),
       state: self.control.view_state,
-      text_system: TextSystem::fallback(),
+      // Thread the host's text system instead of the core fallback. Intrinsic
+      // sizing feeds the child_sizes handed to a parent during placement, and
+      // the fallback estimates advances from font size alone, which
+      // underestimates real glyph runs. A view then receives a frame narrower
+      // than the glyphs it draws, and renderers clip glyphs to that frame,
+      // truncating the text.
+      text_system,
       environment: Environment::neutral(),
       style: ViewStyle::empty(),
       anchor_frames: anchor_frames.copy(),

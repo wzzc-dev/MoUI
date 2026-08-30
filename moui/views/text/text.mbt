@@ -49,7 +49,23 @@ impl @core.ViewNode for Text with fn declaration(self) {
     },
   )
   @common.view_declaration(
-    layout=@common.view_exact_channel(@common.view_size_key(self.size)),
+    // Layout measures the string, so the key must cover the text and the font
+    // used for that measurement, not just the requested box. An explicit theme
+    // pins that font (ambient theme changes go through the environment), so it
+    // is folded into the key rather than dropping the layout cache.
+    layout=@common.view_exact_channel(
+      @common.view_record_key("Text.layout", [
+        ("text", @core.DeclarationKey::string(self.text)),
+        ("role", role),
+        ("min_size", @common.view_size_key(self.size)),
+        (
+          "font",
+          @core.DeclarationKey::option(
+            self.theme.map(theme => @common.view_font_key(self.role.font(theme))),
+          ),
+        ),
+      ]),
+    ),
     paint=if self.theme is Some(_) {
       @core.DeclarationChannel::Uncacheable
     } else {
@@ -69,7 +85,22 @@ impl @core.ViewNode for Text with fn declaration(self) {
 
 ///|
 impl @core.ViewNode for Text with fn layout(self, context) {
-  @core.ViewLayoutResult::new(size=context.constraints.constrain(self.size))
+  let resolved_theme = self.theme.unwrap_or(context.environment.theme)
+  let font = context.style.font.unwrap_or(self.role.font(resolved_theme))
+  let measured = context.text_system.measure_text(
+    @core.TextLayoutInput::new(text=self.text, font~),
+  )
+  // The requested width/height act as a minimum, mirroring Button's `min_size`:
+  // text that fits keeps the requested box, and text that does not fit grows the
+  // box instead of being clipped. Renderers clip glyphs to the TextRun frame, so
+  // a fixed box silently truncated any string whose measured width exceeded it.
+  // That surfaced on Linux, where system fonts are wider than the Windows/macOS
+  // defaults, but the truncation was never platform-specific.
+  let size = @core.Size::new(
+    width=@common.view_max_double(self.size.width, measured.size.width),
+    height=@common.view_max_double(self.size.height, measured.size.height),
+  )
+  @core.ViewLayoutResult::new(size=context.constraints.constrain(size))
 }
 
 ///|
