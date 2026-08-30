@@ -43,7 +43,7 @@ function Ensure-WgpuNativeRoot {
   }
 
   $assetName = "wgpu-windows-x86_64-msvc-release.zip"
-  $releaseTag = "v27.0.4.0"
+  $releaseTag = "v29.0.1.1"
   $releaseRepo = "gfx-rs/wgpu-native"
   $toolsRoot = Join-Path $repoRoot ".tools\wgpu-native"
   $extractRoot = Join-Path $toolsRoot ($assetName -replace '\.zip$', '')
