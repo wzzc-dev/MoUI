@@ -173,7 +173,10 @@ fn create_skia_gpu_host_renderer(
       let next = match context {
         Some(context) =>
           skia_gpu_present_and_acquire_next(
-            surface, context, platform, native_surface,
+            surface,
+            context,
+            platform,
+            native_surface,
             expected_size=expected_size(),
           )
         None => None
