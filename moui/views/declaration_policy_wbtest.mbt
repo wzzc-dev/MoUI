@@ -9,11 +9,13 @@ fn declaration_policy_changes(
 
 ///|
 test "view declarations distinguish equal-length and exact numeric changes" {
+  // Text layout measures the string, so swapping in different text invalidates
+  // layout; a layout change in turn marks paint/semantics/platform dirty.
   let text_a : @core.View[Unit] = text("ab")
   let text_b : @core.View[Unit] = text("cd")
   debug_inspect(
     declaration_policy_changes(text_b.declaration(), text_a.declaration()),
-    content="(false, true, true, false)",
+    content="(true, true, true, true)",
   )
 
   let progress_a : @core.View[Unit] = progress(
