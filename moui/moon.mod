@@ -5,7 +5,7 @@ version = "0.1.12"
 preferred_target = "native"
 
 import {
-  "wzzc-dev/window@0.5.4-0.1.5",
+  "wzzc-dev/window@0.5.4-0.1.6",
   "Milky2018/moon_accesskit@0.3.0",
   "Milky2018/moon_zeno@0.1.3",
   "mizchi/svg@0.2.1",

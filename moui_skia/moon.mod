@@ -4,7 +4,7 @@ version = "0.1.10"
 
 import {
   "Milky2018/windowing@0.1.0",
-  "wzzc-dev/window@0.5.4-0.1.5",
+  "wzzc-dev/window@0.5.4-0.1.6",
 }
 
 readme = "README.mbt.md"

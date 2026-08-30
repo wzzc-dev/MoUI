@@ -19,7 +19,7 @@
 | Date | Note |
 |---|---|
 | 2026-08-05 | 建立计划；确认现有工作树已有平台桥和 embedded_runtime 重命名，但 coordinator 仍位于 runtime，window 仍使用 stateful embedded dispatch kernel。 |
-| 2026-08-05 | `wzzc-dev/window` commit `b80f2a2b486f4d660745a809df72421f08081850` 发布为 `0.5.4-0.1.5`；七个 consumer 完成统一 pin，默认 workspace 恢复 published mooncakes mode。 |
+| 2026-08-05 | `wzzc-dev/window` commit `b80f2a2b486f4d660745a809df72421f08081850` 发布为 `0.5.4-0.1.6`；七个 consumer 完成统一 pin，默认 workspace 恢复 published mooncakes mode。 |
 | 2026-08-05 | window-host boundary、host import、platform bridge、API、guidance、doc-reference、PR 与 platform gates 通过；published-mode hostsim 通过。 |
 | 2026-08-05 | `window_host` native 7/7、wasm-gc 7/7，`embedded_runtime` 11/11，runtime 91/91，Windows 24/24、Linux 25/25、Web 39/39 通过；Web presentation manifest 通过。 |
 

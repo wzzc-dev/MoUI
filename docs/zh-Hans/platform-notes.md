@@ -2,7 +2,7 @@
 
 ## Window 包依赖
 
-MoUI 从 MoonBit registry 解析修改后的窗口宿主为 `wzzc-dev/window@0.5.4-0.1.5`。仓库本地 window checkout 不再属于普通开发流程。该 fork 包目前提供上游包尚未覆盖、但 MoUI 需要的目标支持。主 checkout 现在包含 `moui_skia`，它提供原生 Skia 光栅主线渲染器使用的可编辑 Skia 绑定。
+MoUI 从 MoonBit registry 解析修改后的窗口宿主为 `wzzc-dev/window@0.5.4-0.1.6`。仓库本地 window checkout 不再属于普通开发流程。该 fork 包目前提供上游包尚未覆盖、但 MoUI 需要的目标支持。主 checkout 现在包含 `moui_skia`，它提供原生 Skia 光栅主线渲染器使用的可编辑 Skia 绑定。
 
 ## 共享宿主契约
 
