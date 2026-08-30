@@ -179,7 +179,11 @@ fn create_macos_app(
   let app = MacosNativeHostBackend::{
     title,
     runtime,
-    driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
+    driver: @runtime.HostRuntimeDriver::new(
+      runtime~,
+      schedule_redraw=() => (),
+      frame_clock=options.frame_clock,
+    ),
     lifecycle: @window_lifecycle.WindowLifecycle::new(
       requests=window_requests,
       scene_resolver=options.scene_resolver,

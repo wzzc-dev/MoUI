@@ -4,6 +4,7 @@
 pub(all) struct HostRuntimeDriver {
   runtime : AppRuntime
   scheduler : RedrawScheduler
+  frame_clock : (() -> Double)?
   mut close_requested : Bool
   mut frame_time_ms : Double
 }
@@ -12,10 +13,12 @@ pub(all) struct HostRuntimeDriver {
 pub fn HostRuntimeDriver::new(
   runtime~ : AppRuntime,
   schedule_redraw~ : () -> Unit,
+  frame_clock? : (() -> Double)? = None,
 ) -> HostRuntimeDriver {
   let driver = {
     runtime,
     scheduler: RedrawScheduler::new(schedule=schedule_redraw),
+    frame_clock,
     close_requested: false,
     frame_time_ms: 0.0,
   }
@@ -413,7 +416,10 @@ pub fn HostRuntimeDriver::draw_commands(
 pub fn HostRuntimeDriver::draw_frame(
   self : HostRuntimeDriver,
 ) -> @core.DrawFrame {
-  self.runtime.draw_frame()
+  match self.frame_clock {
+    Some(clock) => self.runtime.profile_draw_frame(clock).frame()
+    None => self.runtime.draw_frame()
+  }
 }
 
 ///|
