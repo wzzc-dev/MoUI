@@ -125,14 +125,23 @@ impl @core.ViewNode for MarkdownViewerNode with fn declaration(self) {
 
 ///|
 impl @core.ViewNode for MarkdownViewerNode with fn layout(self, ctx) {
-  let cache = RichTextDocumentViewCache::new()
-  let measured_height = rich_text_document_session_view_measure_height(
-    self.source,
-    self.size,
-    self.font,
-    ctx.text_system,
-    cache,
-  )
+  // The editor's block list supplies a fixed row height. In that mode layout
+  // must not parse and shape the same block just to discover a height that the
+  // parent immediately clamps back to `self.size.height`; paint performs the
+  // cached preparation only for visible rows. A zero height keeps the general
+  // viewer's intrinsic-size behavior for unconstrained callers.
+  let measured_height = if self.size.height > 0.0 {
+    self.size.height
+  } else {
+    let cache = RichTextDocumentViewCache::new()
+    rich_text_document_session_view_measure_height(
+      self.source,
+      self.size,
+      self.font,
+      ctx.text_system,
+      cache,
+    )
+  }
   let measured = @core.Size::new(width=self.size.width, height=measured_height)
   @core.ViewLayoutResult::new(size=ctx.constraints.constrain(measured))
 }
