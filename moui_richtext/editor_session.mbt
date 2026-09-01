@@ -454,7 +454,9 @@ pub fn MarkdownDocumentSession::estimated_content_height(
   if source_mode {
     self.height_index.source_content_units * base.size
   } else {
-    match markdown_document_gallery_block_heights(self, base, content_width) {
+    match markdown_document_block_heights(
+      self, base, content_width~,
+    ) {
       Some(heights) => markdown_document_sum_heights(heights)
       None => self.height_index.visual_content_units * base.size
     }
@@ -473,7 +475,9 @@ pub fn MarkdownDocumentSession::source_offset_y(
     return 0.0
   }
   if !source_mode {
-    match markdown_document_gallery_block_heights(self, base, content_width) {
+    match markdown_document_block_heights(
+      self, base, content_width~,
+    ) {
       Some(heights) =>
         return markdown_document_gallery_source_offset_y(
           self, source_offset, heights,
@@ -683,8 +687,9 @@ fn markdown_document_window_range(
   content_width~ : Double,
 ) -> MarkdownDocumentWindowRange {
   if !source_mode {
-    match
-      markdown_document_gallery_block_heights(session, base, content_width) {
+    match markdown_document_block_heights(
+      session, base, content_width~,
+    ) {
       Some(heights) =>
         return markdown_document_window_range_for_heights(
           heights,
@@ -783,6 +788,51 @@ fn markdown_document_gallery_block_heights(
     }
   }
   if found_gallery {
+    Some(heights)
+  } else {
+    None
+  }
+}
+
+///|
+/// Per-block pixel heights for scroll geometry. Prefers measured paint
+/// geometry (recorded by the session editor once a block has been
+/// rendered at this width and font), falls back to the gallery
+/// rich-text computation, then to the parse-time estimate. Returns None
+/// only when no block carries geometry better than the unit estimates,
+/// which keeps the pure unit-index path for unrendered documents.
+fn markdown_document_block_heights(
+  session : MarkdownDocumentSession,
+  base : @core.FontSpec,
+  content_width~ : Double,
+) -> Array[Double]? {
+  let gallery = markdown_document_gallery_block_heights(
+    session, base, content_width,
+  )
+  let heights : Array[Double] = []
+  let mut has_measured = false
+  for index, editor_block in session.editor_blocks {
+    match rich_text_block_measured_height(
+      editor_block, base, width=content_width,
+    ) {
+      Some(height) => {
+        has_measured = true
+        heights.push(height)
+      }
+      None => match gallery {
+        Some(gallery) => heights.push(gallery[index])
+        None =>
+          heights.push(
+            session.height_index.blocks
+            .get(index)
+            .map(metric =>
+              metric.visual_height_units * base.size)
+            .unwrap_or(base.size * 1.55),
+          )
+      }
+    }
+  }
+  if has_measured || gallery is Some(_) {
     Some(heights)
   } else {
     None
@@ -1158,6 +1208,35 @@ fn markdown_document_source_chars_in_range(
 
 ///|
 fn markdown_document_source_mode_block_to_rich_text(
+  source_chars : Array[Char],
+  source_char_offset : Int,
+  editor_block : MarkdownEditorBlock,
+  base : @core.FontSpec,
+) -> RichTextBlock {
+  let source_length = source_chars.length()
+  let start = markdown_editor_clamp_int(
+    editor_block.source_range.start - source_char_offset,
+    0,
+    source_length,
+  )
+  let end = markdown_editor_clamp_int(
+    editor_block.source_range.end - source_char_offset,
+    start,
+    source_length,
+  )
+  markdown_document_source_mode_block_to_rich_text_with_cache(
+    String::from_array(source_chars[start:end]),
+    editor_block,
+    base,
+    build=(editor_block, base) =>
+      markdown_document_source_mode_block_to_rich_text_uncached(
+        source_chars, source_char_offset, editor_block, base,
+      ),
+  )
+}
+
+///|
+fn markdown_document_source_mode_block_to_rich_text_uncached(
   source_chars : Array[Char],
   source_char_offset : Int,
   editor_block : MarkdownEditorBlock,

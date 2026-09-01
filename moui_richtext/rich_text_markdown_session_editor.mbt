@@ -28,7 +28,10 @@ fn markdown_session_display_session(
   if display_text == session.source {
     session
   } else {
-    MarkdownDocumentSession::new(display_text)
+    // Composition is live: paints and host IME polls re-derive this
+    // session with the same display text until the candidate changes,
+    // so memoize the full parse instead of re-parsing every poll.
+    markdown_document_session_parse_cached(display_text)
   }
 }
 
@@ -164,6 +167,17 @@ fn markdown_session_editor_paint(
       content_width=content.size.width,
     )
     let window_content = window.content_rect(content)
+    if display_text == session.source && !source_mode &&
+      content.size.width > 0.0 {
+      markdown_session_record_measured_block_heights(
+        session,
+        window,
+        content_width=content.size.width,
+        base=font,
+        base_dir~,
+        text_system=ctx.text_system,
+      )
+    }
     // Position blocks inside the offset `window_content`, but cull against
     // the original `content` viewport. Without this, the non-windowed cull
     // uses `window_content.origin.y + height` which is shifted up by
@@ -547,6 +561,99 @@ fn[Msg] markdown_session_scroll_event(
 }
 
 ///|
+/// Feed the scroll geometry with the pixel heights actually laid out for
+/// the visible block window. Heights are computed from the pre-reveal
+/// rich blocks (cache-hot at this point) so temporary marker reveals do
+/// not leak into the content-keyed measurements.
+fn markdown_session_record_measured_block_heights(
+  session : MarkdownDocumentSession,
+  window : MarkdownDocumentRichTextWindow,
+  content_width~ : Double,
+  base~ : @core.FontSpec,
+  base_dir~ : String?,
+  text_system~ : @core.TextSystem,
+) -> Unit {
+  if window.visible_start < 0 {
+    return
+  }
+  for offset, _window_block in window.document.blocks {
+    match session.editor_blocks.get(window.visible_start + offset) {
+      Some(editor_block) =>
+        rich_text_record_block_measured_height(
+          editor_block,
+          base,
+          width=content_width,
+          height=rich_text_block_total_height(
+            markdown_editor_block_to_rich_text(
+              session.source,
+              editor_block,
+              base,
+              base_dir~,
+            ),
+            base,
+            text_system,
+            block_width=content_width,
+          ),
+        )
+      None => ()
+    }
+  }
+}
+
+///|
+fn markdown_session_estimated_caret_inset_x(
+  session : MarkdownDocumentSession,
+  source_caret : Int,
+  font~ : @core.FontSpec,
+  base_dir~ : String?,
+  content_width~ : Double,
+  text_system~ : @core.TextSystem,
+) -> Double {
+  for editor_block in session.editor_blocks {
+    if source_caret < editor_block.source_range.start ||
+      source_caret > editor_block.source_range.end {
+      continue
+    }
+    let rich_block = markdown_editor_block_to_rich_text(
+      session.source,
+      editor_block,
+      font,
+      base_dir~,
+    )
+    let block_font = rich_block.font.unwrap_or(font)
+    let scan_end = markdown_editor_min_int(
+      source_caret, editor_block.source_range.end,
+    )
+    let before_caret = markdown_editor_substring(
+      session.source,
+      editor_block.source_range.start,
+      scan_end,
+    )
+    let mut line_start = 0
+    for index, ch in before_caret {
+      if ch == '\n' {
+        line_start = index + 1
+      }
+    }
+    let line_text = markdown_editor_substring(
+      before_caret,
+      line_start,
+      markdown_editor_text_length(before_caret),
+    )
+    // The caret rect fallback maps canonical source text; hidden inline
+    // markers make this an over-estimate, so clamp to the content width.
+    let line_width = min_double(
+      rich_text_width(line_text, block_font, text_system),
+      max_double(0.0, content_width - rich_block.inset.left),
+    )
+    return rich_block.inset.left +
+      rich_text_width(rich_block.prefix, block_font, text_system) +
+      line_width
+  }
+  0.0
+}
+
+///|
 fn markdown_session_input_state(
   text~ : String,
   frame~ : @core.Rect,
@@ -627,6 +734,8 @@ fn markdown_session_input_state(
         font,
         source_mode~,
         scroll_y=window.scroll_y,
+        base_dir~,
+        text_system~,
       )
   }
   {
@@ -649,10 +758,20 @@ fn markdown_session_estimated_caret_rect(
   font : @core.FontSpec,
   source_mode~ : Bool,
   scroll_y~ : Double,
+  base_dir~ : String?,
+  text_system~ : @core.TextSystem,
 ) -> @core.Rect {
   let source_y = session.source_offset_y(source_caret, base=font, source_mode~)
+  let inset_x = markdown_session_estimated_caret_inset_x(
+    session,
+    source_caret,
+    font~,
+    base_dir~,
+    content_width=content.size.width,
+    text_system~,
+  )
   @core.Rect::new(
-    x=content.origin.x,
+    x=content.origin.x + inset_x,
     y=content.origin.y + source_y - scroll_y + 4.0,
     width=1.5,
     height=max_double(10.0, font.size * 1.55 - 8.0),

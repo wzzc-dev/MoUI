@@ -1196,6 +1196,25 @@ fn markdown_editor_block_to_rich_text(
   base : @core.FontSpec,
   base_dir? : String? = None,
 ) -> RichTextBlock {
+  markdown_editor_block_to_rich_text_with_cache(
+    source,
+    editor_block,
+    base,
+    base_dir~,
+    build=(source, editor_block, base, base_dir) =>
+      markdown_editor_block_to_rich_text_uncached(
+        source, editor_block, base, base_dir~,
+      ),
+  )
+}
+
+///|
+fn markdown_editor_block_to_rich_text_uncached(
+  source : String,
+  editor_block : MarkdownEditorBlock,
+  base : @core.FontSpec,
+  base_dir~ : String?,
+) -> RichTextBlock {
   let block = markdown_block_to_rich_text(editor_block.block, base, base_dir~)
   {
     ..block,

@@ -2,6 +2,7 @@ import {
   "wzzc-dev/moui/core",
   "mizchi/markdown" @md,
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 import {

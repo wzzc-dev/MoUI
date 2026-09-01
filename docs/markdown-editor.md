@@ -97,6 +97,20 @@ rectangle from the current visible rich-text window without constructing
 grapheme boundaries for the entire document. Full grapheme normalization still
 belongs to actual text edits, selection transforms, and composition handling.
 
+Hot-path rebuilds are memoized in a package-private cache keyed by content
+identity instead of position: block rich-text conversions, run widths, and
+measured block heights exclude absolute source offsets, so an upstream edit
+that only shifts a block reuses the cached conversion by rebasing its ranges,
+and an edit that changes a block's text self-invalidates the entry. Paint
+records measured pixel heights for the visible block window, and the scroll
+geometry (content height, window range, anchor y mapping, scroll clamping)
+prefers those measurements over the parse-time estimates for blocks that have
+already been rendered, which removes scrollbar length drift and anchor
+approximation for visited content. While an IME composition is live, the
+derived display session is memoized by display text, so repeated paints and
+host polls between candidate updates reuse one parse instead of reparsing the
+whole document on every poll.
+
 ## Current Behavior
 
 The editor supports formatted editing for common block and inline structures:

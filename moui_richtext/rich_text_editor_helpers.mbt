@@ -778,7 +778,15 @@ fn rich_text_width(
   font : @core.FontSpec,
   text_system : @core.TextSystem,
 ) -> Double {
-  text_system.measure_text(@core.TextLayoutInput::new(text~, font~)).size.width
+  rich_text_run_width_with_cache(
+    text,
+    font,
+    text_system~,
+    measure=(text, font) =>
+      text_system.measure_text(
+        @core.TextLayoutInput::new(text~, font~),
+      ).size.width,
+  )
 }
 
 ///|
