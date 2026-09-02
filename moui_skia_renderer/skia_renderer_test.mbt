@@ -230,6 +230,40 @@ test "skia text system is directly available for diagnostic conformance" {
 }
 
 ///|
+/// The editor's shared soft-wrap layer consumes line `text_range` as Char
+/// offsets (moui/core contract). SkParagraph reports line metrics in UTF-16
+/// code units, so mixed CJK + Latin text is the regression fixture: if the
+/// conversion regressed to raw byte/unit indices, line coverage gaps appear
+/// only once the text contains multi-byte characters.
+test "skia paragraph line metrics are character offsets for CJK mixed text" {
+  if !@skia_native.skia_paragraph_available() {
+    return
+  }
+  let system = skia_text_system()
+  let text =
+    "MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，共享平台无关的应用逻辑。"
+  let chars = text.to_array()
+  let paragraph = system.layout_paragraph(
+    @core.TextLayoutInput::new(
+      text~,
+      font=@core.FontSpec::new(size=18.0, weight=500),
+      max_width=240.0,
+    ),
+  )
+  assert_true(paragraph.metadata.native_paragraph_ready)
+  let lines = paragraph.lines
+  assert_true(lines.length() >= 2)
+  assert_true(lines[0].text_range.start == 0)
+  assert_true(lines[lines.length() - 1].text_range.end == chars.length())
+  for index, line in lines {
+    assert_true(line.text_range.end > line.text_range.start)
+    if index + 1 < lines.length() {
+      assert_true(lines[index + 1].text_range.start == line.text_range.end)
+    }
+  }
+}
+
+///|
 test "skia selection geometry diagnostic covers line ranges hit testing and bidi observation" {
   let text = "ABC \u{05D0}\u{05D1}\u{05D2} 123 alpha beta gamma"
   guard skia_text_selection_geometry_diagnostic(

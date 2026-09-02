@@ -1377,3 +1377,37 @@ fn skia_test_carets_are_monotonic(carets : Array[Double]) -> Bool {
   }
   true
 }
+
+///|
+/// The SkShaper path falls back to system fonts while shaping, but painting
+/// maps glyph ids through the payload's primary typeface. When the primary
+/// font does not cover the text itself, those ids reference unrelated glyphs
+/// and the run paints blank on GPU canvases even though the run reports
+/// complete coverage. The payload font must map every character through its
+/// own cmap.
+test "skia cjk text payload draws with a typeface covering that text" {
+  guard skia_test_native_text_available() else { return () }
+  let font_spec = @core.FontSpec::new(size=16.0, weight=400)
+  let text = "应用逻辑。原生宿主"
+  match
+    skia_draw_text_payload_for_resolution(
+      font_spec,
+      text,
+      SkiaFontResolution::SystemFontMgr,
+    ) {
+    None => ()
+    Some((font, _)) => {
+      if !skia_font_covers_text(font, text) {
+        let host_has_cjk = match @skia_native.FontMgr::default() {
+          None => false
+          Some(mgr) =>
+            match mgr.match_family_style_character(b"", [], 0x5E94) {
+              None => false
+              Some(_) => true
+            }
+        }
+        assert_true(!host_has_cjk)
+      }
+    }
+  }
+}

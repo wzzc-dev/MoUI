@@ -597,12 +597,16 @@ fn markdown_reference_label_key(label : String) -> String {
 }
 
 ///|
+/// Flattens inline AST nodes into their plain text. Nodes are siblings on
+/// one visual line — backslash escapes split `Text` nodes without any
+/// source break — so they must concatenate directly. Real breaks only
+/// come from SoftBreak/HardBreak node payloads, never from the join.
 fn markdown_inline_text(ast : Array[@md.Inline]) -> String {
-  let parts : Array[String] = []
+  let mut text = ""
   for inline in ast {
-    parts.push(markdown_inline_plain_text(inline))
+    text = text + markdown_inline_plain_text(inline)
   }
-  markdown_join_lines(parts)
+  text
 }
 
 ///|

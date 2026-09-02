@@ -60,6 +60,15 @@ pub struct SkiaRasterRenderer {
   priv image_cache : Map[String, @skia_native.Image]
   priv failed_images : Map[String, String]
   priv image_lifecycle : @render_common.ImageResourceLifecycle
+  // Renderer-owned image pixels can change without a runtime tree/content
+  // revision change (async decode completion).  Retained-layer keys include
+  // this generation so placeholders are never replayed after an image is
+  // ready.
+  priv mut image_cache_generation : Int
+  // Generation last committed to the host surface. A completion can arrive
+  // between runtime paints, leaving the runtime's damage region stale; the
+  // next frame must therefore use full damage until the new pixels present.
+  priv mut presented_image_cache_generation : Int
   priv async_image_loading : Bool
   priv mut present_count : Int
   priv mut unsupported_command_count : Int
@@ -205,6 +214,8 @@ pub fn create_with_present_target_and_route(
     image_cache: Map([]),
     failed_images: Map([]),
     image_lifecycle: @render_common.ImageResourceLifecycle::new(),
+    image_cache_generation: 0,
+    presented_image_cache_generation: 0,
     async_image_loading,
     present_count: 0,
     unsupported_command_count: 0,
@@ -268,6 +279,7 @@ pub fn SkiaRasterRenderer::render(
           let outcome = (gpu_target.present_gpu)(self.gpu_context, self.surface)
           if outcome.succeeded() {
             self.present_count = self.present_count + 1
+            self.presented_image_cache_generation = self.image_cache_generation
             self.last_frame = None
             match outcome.next_surface() {
               Some(next_surface) => self.surface = next_surface
@@ -282,6 +294,7 @@ pub fn SkiaRasterRenderer::render(
           self.last_frame = Some(frame)
           if (self.target.present)(frame) {
             self.present_count = self.present_count + 1
+            self.presented_image_cache_generation = self.image_cache_generation
           } else {
             raise SkiaRendererError::PresentFailed(self.target.description)
           }
@@ -310,6 +323,14 @@ fn SkiaRasterRenderer::resolve_effective_damage(
   self : SkiaRasterRenderer,
   frame : @core.DrawFrame,
 ) -> @core.DamageRegion {
+  // Image decode completion changes renderer-owned pixels without rebuilding
+  // the runtime tree. Runtime damage can still describe an earlier sidebar or
+  // scroll event, so painting only that stale rect would leave the newly ready
+  // image (and any retained layer containing it) untouched. Force one full
+  // surface pass after each image-cache generation change.
+  if self.image_cache_generation != self.presented_image_cache_generation {
+    return @core.DamageRegion::full("image resource completed")
+  }
   // Host GPU surfaces (EGL/Metal/Vulkan/D3D window drawables) swap into a fresh
   // back buffer that does not retain prior frame pixels. Partial damage would
   // clear only the dirty rects and leave the rest white/undefined after a list
@@ -429,6 +450,7 @@ fn SkiaRasterRenderer::render_frame_inner(
           let outcome = (gpu_target.present_gpu)(self.gpu_context, self.surface)
           if outcome.succeeded() {
             self.present_count = self.present_count + 1
+            self.presented_image_cache_generation = self.image_cache_generation
             self.last_frame = None
             match outcome.next_surface() {
               Some(next_surface) => self.surface = next_surface
@@ -444,6 +466,7 @@ fn SkiaRasterRenderer::render_frame_inner(
           self.last_frame = Some(skia_frame)
           if (self.target.present)(skia_frame) {
             self.present_count = self.present_count + 1
+            self.presented_image_cache_generation = self.image_cache_generation
             stats.to_render_frame_result(presented=true)
           } else {
             raise SkiaRendererError::PresentFailed(self.target.description)

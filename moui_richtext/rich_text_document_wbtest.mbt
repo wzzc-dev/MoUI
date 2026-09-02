@@ -404,3 +404,34 @@ test "RichTextDocument struct fields are accessible" {
     let _ = _corner_radius
   }
 }
+
+///|
+/// Quote lines parse per source line, so quoted fence markers would
+/// flatten to empty blocks and paint blank rows around the quoted code.
+test "parse_markdown keeps quoted fence marker lines visible" {
+  let blocks = parse_markdown("> ```powershell\n> .\\run.ps1\n> ```")
+  inspect(blocks.length(), content="3")
+  match blocks[0] {
+    { kind: Blockquote, text, .. } => inspect(text, content="```powershell")
+    _ => fail("expected quoted fence opener block")
+  }
+  match blocks[2] {
+    { kind: Blockquote, text, .. } => inspect(text, content="```")
+    _ => fail("expected quoted fence closer block")
+  }
+}
+
+///|
+/// Inline nodes are siblings on one visual line (backslash escapes split
+/// Text nodes without any source break), so flattening must concatenate
+/// them instead of joining with newlines.
+test "parse_markdown concatenates inline nodes without inserting breaks" {
+  let blocks = parse_markdown("> **注意：** 运行 .\\scripts\\run.ps1 完成。")
+  match blocks[0] {
+    { kind: Blockquote, text, .. } => {
+      assert_false(text.contains("\n"))
+      inspect(text, content="注意： 运行 .\\scripts\\run.ps1 完成。")
+    }
+    _ => fail("expected quote block")
+  }
+}

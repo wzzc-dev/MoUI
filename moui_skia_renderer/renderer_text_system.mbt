@@ -158,7 +158,11 @@ fn skia_native_paragraph_layout_result(
     None => None
     Some(paragraph) => {
       let offsets = skia_utf8_char_offsets(input.text)
-      let lines = skia_paragraph_line_metrics(input.text, paragraph, offsets)
+      let lines = skia_paragraph_line_metrics(
+        input.text,
+        paragraph,
+        skia_utf16_char_offsets(input.text),
+      )
       if lines.is_empty() {
         return None
       }
@@ -231,15 +235,18 @@ fn skia_primary_paragraph_family(font : @core.FontSpec) -> Bytes {
 fn skia_paragraph_line_metrics(
   text : String,
   paragraph : @skia_native.Paragraph,
-  offsets : Array[Int],
+  // SkParagraph line metric indices are UTF-16 code units, not the UTF-8
+  // byte offsets the rect/hit APIs use; callers must pass
+  // `skia_utf16_char_offsets(text)`.
+  line_offsets : Array[Int],
 ) -> Array[@core.TextParagraphLineMetrics] {
   let chars = text.to_array()
   let lines : Array[@core.TextParagraphLineMetrics] = []
   for metric in paragraph.line_metrics() {
     match
       (
-        skia_char_index_for_utf8_offset(offsets, metric.start),
-        skia_char_index_for_utf8_offset(offsets, metric.end),
+        skia_char_index_for_utf16_offset(line_offsets, metric.start),
+        skia_char_index_for_utf16_offset(line_offsets, metric.end),
       ) {
       (Some(start), Some(end)) => {
         let start = start.clamp(min=0, max=chars.length())

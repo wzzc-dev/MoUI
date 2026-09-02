@@ -315,6 +315,17 @@ pub fn SkiaRasterRenderer::apply_image_resource_load_completion(
   }
   let changed = self.image_lifecycle.apply_load_completion(completion_to_apply)
   if changed {
+    // Retained layers contain rasterized command output, including image
+    // placeholders. Image completion changes renderer-owned pixels without
+    // changing the runtime render tree/content revision. Advance a renderer
+    // generation consumed by retained-layer keys so the next redraw rebuilds
+    // the affected pixels instead of replaying the placeholder.
+    self.image_cache_generation = self.image_cache_generation + 1
+    // Drop old raster/picture entries and admission streaks as well. A
+    // document gallery can complete several images back-to-back; retaining
+    // old generations would consume the layer budget and classify otherwise
+    // stable chrome as churn-without-hit.
+    self.clear_layer_cache()
     match completion_to_apply.status {
       @render.ImageResourceLoadCompletionStatus::ImageLoadReady => {
         self.failed_images.remove(completion.source)

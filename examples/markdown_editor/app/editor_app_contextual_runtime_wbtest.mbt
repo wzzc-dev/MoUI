@@ -440,3 +440,23 @@ test "markdown editor target bar renders contextual controls" {
     }),
   )
 }
+
+///|
+/// The block target palette surfaces only after the user actually places
+/// the caret. A document whose first block is an HTML block must not open
+/// with the palette visible just because the initial caret at offset 0
+/// falls inside that block's source range.
+test "markdown editor target palette engages only after caret placement" {
+  let app = MarkdownEditorApp::new()
+  app.load_document("<div align=\"center\">banner</div>\n\n正文。\n", path="")
+  assert_false(app.selection_engaged)
+  app.set_selection(6, None)
+  assert_true(app.selection_engaged)
+  guard app.target_kind() is HtmlBlockTarget else {
+    fail("expected html block target mode after clicking into the block")
+  }
+  app.load_document("Intro\n<div align=\"center\">banner</div>", path="")
+  assert_false(app.selection_engaged)
+  app.set_selection(8, None)
+  assert_true(app.selection_engaged)
+}

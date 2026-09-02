@@ -18,3 +18,18 @@
   relocation to the app package, not more privatization (4046 will pin the rest).
 - `markdown_editor_substring` in the app package is O(source) per call — known
   dominant residual of the steady ~19 ms rebuild.
+- Blockquote parsing is PER SOURCE LINE (`editor_source_mapping.mbt` falls
+  through to `parse_markdown(line.text)`): quoted ``` fence lines re-parse to
+  empty Paragraphs, so `markdown_quote_block_text` keeps the marker-stripped
+  source line when flattening yields "" and the content starts with a fence.
+- `markdown_inline_text` must CONCATENATE per-node flatten results;
+  SoftBreak/HardBreak nodes themselves already flatten to "\n" — joining with
+  `markdown_join_lines` injects one newline per node (blank quote rows).
+- Skia retained layers cache rasterized image placeholders; async image
+  completion updates renderer-owned pixels without a runtime content revision.
+  `SkiaRasterRenderer` advances an image-cache generation, clears old layer
+  entries, and forces one full-damage frame until the decoded pixels present.
+- macOS CPU presentation must use one persistent layer-backed `NSView` and
+  replace `CALayer.contents` inside a transaction with actions disabled;
+  recreating an `NSImage`/`NSImageView.image` per frame lets AppKit expose a
+  clear (white) transaction when neighboring sidebar/editor views repaint.

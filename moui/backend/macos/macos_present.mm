@@ -23,10 +23,59 @@ static BOOL moui_host_presenter_overlay_contains(NSView *view, NSPoint point) {
   return NSPointInRect(parent_point, value.rectValue);
 }
 
-@interface MOUIHostPixelImageView : NSImageView
+// The CPU presenter used to be an NSImageView whose `image` property was
+// replaced for every frame.  AppKit invalidates the old image layer before it
+// has displayed the new one; a sidebar/editor scroll can therefore expose the
+// clear window background for one or more compositing transactions.  Keep this
+// as a plain layer-backed view and replace the layer contents atomically.
+@interface MOUIHostPixelImageView : NSView {
+  CGImageRef _presentedImage;
+}
+- (CGImageRef)presentedImage;
+- (void)setPresentedImage:(CGImageRef)image;
 @end
 
 @implementation MOUIHostPixelImageView
+
+- (CGImageRef)presentedImage {
+  return _presentedImage;
+}
+
+- (void)setPresentedImage:(CGImageRef)image {
+  // Keep an explicit CF retain; this view can outlive the present call while
+  // Core Animation performs its next display transaction.
+  if (_presentedImage == image) {
+    return;
+  }
+  if (_presentedImage != NULL) {
+    CGImageRelease(_presentedImage);
+  }
+  _presentedImage = image == NULL ? NULL : CGImageRetain(image);
+}
+
+- (void)dealloc {
+  if (_presentedImage != NULL) {
+    CGImageRelease(_presentedImage);
+  }
+  [super dealloc];
+}
+
+- (BOOL)wantsUpdateLayer {
+  return YES;
+}
+
+- (void)updateLayer {
+  // AppKit may call this after a neighboring view invalidates the window.
+  // Re-assert the last frame instead of letting the backing-store display
+  // path clear the layer before the next renderer present.
+  if (self.presentedImage != NULL) {
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    self.layer.contents = (__bridge id)self.presentedImage;
+    [CATransaction commit];
+  }
+}
+
 - (NSView *)hitTest:(NSPoint)point {
   return moui_host_presenter_overlay_contains(self, point) ? self.superview : nil;
 }
@@ -102,20 +151,77 @@ int32_t moui_macos_present_pixels_to_view(uint64_t raw_view,
   if (image_view == nil) {
     image_view = [[MOUIHostPixelImageView alloc] initWithFrame:view.bounds];
     image_view.identifier = kMouiHostPixelImageViewIdentifier;
-    image_view.imageScaling = NSImageScaleAxesIndependently;
     image_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     image_view.wantsLayer = YES;
     image_view.layer.opaque = NO;
     image_view.layer.backgroundColor = NSColor.clearColor.CGColor;
+    image_view.layer.contentsGravity = kCAGravityResize;
+    image_view.layer.needsDisplayOnBoundsChange = NO;
     [view addSubview:image_view positioned:NSWindowAbove relativeTo:nil];
     [image_view release];
   }
-  NSImage *ns_image = [[NSImage alloc] initWithCGImage:image size:view.bounds.size];
-  image_view.frame = view.bounds;
-  image_view.image = ns_image;
-  [ns_image release];
+  // The renderer calls this on the AppKit thread. Disable implicit frame and
+  // contents animations so Core Animation never presents an intermediate
+  // transparent frame while the sidebar/editor is scrolling.
+  [CATransaction begin];
+  [CATransaction setDisableActions:YES];
+  if (!NSEqualRects(image_view.frame, view.bounds)) {
+    image_view.frame = view.bounds;
+  }
+  CGFloat scale = view.window.backingScaleFactor > 0.0
+      ? view.window.backingScaleFactor
+      : 1.0;
+  image_view.layer.contentsScale = scale;
+  image_view.presentedImage = image;
+  image_view.layer.contents = (__bridge id)image_view.presentedImage;
+  [CATransaction commit];
   CGImageRelease(image);
   return 0;
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+int32_t moui_macos_cpu_presenter_stable_layer_test(void) {
+  @autoreleasepool {
+    NSView *parent = [[[NSView alloc]
+        initWithFrame:NSMakeRect(0.0, 0.0, 8.0, 8.0)] autorelease];
+    uint8_t pixels_a[8 * 8 * 4];
+    uint8_t pixels_b[8 * 8 * 4];
+    memset(pixels_a, 0xff, sizeof(pixels_a));
+    memset(pixels_b, 0x7f, sizeof(pixels_b));
+    uint64_t raw_parent =
+        (uint64_t)(uintptr_t)(__bridge void *)parent;
+    if (moui_macos_present_pixels_to_view(
+            raw_parent, 8, 8, 8 * 4, pixels_a, sizeof(pixels_a)) != 0 ||
+        moui_macos_present_pixels_to_view(
+            raw_parent, 8, 8, 8 * 4, pixels_b, sizeof(pixels_b)) != 0) {
+      return 0;
+    }
+    MOUIHostPixelImageView *presenter = nil;
+    for (NSView *subview in parent.subviews) {
+      if ([subview.identifier
+              isEqualToString:kMouiHostPixelImageViewIdentifier]) {
+        presenter = [subview isKindOfClass:[MOUIHostPixelImageView class]]
+            ? (MOUIHostPixelImageView *)subview
+            : nil;
+        break;
+      }
+    }
+    id latest_contents = presenter.layer.contents;
+    // A neighboring scroll view can invalidate the presenter while AppKit is
+    // in the middle of a display pass.  Exercise that path explicitly: the
+    // layer contents must survive an NSView display/updateLayer callback.
+    [presenter setNeedsDisplay:YES];
+    [presenter displayIfNeeded];
+    // The view must retain the latest CGImage directly; an NSImageView image
+    // swap would reintroduce the transient clear that this test guards.
+    return presenter != nil && presenter.layer != nil &&
+                   presenter.layer.contents != nil &&
+                   presenter.presentedImage != NULL &&
+                   presenter.layer.contents == latest_contents &&
+                   ![presenter isKindOfClass:[NSImageView class]]
+               ? 1
+               : 0;
+  }
 }
 
 extern "C" MOONBIT_FFI_EXPORT

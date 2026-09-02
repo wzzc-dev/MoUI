@@ -119,6 +119,12 @@ moon build examples/markdown_editor/macos_skia --target native
 ./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
 ```
 
+把文档路径作为第一个参数传入，即可在启动时直接打开该文档，与最近文件菜单走同一条打开路径：
+
+```sh
+./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe /path/to/document.md
+```
+
 Skia 入口点需要与 `examples/showcase/macos_skia` 使用的真实原生 Skia 链接配置相同；`scripts/macos-skia-renderer-smoke.sh` 可以在运行 Skia smoke 检查时临时配置这些标志。当你需要 macOS 上的渲染器像素 smoke 加测试者拥有的首帧 Skia smoke 日志时，使用 `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke`。
 
 Windows/Linux Skia 与所有 native WGPU 证据统一使用 canonical Showcase 路线；编辑器不再复制这些平台/渲染器 composition root。
