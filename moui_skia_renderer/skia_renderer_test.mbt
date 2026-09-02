@@ -240,8 +240,7 @@ test "skia paragraph line metrics are character offsets for CJK mixed text" {
     return
   }
   let system = skia_text_system()
-  let text =
-    "MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，共享平台无关的应用逻辑。"
+  let text = "MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，共享平台无关的应用逻辑。"
   let chars = text.to_array()
   let paragraph = system.layout_paragraph(
     @core.TextLayoutInput::new(

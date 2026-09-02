@@ -2224,6 +2224,121 @@ test "canvas skips non-finite direct geometry" {
 }
 
 ///|
+test "surface copy_from replaces destination pixels" {
+  guard @native.skia_available() else { return () }
+  let size = @skia.ISize::new(4, 4)
+  match @native.Surface::raster_n32_premul(size) {
+    None => fail("expected source surface")
+    Some(source) =>
+      match @native.Surface::raster_n32_premul(size) {
+        None => fail("expected destination surface")
+        Some(destination) =>
+          match (source.canvas(), destination.canvas()) {
+            (Some(source_canvas), Some(destination_canvas)) => {
+              source_canvas.clear(@skia.Color::blue())
+              source_canvas.draw_rect(
+                @skia.Rect::from_xywh(0, 0, 2, 4),
+                @skia.Paint::new(color=@skia.Color::red()),
+              )
+              destination_canvas.clear(@skia.Color::green())
+              assert_true(source.flush_and_submit())
+              assert_true(destination.copy_from(source))
+              assert_true(destination.flush_and_submit())
+              match
+                destination.read_pixels(
+                  bounds=@skia.IRect::from_xywh(0, 0, 1, 1),
+                ) {
+                None => fail("expected copied left pixel")
+                Some(left) =>
+                  native_test_assert_pixel(left, 0xff, 0x00, 0x00, 0xff)
+              }
+              match
+                destination.read_pixels(
+                  bounds=@skia.IRect::from_xywh(3, 3, 1, 1),
+                ) {
+                None => fail("expected copied right pixel")
+                Some(right) =>
+                  native_test_assert_pixel(right, 0x00, 0x00, 0xff, 0xff)
+              }
+              assert_false(destination.copy_from(destination))
+              match @native.Surface::raster_n32_premul(@skia.ISize::new(2, 4)) {
+                None => fail("expected mismatched surface")
+                Some(mismatched) =>
+                  assert_false(destination.copy_from(mismatched))
+              }
+            }
+            _ => fail("expected source and destination canvases")
+          }
+      }
+  }
+}
+
+///|
+test "Metal GPU surface copy preserves pixels after flush" {
+  guard @native.skia_available() else { return () }
+  guard @native.Surface::metal_gpu_context_runtime_available() else {
+    return ()
+  }
+  let context_descriptor = @skia.GpuContextDescriptor::metal(
+    b"native-test-metal-copy-context",
+  )
+  guard @native.GpuContext::metal(context_descriptor) is Some(context) else {
+    return ()
+  }
+  let size = @skia.ISize::new(4, 4)
+  let descriptor = @skia.SurfaceDescriptor::gpu_n32_premul(size)
+  match @native.Surface::gpu_n32_premul(context, descriptor) {
+    None => fail("expected Metal GPU source surface")
+    Some(source) =>
+      match @native.Surface::gpu_n32_premul(context, descriptor) {
+        None => fail("expected Metal GPU destination surface")
+        Some(destination) =>
+          match (source.canvas(), destination.canvas()) {
+            (Some(source_canvas), Some(destination_canvas)) => {
+              source_canvas.clear(@skia.Color::blue())
+              source_canvas.draw_rect(
+                @skia.Rect::from_xywh(0, 0, 2, 4),
+                @skia.Paint::new(color=@skia.Color::red()),
+              )
+              destination_canvas.clear(@skia.Color::green())
+              assert_true(source.flush_and_submit())
+              assert_true(destination.copy_from(source))
+              assert_true(destination.flush_and_submit())
+              // Ganesh GPU surfaces do not guarantee direct CPU readback on
+              // every native device. When snapshot encoding is available,
+              // decode through the existing raster path to verify both marker
+              // pixels; otherwise the copy/flush assertions above remain the
+              // capability-gated evidence for this GPU surface.
+              guard destination.image_snapshot() is Some(snapshot) else {
+                return ()
+              }
+              guard snapshot.encode_to_data(format=PNG, quality=100)
+                is Some(encoded) else {
+                return ()
+              }
+              guard @native.Codec::from_data(encoded) is Some(codec) else {
+                return ()
+              }
+              guard codec.decode_n32_premul() is Some(bitmap) else { return () }
+              guard bitmap.to_pixmap() is Some(pixmap) else { return () }
+              let left_offset = 0
+              assert_eq(pixmap.pixels[left_offset], 0xff)
+              assert_eq(pixmap.pixels[left_offset + 1], 0x00)
+              assert_eq(pixmap.pixels[left_offset + 2], 0x00)
+              assert_eq(pixmap.pixels[left_offset + 3], 0xff)
+              let right_offset = 3 * pixmap.row_bytes() + 3 * 4
+              assert_eq(pixmap.pixels[right_offset], 0x00)
+              assert_eq(pixmap.pixels[right_offset + 1], 0x00)
+              assert_eq(pixmap.pixels[right_offset + 2], 0xff)
+              assert_eq(pixmap.pixels[right_offset + 3], 0xff)
+            }
+            _ => fail("expected Metal GPU source and destination canvases")
+          }
+      }
+  }
+}
+
+///|
 test "canvas sanitizes non-finite image sampling scalars" {
   match @native.Surface::raster_n32_premul(@skia.ISize::new(1, 1)) {
     None => ()

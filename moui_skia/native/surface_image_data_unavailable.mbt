@@ -530,6 +530,14 @@ pub fn Surface::flush_and_submit(self : Surface) -> Bool {
 }
 
 ///|
+/// Surface copying is unavailable when native Skia is not linked.
+pub fn Surface::copy_from(self : Surface, source : Surface) -> Bool {
+  ignore(self)
+  ignore(source)
+  false
+}
+
+///|
 pub fn Surface::render_frame(
   self : Surface,
   frame : @skia.RenderFrameDescriptor,

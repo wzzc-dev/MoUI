@@ -554,6 +554,7 @@ pub(all) struct Surface {
   // private fields
 }
 pub fn Surface::canvas(Self) -> Canvas?
+pub fn Surface::copy_from(Self, Self) -> Bool
 pub fn Surface::descriptor(Self) -> @moui_skia.SurfaceDescriptor
 pub fn Surface::dimensions(Self) -> @moui_skia.ISize
 pub fn Surface::direct3d_gpu_context_headers_available() -> Bool

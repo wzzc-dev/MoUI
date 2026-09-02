@@ -395,6 +395,13 @@ extern "C" fn native_surface_canvas(surface : SurfaceHandle) -> CanvasHandle = "
 extern "C" fn native_surface_flush_and_submit(surface : SurfaceHandle) -> Bool = "moonbit_skia_surface_flush_and_submit"
 
 ///|
+#borrow(destination, source)
+extern "C" fn native_surface_copy_from(
+  destination : SurfaceHandle,
+  source : SurfaceHandle,
+) -> Bool = "moonbit_skia_surface_copy_from"
+
+///|
 #borrow(surface)
 extern "C" fn native_surface_image_snapshot(
   surface : SurfaceHandle,
@@ -1382,6 +1389,19 @@ pub fn Surface::descriptor(self : Surface) -> @skia.SurfaceDescriptor {
 /// Finalize pending surface work; current raster surfaces use this as a no-op boundary.
 pub fn Surface::flush_and_submit(self : Surface) -> Bool {
   native_surface_flush_and_submit(self.handle)
+}
+
+///|
+/// Replace the destination surface pixels with a same-sized snapshot of the
+/// source surface. Both surfaces must use compatible dimensions and GPU
+/// contexts; callers must flush pending source work before copying and flush
+/// the destination after copying.
+pub fn Surface::copy_from(self : Surface, source : Surface) -> Bool {
+  if self.descriptor != source.descriptor {
+    false
+  } else {
+    native_surface_copy_from(self.handle, source.handle)
+  }
 }
 
 ///|

@@ -324,15 +324,13 @@ fn skia_typeface_for_text(
   text : String,
 ) -> @skia_native.Typeface? {
   match skia_typeface_from_embedded(font) {
-    Some(typeface) if skia_typeface_covers_text(typeface, text) => {
+    Some(typeface) if skia_typeface_covers_text(typeface, text) =>
       return Some(typeface)
-    }
     _ => ()
   }
   match skia_typeface_from_font_files(font) {
-    Some(typeface) if skia_typeface_covers_text(typeface, text) => {
+    Some(typeface) if skia_typeface_covers_text(typeface, text) =>
       return Some(typeface)
-    }
     _ => ()
   }
   match @skia_native.FontMgr::default() {
@@ -350,9 +348,8 @@ fn skia_typeface_from_font_mgr_for_text(
   let request = skia_font_fallback_request(font, text)
   if !request.is_empty() {
     match font_mgr.match_fallback_request(request) {
-      Some(typeface) if skia_typeface_covers_text(typeface, text) => {
+      Some(typeface) if skia_typeface_covers_text(typeface, text) =>
         return Some(typeface)
-      }
       _ => ()
     }
   }

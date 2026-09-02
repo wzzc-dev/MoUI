@@ -9,7 +9,7 @@ import {
 // Values
 pub fn application_menus() -> Array[@services.ApplicationMenu]
 
-pub fn runtime(environment? : @services.AppEnvironment, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn runtime(environment? : @services.AppEnvironment, width? : Double, height? : Double, initial_document_path? : String?) -> @runtime.AppRuntime
 
 // Errors
 

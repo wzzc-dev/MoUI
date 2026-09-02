@@ -672,7 +672,7 @@ pub fn MarkdownEditorApp::program(
   let services = environment.services()
   let timer_source = environment.timer()
   @moui.Program::new_with_environment(
-    init=() =>
+    init=() => {
       (
         self,
         @moui.Effect::batch([
@@ -683,7 +683,8 @@ pub fn MarkdownEditorApp::program(
             _ => @moui.Effect::none()
           },
         ]),
-      ),
+      )
+    },
     update=(app, message) => app.update_with_services(message, services),
     view=(app, view_environment) => app.root_with_environment(view_environment),
     subscriptions=app => app.subscriptions(timer_source),

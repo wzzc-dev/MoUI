@@ -368,6 +368,7 @@ pub fn SkiaRasterRenderer::dispose(self : SkiaRasterRenderer) -> Unit {
   self.image_cache.clear()
   self.failed_images.clear()
   self.clear_layer_cache()
+  self.invalidate_gpu_backing_surface()
   // HostGpu EGL surfaces own the platform window. Replace with a tiny raster
   // placeholder so the old surface finalizer can destroy the EGL window before
   // sticky raster present reuses the same OHNativeWindow / ANativeWindow.

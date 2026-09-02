@@ -342,6 +342,7 @@ test "skia renderer applies image load completions and rejects stale results" {
   assert_true(renderer.failed_images.get("missing.png") is Some(_))
 }
 
+///|
 /// Regression: an async image completion must invalidate retained layers that
 /// previously rasterized the loading placeholder. Otherwise redraws keep
 /// hitting the old layer image and the newly decoded pixels never reach the
@@ -383,15 +384,17 @@ test "skia renderer retained layer refreshes after async image completion" {
   )
   assert_true(first.presented)
   let pixels = Bytes::from_array([b'\xff', b'\x00', b'\x00', b'\xff'])
-  ignore(renderer.apply_image_resource_load_completion(
-    @render.ImageResourceLoadCompletion::ready_decoded_rgba(
-      source,
-      width=1,
-      height=1,
-      row_bytes=4,
-      pixels,
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      @render.ImageResourceLoadCompletion::ready_decoded_rgba(
+        source,
+        width=1,
+        height=1,
+        row_bytes=4,
+        pixels,
+      ),
     ),
-  ))
+  )
   // The completion can race with a scroll/sidebar damage rect that does not
   // overlap the editor layer. The renderer must promote this frame to full
   // damage or the placeholder remains visible in the untouched region.
