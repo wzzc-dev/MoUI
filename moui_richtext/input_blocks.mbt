@@ -33,13 +33,13 @@ fn markdown_editor_complete_setext_heading_on_space(
 }
 
 ///|
-pub(all) struct MarkdownEditorPastedFootnoteDefinition {
+priv struct MarkdownEditorPastedFootnoteDefinition {
   label : String
   text : String
 }
 
 ///|
-pub(all) struct MarkdownEditorFootnoteDefinitionEdit {
+priv struct MarkdownEditorFootnoteDefinitionEdit {
   source : String
   anchor_delta : Int
 }

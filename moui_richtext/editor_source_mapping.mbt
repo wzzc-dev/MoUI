@@ -414,11 +414,27 @@ fn markdown_editor_single_inline_marker_at(
 
 ///|
 fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
+  parse_markdown_editor_blocks_with_definitions(source, definitions=None)
+}
+
+///|
+/// Parse with a precomputed whole-source reference-definition set. The
+/// session's incremental apply path passes definitions from the previous
+/// source (edits that could change the definition set fall back to the
+/// full parse), which skips the second whole-document markdown parse
+/// that only exists to collect `[label]: url` entries.
+fn parse_markdown_editor_blocks_with_definitions(
+  source : String,
+  definitions~ : Array[MarkdownReferenceDefinition]?,
+) -> Array[MarkdownEditorBlock] {
   let blocks : Array[MarkdownEditorBlock] = []
   if source == "" {
     return blocks
   }
-  let definitions = markdown_reference_definitions(source)
+  let definitions = match definitions {
+    Some(definitions) => definitions
+    None => markdown_reference_definitions(source)
+  }
   let lines = markdown_editor_lines(source)
   match markdown_editor_front_matter_block_at(lines) {
     Some(front_matter) => {
@@ -440,7 +456,11 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
           rest_start,
           markdown_editor_text_length(source),
         )
-        for block in parse_markdown_editor_blocks(rest) {
+        for
+          block in parse_markdown_editor_blocks_with_definitions(
+            rest,
+            definitions=Some(definitions),
+          ) {
           blocks.push({
             ..block,
             source_range: {
@@ -586,10 +606,10 @@ fn markdown_editor_blank_line_block(line : MarkdownLine) -> MarkdownEditorBlock 
 }
 
 ///|
-pub(all) struct MarkdownEditorFrontMatterParseResult {
+priv struct MarkdownEditorFrontMatterParseResult {
   block : MarkdownEditorBlock
   next_index : Int
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_editor_front_matter_block_at(
@@ -989,10 +1009,10 @@ fn markdown_editor_soft_wrapped_paragraph_line(
 }
 
 ///|
-pub(all) struct MarkdownEditorTableParseResult {
+priv struct MarkdownEditorTableParseResult {
   block : MarkdownEditorBlock
   end_index : Int
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_editor_table_block_at(
@@ -1201,10 +1221,14 @@ fn markdown_editor_block_to_rich_text(
     editor_block,
     base,
     base_dir~,
-    build=(source, editor_block, base, base_dir) =>
+    build=(source, editor_block, base, base_dir) => {
       markdown_editor_block_to_rich_text_uncached(
-        source, editor_block, base, base_dir~,
-      ),
+        source,
+        editor_block,
+        base,
+        base_dir~,
+      )
+    },
   )
 }
 

@@ -25,6 +25,7 @@ fn restore_text_history(
   current : String,
   undo~ : Bool,
 ) -> TextHistoryRestoreResult {
+  rich_text_history_reset_group()
   let source = if undo { control.undo_stack } else { control.redo_stack }
   if source.length() == 0 {
     return { text: current, control, changed: false }
@@ -217,7 +218,9 @@ fn apply_text_edit(
   if changed {
     let undo_stack : Array[@core.TextHistoryEntryContext] = []
     undo_stack.append(control.undo_stack)
-    if record_history && previous != edit.text {
+    if record_history &&
+      previous != edit.text &&
+      rich_text_history_record_edit(control, previous, edit.text, control.caret) {
       undo_stack.push({
         text: previous,
         caret: control.caret,
@@ -778,15 +781,9 @@ fn rich_text_width(
   font : @core.FontSpec,
   text_system : @core.TextSystem,
 ) -> Double {
-  rich_text_run_width_with_cache(
-    text,
-    font,
-    text_system~,
-    measure=(text, font) =>
-      text_system.measure_text(
-        @core.TextLayoutInput::new(text~, font~),
-      ).size.width,
-  )
+  rich_text_run_width_with_cache(text, font, text_system~, measure=(text, font) => {
+    text_system.measure_text(@core.TextLayoutInput::new(text~, font~)).size.width
+  })
 }
 
 ///|
@@ -982,20 +979,11 @@ fn selected_rich_text_runs_text(
     match run.source_range {
       Some(range) =>
         if end > range.start && start < range.end {
-          let copy_text = rich_text_run_copy_text(run)
           parts.push(
-            rich_text_run_slice(
-              copy_text,
-              rich_text_run_copy_offset(
-                start - range.start,
-                source_text=run.text,
-                copy_text~,
-              ),
-              rich_text_run_copy_offset(
-                end - range.start,
-                source_text=run.text,
-                copy_text~,
-              ),
+            rich_text_run_copy_range(
+              run,
+              @core.clamp_int(start - range.start, 0, text_length(run.text)),
+              @core.clamp_int(end - range.start, 0, text_length(run.text)),
             ),
           )
         }
@@ -1003,6 +991,57 @@ fn selected_rich_text_runs_text(
     }
   }
   join_text_lines(parts)
+}
+
+///|
+/// Copy slice for a run between source-text offsets. Wrapped runs carry
+/// injected soft-wrap newlines in their visual text; the alignment scan
+/// skips exactly those characters so copying a wrapped paragraph yields
+/// the canonical source text, matching a plain selection of the same
+/// range. Image runs and unwrapped runs keep the existing path: image
+/// copy text is alt text, a different string rather than text plus breaks.
+fn rich_text_run_copy_range(
+  run : RichTextRun,
+  start : Int,
+  end : Int,
+) -> String {
+  let copy_text = rich_text_run_copy_text(run)
+  if run.image_source is Some(_) || copy_text == run.text {
+    let slice_start = rich_text_run_copy_offset(
+      start,
+      source_text=run.text,
+      copy_text~,
+    )
+    let slice_end = rich_text_run_copy_offset(
+      end,
+      source_text=run.text,
+      copy_text~,
+    )
+    return rich_text_run_slice(copy_text, slice_start, slice_end)
+  }
+  let source = run.text.to_array()
+  let copy = copy_text.to_array()
+  let chars : Array[Char] = []
+  let mut source_index = 0
+  let mut copy_index = 0
+  while source_index < source.length() && copy_index < copy.length() {
+    if copy[copy_index] == source[source_index] {
+      if source_index >= start && source_index < end {
+        chars.push(copy[copy_index])
+      }
+      source_index = source_index + 1
+      copy_index = copy_index + 1
+    } else if copy[copy_index] == '\n' {
+      copy_index = copy_index + 1
+    } else {
+      if source_index >= start && source_index < end {
+        chars.push(copy[copy_index])
+      }
+      source_index = source_index + 1
+      copy_index = copy_index + 1
+    }
+  }
+  String::from_array(chars)
 }
 
 ///|
@@ -1394,31 +1433,39 @@ fn rich_text_hash_mix_string(hash : Int, value : String) -> Int {
 }
 
 ///|
+/// Exact source↔visual alignment for a run. The visual text is the run's
+/// text plus soft-wrap line breaks injected by the shared wrap layout;
+/// every injected `'\n'` is flanked by non-newline characters (the viewer
+/// wrap refuses to insert before or after a real newline), so aligning
+/// the two strings left to right and skipping visual newlines that the
+/// source does not have at the same position is exact — no proportional
+/// guesswork. Runs without a wrap layer take the equality fast path.
 fn rich_text_run_visual_offset_from_source_offset(
   source_offset : Int,
   source_text : String,
   visual_text : String,
 ) -> Int {
-  let source_boundaries = @core.TextGraphemeBoundaries::new(text=source_text)
-  let visual_boundaries = @core.TextGraphemeBoundaries::new(text=visual_text)
-  let source_length = source_boundaries.length()
-  let visual_length = visual_boundaries.length()
-  let source_offset = source_boundaries.nearest_boundary(source_offset)
-  if source_length <= 0 || visual_length <= 0 {
-    0
-  } else if source_offset <= 0 {
-    0
-  } else if source_offset >= source_length {
-    visual_length
-  } else {
-    visual_boundaries.nearest_boundary(
-      (source_offset.to_double() *
-      visual_length.to_double() /
-      source_length.to_double())
-      .round()
-      .to_int(),
-    )
+  if source_text == visual_text {
+    let clamped = @core.clamp_int(source_offset, 0, text_length(visual_text))
+    return clamped
   }
+  let source = source_text.to_array()
+  let visual = visual_text.to_array()
+  let target = @core.clamp_int(source_offset, 0, source.length())
+  let mut source_index = 0
+  let mut visual_index = 0
+  while source_index < target && visual_index < visual.length() {
+    if visual[visual_index] == source[source_index] {
+      source_index = source_index + 1
+      visual_index = visual_index + 1
+    } else if visual[visual_index] == '\n' {
+      visual_index = visual_index + 1
+    } else {
+      source_index = source_index + 1
+      visual_index = visual_index + 1
+    }
+  }
+  @core.clamp_int(visual_index, 0, visual.length())
 }
 
 ///|
@@ -1427,26 +1474,29 @@ fn rich_text_run_source_offset_from_visual_offset(
   visual_text : String,
   source_text : String,
 ) -> Int {
-  let visual_boundaries = @core.TextGraphemeBoundaries::new(text=visual_text)
-  let source_boundaries = @core.TextGraphemeBoundaries::new(text=source_text)
-  let visual_length = visual_boundaries.length()
-  let source_length = source_boundaries.length()
-  let visual_offset = visual_boundaries.nearest_boundary(visual_offset)
-  if visual_length <= 0 || source_length <= 0 {
-    0
-  } else if visual_offset <= 0 {
-    0
-  } else if visual_offset >= visual_length {
-    source_length
-  } else {
-    source_boundaries.nearest_boundary(
-      (visual_offset.to_double() *
-      source_length.to_double() /
-      visual_length.to_double())
-      .round()
-      .to_int(),
-    )
+  if source_text == visual_text {
+    let clamped = @core.clamp_int(visual_offset, 0, text_length(source_text))
+    return clamped
   }
+  let source = source_text.to_array()
+  let visual = visual_text.to_array()
+  let target = @core.clamp_int(visual_offset, 0, visual.length())
+  let mut source_index = 0
+  let mut visual_index = 0
+  while visual_index < target &&
+        source_index < source.length() &&
+        visual_index < visual.length() {
+    if visual[visual_index] == source[source_index] {
+      source_index = source_index + 1
+      visual_index = visual_index + 1
+    } else if visual[visual_index] == '\n' {
+      visual_index = visual_index + 1
+    } else {
+      source_index = source_index + 1
+      visual_index = visual_index + 1
+    }
+  }
+  @core.clamp_int(source_index, 0, source.length())
 }
 
 ///|

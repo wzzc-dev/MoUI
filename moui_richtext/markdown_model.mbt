@@ -24,10 +24,10 @@ pub(all) struct MarkdownBlock {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct MarkdownFrontMatterParseResult {
+priv struct MarkdownFrontMatterParseResult {
   block : MarkdownBlock
   next_index : Int
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_front_matter_block_at(
@@ -720,10 +720,10 @@ fn markdown_soft_wrapped_paragraph_line(
 }
 
 ///|
-pub(all) struct MarkdownCodeFenceInfo {
+priv struct MarkdownCodeFenceInfo {
   marker : String
   info : String?
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_opening_code_fence(line : String) -> MarkdownCodeFenceInfo? {

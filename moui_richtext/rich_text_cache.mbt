@@ -20,6 +20,10 @@
 /// - Display sessions (source + composition text) memoize the full parse
 ///   for the short window where an IME polls paints while the candidate
 ///   text is unchanged.
+/// - Scroll geometry (block heights + prefix sums) is keyed by font,
+///   content width, and source, and stays valid until a measured height
+///   actually changes, so wheel events and repaints read O(1) totals and
+///   binary-searched windows instead of walking every block.
 ///
 /// All maps are bounded; over-cap they clear wholesale. The runtime is
 /// single-threaded, so no synchronization is needed.
@@ -29,10 +33,7 @@ priv struct RichTextBlockCacheEntry {
 }
 
 ///|
-let rich_text_block_conversions : Map[
-  String,
-  RichTextBlockCacheEntry,
-] = Map([])
+let rich_text_block_conversions : Map[String, RichTextBlockCacheEntry] = Map([])
 
 ///|
 let rich_text_run_widths : Map[String, Double] = Map([])
@@ -41,9 +42,41 @@ let rich_text_run_widths : Map[String, Double] = Map([])
 let rich_text_block_heights : Map[String, Double] = Map([])
 
 ///|
-let rich_text_display_sessions : Map[
+let rich_text_display_sessions : Map[String, MarkdownDocumentSession] = Map([])
+
+///|
+let markdown_reference_definitions_cache : Map[
   String,
-  MarkdownDocumentSession,
+  Array[MarkdownReferenceDefinition],
+] = Map([])
+
+///|
+/// Bumped whenever a block's *measured* height changes (including when the
+/// height map is evicted wholesale). Scroll geometry entries record the
+/// epoch they were built at, so a wheel event rebuilds the height array
+/// only when geometry actually changed — steady-state scrolling performs
+/// zero block walks.
+let rich_text_block_heights_epoch : Ref[Int] = Ref(0)
+
+///|
+
+///|
+/// Persisted scroll geometry for one (font, content width, source): the
+/// per-block pixel heights plus their prefix sums (`prefix[i]` is the
+/// total height of the first `i` blocks), so content height is O(1) and
+/// the visible window is a binary search. An entry with an empty
+/// `heights` caches the “no measured geometry yet” verdict; the epoch
+/// check revives it once paints record measured heights.
+priv struct MarkdownDocumentScrollGeometry {
+  heights : Array[Double]
+  prefix : Array[Double]
+  epoch : Int
+}
+
+///|
+let markdown_document_scroll_geometry_cache : Map[
+  String,
+  MarkdownDocumentScrollGeometry,
 ] = Map([])
 
 ///|
@@ -56,8 +89,22 @@ fn rich_text_cache_join_key(parts : Array[String]) -> String {
 }
 
 ///|
+/// Fonts repeat constantly within a frame, so keep the last encoded key
+/// instead of re-serializing the FontSpec for every block conversion.
+let rich_text_cache_last_font : Ref[(@core.FontSpec, String)] = Ref(
+  (@core.FontSpec::new(), ""),
+)
+
+///|
 fn rich_text_cache_font_key(font : @core.FontSpec) -> String {
-  @json.to_json(font).stringify()
+  let last = rich_text_cache_last_font.val
+  if last.0 == font {
+    last.1
+  } else {
+    let key = @json.to_json(font).stringify()
+    rich_text_cache_last_font.val = (font, key)
+    key
+  }
 }
 
 ///|
@@ -71,8 +118,7 @@ fn rich_text_source_range_shift(
   delta : Int,
 ) -> RichTextSourceRange? {
   match range {
-    Some(range) =>
-      Some({ start: range.start + delta, end: range.end + delta })
+    Some(range) => Some({ start: range.start + delta, end: range.end + delta })
     None => None
   }
 }
@@ -99,15 +145,12 @@ fn markdown_editor_rich_block_shift(
     Some(table) =>
       Some({
         ..table,
-        rows:
-          table.rows.map(row =>
-            row.map(cell =>
-              {
-                ..cell,
-                source_range:
-                  rich_text_source_range_shift(cell.source_range, delta),
-              }),
-          ),
+        rows: table.rows.map(row => {
+          row.map(cell => {
+            ..cell,
+            source_range: rich_text_source_range_shift(cell.source_range, delta),
+          })
+        }),
       })
     None => None
   }
@@ -138,9 +181,31 @@ fn markdown_editor_block_conversion_key(
     markdown_editor_block_key(editor_block.block),
     source_slice,
     content,
-    (editor_block.content_range.start -
-      editor_block.source_range.start).to_string(),
+    (editor_block.content_range.start - editor_block.source_range.start).to_string(),
   ])
+}
+
+///|
+
+///|
+/// Memoize the whole-source reference-definition set. The incremental
+/// apply path reuses definitions from the previous source for edits that
+/// cannot change them, skipping the second whole-document markdown parse
+/// that `markdown_reference_definitions` performs.
+fn markdown_reference_definitions_cached(
+  source : String,
+) -> Array[MarkdownReferenceDefinition] {
+  match markdown_reference_definitions_cache.get(source) {
+    Some(definitions) => definitions
+    None => {
+      let definitions = markdown_reference_definitions(source)
+      if markdown_reference_definitions_cache.length() >= 16 {
+        markdown_reference_definitions_cache.clear()
+      }
+      markdown_reference_definitions_cache.set(source, definitions)
+      definitions
+    }
+  }
 }
 
 ///|
@@ -149,9 +214,7 @@ fn markdown_editor_block_to_rich_text_with_cache(
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
   base_dir~ : String?,
-  build~ : (
-    String, MarkdownEditorBlock, @core.FontSpec, String?,
-  ) -> RichTextBlock,
+  build~ : (String, MarkdownEditorBlock, @core.FontSpec, String?) -> RichTextBlock,
 ) -> RichTextBlock {
   let content = markdown_editor_run_source_content(source, editor_block)
   let source_slice = markdown_editor_substring(
@@ -173,14 +236,16 @@ fn markdown_editor_block_to_rich_text_with_cache(
         editor_block.source_range.start - entry.source_start,
       )
     None => {
+      hot_path_block_conversion_builds.val = hot_path_block_conversion_builds.val +
+        1
       let block = build(source, editor_block, base, base_dir)
       if rich_text_block_conversions.length() >= 4096 {
         rich_text_block_conversions.clear()
       }
-      rich_text_block_conversions.set(
-        key,
-        { source_start: editor_block.source_range.start, block },
-      )
+      rich_text_block_conversions.set(key, {
+        source_start: editor_block.source_range.start,
+        block,
+      })
       block
     }
   }
@@ -212,10 +277,10 @@ fn markdown_document_source_mode_block_to_rich_text_with_cache(
       if rich_text_block_conversions.length() >= 4096 {
         rich_text_block_conversions.clear()
       }
-      rich_text_block_conversions.set(
-        key,
-        { source_start: editor_block.source_range.start, block },
-      )
+      rich_text_block_conversions.set(key, {
+        source_start: editor_block.source_range.start,
+        block,
+      })
       block
     }
   }
@@ -275,10 +340,61 @@ fn rich_text_record_block_measured_height(
     return
   }
   let key = rich_text_block_measured_height_key(editor_block, base, width~)
+  if rich_text_block_heights.get(key) == Some(height) {
+    return
+  }
   if rich_text_block_heights.length() >= 32768 {
     rich_text_block_heights.clear()
+    rich_text_block_heights_epoch.val = rich_text_block_heights_epoch.val + 1
   }
   rich_text_block_heights.set(key, height)
+  rich_text_block_heights_epoch.val = rich_text_block_heights_epoch.val + 1
+}
+
+///|
+/// Read the persisted scroll geometry for a (font, content width, source)
+/// triple. Returns `None` on miss or when the entry predates the current
+/// measured-height epoch; an entry with empty `heights` is a cached
+/// “no measured geometry” verdict and is returned like any other hit.
+fn markdown_document_scroll_geometry_get(
+  source : String,
+  base : @core.FontSpec,
+  width~ : Double,
+) -> MarkdownDocumentScrollGeometry? {
+  let key = rich_text_cache_join_key([
+    "scroll-geometry",
+    rich_text_cache_font_key(base),
+    width.to_string(),
+    source,
+  ])
+  match markdown_document_scroll_geometry_cache.get(key) {
+    Some(entry) =>
+      if entry.epoch == rich_text_block_heights_epoch.val {
+        Some(entry)
+      } else {
+        None
+      }
+    None => None
+  }
+}
+
+///|
+fn markdown_document_scroll_geometry_put(
+  source : String,
+  base : @core.FontSpec,
+  width : Double,
+  geometry : MarkdownDocumentScrollGeometry,
+) -> Unit {
+  let key = rich_text_cache_join_key([
+    "scroll-geometry",
+    rich_text_cache_font_key(base),
+    width.to_string(),
+    source,
+  ])
+  if markdown_document_scroll_geometry_cache.length() >= 4 {
+    markdown_document_scroll_geometry_cache.clear()
+  }
+  markdown_document_scroll_geometry_cache.set(key, geometry)
 }
 
 ///|

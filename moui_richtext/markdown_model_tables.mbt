@@ -1,8 +1,8 @@
 ///|
-pub(all) struct MarkdownTableParseResult {
+priv struct MarkdownTableParseResult {
   block : MarkdownBlock
   end_index : Int
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_table_block_at(
@@ -194,7 +194,7 @@ fn markdown_table_preview(
 }
 
 ///|
-pub(all) struct MarkdownTableCellPreviewRange {
+priv struct MarkdownTableCellPreviewRange {
   text : String
   start : Int
   end : Int

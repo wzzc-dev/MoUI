@@ -98,16 +98,16 @@ fn markdown_editor_toggle_code_block(
 }
 
 ///|
-pub(all) struct MarkdownEditorQuotedCodeBlock {
+priv struct MarkdownEditorQuotedCodeBlock {
   source_range : MarkdownSourceRange
   content_range : MarkdownSourceRange
-} derive(Eq, Debug)
+}
 
 ///|
-pub(all) struct MarkdownEditorQuotedCodeFence {
+priv struct MarkdownEditorQuotedCodeFence {
   quote_prefix : String
   fence : String
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_editor_containing_quoted_code_block(

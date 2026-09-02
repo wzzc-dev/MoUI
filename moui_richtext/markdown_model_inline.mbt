@@ -20,11 +20,10 @@ pub(all) struct MarkdownInline {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct MarkdownReferenceDefinition {
+priv struct MarkdownReferenceDefinition {
   label : String
   url : String
-  title : String
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_inline(
@@ -172,7 +171,7 @@ pub fn parse_markdown_inlines(text : String) -> Array[MarkdownInline] {
 }
 
 ///|
-pub fn parse_markdown_inlines_with_definitions(
+fn parse_markdown_inlines_with_definitions(
   text : String,
   definitions : Array[MarkdownReferenceDefinition],
 ) -> Array[MarkdownInline] {
@@ -494,7 +493,6 @@ fn markdown_reference_definitions(
     definitions.push({
       label: markdown_reference_label_key(definition.label),
       url: definition.url,
-      title: definition.title,
     })
   }
   for definition in markdown_scan_reference_definitions(source) {
@@ -541,7 +539,6 @@ fn markdown_scan_reference_definition_line(
   }
   let rest_chars = rest.to_array()
   let mut url = ""
-  let mut title = ""
   if rest_chars[0] == '<' {
     let mut end = 1
     while end < rest_chars.length() && rest_chars[end] != '>' {
@@ -551,7 +548,6 @@ fn markdown_scan_reference_definition_line(
       return None
     }
     url = String::from_array(rest_chars[1:end])
-    title = String::from_array(rest_chars[end + 1:]).trim().to_owned()
   } else {
     let mut end = 0
     while end < rest_chars.length() &&
@@ -560,30 +556,11 @@ fn markdown_scan_reference_definition_line(
       end = end + 1
     }
     url = String::from_array(rest_chars[:end])
-    title = String::from_array(rest_chars[end:]).trim().to_owned()
   }
   if url == "" {
     return None
   }
-  Some({
-    label: markdown_reference_label_key(label),
-    url,
-    title: markdown_trim_reference_title(title),
-  })
-}
-
-///|
-fn markdown_trim_reference_title(title : String) -> String {
-  let chars = title.to_array()
-  if chars.length() >= 2 &&
-    (
-      (chars[0] == '"' && chars[chars.length() - 1] == '"') ||
-      (chars[0] == '\'' && chars[chars.length() - 1] == '\'')
-    ) {
-    String::from_array(chars[1:chars.length() - 1])
-  } else {
-    title
-  }
+  Some({ label: markdown_reference_label_key(label), url })
 }
 
 ///|

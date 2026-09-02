@@ -448,7 +448,9 @@ fn apply_rich_text_input_transform(
   if changed {
     let undo_stack : Array[@core.TextHistoryEntryContext] = []
     undo_stack.append(control.undo_stack)
-    if record_history && previous != edit.text {
+    if record_history &&
+      previous != edit.text &&
+      rich_text_history_record_edit(control, previous, edit.text, control.caret) {
       undo_stack.push({
         text: previous,
         caret: control.caret,
@@ -564,6 +566,12 @@ fn rich_text_block_selection_visual_range(
 }
 
 ///|
+
+///|
+/// One highlight band per visual line the range touches. With soft-wrap
+/// the selection usually spans several wrapped lines, and a single
+/// first-line band would hide most of the selection (and disappear
+/// entirely when the end x lands left of the start x on a later line).
 fn append_rich_text_block_selection_rect(
   commands : Array[@core.DrawCommand],
   block : RichTextBlock,
@@ -572,6 +580,20 @@ fn append_rich_text_block_selection_rect(
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
 ) -> Unit {
+  let line_heights = rich_text_block_line_heights(
+    block,
+    base_font,
+    text_system,
+    frame.size.width,
+  )
+  let line_widths = rich_text_block_line_widths(
+    block,
+    base_font,
+    text_system,
+    frame.size.width,
+  )
+  let start_line = rich_text_visual_offset_to_line(block, range.start)
+  let end_line = rich_text_visual_offset_to_line(block, range.end)
   let start_rect = rich_text_block_caret_rect(
     block,
     range.start,
@@ -586,18 +608,41 @@ fn append_rich_text_block_selection_rect(
     base_font,
     text_system,
   )
-  if end_rect.origin.x > start_rect.origin.x {
-    commands.push(
-      @core.DrawCommand::FillRect(
-        @core.Rect::new(
-          x=start_rect.origin.x,
-          y=frame.origin.y + 4.0,
-          width=end_rect.origin.x - start_rect.origin.x,
-          height=max_double(10.0, frame.size.height - 8.0),
-        ),
-        @core.Color::blue().with_alpha(0.18),
-      ),
-    )
+  let last_line = @core.clamp_int(
+    end_line,
+    0,
+    @core.max_int(line_heights.length() - 1, 0),
+  )
+  let line_step = rich_text_block_line_step(block, base_font, text_system)
+  let mut y = frame.origin.y
+  for line in 0..<=last_line {
+    let height = line_heights.get(line).unwrap_or(line_step)
+    if line >= start_line && line <= last_line {
+      let left = if line == start_line {
+        start_rect.origin.x
+      } else {
+        frame.origin.x
+      }
+      let right = if line == end_line {
+        end_rect.origin.x
+      } else {
+        frame.origin.x + line_widths.get(line).unwrap_or(frame.size.width)
+      }
+      if right > left {
+        commands.push(
+          @core.DrawCommand::FillRect(
+            @core.Rect::new(
+              x=left,
+              y=y + 4.0,
+              width=right - left,
+              height=max_double(10.0, height - 8.0),
+            ),
+            @core.Color::blue().with_alpha(0.18),
+          ),
+        )
+      }
+    }
+    y = y + height
   }
 }
 

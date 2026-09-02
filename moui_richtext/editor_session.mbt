@@ -283,6 +283,7 @@ pub fn MarkdownEditTransaction::from_input_transform(
 
 ///|
 pub fn MarkdownDocumentSession::new(source : String) -> MarkdownDocumentSession {
+  hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
   markdown_document_session_from_blocks(
     source,
     parse_markdown_editor_blocks(source),
@@ -454,10 +455,8 @@ pub fn MarkdownDocumentSession::estimated_content_height(
   if source_mode {
     self.height_index.source_content_units * base.size
   } else {
-    match markdown_document_block_heights(
-      self, base, content_width~,
-    ) {
-      Some(heights) => markdown_document_sum_heights(heights)
+    match markdown_document_block_geometry(self, base, content_width~) {
+      Some(geometry) => geometry.prefix[geometry.heights.length()]
       None => self.height_index.visual_content_units * base.size
     }
   }
@@ -475,9 +474,7 @@ pub fn MarkdownDocumentSession::source_offset_y(
     return 0.0
   }
   if !source_mode {
-    match markdown_document_block_heights(
-      self, base, content_width~,
-    ) {
+    match markdown_document_block_heights(self, base, content_width~) {
       Some(heights) =>
         return markdown_document_gallery_source_offset_y(
           self, source_offset, heights,
@@ -494,28 +491,11 @@ pub fn MarkdownDocumentSession::source_offset_y(
 }
 
 ///|
-pub fn MarkdownDocumentRichTextWindow::content_rect(
+fn MarkdownDocumentRichTextWindow::content_rect(
   self : MarkdownDocumentRichTextWindow,
   content : @core.Rect,
 ) -> @core.Rect {
   content.offset(dx=0.0, dy=self.top_padding - self.scroll_y)
-}
-
-///|
-pub fn MarkdownDocumentRichTextWindow::caret_rect_at_source(
-  self : MarkdownDocumentRichTextWindow,
-  source_caret : Int,
-  content : @core.Rect,
-  base_font : @core.FontSpec,
-  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
-) -> @core.Rect? {
-  rich_text_document_caret_rect_at_source(
-    self.document,
-    source_caret,
-    self.content_rect(content),
-    base_font,
-    text_system~,
-  )
 }
 
 ///|
@@ -526,16 +506,264 @@ pub fn MarkdownDocumentSession::apply(
   if transaction.source == self.source {
     return self
   }
-  let blocks = parse_markdown_editor_blocks(transaction.source)
-  let dirty = markdown_document_dirty_range(transaction, blocks)
-  markdown_document_session_from_blocks(
-    transaction.source,
-    blocks,
-    previous=Some(self),
-    revision=self.revision + 1,
-    parse_count=self.parse_count + 1,
-    dirty_range=dirty,
+  match markdown_document_session_apply_incremental(self, transaction) {
+    Some(next) => next
+    None => {
+      hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
+      let blocks = parse_markdown_editor_blocks(transaction.source)
+      let dirty = markdown_document_dirty_range(transaction, blocks)
+      markdown_document_session_from_blocks(
+        transaction.source,
+        blocks,
+        previous=Some(self),
+        revision=self.revision + 1,
+        parse_count=self.parse_count + 1,
+        dirty_range=dirty,
+      )
+    }
+  }
+}
+
+///|
+/// Incremental `apply`: re-parse only the blank-line-delimited block
+/// cluster containing the edit, rebase the re-parsed region into new
+/// source offsets, and shift the untouched suffix blocks by the edit
+/// delta. Returns None when the full-document parse is required:
+/// structural context markers (fences, `]:`, leading `---`), edits that
+/// touch newlines (they can merge or split clusters), edits carrying
+/// reference-definition characters (the definition set is a whole-source
+/// property), and edits inside front matter.
+fn markdown_document_session_apply_incremental(
+  session : MarkdownDocumentSession,
+  transaction : MarkdownEditTransaction,
+) -> MarkdownDocumentSession? {
+  let deleted = markdown_editor_substring(
+    transaction.previous_source,
+    transaction.edit_range.start,
+    transaction.edit_range.end,
   )
+  let blocks = session.editor_blocks
+  let edit_in_front_matter = blocks.length() > 0 &&
+    blocks[0].block.kind is FrontMatter &&
+    transaction.edit_range.start <= blocks[0].source_range.end
+  if blocks.length() == 0 ||
+    edit_in_front_matter ||
+    !markdown_document_transaction_incremental_safe(transaction, deleted) {
+    hot_path_incremental_fallback_count.val = hot_path_incremental_fallback_count.val +
+      1
+    return None
+  }
+  match markdown_document_edit_cluster(session.editor_blocks, transaction) {
+    Some(cluster) if markdown_document_region_can_stitch(
+        session.editor_blocks,
+        cluster,
+      ) => {
+      let delta = markdown_editor_text_length(transaction.replacement) -
+        markdown_editor_text_length(deleted)
+      let region_end = if cluster.end_index >=
+        session.editor_blocks.length() - 1 {
+        markdown_editor_text_length(transaction.previous_source)
+      } else {
+        cluster.end_block_end
+      }
+      let region_slice = markdown_editor_substring(
+        transaction.source,
+        cluster.start_block_start,
+        markdown_editor_min_int(
+          region_end + delta,
+          markdown_editor_text_length(transaction.source),
+        ),
+      )
+      let definitions = markdown_reference_definitions_cached(
+        transaction.previous_source,
+      )
+      let reparsed = parse_markdown_editor_blocks_with_definitions(
+        region_slice,
+        definitions=Some(definitions),
+      )
+      let stitched : Array[MarkdownEditorBlock] = []
+      for index, block in session.editor_blocks {
+        if index < cluster.start_index {
+          stitched.push(block)
+        }
+      }
+      for block in reparsed {
+        stitched.push({
+          ..block,
+          source_range: {
+            start: block.source_range.start + cluster.start_block_start,
+            end: block.source_range.end + cluster.start_block_start,
+          },
+          content_range: {
+            start: block.content_range.start + cluster.start_block_start,
+            end: block.content_range.end + cluster.start_block_start,
+          },
+        })
+      }
+      for index, block in session.editor_blocks {
+        if index > cluster.end_index {
+          stitched.push({
+            ..block,
+            source_range: {
+              start: block.source_range.start + delta,
+              end: block.source_range.end + delta,
+            },
+            content_range: {
+              start: block.content_range.start + delta,
+              end: block.content_range.end + delta,
+            },
+          })
+        }
+      }
+      hot_path_region_reparse_count.val = hot_path_region_reparse_count.val + 1
+      let dirty = markdown_document_dirty_range(transaction, stitched)
+      markdown_document_session_from_blocks(
+        transaction.source,
+        stitched,
+        previous=Some(session),
+        revision=session.revision + 1,
+        parse_count=session.parse_count + 1,
+        dirty_range=dirty,
+      )
+      |> Some
+    }
+    Some(_) | None => {
+      hot_path_incremental_fallback_count.val = hot_path_incremental_fallback_count.val +
+        1
+      None
+    }
+  }
+}
+
+///|
+/// True when a transaction can be handled incrementally: no structural
+/// context markers, no newline on either side of the edit, and no
+/// reference-definition characters (`[`, `]`, `:`) that could change the
+/// whole-source definition set or a link span inside a block.
+fn markdown_document_transaction_incremental_safe(
+  transaction : MarkdownEditTransaction,
+  deleted : String,
+) -> Bool {
+  !markdown_document_transaction_needs_global_context(transaction) &&
+  !deleted.contains("\n") &&
+  !transaction.replacement.contains("\n") &&
+  !markdown_document_text_may_touch_reference_definition(
+    transaction.replacement,
+  ) &&
+  !markdown_document_text_may_touch_reference_definition(deleted)
+}
+
+///|
+fn markdown_document_text_may_touch_reference_definition(text : String) -> Bool {
+  text.contains("[") || text.contains("]") || text.contains(":")
+}
+
+///|
+priv struct MarkdownDocumentEditCluster {
+  start_index : Int
+  end_index : Int
+  start_block_start : Int
+  end_block_end : Int
+}
+
+///|
+/// The blank-line-delimited block cluster containing the edit. Blank-line
+/// blocks are hard parser boundaries — no setext underline, table, list,
+/// indented code block, or soft-wrapped paragraph continues across one,
+/// and fences/definitions that could span them are excluded earlier — so
+/// re-parsing just this cluster reproduces exactly what the full parse
+/// produces for the same source range. A blank block is its own cluster.
+fn markdown_document_edit_cluster(
+  blocks : Array[MarkdownEditorBlock],
+  transaction : MarkdownEditTransaction,
+) -> MarkdownDocumentEditCluster? {
+  let edit_start = transaction.edit_range.start
+  let edit_end = markdown_editor_max_int(transaction.edit_range.end, edit_start)
+  let mut start_index = blocks.length() - 1
+  for index, block in blocks {
+    if block.source_range.end >= edit_start {
+      start_index = index
+      break
+    }
+  }
+  let mut end_index = start_index
+  for index in start_index..<blocks.length() {
+    end_index = index
+    if blocks[index].source_range.end >= edit_end {
+      break
+    }
+  }
+  // Editing inside a blank block can turn the empty line into paragraph
+  // content (or a marker line), which lazily joins the clusters on both
+  // sides of it. Grow through this blank block so the region always
+  // covers the fused result; for edits inside a non-blank block the
+  // blank neighbors are hard boundaries and stop the growth.
+  let mut grow_start = start_index
+  while grow_start > 0 &&
+        !markdown_document_editor_block_is_blank(blocks[grow_start - 1]) {
+    grow_start = grow_start - 1
+  }
+  if markdown_document_editor_block_is_blank(blocks[start_index]) {
+    if grow_start > 0 {
+      grow_start = grow_start - 1
+    }
+    while grow_start > 0 &&
+          !markdown_document_editor_block_is_blank(blocks[grow_start - 1]) {
+      grow_start = grow_start - 1
+    }
+  }
+  let mut grow_end = end_index
+  while grow_end + 1 < blocks.length() &&
+        !markdown_document_editor_block_is_blank(blocks[grow_end + 1]) {
+    grow_end = grow_end + 1
+  }
+  if markdown_document_editor_block_is_blank(blocks[start_index]) {
+    if grow_end + 1 < blocks.length() {
+      grow_end = grow_end + 1
+    }
+    while grow_end + 1 < blocks.length() &&
+          !markdown_document_editor_block_is_blank(blocks[grow_end + 1]) {
+      grow_end = grow_end + 1
+    }
+  }
+  Some({
+    start_index: grow_start,
+    end_index: grow_end,
+    start_block_start: blocks[grow_start].source_range.start,
+    end_block_end: blocks[grow_end].source_range.end,
+  })
+}
+
+///|
+/// Stitching is only safe when re-parsing the cluster cannot change where
+/// the suffix starts. Code fences, HTML blocks, and tables consume up to a
+/// closing marker (a matching fence, a closing tag, the first non-row
+/// line), and an edit that breaks that marker makes the full parse swallow
+/// part of the suffix — a state the previous blocks cannot represent.
+/// Footnote-definition continuation lines are treated the same way. Any
+/// such kind inside the region forces the full-parse fallback.
+fn markdown_document_region_can_stitch(
+  blocks : Array[MarkdownEditorBlock],
+  cluster : MarkdownDocumentEditCluster,
+) -> Bool {
+  for index in cluster.start_index..<=cluster.end_index {
+    match blocks[index].block.kind {
+      CodeBlock | HtmlBlock | Table | FootnoteDefinition(_) => return false
+      _ => ()
+    }
+  }
+  true
+}
+
+///|
+/// A blank-line block: the empty paragraph the parser produces for each
+/// whitespace-only source line. Its range is zero-width at the line
+/// start and its cluster role is always a boundary.
+fn markdown_document_editor_block_is_blank(block : MarkdownEditorBlock) -> Bool {
+  block.block.text == "" &&
+  block.block.inlines.is_empty() &&
+  block.block.kind is Paragraph &&
+  block.source_range.start == block.source_range.end
 }
 
 ///|
@@ -576,7 +804,7 @@ pub fn MarkdownDocumentSession::with_layout_cache(
 }
 
 ///|
-pub fn MarkdownDocumentLayoutCache::new(
+fn MarkdownDocumentLayoutCache::new(
   session : MarkdownDocumentSession,
   document : RichTextDocument,
   base : @core.FontSpec,
@@ -644,31 +872,6 @@ pub fn MarkdownDocumentLayoutCache::new(
 }
 
 ///|
-pub fn MarkdownDocumentLayoutCache::visible_block_count(
-  self : MarkdownDocumentLayoutCache,
-) -> Int {
-  if self.visible_start < 0 || self.visible_end < self.visible_start {
-    0
-  } else {
-    self.visible_end - self.visible_start + 1
-  }
-}
-
-///|
-pub fn MarkdownDocumentLayoutCache::source_offset_y(
-  self : MarkdownDocumentLayoutCache,
-  source_offset : Int,
-) -> Double? {
-  for block in self.blocks {
-    if source_offset >= block.source_range.start &&
-      source_offset <= block.source_range.end {
-      return Some(block.top)
-    }
-  }
-  None
-}
-
-///|
 priv struct MarkdownDocumentWindowRange {
   visible_start : Int
   visible_end : Int
@@ -687,12 +890,10 @@ fn markdown_document_window_range(
   content_width~ : Double,
 ) -> MarkdownDocumentWindowRange {
   if !source_mode {
-    match markdown_document_block_heights(
-      session, base, content_width~,
-    ) {
-      Some(heights) =>
-        return markdown_document_window_range_for_heights(
-          heights,
+    match markdown_document_block_geometry(session, base, content_width~) {
+      Some(geometry) =>
+        return markdown_document_window_range_for_geometry(
+          geometry,
           scroll_y~,
           viewport_height~,
           overscan~,
@@ -806,56 +1007,108 @@ fn markdown_document_block_heights(
   base : @core.FontSpec,
   content_width~ : Double,
 ) -> Array[Double]? {
+  match markdown_document_block_geometry(session, base, content_width~) {
+    Some(geometry) => Some(geometry.heights)
+    None => None
+  }
+}
+
+///|
+/// Persisted scroll geometry for the session at a laid out content width.
+/// Cache hits (the same source, font, and width, with no measured-height
+/// change since the last build) perform no block walk at all; a miss
+/// walks every block once, builds the prefix sums, and stores the entry.
+/// Zero content width never has measured or gallery geometry, so it skips
+/// the walk entirely and lets callers fall back to the parse-time index.
+fn markdown_document_block_geometry(
+  session : MarkdownDocumentSession,
+  base : @core.FontSpec,
+  content_width~ : Double,
+) -> MarkdownDocumentScrollGeometry? {
+  if content_width <= 0.0 {
+    return None
+  }
+  match
+    markdown_document_scroll_geometry_get(
+      session.source,
+      base,
+      width=content_width,
+    ) {
+    Some(geometry) => {
+      hot_path_scroll_geometry_cache_hits.val = hot_path_scroll_geometry_cache_hits.val +
+        1
+      if geometry.heights.is_empty() {
+        return None
+      }
+      return Some(geometry)
+    }
+    None => ()
+  }
   let gallery = markdown_document_gallery_block_heights(
     session, base, content_width,
   )
   let heights : Array[Double] = []
   let mut has_measured = false
   for index, editor_block in session.editor_blocks {
-    match rich_text_block_measured_height(
-      editor_block, base, width=content_width,
-    ) {
+    hot_path_block_height_walk_blocks.val = hot_path_block_height_walk_blocks.val +
+      1
+    match
+      rich_text_block_measured_height(editor_block, base, width=content_width) {
       Some(height) => {
         has_measured = true
         heights.push(height)
       }
-      None => match gallery {
-        Some(gallery) => heights.push(gallery[index])
-        None =>
-          heights.push(
-            session.height_index.blocks
-            .get(index)
-            .map(metric =>
-              metric.visual_height_units * base.size)
-            .unwrap_or(base.size * 1.55),
-          )
-      }
+      None =>
+        match gallery {
+          Some(gallery) => heights.push(gallery[index])
+          None =>
+            heights.push(
+              session.height_index.blocks
+              .get(index)
+              .map(metric => metric.visual_height_units * base.size)
+              .unwrap_or(base.size * 1.55),
+            )
+        }
     }
   }
-  if has_measured || gallery is Some(_) {
-    Some(heights)
-  } else {
-    None
+  let epoch = rich_text_block_heights_epoch.val
+  if !has_measured && gallery is None {
+    // Cache the “no measured geometry yet” verdict too, so wheels before
+    // the first measured paint stay O(1) until a height actually lands.
+    markdown_document_scroll_geometry_put(session.source, base, content_width, {
+      heights: [],
+      prefix: [0.0],
+      epoch,
+    })
+    return None
   }
-}
-
-///|
-fn markdown_document_sum_heights(heights : Array[Double]) -> Double {
+  let prefix : Array[Double] = [0.0]
   let mut total = 0.0
   for height in heights {
     total = total + height
+    prefix.push(total)
   }
-  total
+  let geometry : MarkdownDocumentScrollGeometry = { heights, prefix, epoch }
+  markdown_document_scroll_geometry_put(
+    session.source,
+    base,
+    content_width,
+    geometry,
+  )
+  Some(geometry)
 }
 
 ///|
-fn markdown_document_window_range_for_heights(
-  heights : Array[Double],
+/// Window lookup over persisted prefix sums: the total is `prefix[n]` and
+/// both edges are binary searches, so a wheel step is O(log n) in blocks.
+fn markdown_document_window_range_for_geometry(
+  geometry : MarkdownDocumentScrollGeometry,
   scroll_y~ : Double,
   viewport_height~ : Double,
   overscan~ : Double,
 ) -> MarkdownDocumentWindowRange {
-  if heights.is_empty() {
+  let count = geometry.heights.length()
+  if count == 0 {
     return {
       visible_start: -1,
       visible_end: -1,
@@ -863,11 +1116,11 @@ fn markdown_document_window_range_for_heights(
       content_height: 0.0,
     }
   }
-  let content_height = markdown_document_sum_heights(heights)
+  let content_height = geometry.prefix[count]
   if viewport_height <= 0.0 {
     return {
       visible_start: 0,
-      visible_end: heights.length() - 1,
+      visible_end: count - 1,
       top_padding: 0.0,
       content_height,
     }
@@ -877,37 +1130,41 @@ fn markdown_document_window_range_for_heights(
     content_height,
     scroll_y + viewport_height + overscan,
   )
-  let mut y = 0.0
-  let mut visible_start = -1
-  let mut visible_end = -1
-  let mut top_padding = 0.0
-  for index, height in heights {
-    let bottom = y + height
-    if bottom >= visible_min && y <= visible_max {
-      if visible_start < 0 {
-        visible_start = index
-        top_padding = y
-      }
-      visible_end = index
-    } else if visible_end >= 0 && y > visible_max {
-      break
-    }
-    y = bottom
-  }
-  if visible_start < 0 {
-    let last = heights.length() - 1
-    let mut top = 0.0
-    for index in 0..<last {
-      top = top + heights[index]
-    }
-    return {
-      visible_start: last,
-      visible_end: last,
-      top_padding: top,
-      content_height,
+  // First block whose bottom edge (`prefix[index + 1]`) reaches the
+  // visible band; heights are non-negative, so prefix is monotone.
+  let mut low = 0
+  let mut high = count
+  while low < high {
+    let mid = low + (high - low) / 2
+    if geometry.prefix[mid + 1] >= visible_min {
+      high = mid
+    } else {
+      low = mid + 1
     }
   }
-  { visible_start, visible_end, top_padding, content_height }
+  let visible_start = if low >= count { count - 1 } else { low }
+  // Last block whose top edge (`prefix[index]`) is still inside the band.
+  let mut low = 0
+  let mut high = count
+  while low < high {
+    let mid = low + (high - low) / 2
+    if geometry.prefix[mid] <= visible_max {
+      low = mid + 1
+    } else {
+      high = mid
+    }
+  }
+  let visible_end = if low - 1 < visible_start {
+    visible_start
+  } else {
+    low - 1
+  }
+  {
+    visible_start,
+    visible_end,
+    top_padding: geometry.prefix[visible_start],
+    content_height,
+  }
 }
 
 ///|
@@ -1228,10 +1485,11 @@ fn markdown_document_source_mode_block_to_rich_text(
     String::from_array(source_chars[start:end]),
     editor_block,
     base,
-    build=(editor_block, base) =>
+    build=(editor_block, base) => {
       markdown_document_source_mode_block_to_rich_text_uncached(
         source_chars, source_char_offset, editor_block, base,
-      ),
+      )
+    },
   )
 }
 

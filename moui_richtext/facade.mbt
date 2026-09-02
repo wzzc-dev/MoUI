@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_document(
+fn markdown_document(
   source : String,
   base? : @core.FontSpec = @core.FontSpec::new(),
 ) -> RichTextDocument {
@@ -7,88 +7,7 @@ pub fn markdown_document(
 }
 
 ///|
-/// A read-only plain text viewer that renders text using proper text
-/// measurement and word-wrapping, matching the RichText pipeline.
-pub fn[Msg] text_viewer(
-  source~ : String,
-  size~ : @core.Size,
-  font? : @core.FontSpec = @core.FontSpec::new(),
-  foreground? : @core.Color = @core.Color::black(),
-  key? : String? = None,
-) -> @core.View[Msg] {
-  @core.View::from_node(TextViewerNode::{ source, size, font, foreground, key })
-}
-
-///|
-priv struct TextViewerNode {
-  source : String
-  size : @core.Size
-  font : @core.FontSpec
-  foreground : @core.Color
-  key : String?
-}
-
-///|
-impl @core.ViewNode for TextViewerNode with fn identity(self) {
-  @core.ViewIdentity::new(kind="TextViewer", key=self.key)
-}
-
-///|
-impl @core.ViewNode for TextViewerNode with fn declaration(self) {
-  rich_text_declaration(
-    layout=rich_text_exact_channel(
-      rich_text_record_key("TextViewer.layout", [
-        ("source", @core.DeclarationKey::string(self.source)),
-        ("size", declaration_size_key(self.size)),
-        ("font", declaration_font_key(self.font)),
-      ]),
-    ),
-    paint=rich_text_exact_channel(declaration_color_key(self.foreground)),
-  )
-}
-
-///|
-impl @core.ViewNode for TextViewerNode with fn layout(self, ctx) {
-  let cache = RichTextDocumentViewCache::new()
-  let measured_height = rich_text_document_session_view_measure_height(
-    self.source,
-    self.size,
-    self.font,
-    ctx.text_system,
-    cache,
-  )
-  let measured = @core.Size::new(width=self.size.width, height=measured_height)
-  @core.ViewLayoutResult::new(size=ctx.constraints.constrain(measured))
-}
-
-///|
-impl @core.ViewNode for TextViewerNode with fn paint(self, ctx) {
-  let cache = RichTextDocumentViewCache::new()
-  rich_text_document_session_view_paint(
-    ctx,
-    self.source,
-    self.font,
-    self.foreground,
-    @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
-    0.0,
-    0.0,
-    0.0,
-    320.0,
-    cache,
-  )
-}
-
-///|
-impl @core.ViewNode for TextViewerNode with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Text,
-    label=self.source,
-  )
-}
-
-///|
-pub fn markdown_input_transform(
+fn markdown_input_transform(
   source : String,
   caret : Int,
   selection : @core.TextRange?,

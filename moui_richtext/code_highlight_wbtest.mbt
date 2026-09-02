@@ -1,16 +1,16 @@
 ///|
 test "code highlight supports common languages and ignores unknown aliases" {
-  assert_true(@moui_richtext.code_highlight_supports_language("python"))
-  assert_true(@moui_richtext.code_highlight_supports_language("PYTHON"))
-  assert_true(@moui_richtext.code_highlight_supports_language("ts"))
-  assert_true(@moui_richtext.code_highlight_supports_language("yaml"))
-  assert_true(@moui_richtext.code_highlight_supports_language("dockerfile"))
-  assert_false(@moui_richtext.code_highlight_supports_language("perl"))
+  assert_true(code_highlight_supports_language("python"))
+  assert_true(code_highlight_supports_language("PYTHON"))
+  assert_true(code_highlight_supports_language("ts"))
+  assert_true(code_highlight_supports_language("yaml"))
+  assert_true(code_highlight_supports_language("dockerfile"))
+  assert_false(code_highlight_supports_language("perl"))
 }
 
 ///|
 test "code highlight tokenizes Python with keyword comment and plain spans" {
-  let spans = @moui_richtext.code_highlight_tokenize(
+  let spans = code_highlight_tokenize(
     "# config.py\ndef add(a, b):\n    return a + b\n", "python",
   )
   let comment_spans = spans.filter(span => {
@@ -45,7 +45,7 @@ test "code highlight tokenizes Python with keyword comment and plain spans" {
 
 ///|
 test "code highlight tokenizes TypeScript with keywords and numbers" {
-  let spans = @moui_richtext.code_highlight_tokenize(
+  let spans = code_highlight_tokenize(
     "const n = 3.14;\nexport async function load() { return 1; }\n", "typescript",
   )
   let keyword_spans = spans.filter(span => {
@@ -73,7 +73,7 @@ test "code highlight tokenizes TypeScript with keywords and numbers" {
 
 ///|
 test "code highlight tokenizes YAML with line comments and plain keys" {
-  let spans = @moui_richtext.code_highlight_tokenize(
+  let spans = code_highlight_tokenize(
     "# deployment\nservice:\n  image: nginx:1.25\n  replicas: 3\n", "yaml",
   )
   let comment_spans = spans.filter(span => {
@@ -95,7 +95,7 @@ test "code highlight tokenizes YAML with line comments and plain keys" {
 
 ///|
 test "code highlight tokenizes Rust with keywords and plain type literals" {
-  let spans = @moui_richtext.code_highlight_tokenize(
+  let spans = code_highlight_tokenize(
     "fn main() { let mut count = 10; }\n", "rust",
   )
   let keyword_spans = spans.filter(span => {
@@ -120,7 +120,7 @@ test "code highlight tokenizes Rust with keywords and plain type literals" {
 ///|
 //|
 test "code highlight detects function call tokens" {
-  let spans = @moui_richtext.code_highlight_tokenize(
+  let spans = code_highlight_tokenize(
     "fn run() { println(\"hello\"); }\n", "rust",
   )
   assert_true(
@@ -134,7 +134,7 @@ test "code highlight detects function call tokens" {
 
 ///|
 test "code highlight detects operator tokens" {
-  let spans = @moui_richtext.code_highlight_tokenize(
+  let spans = code_highlight_tokenize(
     "let x = a + b * c;\nreturn x == 1;\n", "typescript",
   )
   let operator_texts = spans
@@ -150,9 +150,7 @@ test "code highlight detects operator tokens" {
 
 ///|
 test "code highlight detects arrow function operator" {
-  let spans = @moui_richtext.code_highlight_tokenize(
-    "items.map(x => x + 1)\n", "typescript",
-  )
+  let spans = code_highlight_tokenize("items.map(x => x + 1)\n", "typescript")
   assert_true(
     spans.any(span => {
       span.text == "=>" && highlight_kind_name(span.kind) == "CodeOperator"
@@ -164,7 +162,7 @@ test "code highlight detects arrow function operator" {
 
 ///|
 test "code highlight detects PascalCase type tokens" {
-  let spans = @moui_richtext.code_highlight_tokenize(
+  let spans = code_highlight_tokenize(
     "class UserService extends BaseRepository {\n}\n", "typescript",
   )
   assert_true(
@@ -178,7 +176,7 @@ test "code highlight detects PascalCase type tokens" {
 
 ///|
 test "code highlight detects common type names" {
-  let spans = @moui_richtext.code_highlight_tokenize(
+  let spans = code_highlight_tokenize(
     "let name: String = \"foo\"\nlet count: Int = 5\n", "swift",
   )
   assert_true(
@@ -197,7 +195,7 @@ test "code highlight detects common type names" {
 
 ///|
 test "code highlight detects annotation tokens" {
-  let spans = @moui_richtext.code_highlight_tokenize(
+  let spans = code_highlight_tokenize(
     "#[derive(Eq)]\n@override\nfn run() {}\n", "rust",
   )
   assert_true(
@@ -218,7 +216,7 @@ test "code highlight detects annotation tokens" {
 
 ///|
 test "code highlight detects escape sequences in strings" {
-  let spans = @moui_richtext.code_highlight_tokenize(
+  let spans = code_highlight_tokenize(
     "let msg = \"hello\\nworld\\ttab\"\n", "typescript",
   )
   assert_true(
@@ -242,13 +240,13 @@ test "code highlight detects escape sequences in strings" {
 
 ///|
 test "code highlight falls back to a single plain span for unsupported snippets" {
-  let spans = @moui_richtext.code_highlight_tokenize("let x = 1", "perl")
+  let spans = code_highlight_tokenize("let x = 1", "perl")
   assert_eq(spans.length(), 1)
   assert_eq(highlight_kind_name(spans[0].kind), "CodePlain")
 }
 
 ///|
-fn highlight_kind_name(kind : @moui_richtext.CodeHighlightToken) -> String {
+fn highlight_kind_name(kind : CodeHighlightToken) -> String {
   match kind {
     CodePlain => "CodePlain"
     CodeKeyword => "CodeKeyword"
