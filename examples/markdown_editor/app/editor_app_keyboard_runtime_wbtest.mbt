@@ -429,8 +429,10 @@ test "markdown editor runtime undo restores input transform caret" {
   let undo = runtime.dispatch_focused_text_command(@core.CommandIntent::Undo)
   assert_true(undo.handled)
   assert_true(undo.changed)
-  inspect(app.document(), content="#")
-  inspect(runtime.focused_text_input().caret, content="1")
+  // The merge window groups the two contiguous keystrokes, so one undo
+  // reverts the whole typed run.
+  inspect(app.document(), content="")
+  inspect(runtime.focused_text_input().caret, content="0")
   let redo = runtime.dispatch_focused_text_command(@core.CommandIntent::Redo)
   assert_true(redo.handled)
   assert_true(redo.changed)

@@ -71,7 +71,7 @@ fn code_highlight_color(kind : CodeHighlightToken) -> @core.Color {
 ///|
 /// True if the language id has a highlighter. Used to decide whether to apply
 /// token coloring or fall back to a single plain run.
-pub fn code_highlight_supports_language(language : String) -> Bool {
+fn code_highlight_supports_language(language : String) -> Bool {
   let lower = language.to_lower()
   lower == "moonbit" ||
   lower == "moon" ||

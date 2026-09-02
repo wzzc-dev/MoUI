@@ -238,7 +238,7 @@ fn markdown_editor_table_cell_matrix_paste(
 }
 
 ///|
-pub(all) struct MarkdownEditorTableMatrixPaste {
+priv struct MarkdownEditorTableMatrixPaste {
   grid : Array[Array[String]]
   alignments : Array[@core.TextAlign?]
 }
@@ -395,11 +395,11 @@ fn markdown_editor_paste_block_text_as_block(
 }
 
 ///|
-pub(all) struct MarkdownEditorPastedMarkdownTable {
+priv struct MarkdownEditorPastedMarkdownTable {
   grid : Array[Array[String]]
   alignments : Array[@core.TextAlign?]
   table_text : String
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_editor_markdown_table_paste(
@@ -765,7 +765,7 @@ fn markdown_editor_table_paste_join_cells(cells : Array[String]) -> String {
 }
 
 ///|
-pub(all) struct MarkdownEditorTablePasteTarget {
+priv struct MarkdownEditorTablePasteTarget {
   row : Int
   column : Int
 }

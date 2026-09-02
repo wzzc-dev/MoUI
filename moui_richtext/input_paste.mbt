@@ -264,11 +264,11 @@ fn markdown_editor_previous_token_start(
 }
 
 ///|
-pub(all) struct MarkdownEditorAutolinkTarget {
+priv struct MarkdownEditorAutolinkTarget {
   leading : String
   target : String
   trailing : String
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_editor_autolink_target_with_trailing_punctuation(
@@ -563,7 +563,7 @@ fn markdown_editor_paste_reference_over_selection(
 }
 
 ///|
-pub(all) struct MarkdownEditorPasteReferenceCommand {
+priv struct MarkdownEditorPasteReferenceCommand {
   command : MarkdownEditorCommand
   target : String
   reference_style : Bool
@@ -623,14 +623,14 @@ fn markdown_editor_reference_command_for_paste_target(
 }
 
 ///|
-pub(all) struct MarkdownEditorPastedReferenceTarget {
+priv struct MarkdownEditorPastedReferenceTarget {
   target : String
   image : Bool
   reference_style : Bool
 }
 
 ///|
-pub(all) struct MarkdownEditorPastedReferenceDefinition {
+priv struct MarkdownEditorPastedReferenceDefinition {
   label : String
   target : String
   definition_text : String

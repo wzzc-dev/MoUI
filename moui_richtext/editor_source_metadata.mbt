@@ -12,7 +12,7 @@ fn markdown_editor_active_heading(
 }
 
 ///|
-pub(all) struct MarkdownEditorFrontMatterMetadata {
+priv struct MarkdownEditorFrontMatterMetadata {
   title : String
   tags : Array[String]
 }

@@ -67,17 +67,17 @@ fn markdown_editor_normalize_ordered_edit_result(
 }
 
 ///|
-pub(all) struct MarkdownEditorOffsetReplacement {
+priv struct MarkdownEditorOffsetReplacement {
   start : Int
   old_end : Int
   new_end : Int
-} derive(Eq, Debug)
+}
 
 ///|
-pub(all) struct MarkdownEditorRenumberResult {
+priv struct MarkdownEditorRenumberResult {
   text : String
   replacements : Array[MarkdownEditorOffsetReplacement]
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_editor_renumber_ordered_lists(
@@ -121,11 +121,11 @@ fn markdown_editor_renumber_ordered_lists(
 }
 
 ///|
-pub(all) struct MarkdownEditorOrderedRenumberContext {
+priv struct MarkdownEditorOrderedRenumberContext {
   indent : Int
   context_prefix : String
   expected : Int
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_editor_trim_ordered_renumber_contexts(
@@ -190,14 +190,14 @@ fn markdown_editor_ordered_renumber_blank_line(line : String) -> Bool {
 }
 
 ///|
-pub(all) struct MarkdownEditorOrderedLineInfo {
+priv struct MarkdownEditorOrderedLineInfo {
   indent : Int
   context_prefix : String
   digit_start : Int
   digit_end : Int
   digits : String
   number : Int
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_editor_ordered_line_info(

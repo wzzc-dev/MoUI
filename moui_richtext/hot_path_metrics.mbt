@@ -1,0 +1,43 @@
+///|
+/// Package-private counters for editor hot paths.
+///
+/// White-box tests and the gated hot-path benchmark assert on these
+/// counters so the performance invariants (no full-document parse per
+/// keystroke, no full height walk per wheel event, one paragraph layout
+/// shared by paint/caret/hit-test) are machine-checkable instead of
+/// relying on wall-clock thresholds. The runtime is single-threaded and
+/// counters are reset by each test that reads them.
+
+///|
+/// `parse_markdown_editor_blocks` over the whole source (session `new` or
+/// the full-parse `apply` path).
+let hot_path_full_parse_count : Ref[Int] = Ref(0)
+
+///|
+/// `apply` calls that re-parsed only the affected source region.
+let hot_path_region_reparse_count : Ref[Int] = Ref(0)
+
+///|
+/// `apply` calls that fell back to a full re-parse from the incremental
+/// region path (region expansion refused).
+let hot_path_incremental_fallback_count : Ref[Int] = Ref(0)
+
+///|
+/// Blocks visited while (re)building the scroll block-height array.
+let hot_path_block_height_walk_blocks : Ref[Int] = Ref(0)
+
+///|
+/// Scroll geometry reads served from the persisted prefix-sum index.
+let hot_path_scroll_geometry_cache_hits : Ref[Int] = Ref(0)
+
+///|
+/// Rich-text block conversions executed (cache misses).
+let hot_path_block_conversion_builds : Ref[Int] = Ref(0)
+
+///|
+/// Soft-wrap paragraph layouts built (cache misses) for wrapped blocks.
+let hot_path_block_wrap_builds : Ref[Int] = Ref(0)
+
+///|
+/// Soft-wrap paragraph layouts reused from the cache.
+let hot_path_block_wrap_cache_hits : Ref[Int] = Ref(0)

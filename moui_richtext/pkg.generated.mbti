@@ -7,21 +7,15 @@ import {
 }
 
 // Values
-pub fn code_highlight_supports_language(String) -> Bool
-
 pub fn code_highlight_tokenize(String, String) -> Array[CodeHighlightSpan]
 
 pub fn[Msg] controlled_markdown_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, accepts_tab_input? : Bool, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] controlled_markdown_session_editor(session~ : MarkdownDocumentSession, selection~ : MarkdownEditorSelection, on_transaction~ : (MarkdownEditTransaction) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, on_scroll? : ((Double) -> Msg)?, visible_viewport_height? : Double, visible_overscan? : Double, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] controlled_rich_text_document_editor(value~ : String, document~ : RichTextDocument, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, on_scroll? : ((Double) -> Msg)?, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
-
 pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, on_scroll? : ((Double) -> Msg)?, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn markdown_block_to_rich_text(MarkdownBlock, @core.FontSpec, base_dir? : String?) -> RichTextBlock
-
-pub fn markdown_document(String, base? : @core.FontSpec) -> RichTextDocument
 
 pub fn[Msg] markdown_editor(value~ : String, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, accepts_tab_input? : Bool, key? : String?) -> @core.View[Msg]
 
@@ -79,8 +73,6 @@ pub fn markdown_editor_toggle_task_at(String, Int) -> MarkdownEditorEditResult?
 
 pub fn markdown_editor_transform_input(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
 
-pub fn markdown_input_transform(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
 pub fn markdown_join_lines(Array[String]) -> String
 
 pub fn markdown_split_lines(String) -> Array[String]
@@ -93,17 +85,11 @@ pub fn parse_markdown(String) -> Array[MarkdownBlock]
 
 pub fn parse_markdown_inlines(String) -> Array[MarkdownInline]
 
-pub fn parse_markdown_inlines_with_definitions(String, Array[MarkdownReferenceDefinition]) -> Array[MarkdownInline]
-
 pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, @core.Rect, @core.FontSpec, text_system? : @core.TextSystem) -> @core.Rect?
 
 pub fn rich_text_document_height(RichTextDocument, @core.FontSpec, text_system? : @core.TextSystem) -> Double
 
-pub fn[Msg] rich_text_editor(value~ : String, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_input_edit? : ((String, Int, @core.TextRange?) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, on_scroll? : ((Double) -> Msg)?, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
-
 pub fn rich_text_editor_content_rect(@core.Rect) -> @core.Rect
-
-pub fn[Msg] text_viewer(source~ : String, size~ : @core.Size, font? : @core.FontSpec, foreground? : @core.Color, key? : String?) -> @core.View[Msg]
 
 // Errors
 
@@ -148,11 +134,6 @@ pub(all) enum MarkdownBlockKind {
   HtmlBlock
   FrontMatter
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct MarkdownCodeFenceInfo {
-  marker : String
-  info : String?
-} derive(Eq, @debug.Debug)
 
 pub(all) struct MarkdownDocumentBlock {
   id : Int
@@ -209,9 +190,6 @@ pub(all) struct MarkdownDocumentLayoutCache {
   visible_end : Int
   blocks : Array[MarkdownDocumentLayoutBlock]
 } derive(Eq, ToJson, @debug.Debug)
-pub fn MarkdownDocumentLayoutCache::new(MarkdownDocumentSession, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double, text_system? : @core.TextSystem) -> Self
-pub fn MarkdownDocumentLayoutCache::source_offset_y(Self, Int) -> Double?
-pub fn MarkdownDocumentLayoutCache::visible_block_count(Self) -> Int
 
 pub(all) struct MarkdownDocumentRichTextWindow {
   document : RichTextDocument
@@ -225,8 +203,6 @@ pub(all) struct MarkdownDocumentRichTextWindow {
   block_count : Int
   rendered_block_count : Int
 } derive(Eq, ToJson, @debug.Debug)
-pub fn MarkdownDocumentRichTextWindow::caret_rect_at_source(Self, Int, @core.Rect, @core.FontSpec, text_system? : @core.TextSystem) -> @core.Rect?
-pub fn MarkdownDocumentRichTextWindow::content_rect(Self, @core.Rect) -> @core.Rect
 
 pub(all) struct MarkdownDocumentSession {
   source : String
@@ -281,29 +257,11 @@ pub fn MarkdownEditTransaction::from_input_transform(String, RichTextInputTransf
 pub fn MarkdownEditTransaction::from_sources(String, String, caret? : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::replace_all(String, String, caret? : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
 
-pub(all) struct MarkdownEditorAutolinkTarget {
-  leading : String
-  target : String
-  trailing : String
-} derive(Eq, @debug.Debug)
-
 pub(all) struct MarkdownEditorBlock {
   block : MarkdownBlock
   source_range : MarkdownSourceRange
   content_range : MarkdownSourceRange
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct MarkdownEditorBlockGroup {
-  start_index : Int
-  end_index : Int
-  source_start : Int
-  source_end : Int
-}
-
-pub(all) struct MarkdownEditorBlockPosition {
-  block : MarkdownEditorBlock
-  index : Int
-}
 
 pub(all) enum MarkdownEditorCommand {
   Bold
@@ -344,59 +302,9 @@ pub(all) struct MarkdownEditorEditResult {
   selection : @core.TextRange?
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct MarkdownEditorFootnoteDefinitionEdit {
-  source : String
-  anchor_delta : Int
-}
-
-pub(all) struct MarkdownEditorFrontMatterMetadata {
-  title : String
-  tags : Array[String]
-}
-
-pub(all) struct MarkdownEditorFrontMatterParseResult {
-  block : MarkdownEditorBlock
-  next_index : Int
-} derive(Eq, @debug.Debug)
-
 type MarkdownEditorHtmlBlockParseResult derive(Eq, @debug.Debug)
 
 type MarkdownEditorIndentedCodeParseResult derive(Eq, @debug.Debug)
-
-pub(all) struct MarkdownEditorLineBlockParts {
-  context_prefix : String
-  content_start : Int
-  content : String
-}
-
-pub(all) enum MarkdownEditorMergeBlockKind {
-  Plain
-  Bullet
-  Task
-  Ordered
-  Quote
-} derive(Eq, @debug.Debug)
-
-pub(all) struct MarkdownEditorOffsetReplacement {
-  start : Int
-  old_end : Int
-  new_end : Int
-} derive(Eq, @debug.Debug)
-
-pub(all) struct MarkdownEditorOrderedLineInfo {
-  indent : Int
-  context_prefix : String
-  digit_start : Int
-  digit_end : Int
-  digits : String
-  number : Int
-} derive(Eq, @debug.Debug)
-
-pub(all) struct MarkdownEditorOrderedRenumberContext {
-  indent : Int
-  context_prefix : String
-  expected : Int
-} derive(Eq, @debug.Debug)
 
 pub(all) struct MarkdownEditorOutlineItem {
   level : Int
@@ -405,57 +313,6 @@ pub(all) struct MarkdownEditorOutlineItem {
 } derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownEditorParagraphParseResult derive(Eq, @debug.Debug)
-
-pub(all) struct MarkdownEditorPasteReferenceCommand {
-  command : MarkdownEditorCommand
-  target : String
-  reference_style : Bool
-  definition_text : String
-}
-
-pub(all) struct MarkdownEditorPastedFootnoteDefinition {
-  label : String
-  text : String
-}
-
-pub(all) struct MarkdownEditorPastedMarkdownTable {
-  grid : Array[Array[String]]
-  alignments : Array[@core.TextAlign?]
-  table_text : String
-} derive(Eq, @debug.Debug)
-
-pub(all) struct MarkdownEditorPastedReferenceDefinition {
-  label : String
-  target : String
-  definition_text : String
-}
-
-pub(all) struct MarkdownEditorPastedReferenceTarget {
-  target : String
-  image : Bool
-  reference_style : Bool
-}
-
-pub(all) struct MarkdownEditorQuotedCodeBlock {
-  source_range : MarkdownSourceRange
-  content_range : MarkdownSourceRange
-} derive(Eq, @debug.Debug)
-
-pub(all) struct MarkdownEditorQuotedCodeFence {
-  quote_prefix : String
-  fence : String
-} derive(Eq, @debug.Debug)
-
-pub(all) struct MarkdownEditorReferenceMarkerTarget {
-  start : Int
-  end : Int
-  label : String
-}
-
-pub(all) struct MarkdownEditorRenumberResult {
-  text : String
-  replacements : Array[MarkdownEditorOffsetReplacement]
-} derive(Eq, @debug.Debug)
 
 type MarkdownEditorRunSourceRange derive(Eq, @debug.Debug)
 
@@ -480,35 +337,6 @@ pub(all) struct MarkdownEditorSnapshot {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownEditorSnapshot::parse(String) -> Self
 pub fn MarkdownEditorSnapshot::parse_with_font(String, @core.FontSpec, base_dir? : String?) -> Self
-
-pub(all) struct MarkdownEditorTableCellRange {
-  hit_start : Int
-  hit_end : Int
-  content_start : Int
-  content_end : Int
-  row : Int
-  column : Int
-} derive(Eq, @debug.Debug)
-
-pub(all) struct MarkdownEditorTableMatrixPaste {
-  grid : Array[Array[String]]
-  alignments : Array[@core.TextAlign?]
-}
-
-pub(all) struct MarkdownEditorTableParseResult {
-  block : MarkdownEditorBlock
-  end_index : Int
-} derive(Eq, @debug.Debug)
-
-pub(all) struct MarkdownEditorTablePasteTarget {
-  row : Int
-  column : Int
-}
-
-pub(all) struct MarkdownFrontMatterParseResult {
-  block : MarkdownBlock
-  next_index : Int
-} derive(Eq, @debug.Debug)
 
 type MarkdownHtmlBlockParseResult derive(Eq, @debug.Debug)
 
@@ -535,12 +363,6 @@ pub(all) enum MarkdownInlineKind {
   HtmlInline
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct MarkdownLine {
-  text : String
-  start : Int
-  end : Int
-} derive(Eq, @debug.Debug)
-
 pub(all) struct MarkdownLinkBounds {
   open_start : Int
   close_start : Int
@@ -558,29 +380,12 @@ pub(all) struct MarkdownReferenceContext {
   bounds : MarkdownLinkBounds
 } derive(Eq, @debug.Debug)
 
-pub(all) struct MarkdownReferenceDefinition {
-  label : String
-  url : String
-  title : String
-} derive(Eq, @debug.Debug)
-
 type MarkdownSetextHeadingParseResult derive(Eq, @debug.Debug)
 
 pub(all) struct MarkdownSourceRange {
   start : Int
   end : Int
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct MarkdownTableCellPreviewRange {
-  text : String
-  start : Int
-  end : Int
-}
-
-pub(all) struct MarkdownTableParseResult {
-  block : MarkdownBlock
-  end_index : Int
-} derive(Eq, @debug.Debug)
 
 pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
@@ -654,6 +459,5 @@ pub(all) struct RichTextTableCell {
 } derive(Eq, ToJson, @debug.Debug)
 
 // Type aliases
-pub type RichTextFormatter = (String) -> RichTextDocument
 
 // Traits

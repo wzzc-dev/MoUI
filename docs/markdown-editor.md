@@ -111,6 +111,27 @@ derived display session is memoized by display text, so repeated paints and
 host polls between candidate updates reuse one parse instead of reparsing the
 whole document on every poll.
 
+Edits that fall inside ordinary (non-front-matter) text re-parse only the
+affected cluster of blocks around the edit and stitch the rebased result back
+onto the cached prefix and suffix, shifting downstream ranges by the length
+delta. Edits near fence-like or shape-reparse structures (code fences, raw
+HTML, tables, footnote definitions), bracket lines, or documents with global
+context requirements fall back to a full parse, so the incremental path is
+guarded rather than best-effort.
+
+The scroll geometry derived from measured heights (heights plus prefix sums)
+is itself cached per font, content width, and source, and stays valid until a
+measured height actually changes. Wheel scrolling and repaints then read O(1)
+content totals and a binary-searched visible window instead of walking every
+block, and the zero-width frame case skips the walk entirely.
+
+Soft line wrapping is shared across paint, height measurement, caret
+geometry, pointer hit testing, copy text, and selection rendering: one
+memoized wrap layout per block per content width feeds all of them, so a
+click on the Nth wrapped line resolves to the exact source offset, multi-line
+drag selections paint one band per visual line, and copied text stays
+canonical (injected soft breaks are stripped).
+
 ## Current Behavior
 
 The editor supports formatted editing for common block and inline structures:
@@ -424,6 +445,12 @@ The editor supports formatted editing for common block and inline structures:
   alignment row intact.
 - Structured shortcut/contextual command history so Markdown transforms can be
   undone separately from raw text input.
+- Raw text input undo groups consecutive single-character typing, backspace,
+  and forward-delete edits into one entry while they stay in the same edit kind
+  at contiguous positions within a short pause window (about half a second), so
+  one undo reverts a typed word instead of one character. Newlines, pastes,
+  selection replacements, a pause longer than the window, and any edit after
+  undo or redo start a fresh group.
 
 Source preview remains available from the top chrome for inspection, but the
 formatted surface is the primary user flow.

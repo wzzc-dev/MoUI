@@ -80,11 +80,11 @@ pub(all) enum MarkdownEditorCommand {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct MarkdownLine {
+priv struct MarkdownLine {
   text : String
   start : Int
   end : Int
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_editor_line_count(source : String) -> Int {

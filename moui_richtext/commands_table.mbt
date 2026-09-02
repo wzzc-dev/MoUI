@@ -1,12 +1,12 @@
 ///|
-pub(all) struct MarkdownEditorTableCellRange {
+priv struct MarkdownEditorTableCellRange {
   hit_start : Int
   hit_end : Int
   content_start : Int
   content_end : Int
   row : Int
   column : Int
-} derive(Eq, Debug)
+}
 
 ///|
 fn markdown_editor_move_table_cell(

@@ -388,7 +388,7 @@ fn markdown_editor_transform_line_segment(
 }
 
 ///|
-pub(all) struct MarkdownEditorLineBlockParts {
+priv struct MarkdownEditorLineBlockParts {
   context_prefix : String
   content_start : Int
   content : String
@@ -545,13 +545,13 @@ fn markdown_editor_next_selected_ordered_number(
 }
 
 ///|
-pub(all) struct MarkdownEditorBlockPosition {
+priv struct MarkdownEditorBlockPosition {
   block : MarkdownEditorBlock
   index : Int
 }
 
 ///|
-pub(all) struct MarkdownEditorBlockGroup {
+priv struct MarkdownEditorBlockGroup {
   start_index : Int
   end_index : Int
   source_start : Int

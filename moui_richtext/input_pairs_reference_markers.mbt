@@ -245,7 +245,7 @@ fn markdown_editor_reference_close_after(
 }
 
 ///|
-pub(all) struct MarkdownEditorReferenceMarkerTarget {
+priv struct MarkdownEditorReferenceMarkerTarget {
   start : Int
   end : Int
   label : String

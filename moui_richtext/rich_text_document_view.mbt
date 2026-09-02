@@ -289,9 +289,7 @@ fn rich_text_document_view_wrap(
 ) -> RichTextDocument {
   let blocks : Array[RichTextBlock] = []
   for block in document.blocks {
-    blocks.push(
-      rich_text_document_view_wrap_block(block, width, base_font, text_system),
-    )
+    blocks.push(rich_text_block_soft_wrap(block, width, base_font, text_system))
   }
   { blocks, }
 }
@@ -359,10 +357,11 @@ fn rich_text_document_view_wrap_block(
     return block
   }
   let soft_breaks : Array[Int] = []
+  let visual_length = visual.to_array().length()
   for index, line in layout.lines {
     if index + 1 < layout.lines.length() &&
       line.text_range.end > 0 &&
-      line.text_range.end < visual.to_array().length() {
+      line.text_range.end < visual_length {
       soft_breaks.push(line.text_range.end)
     }
   }

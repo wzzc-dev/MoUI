@@ -298,13 +298,13 @@ fn markdown_editor_preserved_merge_prefix(
 }
 
 ///|
-pub(all) enum MarkdownEditorMergeBlockKind {
+priv enum MarkdownEditorMergeBlockKind {
   Plain
   Bullet
   Task
   Ordered
   Quote
-} derive(Eq, Debug)
+} derive(Eq)
 
 ///|
 fn markdown_editor_merge_block_kind(

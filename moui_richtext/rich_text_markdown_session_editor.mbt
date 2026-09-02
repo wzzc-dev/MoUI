@@ -47,6 +47,7 @@ fn markdown_session_visible_window(
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
   content_width? : Double = 0.0,
+  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> MarkdownDocumentRichTextWindow {
   let scroll_y = markdown_session_clamped_scroll_y(
     session,
@@ -56,7 +57,7 @@ fn markdown_session_visible_window(
     visible_viewport_height,
     content_width~,
   )
-  session.rich_text_window(
+  let window = session.rich_text_window(
     selection,
     base=font,
     source_mode~,
@@ -67,6 +68,22 @@ fn markdown_session_visible_window(
     overscan=visible_overscan,
     content_width~,
   )
+  // Paint, caret, hit-test, selection, and the measured-height feed all
+  // consume this one soft-wrapped document, so a click lands the caret
+  // exactly where the text was drawn (ADR 0001).
+  if source_mode || content_width <= 0.0 {
+    window
+  } else {
+    {
+      ..window,
+      document: rich_text_document_soft_wrap(
+        window.document,
+        content_width,
+        font,
+        text_system,
+      ),
+    }
+  }
 }
 
 ///|
@@ -165,9 +182,11 @@ fn markdown_session_editor_paint(
       visible_viewport_height~,
       visible_overscan~,
       content_width=content.size.width,
+      text_system=ctx.text_system,
     )
     let window_content = window.content_rect(content)
-    if display_text == session.source && !source_mode &&
+    if display_text == session.source &&
+      !source_mode &&
       content.size.width > 0.0 {
       markdown_session_record_measured_block_heights(
         session,
@@ -277,6 +296,7 @@ fn[Msg] markdown_session_editor_event(
           visible_viewport_height~,
           visible_overscan~,
           content_width=rich_text_editor_content_rect(ctx.frame).size.width,
+          text_system=ctx.text_system,
         )
         let content = window.content_rect(
           rich_text_editor_content_rect(ctx.frame),
@@ -375,6 +395,7 @@ fn[Msg] markdown_session_pointer_event(
           visible_viewport_height~,
           visible_overscan~,
           content_width~,
+          text_system=ctx.text_system,
         )
         let content = window.content_rect(
           rich_text_editor_content_rect(ctx.frame),
@@ -584,11 +605,16 @@ fn markdown_session_record_measured_block_heights(
           base,
           width=content_width,
           height=rich_text_block_total_height(
-            markdown_editor_block_to_rich_text(
-              session.source,
-              editor_block,
+            rich_text_block_soft_wrap(
+              markdown_editor_block_to_rich_text(
+                session.source,
+                editor_block,
+                base,
+                base_dir~,
+              ),
+              content_width,
               base,
-              base_dir~,
+              text_system,
             ),
             base,
             text_system,
@@ -622,7 +648,8 @@ fn markdown_session_estimated_caret_inset_x(
     )
     let block_font = rich_block.font.unwrap_or(font)
     let scan_end = markdown_editor_min_int(
-      source_caret, editor_block.source_range.end,
+      source_caret,
+      editor_block.source_range.end,
     )
     let before_caret = markdown_editor_substring(
       session.source,
@@ -714,6 +741,7 @@ fn markdown_session_input_state(
     visible_viewport_height~,
     visible_overscan~,
     content_width=rich_text_editor_content_rect(frame).size.width,
+    text_system~,
   )
   let base_content = rich_text_editor_content_rect(frame)
   let content = window.content_rect(base_content)

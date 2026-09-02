@@ -77,8 +77,9 @@ test "markdown document layout cache reports visible variable height blocks" {
     overscan=0.0,
   )
   assert_true(layout.content_height > 80.0)
-  assert_true(layout.visible_block_count() > 0)
-  assert_true(layout.visible_block_count() < layout.blocks.length())
+  let visible_block_count = layout.visible_end - layout.visible_start + 1
+  assert_true(visible_block_count > 0)
+  assert_true(visible_block_count < layout.blocks.length())
 }
 
 ///|

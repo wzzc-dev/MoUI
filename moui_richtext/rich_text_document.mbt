@@ -1,5 +1,5 @@
 ///|
-pub type RichTextFormatter = (String) -> RichTextDocument
+type RichTextFormatter = (String) -> RichTextDocument
 
 ///|
 pub(all) struct RichTextInputTransform {
