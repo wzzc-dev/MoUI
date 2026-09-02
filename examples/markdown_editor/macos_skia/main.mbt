@@ -1,7 +1,20 @@
 ///|
+/// Optional command-line argument: `macos_skia <document.md>` opens that
+/// document on startup instead of the sample.
+fn initial_document_from_args() -> String? {
+  let args = @env.args()
+  if args.length() > 1 && args[1] != "" {
+    Some(args[1])
+  } else {
+    None
+  }
+}
+
+///|
 fn main {
   let runtime = @markdown_editor.runtime(
     environment=@macos_backend.app_environment(),
+    initial_document_path=initial_document_from_args(),
   )
   let menus = @markdown_editor.application_menus()
   @runtime.run_app("MoUI Markdown Editor", runtime)

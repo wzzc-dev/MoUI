@@ -70,6 +70,7 @@ fn MarkdownEditorApp::apply_command_to_selection(
   self.document = result.source
   self.refresh_find_matches_if_visible()
   self.selection = { caret: result.caret, selection: result.selection }
+  self.selection_engaged = true
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
 }
@@ -94,6 +95,7 @@ fn MarkdownEditorApp::apply_text_transform(
   self.document = transform.text
   self.refresh_find_matches_if_visible()
   self.selection = { caret: transform.caret, selection: transform.selection }
+  self.selection_engaged = true
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
 }
@@ -156,6 +158,7 @@ fn MarkdownEditorApp::set_selection(
   selection : @text.TextRange?,
 ) -> Unit {
   self.selection = { caret, selection }
+  self.selection_engaged = true
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
 }

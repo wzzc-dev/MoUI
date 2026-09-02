@@ -496,7 +496,7 @@ fn SkiaRasterRenderer::skia_layer_cache_key(
   spec : @core.RetainedLayerSpec,
   physical_size : @moui_skia.ISize,
 ) -> String {
-  "\{spec.key}|route=\{self.surface_route.label()}|scale=\{self.metrics.scale_factor}|pw=\{physical_size.width}|ph=\{physical_size.height}|rev=\{spec.content_revision}"
+  "\{spec.key}|route=\{self.surface_route.label()}|scale=\{self.metrics.scale_factor}|pw=\{physical_size.width}|ph=\{physical_size.height}|rev=\{spec.content_revision}|img=\{self.image_cache_generation}"
 }
 
 ///|

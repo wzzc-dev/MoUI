@@ -342,6 +342,81 @@ test "skia renderer applies image load completions and rejects stale results" {
   assert_true(renderer.failed_images.get("missing.png") is Some(_))
 }
 
+/// Regression: an async image completion must invalidate retained layers that
+/// previously rasterized the loading placeholder. Otherwise redraws keep
+/// hitting the old layer image and the newly decoded pixels never reach the
+/// surface (especially visible while scrolling a repaint-boundary editor).
+test "skia renderer retained layer refreshes after async image completion" {
+  guard skia_available() else { return () }
+  let source = "moui-skia-retained-async://red"
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=8.0, height=8.0),
+    ),
+    SkiaPresentTarget::new(description="test", present=_ => true),
+    async_image_loading=true,
+  ) catch {
+    _ => fail("expected Skia renderer creation")
+  }
+  renderer.mark_image_loading(source)
+  let spec = @core.RetainedLayerSpec::new(
+    key="retained-async-image",
+    frame=@core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
+    content_revision=1,
+  )
+  let commands = [
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::BeginRetainedLayer(spec),
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source,
+      frame: @core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Stretch,
+    }),
+    @core.DrawCommand::EndRetainedLayer(spec.key),
+  ]
+  let first = renderer.render_frame(
+    @core.DrawFrame::new(
+      commands~,
+      damage=@core.DamageRegion::full("initial image"),
+    ),
+  )
+  assert_true(first.presented)
+  let pixels = Bytes::from_array([b'\xff', b'\x00', b'\x00', b'\xff'])
+  ignore(renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::ready_decoded_rgba(
+      source,
+      width=1,
+      height=1,
+      row_bytes=4,
+      pixels,
+    ),
+  ))
+  // The completion can race with a scroll/sidebar damage rect that does not
+  // overlap the editor layer. The renderer must promote this frame to full
+  // damage or the placeholder remains visible in the untouched region.
+  let second = renderer.render_frame(
+    @core.DrawFrame::new(
+      commands~,
+      damage=@core.DamageRegion::Rects([
+        @core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0),
+      ]),
+    ),
+  )
+  assert_true(second.presented)
+  inspect(second.cache_hit_count, content="0")
+  guard renderer.last_frame() is Some(last) else {
+    fail("expected retained async image frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      last,
+      @core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
+      (r, g, b, a) => a > 0 && r > 220 && g < 40 && b < 40,
+    ),
+  )
+}
+
 ///|
 test "skia renderer async image loading waits for explicit decoded completion before caching" {
   guard skia_available() else { return () }

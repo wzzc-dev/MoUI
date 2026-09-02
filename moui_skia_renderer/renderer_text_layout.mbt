@@ -104,7 +104,9 @@ fn skia_draw_text_payload_for_resolution(
   match skia_font_with_resolution_for_text(font_spec, text, resolution) {
     Some(font) => {
       let glyph_run = skia_glyph_run_for_resolution(font, text, resolution)
-      if skia_glyph_run_can_draw_text(glyph_run) {
+      if
+        skia_glyph_run_can_draw_text(glyph_run) &&
+        skia_font_covers_text(font, text) {
         Some((font, glyph_run))
       } else {
         skia_fallback_draw_payload(font_spec, text, resolution, glyph_run)

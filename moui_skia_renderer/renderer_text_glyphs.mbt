@@ -268,6 +268,30 @@ fn skia_codepoint_is_latin_script(codepoint : Int) -> Bool {
 }
 
 ///|
+/// A font paints a shaped run with its own typeface, so glyph ids from a
+/// shaper's fallback fonts are meaningless when mapped through a different
+/// primary font. Accept a candidate font only when its own cmap maps every
+/// character, which guarantees shaped ids belong to the drawing typeface.
+fn skia_font_covers_text(font : @skia_native.Font, text : String) -> Bool {
+  if text == "" {
+    return true
+  }
+  let glyphs = font.text_to_glyphs_utf8(@utf8.encode(text[:], bom=false))
+  !glyphs.is_empty() && glyphs.all(glyph => glyph.to_int() != 0)
+}
+
+///|
+fn skia_typeface_covers_text(
+  typeface : @skia_native.Typeface,
+  text : String,
+) -> Bool {
+  match @skia_native.Font::from_typeface(typeface, size=16.0) {
+    None => false
+    Some(font) => skia_font_covers_text(font, text)
+  }
+}
+
+///|
 fn skia_font_with_resolution_for_text(
   font : @core.FontSpec,
   text : String,
@@ -300,12 +324,16 @@ fn skia_typeface_for_text(
   text : String,
 ) -> @skia_native.Typeface? {
   match skia_typeface_from_embedded(font) {
-    Some(typeface) => return Some(typeface)
-    None => ()
+    Some(typeface) if skia_typeface_covers_text(typeface, text) => {
+      return Some(typeface)
+    }
+    _ => ()
   }
   match skia_typeface_from_font_files(font) {
-    Some(typeface) => return Some(typeface)
-    None => ()
+    Some(typeface) if skia_typeface_covers_text(typeface, text) => {
+      return Some(typeface)
+    }
+    _ => ()
   }
   match @skia_native.FontMgr::default() {
     Some(font_mgr) => skia_typeface_from_font_mgr_for_text(font_mgr, font, text)
@@ -322,8 +350,10 @@ fn skia_typeface_from_font_mgr_for_text(
   let request = skia_font_fallback_request(font, text)
   if !request.is_empty() {
     match font_mgr.match_fallback_request(request) {
-      Some(typeface) => return Some(typeface)
-      None => ()
+      Some(typeface) if skia_typeface_covers_text(typeface, text) => {
+        return Some(typeface)
+      }
+      _ => ()
     }
   }
   skia_typeface_from_font_mgr(font_mgr, font)

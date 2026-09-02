@@ -892,7 +892,7 @@ fn append_markdown_ast_block(
         markdown_code_block(markdown_trim_single_trailing_newline(code), None),
       )
     Blockquote(children~, ..) => {
-      let text = markdown_blocks_text(children)
+      let text = markdown_quote_block_text(children, source_text)
       blocks.push({
         kind: MarkdownBlockKind::Blockquote,
         text,
@@ -968,6 +968,35 @@ fn markdown_trim_single_trailing_newline(text : String) -> String {
     String::from_array(chars[:chars.length() - 1])
   } else {
     text
+  }
+}
+
+///|
+/// Quote lines are parsed per source line, so a fenced code block inside
+/// a blockquote flattens its fence-marker lines (`> ```lang` / `> ``` `)
+/// to an empty quote block, rendering two blank quote rows around the
+/// quoted code. Keep the fence text visible so those rows carry their
+/// source content instead of blank space.
+fn markdown_quote_block_text(
+  children : Array[@md.Block],
+  source_text : String?,
+) -> String {
+  let text = markdown_blocks_text(children)
+  if text != "" {
+    return text
+  }
+  match source_text {
+    None => text
+    Some(source_text) => {
+      let content = markdown_editor_strip_block_marker(source_text)
+      if
+        content.trim_start().starts_with("```") ||
+        content.trim_start().starts_with("~~~") {
+        content
+      } else {
+        text
+      }
+    }
   }
 }
 

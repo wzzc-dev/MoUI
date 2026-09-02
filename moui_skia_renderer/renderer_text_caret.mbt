@@ -315,3 +315,27 @@ fn skia_char_index_for_utf8_offset(offsets : Array[Int], offset : Int) -> Int? {
   }
   None
 }
+
+///|
+/// Per-character UTF-16 code unit offsets. SkParagraph reports line
+/// metrics (`fStartIndex`/`fEndIndex`) in UTF-16 units while the rect and
+/// hit-test APIs accept UTF-8 bytes, so line metrics need their own table:
+/// for ASCII the two coincide, and only mixed CJK/Latin text exposes the
+/// difference.
+fn skia_utf16_char_offsets(text : String) -> Array[Int] {
+  let offsets : Array[Int] = [0]
+  let mut offset = 0
+  for ch in text {
+    offset += if ch.to_int() < 0x10000 { 1 } else { 2 }
+    offsets.push(offset)
+  }
+  offsets
+}
+
+///|
+fn skia_char_index_for_utf16_offset(
+  offsets : Array[Int],
+  units : Int,
+) -> Int? {
+  skia_char_index_for_utf8_offset(offsets, units)
+}

@@ -81,6 +81,11 @@ extern "C" fn macos_gpu_surface_presenter_test() -> Int = "moui_macos_gpu_surfac
 ///|
 extern "C" fn macos_gpu_surface_partial_overlay_hit_test() -> Int = "moui_macos_gpu_surface_partial_overlay_hit_test"
 
+/// The CPU presenter must keep a stable layer-backed view and swap its image
+/// contents directly; replacing an NSImageView image causes AppKit flash-white
+/// frames while a neighboring scroll view is invalidating the host window.
+extern "C" fn macos_cpu_presenter_stable_layer_test() -> Int = "moui_macos_cpu_presenter_stable_layer_test"
+
 ///|
 extern "C" fn macos_accessibility_view_adapter_test() -> Int = "moui_macos_accessibility_view_adapter_test"
 
@@ -92,6 +97,11 @@ test "macOS GPU surface uses a transparent reorderable presenter sibling" {
 ///|
 test "macOS GPU presenter hit-tests only the local overlay rectangle" {
   assert_eq(macos_gpu_surface_partial_overlay_hit_test(), 1)
+}
+
+///|
+test "macOS CPU presenter swaps stable layer contents without NSImageView" {
+  assert_eq(macos_cpu_presenter_stable_layer_test(), 1)
 }
 
 ///|

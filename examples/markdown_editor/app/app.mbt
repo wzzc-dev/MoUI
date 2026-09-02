@@ -34,6 +34,7 @@ pub struct MarkdownEditorApp {
   mut footnote_text : String
   mut html_block_text : String
   mut target_kind : MarkdownEditorTargetKind
+  priv mut selection_engaged : Bool
   mut block_label : String
   mut source_preview_visible : Bool
   mut source_mode_enabled : Bool
@@ -307,6 +308,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     footnote_text: "Footnote text",
     html_block_text: "<div>HTML</div>",
     target_kind: PlainSelection,
+    selection_engaged: false,
     block_label: "Paragraph",
     source_preview_visible: false,
     source_mode_enabled: false,
@@ -661,11 +663,27 @@ fn MarkdownEditorApp::subscriptions(
 pub fn MarkdownEditorApp::program(
   self : MarkdownEditorApp,
   environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  // When a path is given (e.g. from the command line), the program opens it
+  // through the same `OpenRecentDocument` message the recent-files menu uses,
+  // so host file reading, working-directory rooting, and the file tree all
+  // behave exactly like a manual open.
+  initial_document_path? : String? = None,
 ) -> @moui.Program[MarkdownEditorApp, MarkdownEditorMsg] {
   let services = environment.services()
   let timer_source = environment.timer()
   @moui.Program::new_with_environment(
-    init=() => (self, markdown_editor_request_settings_load(services)),
+    init=() =>
+      (
+        self,
+        @moui.Effect::batch([
+          markdown_editor_request_settings_load(services),
+          match initial_document_path {
+            Some(path) if path != "" =>
+              @moui.Effect::send(OpenRecentDocument(path))
+            _ => @moui.Effect::none()
+          },
+        ]),
+      ),
     update=(app, message) => app.update_with_services(message, services),
     view=(app, view_environment) => app.root_with_environment(view_environment),
     subscriptions=app => app.subscriptions(timer_source),

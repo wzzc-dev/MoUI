@@ -500,6 +500,13 @@ moon build examples/markdown_editor/macos_skia --target native
 ./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
 ```
 
+Pass a document path as the first argument to open that document on startup,
+the same path the recent-files menu takes:
+
+```sh
+./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe /path/to/document.md
+```
+
 The Skia entrypoint requires the same real native Skia link setup used by
 `examples/showcase/macos_skia`; `scripts/macos-skia-renderer-smoke.sh` can
 configure those flags temporarily while running Skia smoke checks. Use

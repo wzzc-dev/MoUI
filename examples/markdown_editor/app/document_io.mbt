@@ -14,6 +14,7 @@ fn MarkdownEditorApp::load_document(
   self.record_recent_document_path(path)
   self.saved_document = source
   self.selection = { caret: 0, selection: None }
+  self.selection_engaged = false
   self.reset_find_session()
   self.reset_format_palette()
   self.transfer_status = TransferReady
