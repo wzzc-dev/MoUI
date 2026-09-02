@@ -6,10 +6,9 @@
 
 ///|
 fn program_init_open_requests(path : String?) -> Array[String] {
-  let (_, effect) =
-    MarkdownEditorApp::new().program(
-      initial_document_path=path,
-    ).runtime_init()
+  let (_, effect) = MarkdownEditorApp::new()
+    .program(initial_document_path=path)
+    .runtime_init()
   let effects = match effect {
     @moui.Effect::Batch(effects) => effects
     effect => [effect]

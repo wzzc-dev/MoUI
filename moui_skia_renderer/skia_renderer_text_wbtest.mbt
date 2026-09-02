@@ -1396,7 +1396,7 @@ test "skia cjk text payload draws with a typeface covering that text" {
       SkiaFontResolution::SystemFontMgr,
     ) {
     None => ()
-    Some((font, _)) => {
+    Some((font, _)) =>
       if !skia_font_covers_text(font, text) {
         let host_has_cjk = match @skia_native.FontMgr::default() {
           None => false
@@ -1408,6 +1408,5 @@ test "skia cjk text payload draws with a typeface covering that text" {
         }
         assert_true(!host_has_cjk)
       }
-    }
   }
 }

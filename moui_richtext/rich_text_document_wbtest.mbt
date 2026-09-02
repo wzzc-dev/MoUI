@@ -426,7 +426,9 @@ test "parse_markdown keeps quoted fence marker lines visible" {
 /// Text nodes without any source break), so flattening must concatenate
 /// them instead of joining with newlines.
 test "parse_markdown concatenates inline nodes without inserting breaks" {
-  let blocks = parse_markdown("> **注意：** 运行 .\\scripts\\run.ps1 完成。")
+  let blocks = parse_markdown(
+    "> **注意：** 运行 .\\scripts\\run.ps1 完成。",
+  )
   match blocks[0] {
     { kind: Blockquote, text, .. } => {
       assert_false(text.contains("\n"))

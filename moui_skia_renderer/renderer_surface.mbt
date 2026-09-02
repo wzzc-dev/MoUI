@@ -559,6 +559,9 @@ pub fn SkiaRasterRenderer::resize(
   }
   let previous = self.metrics
   self.metrics = metrics
+  // A backing surface is tied to the physical drawable dimensions and scale.
+  // Never carry pixels across a resize; the next frame must rebuild it.
+  self.invalidate_gpu_backing_surface()
   self.surface = match self.gpu_target {
     Some(gpu_target) =>
       if self.gpu_surface_attached {
@@ -567,11 +570,16 @@ pub fn SkiaRasterRenderer::resize(
           // Keep the current surface when the host cannot produce a resized
           // window surface (Direct3D allows only one flip-model swap chain
           // per HWND, so live resizes converge through the present path's
-          // ResizeBuffers instead of a recreated swap chain). Present
-          // failures still fall back through render_frame.
-          None => self.surface
+          // ResizeBuffers instead of a recreated swap chain). Mark the
+          // attachment stale so the next frame retries acquisition instead of
+          // rendering into the old-size or already-presented drawable.
+          None => {
+            self.gpu_surface_attached = false
+            self.surface
+          }
         }
       } else {
+        self.gpu_surface_attached = false
         create_surface(metrics, self.surface_route, self.gpu_context)
       }
     None => create_surface(metrics, self.surface_route, self.gpu_context)

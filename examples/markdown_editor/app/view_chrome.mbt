@@ -27,8 +27,11 @@ fn MarkdownEditorApp::root(
   // The block target palette only surfaces after the user has actually
   // placed the caret (click/keys/edits); loading a document must not show
   // it just because the initial caret at offset 0 lands inside a rich block.
-  let target_kind =
-    if self.selection_engaged { self.target_kind } else { PlainSelection }
+  let target_kind = if self.selection_engaged {
+    self.target_kind
+  } else {
+    PlainSelection
+  }
   let block_label = self.block_label
   let scroll_offset = self.editor_scroll
   let children : Array[@moui.View[MarkdownEditorMsg]] = []

@@ -333,9 +333,6 @@ fn skia_utf16_char_offsets(text : String) -> Array[Int] {
 }
 
 ///|
-fn skia_char_index_for_utf16_offset(
-  offsets : Array[Int],
-  units : Int,
-) -> Int? {
+fn skia_char_index_for_utf16_offset(offsets : Array[Int], units : Int) -> Int? {
   skia_char_index_for_utf8_offset(offsets, units)
 }

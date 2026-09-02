@@ -310,6 +310,76 @@ test "skia rect damage uses logical coordinates on hidpi surfaces" {
 }
 
 ///|
+test "skia effective damage policy preserves safe Metal rects" {
+  let dirty = @core.Rect::new(x=2.0, y=3.0, width=4.0, height=5.0)
+  let resolved = skia_effective_damage_policy(
+    @core.DamageRegion::Rects([dirty]),
+    [@core.DrawCommand::FillRect(dirty, @core.Color::black())],
+    gpu_target=true,
+    metal_backing_ready=true,
+    image_generation_changed=false,
+  )
+  match resolved {
+    @core.DamageRegion::Rects([rect]) => assert_true(rect == dirty)
+    _ => fail("expected safe Metal backing to preserve rect damage")
+  }
+}
+
+///|
+test "skia effective damage policy keeps host GPU safety fallbacks" {
+  let dirty = @core.Rect::new(x=2.0, y=3.0, width=4.0, height=5.0)
+  let commands = [@core.DrawCommand::FillRect(dirty, @core.Color::black())]
+  match
+    skia_effective_damage_policy(
+      @core.DamageRegion::Rects([dirty]),
+      commands,
+      gpu_target=true,
+      metal_backing_ready=false,
+      image_generation_changed=false,
+    ) {
+    @core.DamageRegion::FullSurface(reason) =>
+      assert_eq(reason, "host-gpu drawable has no preserved backbuffer")
+    _ => fail("expected a fresh host drawable to force full damage")
+  }
+  match
+    skia_effective_damage_policy(
+      @core.DamageRegion::Rects([dirty]),
+      commands,
+      gpu_target=true,
+      metal_backing_ready=true,
+      image_generation_changed=true,
+    ) {
+    @core.DamageRegion::FullSurface(reason) =>
+      assert_eq(reason, "image resource completed")
+    _ => fail("expected image completion to force full damage")
+  }
+  match
+    skia_effective_damage_policy(
+      @core.DamageRegion::Rects([dirty]),
+      [@core.DrawCommand::PushOpacity(0.5), @core.DrawCommand::PopOpacity],
+      gpu_target=true,
+      metal_backing_ready=true,
+      image_generation_changed=false,
+    ) {
+    @core.DamageRegion::FullSurface(reason) =>
+      assert_eq(reason, "scope commands present with damage rects")
+    _ => fail("expected scope commands to force full damage")
+  }
+  match
+    skia_effective_damage_policy(
+      @core.DamageRegion::Empty,
+      [],
+      gpu_target=false,
+      metal_backing_ready=false,
+      image_generation_changed=false,
+    ) {
+    @core.DamageRegion::FullSurface(reason) =>
+      assert_eq(reason, "empty damage fallback")
+    _ => fail("expected empty damage to force a full raster fallback")
+  }
+}
+
+///|
 test "skia render_frame falls back to full damage when scope commands present" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)

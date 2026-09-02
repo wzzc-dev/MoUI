@@ -989,9 +989,8 @@ fn markdown_quote_block_text(
     None => text
     Some(source_text) => {
       let content = markdown_editor_strip_block_marker(source_text)
-      if
-        content.trim_start().starts_with("```") ||
-        content.trim_start().starts_with("~~~") {
+      if content.trim_start().has_prefix("```") ||
+        content.trim_start().has_prefix("~~~") {
         content
       } else {
         text

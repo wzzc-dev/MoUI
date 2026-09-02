@@ -3179,6 +3179,66 @@ moonbit_skia_surface_flush_and_submit(MoonbitSkiaSurface* wrapper) {
 
 
 
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_copy_from(
+  MoonbitSkiaSurface* destination,
+  MoonbitSkiaSurface* source
+) {
+  if (
+    destination == nullptr ||
+    source == nullptr ||
+    destination->surface == nullptr ||
+    source->surface == nullptr ||
+    destination == source
+  ) {
+    return 0;
+  }
+#if defined(MOUI_SKIA_HAS_SKIA)
+  if (
+    destination->surface->width() != source->surface->width() ||
+    destination->surface->height() != source->surface->height()
+  ) {
+    return 0;
+  }
+  // A GPU surface can only be copied through Skia when both wrappers belong to
+  // the same recording context. Raster surfaces have a null owner and are
+  // compatible with one another.
+  if (destination->gpu_context_owner != source->gpu_context_owner) {
+    return 0;
+  }
+  sk_sp<SkImage> image = source->surface->makeImageSnapshot();
+  if (!image) {
+    return 0;
+  }
+  SkCanvas* canvas = destination->surface->getCanvas();
+  if (canvas == nullptr) {
+    return 0;
+  }
+  SkPaint paint;
+  paint.setBlendMode(SkBlendMode::kSrc);
+  paint.setAntiAlias(false);
+  canvas->drawImageRect(
+    image,
+    SkRect::MakeWH(
+      static_cast<float>(source->surface->width()),
+      static_cast<float>(source->surface->height())
+    ),
+    SkRect::MakeWH(
+      static_cast<float>(destination->surface->width()),
+      static_cast<float>(destination->surface->height())
+    ),
+    SkSamplingOptions(SkFilterMode::kNearest, SkMipmapMode::kNone),
+    &paint,
+    SkCanvas::kStrict_SrcRectConstraint
+  );
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+
+
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaImage*
 moonbit_skia_surface_image_snapshot(MoonbitSkiaSurface* wrapper) {
   if (wrapper == nullptr || wrapper->surface == nullptr) {

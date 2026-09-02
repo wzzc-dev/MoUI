@@ -58,7 +58,7 @@ pub struct MarkdownEditorApp {
   // private fields
 }
 pub fn MarkdownEditorApp::new() -> Self
-pub fn MarkdownEditorApp::program(Self, environment? : @services.AppEnvironment) -> @core.Program[Self, MarkdownEditorMsg]
+pub fn MarkdownEditorApp::program(Self, environment? : @services.AppEnvironment, initial_document_path? : String?) -> @core.Program[Self, MarkdownEditorMsg]
 pub fn MarkdownEditorApp::save_document_as(Self, String) -> Unit
 
 pub struct MarkdownEditorConfirmRequest {

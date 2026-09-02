@@ -5,8 +5,7 @@
 test "wrap probe: CJK Latin mixed paragraph line invariants" {
   let base = @core.FontSpec::new()
   let text_system = @core.TextSystem::fallback()
-  let source =
-    "MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，共享平台无关的应用逻辑。原生宿主核心拥有窗口、事件、服务和生命周期，再通过平台渲染器提供方包（renderer provider packages）接入具体的渲染器。"
+  let source = "MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，共享平台无关的应用逻辑。原生宿主核心拥有窗口、事件、服务和生命周期，再通过平台渲染器提供方包（renderer provider packages）接入具体的渲染器。"
   let session = MarkdownDocumentSession::new(source)
   hot_path_metrics_reset()
   let plain = markdown_editor_block_to_rich_text(
@@ -52,8 +51,7 @@ test "wrap probe: CJK Latin mixed paragraph line invariants" {
 test "wrap probe: CJK paragraph with code and link stays line-aligned" {
   let base = @core.FontSpec::new()
   let text_system = @core.TextSystem::fallback()
-  let source =
-    "当前主线为原生 Skia 光栅化 + Web `wasm-gc + window/web + 浏览器 WebGPU host imports` 路径。原生 WGPU 仍作为实验性诊断路径保留，等待 MoonBit WGPU 生态进一步成熟。欢迎贡献 — 请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)。"
+  let source = "当前主线为原生 Skia 光栅化 + Web `wasm-gc + window/web + 浏览器 WebGPU host imports` 路径。原生 WGPU 仍作为实验性诊断路径保留，等待 MoonBit WGPU 生态进一步成熟。欢迎贡献 — 请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)。"
   let session = MarkdownDocumentSession::new(source)
   let plain = markdown_editor_block_to_rich_text(
     session.source,

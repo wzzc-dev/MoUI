@@ -448,7 +448,10 @@ test "markdown editor target bar renders contextual controls" {
 /// falls inside that block's source range.
 test "markdown editor target palette engages only after caret placement" {
   let app = MarkdownEditorApp::new()
-  app.load_document("<div align=\"center\">banner</div>\n\n正文。\n", path="")
+  app.load_document(
+    "<div align=\"center\">banner</div>\n\n正文。\n",
+    path="",
+  )
   assert_false(app.selection_engaged)
   app.set_selection(6, None)
   assert_true(app.selection_engaged)
