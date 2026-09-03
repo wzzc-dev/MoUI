@@ -172,28 +172,35 @@ fn ElementNode::dispatch_pointer_to_children(
     event.phase == PointerPhase::Down ||
     event.phase == PointerPhase::Cancel
   let mut delivered_main_event = false
-  let mut overlay_index = -1
-  let mut overlay_search = self.children.length() - 1
+  // Hoisted overlay subtrees (control popups, presentations) receive pointer
+  // events before in-flow content, top-most first — globally, via the
+  // `subtree_overlay_contains` prepass: a popup hoisted anywhere inside a
+  // child subtree wins over in-flow siblings painted underneath it. Their
+  // placed frames bound the hit region, so a click outside the popup falls
+  // through to in-flow content below.
+  let dispatch_order : Array[Int] = []
+  let is_overlay_owner : Array[Bool] = []
+  for _ in self.children {
+    is_overlay_owner.push(false)
+  }
+  let mut overlay_search = render.children.length() - 1
   while overlay_search >= 0 {
-    if overlay_search < render.children.length() {
-      match render.children[overlay_search].overlay_hit_bounds() {
-        Some(bounds) =>
-          if bounds.contains(event.position) {
-            overlay_index = overlay_search
-            break
-          }
-        None => ()
-      }
+    if overlay_search < self.children.length() &&
+      render.children[overlay_search].is_overlay_child &&
+      render.children[overlay_search].hit_bounds().contains(event.position) {
+      dispatch_order.push(overlay_search)
+      is_overlay_owner[overlay_search] = true
+    } else if overlay_search < self.children.length() &&
+      render.children[overlay_search].subtree_overlay_contains(event.position) {
+      dispatch_order.push(overlay_search)
+      is_overlay_owner[overlay_search] = true
     }
     overlay_search = overlay_search - 1
   }
-  let dispatch_order : Array[Int] = []
-  if overlay_index >= 0 {
-    dispatch_order.push(overlay_index)
-  }
   let mut regular_index = self.children.length() - 1
   while regular_index >= 0 {
-    if regular_index != overlay_index {
+    if regular_index < render.children.length() &&
+      !render.children[regular_index].is_overlay_child {
       dispatch_order.push(regular_index)
     }
     regular_index = regular_index - 1
@@ -204,7 +211,10 @@ fn ElementNode::dispatch_pointer_to_children(
       let child_render = render.children[index]
       let has_capture = capture_lookup &&
         child.has_active_pointer_capture(event.phase)
-      let hit = has_capture ||
+      // An overlay owner is dispatched for its hoisted popup even when the
+      // point lies outside the owner's own (possibly clipped) frame.
+      let hit = is_overlay_owner[index] ||
+        has_capture ||
         child_render.hit_bounds().contains(event.position)
       if hit && !delivered_main_event {
         let result = child.dispatch_pointer(
@@ -300,50 +310,13 @@ fn ElementNode::has_hovered_descendant(self : ElementNode) -> Bool {
 
 ///|
 fn RenderNode::hit_bounds(self : RenderNode) -> Rect {
-  self.paint_bounds
+  match self.hit_rect {
+    Some(hit) => hit
+    None => self.paint_bounds
+  }
 }
 
 ///|
-fn RenderNode::overlay_hit_bounds(self : RenderNode) -> Rect? {
-  let mut bounds : Rect? = None
-  match self.cached_overlay_draw_commands {
-    Some(commands) =>
-      for command in commands {
-        bounds = @core.optional_rect_union(
-          bounds,
-          pointer_overlay_command_bounds(command),
-        )
-      }
-    None => {
-      for command in self.overlay_paint_commands {
-        bounds = @core.optional_rect_union(
-          bounds,
-          pointer_overlay_command_bounds(command),
-        )
-      }
-      for child in self.children {
-        bounds = @core.optional_rect_union(bounds, child.overlay_hit_bounds())
-      }
-    }
-  }
-  bounds
-}
-
-///|
-/// Fully transparent overlay fills can carry native-composition bounds without
-/// representing interactive content. Excluding them here keeps a modal scrim's
-/// marker from taking pointer priority over the dialog painted above it.
-/// Drop shadows are pure decoration: their bounds spill far beyond the owning
-/// view (a 42pt-blur window shadow reaches ~60pt out), and treating them as
-/// pointer overlays makes a background window's glow swallow clicks and drags
-/// aimed at the focused window's chrome beneath it.
-fn pointer_overlay_command_bounds(command : DrawCommand) -> Rect? {
-  match command {
-    FillRect(_, color) if color.a == 0.0 => None
-    DrawShadow(_) => None
-    _ => command.bounds()
-  }
-}
 
 ///|
 fn ElementNode::has_active_pointer_capture(

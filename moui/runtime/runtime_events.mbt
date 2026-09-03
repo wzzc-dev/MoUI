@@ -103,6 +103,13 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
     }
     Pointer(event) => ignore(self.dispatch_pointer_event(event))
     Keyboard(event) => {
+      // Top-most dismissal layer stack (ADR 0033): overlay hosts registered
+      // during the placement pass receive Escape/Back top-most-first, so a
+      // popover nested inside a dialog dismisses before the dialog.
+      let layer_consumed = self.dispatch_dismissal_layers(event)
+      if layer_consumed {
+        return
+      }
       let shortcut = self.element_tree.root.dispatch_keyboard_shortcut(
         event,
         environment=self.environment,
@@ -447,4 +454,35 @@ fn RuntimeState::clear_stale_pointer_capture(self : RuntimeState) -> Unit {
       }
     None => ()
   }
+}
+
+///|
+/// Dispatch a keyboard event to the registered dismissal layers, top-most
+/// first. Returns true when a layer consumed the event.
+fn RuntimeState::dispatch_dismissal_layers(
+  self : RuntimeState,
+  event : KeyboardEvent,
+) -> Bool {
+  let mut consumed = false
+  let mut index = self.layer_stack.length() - 1
+  while index >= 0 {
+    if !consumed {
+      let result = self.element_tree.root.dispatch_keyboard(
+        self.layer_stack[index],
+        event,
+        environment=self.environment,
+        text_system=self.text_system,
+      )
+      if result.changed || result.activated {
+        self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
+        self.dirty.needs_paint = self.dirty.needs_paint || result.changed
+        self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
+        self.mark_current_dirty_elements()
+        self.deliver_messages(result.deliveries)
+        consumed = true
+      }
+    }
+    index = index - 1
+  }
+  consumed
 }

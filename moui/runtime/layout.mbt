@@ -11,6 +11,14 @@ priv struct PlacedNode {
   element_id : ElementId
   frame : Rect
   children : Array[PlacedNode]
+  /// Element child indices whose placed frames are overlay-positioned: their
+  /// render subtrees are hoisted and painted after the whole tree so popup
+  /// content escapes ancestor clip rects.
+  overlay_child_indices : Array[Int]
+  /// Hit region: the frame intersected with the accumulated ancestor clip.
+  /// Hit-testing uses this instead of paint bounds so clipped content never
+  /// wins hit-test over content painted below it.
+  hit_rect : Rect
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -28,13 +36,11 @@ fn ElementNode::measure_with_text_system(
   environment~ : Environment,
   style? : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
-  anchor_frames? : Array[(String, Rect)] = [],
 ) -> MeasuredNode {
   if !self.has_dirty_layout() &&
     self.layout_cache.cached_measure_constraints == Some(constraints) &&
     self.layout_cache.cached_measure_environment == Some(environment) &&
-    self.layout_cache.cached_measure_style == Some(style) &&
-    self.layout_cache.cached_measure_anchor_frames == Some(anchor_frames) {
+    self.layout_cache.cached_measure_style == Some(style) {
     match self.layout_cache.cached_measured {
       Some(measured) => {
         self.layout_cache.hit_count = self.layout_cache.hit_count + 1
@@ -55,7 +61,6 @@ fn ElementNode::measure_with_text_system(
         environment=child_environment,
         style=child_style,
         text_system~,
-        anchor_frames~,
       ),
     )
   }
@@ -63,7 +68,6 @@ fn ElementNode::measure_with_text_system(
     constraints,
     child_sizes: children.map(child => child.size),
     child_flex_weights: children.map(child => child.flex_weight),
-    anchor_frames: anchor_frames.copy(),
     state: self.control.view_state,
     text_system,
     environment,
@@ -78,7 +82,6 @@ fn ElementNode::measure_with_text_system(
   self.layout_cache.cached_measure_constraints = Some(constraints)
   self.layout_cache.cached_measure_environment = Some(environment)
   self.layout_cache.cached_measure_style = Some(style)
-  self.layout_cache.cached_measure_anchor_frames = Some(anchor_frames)
   self.layout_cache.cached_measured = Some(measured)
   self.dirty.needs_layout = false
   self.refresh_descendant_dirty_flags()
@@ -93,13 +96,13 @@ fn ElementNode::place_with_text_system(
   style? : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
   layout_direction? : LayoutDirection = LayoutDirection::LeftToRight,
-  anchor_frames? : Array[(String, Rect)] = [],
+  overlay_overrides? : Array[(Int, Array[(Int, Rect)])] = [],
 ) -> PlacedNode {
   if !self.has_dirty_layout() &&
     self.layout_cache.cached_place_frame == Some(bounds) &&
     self.layout_cache.cached_place_environment == Some(environment) &&
     self.layout_cache.cached_place_style == Some(style) &&
-    self.layout_cache.cached_place_anchor_frames == Some(anchor_frames) {
+    overlay_overrides.is_empty() {
     match self.layout_cache.cached_placed {
       Some(placed) => {
         self.layout_cache.hit_count = self.layout_cache.hit_count + 1
@@ -114,7 +117,6 @@ fn ElementNode::place_with_text_system(
     environment~,
     style~,
     text_system~,
-    anchor_frames~,
   )
   let placed = self.place_measured_with_text_system(
     measured,
@@ -123,12 +125,11 @@ fn ElementNode::place_with_text_system(
     style~,
     text_system~,
     layout_direction~,
-    anchor_frames~,
+    overlay_overrides~,
   )
   self.layout_cache.cached_place_frame = Some(bounds)
   self.layout_cache.cached_place_environment = Some(environment)
   self.layout_cache.cached_place_style = Some(style)
-  self.layout_cache.cached_place_anchor_frames = Some(anchor_frames)
   self.layout_cache.cached_placed = Some(placed)
   self.refresh_descendant_dirty_flags()
   placed
@@ -143,52 +144,113 @@ fn ElementNode::place_measured_with_text_system(
   style~ : ViewStyle,
   text_system~ : TextSystem,
   layout_direction~ : LayoutDirection,
-  anchor_frames? : Array[(String, Rect)] = [],
+  overlay_overrides? : Array[(Int, Array[(Int, Rect)])] = [],
+  accumulated_clip? : Rect? = None,
 ) -> PlacedNode {
   let result = self.view_node.layout({
     constraints: Constraints::tight(frame.size),
-    child_sizes: self.children.map(child => {
-      child.intrinsic_size(anchor_frames~, text_system~)
-    }),
+    child_sizes: self.children.map(child => child.intrinsic_size(text_system~)),
     child_flex_weights: measured.children.map(child => child.flex_weight),
     state: self.control.view_state,
     text_system,
     environment,
     style,
-    anchor_frames: anchor_frames.copy(),
   })
   let child_frames = result.child_frames.map(child_frame => {
     child_frame.offset(dx=frame.origin.x, dy=frame.origin.y)
   })
+  let overrides = overlay_overrides_for(overlay_overrides, self.id.value())
   let child_environment = self.view_node.child_environment(environment)
   let child_style = self.view_node.child_style(style)
+  // A clip container folds its own frame into the accumulated ancestor clip;
+  // children inherit that, and their hit regions are the intersection.
+  let child_clip : Rect? = if result.clips_children {
+    match accumulated_clip {
+      Some(clip) => frame.intersection(clip)
+      None => Some(frame)
+    }
+  } else {
+    accumulated_clip
+  }
   let children : Array[PlacedNode] = []
+  let overlay_child_indices : Array[Int] = []
   for index, child in self.children {
     if index < child_frames.length() && index < measured.children.length() {
+      // Overlay-positioned children skip their parent-assigned provisional
+      // frame and are placed directly at the absolute rect computed by the
+      // post-layout placement pass.
+      let is_overlay = overlay_child_override(overrides, index) is Some(_)
+      let child_frame = match overlay_child_override(overrides, index) {
+        Some(override_frame) => override_frame
+        None => child_frames[index]
+      }
       children.push(
         child.place_measured_with_text_system(
           measured.children[index],
-          child_frames[index],
+          child_frame,
           environment=child_environment,
           style=child_style,
           text_system~,
           layout_direction~,
-          anchor_frames~,
+          overlay_overrides~,
+          // Hoisted popups escape ancestor clips by design.
+          accumulated_clip=if is_overlay { None } else { child_clip },
         ),
       )
+      if is_overlay {
+        overlay_child_indices.push(index)
+      }
     }
   }
-  { element_id: self.id, frame, children }
+  {
+    element_id: self.id,
+    frame,
+    children,
+    overlay_child_indices,
+    hit_rect: match accumulated_clip {
+      Some(clip) =>
+        match frame.intersection(clip) {
+          Some(hit) => hit
+          None => Rect::new(x=0.0, y=0.0, width=0.0, height=0.0)
+        }
+      None => frame
+    },
+  }
+}
+
+///|
+fn overlay_overrides_for(
+  overrides : Array[(Int, Array[(Int, Rect)])],
+  element_id : Int,
+) -> Array[(Int, Rect)]? {
+  for entry in overrides {
+    if entry.0 == element_id {
+      return Some(entry.1)
+    }
+  }
+  None
+}
+
+///|
+fn overlay_child_override(pairs : Array[(Int, Rect)]?, index : Int) -> Rect? {
+  match pairs {
+    Some(pairs) =>
+      for pair in pairs {
+        if pair.0 == index {
+          return Some(pair.1)
+        }
+      }
+    None => ()
+  }
+  None
 }
 
 ///|
 fn ElementNode::intrinsic_size(
   self : ElementNode,
-  anchor_frames? : Array[(String, Rect)] = [],
   text_system~ : TextSystem,
 ) -> Size {
-  if !self.has_dirty_layout() &&
-    self.layout_cache.cached_intrinsic_anchor_frames == Some(anchor_frames) {
+  if !self.has_dirty_layout() {
     match self.layout_cache.cached_intrinsic_size {
       Some(size) => return size
       None => ()
@@ -200,9 +262,7 @@ fn ElementNode::intrinsic_size(
   }
   let size = self.view_node.layout({
       constraints: Constraints::unbounded(),
-      child_sizes: self.children.map(child => {
-        child.intrinsic_size(anchor_frames~, text_system~)
-      }),
+      child_sizes: self.children.map(child => child.intrinsic_size(text_system~)),
       child_flex_weights: self.children.map(child => {
         child.view_node.flex_weight()
       }),
@@ -216,9 +276,7 @@ fn ElementNode::intrinsic_size(
       text_system,
       environment: Environment::neutral(),
       style: ViewStyle::empty(),
-      anchor_frames: anchor_frames.copy(),
     }).size
-  self.layout_cache.cached_intrinsic_anchor_frames = Some(anchor_frames)
   self.layout_cache.cached_intrinsic_size = Some(size)
   size
 }

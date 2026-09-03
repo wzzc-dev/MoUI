@@ -19,10 +19,7 @@ priv struct OverlayMarker {
 
 ///|
 impl @core.ViewNode for OverlayMarker with fn identity(_self) {
-  @core.ViewIdentity::new(
-    kind="OverlayMarker",
-    key=Some("{self.width}x{self.height}"),
-  )
+  @core.ViewIdentity::new(kind="OverlayMarker")
 }
 
 ///|

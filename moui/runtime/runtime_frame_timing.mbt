@@ -69,6 +69,9 @@ pub fn AppRuntime::profile_draw_frame(
   clock : () -> Double,
 ) -> ProfiledDrawFrame {
   let total_start = clock()
+  // Advance the animation clock on every presented frame so runtime-driven
+  // transitions (overlay enter/exit fades) progress without user input.
+  self.state.advance_time(total_start)
   let build_ms = if self.state.dirty.needs_rebuild {
     let start = clock()
     self.state.rebuild_if_possible()

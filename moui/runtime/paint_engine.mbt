@@ -7,9 +7,20 @@ fn ElementNode::render_with_environment(
   placed : PlacedNode,
   focused : ElementId?,
   environment : RenderEnvironment,
+  overlay_enter? : Array[(ElementId, Double)] = [],
 ) -> RenderNode {
   let bounds = placed.frame
+  // An in-flight enter fade changes the subtree's opacity every frame; the
+  // render cache is keyed on frame/focused only, so a fading node must bypass
+  // it (read and write) or the first faded frame is served forever.
+  let enter_fading = overlay_enter_opacity(
+      overlay_enter,
+      self.id,
+      environment.now_ms,
+    )
+    is Some(_)
   if environment.matches_default_cache_key() &&
+    !enter_fading &&
     !self.has_dirty_paint() &&
     !self.has_dirty_layout() &&
     self.render_cache.cached_render_frame == Some(bounds) &&
@@ -27,7 +38,8 @@ fn ElementNode::render_with_environment(
   let commands : Array[DrawCommand] = []
   let post_commands : Array[DrawCommand] = []
   let overlay_commands : Array[DrawCommand] = []
-  let plan = if environment.matches_default_cache_key() &&
+  let plan = if !enter_fading &&
+    environment.matches_default_cache_key() &&
     !self.dirty.needs_paint &&
     self.render_cache.cached_render_frame == Some(bounds) &&
     self.render_cache.cached_render_focused == focused {
@@ -65,17 +77,9 @@ fn ElementNode::render_with_environment(
   }
   post_commands.append(plan.post_commands)
   overlay_commands.append(plan.overlay_commands)
-  // A scroll/clip container wraps its children in a pushed clip rect (see
-  // `ScrollContainerView::paint` and `ClipModifier`). The clip only constrains
-  // drawn pixels, not `RenderNode::paint_bounds`, so a long column inside a
-  // short scroll viewport reports a `paint_bounds` that spills over earlier
-  // siblings — the showcase sidebar search field becomes un-clickable after
-  // the story list scrolls, because the list's `paint_bounds` grows up over
-  // the field and wins hit-test. Detect a leading `PushClip`/`PushRoundedClip`
-  // in this node's own commands and clip each child's `paint_bounds` to that
-  // rect before union. Picker/date-picker popups paint through
-  // `overlay_commands` (not children) and stay unaffected.
-  let child_clip : @core.Rect? = paint_plan_child_clip(plan.commands)
+  // Child hit regions come from the placed tree (frame ∩ accumulated clip);
+  // hoisted overlay children escape ancestor clips entirely, so no paint-time
+  // clip trimming is needed here.
   let child_environment = environment.with_child_context(self.view_node)
   for index, child in self.children {
     if index < placed.children.length() {
@@ -83,16 +87,13 @@ fn ElementNode::render_with_environment(
         placed.children[index],
         focused,
         child_environment,
+        overlay_enter~,
       )
-      match child_clip {
-        Some(clip) =>
-          match clip.intersection(rendered.paint_bounds) {
-            Some(clipped) =>
-              children.push({ ..rendered, paint_bounds: clipped })
-            None => children.push({ ..rendered, paint_bounds: clip })
-          }
-        None => children.push(rendered)
+      let rendered = {
+        ..rendered,
+        is_overlay_child: placed.overlay_child_indices.contains(index),
       }
+      children.push(rendered)
     }
   }
   self.dirty.needs_paint = false
@@ -105,12 +106,19 @@ fn ElementNode::render_with_environment(
   // sample or any rendered child did. Folded up so the runtime only needs to
   // check the root to keep redraws ticking.
   let child_animating = children.iter().any(child => child.animating)
-  let animating = plan.animating || child_animating
+  let animating = plan.animating || child_animating || enter_fading
   let render = {
     element_id: self.id,
     frame: bounds,
     children,
+    is_overlay_child: false,
     paint_bounds,
+    hit_rect: Some(placed.hit_rect),
+    render_opacity: overlay_enter_opacity(
+      overlay_enter,
+      self.id,
+      environment.now_ms,
+    ),
     content_revision: self.render_cache.content_revision,
     is_repaint_boundary: false,
     layer_cache_key: None,
@@ -126,7 +134,9 @@ fn ElementNode::render_with_environment(
   } else {
     render
   }
-  if environment.matches_default_cache_key() {
+  // A fading node must not persist into the cache: its opacity changes every
+  // frame while its frame/key stays identical.
+  if environment.matches_default_cache_key() && !enter_fading {
     self.render_cache.cached_render_frame = Some(bounds)
     self.render_cache.cached_render_focused = focused
     self.render_cache.cached_plan = Some(plan)
@@ -151,7 +161,10 @@ fn view_paint_layer_render_node(
     element_id,
     frame: layer.frame,
     children: [],
+    is_overlay_child: false,
     paint_bounds,
+    hit_rect: None,
+    render_opacity: None,
     content_revision: layer.content_revision,
     is_repaint_boundary: true,
     layer_cache_key: Some(layer.cache_key),
@@ -162,34 +175,6 @@ fn view_paint_layer_render_node(
     cached_overlay_draw_commands: Some(layer.overlay_commands),
     animating: false,
   }
-}
-
-///|
-/// Returns the rect this node's own commands clip children into, if any.
-///
-/// A leading `PushClip(Rect)` or `PushRoundedClip(RoundedRect)` (as emitted by
-/// `ScrollContainerView::paint` and the `ClipModifier` view) wraps the node's
-/// children in a clip. The clip constrains drawn pixels but not
-/// `RenderNode::paint_bounds`, so without this hint a long column inside a
-/// short scroll viewport reports a `paint_bounds` that spills over earlier
-/// siblings — the showcase sidebar search field becomes un-clickable after
-/// the story list scrolls, because the list's `paint_bounds` grows up over
-/// the field and wins hit-test.
-///
-/// Only the first clip command is consulted: that is the one `ScrollContainer`
-/// and `ClipModifier` emit before any children, and matches the painting order
-/// (children paint between the push and its matching pop). Picker and
-/// date-picker popups paint through `overlay_commands` rather than children,
-/// so they remain unaffected by this clip.
-fn paint_plan_child_clip(commands : Array[@core.DrawCommand]) -> @core.Rect? {
-  for command in commands {
-    match command {
-      @core.DrawCommand::PushClip(rect) => return Some(rect)
-      @core.DrawCommand::PushRoundedClip(rounded) => return Some(rounded.rect)
-      _ => ()
-    }
-  }
-  None
 }
 
 ///|
@@ -216,5 +201,33 @@ fn render_node_paint_bounds(
   match bounds {
     Some(rect) => rect
     None => frame
+  }
+}
+
+///|
+/// Enter-fade opacity for an overlay surface: 1.0 once the fade completed (or
+/// when the surface is not tracked).
+fn overlay_enter_opacity(
+  overlay_enter : Array[(ElementId, Double)],
+  element_id : ElementId,
+  now_ms : Double,
+) -> Double? {
+  let mut started_ms : Double? = None
+  for entry in overlay_enter {
+    if entry.0 == element_id {
+      started_ms = Some(entry.1)
+    }
+  }
+  match started_ms {
+    Some(started) => {
+      let elapsed = now_ms - started
+      let duration = 160.0
+      if elapsed >= duration {
+        None
+      } else {
+        Some((elapsed / duration).clamp(min=0.0, max=1.0))
+      }
+    }
+    None => None
   }
 }

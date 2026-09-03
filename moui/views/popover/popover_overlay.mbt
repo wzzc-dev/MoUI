@@ -1,44 +1,55 @@
 ///|
-fn[Msg] popover_surface(
-  anchor~ : @core.View[Msg],
+/// Styled panel shell for control popups: overlay surface, shadow, padding.
+/// This is a content shell only — placement, clipping escape, semantics, and
+/// dismissal belong to `@presentation.popup_host` and the runtime placement pass.
+fn[Msg] popover_panel(
   content~ : @core.View[Msg],
-  expanded~ : Bool,
-  placement? : PopoverPlacement = PopoverPlacement::BottomStart,
-  theme? : @core.Theme,
-  width? : Double = 240.0,
-  height? : Double = 160.0,
-  trap_focus? : Bool = false,
+  width~ : Double,
+  height? : Double,
+  theme~ : @core.Theme,
 ) -> @core.View[Msg] {
-  let resolved_theme = @common.views_ambient_theme(theme)
-  let view = if expanded {
-    let panel = @container.container(
-        content,
-        width~,
-        height~,
-        variant=@style.ContainerVariant::Overlay,
-        theme=resolved_theme,
-        padding=resolved_theme.spacing_scale.sm,
-      )
-      .shadow(
-        @style.views_ambient_control_theme(resolved_theme).surface.overlay_shadow.unwrap_or(
-          resolved_theme.shadow_scale.md,
-        ),
-      )
-      .align(alignment=popover_alignment(placement))
-    let panel = if trap_focus { panel.focus_trap() } else { panel }
-    @layout.stack([anchor, panel])
-  } else {
-    anchor
-  }
-  view.semantics_expanded(expanded~)
+  @container.container(
+    content,
+    width~,
+    height?,
+    variant=@style.ContainerVariant::Overlay,
+    theme~,
+    padding=theme.spacing_scale.sm,
+  ).shadow(
+    @style.views_ambient_control_theme(theme).surface.overlay_shadow.unwrap_or(
+      theme.shadow_scale.md,
+    ),
+  )
 }
 
 ///|
-fn popover_alignment(placement : PopoverPlacement) -> @core.Alignment {
-  match placement {
-    BottomStart => @core.Alignment::new(x=0.0, y=1.0)
-    BottomEnd => @core.Alignment::new(x=1.0, y=1.0)
-    TopStart => @core.Alignment::new(x=0.0, y=0.0)
-    TopEnd => @core.Alignment::new(x=1.0, y=0.0)
-  }
+/// Build a control-popup presentation spec anchored to the enclosing
+/// `@presentation.popup_host` base child. Candidates fall back around the anchor and clamp
+/// to the viewport; the popup escapes ancestor clipping through the runtime
+/// placement pass.
+pub fn[Msg] popup_spec(
+  id~ : String,
+  content~ : @core.View[Msg],
+  theme~ : @core.Theme,
+  width~ : Double,
+  height? : Double,
+  candidates? : Array[@presentation.PresentationPlacementCandidate] = [
+    @presentation.PresentationPlacementCandidate::BelowStart,
+    @presentation.PresentationPlacementCandidate::AboveStart,
+    @presentation.PresentationPlacementCandidate::BelowEnd,
+    @presentation.PresentationPlacementCandidate::AboveEnd,
+  ],
+) -> @presentation.PresentationSpec[Msg] {
+  @presentation.PresentationSpec::new(
+    id~,
+    kind=@presentation.PresentationKind::Popover,
+    anchor=@presentation.PresentationAnchor::HostBase,
+    placement=Some(
+      @presentation.PresentationPlacement::new(
+        candidates~,
+        viewport_insets=@core.Insets::all(0.0),
+      ),
+    ),
+    content=popover_panel(content~, width~, height?, theme~),
+  )
 }

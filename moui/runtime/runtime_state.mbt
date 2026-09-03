@@ -22,6 +22,21 @@ priv struct RuntimeState {
   mut pending_scroll_request : ScrollRequest?
   mut last_event_hit_path : Array[Int]
   mut last_frame_timing : RuntimeFrameTiming
+  /// Post-layout overlay frame overrides: host element id -> (child index,
+  /// absolute rect). Applied by the placement pass after the layout fixpoint.
+  mut overlay_overrides : Array[(Int, Array[(Int, Rect)])]
+  /// Keyboard dismissal layer stack, back-to-front. The top-most entry
+  /// receives Escape/Back before in-flow content (ADR 0033).
+  mut layer_stack : Array[ElementId]
+  /// Exiting overlay subtrees (ADR 0033): removed presentations/popups are
+  /// replayed as fading command snapshots until their transition completes.
+  exiting_overlays : Array[ExitingOverlay]
+  /// Element ids of overlay-positioned surfaces active in the last placement
+  /// pass; drives exit-retention detection.
+  mut active_surface_ids : Array[ElementId]
+  /// First-seen frame-clock time per active overlay surface id; drives enter
+  /// fades.
+  overlay_enter_times : Array[(ElementId, Double)]
   mut closed : Bool
   semantics : SemanticsSubsystem
 }
@@ -86,6 +101,11 @@ fn RuntimeState::new_runtime_view_node(
     pending_scroll_request: None,
     last_event_hit_path: [],
     last_frame_timing: RuntimeFrameTiming::zero(),
+    overlay_overrides: [],
+    layer_stack: [],
+    exiting_overlays: [],
+    active_surface_ids: [],
+    overlay_enter_times: [],
     closed: false,
     semantics: SemanticsSubsystem::new(),
   }
@@ -319,6 +339,7 @@ fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] 
   self.rebuild_if_possible()
   self.ensure_render_tree()
   self.render_tree.root.collect_draw_commands(commands)
+  self.append_exiting_overlay_commands(commands)
   self.stats.last_command_count = commands.length()
   commands
 }
@@ -332,6 +353,7 @@ fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   self.rebuild_if_possible()
   self.ensure_render_tree()
   self.render_tree.root.collect_frame_commands(commands)
+  self.append_exiting_overlay_commands(commands)
   let overlay_bounds = self.render_tree.root.overlay_bounds()
   let platform_views = self.platform_tree.placements()
   let transparent_platform_frame = (
@@ -598,3 +620,48 @@ fn SemanticsSubsystem::new() -> SemanticsSubsystem {
 ///   2. Compiler errors guide ~400 `self.needs_*` → `self.dirty.needs_*` renames.
 ///   3. Each rename is a `replace_all_preview` → `multi_edit` batch per file.
 ///   Constructors above produce correct initial values for the subsystem fields.
+
+///|
+/// A removed overlay subtree replayed as a fading command snapshot while its
+/// exit transition runs.
+priv struct ExitingOverlay {
+  commands : Array[DrawCommand]
+  started_ms : Double
+  duration_ms : Double
+}
+
+///|
+/// Fade and replay exiting overlay snapshots; prune completed ones. While any
+/// snapshot remains, the runtime keeps ticking frames so the fade animates.
+fn RuntimeState::append_exiting_overlay_commands(
+  self : RuntimeState,
+  commands : Array[DrawCommand],
+) -> Unit {
+  if self.exiting_overlays.is_empty() {
+    return
+  }
+  let now_ms = self.animfocus.now_ms
+  let mut index = 0
+  while index < self.exiting_overlays.length() {
+    let ghost = self.exiting_overlays[index]
+    let elapsed = now_ms - ghost.started_ms
+    if elapsed >= ghost.duration_ms {
+      ignore(self.exiting_overlays.remove(index))
+    } else {
+      let progress = if ghost.duration_ms > 0.0 {
+        (elapsed / ghost.duration_ms).clamp(min=0.0, max=1.0)
+      } else {
+        1.0
+      }
+      commands.push(DrawCommand::PushOpacity(1.0 - progress))
+      for command in ghost.commands {
+        commands.push(command)
+      }
+      commands.push(DrawCommand::PopOpacity)
+      index = index + 1
+    }
+  }
+  if !self.exiting_overlays.is_empty() {
+    self.animfocus.active_animations = true
+  }
+}

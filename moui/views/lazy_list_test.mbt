@@ -41,7 +41,6 @@ fn lazy_measure(
     constraints,
     child_sizes: children.map(child => lazy_measure(child, child_constraints)),
     child_flex_weights: children.map(child => child.flex_weight()),
-    anchor_frames: [],
     state: {
       focused: false,
       hovered: false,

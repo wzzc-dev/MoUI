@@ -1,40 +1,34 @@
 ///|
 /// Locate the top-most focusable element under `point`.
 ///
-/// Child order matches pointer dispatch: descendants that currently paint
-/// overlay commands (picker/datepicker popups, etc.) are searched first via
-/// `overlay_hit_bounds`, then remaining siblings top-most-first by paint
-/// bounds. Without the overlay prepass, a later sibling whose layout frame sits
-/// under a floating popup (e.g. playground editor under the examples picker)
-/// would steal focus on Pointer Down even though pointer events correctly hit
-/// the overlay owner.
+/// Child order matches pointer dispatch: hoisted overlay subtrees (control
+/// popups, presentations) are searched first top-most-first, then remaining
+/// in-flow siblings by paint bounds. Without the overlay prepass, a later
+/// sibling whose layout frame sits under a floating popup (e.g. playground
+/// editor under the examples picker) would steal focus on Pointer Down even
+/// though pointer events correctly hit the popup.
 fn ElementNode::find_focusable_at(
   self : ElementNode,
   point : Point,
   render : RenderNode,
 ) -> ElementId? {
-  let mut overlay_index = -1
-  let mut overlay_search = self.children.length() - 1
+  let search_order : Array[Int] = []
+  let mut overlay_search = render.children.length() - 1
   while overlay_search >= 0 {
-    if overlay_search < render.children.length() {
-      match render.children[overlay_search].overlay_hit_bounds() {
-        Some(bounds) =>
-          if bounds.contains(point) {
-            overlay_index = overlay_search
-            break
-          }
-        None => ()
-      }
+    if overlay_search < self.children.length() &&
+      render.children[overlay_search].is_overlay_child &&
+      render.children[overlay_search].hit_bounds().contains(point) {
+      search_order.push(overlay_search)
+    } else if overlay_search < self.children.length() &&
+      render.children[overlay_search].subtree_overlay_contains(point) {
+      search_order.push(overlay_search)
     }
     overlay_search = overlay_search - 1
   }
-  let search_order : Array[Int] = []
-  if overlay_index >= 0 {
-    search_order.push(overlay_index)
-  }
   let mut regular_index = self.children.length() - 1
   while regular_index >= 0 {
-    if regular_index != overlay_index {
+    if regular_index < render.children.length() &&
+      !render.children[regular_index].is_overlay_child {
       search_order.push(regular_index)
     }
     regular_index = regular_index - 1
@@ -42,11 +36,9 @@ fn ElementNode::find_focusable_at(
   for index in search_order {
     if index < render.children.length() {
       let child_render = render.children[index]
-      let hit = if index == overlay_index {
-        true
-      } else {
-        child_render.hit_bounds().contains(point)
-      }
+      let is_overlay_owner = render.children[index].is_overlay_child ||
+        render.children[index].subtree_overlay_contains(point)
+      let hit = is_overlay_owner || child_render.hit_bounds().contains(point)
       if hit {
         match self.children[index].find_focusable_at(point, child_render) {
           Some(id) => return Some(id)

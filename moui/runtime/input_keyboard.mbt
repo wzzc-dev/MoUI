@@ -58,12 +58,17 @@ fn ElementNode::dispatch_keyboard_shortcut(
   style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
-  let is_overlay_host = self.view_node.identity().kind == "OverlayHost"
-  // OverlayHost owns the presentation stack's keyboard policy. Give it the
-  // first chance to consume Escape so a focused base control cannot observe
-  // the event before the top-most presentation dismisses.
-  let own_first = is_overlay_host
-  let own = if own_first {
+  // Keyboard policy is typed (ADR 0033): overlay hosts own top-most-first
+  // dismissal, keyboard-shortcut modifier scopes handle their own shortcuts.
+  let owns_dismissal = self.view_node.keyboard_policy()
+    is @core.KeyboardPolicy::TopMostDismissal
+  let is_shortcut_scope = self.view_node.keyboard_policy()
+    is @core.KeyboardPolicy::ShortcutScope
+  let own = if owns_dismissal {
+    // Give the host the first chance to consume Escape so a focused base
+    // control cannot observe the event before the top-most presentation
+    // dismisses. (The runtime layer stack runs hosts top-most-first before
+    // this tree dispatch; this pass stays for unconsumed fall-through.)
     self.dispatch_view_event(
       self.view_node,
       AppEvent::Keyboard(event),
@@ -82,7 +87,7 @@ fn ElementNode::dispatch_keyboard_shortcut(
       deliveries: [],
     }
   }
-  if own_first && own.changed {
+  if owns_dismissal && own.changed {
     own
   } else {
     let child_result = self.dispatch_keyboard_shortcut_to_children(
@@ -93,45 +98,24 @@ fn ElementNode::dispatch_keyboard_shortcut(
     )
     if child_result.activated {
       child_result
-    } else if self.view_node.identity().kind.has_prefix(
-        "Modified<KeyboardShortcut>",
-      ) ||
-      is_overlay_host {
-      if is_overlay_host {
+    } else if is_shortcut_scope || owns_dismissal {
+      if owns_dismissal {
         child_result
-      } else {
         // Give the modifier node itself a chance to handle the keyboard event
         // (so its `handle_keyboard_shortcut` runs). Only if the node reports a
         // change (meaning the shortcut matched) do we activate the first child.
-        let own = if own_first {
-          own
-        } else {
-          self.dispatch_view_event(
-            self.view_node,
-            AppEvent::Keyboard(event),
-            RenderNode::empty(),
-            text_system,
-            environment~,
-            style~,
-          )
-        }
-        if own.changed {
-          if self.view_node.identity().kind == "OverlayHost" {
-            own
-          } else {
-            self.activate_first_child(environment~, style~, text_system~)
-          }
-        } else if child_result.changed {
-          child_result
-        } else {
-          {
-            changed: false,
-            activated: false,
-            captured: false,
-            capture_target: None,
-            focused: None,
-            deliveries: [],
-          }
+      } else if own.changed {
+        self.activate_first_child(environment~, style~, text_system~)
+      } else if child_result.changed {
+        child_result
+      } else {
+        {
+          changed: false,
+          activated: false,
+          captured: false,
+          capture_target: None,
+          focused: None,
+          deliveries: [],
         }
       }
     } else {

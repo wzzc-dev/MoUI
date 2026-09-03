@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/controls",
+  "wzzc-dev/moui/views/presentation",
   "wzzc-dev/moui/views/style",
 }
 
@@ -14,6 +15,8 @@ pub fn[Msg] autocomplete(String, on_input~ : (String) -> Msg, Array[@controls.Me
 pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[@controls.MenuItem[Msg]], expanded~ : Bool, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] dropdown(String, Array[@controls.MenuItem[Msg]], state~ : DropdownState, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] popup_spec(id~ : String, content~ : @core.View[Msg], theme~ : @core.Theme, width~ : Double, height? : Double, candidates? : Array[@presentation.PresentationPlacementCandidate]) -> @presentation.PresentationSpec[Msg]
 
 pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @style.SheetPresentationMode, theme? : @core.Theme, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
 
