@@ -34,8 +34,10 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       path: "moui/core/pkg.generated.mbti",
       category: "required_protocol",
       // Neutral accessibility DTOs are required cross-runtime protocol
-      // surface, including their public enum/record shapes.
-      max_count: 187,
+      // surface, including their public enum/record shapes. The overlay
+      // placement context and keyboard policy (ADR 0033) add two neutral
+      // protocol records.
+      max_count: 189,
     },
     {
       path: "moui/core/pkg.generated.mbti",

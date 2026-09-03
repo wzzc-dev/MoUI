@@ -53,21 +53,21 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2109,
-      "public_declarations": 549,
-      "pub_all_declarations": 187
+      "lines": 2127,
+      "public_declarations": 551,
+      "pub_all_declarations": 189
     },
     {
       "label": "views facade",
       "path": "moui/views/pkg.generated.mbti",
-      "lines": 752,
-      "public_declarations": 341,
-      "pub_all_declarations": 8
+      "lines": 671,
+      "public_declarations": 323,
+      "pub_all_declarations": 0
     },
     {
       "label": "backend protocols",
       "path": "moui/backend/pkg.generated.mbti",
-      "lines": 466,
+      "lines": 467,
       "public_declarations": 84,
       "pub_all_declarations": 44
     },
