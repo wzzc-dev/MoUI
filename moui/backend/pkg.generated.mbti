@@ -99,13 +99,14 @@ pub(all) struct HostCapabilitySummary {
   async_services : Bool
   native_accessibility_available : Bool
   web_view_available : Bool
+  host_modal_available : Bool
   web_view_description : String
   description : String
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostCapabilitySummary::from_contracts(info~ : HostAppInfo, services~ : HostServiceCapabilities, input~ : HostInputCapabilities, label? : String, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view_available? : Bool, web_view_description? : String, description? : String) -> Self
+pub fn HostCapabilitySummary::from_contracts(info~ : HostAppInfo, services~ : HostServiceCapabilities, input~ : HostInputCapabilities, label? : String, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view_available? : Bool, host_modal_available? : Bool, web_view_description? : String, description? : String) -> Self
 pub fn HostCapabilitySummary::has_required_app_basics(Self) -> Bool
 pub fn HostCapabilitySummary::input_count(Self) -> Int
-pub fn HostCapabilitySummary::new(backend~ : HostBackendKind, label? : String, services? : HostServiceCapabilities, input? : HostInputCapabilities, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view_available? : Bool, web_view_description? : String, description? : String) -> Self
+pub fn HostCapabilitySummary::new(backend~ : HostBackendKind, label? : String, services? : HostServiceCapabilities, input? : HostInputCapabilities, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view_available? : Bool, host_modal_available? : Bool, web_view_description? : String, description? : String) -> Self
 pub fn HostCapabilitySummary::preflight_fields(Self) -> String
 pub fn HostCapabilitySummary::service_count(Self) -> Int
 pub fn HostCapabilitySummary::test_host(label? : String) -> Self
