@@ -12,28 +12,31 @@ test "host app info records shared model boundaries" {
 
 ///|
 test "host capability summary combines service input and window readiness" {
+  let services = @backend_host.HostServiceCapabilities::new(
+    clipboard=true,
+    file_dialogs=true,
+    open_url=true,
+    system_theme=true,
+  )
+  let input = @backend_host.HostInputCapabilities::new(
+    pointer=true,
+    keyboard=true,
+    focus=true,
+    text_input=true,
+    drag_drop=true,
+  )
   let summary = @backend_host.HostCapabilitySummary::from_contracts(
     info=@backend_host.HostAppInfo::new(
       backend=@backend_host.HostBackendKind::Web,
       description="browser host",
     ),
-    services=@backend_host.HostServiceCapabilities::new(
-      clipboard=true,
-      file_dialogs=true,
-      open_url=true,
-      system_theme=true,
-    ),
-    input=@backend_host.HostInputCapabilities::new(
-      pointer=true,
-      keyboard=true,
-      focus=true,
-      text_input=true,
-      drag_drop=true,
-    ),
+    services~,
+    input~,
     label="Web host",
     window_lifecycle=true,
     multi_window=true,
     async_services=true,
+    host_modal_available=true,
   )
   inspect(summary.backend.label(), content="Web")
   inspect(summary.label, content="Web host")
@@ -65,6 +68,15 @@ test "host capability summary combines service input and window readiness" {
   assert_true(preflight.contains("native_context_menu=gap"))
   assert_true(preflight.contains("host_modal=available"))
   assert_true(preflight.contains("native_accessibility=gap"))
+  let unmodal = @backend_host.HostCapabilitySummary::from_contracts(
+    info=@backend_host.HostAppInfo::new(
+      backend=@backend_host.HostBackendKind::Web,
+      description="browser host",
+    ),
+    services~,
+    input~,
+  )
+  assert_true(unmodal.preflight_fields().contains("host_modal=gap"))
 }
 
 ///|

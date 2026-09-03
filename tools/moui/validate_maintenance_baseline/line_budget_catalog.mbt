@@ -117,7 +117,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/common/input/window_event_decode_test.mbt",
-      max_lines: 295,
+      max_lines: 304,
     },
     {
       path: "moui/backend/common/lifecycle/window_registry_test.mbt",
