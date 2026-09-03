@@ -9,13 +9,15 @@ test "harmonyos demo update changes model" {
 
 ///|
 test "harmonyos demo runtime responds to button click and viewport" {
+  // The demo content column is taller than 360; clip-aware hit testing
+  // rejects clicks outside the viewport, so use a height that shows the buttons.
   let runtime = @runtime.new_program_with_dimensions(
     program=program(),
     width=520.0,
-    height=360.0,
+    height=560.0,
   )
   assert_true(has_text(runtime.draw_commands(), "MoUI HarmonyOS Demo"))
-  assert_true(has_text(runtime.draw_commands(), "520 x 360"))
+  assert_true(has_text(runtime.draw_commands(), "520 x 560"))
   click_text(runtime, "Tap")
   assert_true(has_text(runtime.draw_commands(), "1"))
 }

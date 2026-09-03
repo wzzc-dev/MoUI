@@ -315,7 +315,10 @@ fn Model::hero(
     metrics,
     hero_body,
     top=if metrics.compact { 24.0 } else { 20.0 },
-    bottom=if metrics.compact { 24.0 } else { 10.0 },
+    // The hero title now sizes to its measured 52px/850 line box (65, up
+    // from the cached 62); reclaim 3px of bottom padding so the capability
+    // strip's first metric stays above the 760 fold on desktop.
+    bottom=if metrics.compact { 24.0 } else { 7.0 },
     background=Some(hero_background(theme)),
     dotted=true,
     wash=false,
