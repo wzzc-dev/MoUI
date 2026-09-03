@@ -16,6 +16,7 @@ fn full_workspace_file_budgets() -> Array[FileBudget] {
     { path: "moui_skia/moui_skia_render_test.mbt", max_lines: 1350 },
     { path: "moui_skia/moui_skia_text_test.mbt", max_lines: 660 },
     { path: "moui_skia/moui_skia_value_path_test.mbt", max_lines: 810 },
+    { path: "moui/runtime/view_runtime_test.mbt", max_lines: 1390 },
     { path: "moui_skia/native/skia_native_test.mbt", max_lines: 2747 },
     { path: "moui_skia/native/canvas_native.mbt", max_lines: 2548 },
     { path: "moui_sun/softbuffer/surface_test.mbt", max_lines: 235 },

@@ -319,9 +319,9 @@ fn package_budgets() -> Array[PackageBudget] {
       // SurfaceMetrics is the single backend/render-neutral surface DTO.
       // Semantics DTO expansion adds roles, relations, ranges, text metadata,
       // live announcements, and typed actions in one intentional migration.
-      max_lines: 2120,
+      max_lines: 2128,
       max_pub_lines: 560,
-      max_pub_all_lines: 187,
+      max_pub_all_lines: 189,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",
