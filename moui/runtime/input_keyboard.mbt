@@ -101,21 +101,31 @@ fn ElementNode::dispatch_keyboard_shortcut(
     } else if is_shortcut_scope || owns_dismissal {
       if owns_dismissal {
         child_result
+      } else {
         // Give the modifier node itself a chance to handle the keyboard event
         // (so its `handle_keyboard_shortcut` runs). Only if the node reports a
         // change (meaning the shortcut matched) do we activate the first child.
-      } else if own.changed {
-        self.activate_first_child(environment~, style~, text_system~)
-      } else if child_result.changed {
-        child_result
-      } else {
-        {
-          changed: false,
-          activated: false,
-          captured: false,
-          capture_target: None,
-          focused: None,
-          deliveries: [],
+        let scope_own = self.dispatch_view_event(
+          self.view_node,
+          AppEvent::Keyboard(event),
+          RenderNode::empty(),
+          text_system,
+          environment~,
+          style~,
+        )
+        if scope_own.changed {
+          self.activate_first_child(environment~, style~, text_system~)
+        } else if child_result.changed {
+          child_result
+        } else {
+          {
+            changed: false,
+            activated: false,
+            captured: false,
+            capture_target: None,
+            focused: None,
+            deliveries: [],
+          }
         }
       }
     } else {

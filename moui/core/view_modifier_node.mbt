@@ -51,10 +51,10 @@ impl[Msg] ViewNode for ModifierViewNode[Msg] with fn declaration(self) {
 ///|
 
 ///|
-/// A modifier wrapping a keyboard-shortcut child is a shortcut scope; all
-/// other modifiers pass keyboard policy through.
+/// A modifier node carrying a keyboard-shortcut modifier is a shortcut
+/// scope; all other modifiers pass keyboard policy through.
 impl[Msg] ViewNode for ModifierViewNode[Msg] with fn keyboard_policy(self) {
-  if self.child.identity().kind == "KeyboardShortcut" {
+  if self.modifier.identity_kind == "KeyboardShortcut" {
     KeyboardPolicy::ShortcutScope
   } else {
     KeyboardPolicy::Passthrough
