@@ -74,7 +74,7 @@ workflow for agents and maintainers.
 ```text
 Add a MoUI view constructor for <control>. Keep it in views/, return @moui.View[Msg],
 implement reusable behavior in views/ as a concrete @core.ViewNode and construct it with @core.View::from_node, reuse existing styles/modifiers where possible, add focused tests in
-views/views_test.mbt, update docs/view-catalog.md if public coverage changes, and
+the moui/views tests (tests/smoke), update docs/view-catalog.md if public coverage changes, and
 run moon test moui/views --target native plus moon info if the public API changes.
 ```
 

@@ -6,7 +6,7 @@
 
 1. 在 `views/` 下添加公开 constructor，并返回 `@moui.View[Msg]`。
 2. 将具体可复用 custom view 行为放在 `moui/views`，然后由 `views/` 暴露面向 app 的 constructor。复用现有 state、style、binding、semantics 和 layout 类型。
-3. 在 `views/views_test.mbt` 中添加聚焦测试。
+3. 在 `moui/views` 的 `tests/smoke` 包或聚焦 `*_test.mbt` 中添加测试。
 4. 当 view 面向用户时，添加 Showcase 入口。
 5. 运行 `moon test moui/views --target native` 和 `moon info`。
 
@@ -18,7 +18,7 @@
 2. 阅读 `CustomLayoutContext.child_sizes`、`child_baselines`、`child_alignment_guides`、`child_priorities`、`safe_area`、`viewport` 和 `layout_direction`。
 3. 在 `CustomLayoutContext.cache` 中存储可复用 measurement。
 4. 使用 `CustomPlacementContext::mirror_x` 进行 RTL-aware x 放置。
-5. 在 `views/views_test.mbt` 中添加测试；如果 runtime contract 变化，则添加 core white-box 测试。
+5. 在 `moui/views`（`tests/smoke` 或聚焦 `*_test.mbt`）中添加测试；如果 runtime contract 变化，则添加 core white-box 测试。
 
 ## 创建平台服务
 
