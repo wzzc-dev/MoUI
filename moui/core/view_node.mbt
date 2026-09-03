@@ -1,4 +1,34 @@
 ///|
+/// Keyboard dispatch policy for a node.
+///
+/// `TopMostDismissal` marks an overlay host: it owns top-most-first dismissal
+/// (Escape/Back) and receives keyboard events before its subtree, as
+/// registered in the runtime layer stack. `ShortcutScope` marks a keyboard
+/// shortcut wrapper whose own shortcut handling runs before children.
+pub(all) enum KeyboardPolicy {
+  Passthrough
+  TopMostDismissal
+  ShortcutScope
+}
+
+///|
+/// Context for the post-layout overlay placement pass. Anchored overlay hosts
+/// resolve their popup frames here — after base layout and anchor-registry
+/// collection — instead of during layout, so anchoring never re-enters the
+/// layout fixpoint nor keys layout caches.
+pub(all) struct OverlayPlacementContext {
+  viewport : Rect
+  /// The host node's own placed frame. Base-sized hosts (control popups) use
+  /// it as the default anchor for their popups.
+  host_frame : Rect
+  child_sizes : Array[Size]
+  anchor_frames : Array[(String, Rect)]
+  /// The host node's transient control state (e.g. `expanded` decides whether
+  /// a control's popup participates in placement at all).
+  state : ViewStateContext
+}
+
+///|
 /// Message-independent behavior for a low-level custom view node.
 ///
 /// The trait is open so downstream packages can define renderer-neutral
@@ -18,12 +48,19 @@ pub(open) trait ViewNode {
   fn child_environment(Self, Environment) -> Environment = _
   fn child_style(Self, ViewStyle) -> ViewStyle = _
   fn layout(Self, ViewLayoutContext) -> ViewLayoutResult
+  /// Absolute frames for overlay-positioned children, indexed by child
+  /// position. Layout positions these children provisionally (correct sizes,
+  /// placeholder origins); the runtime re-places them at the returned frames
+  /// after base layout. Returning `None` (the default) marks the node as
+  /// having no overlay-positioned children.
+  fn place_overlays(Self, OverlayPlacementContext) -> Array[(Int, Rect)]? = _
   fn paint(Self, ViewPaintContext) -> ViewPaintPlan = _
   fn platform_views(Self, ViewPlatformContext) -> Array[PlatformViewPlacement] = _
   fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
   fn semantics(Self) -> ViewSemanticsInfo = _
   fn focusable(Self) -> Bool = _
   fn focus_trap(Self) -> Bool = _
+  fn keyboard_policy(Self) -> KeyboardPolicy = _
   fn flex_weight(Self) -> Double = _
 }
 
@@ -54,6 +91,11 @@ impl ViewNode with fn child_style(_self, style) {
 }
 
 ///|
+impl ViewNode with fn place_overlays(_self, _context) {
+  None
+}
+
+///|
 impl ViewNode with fn paint(_self, _context) {
   ViewPaintPlan::empty()
 }
@@ -81,6 +123,11 @@ impl ViewNode with fn focusable(_self) {
 ///|
 impl ViewNode with fn focus_trap(_self) {
   false
+}
+
+///|
+impl ViewNode with fn keyboard_policy(_self) {
+  KeyboardPolicy::Passthrough
 }
 
 ///|

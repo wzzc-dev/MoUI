@@ -70,14 +70,29 @@ pub fn[Msg] tooltip(
   visible? : Bool = false,
 ) -> @core.View[Msg] {
   if visible {
-    @layout.stack([
-      child,
-      @container.container(
-        @text.text(message, width=180.0, height=24.0).semantics_role(
-          @core.SemanticsRole::Tooltip,
+    @presentation.popup_host(child, [
+      @presentation.PresentationSpec::new(
+        id="tooltip:\{message}",
+        kind=@presentation.PresentationKind::Tooltip,
+        anchor=@presentation.PresentationAnchor::HostBase,
+        placement=Some(
+          @presentation.PresentationPlacement::new(
+            candidates=[
+              @presentation.PresentationPlacementCandidate::AboveEnd,
+              @presentation.PresentationPlacementCandidate::BelowEnd,
+              @presentation.PresentationPlacementCandidate::AboveStart,
+              @presentation.PresentationPlacementCandidate::BelowStart,
+            ],
+            viewport_insets=@core.Insets::all(0.0),
+          ),
         ),
-        variant=@style.ContainerVariant::Raised,
-      ).align(alignment=@core.Alignment::top_trailing()),
+        content=@container.container(
+          @text.text(message, width=180.0, height=24.0).semantics_role(
+            @core.SemanticsRole::Tooltip,
+          ),
+          variant=@style.ContainerVariant::Raised,
+        ),
+      ),
     ])
   } else {
     child

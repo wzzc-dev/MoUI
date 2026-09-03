@@ -30,6 +30,7 @@ import {
   "wzzc-dev/moui/views/layout",
   "wzzc-dev/moui/views/canvas",
   "wzzc-dev/moui/views/presence_dot",
+  "wzzc-dev/moui/views/presentation",
   "wzzc-dev/moui/views/progress",
   "wzzc-dev/moui/views/slider",
   "wzzc-dev/moui/views/text",

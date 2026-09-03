@@ -9,10 +9,6 @@ pub(all) struct ViewLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
   child_flex_weights : Array[Double]
-  /// Frames from the previous completed layout pass keyed by stable view key.
-  /// Runtime-owned layout code supplies this snapshot so presentation nodes can
-  /// resolve anchors without depending on the runtime package.
-  anchor_frames : Array[(String, Rect)]
   state : ViewStateContext
   text_system : TextSystem
   environment : Environment
@@ -23,6 +19,11 @@ pub(all) struct ViewLayoutContext {
 pub(all) struct ViewLayoutResult {
   size : Size
   child_frames : Array[Rect]
+  /// True when this node clips its children to its own frame (scroll
+  /// containers, clip modifiers). The placement pass folds this into the
+  /// accumulated clip so hit regions respect clipping without consulting
+  /// paint output.
+  clips_children : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -216,8 +217,9 @@ pub fn ViewIdentity::new(kind~ : String, key? : String? = None) -> ViewIdentity 
 pub fn ViewLayoutResult::new(
   size~ : Size,
   child_frames? : Array[Rect] = [],
+  clips_children? : Bool = false,
 ) -> ViewLayoutResult {
-  { size, child_frames }
+  { size, child_frames, clips_children }
 }
 
 ///|
@@ -466,6 +468,14 @@ pub fn[Msg] View::layout(
 }
 
 ///|
+pub fn[Msg] View::place_overlays(
+  self : View[Msg],
+  context : OverlayPlacementContext,
+) -> Array[(Int, Rect)]? {
+  self.adapter.node.place_overlays(context)
+}
+
+///|
 pub fn[Msg] View::paint(
   self : View[Msg],
   context : ViewPaintContext,
@@ -520,6 +530,11 @@ pub fn[Msg] View::text_command_result(
 ///|
 pub fn[Msg] View::semantics(self : View[Msg]) -> ViewSemanticsInfo {
   self.adapter.semantics_snapshot
+}
+
+///|
+pub fn[Msg] View::keyboard_policy(self : View[Msg]) -> KeyboardPolicy {
+  self.adapter.node.keyboard_policy()
 }
 
 ///|

@@ -36,6 +36,9 @@ priv trait RuntimeViewNode {
   fn child_environment(Self, Environment) -> Environment
   fn child_style(Self, ViewStyle) -> ViewStyle
   fn layout(Self, @core.ViewLayoutContext) -> @core.ViewLayoutResult
+  fn place_overlays(Self, @core.OverlayPlacementContext) -> Array[
+    (Int, @core.Rect),
+  ]?
   fn paint(Self, @core.ViewPaintContext) -> @core.ViewPaintPlan
   fn platform_views(Self, @core.ViewPlatformContext) -> Array[
     PlatformViewPlacement,
@@ -43,6 +46,7 @@ priv trait RuntimeViewNode {
   fn event(Self, @core.ViewEventContext) -> RuntimeEventOutcome
   fn text_input_state(Self, @core.ViewPaintContext) -> TextInputState?
   fn text_command(Self, @core.ViewEventContext, CommandIntent, String?) -> RuntimeTextCommandOutcome
+  fn keyboard_policy(Self) -> @core.KeyboardPolicy
   fn semantics(Self) -> @core.ViewSemanticsInfo
   fn semantics_action_kinds(Self) -> Array[@core.SemanticsActionKind]
   fn semantics_action(
@@ -117,6 +121,14 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn layout(
 }
 
 ///|
+impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn place_overlays(
+  self,
+  context,
+) {
+  self.view.place_overlays(context)
+}
+
+///|
 impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn paint(
   self,
   context,
@@ -171,6 +183,13 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn text_command(
     text_control: result.text_control,
     deliveries: result.messages.map(message => () => (self.emit)(message)),
   }
+}
+
+///|
+impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn keyboard_policy(
+  self,
+) {
+  self.view.keyboard_policy()
 }
 
 ///|

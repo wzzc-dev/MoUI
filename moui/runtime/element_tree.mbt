@@ -57,14 +57,11 @@ priv struct ElementLayoutCache {
   mut cached_measure_constraints : Constraints?
   mut cached_measure_environment : Environment?
   mut cached_measure_style : ViewStyle?
-  mut cached_measure_anchor_frames : Array[(String, Rect)]?
   mut cached_measured : MeasuredNode?
   mut cached_place_frame : Rect?
   mut cached_place_environment : Environment?
   mut cached_place_style : ViewStyle?
-  mut cached_place_anchor_frames : Array[(String, Rect)]?
   mut cached_placed : PlacedNode?
-  mut cached_intrinsic_anchor_frames : Array[(String, Rect)]?
   mut hit_count : Int
   mut miss_count : Int
 }
@@ -132,7 +129,17 @@ priv struct RenderNode {
   element_id : ElementId
   frame : Rect
   children : Array[RenderNode]
+  /// True for children whose placed frames are overlay-positioned. They are
+  /// painted after the whole tree so popup content escapes ancestor clip
+  /// rects, and they win hit-test priority.
+  is_overlay_child : Bool
   paint_bounds : Rect
+  /// Hit region from the placed tree (frame ∩ accumulated clip). `None`
+  /// means "use paint_bounds".
+  hit_rect : Rect?
+  /// Enter-fade opacity for hoisted overlay subtrees. `None` or 1.0 renders
+  /// normally; values below 1.0 wrap the subtree in a fading opacity layer.
+  render_opacity : Double?
   content_revision : Int
   is_repaint_boundary : Bool
   layer_cache_key : String?
@@ -171,7 +178,10 @@ fn RenderNode::empty() -> RenderNode {
     element_id: ElementId::new(0),
     frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
     children: [],
+    is_overlay_child: false,
     paint_bounds: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+    hit_rect: None,
+    render_opacity: None,
     content_revision: 0,
     is_repaint_boundary: false,
     layer_cache_key: None,
@@ -221,6 +231,8 @@ fn LayoutTree::empty() -> LayoutTree {
       element_id: ElementId::new(0),
       frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
       children: [],
+      overlay_child_indices: [],
+      hit_rect: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
     },
   }
 }
@@ -255,14 +267,11 @@ fn ElementLayoutCache::empty() -> ElementLayoutCache {
     cached_measure_constraints: None,
     cached_measure_environment: None,
     cached_measure_style: None,
-    cached_measure_anchor_frames: None,
     cached_measured: None,
     cached_place_frame: None,
     cached_place_environment: None,
     cached_place_style: None,
-    cached_place_anchor_frames: None,
     cached_placed: None,
-    cached_intrinsic_anchor_frames: None,
     hit_count: 0,
     miss_count: 0,
   }
@@ -274,14 +283,11 @@ fn ElementLayoutCache::clear(self : ElementLayoutCache) -> Unit {
   self.cached_measure_constraints = None
   self.cached_measure_environment = None
   self.cached_measure_style = None
-  self.cached_measure_anchor_frames = None
   self.cached_measured = None
   self.cached_place_frame = None
   self.cached_place_environment = None
   self.cached_place_style = None
-  self.cached_place_anchor_frames = None
   self.cached_placed = None
-  self.cached_intrinsic_anchor_frames = None
 }
 
 ///|

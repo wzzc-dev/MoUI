@@ -352,6 +352,10 @@ fn[Msg] button_event(
   match ctx.event {
     @core.AppEvent::Pointer(event) => {
       let inside = ctx.frame.contains(event.position)
+      // A stale-hover Exit re-dispatches positionally and can carry a
+      // position that is still inside this button; such an Exit must not
+      // clear press/hover, or the terminating Up never activates.
+      let exit_inside = event.phase == @core.PointerPhase::Exit && inside
       let current = if ctx.state.pressed {
         @core.PressableState::Pressed
       } else if ctx.state.hovered {
@@ -359,13 +363,23 @@ fn[Msg] button_event(
       } else {
         @core.PressableState::Normal
       }
-      let next = @common.view_button_next_state(current, inside, event.phase)
+      let next = if exit_inside {
+        current
+      } else {
+        @common.view_button_next_state(current, inside, event.phase)
+      }
       let activated = event.phase == @core.PointerPhase::Up &&
         inside &&
         current == @core.PressableState::Pressed
       let changed = next != current || activated
+      // A stale-hover Exit carries the current pointer position; when it
+      // lands inside the button the pointer never left, so press/hover must
+      // survive it (synthetic Exit cascades re-dispatch positionally and can
+      // otherwise clear a button the pointer is still on).
       let is_instant_clear = event.phase == @core.PointerPhase::Exit &&
-        current != @core.PressableState::Normal
+        current != @core.PressableState::Normal &&
+        !inside &&
+        !exit_inside
       let next_state = if is_instant_clear {
         @common.button_state_with_transition(
           ctx.state,

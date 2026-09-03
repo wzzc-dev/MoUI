@@ -30,21 +30,27 @@ pub fn[Msg] dropdown(
     state.expanded,
     on_toggle,
   )
-  popover_surface(
-    anchor~,
-    content=dropdown_menu(
-      items,
-      theme=resolved_theme,
-      width=width - resolved_theme.spacing_scale.sm * 2.0,
-      max_height~,
-      selected=state.selected,
-      label=label + " options",
-    ),
-    expanded=state.expanded,
-    theme=resolved_theme,
-    width~,
-    height=max_height,
-  )
+  let popups : Array[@presentation.PresentationSpec[Msg]] = if state.expanded {
+    [
+      popup_spec(
+        id="dropdown:\{label}",
+        content=dropdown_menu(
+          items,
+          theme=resolved_theme,
+          width=width - resolved_theme.spacing_scale.sm * 2.0,
+          max_height~,
+          selected=state.selected,
+          label=label + " options",
+        ),
+        theme=resolved_theme,
+        width~,
+        height=max_height,
+      ),
+    ]
+  } else {
+    []
+  }
+  @presentation.popup_host(anchor, popups)
 }
 
 ///|
@@ -92,17 +98,23 @@ pub fn[Msg] combobox(
   let anchor = @controls.semantic_toggle_action_control(
     anchor_view, expanded, on_toggle,
   )
-  popover_surface(
-    anchor~,
-    content=dropdown_menu(
-      items,
-      theme=resolved_theme,
-      width=width - resolved_theme.spacing_scale.sm * 2.0,
-      max_height~,
-    ),
-    expanded~,
-    theme=resolved_theme,
-    width~,
-    height=max_height,
-  )
+  let popups : Array[@presentation.PresentationSpec[Msg]] = if expanded {
+    [
+      popup_spec(
+        id="combobox:\{placeholder}",
+        content=dropdown_menu(
+          items,
+          theme=resolved_theme,
+          width=width - resolved_theme.spacing_scale.sm * 2.0,
+          max_height~,
+        ),
+        theme=resolved_theme,
+        width~,
+        height=max_height,
+      ),
+    ]
+  } else {
+    []
+  }
+  @presentation.popup_host(anchor, popups)
 }

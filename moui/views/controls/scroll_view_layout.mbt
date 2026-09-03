@@ -293,19 +293,23 @@ impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
     @common.first_child_size(ctx.child_sizes),
   )
   let offset = scroll_runtime_state(self, ctx.state).offset
-  @core.ViewLayoutResult::new(size=ctx.constraints.constrain(viewport_size), child_frames=[
-    scroll_child_frame(
-      frame=@core.Rect::new(
-        x=0.0,
-        y=0.0,
-        width=viewport_size.width,
-        height=viewport_size.height,
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(viewport_size),
+    child_frames=[
+      scroll_child_frame(
+        frame=@core.Rect::new(
+          x=0.0,
+          y=0.0,
+          width=viewport_size.width,
+          height=viewport_size.height,
+        ),
+        offset~,
+        viewport=viewport_size,
+        child_size=@common.first_child_size(ctx.child_sizes),
       ),
-      offset~,
-      viewport=viewport_size,
-      child_size=@common.first_child_size(ctx.child_sizes),
-    ),
-  ])
+    ],
+    clips_children=true,
+  )
 }
 
 ///|

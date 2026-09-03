@@ -124,29 +124,42 @@ pub fn[Msg] context_menu_region(
   theme? : @core.Theme,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let content = if visible {
-    @layout.stack([
-      child,
-      @container.container(
-        menu,
-        variant=@style.ContainerVariant::Overlay,
-        theme=resolved_theme,
-        padding=0.0,
-      )
-      // Context menus float above their host, so lift them with the component
-      // overlay shadow (Fluent flyout) or the neutral large elevation shadow.
-      .shadow(
-        @style.views_ambient_control_theme(resolved_theme).surface.overlay_shadow.unwrap_or(
-          resolved_theme.shadow_scale.lg,
+  // Context menus float above their host, so lift them with the component
+  // overlay shadow (Fluent flyout) or the neutral large elevation shadow.
+  let panel = @container.container(
+    menu,
+    variant=@style.ContainerVariant::Overlay,
+    theme=resolved_theme,
+    padding=0.0,
+  ).shadow(
+    @style.views_ambient_control_theme(resolved_theme).surface.overlay_shadow.unwrap_or(
+      resolved_theme.shadow_scale.lg,
+    ),
+  )
+  let popups : Array[@presentation.PresentationSpec[Msg]] = if visible {
+    [
+      @presentation.PresentationSpec::new(
+        id="context-menu",
+        kind=@presentation.PresentationKind::ContextMenu,
+        anchor=@presentation.PresentationAnchor::HostBase,
+        placement=Some(
+          @presentation.PresentationPlacement::new(
+            candidates=[
+              @presentation.PresentationPlacementCandidate::AboveEnd,
+              @presentation.PresentationPlacementCandidate::BelowEnd,
+              @presentation.PresentationPlacementCandidate::AboveStart,
+              @presentation.PresentationPlacementCandidate::BelowStart,
+            ],
+            viewport_insets=@core.Insets::all(0.0),
+          ),
         ),
+        content=panel,
       ),
-    ])
-    .semantics_role(@core.SemanticsRole::Menu)
-    .align(alignment=@core.Alignment::bottom_trailing())
+    ]
   } else {
-    child
+    []
   }
-  content
+  @presentation.popup_host(child, popups)
   .semantics_role(@core.SemanticsRole::Group)
   .accessibility_label("Context menu region")
   .semantics_description("Context menu region")

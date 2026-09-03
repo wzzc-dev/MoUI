@@ -70,20 +70,21 @@ fn RuntimeState::ensure_layout_tree(self : RuntimeState) -> Unit {
     passes = passes + 1
     self.layout_current_tree()
   }
+  // Overlay/presentation placement runs after the layout fixpoint so anchor
+  // resolution never re-enters layout and never keys layout caches.
+  self.apply_overlay_placements()
 }
 
 ///|
 fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
   self.rebuild_if_possible()
   self.stats.layout_pass_count = self.stats.layout_pass_count + 1
-  let previous_anchor_frames = self.anchor_registry.snapshot()
   self.layout_tree = {
     root: self.element_tree.root.place_with_text_system(
       Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
       environment=self.environment,
       text_system=self.text_system,
       layout_direction=self.environment.layout_direction,
-      anchor_frames=self.anchor_registry.snapshot(),
     ),
   }
   self.anchor_registry.clear()
@@ -91,20 +92,143 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
     self.layout_tree.root,
     self.anchor_registry,
   )
-  // A presentation can only consume anchor frames after the base tree has
-  // been placed. If this pass produced a different registry, run one bounded
-  // follow-up pass with the fresh snapshot. The normal layout stabilizer stops
-  // as soon as the registry is unchanged.
-  let anchor_frames_changed = previous_anchor_frames !=
-    self.anchor_registry.snapshot()
   self.dirty.needs_rebuild = false
   self.dirty.needs_layout = false
-  if anchor_frames_changed {
-    self.dirty.needs_layout = true
-  }
   self.dirty.dirty_layout_elements.clear()
   self.refresh_dirty_element_queue()
   ignore(self.try_pending_scroll_from_current_layout())
+}
+
+///|
+/// Compute final overlay frames from the fresh anchor registry. Overlay hosts
+/// position their presentation children during layout only provisionally
+/// (correct sizes, placeholder origins); this pass resolves the anchors and,
+/// when a computed frame differs from the placed frame, re-places the tree
+/// with the overrides applied. The registry is position-snapshotted from the
+/// base tree, so the resolved frames are stable across subsequent cache hits.
+fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
+  let context : @core.OverlayPlacementContext = {
+    viewport: Rect::new(
+      x=0.0,
+      y=0.0,
+      width=self.size.width,
+      height=self.size.height,
+    ),
+    host_frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+    child_sizes: self.layout_tree.root.children.map(child => child.frame.size),
+    anchor_frames: self.anchor_registry.snapshot(),
+    state: self.element_tree.root.control.view_state,
+  }
+  let overrides : Array[(Int, Array[(Int, Rect)])] = []
+  let spines : Array[ElementId] = []
+  let layers : Array[ElementId] = []
+  let active_surfaces : Array[ElementId] = []
+  collect_overlay_overrides(
+    self.element_tree.root,
+    self.layout_tree.root,
+    context,
+    [],
+    overrides,
+    spines,
+    layers,
+    active_surfaces,
+  )
+  self.layer_stack = layers
+  self.track_overlay_surface_lifecycle(active_surfaces)
+  if overrides.is_empty() {
+    self.overlay_overrides = []
+    return
+  }
+  self.overlay_overrides = overrides
+  // Force a re-place that consumes the overrides; unchanged subtrees still
+  // reuse their measured caches, so only positioned frames are recomputed.
+  self.element_tree.root.layout_cache.clear()
+  self.layout_tree = {
+    root: self.element_tree.root.place_with_text_system(
+      Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
+      environment=self.environment,
+      text_system=self.text_system,
+      layout_direction=self.environment.layout_direction,
+      overlay_overrides=self.overlay_overrides,
+    ),
+  }
+  // Ancestor render caches embed descendant paint bounds; the re-place moved
+  // overlay frames, so every cache along the hosts' ancestor spines is stale.
+  for id in spines {
+    self.mark_dirty(id)
+  }
+  self.dirty.needs_paint = true
+  self.dirty.needs_redraw = true
+}
+
+///|
+/// Descend the element/placed trees in lockstep and collect final overlay
+/// frames for every node that reports `place_overlays` positions differing
+/// from its currently placed child frames. `spines` receives the ancestor
+/// element paths (including the host) of every host whose frames changed, so
+/// stale ancestor render caches can be cleared.
+fn collect_overlay_overrides(
+  element : ElementNode,
+  placed : PlacedNode,
+  context : @core.OverlayPlacementContext,
+  path : Array[ElementId],
+  out : Array[(Int, Array[(Int, Rect)])],
+  spines : Array[ElementId],
+  layers : Array[ElementId],
+  active_surfaces : Array[ElementId],
+) -> Unit {
+  let child_path : Array[ElementId] = path.copy()
+  child_path.push(element.id)
+  match
+    element.view_node.place_overlays({
+      ..context,
+      host_frame: placed.frame,
+      child_sizes: placed.children.map(child => child.frame.size),
+      state: element.control.view_state,
+    }) {
+    Some(pairs) => {
+      // Overrides must cover every overlay-positioned child: the re-place
+      // rebuilds the spine and would otherwise drop unchanged children back to
+      // their provisional frames.
+      let any_changed = pairs
+        .iter()
+        .any(pair => {
+          pair.0 < placed.children.length() &&
+          placed.children[pair.0].frame != pair.1
+        })
+      if any_changed {
+        out.push((element.id.value(), pairs))
+        for id in child_path {
+          spines.push(id)
+        }
+      }
+      if pairs.length() > 0 &&
+        element.view_node.keyboard_policy()
+        is @core.KeyboardPolicy::TopMostDismissal {
+        layers.push(element.id)
+      }
+      for pair in pairs {
+        if pair.0 < element.children.length() {
+          active_surfaces.push(element.children[pair.0].id)
+        }
+      }
+    }
+    None => ()
+  }
+  for index, child in element.children {
+    if index < placed.children.length() {
+      collect_overlay_overrides(
+        child,
+        placed.children[index],
+        context,
+        child_path,
+        out,
+        spines,
+        layers,
+        active_surfaces,
+      )
+    }
+  }
 }
 
 ///|
@@ -129,12 +253,16 @@ fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
       environment=self.environment,
       text_system=self.text_system,
       now_ms=self.animfocus.now_ms,
+      overlay_enter=self.overlay_enter_times,
     ),
   }
   // Fold the per-subtree animation flag up to the root: if any painted node
   // reported a mid-animation sample, keep the host ticking redraws until the
-  // animation settles. Controls clear this once progress reaches 1.0.
-  self.animfocus.active_animations = self.render_tree.root.animating
+  // animation settles. Controls clear this once progress reaches 1.0. Exit
+  // ghosts are command snapshots without render nodes, so their in-flight
+  // fades must be latched here explicitly or they freeze mid-fade.
+  self.animfocus.active_animations = self.render_tree.root.animating ||
+    !self.exiting_overlays.is_empty()
   // If an animation is still in flight, request another frame right after the
   // paint that observed it. This is evaluated after `active_animations` is
   // updated, so once a transition settles the flag flips false and the redraw
@@ -406,4 +534,71 @@ fn RuntimeState::refresh_dirty_element_queue(self : RuntimeState) -> Unit {
   for id in self.dirty.dirty_platform_elements {
     push_unique_element_id(self.dirty.dirty_elements, id)
   }
+}
+
+///|
+/// Overlay surface lifecycle (ADR 0033): surfaces that disappeared since the
+/// previous pass are retained as fading command snapshots (exit); surfaces
+/// that just appeared get an enter fade driven by the frame clock through the
+/// render pass (see `RenderNode.render_opacity`).
+fn RuntimeState::track_overlay_surface_lifecycle(
+  self : RuntimeState,
+  active_surfaces : Array[ElementId],
+) -> Unit {
+  let now_ms = self.animfocus.now_ms
+  // Exit retention: capture removed surfaces from the previous render tree.
+  for id in self.active_surface_ids {
+    let still_active = active_surfaces.any(active => active == id)
+    if !still_active {
+      match self.render_tree.root.find_render_node(id) {
+        Some(node) => {
+          let commands : Array[DrawCommand] = []
+          node.collect_draw_commands(commands)
+          if commands.length() > 0 {
+            self.exiting_overlays.push({
+              commands,
+              started_ms: now_ms,
+              duration_ms: self.overlay_transition_duration_ms(),
+            })
+            self.dirty.full_damage_reason = Some("overlay exited")
+          }
+        }
+        None => ()
+      }
+    }
+  }
+  self.active_surface_ids = active_surfaces.copy()
+  // Enter fade bookkeeping: record first-seen time. Completed entries stay
+  // registered so an active surface is never re-recorded (which would restart
+  // its fade every placement pass and make it flicker); entries are dropped
+  // only when their surface disappears.
+  let mut index = 0
+  while index < self.overlay_enter_times.length() {
+    let entry = self.overlay_enter_times[index]
+    let still_active = active_surfaces.any(active => active == entry.0)
+    if !still_active {
+      ignore(self.overlay_enter_times.remove(index))
+    } else {
+      index = index + 1
+    }
+  }
+  for id in active_surfaces {
+    let known = self.overlay_enter_times.any(entry => entry.0 == id)
+    if !known {
+      self.overlay_enter_times.push((id, now_ms))
+    }
+  }
+  let any_fading = self.overlay_enter_times.any(entry => {
+    now_ms - entry.1 < self.overlay_transition_duration_ms()
+  })
+  if any_fading {
+    self.animfocus.active_animations = true
+  }
+}
+
+///|
+/// Duration of overlay enter/exit fades. Reduced-motion environments run at
+/// the runtime level elsewhere; overlays keep a single short default here.
+fn RuntimeState::overlay_transition_duration_ms(_self : RuntimeState) -> Double {
+  160.0
 }

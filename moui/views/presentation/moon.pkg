@@ -3,11 +3,11 @@ supported_targets = "+native+wasm-gc+wasm"
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/common",
-  "wzzc-dev/moui/views/presentation",
-  "wzzc-dev/moui/views/style",
-  "wzzc-dev/moui/views/layout",
-  "wzzc-dev/moui/views/container",
-  "wzzc-dev/moui/views/button",
-  "wzzc-dev/moui/views/text",
-  "wzzc-dev/moui/views/checkbox",
 }
+
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/views/container",
+  "wzzc-dev/moui/views/layout",
+  "wzzc-dev/moui/views/text",
+} for "test"

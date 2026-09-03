@@ -1,7 +1,6 @@
 ///|
 test "presentation placement falls back and clamps to viewport" {
   let placement = PresentationPlacement::new(
-    anchor=PresentationAnchor::stable_key("anchor"),
     candidates=[
       PresentationPlacementCandidate::AboveCenter,
       PresentationPlacementCandidate::BelowCenter,
@@ -53,4 +52,39 @@ test "presentation host policy keeps transparent fallback" {
   assert_true(!PresentationHostPolicy::PreferNative.requests_native(false))
   assert_true(PresentationHostPolicy::NativeRequired.shows_view_surface(false))
   assert_true(!PresentationHostPolicy::PreferNative.shows_view_surface(true))
+}
+
+///|
+
+///|
+fn toast_panel() -> @core.View[String] {
+  let panel : @core.View[String] = @layout.frame(
+    @text.text("Toast"),
+    width=40.0,
+    height=20.0,
+  )
+  panel
+}
+
+///|
+test "toast presentations dock bottom-center in the viewport" {
+  let root = overlay_host(@text.text("Base"), [
+    PresentationSpec::new(
+      id="toast",
+      kind=PresentationKind::Toast,
+      content=toast_panel(),
+      placement=Some(
+        PresentationPlacement::new(viewport_insets=@core.Insets::all(12.0)),
+      ),
+    ),
+  ])
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=200.0, height=100.0),
+  )
+  let layout = runtime.layout()
+  // The toast content is 40x20 wide: docked at the bottom inset, centered.
+  let frame = layout.children[1].frame
+  assert_true(frame.origin.x == 80.0)
+  assert_true(frame.origin.y == 68.0)
 }

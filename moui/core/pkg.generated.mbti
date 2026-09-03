@@ -772,6 +772,12 @@ pub(all) struct KeyboardEvent {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn KeyboardEvent::new(key~ : String, pressed? : Bool, text? : String?, repeat? : Bool, modifiers? : KeyModifiers) -> Self
 
+pub(all) enum KeyboardPolicy {
+  Passthrough
+  TopMostDismissal
+  ShortcutScope
+}
+
 pub(all) struct KeyboardShortcut {
   key : String
   modifiers : KeyModifiers
@@ -884,6 +890,14 @@ pub(all) struct OpacityModifier {
   opacity : Double
 }
 pub fn[Msg] OpacityModifier::to_any_modifier(Self) -> AnyModifier[Msg]
+
+pub(all) struct OverlayPlacementContext {
+  viewport : Rect
+  host_frame : Rect
+  child_sizes : Array[Size]
+  anchor_frames : Array[(String, Rect)]
+  state : ViewStateContext
+}
 
 pub(all) struct PaddingModifier {
   insets : Insets
@@ -1781,6 +1795,7 @@ pub fn[Msg] View::identity(Self[Msg]) -> ViewIdentity
 pub fn[Msg] View::intrinsic_height(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::intrinsic_width(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::key(Self[Msg], String) -> Self[Msg]
+pub fn[Msg] View::keyboard_policy(Self[Msg]) -> KeyboardPolicy
 pub fn[Msg] View::keyboard_shortcut(Self[Msg], KeyboardShortcut) -> Self[Msg]
 pub fn[Msg] View::layout(Self[Msg], ViewLayoutContext) -> ViewLayoutResult
 pub fn[Msg] View::layout_priority(Self[Msg], Double) -> Self[Msg]
@@ -1799,6 +1814,7 @@ pub fn[Msg] View::on_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::opacity(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::paint(Self[Msg], ViewPaintContext) -> ViewPaintPlan
+pub fn[Msg] View::place_overlays(Self[Msg], OverlayPlacementContext) -> Array[(Int, Rect)]?
 pub fn[Msg] View::platform_views(Self[Msg], ViewPlatformContext) -> Array[PlatformViewPlacement]
 pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
@@ -1900,7 +1916,6 @@ pub(all) struct ViewLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
   child_flex_weights : Array[Double]
-  anchor_frames : Array[(String, Rect)]
   state : ViewStateContext
   text_system : TextSystem
   environment : Environment
@@ -1910,8 +1925,9 @@ pub(all) struct ViewLayoutContext {
 pub(all) struct ViewLayoutResult {
   size : Size
   child_frames : Array[Rect]
+  clips_children : Bool
 } derive(Eq, ToJson, @debug.Debug)
-pub fn ViewLayoutResult::new(size~ : Size, child_frames? : Array[Rect]) -> Self
+pub fn ViewLayoutResult::new(size~ : Size, child_frames? : Array[Rect], clips_children? : Bool) -> Self
 
 pub(all) struct ViewPaintContext {
   frame : Rect
@@ -2088,12 +2104,14 @@ pub(open) trait ViewNode {
   fn child_environment(Self, Environment) -> Environment = _
   fn child_style(Self, ViewStyle) -> ViewStyle = _
   fn layout(Self, ViewLayoutContext) -> ViewLayoutResult
+  fn place_overlays(Self, OverlayPlacementContext) -> Array[(Int, Rect)]? = _
   fn paint(Self, ViewPaintContext) -> ViewPaintPlan = _
   fn platform_views(Self, ViewPlatformContext) -> Array[PlatformViewPlacement] = _
   fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
   fn semantics(Self) -> ViewSemanticsInfo = _
   fn focusable(Self) -> Bool = _
   fn focus_trap(Self) -> Bool = _
+  fn keyboard_policy(Self) -> KeyboardPolicy = _
   fn flex_weight(Self) -> Double = _
 }
 

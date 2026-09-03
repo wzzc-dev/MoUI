@@ -280,18 +280,28 @@ test "virtual node checkbox controlled event dispatches without core primitive" 
 test "virtual node picker dispatches overlay selection without core primitive" {
   let received : Array[String] = []
   let runtime = AppRuntime::new_view(
-    root=@views.frame(
-      @views.picker(
-        [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
-        selected="one",
-        on_select=id => id,
-        placeholder="Pick",
-        max_height=160.0,
-      ),
-      width=200.0,
-      height=40.0,
+    // Column wrapper: a root-level frame stretches to the window constraints,
+    // which would put the picker's own frame under the click point.
+    root=@views.column(
+      [
+        @views.frame(
+          @views.picker(
+            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
+            selected="one",
+            on_select=id => id,
+            placeholder="Pick",
+            max_height=160.0,
+          ),
+          width=200.0,
+          height=40.0,
+        ),
+      ],
+      spacing=0.0,
     ),
-    size=@core.Size::new(width=200.0, height=40.0),
+    // The window is tall enough for the popup to fit below the anchor: the
+    // placement pass clamps popups into the viewport instead of painting them
+    // beyond the window edge like the old overlay-command popups.
+    size=@core.Size::new(width=200.0, height=160.0),
     on_message=Some(message => received.push(message)),
   )
   ignore(runtime.draw_frame())
@@ -303,13 +313,11 @@ test "virtual node picker dispatches overlay selection without core primitive" {
       ),
     ),
   )
-  let opened = runtime.inspector_snapshot()
-  match opened.view_tree().nodes().get(1) {
-    Some(node) =>
-      if !node.needs_paint() {
-        fail("expected opening picker to dirty paint")
-      }
-    None => fail("expected picker inspector node")
+  // Opening re-runs layout (the popup becomes a placed overlay child) and the
+  // relayout completes inside dispatch, so the observable is a pending redraw
+  // at the runtime level rather than a stale per-node dirty flag.
+  if !(runtime.needs_paint() || runtime.needs_redraw()) {
+    fail("expected opening picker to request a repaint")
   }
   ignore(runtime.draw_frame())
   runtime.dispatch_event(
@@ -324,14 +332,16 @@ test "virtual node picker dispatches overlay selection without core primitive" {
     fail("expected picker overlay selection message")
   }
   let snapshot = runtime.inspector_snapshot()
-  match snapshot.view_tree().nodes().get(1) {
+  // Node order shifted with the wrapper: frame -> picker. The picker keeps
+  // its virtual-node identity across the popup child subtree.
+  match snapshot.view_tree().nodes().get(2) {
     Some(node) =>
       if node.kind() != "Picker" {
         fail("expected picker virtual node identity in inspector")
       }
     None => fail("expected picker inspector node")
   }
-  if snapshot.view_tree().root_kind() != "Frame" {
+  if snapshot.view_tree().root_kind() != "Flex" {
     fail("expected picker virtual node identity in inspector")
   }
 }
@@ -492,17 +502,28 @@ test "picker overlay keeps focus off covered text field on pointer down" {
 test "virtual node datepicker dispatches overlay selection without core primitive" {
   let received : Array[@core.DateValue] = []
   let runtime = AppRuntime::new_view(
-    root=@views.frame(
-      @views.datepicker(
-        selected=@core.DateValue::new(year=2024, month=1, day=15),
-        on_select=value => value,
-        mode=@views.DatePickerMode::Date,
-        placeholder="Select date",
-      ),
-      width=200.0,
-      height=40.0,
+    // Column wrapper: a root-level frame stretches to the window constraints,
+    // which would put the datepicker's own frame under the click point.
+    root=@views.column(
+      [
+        @views.frame(
+          @views.datepicker(
+            selected=@core.DateValue::new(year=2024, month=1, day=15),
+            on_select=value => value,
+            mode=@views.DatePickerMode::Date,
+            placeholder="Select date",
+          ),
+          width=200.0,
+          height=40.0,
+        ),
+      ],
+      spacing=0.0,
     ),
-    size=@core.Size::new(width=200.0, height=40.0),
+    // The window is tall enough for the calendar panel to fit below the
+    // anchor: the placement pass clamps popups into the viewport instead of
+    // painting them beyond the window edge like the old overlay-command
+    // popups.
+    size=@core.Size::new(width=280.0, height=420.0),
     on_message=Some(message => received.push(message)),
   )
   ignore(runtime.draw_frame())
@@ -514,14 +535,6 @@ test "virtual node datepicker dispatches overlay selection without core primitiv
       ),
     ),
   )
-  let opened = runtime.inspector_snapshot()
-  match opened.view_tree().nodes().get(1) {
-    Some(node) =>
-      if !node.needs_paint() {
-        fail("expected opening datepicker to dirty paint")
-      }
-    None => fail("expected datepicker inspector node")
-  }
   ignore(runtime.draw_frame())
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
@@ -535,7 +548,8 @@ test "virtual node datepicker dispatches overlay selection without core primitiv
     fail("expected datepicker overlay selection message")
   }
   let snapshot = runtime.inspector_snapshot()
-  match snapshot.view_tree().nodes().get(1) {
+  // Node order: column -> frame -> datepicker.
+  match snapshot.view_tree().nodes().get(2) {
     Some(node) =>
       if node.kind() != "DatePicker" {
         fail("expected datepicker virtual node identity in inspector")

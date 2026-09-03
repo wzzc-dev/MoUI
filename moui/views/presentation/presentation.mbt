@@ -8,13 +8,16 @@ pub(all) enum PresentationKind {
   Sheet
   Tooltip
   ContextMenu
+  Toast
 } derive(Eq, Debug)
 
 ///|
-/// An anchor is either a stable view key or a point in the viewport.
+/// An anchor is a stable view key, a viewport point, or — inside
+/// `popup_host` — the host node's own base frame.
 pub(all) enum PresentationAnchor {
   StableKey(String)
   Viewport(@core.Point)
+  HostBase
 } derive(Eq, Debug)
 
 ///|
@@ -36,9 +39,10 @@ pub(all) enum PresentationPlacementCandidate {
 } derive(Eq, Debug)
 
 ///|
-/// Placement policy shared by view-level and host presentations.
+/// Placement policy shared by view-level and host presentations. The anchor
+/// itself lives on `PresentationSpec`; a placement only describes where around
+/// that anchor the surface may land.
 pub(all) struct PresentationPlacement {
-  anchor : PresentationAnchor
   candidates : Array[PresentationPlacementCandidate]
   viewport_insets : @core.Insets
   clamp_to_viewport : Bool
@@ -163,9 +167,7 @@ pub fn[Msg] PresentationSpec::new(
   transition? : PresentationTransition = PresentationTransition::Fade,
   presented? : Bool = true,
 ) -> PresentationSpec[Msg] {
-  let resolved_placement = placement.unwrap_or(
-    PresentationPlacement::at(anchor),
-  )
+  let resolved_placement = placement.unwrap_or(PresentationPlacement::new())
   {
     id,
     kind,
@@ -206,27 +208,14 @@ pub fn[Msg] PresentationDismissPolicy::new(
 }
 
 ///|
-pub fn PresentationPlacement::at(
-  anchor : PresentationAnchor,
-) -> PresentationPlacement {
-  {
-    anchor,
-    candidates: [PresentationPlacementCandidate::BelowStart],
-    viewport_insets: @core.Insets::all(8.0),
-    clamp_to_viewport: true,
-  }
-}
-
-///|
 pub fn PresentationPlacement::new(
-  anchor~ : PresentationAnchor,
   candidates? : Array[PresentationPlacementCandidate] = [
     PresentationPlacementCandidate::BelowStart,
   ],
   viewport_insets? : @core.Insets = @core.Insets::all(8.0),
   clamp_to_viewport? : Bool = true,
 ) -> PresentationPlacement {
-  { anchor, candidates: candidates.copy(), viewport_insets, clamp_to_viewport }
+  { candidates: candidates.copy(), viewport_insets, clamp_to_viewport }
 }
 
 ///|
@@ -236,11 +225,7 @@ pub fn PresentationPlacement::viewport(
   ],
   viewport_insets? : @core.Insets = @core.Insets::all(8.0),
 ) -> PresentationPlacement {
-  PresentationPlacement::new(
-    anchor=PresentationAnchor::Viewport(@core.Point::new(x=0.0, y=0.0)),
-    candidates~,
-    viewport_insets~,
-  )
+  PresentationPlacement::new(candidates~, viewport_insets~)
 }
 
 ///|
@@ -467,6 +452,28 @@ pub fn[Msg] overlay_host(
   base : @core.View[Msg],
   presentations : Array[PresentationSpec[Msg]],
 ) -> @core.View[Msg] {
+  overlay_host_with_sizing(base, presentations, sizing=ViewportSized)
+}
+
+///|
+/// Composition entrypoint for control-internal popups. The host sizes to its
+/// base child (like an in-place stack) while popup children are placed by the
+/// runtime's post-layout placement pass: they escape ancestor clipping, flip
+/// and clamp around the host frame (`PresentationAnchor::HostBase`), and take
+/// part in presentation semantics and dismissal.
+pub fn[Msg] popup_host(
+  base : @core.View[Msg],
+  popups : Array[PresentationSpec[Msg]],
+) -> @core.View[Msg] {
+  overlay_host_with_sizing(base, popups, sizing=BaseSized)
+}
+
+///|
+fn[Msg] overlay_host_with_sizing(
+  base : @core.View[Msg],
+  presentations : Array[PresentationSpec[Msg]],
+  sizing~ : OverlayHostSizing,
+) -> @core.View[Msg] {
   let deepest_modal = deepest_modal_index(presentations)
   let base_child = if deepest_modal >= 0 { base.hide_semantics() } else { base }
   let children : Array[@core.View[Msg]] = [base_child]
@@ -484,7 +491,7 @@ pub fn[Msg] overlay_host(
     }
   }
   @core.View::from_node(
-    OverlayHostNode::{ presentations: presentations.copy() },
+    OverlayHostNode::{ presentations: presentations.copy(), sizing },
     children=_node => children,
     event=(node, context) => node.event_result(context),
   )
@@ -505,8 +512,18 @@ fn[Msg] deepest_modal_index(
 }
 
 ///|
+/// Sizing mode of an overlay host. `ViewportSized` hosts fill their
+/// constraints (app presentations); `BaseSized` hosts size to their base
+/// child (control popups) and anchor popups to their own frame.
+priv enum OverlayHostSizing {
+  ViewportSized
+  BaseSized
+}
+
+///|
 priv struct OverlayHostNode[Msg] {
   presentations : Array[PresentationSpec[Msg]]
+  sizing : OverlayHostSizing
 }
 
 ///|
@@ -522,14 +539,25 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn declaration(_self) {
 ///|
 impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn layout(self, ctx) {
   let viewport = ctx.constraints.constrain(ctx.constraints.max)
-  let viewport_rect = @core.Rect::new(
-    x=0.0,
-    y=0.0,
-    width=viewport.width,
-    height=viewport.height,
-  )
+  let host_size = if self.sizing is OverlayHostSizing::BaseSized {
+    // Base-sized hosts (control popups) size to their base child. The base's
+    // measured size is authoritative: parents may stretch the host's placed
+    // frame, but the popup anchor and the base child must track the control.
+    if ctx.child_sizes.length() > 0 {
+      ctx.child_sizes[0]
+    } else {
+      @core.Size::new(width=0.0, height=0.0)
+    }
+  } else {
+    viewport
+  }
   let frames : Array[@core.Rect] = [
-    @core.Rect::new(x=0.0, y=0.0, width=viewport.width, height=viewport.height),
+    @core.Rect::new(
+      x=0.0,
+      y=0.0,
+      width=host_size.width,
+      height=host_size.height,
+    ),
   ]
   let mut child_index = 1
   for presentation in self.presentations {
@@ -550,34 +578,108 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn layout(self, ctx) {
       } else {
         @core.Size::new(width=0.0, height=0.0)
       }
+      // Placement is provisional: sizes are final, origins are placeholders.
+      // The runtime's post-layout placement pass resolves anchors and assigns
+      // the absolute frame via `place_overlays`.
+      frames.push(
+        @core.Rect::new(
+          x=0.0,
+          y=0.0,
+          width=measured.width,
+          height=measured.height,
+        ),
+      )
+      child_index = child_index + 1
+    }
+  }
+  @core.ViewLayoutResult::new(size=host_size, child_frames=frames)
+}
+
+///|
+impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
+  self,
+  context,
+) {
+  let viewport_rect = context.viewport
+  // `HostBase` anchors to the base child's frame: the host's placed frame may
+  // be stretched by its parent, but the control the popup belongs to is the
+  // base child at the host origin.
+  let host_base_frame = @core.Rect::new(
+    x=context.host_frame.origin.x,
+    y=context.host_frame.origin.y,
+    width=if context.child_sizes.length() > 0 {
+      context.child_sizes[0].width
+    } else {
+      0.0
+    },
+    height=if context.child_sizes.length() > 0 {
+      context.child_sizes[0].height
+    } else {
+      0.0
+    },
+  )
+  let pairs : Array[(Int, @core.Rect)] = []
+  let mut child_index = 1
+  for presentation in self.presentations {
+    if presentation.presented {
+      if presentation.modality is PresentationModality::Modal {
+        child_index = child_index + 1
+      }
+      let measured = if child_index < context.child_sizes.length() {
+        context.child_sizes[child_index]
+      } else {
+        @core.Size::new(width=0.0, height=0.0)
+      }
       let anchor_frame = presentation_anchor_frame(
         presentation.anchor,
         viewport_rect,
-        ctx.anchor_frames,
+        host_base_frame,
+        context.anchor_frames,
       )
       let frame = match presentation.kind {
-        PresentationKind::Dialog =>
+        PresentationKind::Toast if self.sizing
+          is OverlayHostSizing::ViewportSized =>
           @core.Rect::new(
-            x=(viewport.width - measured.width) / 2.0,
-            y=(viewport.height - measured.height) / 2.0,
+            x=(viewport_rect.size.width - measured.width) / 2.0,
+            y=viewport_rect.size.height -
+              measured.height -
+              presentation.placement.viewport_insets.bottom,
             width=measured.width,
             height=measured.height,
           )
-        PresentationKind::Sheet =>
+        PresentationKind::Dialog if self.sizing
+          is OverlayHostSizing::ViewportSized =>
           @core.Rect::new(
-            x=(viewport.width - measured.width) / 2.0,
-            y=viewport.height - measured.height,
+            x=(viewport_rect.size.width - measured.width) / 2.0,
+            y=(viewport_rect.size.height - measured.height) / 2.0,
+            width=measured.width,
+            height=measured.height,
+          )
+        PresentationKind::Sheet if self.sizing
+          is OverlayHostSizing::ViewportSized =>
+          @core.Rect::new(
+            x=(viewport_rect.size.width - measured.width) / 2.0,
+            y=viewport_rect.size.height - measured.height,
             width=measured.width,
             height=measured.height,
           )
         _ =>
           presentation.placement.resolve(anchor_frame, viewport_rect, measured)
       }
-      frames.push(frame)
+      pairs.push((child_index, frame))
       child_index = child_index + 1
     }
   }
-  @core.ViewLayoutResult::new(size=viewport, child_frames=frames)
+  if pairs.is_empty() {
+    None
+  } else {
+    Some(pairs)
+  }
+}
+
+///|
+impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn keyboard_policy(_self) {
+  @core.KeyboardPolicy::TopMostDismissal
 }
 
 ///|
@@ -591,19 +693,22 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn semantics(_self) {
 fn presentation_anchor_frame(
   anchor : PresentationAnchor,
   viewport : @core.Rect,
+  host_frame : @core.Rect,
   anchor_frames : Array[(String, @core.Rect)],
 ) -> @core.Rect {
   match anchor {
     PresentationAnchor::Viewport(point) =>
       @core.Rect::new(x=point.x, y=point.y, width=0.0, height=0.0)
+    PresentationAnchor::HostBase => host_frame
     PresentationAnchor::StableKey(key) => {
       for entry in anchor_frames {
         if entry.0 == key {
           return entry.1
         }
       }
-      // The first layout has no completed anchor snapshot yet. Keep the
-      // existing deterministic fallback and converge on the next pass.
+      // The anchor snapshot may lag one frame behind a just-mounted key; the
+      // placement pass runs every frame, so this converges without a second
+      // layout pass. Fall back to the viewport center meanwhile.
       @core.Rect::new(
         x=viewport.origin.x + viewport.size.width / 2.0,
         y=viewport.origin.y + viewport.size.height / 2.0,

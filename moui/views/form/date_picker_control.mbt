@@ -89,13 +89,28 @@ fn[Msg] date_picker_control(
       kind,
       key,
     },
+    children=_node => {
+      [
+        @core.View::from_node(
+          DatePickerPanel::{
+            selected: selected_snapshot,
+            min_date,
+            max_date,
+            on_select,
+            theme,
+            style,
+          },
+          event=(node, ctx) => datepicker_panel_event(node, ctx),
+        ),
+      ]
+    },
     event=(node, ctx) => date_picker_event(node, ctx, selected, on_select),
     semantics_actions=_node => {
       [
         @core.ViewSemanticsActionHandler::activate(ctx => {
           @core.ViewSemanticsActionResult::accepted(
             state=Some({ ..ctx.state, expanded: !ctx.state.expanded }),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=@core.ViewDirtyHint::ViewLayoutDirty,
           )
         }),
       ]
@@ -148,9 +163,69 @@ impl @core.ViewNode for DatePicker with fn declaration(self) {
 
 ///|
 impl @core.ViewNode for DatePicker with fn layout(_self, ctx) {
-  @core.ViewLayoutResult::new(
-    size=ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0)),
+  let own = ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0))
+  // The calendar panel is a real child subtree. Collapsed it receives no
+  // frame (not placed, painted, hit-tested, or exposed to semantics);
+  // expanded, the post-layout placement pass resolves its absolute frame.
+  let child_frames = if ctx.state.expanded {
+    let panel_size = if ctx.child_sizes.length() > 0 {
+      ctx.child_sizes[0]
+    } else {
+      @core.Size::new(
+        width=datepicker_popup_width(0.0),
+        height=datepicker_popup_height(),
+      )
+    }
+    [
+      @core.Rect::new(
+        x=0.0,
+        y=-100000.0,
+        width=panel_size.width,
+        height=panel_size.height,
+      ),
+    ]
+  } else {
+    []
+  }
+  @core.ViewLayoutResult::new(size=own, child_frames~)
+}
+
+///|
+impl @core.ViewNode for DatePicker with fn child_constraints(
+  _self,
+  _constraints,
+) {
+  // The panel sizes to its own content; parent constraints (tight at place
+  // time) must not clamp it.
+  @core.Constraints::unbounded()
+}
+
+///|
+impl @core.ViewNode for DatePicker with fn place_overlays(_self, context) {
+  if !context.state.expanded {
+    return None
+  }
+  if context.child_sizes.is_empty() {
+    return None
+  }
+  let natural = context.child_sizes[0]
+  let content_size = @core.Size::new(
+    width=@common.view_max_double(natural.width, context.host_frame.size.width),
+    height=natural.height,
   )
+  let placement = @presentation.PresentationPlacement::new(
+    candidates=[
+      @presentation.PresentationPlacementCandidate::BelowStart,
+      @presentation.PresentationPlacementCandidate::AboveStart,
+    ],
+    viewport_insets=@core.Insets::all(0.0),
+  )
+  let frame = placement.resolve(
+    context.host_frame,
+    context.viewport,
+    content_size,
+  )
+  Some([(0, frame)])
 }
 
 ///|
@@ -161,32 +236,20 @@ impl @core.ViewNode for DatePicker with fn paint(self, ctx) {
     None => @style.PickerStyle::default(theme=resolved_theme)
   }
   let commands : Array[@core.DrawCommand] = []
-  let overlay_commands : Array[@core.DrawCommand] = []
   append_datepicker_commands(
     commands,
-    overlay_commands,
     frame=ctx.frame,
     selected=self.selected,
-    view_date=datepicker_view_date(ctx.state, self.selected),
     mode=self.mode,
     placeholder=self.placeholder,
     font=resolved_style.font,
     foreground=resolved_style.foreground,
     background=resolved_style.background,
     corner_radius=resolved_style.radius,
-    min_date=self.min_date,
-    max_date=self.max_date,
     expanded=ctx.state.expanded,
     theme=resolved_theme,
   )
-  {
-    commands,
-    child_layers: [],
-    post_commands: [],
-    overlay_commands,
-    repaint_boundary: false,
-    animating: false,
-  }
+  { ..@core.ViewPaintPlan::empty(), commands, }
 }
 
 ///|
@@ -206,10 +269,10 @@ impl @core.ViewNode for DatePicker with fn focusable(_self) {
 
 ///|
 fn[Msg] date_picker_event(
-  node : DatePicker,
+  _node : DatePicker,
   ctx : @core.ViewEventContext,
   selected : @core.DateValue,
-  on_select : ((@core.DateValue) -> Msg)?,
+  _on_select : ((@core.DateValue) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
     @core.AppEvent::Pointer(event) =>
@@ -217,10 +280,8 @@ fn[Msg] date_picker_event(
         ctx.state,
         event,
         frame=ctx.frame,
+        popup_frame=ctx.child_frames.get(0),
         selected~,
-        min_date=node.min_date,
-        max_date=node.max_date,
-        on_select~,
       )
     @core.AppEvent::Keyboard(event) =>
       handle_datepicker_keyboard(ctx.state, event, selected~)
@@ -231,18 +292,14 @@ fn[Msg] date_picker_event(
 ///|
 fn append_datepicker_commands(
   commands : Array[@core.DrawCommand],
-  overlay_commands : Array[@core.DrawCommand],
   frame~ : @core.Rect,
   selected~ : @core.DateValue,
-  view_date~ : @core.DateValue,
   mode~ : DatePickerDisplayMode,
   placeholder~ : String,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
   background~ : @core.Brush,
   corner_radius~ : Double,
-  min_date~ : @core.DateValue?,
-  max_date~ : @core.DateValue?,
   expanded~ : Bool,
   theme~ : @core.Theme,
 ) -> Unit {
@@ -290,166 +347,6 @@ fn append_datepicker_commands(
       ),
     ),
   )
-  if expanded {
-    append_datepicker_popup_commands(
-      overlay_commands,
-      frame~,
-      selected~,
-      view_date~,
-      foreground~,
-      background~,
-      min_date~,
-      max_date~,
-      theme~,
-    )
-  }
-}
-
-///|
-fn append_datepicker_popup_commands(
-  overlay_commands : Array[@core.DrawCommand],
-  frame~ : @core.Rect,
-  selected~ : @core.DateValue,
-  view_date~ : @core.DateValue,
-  foreground~ : @core.Color,
-  background~ : @core.Brush,
-  min_date~ : @core.DateValue?,
-  max_date~ : @core.DateValue?,
-  theme~ : @core.Theme,
-) -> Unit {
-  let panel_frame = datepicker_popup_frame(frame)
-  let panel_rounded = @core.RoundedRect::new(
-    rect=panel_frame,
-    radius=theme.radius_scale.lg,
-  )
-  // Align with popover/menu floating surfaces: prefer the component overlay
-  // shadow token, fall back to mid elevation (theme docs reserve `md` for
-  // picker-like mid layers).
-  let shadow = @style.views_ambient_control_theme(theme).surface.overlay_shadow.unwrap_or(
-    theme.shadow_scale.md,
-  )
-  overlay_commands.push(
-    @core.DrawCommand::DrawShadow(
-      @core.ShadowSpec::new(
-        rect=panel_rounded,
-        color=shadow.color,
-        offset=shadow.offset,
-        blur_radius=shadow.blur_radius,
-        spread=shadow.spread,
-      ),
-    ),
-  )
-  overlay_commands.push(
-    @core.DrawCommand::FillRoundedRectBrush(panel_rounded, background),
-  )
-  let header_height = datepicker_header_height()
-  let header_frame = @core.Rect::new(
-    x=panel_frame.origin.x,
-    y=panel_frame.origin.y,
-    width=panel_frame.size.width,
-    height=header_height,
-  )
-  overlay_commands.push(
-    @core.DrawCommand::DrawText(
-      @core.TextRun::new(
-        text="\{view_date.year}年\{view_date.month}月",
-        frame=header_frame,
-        font=@core.FontSpec::new(size=16.0, weight=600),
-        color=foreground,
-      ),
-    ),
-  )
-  let left_button_frame = datepicker_left_nav_frame(panel_frame)
-  let right_button_frame = datepicker_right_nav_frame(panel_frame)
-  overlay_commands.push(
-    @core.DrawCommand::DrawText(
-      @core.TextRun::new(
-        text="◀",
-        frame=left_button_frame,
-        font=@core.FontSpec::new(size=18.0),
-        color=foreground,
-      ),
-    ),
-  )
-  overlay_commands.push(
-    @core.DrawCommand::DrawText(
-      @core.TextRun::new(
-        text="▶",
-        frame=right_button_frame,
-        font=@core.FontSpec::new(size=18.0),
-        color=foreground,
-      ),
-    ),
-  )
-  let day_header_height = datepicker_day_header_height()
-  let day_cell_width = panel_frame.size.width / 7.0
-  let day_names = ["日", "一", "二", "三", "四", "五", "六"]
-  for index, day in day_names {
-    let day_frame = @core.Rect::new(
-      x=panel_frame.origin.x + index.to_double() * day_cell_width,
-      y=panel_frame.origin.y + header_height,
-      width=day_cell_width,
-      height=day_header_height,
-    )
-    overlay_commands.push(
-      @core.DrawCommand::DrawText(
-        @core.TextRun::new(
-          text=day,
-          frame=day_frame,
-          font=@core.FontSpec::new(size=12.0, weight=500),
-          color=foreground.with_alpha(0.6),
-        ),
-      ),
-    )
-  }
-  let cell_height = datepicker_cell_height()
-  let start_y = panel_frame.origin.y + header_height + day_header_height
-  let year = view_date.year
-  let month = view_date.month
-  let first_day_weekday = datepicker_first_weekday_of_month_sunday0(year, month)
-  let days_in_month_count = datepicker_days_in_month(year, month)
-  for day in 1..<=days_in_month_count {
-    let total_index = first_day_weekday + day - 1
-    let col = total_index % 7
-    let row = total_index / 7
-    let cell_frame = @core.Rect::new(
-      x=panel_frame.origin.x + col.to_double() * day_cell_width,
-      y=start_y + row.to_double() * cell_height,
-      width=day_cell_width,
-      height=cell_height,
-    )
-    let is_selected = selected.year == year &&
-      selected.month == month &&
-      selected.day == day
-    let candidate = { ..selected, year, month, day }
-    let is_selectable = datepicker_value_in_range(candidate, min_date, max_date)
-    let cell_rounded = @core.RoundedRect::new(
-      rect=cell_frame.inset(@core.Insets::all(4.0)),
-      radius=18.0,
-    )
-    if is_selected {
-      overlay_commands.push(
-        @core.DrawCommand::FillRoundedRect(cell_rounded, theme.palette.primary),
-      )
-    }
-    let day_color = if is_selected {
-      @core.Color::white()
-    } else if !is_selectable {
-      foreground.with_alpha(0.28)
-    } else {
-      foreground
-    }
-    overlay_commands.push(
-      @core.DrawCommand::DrawText(
-        @core.TextRun::new(
-          text="\{day}",
-          frame=cell_frame,
-          font=@core.FontSpec::new(size=14.0),
-          color=day_color,
-        ),
-      ),
-    )
-  }
 }
 
 ///|
@@ -457,46 +354,37 @@ fn[Msg] handle_datepicker_pointer(
   state : @core.ViewStateContext,
   event : @core.PointerEvent,
   frame~ : @core.Rect,
+  popup_frame~ : @core.Rect?,
   selected~ : @core.DateValue,
-  min_date~ : @core.DateValue?,
-  max_date~ : @core.DateValue?,
-  on_select~ : ((@core.DateValue) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   let main_button_clicked = event.phase == @core.PointerPhase::Up &&
     frame.contains(event.position)
-  let panel_frame = datepicker_popup_frame(frame)
-  let inside_panel = state.expanded && panel_frame.contains(event.position)
+  let panel_hit = match popup_frame {
+    Some(popup) => popup.contains(event.position)
+    None => false
+  }
+  let inside_panel = state.expanded && panel_hit
+  // Panel interactions (month nav, day selection) are handled by the panel
+  // subtree itself; this handler only toggles and closes the popup.
   let claim_focus = event.phase == @core.PointerPhase::Down &&
-    (frame.contains(event.position) || inside_panel)
+    frame.contains(event.position)
   if state.expanded {
-    if main_button_clicked && !panel_frame.contains(event.position) {
+    if main_button_clicked && !inside_panel {
       @common.view_event_result(
         changed=true,
         focused=true,
         captured=true,
         state=Some(datepicker_state(state, expanded=false, selected)),
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
-      )
-    } else if event.phase == @core.PointerPhase::Up &&
-      panel_frame.contains(event.position) {
-      handle_datepicker_panel_pointer(
-        state,
-        event,
-        panel_frame~,
-        selected~,
-        min_date~,
-        max_date~,
-        on_select~,
+        dirty=@core.ViewDirtyHint::ViewLayoutDirty,
       )
     } else if event.phase == @core.PointerPhase::Up {
       @common.view_event_result(
         changed=true,
         captured=true,
         state=Some(datepicker_state(state, expanded=false, selected)),
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        dirty=@core.ViewDirtyHint::ViewLayoutDirty,
       )
-    } else if frame.contains(event.position) ||
-      panel_frame.contains(event.position) {
+    } else if frame.contains(event.position) {
       @common.view_event_result(
         changed=true,
         focused=claim_focus,
@@ -511,7 +399,7 @@ fn[Msg] handle_datepicker_pointer(
       focused=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, selected)),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=@core.ViewDirtyHint::ViewLayoutDirty,
     )
   } else if claim_focus {
     @common.view_event_result(changed=true, focused=true, captured=true)
@@ -521,6 +409,10 @@ fn[Msg] handle_datepicker_pointer(
 }
 
 ///|
+/// Panel-local pointer handling. Month navigation keeps the popup open
+/// (`activated=true` stops the parent datepicker from closing it); day
+/// selection deliberately does NOT activate so the parent's close branch also
+/// runs, matching the previous single-handler behavior.
 fn[Msg] handle_datepicker_panel_pointer(
   state : @core.ViewStateContext,
   event : @core.PointerEvent,
@@ -535,6 +427,7 @@ fn[Msg] handle_datepicker_panel_pointer(
     let next_view = datepicker_previous_month(view_date)
     @common.view_event_result(
       changed=true,
+      activated=true,
       focused=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, next_view)),
@@ -544,6 +437,7 @@ fn[Msg] handle_datepicker_panel_pointer(
     let next_view = datepicker_next_month(view_date)
     @common.view_event_result(
       changed=true,
+      activated=true,
       focused=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, next_view)),
@@ -562,15 +456,14 @@ fn[Msg] handle_datepicker_panel_pointer(
         if datepicker_value_in_range(next, min_date, max_date) {
           @common.view_event_result(
             changed=true,
-            activated=true,
             focused=true,
             captured=true,
-            state=Some(datepicker_state(state, expanded=false, next)),
-            dirty=@core.ViewDirtyHint::ViewBuildDirty,
+            state=Some(datepicker_state(state, expanded=true, next)),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
             messages=datepicker_messages(on_select, next),
           )
         } else {
-          @core.ViewEventResult::ignored()
+          @common.view_event_result(changed=true, focused=true, captured=true)
         }
       }
       None =>
@@ -592,14 +485,14 @@ fn[Msg] handle_datepicker_keyboard(
       changed=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=false, selected)),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=@core.ViewDirtyHint::ViewLayoutDirty,
     )
   } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
     @common.view_event_result(
       changed=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=!state.expanded, selected)),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=@core.ViewDirtyHint::ViewLayoutDirty,
     )
   } else {
     @core.ViewEventResult::ignored()
@@ -638,16 +531,6 @@ fn datepicker_view_date(
     Month(year, month) => { ..selected, year, month }
     FollowSelection => selected
   }
-}
-
-///|
-fn datepicker_popup_frame(frame : @core.Rect) -> @core.Rect {
-  @core.Rect::new(
-    x=frame.origin.x,
-    y=frame.origin.y + frame.size.height + 4.0,
-    width=@common.view_max_double(frame.size.width, 280.0),
-    height=350.0,
-  )
 }
 
 ///|
@@ -875,4 +758,242 @@ fn datepicker_cell_height() -> Double {
 ///|
 fn datepicker_nav_button_size() -> Double {
   32.0
+}
+
+///|
+fn datepicker_popup_width(anchor_width : Double) -> Double {
+  @common.view_max_double(anchor_width, 280.0)
+}
+
+///|
+fn datepicker_popup_height() -> Double {
+  350.0
+}
+
+///|
+/// The calendar popup as a real child subtree. It owns the visible-month slot
+/// (month navigation repaints the panel without closing it) and paints the
+/// day grid; escaping ancestor clips is handled by the runtime's overlay
+/// placement hoist.
+priv struct DatePickerPanel[Msg] {
+  selected : @core.DateValue
+  min_date : @core.DateValue?
+  max_date : @core.DateValue?
+  on_select : ((@core.DateValue) -> Msg)?
+  theme : @core.Theme?
+  style : @style.PickerStyle?
+}
+
+///|
+impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn identity(_self) {
+  @core.ViewIdentity::new(kind="DatePickerPanel")
+}
+
+///|
+impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn declaration(_self) {
+  @core.ViewDeclaration::uncacheable()
+}
+
+///|
+impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn child_constraints(
+  _self,
+  _constraints,
+) {
+  @core.Constraints::unbounded()
+}
+
+///|
+impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn layout(_self, ctx) {
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(
+      @core.Size::new(
+        width=datepicker_popup_width(0.0),
+        height=datepicker_popup_height(),
+      ),
+    ),
+  )
+}
+
+///|
+
+///|
+fn[Msg] datepicker_panel_event(
+  node : DatePickerPanel[Msg],
+  ctx : @core.ViewEventContext,
+) -> @core.ViewEventResult[Msg] {
+  match ctx.event {
+    @core.AppEvent::Pointer(event) =>
+      handle_datepicker_panel_pointer(
+        ctx.state,
+        event,
+        panel_frame=ctx.frame,
+        selected=node.selected,
+        min_date=node.min_date,
+        max_date=node.max_date,
+        on_select=node.on_select,
+      )
+    _ => @core.ViewEventResult::ignored()
+  }
+}
+
+///|
+impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
+  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_style = match self.style {
+    Some(value) => value
+    None => @style.PickerStyle::default(theme=resolved_theme)
+  }
+  let view_date = datepicker_view_date(ctx.state, self.selected)
+  let commands : Array[@core.DrawCommand] = []
+  let panel_rounded = @core.RoundedRect::new(
+    rect=ctx.frame,
+    radius=resolved_theme.radius_scale.lg,
+  )
+  // Align with popover/menu floating surfaces: prefer the component overlay
+  // shadow token, fall back to mid elevation.
+  let shadow = @style.views_ambient_control_theme(resolved_theme).surface.overlay_shadow.unwrap_or(
+    resolved_theme.shadow_scale.md,
+  )
+  commands.push(
+    @core.DrawCommand::DrawShadow(
+      @core.ShadowSpec::new(
+        rect=panel_rounded,
+        color=shadow.color,
+        offset=shadow.offset,
+        blur_radius=shadow.blur_radius,
+        spread=shadow.spread,
+      ),
+    ),
+  )
+  commands.push(
+    @core.DrawCommand::FillRoundedRectBrush(
+      panel_rounded,
+      resolved_style.background,
+    ),
+  )
+  let header_height = datepicker_header_height()
+  let header_frame = @core.Rect::new(
+    x=ctx.frame.origin.x,
+    y=ctx.frame.origin.y,
+    width=ctx.frame.size.width,
+    height=header_height,
+  )
+  commands.push(
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text="\{view_date.year}年\{view_date.month}月",
+        frame=header_frame,
+        font=@core.FontSpec::new(size=16.0, weight=600),
+        color=resolved_style.foreground,
+      ),
+    ),
+  )
+  let left_button_frame = datepicker_left_nav_frame(ctx.frame)
+  let right_button_frame = datepicker_right_nav_frame(ctx.frame)
+  commands.push(
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text="◀",
+        frame=left_button_frame,
+        font=@core.FontSpec::new(size=18.0),
+        color=resolved_style.foreground,
+      ),
+    ),
+  )
+  commands.push(
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text="▶",
+        frame=right_button_frame,
+        font=@core.FontSpec::new(size=18.0),
+        color=resolved_style.foreground,
+      ),
+    ),
+  )
+  let day_header_height = datepicker_day_header_height()
+  let day_cell_width = ctx.frame.size.width / 7.0
+  let day_names = ["日", "一", "二", "三", "四", "五", "六"]
+  for index, day in day_names {
+    let day_frame = @core.Rect::new(
+      x=ctx.frame.origin.x + index.to_double() * day_cell_width,
+      y=ctx.frame.origin.y + header_height,
+      width=day_cell_width,
+      height=day_header_height,
+    )
+    commands.push(
+      @core.DrawCommand::DrawText(
+        @core.TextRun::new(
+          text=day,
+          frame=day_frame,
+          font=@core.FontSpec::new(size=12.0, weight=500),
+          color=resolved_style.foreground.with_alpha(0.6),
+        ),
+      ),
+    )
+  }
+  let cell_height = datepicker_cell_height()
+  let start_y = ctx.frame.origin.y + header_height + day_header_height
+  let year = view_date.year
+  let month = view_date.month
+  let first_day_weekday = datepicker_first_weekday_of_month_sunday0(year, month)
+  let days_in_month_count = datepicker_days_in_month(year, month)
+  for day in 1..<=days_in_month_count {
+    let total_index = first_day_weekday + day - 1
+    let col = total_index % 7
+    let row = total_index / 7
+    let cell_frame = @core.Rect::new(
+      x=ctx.frame.origin.x + col.to_double() * day_cell_width,
+      y=start_y + row.to_double() * cell_height,
+      width=day_cell_width,
+      height=cell_height,
+    )
+    let is_selected = self.selected.year == year &&
+      self.selected.month == month &&
+      self.selected.day == day
+    let candidate = { ..self.selected, year, month, day }
+    let is_selectable = datepicker_value_in_range(
+      candidate,
+      self.min_date,
+      self.max_date,
+    )
+    let cell_rounded = @core.RoundedRect::new(
+      rect=cell_frame.inset(@core.Insets::all(4.0)),
+      radius=18.0,
+    )
+    if is_selected {
+      commands.push(
+        @core.DrawCommand::FillRoundedRect(
+          cell_rounded,
+          resolved_theme.palette.primary,
+        ),
+      )
+    }
+    let day_color = if is_selected {
+      @core.Color::white()
+    } else if !is_selectable {
+      resolved_style.foreground.with_alpha(0.28)
+    } else {
+      resolved_style.foreground
+    }
+    commands.push(
+      @core.DrawCommand::DrawText(
+        @core.TextRun::new(
+          text="\{day}",
+          frame=cell_frame,
+          font=@core.FontSpec::new(size=14.0),
+          color=day_color,
+        ),
+      ),
+    )
+  }
+  { ..@core.ViewPaintPlan::empty(), commands, }
+}
+
+///|
+impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn semantics(_self) {
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
+    role=@core.SemanticsRole::Dialog,
+    label="Calendar",
+  )
 }
