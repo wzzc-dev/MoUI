@@ -10,7 +10,7 @@ before expanding behavior.
 2. Put concrete reusable custom view behavior in `moui/views`, then let `views/`
    expose the app-facing constructor.
    Reuse existing state, style, binding, semantics, and layout types.
-3. Add focused tests in `views/views_test.mbt`.
+3. Add focused tests in the `moui/views` `tests/smoke` package or a focused `*_test.mbt`.
 4. Add a Showcase entry when the view is user-facing.
 5. Run `moon test moui/views --target native` and `moon info`.
 
@@ -27,7 +27,7 @@ lowering arms for a new control.
    `layout_direction`.
 3. Store reusable measurements in `CustomLayoutContext.cache`.
 4. Use `CustomPlacementContext::mirror_x` for RTL-aware x placement.
-5. Add tests in `views/views_test.mbt` or core white-box tests when the runtime
+5. Add tests in `moui/views` (`tests/smoke` or a focused `*_test.mbt`) or core white-box tests when the runtime
    contract changes.
 
 ## Create A Platform Service
