@@ -199,6 +199,10 @@ fn[Msg] ViewAdapter::new(
     focusable_snapshot: focusable,
     focus_trap_snapshot: focus_trap,
     semantics_action_handlers: semantics_action_handlers.copy(),
+    // Defensive snapshot: `from_node`'s producer closures are app code that
+    // may hand over a retained, mutable array (pinned by
+    // `view_node_test.mbt`'s producer-owned-children contract), so the
+    // adapter must own its copy.
     children_snapshot: children.copy(),
     event_fn: event,
     text_command_fn: text_command,
