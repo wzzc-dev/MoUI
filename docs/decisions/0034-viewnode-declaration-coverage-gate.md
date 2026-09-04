@@ -3,7 +3,7 @@
 - **Date**: 2026-09-04
 - **Status**: Accepted
 - **Deciders**: Agent-assisted (ZCode, gpt-5.5)
-- **Related**: [Plan: view-framework-remediation](../plans/active/view-framework-remediation.md),
+- **Related**: [Plan: view-framework-remediation](../plans/done/view-framework-remediation.md),
   [ADR 0015](0015-core-protocols.md), [ADR 0017](0017-theme-and-host-contract.md)
 
 ## Context

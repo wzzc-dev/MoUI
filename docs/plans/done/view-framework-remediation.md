@@ -1,6 +1,6 @@
 # Plan: View framework remediation batch (declaration keys, flex tight-fit, text caching)
 
-- **Status:** active
+- **Status:** done
 - **RFC:** none (no invariant break; adds gate P17 and extends `ViewLayoutResult`
   with a defaulted field)
 - **ADR:** [0034](../../decisions/0034-viewnode-declaration-coverage-gate.md),
@@ -73,7 +73,7 @@
 - [x] `benchmarks/full_cycle` deep-tree `View::map` baseline recorded; copy
   audit conclusion written to this plan either way.
 - [x] Three debt notes exist under `docs/plans/debt/`.
-- [ ] `sh scripts/check.sh --profile pr`, the pre-push static trio, and
+- [x] `sh scripts/check.sh --profile pr`, the pre-push static trio, and
   `node scripts/sync-website-docs.mjs` + `node scripts/check-website-docs.mjs`
   pass.
 
@@ -156,4 +156,8 @@ now — 12 descriptor sites, single-digit live slots per node), and
 the P11 shrink-or-stay ratchet), each with explicit re-evaluation triggers;
 indexed in a new Debt section of `docs/plans/README.md`.
 
-Remaining: final gate pass (`pr` profile + static validators + website sync).
+Wrap-up complete: `sh scripts/check.sh --profile pr` passes (423 framework
+tests plus the wasm showcase builds), the pre-push static validators pass,
+`checks/api-surface-report.json` and `docs/repository-facts.md` were
+regenerated, and `sync-website-docs.mjs` + `check-website-docs.mjs` are
+green.
