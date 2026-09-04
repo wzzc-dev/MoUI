@@ -11,9 +11,12 @@ fn hot_path_metrics_reset() -> Unit {
   hot_path_incremental_fallback_count.val = 0
   hot_path_block_height_walk_blocks.val = 0
   hot_path_scroll_geometry_cache_hits.val = 0
+  hot_path_scroll_geometry_point_updates.val = 0
   hot_path_block_conversion_builds.val = 0
   hot_path_block_wrap_builds.val = 0
   hot_path_block_wrap_cache_hits.val = 0
+  hot_path_block_fingerprints_built.val = 0
+  hot_path_height_metrics_recomputed.val = 0
 }
 
 ///|
@@ -221,7 +224,12 @@ test "hot path: fenwick point updates match a rebuild" {
   ]
   let geometry = geometry_of_heights(heights)
   let updates : Array[(Int, Double)] = [
-    (0, 90.0), (9, 3.5), (5, 44.0), (2, 0.0), (4, 12.5), (9, 3.5),
+    (0, 90.0),
+    (9, 3.5),
+    (5, 44.0),
+    (2, 0.0),
+    (4, 12.5),
+    (9, 3.5),
   ]
   let expected : Array[Double] = []
   expected.append(heights)
@@ -239,10 +247,8 @@ test "hot path: fenwick point updates match a rebuild" {
         want = want + expected[j]
       }
       assert_true(
-        markdown_document_scroll_geometry_prefix_at(
-          geometry,
-          count=upto,
-        ) == want,
+        markdown_document_scroll_geometry_prefix_at(geometry, count=upto) ==
+        want,
       )
     }
   }
@@ -256,7 +262,8 @@ test "hot path: fenwick point updates match a rebuild" {
     markdown_document_scroll_geometry_prefix_at(
       geometry,
       count=heights.length(),
-    ) == total,
+    ) ==
+    total,
   )
 }
 
@@ -413,6 +420,168 @@ test "hot path: scrolling through freshly measured blocks stays walk-free" {
   // that turn the pre-reset query into that build directly). Under the
   // old epoch semantics this counter was count × steps.
   assert_true(hot_path_block_height_walk_blocks.val <= count)
+}
+
+///|
+fn hot_path_apply_edit(
+  session : MarkdownDocumentSession,
+  next_source : String,
+) -> MarkdownDocumentSession {
+  session.apply(
+    MarkdownEditTransaction::from_sources(
+      session.source,
+      next_source,
+      reason=TextInput,
+    ),
+  )
+}
+
+///|
+/// Test-only char-space `index_of` (the editor document fixtures are ASCII,
+/// so char indices equal string slice offsets).
+fn hot_path_index_of(source : String, needle : String) -> Int {
+  let chars = source.to_array()
+  let needle_chars = needle.to_array()
+  let limit = chars.length() - needle_chars.length()
+  let mut index = 0
+  let mut found = -1
+  while index <= limit && found < 0 {
+    let mut matches = true
+    for offset, needle_char in needle_chars {
+      if chars[index + offset] != needle_char {
+        matches = false
+        break
+      }
+    }
+    if matches {
+      found = index
+    }
+    index = index + 1
+  }
+  found
+}
+
+///|
+/// Derived state an incremental `apply` must reproduce exactly (ids and
+/// revisions legitimately differ from a from-scratch session and are not
+/// compared here).
+fn hot_path_assert_matches_scratch(
+  session : MarkdownDocumentSession,
+  next_source : String,
+) -> Unit raise {
+  let full = MarkdownDocumentSession::new(next_source)
+  assert_eq(session.line_count, full.line_count)
+  assert_eq(session.word_count, full.word_count)
+  assert_eq(session.reading_minutes, full.reading_minutes)
+  assert_eq(session.active_heading, full.active_heading)
+  assert_eq(session.outline, full.outline)
+  assert_eq(
+    session.height_index.blocks.length(),
+    full.height_index.blocks.length(),
+  )
+  assert_eq(
+    session.height_index.visual_content_units,
+    full.height_index.visual_content_units,
+  )
+  assert_eq(
+    session.height_index.source_content_units,
+    full.height_index.source_content_units,
+  )
+  for index, metric in session.height_index.blocks {
+    let expected = full.height_index.blocks[index]
+    assert_eq(metric.source_range, expected.source_range)
+    assert_eq(metric.visual_top_units, expected.visual_top_units)
+    assert_eq(metric.visual_height_units, expected.visual_height_units)
+    assert_eq(metric.source_top_units, expected.source_top_units)
+    assert_eq(metric.source_height_units, expected.source_height_units)
+  }
+  for index, block in session.blocks {
+    let expected = full.blocks[index]
+    assert_eq(block.source_range, expected.source_range)
+    assert_eq(block.content_range, expected.content_range)
+    assert_eq(block.kind, expected.kind)
+    assert_eq(block.text, expected.text)
+    assert_eq(block.fingerprint, expected.fingerprint)
+    assert_eq(block.inline_count, expected.inline_count)
+  }
+}
+
+///|
+/// A2's correctness contract: every incremental bookkeeping fast path
+/// (fingerprints, height metrics, outline splice, word/line deltas) must
+/// end in exactly the state a from-scratch parse of the same source has.
+test "hot path: incremental bookkeeping matches a from-scratch session" {
+  let mut session = MarkdownDocumentSession::new(hot_path_bench_document(20))
+  // Append at the document end (word-boundary delta: no new word).
+  let source1 = session.source + "x"
+  session = hot_path_apply_edit(session, source1)
+  hot_path_assert_matches_scratch(session, source1)
+  // Insert into an early paragraph: everything after the edit shifts by
+  // one character — outline positions, height metric ranges and tops.
+  let insert_at = hot_path_index_of(source1, "with") + 5
+  let source2 = (source1[:insert_at] + "Q" + source1[insert_at:]).to_owned()
+  session = hot_path_apply_edit(session, source2)
+  hot_path_assert_matches_scratch(session, source2)
+  // Delete a letter inside the same word (no word-count change).
+  let delete_at = hot_path_index_of(source2, "with") + 1
+  let source3 = (source2[:delete_at] + source2[delete_at + 1:]).to_owned()
+  session = hot_path_apply_edit(session, source3)
+  hot_path_assert_matches_scratch(session, source3)
+  // Delete the space between two words (word count drops by one).
+  let space_at = hot_path_index_of(source3, " wth")
+  let source4 = (source3[:space_at] + source3[space_at + 1:]).to_owned()
+  session = hot_path_apply_edit(session, source4)
+  hot_path_assert_matches_scratch(session, source4)
+  // Append a full word at the end (word count rises by one).
+  let source5 = source4 + " omega"
+  session = hot_path_apply_edit(session, source5)
+  hot_path_assert_matches_scratch(session, source5)
+  assert_true(
+    session.word_count > MarkdownDocumentSession::new(source4).word_count,
+  )
+}
+
+///|
+/// A2's work contract: a keystroke must only pay derived-bookkeeping work
+/// for the re-parse window — not the whole document.
+test "hot path: keystroke bookkeeping work stays inside the re-parse window" {
+  let mut session = MarkdownDocumentSession::new(hot_path_bench_document(60))
+  let block_count = session.editor_blocks.length()
+  assert_true(block_count > 600)
+  hot_path_metrics_reset()
+  for _ in 0..<5 {
+    session = hot_path_apply_edit(session, session.source + "x")
+  }
+  let keystrokes = 5
+  assert_eq(hot_path_full_parse_count.val, 0)
+  assert_eq(hot_path_incremental_fallback_count.val, 0)
+  assert_eq(hot_path_region_reparse_count.val, keystrokes)
+  // The trailing cluster is a couple of blocks; whole-document work would
+  // show thousands of fingerprint builds and height recomputes here.
+  assert_true(hot_path_block_fingerprints_built.val < block_count)
+  assert_true(hot_path_height_metrics_recomputed.val < block_count)
+}
+
+///|
+/// Id stability across appends: the reindex pass reuses prefix/suffix ids
+/// and revisions by position, so untouched blocks never re-stamp.
+test "hot path: untouched block ids and revisions survive appends" {
+  let start = MarkdownDocumentSession::new(hot_path_bench_document(30))
+  let mut session = start
+  for _ in 0..<3 {
+    session = hot_path_apply_edit(session, session.source + "y")
+  }
+  let mut stable = 0
+  for index, block in session.blocks {
+    if index < start.blocks.length() &&
+      start.blocks[index].fingerprint == block.fingerprint {
+      if start.blocks[index].id == block.id &&
+        start.blocks[index].revision == block.revision {
+        stable = stable + 1
+      }
+    }
+  }
+  assert_true(stable >= start.blocks.length() - 2)
 }
 
 ///|

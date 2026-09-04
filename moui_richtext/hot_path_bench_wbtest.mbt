@@ -77,6 +77,14 @@ fn hot_path_bench_input(fixture : String, keystrokes : Int) -> Unit {
     hot_path_incremental_fallback_count.val,
   )
   hot_path_bench_print_int(
+    "input_fingerprints_per_keystroke",
+    hot_path_block_fingerprints_built.val / keystrokes,
+  )
+  hot_path_bench_print_int(
+    "input_height_recomputes_per_keystroke",
+    hot_path_height_metrics_recomputed.val / keystrokes,
+  )
+  hot_path_bench_print_int(
     "input_keep",
     if baseline_keep == current_keep {
       1
