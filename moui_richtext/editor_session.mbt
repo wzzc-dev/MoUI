@@ -534,10 +534,15 @@ pub fn MarkdownDocumentSession::apply(
 /// cluster containing the edit, rebase the re-parsed region into new
 /// source offsets, and shift the untouched suffix blocks by the edit
 /// delta. Returns None when the full-document parse is required:
-/// structural context markers (fences, `]:`, leading `---`), edits that
-/// touch newlines (they can merge or split clusters), edits carrying
-/// reference-definition characters (the definition set is a whole-source
-/// property), and edits inside front matter.
+/// structural context markers (fences, `]:`, leading `---`), edits
+/// carrying reference-definition characters (the definition set is a
+/// whole-source property), and edits inside front matter. Edits that
+/// touch newlines also force the full parse (they can merge or split
+/// clusters) — with one fence-aware exception: a keystroke that stays
+/// strictly inside a fenced code block (never touching its opener or
+/// closer line, never typing fence characters) keeps the fence exactly
+/// as bounded as it was, newlines included, so typing code re-parses
+/// just the one fenced block.
 fn markdown_document_session_apply_incremental(
   session : MarkdownDocumentSession,
   transaction : MarkdownEditTransaction,
@@ -559,10 +564,31 @@ fn markdown_document_session_apply_incremental(
     return None
   }
   match markdown_document_edit_cluster(session.editor_blocks, transaction) {
-    Some(cluster) if markdown_document_region_can_stitch(
+    Some(cluster) => {
+      // The cluster is re-parseable on its own only when its swallowable
+      // blocks (currently code fences) are entered strictly from the
+      // inside; that single decision also licenses newline edits, which
+      // a fence swallows.
+      let interior_fence_edit = cluster_interior_fence_edit(
         session.editor_blocks,
         cluster,
-      ) => {
+        transaction,
+        deleted,
+      )
+      guard markdown_document_newlines_safe(
+          transaction,
+          deleted,
+          interior_fence_edit~,
+        ) &&
+        markdown_document_region_can_stitch(
+          session.editor_blocks,
+          cluster,
+          interior_fence_edit~,
+        ) else {
+        hot_path_incremental_fallback_count.val = hot_path_incremental_fallback_count.val +
+          1
+        return None
+      }
       let delta = markdown_editor_text_length(transaction.replacement) -
         markdown_editor_text_length(deleted)
       let region_end = if cluster.end_index >=
@@ -646,7 +672,7 @@ fn markdown_document_session_apply_incremental(
       )
       |> Some
     }
-    Some(_) | None => {
+    None => {
       hot_path_incremental_fallback_count.val = hot_path_incremental_fallback_count.val +
         1
       None
@@ -656,20 +682,162 @@ fn markdown_document_session_apply_incremental(
 
 ///|
 /// True when a transaction can be handled incrementally: no structural
-/// context markers, no newline on either side of the edit, and no
-/// reference-definition characters (`[`, `]`, `:`) that could change the
-/// whole-source definition set or a link span inside a block.
+/// context markers and no reference-definition characters (`[`, `]`, `:`)
+/// that could change the whole-source definition set or a link span
+/// inside a block. Newline safety is decided once the edit cluster is
+/// known (`markdown_document_newlines_safe`), because a newline inside a
+/// fenced block is structurally inert.
 fn markdown_document_transaction_incremental_safe(
   transaction : MarkdownEditTransaction,
   deleted : String,
 ) -> Bool {
   !markdown_document_transaction_needs_global_context(transaction) &&
-  !deleted.contains("\n") &&
-  !transaction.replacement.contains("\n") &&
   !markdown_document_text_may_touch_reference_definition(
     transaction.replacement,
   ) &&
   !markdown_document_text_may_touch_reference_definition(deleted)
+}
+
+///|
+/// The fence edit keeps the block's span iff it (a) types or deletes no
+/// fence character, (b) starts strictly after the opener line — a change
+/// on the opener can stop it opening a fence — and (c) stays strictly
+/// before the closer line — typing on the closer stops it closing, which
+/// would make the fence swallow the rest of the document. An unclosed
+/// fence running to the end of the source has no closer line to protect,
+/// so its last (interior) line is editable.
+fn markdown_document_fence_edit_is_interior(
+  editor_block : MarkdownEditorBlock,
+  transaction : MarkdownEditTransaction,
+  deleted : String,
+) -> Bool {
+  editor_block.block.kind is CodeBlock &&
+  !markdown_document_edit_text_has_fence_char(transaction.replacement) &&
+  !markdown_document_edit_text_has_fence_char(deleted) &&
+  markdown_document_fence_interior_bounds(editor_block, transaction)
+}
+
+///|
+/// One forward pass over the fence block's source: remember the end of
+/// the opener line (first newline at or after the block start) and the
+/// start of the last line together with whether that last line is
+/// fence-character-only. The edit range must live in
+/// `[opener_end, closer_start)`; an unclosed fence that runs to the end
+/// of the source (and whose last line is not fence-only) has no closer
+/// line, so its bound is the block end itself.
+fn markdown_document_fence_interior_bounds(
+  editor_block : MarkdownEditorBlock,
+  transaction : MarkdownEditTransaction,
+) -> Bool {
+  let previous = transaction.previous_source
+  let previous_length = markdown_editor_text_length(previous)
+  let range = editor_block.source_range
+  let iterator = previous.iter()
+  let mut index = 0
+  let mut opener_end = -1
+  let mut last_line_start = range.start
+  let mut last_line_fence_only = true
+  let mut scanning = true
+  while scanning {
+    match iterator.next() {
+      Some(ch) => {
+        // A trailing newline may or may not belong to the block range;
+        // treat it as line terminator, never as line content, so the
+        // closer-line logic works for either parser convention.
+        if index == range.end - 1 && ch == '\n' {
+
+        } else if ch == '\n' {
+          if index >= range.start && opener_end < 0 {
+            opener_end = index + 1
+          }
+          if index >= range.start && index < range.end {
+            last_line_start = index + 1
+            last_line_fence_only = true
+          }
+        } else if index >= range.start &&
+          index < range.end &&
+          !(ch == ' ' || ch == '\t' || ch == '`' || ch == '~') {
+          last_line_fence_only = false
+        }
+        index = index + 1
+        if index >= range.end && opener_end >= 0 {
+          scanning = false
+        }
+      }
+      None => scanning = false
+    }
+  }
+  if opener_end < 0 {
+    opener_end = range.end
+  }
+  let closed_fence = range.end < previous_length || last_line_fence_only
+  let closer_start = if closed_fence { last_line_start } else { range.end }
+  let end_ok = if closed_fence {
+    transaction.edit_range.end < closer_start
+  } else {
+    // Unclosed fence: the document tail is still interior code, so an
+    // edit ending exactly at the block end is fine too.
+    transaction.edit_range.end <= closer_start
+  }
+  transaction.edit_range.start >= opener_end && end_ok
+}
+
+///|
+fn markdown_document_edit_text_has_fence_char(text : String) -> Bool {
+  text.contains("`") || text.contains("~")
+}
+
+///|
+/// Edits touching newlines can merge or split blank-line clusters and
+/// are only safe inside a fenced code block, which swallows them.
+fn markdown_document_newlines_safe(
+  transaction : MarkdownEditTransaction,
+  deleted : String,
+  interior_fence_edit~ : Bool,
+) -> Bool {
+  interior_fence_edit ||
+  !(transaction.replacement.contains("\n") || deleted.contains("\n"))
+}
+
+///|
+/// True when every swallowable block in the cluster (fences, HTML,
+/// tables, footnote definitions) keeps its span across the edit: re-
+/// parsing the cluster then reproduces the suffix boundary exactly. Only
+/// code fences admit this, and only for strictly-interior edits (already
+/// decided once as `interior_fence_edit`); HTML blocks, tables, and
+/// footnote definitions always force the full-parse fallback.
+fn markdown_document_region_can_stitch(
+  blocks : Array[MarkdownEditorBlock],
+  cluster : MarkdownDocumentEditCluster,
+  interior_fence_edit~ : Bool,
+) -> Bool {
+  for index in cluster.start_index..<=cluster.end_index {
+    match blocks[index].block.kind {
+      CodeBlock if interior_fence_edit => ()
+      CodeBlock | HtmlBlock | Table | FootnoteDefinition(_) => return false
+      _ => ()
+    }
+  }
+  true
+}
+
+///|
+/// True when the whole cluster is a single code fence and the edit stays
+/// strictly in its interior (never on the opener or closer line, no
+/// fence characters typed or deleted). The fence then keeps exactly the
+/// span it had, newlines included.
+fn cluster_interior_fence_edit(
+  blocks : Array[MarkdownEditorBlock],
+  cluster : MarkdownDocumentEditCluster,
+  transaction : MarkdownEditTransaction,
+  deleted : String,
+) -> Bool {
+  cluster.start_index == cluster.end_index &&
+  markdown_document_fence_edit_is_interior(
+    blocks[cluster.start_index],
+    transaction,
+    deleted,
+  )
 }
 
 ///|
@@ -795,27 +963,6 @@ fn markdown_document_edit_cluster(
     start_block_start: blocks[grow_start].source_range.start,
     end_block_end: blocks[grow_end].source_range.end,
   })
-}
-
-///|
-/// Stitching is only safe when re-parsing the cluster cannot change where
-/// the suffix starts. Code fences, HTML blocks, and tables consume up to a
-/// closing marker (a matching fence, a closing tag, the first non-row
-/// line), and an edit that breaks that marker makes the full parse swallow
-/// part of the suffix — a state the previous blocks cannot represent.
-/// Footnote-definition continuation lines are treated the same way. Any
-/// such kind inside the region forces the full-parse fallback.
-fn markdown_document_region_can_stitch(
-  blocks : Array[MarkdownEditorBlock],
-  cluster : MarkdownDocumentEditCluster,
-) -> Bool {
-  for index in cluster.start_index..<=cluster.end_index {
-    match blocks[index].block.kind {
-      CodeBlock | HtmlBlock | Table | FootnoteDefinition(_) => return false
-      _ => ()
-    }
-  }
-  true
 }
 
 ///|
