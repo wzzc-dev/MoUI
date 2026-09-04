@@ -67,10 +67,10 @@
 - [x] Identical `DrawText` runs across frames report `cache_hit_count > 0`
   (wbtest in `moui_skia_renderer`; shaping here is width-independent, so the
   key is `(font spec, text, font resolution)` and a text change reports a miss).
-- [ ] New `moui/runtime` tests: `expanded`/weighted text child wraps to its
+- [x] New `moui/runtime` tests: `expanded`/weighted text child wraps to its
   final weighted width (not the loose measure width and not clipped); all
   pre-existing flex tests stay green.
-- [ ] `benchmarks/full_cycle` deep-tree `View::map` baseline recorded; copy
+- [x] `benchmarks/full_cycle` deep-tree `View::map` baseline recorded; copy
   audit conclusion written to this plan either way.
 - [ ] Three debt notes exist under `docs/plans/debt/`.
 - [ ] `sh scripts/check.sh --profile pr`, the pre-push static trio, and
@@ -120,4 +120,32 @@ attempts are misses but stay uncached. wbtests cover key separation, failed
 reshape, LRU bounds with eviction order, and cross-frame hit visibility
 through `render_frame`; 136 renderer tests green, no public API drift.
 
-Remaining: WS-B, WS-D, WS-F — implementation not started.
+WS-B (tight-fit re-measure) complete: `ViewLayoutResult` gained
+`child_frames_tight` with a defaulted `ViewLayoutResult::new` parameter (all
+97 construction sites compile unchanged); `flex` opts in; placement
+re-measures a flagged child under `Constraints::tight(frame.size)` when the
+final frame size differs from the measured size and feeds the settled wrapped
+child sizes into nested `layout()` calls, while unflagged parents keep the
+intrinsic-size path exactly as before. New tests in
+`moui/runtime/flex_tight_fit_wrap_test.mbt` pin the wrap (500-natural leaf in
+a 200-wide expanded column becomes 200×30 instead of the stale clipped 200×20;
+an A/B run with the flex flag off reproduces the old failure) and pin that
+matched-size children keep their measured geometry. `pkg.generated.mbti`
+regenerated; 233 `moui/core`+`moui/runtime`+`moui/views` tests and 291
+framework-wide tests green.
+
+WS-D (map cost) complete with an audit-negative code outcome, as the plan
+allowed: `benchmarks/full_cycle` gained `G-deep-dblmap-click` (same 511-node
+deep tree as F with two nested `View::map` layers); measured rebuild cost rose
+from 16.3 ms/frame (F) to 19.7 ms/frame (G), ≈10% per layer. The copy audit
+then rejected removing the inner `children.copy()` in `ViewAdapter::new`:
+`from_node` producer closures are app code that may hand over a retained,
+mutable array, and that ownership contract is pinned by
+`moui/core/view_node_test.mbt` ("producer-owned child and action arrays"),
+while the accessor copy in `children()` is the public mutation boundary for
+`View::children`. The code path therefore stays unchanged; the flat-`Msg`
+guidance and the cost model are documented in
+`docs/views-api-guide.md` ("Message Types and `View::map` Cost"), and
+type-erased map-adapter fusion stays a non-goal.
+
+Remaining: WS-F — implementation not started.

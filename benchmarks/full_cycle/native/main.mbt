@@ -63,12 +63,19 @@ fn bench_run(
   width : Int,
   frames : Int,
   trigger_rebuild : Bool,
+  maps? : Int = 0,
 ) -> FCResult {
   let total = bench_node_count(depth, width)
   let program = @core.Program::simple(init=0, update=fn(_model, msg) { msg }, view=fn(
     model,
   ) {
-    bench_tree(depth, width, model + 1000)
+    // `maps` layers of View::map rebuild the whole tree per map layer on
+    // every view call; G vs F isolates that construction cost.
+    let mut view = bench_tree(depth, width, model + 1000)
+    for _layer in 0..<maps {
+      view = view.map(message => message)
+    }
+    view
   })
   let runtime = @runtime.AppRuntime::new_program(
     program~,
@@ -152,4 +159,11 @@ fn main {
 
   let f = bench_run("F-deep-click", 8, 2, frames, true)
   bench_print(f)
+  println("")
+
+  // Same deep tree as F with two nested `View::map` layers: the delta over
+  // F is the per-frame map construction amplification (full subtree
+  // re-wrap + adapter snapshot per layer).
+  let g = bench_run("G-deep-dblmap-click", 8, 2, frames, true, maps=2)
+  bench_print(g)
 }
