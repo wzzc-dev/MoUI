@@ -14,7 +14,9 @@ impl @core.ViewStateValue for TextAreaScrollState with fn view_state_type_key() 
 }
 
 ///|
-impl @core.ViewStateValue for TextAreaScrollState with fn encode_view_state(self) {
+impl @core.ViewStateValue for TextAreaScrollState with fn encode_view_state(
+  self,
+) {
   let output = Buffer(size_hint=8)
   output.write_double_be(self.offset_y)
   output.to_bytes()
@@ -29,7 +31,7 @@ impl @core.ViewStateValue for TextAreaScrollState with fn decode_view_state(
     None
   } else {
     match @core.ViewStateValue::decode_view_state(0.0, bytes) {
-      Some(offset_y) => Some({ offset_y : offset_y })
+      Some(offset_y) => Some({ offset_y, })
       None => None
     }
   }
@@ -48,9 +50,7 @@ fn text_area_scroll_slot() -> @core.ViewStateSlot[TextAreaScrollState] {
 /// `text_area_clamped_scroll_offset` once the paragraph line count is
 /// known, so a content shrink (text replaced externally) clamps the
 /// stale offset instead of painting blank space.
-fn text_area_scroll_offset(
-  state : @core.ViewStateContext,
-) -> Double {
+fn text_area_scroll_offset(state : @core.ViewStateContext) -> Double {
   state.read_slot(text_area_scroll_slot()).offset_y
 }
 
@@ -65,9 +65,9 @@ fn text_area_max_scroll_offset(
   line_height~ : Double,
   viewport_height~ : Double,
 ) -> Double {
-  (
-    text_area_content_height(line_count~, line_height~) - viewport_height
-  ).max(0.0)
+  (text_area_content_height(line_count~, line_height~) - viewport_height).max(
+    0.0,
+  )
 }
 
 ///|
@@ -118,12 +118,14 @@ fn text_area_visible_line_window(
   } else if line_height <= 0.0 {
     (0, line_count)
   } else {
-    let first =
-      (offset / line_height).floor().to_int().clamp(min=0, max=line_count)
-    let last =
-      (
-        (offset + viewport_height) / line_height
-      ).ceil().to_int().clamp(min=first, max=line_count)
+    let first = (offset / line_height)
+      .floor()
+      .to_int()
+      .clamp(min=0, max=line_count)
+    let last = ((offset + viewport_height) / line_height)
+      .ceil()
+      .to_int()
+      .clamp(min=first, max=line_count)
     (first, last)
   }
 }
@@ -193,10 +195,7 @@ fn text_area_hit_offset_at_slot(
     )
     let line = paragraph.lines[row]
     paragraph.hit_test(
-      @core.Point::new(
-        x=slot_point.x,
-        y=line.origin.y + line.size.height / 2.0,
-      ),
+      @core.Point::new(x=slot_point.x, y=line.origin.y + line.size.height / 2.0),
     ).offset
   }
 }

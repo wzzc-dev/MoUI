@@ -77,6 +77,7 @@ pub struct MarkdownEditorApp {
 }
 
 ///|
+
 ///|
 /// One command-level undo step over the document source: the shared
 /// core delta entry plus the editor selection to restore. The delta

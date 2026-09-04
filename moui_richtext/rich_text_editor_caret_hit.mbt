@@ -451,10 +451,7 @@ fn apply_rich_text_input_transform(
     if record_history && previous != edit.text {
       // The transform API only exposes before/after documents, so the
       // entry falls back to a one-shot prefix/suffix diff at push time.
-      let (start, before, after) = @core.text_history_delta(
-        previous,
-        edit.text,
-      )
+      let (start, before, after) = @core.text_history_delta(previous, edit.text)
       rich_text_history_extend_stack(
         undo_stack,
         rich_text_history_record_edit(

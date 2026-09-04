@@ -182,10 +182,7 @@ fn[Msg] text_area_reveal_caret(
     {
       ..result,
       state: Some(
-        base_state.with_slot(
-          text_area_scroll_slot(),
-          { offset_y : next_offset },
-        ),
+        base_state.with_slot(text_area_scroll_slot(), { offset_y: next_offset }),
       ),
       dirty: @core.ViewDirtyHint::ViewLayoutDirty,
     }
@@ -479,10 +476,7 @@ fn[Msg] handle_text_area_pointer(
         changed=true,
         captured=true,
         state=Some(
-          ctx.state.with_slot(
-            text_area_scroll_slot(),
-            { offset_y : next_offset },
-          ),
+          ctx.state.with_slot(text_area_scroll_slot(), { offset_y: next_offset }),
         ),
         dirty=@core.ViewDirtyHint::ViewLayoutDirty,
       )
@@ -506,9 +500,7 @@ fn[Msg] handle_text_area_pointer(
       y=event.position.y - text_frame.origin.y + offset,
     )
     let hit_offset = text_area_hit_offset_at_slot(
-      paragraph,
-      local_point,
-      line_height,
+      paragraph, local_point, line_height,
     )
     let next_control = {
       ..ctx.text_control,
@@ -544,9 +536,7 @@ fn[Msg] handle_text_area_pointer(
       y=event.position.y - text_frame.origin.y + offset,
     )
     let hit_offset = text_area_hit_offset_at_slot(
-      paragraph,
-      local_point,
-      line_height,
+      paragraph, local_point, line_height,
     )
     if hit_offset != anchor || hit_offset != ctx.text_control.caret {
       let start = @core.min_int(anchor, hit_offset)
@@ -623,9 +613,10 @@ fn text_input_state_for_multi_line(
         height=glyph_h,
       )
     }
-    Some(paragraph) => text_area_display_caret_rect(
-      paragraph, text_system, content_frame, font, visual_caret, line_height,
-    )
+    Some(paragraph) =>
+      text_area_display_caret_rect(
+        paragraph, text_system, content_frame, font, visual_caret, line_height,
+      )
   }
   {
     focused: true,

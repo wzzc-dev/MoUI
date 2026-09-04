@@ -119,10 +119,7 @@ fn text_area_selection_slot_rects(
   let rects : Array[@core.Rect] = []
   let chars = paragraph.text.to_array()
   for line in paragraph.lines {
-    let start = @core.max_int(
-      selection.start,
-      line.text_range.start,
-    )
+    let start = @core.max_int(selection.start, line.text_range.start)
     let end = @core.min_int(selection.end, line.text_range.end)
     if start < end {
       let start_rect = paragraph.caret_rect_at(start)
@@ -137,7 +134,12 @@ fn text_area_selection_slot_rects(
       rects.push(
         @core.Rect::new(
           x=text_frame.origin.x + x0,
-          y=text_area_line_slot_y(text_frame, line.line_index, line_height, glyph_h),
+          y=text_area_line_slot_y(
+            text_frame,
+            line.line_index,
+            line_height,
+            glyph_h,
+          ),
           width=(x1 - x0).max(1.0),
           height=glyph_h,
         ),

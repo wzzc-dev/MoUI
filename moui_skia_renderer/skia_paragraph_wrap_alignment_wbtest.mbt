@@ -52,10 +52,7 @@ test "core fallback algorithm and skia native paragraph break alike" {
   // latin word wrapping with hanging trailing spaces, hard newlines,
   // CJK cluster breaks, and mixed runs.
   let aligned_cases : Array[(String, String)] = [
-    (
-      "latin",
-      "one two three four five six seven eight nine ten",
-    ),
+    ("latin", "one two three four five six seven eight nine ten"),
     ("newline", "first\nsecond line of text here now"),
     ("cjk", "你好世界测试文本换行对齐语料覆盖情况"),
     ("mixed", "MoUI 文本换行 corpus alignment 对齐 corpus"),
@@ -64,9 +61,7 @@ test "core fallback algorithm and skia native paragraph break alike" {
     let label = case.0
     let text = case.1
     let native = skia_wrap_corpus_ends(skia, text, font, width)
-    let fallback = skia_wrap_corpus_ends(
-      fallback_algorithm, text, font, width,
-    )
+    let fallback = skia_wrap_corpus_ends(fallback_algorithm, text, font, width)
     if native != fallback {
       let native_repr = skia_wrap_corpus_describe(native)
       let fallback_repr = skia_wrap_corpus_describe(fallback)
@@ -106,13 +101,11 @@ test "skia native paragraph covers the corpus contiguously" {
   guard skia_test_native_text_available() else { return () }
   let skia = skia_text_system(resolution=SkiaFontResolution::SystemFontMgr)
   let font = @core.FontSpec::new(size=16.0, weight=400)
-  for text in [
-    "plain single line",
-    "one two three four five six seven eight nine ten",
-    "你好世界测试文本换行对齐语料覆盖情况",
-    "first\nsecond line of text here now",
-    "trailing newline\n",
-  ] {
+  for
+    text in [
+      "plain single line", "one two three four five six seven eight nine ten", "你好世界测试文本换行对齐语料覆盖情况",
+      "first\nsecond line of text here now", "trailing newline\n",
+    ] {
     let paragraph = skia.layout_paragraph(
       @core.TextLayoutInput::new(text~, font~, max_width=120.0),
     )
@@ -124,7 +117,7 @@ test "skia native paragraph covers the corpus contiguously" {
     // dropped by the native paragraph, so the only illegal gap is one
     // that swallows a non-break character.
     let mut covered = 0
-    for line_index in 0..=last {
+    for line_index in 0..<=last {
       let line = paragraph.lines[line_index]
       if line.text_range.start < covered {
         let ranges : Array[String] = []
@@ -142,9 +135,9 @@ test "skia native paragraph covers the corpus contiguously" {
       assert_true(line.text_range.end >= line.text_range.start)
       covered = line.text_range.end
     }
-    assert_true(covered == chars.length() || (
-      covered == chars.length() - 1 &&
-        chars[chars.length() - 1] == '\n'
-    ))
+    assert_true(
+      covered == chars.length() ||
+      (covered == chars.length() - 1 && chars[chars.length() - 1] == '\n'),
+    )
   }
 }

@@ -1,7 +1,5 @@
 ///|
-fn viewport_test_state(
-  offset_y? : Double = 0.0,
-) -> @core.ViewStateContext {
+fn viewport_test_state(offset_y? : Double = 0.0) -> @core.ViewStateContext {
   let base : @core.ViewStateContext = {
     focused: false,
     hovered: false,
@@ -12,13 +10,11 @@ fn viewport_test_state(
     disabled: false,
     slots: @core.ViewStateSlots::empty(),
   }
-  base.with_slot(text_area_scroll_slot(), { offset_y : offset_y })
+  base.with_slot(text_area_scroll_slot(), { offset_y, })
 }
 
 ///|
-fn viewport_test_text_control(
-  caret~ : Int,
-) -> @core.TextControlStateContext {
+fn viewport_test_text_control(caret~ : Int) -> @core.TextControlStateContext {
   {
     caret,
     selection: None,
@@ -167,9 +163,7 @@ test "wheel past the bottom edge clamps to content minus viewport" {
 test "typing past the viewport reveals the caret line at the bottom" {
   let result : @core.ViewEventResult[Unit] = handle_text_area_event(
     viewport_test_event_context(
-      event=@core.AppEvent::TextInput(
-        @core.TextInputEvent::InsertText("x"),
-      ),
+      event=@core.AppEvent::TextInput(@core.TextInputEvent::InsertText("x")),
       state=viewport_test_state(),
       text_control=viewport_test_text_control(caret=119),
       frame=viewport_test_frame(),
@@ -199,9 +193,7 @@ test "typing past the viewport reveals the caret line at the bottom" {
 test "typing with a visible caret leaves the scroll state alone" {
   let result : @core.ViewEventResult[Unit] = handle_text_area_event(
     viewport_test_event_context(
-      event=@core.AppEvent::TextInput(
-        @core.TextInputEvent::InsertText("x"),
-      ),
+      event=@core.AppEvent::TextInput(@core.TextInputEvent::InsertText("x")),
       state=viewport_test_state(),
       text_control=viewport_test_text_control(caret=3),
       frame=viewport_test_frame(),
@@ -259,7 +251,7 @@ test "clicks hit the scrolled line, not the unscrolled one" {
     Some(control) =>
       assert_true(
         control.caret >= target.text_range.start &&
-          control.caret <= target.text_range.end,
+        control.caret <= target.text_range.end,
       )
   }
 }

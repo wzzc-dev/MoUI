@@ -139,8 +139,8 @@ pub fn TextSystem::register_font_data(
   (self.register_font_data)(family, data)
   // Measured widths (and therefore cached paragraph layouts) can change
   // whenever any font data is registered, for any backend.
-  text_paragraph_cache_font_generation.val =
-    text_paragraph_cache_font_generation.val + 1
+  text_paragraph_cache_font_generation.val = text_paragraph_cache_font_generation.val +
+    1
 }
 
 ///|
@@ -393,8 +393,10 @@ fn fallback_paragraph_line_ranges(
       // only open a soft break that the next non-blank cluster pays
       // for when it finally overflows.
       let cluster_hangs = cluster == " " || cluster == "\t"
-      let overflows =
-        fallback_paragraph_should_wrap(input.max_width, candidate_width)
+      let overflows = fallback_paragraph_should_wrap(
+        input.max_width,
+        candidate_width,
+      )
       if overflows && !cluster_hangs && line_start < cursor {
         let break_end = if last_soft_break > line_start {
           last_soft_break

@@ -4,13 +4,14 @@
 /// key iff they are structurally equal. These cases pin the adversarial
 /// boundaries (embedded length markers, shifted field boundaries, empty
 /// optionals) that a length-prefixed encoding could otherwise collapse.
+
 ///|
 fn key_sample_block(
-  kind~ : MarkdownBlockKind = Paragraph,
-  text~ : String = "",
-  inlines~ : Array[MarkdownInline] = [],
-  alignments~ : Array[@core.TextAlign?] = [],
-  code_language~ : String? = None,
+  kind? : MarkdownBlockKind = Paragraph,
+  text? : String = "",
+  inlines? : Array[MarkdownInline] = [],
+  alignments? : Array[@core.TextAlign?] = [],
+  code_language? : String? = None,
 ) -> MarkdownBlock {
   { kind, text, inlines, table_alignments: alignments, code_language }
 }
@@ -18,8 +19,8 @@ fn key_sample_block(
 ///|
 fn key_inline(
   text~ : String,
-  kind~ : MarkdownInlineKind = Plain,
-  target~ : String? = None,
+  kind? : MarkdownInlineKind = Plain,
+  target? : String? = None,
 ) -> MarkdownInline {
   { text, kind, target }
 }
@@ -52,38 +53,33 @@ test "markdown_editor_block_key is injective on block content" {
     key_sample_block(text="a", code_language=None),
     key_sample_block(text="", code_language=Some("ab")),
     key_sample_block(text="ab", code_language=Some("")),
-    key_sample_block(
-      inlines=[key_inline(text="a"), key_inline(text="b", kind=Bold)],
-    ),
+    key_sample_block(inlines=[
+      key_inline(text="a"),
+      key_inline(text="b", kind=Bold),
+    ]),
     key_sample_block(inlines=[key_inline(text="ab")]),
+    key_sample_block(inlines=[
+      key_inline(text="a", target=Some("b")),
+      key_inline(text="c"),
+    ]),
+    key_sample_block(inlines=[
+      key_inline(text="a"),
+      key_inline(text="b", target=Some("c")),
+    ]),
     key_sample_block(
       inlines=[key_inline(text="a", target=Some("b")), key_inline(text="c")],
-    ),
-    key_sample_block(
-      inlines=[key_inline(text="a"), key_inline(text="b", target=Some("c"))],
-    ),
-    key_sample_block(
-      inlines=[
-        key_inline(text="a", target=Some("b")), key_inline(text="c"),
-      ],
       code_language=Some(""),
     ),
-    key_sample_block(
-      inlines=[key_inline(text="plain")],
-      alignments=[Some(@core.TextStart)],
-    ),
-    key_sample_block(
-      inlines=[key_inline(text="plain")],
-      alignments=[Some(@core.TextCenter)],
-    ),
-    key_sample_block(
-      inlines=[key_inline(text="plain")],
-      alignments=[Some(@core.TextEnd)],
-    ),
-    key_sample_block(
-      inlines=[key_inline(text="plain")],
-      alignments=[None],
-    ),
+    key_sample_block(inlines=[key_inline(text="plain")], alignments=[
+      Some(@core.TextStart),
+    ]),
+    key_sample_block(inlines=[key_inline(text="plain")], alignments=[
+      Some(@core.TextCenter),
+    ]),
+    key_sample_block(inlines=[key_inline(text="plain")], alignments=[
+      Some(@core.TextEnd),
+    ]),
+    key_sample_block(inlines=[key_inline(text="plain")], alignments=[None]),
     key_sample_block(inlines=[key_inline(text="plain")]),
   ]
   for left_index, left in samples {
