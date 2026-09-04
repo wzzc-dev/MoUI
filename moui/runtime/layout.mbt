@@ -146,10 +146,30 @@ fn ElementNode::place_measured_with_text_system(
   layout_direction~ : LayoutDirection,
   overlay_overrides? : Array[(Int, Array[(Int, Rect)])] = [],
   accumulated_clip? : Rect? = None,
+  fit_measured_sizes? : Bool = false,
 ) -> PlacedNode {
+  // A tight-fit re-measure already settled this subtree under the final
+  // frame's tight constraints, so its `measured` child sizes are the wrapped
+  // sizes; feed them to `layout` instead of the unbounded intrinsic sizes so
+  // internal frames reflect the extent the children actually occupy (ADR 0035).
+  let child_sizes : Array[Size] = []
+  if fit_measured_sizes && measured.children.length() == self.children.length() {
+    for index, child in self.children {
+      child_sizes.push(
+        match measured.children.get(index) {
+          Some(node) => node.size
+          None => child.intrinsic_size(text_system~)
+        },
+      )
+    }
+  } else {
+    for child in self.children {
+      child_sizes.push(child.intrinsic_size(text_system~))
+    }
+  }
   let result = self.view_node.layout({
     constraints: Constraints::tight(frame.size),
-    child_sizes: self.children.map(child => child.intrinsic_size(text_system~)),
+    child_sizes,
     child_flex_weights: measured.children.map(child => child.flex_weight),
     state: self.control.view_state,
     text_system,
@@ -184,9 +204,27 @@ fn ElementNode::place_measured_with_text_system(
         Some(override_frame) => override_frame
         None => child_frames[index]
       }
+      // Tight-fit parents (flex with weighted children) measure children
+      // under looser constraints than the frame they finally place them in.
+      // When the final frame is a different size, re-measure that subtree
+      // under tight constraints so its internal layout re-wraps to the
+      // extent it actually occupies; the measure memo is constraint-keyed, so
+      // this is cache-safe and stays silent once the subtree settles (ADR 0035).
+      let refits = result.child_frames_tight &&
+        child_frame.size != measured.children[index].size
+      let child_measured = if refits {
+        child.measure_with_text_system(
+          Constraints::tight(child_frame.size),
+          environment=child_environment,
+          style=child_style,
+          text_system~,
+        )
+      } else {
+        measured.children[index]
+      }
       children.push(
         child.place_measured_with_text_system(
-          measured.children[index],
+          child_measured,
           child_frame,
           environment=child_environment,
           style=child_style,
@@ -195,6 +233,7 @@ fn ElementNode::place_measured_with_text_system(
           overlay_overrides~,
           // Hoisted popups escape ancestor clips by design.
           accumulated_clip=if is_overlay { None } else { child_clip },
+          fit_measured_sizes=refits || fit_measured_sizes,
         ),
       )
       if is_overlay {

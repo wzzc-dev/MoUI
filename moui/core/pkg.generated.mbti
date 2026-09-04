@@ -1932,8 +1932,9 @@ pub(all) struct ViewLayoutResult {
   size : Size
   child_frames : Array[Rect]
   clips_children : Bool
+  child_frames_tight : Bool
 } derive(Eq, ToJson, @debug.Debug)
-pub fn ViewLayoutResult::new(size~ : Size, child_frames? : Array[Rect], clips_children? : Bool) -> Self
+pub fn ViewLayoutResult::new(size~ : Size, child_frames? : Array[Rect], clips_children? : Bool, child_frames_tight? : Bool) -> Self
 
 pub(all) struct ViewPaintContext {
   frame : Rect
