@@ -72,7 +72,7 @@
   pre-existing flex tests stay green.
 - [x] `benchmarks/full_cycle` deep-tree `View::map` baseline recorded; copy
   audit conclusion written to this plan either way.
-- [ ] Three debt notes exist under `docs/plans/debt/`.
+- [x] Three debt notes exist under `docs/plans/debt/`.
 - [ ] `sh scripts/check.sh --profile pr`, the pre-push static trio, and
   `node scripts/sync-website-docs.mjs` + `node scripts/check-website-docs.mjs`
   pass.
@@ -148,4 +148,12 @@ guidance and the cost model are documented in
 `docs/views-api-guide.md` ("Message Types and `View::map` Cost"), and
 type-erased map-adapter fusion stays a non-goal.
 
-Remaining: WS-F — implementation not started.
+WS-F (debt notes) complete: `docs/plans/debt/viewnode-trait-decomposition.md`
+(blocked on MoonBit blanket impls; P17 accepted as interim mitigation),
+`docs/plans/debt/view-state-slot-storage.md` (copy-on-write slot map kept for
+now — 12 descriptor sites, single-digit live slots per node), and
+`docs/plans/debt/renderer-session-closure-style.md` (closure record kept under
+the P11 shrink-or-stay ratchet), each with explicit re-evaluation triggers;
+indexed in a new Debt section of `docs/plans/README.md`.
+
+Remaining: final gate pass (`pr` profile + static validators + website sync).
