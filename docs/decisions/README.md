@@ -50,5 +50,8 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0032 | [Linux promoted to committed product class](0032-linux-committed-product-class.md) | 2026-08-30 | Accepted |
 | 0031 | [Windows promoted to committed product class](0031-windows-committed-product-class.md) | 2026-08-29 | Accepted |
 | 0030 | Overlay presentation host and neutral modal transport | 2026-08-25 | Accepted |
+| 0033 | [Overlay placement pass, portal, and layer stack](0033-overlay-placement-and-portal.md) | 2026-09-03 | Accepted |
+| 0034 | [ViewNode declaration-key coverage gate](0034-viewnode-declaration-coverage-gate.md) | 2026-09-04 | Accepted |
+| 0035 | [Tight-fit child frames and place-time re-measure](0035-tight-fit-child-remeasure.md) | 2026-09-04 | Accepted |
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->
