@@ -1536,6 +1536,7 @@ fn markdown_document_session_from_blocks(
   parse_count~ : Int,
   dirty_range~ : MarkdownDocumentDirtyRange?,
 ) -> MarkdownDocumentSession {
+  markdown_editor_blocks_cache_put(source, editor_blocks)
   let word_count = markdown_editor_word_count(source)
   let metadata = markdown_editor_front_matter_metadata(editor_blocks)
   let next_block_id_seed = match previous {

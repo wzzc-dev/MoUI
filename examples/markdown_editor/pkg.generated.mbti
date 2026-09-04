@@ -9,6 +9,8 @@ import {
 // Values
 pub fn application_menus() -> Array[@services.ApplicationMenu]
 
+pub fn env_flag(String) -> Bool
+
 pub fn runtime(environment? : @services.AppEnvironment, width? : Double, height? : Double, initial_document_path? : String?) -> @runtime.AppRuntime
 
 // Errors

@@ -53,6 +53,11 @@ fn markdown_front_matter_block_at(
 
 ///|
 pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
+  parse_markdown_cached(text)
+}
+
+///|
+fn parse_markdown_uncached(text : String) -> Array[MarkdownBlock] {
   let blocks : Array[MarkdownBlock] = []
   let definitions = markdown_reference_definitions(text)
   let lines = markdown_split_lines(text)
@@ -65,7 +70,7 @@ pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
       }
       let remaining = markdown_join_lines(remaining_lines)
       if remaining != "" {
-        blocks.append(parse_markdown(remaining))
+        blocks.append(parse_markdown_uncached(remaining))
       }
       return blocks
     }

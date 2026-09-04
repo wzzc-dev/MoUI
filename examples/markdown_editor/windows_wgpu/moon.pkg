@@ -1,0 +1,18 @@
+import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/windows" @windows_backend,
+  "wzzc-dev/moui_wgpu_renderer" @render_wgpu,
+  "wzzc-dev/moui_wgpu_renderer/directwrite" @wgpu_directwrite,
+  "wzzc-dev/moui_wgpu_renderer/cosmic_text" @wgpu_cosmic,
+  "examples/markdown_editor",
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { "main.mbt": [ "native" ] },
+)
