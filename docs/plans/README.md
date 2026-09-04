@@ -75,6 +75,14 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [overlay-system-redesign](done/overlay-system-redesign.md) | Ordered `OverlayHost + PresentationSpec` with runtime placement/input/focus and neutral host-modal transport |
 | [overlay-placement-portal-unification](active/overlay-placement-portal-unification.md) | Move anchoring out of the layout fixpoint (post-layout placement pass), add the portal path for control popups, unify popup mechanisms, and add LayerStack/hit/transition/native-modal completion |
 
+## Debt
+
+| Debt note | Summary |
+|-----------|---------|
+| [viewnode-trait-decomposition](debt/viewnode-trait-decomposition.md) | Split the fat 14-method `ViewNode` trait once MoonBit supports blanket impls |
+| [view-state-slot-storage](debt/view-state-slot-storage.md) | Replace copy-on-write `Map[DeclarationKey, Bytes]` slot storage if event-path profiles demand it |
+| [renderer-session-closure-style](debt/renderer-session-closure-style.md) | Revisit `RendererSession` closure record vs trait when renderer duplication or capability mistakes justify an RFC |
+
 ## Done (recent)
 
 | Plan | Summary |
