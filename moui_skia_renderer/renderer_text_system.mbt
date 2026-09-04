@@ -251,6 +251,17 @@ fn skia_paragraph_line_metrics(
       (Some(start), Some(end)) => {
         let start = start.clamp(min=0, max=chars.length())
         let end = end.clamp(min=start, max=chars.length())
+        // SkParagraph can emit an empty trailing line whose utf16
+        // range still overlaps the real last line (a quirk around
+        // trailing hard breaks). Consumers tile ranges, so enforce
+        // monotonic non-overlap: a line never starts before the
+        // previous line ended.
+        let start = if lines.is_empty() {
+          start
+        } else {
+          start.max(lines[lines.length() - 1].text_range.end)
+        }
+        let end = end.clamp(min=start, max=chars.length())
         let ascent = metric.ascent.to_double().abs()
         let descent = metric.descent.to_double().abs()
         let metric_height = metric.height

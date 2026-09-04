@@ -1,14 +1,13 @@
 ///|
 /// Undo-history merge window for the rich-text editors.
 ///
-/// Every accepted text edit used to push one undo entry, so undoing a
-/// typed word took as many presses as it took to type. Consecutive
-/// single-character edits of the same kind at contiguous positions keep
-/// the current undo group open instead: the group's original pre-edit
-/// entry already covers them, so one undo reverts the whole run.
-/// Multi-character edits (pastes, IME commits), newline insertions,
-/// edits behind an active selection, and edits after a history restore
-/// always start a fresh group.
+/// Consecutive single-character edits of the same kind at contiguous
+/// positions keep the current undo group open: instead of skipping the
+/// push and trusting the group's first entry to cover them, the merge
+/// rewrites the stack-top delta so one undo still reverts the whole
+/// run. Multi-character edits (pastes, IME commits), newline
+/// insertions, edits behind an active selection, and edits after a
+/// history restore always start a fresh group.
 priv struct RichTextHistoryGroupState {
   mut kind : Int
   mut start : Int
@@ -48,18 +47,29 @@ fn rich_text_history_now_ms() -> Int {
 let rich_text_history_merge_window_ms : Int = 500
 
 ///|
+/// What the caller must do with the undo stack for an accepted edit:
+/// push a fresh entry, or merge — rewriting the stack-top delta with
+/// `kind` and the single affected character (kind `1` appends it to
+/// `after`, kinds `2`/`3` extend `before`, backspace at the group's
+/// left edge also shifts `start`).
+priv enum RichTextHistoryAction {
+  PushHistory
+  MergeHistory(Int, Char)
+}
+
+///|
 /// Classify an accepted edit as a single-character text change, or
-/// `None` when it is anything else. Kinds: `1` inserts at `start`
-/// (caret typed just before it), `2` backspaces the character at
-/// `start` (caret sat right after it), `3` forward-deletes the
-/// character at `start`. Newline changes never merge, so they report
-/// `None` and force their own undo entry.
+/// `None` when it is anything else. Kinds: `1` inserts `character` at
+/// `start` (caret typed just before it), `2` backspaces `character` at
+/// `start` (caret sat right after it), `3` forward-deletes `character`
+/// at `start`. Newline changes never merge, so they report `None` and
+/// force their own undo entry.
 fn rich_text_history_single_edit(
   previous : String,
   next : String,
   caret : Int,
   selection_active~ : Bool,
-) -> (Int, Int)? {
+) -> (Int, Int, Char)? {
   if selection_active {
     return None
   }
@@ -75,7 +85,7 @@ fn rich_text_history_single_edit(
     if after[index] == '\n' || caret != index {
       return None
     }
-    return Some((1, index))
+    return Some((1, index, after[index]))
   }
   if after_length + 1 == before_length {
     let mut index = 0
@@ -86,10 +96,10 @@ fn rich_text_history_single_edit(
       return None
     }
     if caret == index + 1 {
-      return Some((2, index))
+      return Some((2, index, before[index]))
     }
     if caret == index {
-      return Some((3, index))
+      return Some((3, index, before[index]))
     }
     return None
   }
@@ -111,19 +121,17 @@ fn rich_text_history_group_delta(kind : Int) -> Int {
 }
 
 ///|
-/// Decide whether an accepted edit should push a new undo entry,
-/// updating the open-group bookkeeping either way. Returning `false`
-/// means the edit is covered by the group entry already on the undo
-/// stack, so the caller must not push. The group is identified by its
-/// expected stack length and running text length, so an undo, redo, or
-/// foreign edit in between breaks the merge even without an explicit
-/// reset.
+/// Decide what an accepted edit does to the undo stack, updating the
+/// open-group bookkeeping either way. Merging requires the group's
+/// kind, expected stack length, running text length, time window, and
+/// contiguity to all line up, so an undo, redo, or foreign edit in
+/// between breaks the merge even without an explicit reset.
 fn rich_text_history_record_edit(
   control : @core.TextControlStateContext,
   previous : String,
   next : String,
   caret : Int,
-) -> Bool {
+) -> RichTextHistoryAction {
   let now = rich_text_history_now_ms()
   let selection_active = @core.active_text_selection(control.selection)
     is Some(_)
@@ -136,7 +144,7 @@ fn rich_text_history_record_edit(
   let state = rich_text_history_group.val
   let stack_length = control.undo_stack.length()
   let merges = match edit_shape {
-    Some((kind, start)) =>
+    Some((kind, start, _)) =>
       state.kind == kind &&
       stack_length == state.expected_stack_length &&
       text_length(previous) == state.after_length &&
@@ -148,27 +156,66 @@ fn rich_text_history_record_edit(
   }
   if merges {
     match edit_shape {
-      Some((_, start)) => state.start = start
-      None => ()
+      Some((kind, start, character)) => {
+        state.start = start
+        state.after_length = text_length(next)
+        state.last_push_ms = now
+        MergeHistory(kind, character)
+      }
+      None => PushHistory
+    }
+  } else {
+    match edit_shape {
+      Some((kind, start, _)) => {
+        state.kind = kind
+        state.start = start
+      }
+      None => {
+        state.kind = 0
+        state.start = -1
+      }
     }
     state.after_length = text_length(next)
     state.last_push_ms = now
-    return false
+    state.expected_stack_length = stack_length + 1
+    PushHistory
   }
-  match edit_shape {
-    Some((kind, start)) => {
-      state.kind = kind
-      state.start = start
-    }
-    None => {
-      state.kind = 0
-      state.start = -1
+}
+
+///|
+/// Apply a history action to the undo stack the caller is building.
+/// Merging rewrites the group's stack-top delta in place so the stack
+/// keeps one entry per run while still describing the whole run
+/// exactly. The merge guards guarantee a non-empty stack whose top is
+/// the group entry; an empty stack defensively takes the fresh entry.
+fn rich_text_history_extend_stack(
+  undo_stack : Array[@core.TextHistoryEntryContext],
+  action : RichTextHistoryAction,
+  entry : @core.TextHistoryEntryContext,
+) -> Unit {
+  match action {
+    PushHistory => undo_stack.push(entry)
+    MergeHistory(kind, character) => {
+      if undo_stack.is_empty() {
+        undo_stack.push(entry)
+      } else {
+        let top_index = undo_stack.length() - 1
+        let top = undo_stack[top_index]
+        let character_text = character.to_string()
+        undo_stack[top_index] = if kind == 1 {
+          { ..top, after: top.after + character_text }
+        } else if kind == 2 {
+          {
+            ..top,
+            start: top.start - 1,
+            before: character_text + top.before,
+          }
+        } else {
+          { ..top, before: top.before + character_text }
+        }
+      }
     }
   }
-  state.after_length = text_length(next)
-  state.last_push_ms = now
-  state.expected_stack_length = stack_length + 1
-  return true
 }
 
 ///|

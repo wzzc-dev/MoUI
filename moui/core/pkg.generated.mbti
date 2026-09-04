@@ -59,6 +59,8 @@ pub fn selected_text(String, TextRange?) -> String
 
 pub fn surrounding_delete_range(String, Int, Int, Int) -> TextRange
 
+pub fn text_history_delta(String, String) -> (Int, String, String)
+
 pub fn text_input_grapheme_selection(@unicode.TextGraphemeBoundaries, TextRange?) -> TextRange?
 
 pub fn text_next_grapheme_caret_boundary(String, Int) -> Int
@@ -1517,10 +1519,14 @@ pub(all) struct TextControlStateContext {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct TextHistoryEntryContext {
-  text : String
+  start : Int
+  before : String
+  after : String
   caret : Int
   selection : TextRange?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextHistoryEntryContext::redo_text(Self, String) -> String
+pub fn TextHistoryEntryContext::undo_text(Self, String) -> String
 
 pub(all) enum TextInputEvent {
   InsertText(String)

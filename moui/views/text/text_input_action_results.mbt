@@ -46,8 +46,11 @@ fn[Msg] text_semantics_set_text(
   }
   let undo_stack : Array[@core.TextHistoryEntryContext] = []
   undo_stack.append(ctx.text_control.undo_stack)
+  let (start, before, after) = @core.text_history_delta(previous, next)
   undo_stack.push({
-    text: previous,
+    start,
+    before,
+    after,
     caret: ctx.text_control.caret,
     selection: ctx.text_control.selection,
   })

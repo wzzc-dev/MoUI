@@ -3,6 +3,9 @@ priv struct TextEditResult {
   text : String
   caret : Int
   selection : @core.TextRange?
+  start : Int
+  before : String
+  after : String
 }
 
 ///|
@@ -272,7 +275,15 @@ fn replace_text_range(
   let caret = range.start +
     @core.TextGraphemeBoundaries::new(text=replacement).length()
   let boundaries = @core.TextGraphemeBoundaries::new(text=next_text)
-  { text: next_text, caret: boundaries.clamp_index(caret), selection: None }
+  let chars = text.to_array()
+  {
+    text: next_text,
+    caret: boundaries.clamp_index(caret),
+    selection: None,
+    start: range.start,
+    before: String::from_array(chars[range.start:range.end]),
+    after: replacement,
+  }
 }
 
 ///|

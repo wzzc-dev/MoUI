@@ -448,14 +448,29 @@ fn apply_rich_text_input_transform(
   if changed {
     let undo_stack : Array[@core.TextHistoryEntryContext] = []
     undo_stack.append(control.undo_stack)
-    if record_history &&
-      previous != edit.text &&
-      rich_text_history_record_edit(control, previous, edit.text, control.caret) {
-      undo_stack.push({
-        text: previous,
-        caret: control.caret,
-        selection: control.selection,
-      })
+    if record_history && previous != edit.text {
+      // The transform API only exposes before/after documents, so the
+      // entry falls back to a one-shot prefix/suffix diff at push time.
+      let (start, before, after) = @core.text_history_delta(
+        previous,
+        edit.text,
+      )
+      rich_text_history_extend_stack(
+        undo_stack,
+        rich_text_history_record_edit(
+          control,
+          previous,
+          edit.text,
+          control.caret,
+        ),
+        {
+          start,
+          before,
+          after,
+          caret: control.caret,
+          selection: control.selection,
+        },
+      )
     }
     {
       text: edit.text,
