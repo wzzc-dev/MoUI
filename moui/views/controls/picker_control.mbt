@@ -496,8 +496,8 @@ priv struct PickerRow {
   label : String
   is_selected : Bool
   width : Double
-  theme : @core.Theme
-  foreground : @core.Color
+  theme : @core.Theme // declaration-exempt: consumed only by the Uncacheable paint channel
+  foreground : @core.Color // declaration-exempt: consumed only by the Uncacheable paint channel
 }
 
 ///|
@@ -506,8 +506,24 @@ impl @core.ViewNode for PickerRow with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for PickerRow with fn declaration(_self) {
-  @core.ViewDeclaration::constant()
+/// Rows keep a stable identity while their selection flips during wheel
+/// scrolling, so every channel must key on the mutable state; the resolved
+/// theme has no cheap key and keeps paint uncacheable (views convention).
+impl @core.ViewNode for PickerRow with fn declaration(self) {
+  @common.view_declaration(
+    layout=@common.view_exact_channel(
+      @common.view_record_key("PickerRow.layout", [
+        ("row_width", @core.DeclarationKey::double(self.width)),
+      ]),
+    ),
+    paint=@core.DeclarationChannel::Uncacheable,
+    semantics=@common.view_exact_channel(
+      @common.view_record_key("PickerRow.semantics", [
+        ("label", @core.DeclarationKey::string(self.label)),
+        ("is_selected", @core.DeclarationKey::bool(self.is_selected)),
+      ]),
+    ),
+  )
 }
 
 ///|

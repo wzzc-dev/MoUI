@@ -234,6 +234,12 @@ impl @core.ViewNode for Slider with fn declaration(self) {
       ("value", @core.DeclarationKey::double(self.value)),
       ("label", @core.DeclarationKey::string(self.label)),
       ("scroll", @core.DeclarationKey::bool(self.has_on_change)),
+      (
+        "value_text",
+        @core.DeclarationKey::option(
+          self.value_text.map(@core.DeclarationKey::string),
+        ),
+      ),
     ],
     layout_theme_dependent=false,
   )

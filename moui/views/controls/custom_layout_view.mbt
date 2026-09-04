@@ -1,7 +1,7 @@
 ///|
 priv struct CustomLayout {
-  measure : (@core.Constraints) -> @core.Size
-  paint : (@common.PaintContext, @core.Rect) -> Unit
+  measure : (@core.Constraints) -> @core.Size // declaration-exempt: consumed only by the Uncacheable layout channel
+  paint : (@common.PaintContext, @core.Rect) -> Unit // declaration-exempt: consumed only by the Uncacheable paint channel
   semantics_role : @core.SemanticsRole
   semantics_label : String
 }

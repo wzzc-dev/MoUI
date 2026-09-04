@@ -84,6 +84,23 @@
           ]
         },
         {
+          "name": "ViewNode declaration coverage",
+          "argv": [
+            "node",
+            "scripts/validate-viewnode-declaration-coverage.mjs"
+          ]
+        },
+        {
+          "name": "ViewNode declaration coverage tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/validate_viewnode_declaration_coverage",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "root facade dependency boundary",
           "argv": [
             "node",

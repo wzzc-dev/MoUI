@@ -212,7 +212,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/moonbit_tool_wrapper_budget.mbt",
-      max_lines: 145,
+      max_lines: 146,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/repo_scan_helpers.mbt",
@@ -298,10 +298,10 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/layout/layout_state.mbt", max_lines: 40 },
     { path: "moui/views/layout/grid_list.mbt", max_lines: 25 },
     { path: "moui/views/checkbox/choice.mbt", max_lines: 45 },
-    { path: "moui/views/progress/progress.mbt", max_lines: 155 },
+    { path: "moui/views/progress/progress.mbt", max_lines: 158 },
     // Slider exposes localized labels, range metadata, and typed numeric
     // actions as part of the neutral accessibility contract.
-    { path: "moui/views/slider/slider.mbt", max_lines: 395 },
+    { path: "moui/views/slider/slider.mbt", max_lines: 396 },
     { path: "moui/views/form/form_state.mbt", max_lines: 75 },
     { path: "moui/views/form/form_layout.mbt", max_lines: 80 },
     { path: "moui/views/form/form_field.mbt", max_lines: 95 },
