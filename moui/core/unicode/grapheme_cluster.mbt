@@ -60,7 +60,39 @@ pub struct TextGraphemeBoundaries {
 } derive(Eq, Debug)
 
 ///|
+/// All-ASCII text has a trivial grapheme segmentation: every codepoint is
+/// its own cluster except the LF of a CR-LF pair. Scanning the text once
+/// with a non-allocating char iterator yields boundaries identical to the
+/// general fallback walk, so keystrokes in ASCII documents never pay the
+/// per-pair cluster-rule evaluation and char-array copy. Returns None as
+/// soon as a non-ASCII codepoint appears, falling back to the general path.
+fn ascii_grapheme_boundaries(text : String) -> Array[Int]? {
+  let boundaries : Array[Int] = [0]
+  let mut index = 0
+  let mut last_was_cr = false
+  for ch in text {
+    if ch.to_int() >= 128 {
+      return None
+    }
+    let is_lf = ch == '\n'
+    if index > 0 && !(last_was_cr && is_lf) {
+      boundaries.push(index)
+    }
+    last_was_cr = ch == '\r'
+    index = index + 1
+  }
+  if index > 0 {
+    boundaries.push(index)
+  }
+  Some(boundaries)
+}
+
+///|
 pub fn TextGraphemeBoundaries::new(text~ : String) -> TextGraphemeBoundaries {
+  match ascii_grapheme_boundaries(text) {
+    Some(boundaries) => return { text, boundaries }
+    None => ()
+  }
   let chars = text.to_array()
   let boundaries : Array[Int] = [0]
   let mut index = 1

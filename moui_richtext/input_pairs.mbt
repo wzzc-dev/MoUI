@@ -5,9 +5,6 @@ fn markdown_editor_wrap_selection_input(
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
-  if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
-    return None
-  }
   let marker = match input {
     "**" => "**"
     "__" => "__"
@@ -16,6 +13,9 @@ fn markdown_editor_wrap_selection_input(
     "*" => "*"
     "_" => "_"
     _ => return None
+  }
+  if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
+    return None
   }
   match markdown_editor_active_selection(selection) {
     Some(range) => {
@@ -61,9 +61,6 @@ fn markdown_editor_pair_delimiter_input(
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
-  if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
-    return None
-  }
   let close = match input {
     "(" => ")"
     "[" => "]"
@@ -77,6 +74,9 @@ fn markdown_editor_pair_delimiter_input(
       }
     "`" => "`"
     _ => return None
+  }
+  if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
+    return None
   }
   let source_length = markdown_editor_text_length(source)
   match markdown_editor_active_selection(selection) {

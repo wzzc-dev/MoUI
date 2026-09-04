@@ -414,6 +414,13 @@ fn markdown_editor_single_inline_marker_at(
 
 ///|
 fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
+  parse_markdown_editor_blocks_cached(source)
+}
+
+///|
+fn parse_markdown_editor_blocks_uncached(
+  source : String,
+) -> Array[MarkdownEditorBlock] {
   parse_markdown_editor_blocks_with_definitions(source, definitions=None)
 }
 
@@ -433,7 +440,7 @@ fn parse_markdown_editor_blocks_with_definitions(
   }
   let definitions = match definitions {
     Some(definitions) => definitions
-    None => markdown_reference_definitions(source)
+    None => markdown_reference_definitions_cached(source)
   }
   let lines = markdown_editor_lines(source)
   match markdown_editor_front_matter_block_at(lines) {
@@ -1130,11 +1137,21 @@ fn markdown_editor_setext_heading_level_at(
   }
   let text = lines[index].text.trim().to_owned()
   if text == "" ||
-    markdown_editor_opening_code_fence_marker(lines[index].text) is Some(_) ||
-    !markdown_editor_is_setext_paragraph_candidate(lines[index].text) {
+    markdown_editor_opening_code_fence_marker(lines[index].text) is Some(_) {
     return None
   }
-  markdown_editor_setext_underline_level(lines[index + 1].text)
+  // Underline first: it is a trivial character scan, and the paragraph
+  // candidate mini-parse below is only worth running on the rare line
+  // that actually sits above a `---`/`===` underline.
+  match markdown_editor_setext_underline_level(lines[index + 1].text) {
+    None => None
+    Some(level) =>
+      if markdown_editor_is_setext_paragraph_candidate(lines[index].text) {
+        Some(level)
+      } else {
+        None
+      }
+  }
 }
 
 ///|

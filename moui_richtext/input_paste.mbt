@@ -147,8 +147,7 @@ fn markdown_editor_paste_autolink(
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
-  if markdown_editor_active_selection(selection) is Some(_) ||
-    markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
+  if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
   if markdown_editor_text_length(input.trim().to_owned()) !=
@@ -157,6 +156,9 @@ fn markdown_editor_paste_autolink(
   }
   let target = markdown_editor_autolink_target_with_trailing_punctuation(input)
   if target.target == "" {
+    return None
+  }
+  if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
   }
   let source_length = markdown_editor_text_length(source)
@@ -178,8 +180,7 @@ fn markdown_editor_complete_autolink_on_space(
   caret : Int,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
-  if markdown_editor_active_selection(selection) is Some(_) ||
-    markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
+  if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
   let chars = source.to_array()
@@ -191,6 +192,9 @@ fn markdown_editor_complete_autolink_on_space(
   let token = String::from_array(chars[start:caret])
   let target = markdown_editor_autolink_target_with_trailing_punctuation(token)
   if target.target == "" {
+    return None
+  }
+  if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
   }
   let replacement = target.leading +
@@ -216,8 +220,7 @@ fn markdown_editor_complete_autolink_on_enter(
   selection : @core.TextRange?,
   line : String,
 ) -> RichTextInputTransform? {
-  if markdown_editor_active_selection(selection) is Some(_) ||
-    markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
+  if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
   let chars = source.to_array()
@@ -229,6 +232,9 @@ fn markdown_editor_complete_autolink_on_enter(
   let token = String::from_array(chars[start:caret])
   let target = markdown_editor_autolink_target_with_trailing_punctuation(token)
   if target.target == "" {
+    return None
+  }
+  if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
   }
   let replacement = target.leading +
@@ -364,12 +370,12 @@ fn markdown_editor_paste_html_block(
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
-  if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
-    return None
-  }
   let html = match markdown_editor_pasted_html_block(input) {
     Some(html) => html
     None => return None
+  }
+  if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
+    return None
   }
   let editor_selection : MarkdownEditorSelection = { caret, selection }
   if markdown_editor_active_selection(selection) is None {

@@ -143,8 +143,22 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
 }
 
 ///|
+/// `char_length` decodes the whole UTF-8 buffer, and the editor helpers
+/// call it on the same source document for every block conversion, caret
+/// clamp, and substring. Memoize the last (source, length) pair so one
+/// keystroke pays the scan at most once; the runtime is single-threaded.
+let markdown_editor_text_length_cache : Ref[(String, Int)] = Ref(("", -1))
+
+///|
 pub fn markdown_editor_text_length(source : String) -> Int {
-  source.char_length()
+  let cached = markdown_editor_text_length_cache.val
+  if cached.1 >= 0 && cached.0 == source {
+    cached.1
+  } else {
+    let length = source.char_length()
+    markdown_editor_text_length_cache.val = (source, length)
+    length
+  }
 }
 
 ///|
@@ -153,11 +167,13 @@ pub fn markdown_editor_substring(
   start : Int,
   end : Int,
 ) -> String {
-  let char_length = source.char_length()
+  let char_length = markdown_editor_text_length(source)
   let start = markdown_editor_clamp_int(start, 0, char_length)
   let end = markdown_editor_clamp_int(end, start, char_length)
   let source_length = source.length()
-  let start_offset = if start == char_length {
+  let start_offset = if start == 0 {
+    0
+  } else if start == char_length {
     source_length
   } else {
     source.offset_of_nth_char(start).unwrap_or(source_length)

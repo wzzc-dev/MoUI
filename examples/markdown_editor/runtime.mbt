@@ -16,6 +16,13 @@ pub fn runtime(
 }
 
 ///|
+/// Shared environment-flag convention for the platform entrypoints, matching
+/// the other desktop examples (e.g. `MOUI_FIRST_FRAME_EXIT=1` smoke runs).
+pub fn env_flag(name : String) -> Bool {
+  @env.get_env_var(name) == Some("1")
+}
+
+///|
 pub fn application_menus() -> Array[@services.ApplicationMenu] {
   @app.markdown_editor_application_menus()
 }

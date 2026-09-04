@@ -20,6 +20,13 @@
 /// - Display sessions (source + composition text) memoize the full parse
 ///   for the short window where an IME polls paints while the candidate
 ///   text is unchanged.
+/// - The editor block parse is keyed by source, so the many block-context
+///   questions a single keystroke or command asks (pair/autolink/HTML
+///   guards, caret kind and containment queries) share one whole-document
+///   parse instead of re-parsing per question.
+/// - The markdown mini-parse is keyed by text, because the block pass
+///   consults the same lines several times and each mini-parse runs a
+///   mizchi parse of its input to collect reference definitions.
 /// - Scroll geometry (block heights + prefix sums) is keyed by font,
 ///   content width, and source, and stays valid until a measured height
 ///   actually changes, so wheel events and repaints read O(1) totals and
@@ -39,7 +46,18 @@ let rich_text_block_conversions : Map[String, RichTextBlockCacheEntry] = Map([])
 let rich_text_run_widths : Map[String, Double] = Map([])
 
 ///|
-let rich_text_block_heights : Map[String, Double] = Map([])
+/// Measured heights live in digest buckets: the full-document scroll
+/// geometry walk queries every block, so it hashes a cheap 64-bit digest
+/// per block instead of allocating and re-hashing a content-length key
+/// string. Each bucket still validates its hits against the exact
+/// content-identity key, so lookups remain exact.
+let rich_text_block_heights : Map[UInt64, Array[(String, Double)]] = Map([])
+
+///|
+/// Number of exact (key, height) pairs across all digest buckets; the
+/// bounded clear and the empty-map short circuit read this instead of
+/// walking the bucket map.
+let rich_text_block_heights_count : Ref[Int] = Ref(0)
 
 ///|
 let rich_text_display_sessions : Map[String, MarkdownDocumentSession] = Map([])
@@ -49,6 +67,15 @@ let markdown_reference_definitions_cache : Map[
   String,
   Array[MarkdownReferenceDefinition],
 ] = Map([])
+
+///|
+let markdown_editor_blocks_cache : Map[
+  String,
+  Array[MarkdownEditorBlock],
+] = Map([])
+
+///|
+let markdown_parse_cache : Map[String, Array[MarkdownBlock]] = Map([])
 
 ///|
 /// Bumped whenever a block's *measured* height changes (including when the
@@ -108,8 +135,72 @@ fn rich_text_cache_font_key(font : @core.FontSpec) -> String {
 }
 
 ///|
+/// Content-identity key for a parsed block. Hand-rolled to keep the
+/// measured-height walk cheap over large documents, it must stay
+/// injective on the exact fields that determine layout, so every payload
+/// carries its length and every field a fixed tag; changing a field or
+/// adding one to `MarkdownBlock` requires mirroring it here.
 fn markdown_editor_block_key(block : MarkdownBlock) -> String {
-  @json.to_json(block).stringify()
+  let key = StringBuilder()
+  key.write_string("b")
+  match block.kind {
+    Heading(level) => key.write_string("h\{level};")
+    Paragraph => key.write_string("p;")
+    UnorderedListItem => key.write_string("u;")
+    TaskListItem(checked) => key.write_string("t\{if checked { 1 } else { 0 }};")
+    OrderedListItem(start) => key.write_string("o\{start};")
+    Blockquote => key.write_string("q;")
+    CodeBlock => key.write_string("c;")
+    HorizontalRule => key.write_string("r;")
+    Table => key.write_string("a;")
+    FootnoteDefinition(label) => {
+      key.write_string("f")
+      markdown_editor_block_key_string(key, Some(label))
+    }
+    HtmlBlock => key.write_string("x;")
+    FrontMatter => key.write_string("m;")
+  }
+  markdown_editor_block_key_string(key, Some(block.text))
+  key.write_string("i\{block.inlines.length()};")
+  for inline in block.inlines {
+    let inline_tag = match inline.kind {
+      Plain => '0'
+      Bold => '1'
+      Italic => '2'
+      Code => '3'
+      Strikethrough => '4'
+      Link => '5'
+      Autolink => '6'
+      Image => '7'
+      FootnoteReference => '8'
+      HtmlInline => '9'
+    }
+    key.write_char(inline_tag)
+    markdown_editor_block_key_string(key, Some(inline.text))
+    markdown_editor_block_key_string(key, inline.target)
+  }
+  key.write_string("a\{block.table_alignments.length()};")
+  for align in block.table_alignments {
+    let align_tag = match align {
+      None => 'n'
+      Some(@core.TextStart) => 's'
+      Some(@core.TextCenter) => 'e'
+      Some(@core.TextEnd) => 'd'
+    }
+    key.write_char(align_tag)
+  }
+  markdown_editor_block_key_string(key, block.code_language)
+  key.to_string()
+}
+
+fn markdown_editor_block_key_string(
+  key : StringBuilder,
+  part : String?,
+) -> Unit {
+  match part {
+    None => key.write_char('n')
+    Some(text) => key.write_string("s\{text.length()}:\{text}")
+  }
 }
 
 ///|
@@ -204,6 +295,61 @@ fn markdown_reference_definitions_cached(
       }
       markdown_reference_definitions_cache.set(source, definitions)
       definitions
+    }
+  }
+}
+
+///|
+/// Memoize the editor block parse for one source. Block-context queries
+/// are pure functions of the parse, and a single keystroke or command
+/// asks several of them, so one parse per source serves them all. The
+/// entry duplicates the document's block text plus inline arrays, so the
+/// cap stays at 2; callers get a shallow copy to keep the cached array's
+/// identity private (the model itself is never mutated in place).
+fn parse_markdown_editor_blocks_cached(
+  source : String,
+) -> Array[MarkdownEditorBlock] {
+  match markdown_editor_blocks_cache.get(source) {
+    Some(blocks) => blocks.copy()
+    None => {
+      let blocks = parse_markdown_editor_blocks_uncached(source)
+      markdown_editor_blocks_cache_put(source, blocks)
+      blocks.copy()
+    }
+  }
+}
+
+///|
+/// Publish a parse result produced elsewhere (the session's incremental
+/// apply stitches blocks without re-parsing the whole source) so the
+/// next keystroke's block-context queries resolve from the cache.
+fn markdown_editor_blocks_cache_put(
+  source : String,
+  blocks : Array[MarkdownEditorBlock],
+) -> Unit {
+  if markdown_editor_blocks_cache.length() >= 2 {
+    markdown_editor_blocks_cache.clear()
+  }
+  markdown_editor_blocks_cache.set(source, blocks)
+}
+
+///|
+/// Memoize `parse_markdown` per text. The block pass consults the same
+/// lines repeatedly (setext candidate, soft-wrap line, paragraph
+/// fallback) and `parse_markdown` runs a full mizchi parse to collect
+/// definitions per call, so without this each keystroke parses every
+/// line 2–3 times. The cap is sized to keep the ±few-line reuse window
+/// of the block pass hot while bounding memory to sub-line payloads.
+fn parse_markdown_cached(text : String) -> Array[MarkdownBlock] {
+  match markdown_parse_cache.get(text) {
+    Some(blocks) => blocks.copy()
+    None => {
+      let blocks = parse_markdown_uncached(text)
+      if markdown_parse_cache.length() >= 1024 {
+        markdown_parse_cache.clear()
+      }
+      markdown_parse_cache.set(text, blocks)
+      blocks.copy()
     }
   }
 }
@@ -330,6 +476,126 @@ fn rich_text_block_measured_height_key(
 }
 
 ///|
+///|
+/// Exact (key, height) lookup inside a digest bucket. Buckets hold only
+/// the handful of distinct blocks sharing a digest, so a linear scan is
+/// the cheapest verification step.
+fn rich_text_bucket_lookup(
+  bucket : Array[(String, Double)],
+  key~ : String,
+) -> Double? {
+  let mut found : Double? = None
+  for pair in bucket {
+    if pair.0 == key {
+      found = Some(pair.1)
+      break
+    }
+  }
+  found
+}
+
+/// FNV-1a mixing over the same identity inputs as the exact key, but
+/// without materializing any string: the geometry walk hashes 100k+
+/// blocks per revision, so the digest must stay allocation-light.
+fn rich_text_digest_mix(hash : UInt64, value : UInt64) -> UInt64 {
+  let mut hash = hash ^ value
+  hash = hash * 0x100000001b3UL
+  hash
+}
+
+///|
+fn rich_text_digest_string(hash : UInt64, text : String) -> UInt64 {
+  let mut hash = rich_text_digest_mix(hash, text.length().to_uint64())
+  for ch in text {
+    hash = rich_text_digest_mix(hash, ch.to_int().to_uint64())
+  }
+  hash
+}
+
+///|
+fn rich_text_block_measured_height_digest(
+  editor_block : MarkdownEditorBlock,
+  base : @core.FontSpec,
+  width~ : Double,
+) -> UInt64 {
+  let block = editor_block.block
+  let mut hash = 0xcbf29ce484222325UL
+  hash = rich_text_digest_string(hash, rich_text_cache_font_key(base))
+  hash = rich_text_digest_string(hash, width.to_string())
+  hash = match block.kind {
+    Heading(level) => rich_text_digest_mix(
+      rich_text_digest_mix(hash, 1UL),
+      level.to_uint64(),
+    )
+    Paragraph => rich_text_digest_mix(hash, 2UL)
+    UnorderedListItem => rich_text_digest_mix(hash, 3UL)
+    TaskListItem(checked) => rich_text_digest_mix(
+      hash,
+      if checked { 4UL } else { 5UL },
+    )
+    OrderedListItem(start) => rich_text_digest_mix(
+      rich_text_digest_mix(hash, 6UL),
+      start.to_uint64(),
+    )
+    Blockquote => rich_text_digest_mix(hash, 7UL)
+    CodeBlock => rich_text_digest_mix(hash, 8UL)
+    HorizontalRule => rich_text_digest_mix(hash, 9UL)
+    Table => rich_text_digest_mix(hash, 10UL)
+    FootnoteDefinition(label) => rich_text_digest_string(
+      rich_text_digest_mix(hash, 11UL),
+      label,
+    )
+    HtmlBlock => rich_text_digest_mix(hash, 12UL)
+    FrontMatter => rich_text_digest_mix(hash, 13UL)
+  }
+  hash = rich_text_digest_string(hash, block.text)
+  hash = rich_text_digest_mix(hash, block.inlines.length().to_uint64())
+  for inline in block.inlines {
+    hash = rich_text_digest_mix(
+      hash,
+      match inline.kind {
+        Plain => 20UL
+        Bold => 21UL
+        Italic => 22UL
+        Code => 23UL
+        Strikethrough => 24UL
+        Link => 25UL
+        Autolink => 26UL
+        Image => 27UL
+        FootnoteReference => 28UL
+        HtmlInline => 29UL
+      },
+    )
+    hash = rich_text_digest_string(hash, inline.text)
+    match inline.target {
+      None => hash = rich_text_digest_mix(hash, 30UL)
+      Some(target) =>
+        hash = rich_text_digest_string(
+          rich_text_digest_mix(hash, 31UL),
+          target,
+        )
+    }
+  }
+  hash = rich_text_digest_mix(hash, block.table_alignments.length().to_uint64())
+  for align in block.table_alignments {
+    hash = rich_text_digest_mix(
+      hash,
+      match align {
+        None => 40UL
+        Some(@core.TextStart) => 41UL
+        Some(@core.TextCenter) => 42UL
+        Some(@core.TextEnd) => 43UL
+      },
+    )
+  }
+  match block.code_language {
+    None => rich_text_digest_mix(hash, 50UL)
+    Some(language) =>
+      rich_text_digest_string(rich_text_digest_mix(hash, 51UL), language)
+  }
+}
+
+///|
 fn rich_text_record_block_measured_height(
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
@@ -340,14 +606,42 @@ fn rich_text_record_block_measured_height(
     return
   }
   let key = rich_text_block_measured_height_key(editor_block, base, width~)
-  if rich_text_block_heights.get(key) == Some(height) {
-    return
+  let digest = rich_text_block_measured_height_digest(
+    editor_block,
+    base,
+    width~,
+  )
+  let old_bucket = rich_text_block_heights.get(digest)
+  match old_bucket {
+    Some(bucket) =>
+      match rich_text_bucket_lookup(bucket, key~) {
+        Some(recorded) => if recorded == height {
+          return
+        }
+        None => ()
+      }
+    None => ()
   }
-  if rich_text_block_heights.length() >= 32768 {
+  if rich_text_block_heights_count.val >= 32768 {
     rich_text_block_heights.clear()
+    rich_text_block_heights_count.val = 0
     rich_text_block_heights_epoch.val = rich_text_block_heights_epoch.val + 1
   }
-  rich_text_block_heights.set(key, height)
+  let next_bucket = match old_bucket {
+    Some(bucket) => {
+      let filtered = bucket.filter(pair => pair.0 != key)
+      filtered.push((key, height))
+      filtered
+    }
+    None => [(key, height)]
+  }
+  let old_length = match old_bucket {
+    Some(bucket) => bucket.length()
+    None => 0
+  }
+  rich_text_block_heights_count.val =
+    rich_text_block_heights_count.val - old_length + next_bucket.length()
+  rich_text_block_heights.set(digest, next_bucket)
   rich_text_block_heights_epoch.val = rich_text_block_heights_epoch.val + 1
 }
 
@@ -406,9 +700,30 @@ fn rich_text_block_measured_height(
   if width <= 0.0 {
     return None
   }
-  rich_text_block_heights.get(
-    rich_text_block_measured_height_key(editor_block, base, width~),
+  // Before the first measured height lands (a fresh process opening a
+  // document) every lookup would miss, so skip the digest entirely
+  // instead of computing it once per block.
+  if rich_text_block_heights_count.val == 0 {
+    return None
+  }
+  let digest = rich_text_block_measured_height_digest(
+    editor_block,
+    base,
+    width~,
   )
+  match rich_text_block_heights.get(digest) {
+    None => None
+    Some(bucket) => {
+      // A digest hit is the only case that pays for the exact key, so
+      // misses stay allocation-free while hits remain content-verified.
+      let key = rich_text_block_measured_height_key(
+        editor_block,
+        base,
+        width~,
+      )
+      rich_text_bucket_lookup(bucket, key~)
+    }
+  }
 }
 
 ///|

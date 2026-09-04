@@ -335,19 +335,19 @@ fn markdown_editor_paste_markdown_table_as_table(
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
+  let table = match markdown_editor_markdown_table_paste(input) {
+    Some(table) => table
+    None => return None
+  }
   if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
   }
-  match markdown_editor_markdown_table_paste(input) {
-    Some(table) =>
-      markdown_editor_paste_table_text_as_block(
-        source,
-        caret,
-        selection,
-        table.table_text,
-      )
-    None => None
-  }
+  markdown_editor_paste_table_text_as_block(
+    source,
+    caret,
+    selection,
+    table.table_text,
+  )
 }
 
 ///|
