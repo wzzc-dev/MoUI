@@ -114,7 +114,7 @@ fn markdown_document_scroll_geometry_from_heights(
   for index, height in heights {
     let i = index + 1
     tree[i] = tree[i] + height
-    let parent = i + (i & (-i))
+    let parent = i + (i & -i)
     if parent <= count {
       tree[parent] = tree[parent] + tree[i]
     }
@@ -139,7 +139,7 @@ fn markdown_document_scroll_geometry_prefix_at(
   let mut sum = 0.0
   while i > 0 {
     sum = sum + geometry.tree[i]
-    i = i - (i & (-i))
+    i = i - (i & -i)
   }
   sum
 }
@@ -164,7 +164,7 @@ fn markdown_document_scroll_geometry_set_height(
   let mut i = index + 1
   while i <= count {
     geometry.tree[i] = geometry.tree[i] + delta
-    i = i + (i & (-i))
+    i = i + (i & -i)
   }
 }
 

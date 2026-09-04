@@ -46,3 +46,17 @@ let hot_path_block_wrap_builds : Ref[Int] = Ref(0)
 ///|
 /// Soft-wrap paragraph layouts reused from the cache.
 let hot_path_block_wrap_cache_hits : Ref[Int] = Ref(0)
+
+///|
+/// Block fingerprint strings built in `markdown_document_assign_blocks`.
+/// With a reindex window only the re-parse window (whose blocks may have
+/// changed content) pays fingerprint construction; the untouched prefix
+/// and suffix reuse the previous fingerprints by reference.
+let hot_path_block_fingerprints_built : Ref[Int] = Ref(0)
+
+///|
+/// Per-block height metrics recomputed from source in
+/// `markdown_document_height_index`. Outside the re-parse window the
+/// metrics are reused (their heights depend on unchanged content), so
+/// this counts only window blocks.
+let hot_path_height_metrics_recomputed : Ref[Int] = Ref(0)
