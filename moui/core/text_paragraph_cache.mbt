@@ -9,7 +9,6 @@
 /// entry. Total cached text is bounded by a byte budget and an entry
 /// cap; exceeding either drops every entry, mirroring the
 /// wholesale-clear pattern of the rich-text caches.
-
 priv struct TextParagraphCacheEntry {
   text_system_id : String
   font_generation : Int
@@ -18,7 +17,8 @@ priv struct TextParagraphCacheEntry {
 }
 
 ///|
-let text_paragraph_cache_buckets : Map[UInt64, Array[TextParagraphCacheEntry]] = Map([])
+let text_paragraph_cache_buckets : Map[UInt64, Array[TextParagraphCacheEntry]] = Map([],
+)
 
 ///|
 let text_paragraph_cache_count : Ref[Int] = Ref(0)
@@ -44,7 +44,10 @@ fn text_paragraph_cache_digest_mix(hash : UInt64, value : UInt64) -> UInt64 {
 
 ///|
 fn text_paragraph_cache_digest_string(hash : UInt64, text : String) -> UInt64 {
-  let mut hash = text_paragraph_cache_digest_mix(hash, text.length().to_uint64())
+  let mut hash = text_paragraph_cache_digest_mix(
+    hash,
+    text.length().to_uint64(),
+  )
   for ch in text {
     hash = text_paragraph_cache_digest_mix(hash, ch.to_int().to_uint64())
   }
@@ -52,11 +55,15 @@ fn text_paragraph_cache_digest_string(hash : UInt64, text : String) -> UInt64 {
 }
 
 ///|
-fn text_paragraph_cache_digest_family(hash : UInt64, family : FontFamily) -> UInt64 {
+fn text_paragraph_cache_digest_family(
+  hash : UInt64,
+  family : FontFamily,
+) -> UInt64 {
   match family {
     Name(name) =>
       text_paragraph_cache_digest_string(
-        text_paragraph_cache_digest_mix(hash, 0UL), name,
+        text_paragraph_cache_digest_mix(hash, 0UL),
+        name,
       )
     SystemUi => text_paragraph_cache_digest_mix(hash, 1UL)
     UiSansSerif => text_paragraph_cache_digest_mix(hash, 2UL)
@@ -74,7 +81,8 @@ fn text_paragraph_cache_digest_family(hash : UInt64, family : FontFamily) -> UIn
 ///|
 fn text_paragraph_cache_digest_font(hash : UInt64, font : FontSpec) -> UInt64 {
   let mut hash = text_paragraph_cache_digest_mix(
-    hash, font.families.families.length().to_uint64(),
+    hash,
+    font.families.families.length().to_uint64(),
   )
   for family in font.families.families {
     hash = text_paragraph_cache_digest_family(hash, family)
@@ -85,7 +93,10 @@ fn text_paragraph_cache_digest_font(hash : UInt64, font : FontSpec) -> UInt64 {
     Normal => text_paragraph_cache_digest_mix(hash, 0UL)
     Italic => text_paragraph_cache_digest_mix(hash, 1UL)
   }
-  hash = text_paragraph_cache_digest_mix(hash, font.variations.length().to_uint64())
+  hash = text_paragraph_cache_digest_mix(
+    hash,
+    font.variations.length().to_uint64(),
+  )
   for variation in font.variations {
     hash = text_paragraph_cache_digest_string(hash, variation.axis)
     hash = text_paragraph_cache_digest_string(hash, variation.value.to_string())
@@ -101,13 +112,16 @@ fn text_paragraph_cache_input_digest(
   let mut hash = 0xcbf29ce484222325UL
   hash = text_paragraph_cache_digest_string(hash, text_system_id)
   hash = text_paragraph_cache_digest_mix(
-    hash, text_paragraph_cache_font_generation.val.to_uint64(),
+    hash,
+    text_paragraph_cache_font_generation.val.to_uint64(),
   )
   hash = match input.max_width {
     None => text_paragraph_cache_digest_mix(hash, 0UL)
-    Some(width) => text_paragraph_cache_digest_string(
-      text_paragraph_cache_digest_mix(hash, 1UL), width.to_string(),
-    )
+    Some(width) =>
+      text_paragraph_cache_digest_string(
+        text_paragraph_cache_digest_mix(hash, 1UL),
+        width.to_string(),
+      )
   }
   hash = text_paragraph_cache_digest_string(hash, input.text)
   text_paragraph_cache_digest_font(hash, input.font)
@@ -167,7 +181,7 @@ fn text_paragraph_cache_store(
   }
   if text_paragraph_cache_count.val >= text_paragraph_cache_capacity.val ||
     text_paragraph_cache_text_bytes.val + text_bytes >
-      text_paragraph_cache_text_budget_bytes.val {
+    text_paragraph_cache_text_budget_bytes.val {
     text_paragraph_cache_clear()
   }
   let entry = {
@@ -182,17 +196,15 @@ fn text_paragraph_cache_store(
     None => []
     Some(bucket) => bucket
   }
-  let bucket = previous.filter(
-    existing => !text_paragraph_cache_entry_matches(
-      existing, text_system_id, input,
-    ),
-  )
+  let bucket = previous.filter(existing => {
+    !text_paragraph_cache_entry_matches(existing, text_system_id, input)
+  })
   let removed = previous.length() - bucket.length()
   bucket.push(entry)
   text_paragraph_cache_buckets[digest] = bucket
   text_paragraph_cache_count.val = text_paragraph_cache_count.val + 1 - removed
-  text_paragraph_cache_text_bytes.val =
-    text_paragraph_cache_text_bytes.val + text_bytes
+  text_paragraph_cache_text_bytes.val = text_paragraph_cache_text_bytes.val +
+    text_bytes
 }
 
 ///|
@@ -203,9 +215,11 @@ test "paragraph layouts are memoized per input identity" {
     measure=input => fallback_text_layout_result(input),
     paragraph_layout=Some(input => {
       layout_count[0] = layout_count[0] + 1
-      fallback_paragraph_layout_result(input, {
-        input => fallback_text_layout_result(input)
-      }, "memoized-paragraph-test")
+      fallback_paragraph_layout_result(
+        input,
+        input => fallback_text_layout_result(input),
+        "memoized-paragraph-test",
+      )
     }),
   )
   let input = TextLayoutInput::new(
@@ -224,9 +238,11 @@ test "distinct inputs never share a cached layout" {
   let layout_count = [0]
   let count_layout = input => {
     layout_count[0] = layout_count[0] + 1
-    fallback_paragraph_layout_result(input, {
-      input => fallback_text_layout_result(input)
-    }, "distinct-input-paragraph-test")
+    fallback_paragraph_layout_result(
+      input,
+      input => fallback_text_layout_result(input),
+      "distinct-input-paragraph-test",
+    )
   }
   let system = TextSystem::new(
     id="distinct-input-paragraph-test",
@@ -243,17 +259,23 @@ test "distinct inputs never share a cached layout" {
   let _ = system.layout_paragraph(
     TextLayoutInput::new(text="hello", font~, max_width=80.5),
   )
-  let _ = system.layout_paragraph(
-    TextLayoutInput::new(text="hello", font~),
-  )
+  let _ = system.layout_paragraph(TextLayoutInput::new(text="hello", font~))
   let _ = system.layout_paragraph(
     TextLayoutInput::new(text="hellp", font~, max_width=80.0),
   )
   let _ = system.layout_paragraph(
-    TextLayoutInput::new(text="hello", font=FontSpec::new(size=15.0), max_width=80.0),
+    TextLayoutInput::new(
+      text="hello",
+      font=FontSpec::new(size=15.0),
+      max_width=80.0,
+    ),
   )
   let _ = system.layout_paragraph(
-    TextLayoutInput::new(text="hello", font=FontSpec::new(size=14.0, weight=700), max_width=80.0),
+    TextLayoutInput::new(
+      text="hello",
+      font=FontSpec::new(size=14.0, weight=700),
+      max_width=80.0,
+    ),
   )
   let _ = system.layout_paragraph(
     TextLayoutInput::new(text="hello", font~, max_width=80.0),
@@ -269,9 +291,11 @@ test "font registration retires cached layouts" {
     measure=input => fallback_text_layout_result(input),
     paragraph_layout=Some(input => {
       layout_count[0] = layout_count[0] + 1
-      fallback_paragraph_layout_result(input, {
-        input => fallback_text_layout_result(input)
-      }, "font-generation-paragraph-test")
+      fallback_paragraph_layout_result(
+        input,
+        input => fallback_text_layout_result(input),
+        "font-generation-paragraph-test",
+      )
     }),
   )
   let input = TextLayoutInput::new(
@@ -282,7 +306,10 @@ test "font registration retires cached layouts" {
   let _ = system.layout_paragraph(input)
   let _ = system.layout_paragraph(input)
   assert_eq(layout_count[0], 1)
-  system.register_font_data(FontFamily::Name("regenerated"), Bytes::make(4, b'\x00'))
+  system.register_font_data(
+    FontFamily::Name("regenerated"),
+    Bytes::make(4, b'\x00'),
+  )
   let _ = system.layout_paragraph(input)
   assert_eq(layout_count[0], 2)
 }
@@ -290,12 +317,16 @@ test "font registration retires cached layouts" {
 ///|
 test "different text systems never share cached layouts" {
   let layout_count = [0]
-  let count_layout = id => (input => {
-    layout_count[0] = layout_count[0] + 1
-    fallback_paragraph_layout_result(input, {
-      input => fallback_text_layout_result(input)
-    }, id)
-  })
+  let count_layout = id => {
+    input => {
+      layout_count[0] = layout_count[0] + 1
+      fallback_paragraph_layout_result(
+        input,
+        input => fallback_text_layout_result(input),
+        id,
+      )
+    }
+  }
   let first = TextSystem::new(
     id="shared-input-paragraph-a",
     measure=input => fallback_text_layout_result(input),
@@ -325,9 +356,11 @@ test "the text byte budget drops stale paragraph entries" {
   let layout_count = [0]
   let count_layout = input => {
     layout_count[0] = layout_count[0] + 1
-    fallback_paragraph_layout_result(input, {
-      input => fallback_text_layout_result(input)
-    }, "budget-paragraph-test")
+    fallback_paragraph_layout_result(
+      input,
+      input => fallback_text_layout_result(input),
+      "budget-paragraph-test",
+    )
   }
   let system = TextSystem::new(
     id="budget-paragraph-test",
@@ -337,12 +370,8 @@ test "the text byte budget drops stale paragraph entries" {
   let budget = text_paragraph_cache_text_budget_bytes.val
   let font = FontSpec::new(size=14.0)
   text_paragraph_cache_text_budget_bytes.val = 8
-  let first = TextLayoutInput::new(
-    text="aaaaaaaa", font~, max_width=80.0,
-  )
-  let second = TextLayoutInput::new(
-    text="bbbbbbbb", font~, max_width=80.0,
-  )
+  let first = TextLayoutInput::new(text="aaaaaaaa", font~, max_width=80.0)
+  let second = TextLayoutInput::new(text="bbbbbbbb", font~, max_width=80.0)
   let _ = system.layout_paragraph(first)
   assert_eq(layout_count[0], 1)
   let _ = system.layout_paragraph(first)
@@ -366,15 +395,19 @@ test "oversized inputs bypass the paragraph cache" {
     measure=input => fallback_text_layout_result(input),
     paragraph_layout=Some(input => {
       layout_count[0] = layout_count[0] + 1
-      fallback_paragraph_layout_result(input, {
-        input => fallback_text_layout_result(input)
-      }, "oversized-paragraph-test")
+      fallback_paragraph_layout_result(
+        input,
+        input => fallback_text_layout_result(input),
+        "oversized-paragraph-test",
+      )
     }),
   )
   let budget = text_paragraph_cache_text_budget_bytes.val
   text_paragraph_cache_text_budget_bytes.val = 8
   let input = TextLayoutInput::new(
-    text="aaaaaaaaa", font=FontSpec::new(size=14.0), max_width=80.0,
+    text="aaaaaaaaa",
+    font=FontSpec::new(size=14.0),
+    max_width=80.0,
   )
   // The cache is process-global and shared across tests, so this only
   // asserts the oversized input itself never occupies an entry.

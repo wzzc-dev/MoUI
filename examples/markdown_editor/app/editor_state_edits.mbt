@@ -317,7 +317,9 @@ priv struct MarkdownEditorPreEdit {
 }
 
 ///|
-fn MarkdownEditorApp::pre_edit_state(self : MarkdownEditorApp) -> MarkdownEditorPreEdit {
+fn MarkdownEditorApp::pre_edit_state(
+  self : MarkdownEditorApp,
+) -> MarkdownEditorPreEdit {
   { source: self.document_session.source, selection: self.selection }
 }
 
@@ -333,18 +335,16 @@ fn MarkdownEditorApp::record_edit_history(
     before.source,
     self.document_session.source,
   )
-  self.push_undo(
-    {
-      delta: {
-        start,
-        before: removed,
-        after: inserted,
-        caret: before.selection.caret,
-        selection: before.selection.selection,
-      },
-      selection: before.selection,
+  self.push_undo({
+    delta: {
+      start,
+      before: removed,
+      after: inserted,
+      caret: before.selection.caret,
+      selection: before.selection.selection,
     },
-  )
+    selection: before.selection,
+  })
   self.redo_stack = []
 }
 

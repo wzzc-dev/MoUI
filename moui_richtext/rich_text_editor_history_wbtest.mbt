@@ -45,13 +45,7 @@ fn history_apply(
   rich_text_history_extend_stack(
     undo_stack,
     rich_text_history_record_edit(control, previous, next, control.caret),
-    {
-      start,
-      before,
-      after,
-      caret: control.caret,
-      selection: control.selection,
-    },
+    { start, before, after, caret: control.caret, selection: control.selection },
   )
   let caret = control.caret + text_length(next) - text_length(previous)
   { ..control, caret, undo_stack, redo_stack: [] }
@@ -136,9 +130,7 @@ test "undo merge window: newlines and pastes always start their own group" {
   assert_eq(control.undo_stack.length(), 4)
   // Each entry holds only its edit, never the surrounding document.
   for entry in control.undo_stack {
-    assert_true(
-      text_length(entry.before) + text_length(entry.after) <= 2,
-    )
+    assert_true(text_length(entry.before) + text_length(entry.after) <= 2)
   }
   history_stop_fake_clock()
 }

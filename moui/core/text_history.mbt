@@ -52,15 +52,15 @@ pub fn text_history_delta(
   let after = next.to_array()
   let mut prefix = 0
   while prefix < before.length() &&
-    prefix < after.length() &&
-    before[prefix] == after[prefix] {
+        prefix < after.length() &&
+        before[prefix] == after[prefix] {
     prefix = prefix + 1
   }
   let mut suffix = 0
   while suffix < before.length() - prefix &&
-    suffix < after.length() - prefix &&
-    before[before.length() - 1 - suffix] ==
-      after[after.length() - 1 - suffix] {
+        suffix < after.length() - prefix &&
+        before[before.length() - 1 - suffix] ==
+        after[after.length() - 1 - suffix] {
     suffix = suffix + 1
   }
   (
@@ -81,7 +81,8 @@ fn text_history_apply_delta(
   let start = start.clamp(min=0, max=chars.length())
   let end = (start + removed_length).clamp(min=start, max=chars.length())
   String::from_array(chars[:start]) +
-    replacement + String::from_array(chars[end:])
+  replacement +
+  String::from_array(chars[end:])
 }
 
 ///|
@@ -137,10 +138,7 @@ test "prefix-suffix delta captures exactly the edited middle" {
   )
   // The greedy trim may tie-align the shared "t"; the split is chosen
   // for correctness of the round trip, not for aesthetics.
-  assert_eq(
-    text_history_delta("one two three", "one three"),
-    (5, "wo t", ""),
-  )
+  assert_eq(text_history_delta("one two three", "one three"), (5, "wo t", ""))
   assert_eq(text_history_delta("", "abc"), (0, "", "abc"))
   assert_eq(text_history_delta("abc", ""), (0, "abc", ""))
   // Shared prefix and suffix must not overlap into a negative span.

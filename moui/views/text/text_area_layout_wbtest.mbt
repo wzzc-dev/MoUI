@@ -11,7 +11,7 @@ fn text_area_test_paragraph(
   text : String,
   width : Double,
 ) -> @core.TextParagraphLayoutResult {
-  let frame = @core.Rect::new(x=0.0, y=0.0, width=width, height=120.0)
+  let frame = @core.Rect::new(x=0.0, y=0.0, width~, height=120.0)
   @core.TextSystem::fallback().layout_paragraph(
     @core.TextLayoutInput::new(
       text~,
@@ -50,9 +50,7 @@ test "paragraph lines tile the whole text contiguously" {
 
 ///|
 test "caret rect x comes from paragraph caret geometry" {
-  let paragraph = text_area_test_paragraph(
-    "one two three four five", 120.0,
-  )
+  let paragraph = text_area_test_paragraph("one two three four five", 120.0)
   let frame = @core.Rect::new(x=0.0, y=0.0, width=120.0, height=120.0)
   let text_frame = text_area_text_frame(frame)
   let font = @core.FontSpec::new(size=14.0)
@@ -66,7 +64,7 @@ test "caret rect x comes from paragraph caret geometry" {
   assert_eq(
     caret.origin.x,
     text_frame.origin.x +
-      (paragraph.caret_rect_at(offset).origin.x - second_line.origin.x),
+    (paragraph.caret_rect_at(offset).origin.x - second_line.origin.x),
   )
   let glyph_h = text_area_glyph_row_height(text_system, " ", font)
   assert_eq(
@@ -75,7 +73,8 @@ test "caret rect x comes from paragraph caret geometry" {
   )
   assert_eq(
     text_area_line_index_for_paragraph_offset(
-      paragraph, paragraph.text.to_array().length(),
+      paragraph,
+      paragraph.text.to_array().length(),
     ),
     paragraph.lines.length() - 1,
   )
@@ -102,10 +101,7 @@ test "selection highlight shares the painted line rows" {
   let black : @core.Color = { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
   for line_index, rect in rects {
     let line_text = String::from_array(
-      chars[paragraph.lines[line_index].text_range.start:paragraph.lines[
-        line_index
-      ].text_range.end
-      ],
+      chars[paragraph.lines[line_index].text_range.start:paragraph.lines[line_index].text_range.end],
     )
     let commands : Array[@core.DrawCommand] = []
     text_area_draw_line_text(
@@ -135,7 +131,7 @@ test "selection highlight shares the painted line rows" {
 test "hit testing round-trips caret positions" {
   let text = "one two three"
   let paragraph = text_area_test_paragraph(text, 120.0)
-  for offset in 0..=text.to_array().length() {
+  for offset in 0..<=text.to_array().length() {
     let caret = paragraph.caret_rect_at(offset)
     let hit = paragraph.hit_test(
       @core.Point::new(
@@ -171,14 +167,12 @@ test "wrapping and carets stay on grapheme boundaries" {
   let caret = text_area_display_caret_rect(
     paragraph, text_system, text_frame, font, inner, 28.0,
   )
-  let line_index = text_area_line_index_for_paragraph_offset(
-    paragraph, inner,
-  )
+  let line_index = text_area_line_index_for_paragraph_offset(paragraph, inner)
   let line = paragraph.lines[line_index]
   assert_eq(
     caret.origin.x,
     text_frame.origin.x +
-      (paragraph.caret_rect_at(inner).origin.x - line.origin.x),
+    (paragraph.caret_rect_at(inner).origin.x - line.origin.x),
   )
   let glyph_h = text_area_glyph_row_height(text_system, " ", font)
   assert_eq(

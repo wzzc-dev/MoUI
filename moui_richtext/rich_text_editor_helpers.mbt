@@ -107,9 +107,7 @@ fn apply_text_input(
         caret: normalized.start + text_length(replacement),
         selection: None,
         start: normalized.start,
-        before: String::from_array(
-          chars[normalized.start:normalized.end],
-        ),
+        before: String::from_array(chars[normalized.start:normalized.end]),
         after: replacement,
       }
       apply_text_edit(control, text, edit, record_history~)
@@ -199,9 +197,7 @@ fn apply_text_input(
         caret: normalized.start,
         selection: None,
         start: normalized.start,
-        before: String::from_array(
-          chars[normalized.start:normalized.end],
-        ),
+        before: String::from_array(chars[normalized.start:normalized.end]),
         after: "",
       }
       apply_text_edit(control, text, edit, record_history~)

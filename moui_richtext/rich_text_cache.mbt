@@ -69,10 +69,8 @@ let markdown_reference_definitions_cache : Map[
 ] = Map([])
 
 ///|
-let markdown_editor_blocks_cache : Map[
-  String,
-  Array[MarkdownEditorBlock],
-] = Map([])
+let markdown_editor_blocks_cache : Map[String, Array[MarkdownEditorBlock]] = Map([],
+)
 
 ///|
 let markdown_parse_cache : Map[String, Array[MarkdownBlock]] = Map([])
@@ -147,7 +145,8 @@ fn markdown_editor_block_key(block : MarkdownBlock) -> String {
     Heading(level) => key.write_string("h\{level};")
     Paragraph => key.write_string("p;")
     UnorderedListItem => key.write_string("u;")
-    TaskListItem(checked) => key.write_string("t\{if checked { 1 } else { 0 }};")
+    TaskListItem(checked) =>
+      key.write_string("t\{if checked { 1 } else { 0 }};")
     OrderedListItem(start) => key.write_string("o\{start};")
     Blockquote => key.write_string("q;")
     CodeBlock => key.write_string("c;")
@@ -193,6 +192,7 @@ fn markdown_editor_block_key(block : MarkdownBlock) -> String {
   key.to_string()
 }
 
+///|
 fn markdown_editor_block_key_string(
   key : StringBuilder,
   part : String?,
@@ -476,6 +476,7 @@ fn rich_text_block_measured_height_key(
 }
 
 ///|
+
 ///|
 /// Exact (key, height) lookup inside a digest bucket. Buckets hold only
 /// the handful of distinct blocks sharing a digest, so a linear scan is
@@ -494,6 +495,7 @@ fn rich_text_bucket_lookup(
   found
 }
 
+///|
 /// FNV-1a mixing over the same identity inputs as the exact key, but
 /// without materializing any string: the geometry walk hashes 100k+
 /// blocks per revision, so the digest must stay allocation-light.
@@ -523,28 +525,20 @@ fn rich_text_block_measured_height_digest(
   hash = rich_text_digest_string(hash, rich_text_cache_font_key(base))
   hash = rich_text_digest_string(hash, width.to_string())
   hash = match block.kind {
-    Heading(level) => rich_text_digest_mix(
-      rich_text_digest_mix(hash, 1UL),
-      level.to_uint64(),
-    )
+    Heading(level) =>
+      rich_text_digest_mix(rich_text_digest_mix(hash, 1UL), level.to_uint64())
     Paragraph => rich_text_digest_mix(hash, 2UL)
     UnorderedListItem => rich_text_digest_mix(hash, 3UL)
-    TaskListItem(checked) => rich_text_digest_mix(
-      hash,
-      if checked { 4UL } else { 5UL },
-    )
-    OrderedListItem(start) => rich_text_digest_mix(
-      rich_text_digest_mix(hash, 6UL),
-      start.to_uint64(),
-    )
+    TaskListItem(checked) =>
+      rich_text_digest_mix(hash, if checked { 4UL } else { 5UL })
+    OrderedListItem(start) =>
+      rich_text_digest_mix(rich_text_digest_mix(hash, 6UL), start.to_uint64())
     Blockquote => rich_text_digest_mix(hash, 7UL)
     CodeBlock => rich_text_digest_mix(hash, 8UL)
     HorizontalRule => rich_text_digest_mix(hash, 9UL)
     Table => rich_text_digest_mix(hash, 10UL)
-    FootnoteDefinition(label) => rich_text_digest_string(
-      rich_text_digest_mix(hash, 11UL),
-      label,
-    )
+    FootnoteDefinition(label) =>
+      rich_text_digest_string(rich_text_digest_mix(hash, 11UL), label)
     HtmlBlock => rich_text_digest_mix(hash, 12UL)
     FrontMatter => rich_text_digest_mix(hash, 13UL)
   }
@@ -570,10 +564,7 @@ fn rich_text_block_measured_height_digest(
     match inline.target {
       None => hash = rich_text_digest_mix(hash, 30UL)
       Some(target) =>
-        hash = rich_text_digest_string(
-          rich_text_digest_mix(hash, 31UL),
-          target,
-        )
+        hash = rich_text_digest_string(rich_text_digest_mix(hash, 31UL), target)
     }
   }
   hash = rich_text_digest_mix(hash, block.table_alignments.length().to_uint64())
@@ -615,9 +606,7 @@ fn rich_text_record_block_measured_height(
   match old_bucket {
     Some(bucket) =>
       match rich_text_bucket_lookup(bucket, key~) {
-        Some(recorded) => if recorded == height {
-          return
-        }
+        Some(recorded) => if recorded == height { return }
         None => ()
       }
     None => ()
@@ -639,8 +628,9 @@ fn rich_text_record_block_measured_height(
     Some(bucket) => bucket.length()
     None => 0
   }
-  rich_text_block_heights_count.val =
-    rich_text_block_heights_count.val - old_length + next_bucket.length()
+  rich_text_block_heights_count.val = rich_text_block_heights_count.val -
+    old_length +
+    next_bucket.length()
   rich_text_block_heights.set(digest, next_bucket)
   rich_text_block_heights_epoch.val = rich_text_block_heights_epoch.val + 1
 }
@@ -716,11 +706,7 @@ fn rich_text_block_measured_height(
     Some(bucket) => {
       // A digest hit is the only case that pays for the exact key, so
       // misses stay allocation-free while hits remain content-verified.
-      let key = rich_text_block_measured_height_key(
-        editor_block,
-        base,
-        width~,
-      )
+      let key = rich_text_block_measured_height_key(editor_block, base, width~)
       rich_text_bucket_lookup(bucket, key~)
     }
   }

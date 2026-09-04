@@ -1,8 +1,8 @@
 ///|
 test "ascii fast path matches the fallback boundary walk" {
   let samples : Array[String] = [
-    "", "a", "\n", "\r", "\r\n", "\r\r\n\n", "line one\r\nline two\r\n",
-    "tabs\tand\tcontrols\u{1}\u{2}", "mixed ascii \u{D}x", "ends in CR\r",
+    "", "a", "\n", "\r", "\r\n", "\r\r\n\n", "line one\r\nline two\r\n", "tabs\tand\tcontrols\u{1}\u{2}",
+    "mixed ascii \u{D}x", "ends in CR\r",
   ]
   for text in samples {
     let chars = text.to_array()
@@ -19,9 +19,6 @@ test "ascii fast path matches the fallback boundary walk" {
       }
       expected.push(chars.length())
     }
-    assert_eq(
-      TextGraphemeBoundaries::new(text~).boundaries(),
-      expected,
-    )
+    assert_eq(TextGraphemeBoundaries::new(text~).boundaries(), expected)
   }
 }
