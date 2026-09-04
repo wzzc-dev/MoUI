@@ -62,7 +62,7 @@
   zeroed baseline for `moui/views`, is listed by
   `node scripts/check.mjs --profile pr --list`, and maps to P17 in
   `docs/invariants.md`.
-- [ ] A live task key superseded by a different kind/label emits one runtime
+- [x] A live task key superseded by a different kind/label emits one runtime
   diagnostic record (focused test).
 - [ ] Identical `DrawText` runs across frames report `cache_hit_count > 0`;
   width-bucket change reports misses (wbtest in `moui_skia_renderer`).
@@ -98,4 +98,16 @@ into `daily`/`full`; the maintenance budget catalog ratchets the three touched
 references, renderer capability) all pass; the shim reports
 `OK (34 ViewNode nodes with declaration() overrides; rule P17)`.
 
-Remaining: WS-E, WS-C, WS-B, WS-D, WS-F — implementation not started.
+WS-E (Effect-key supersession diagnostics) complete: a live task superseded
+by a descriptor with a different `kind`/`label` is recorded once per distinct
+collision shape in `superseded_effect_task_key_count` /
+`superseded_effect_task_keys` on `ProgramRuntimeSnapshot` and
+`RuntimeInspectorSnapshot` (supersession semantics unchanged); identical
+kind+label restarts stay silent. Focused test
+`moui/runtime/effect_task_supersession_test.mbt` drives it through pointer
+events; the key-naming convention is documented in
+`docs/tea-program-model.md`; `pkg.generated.mbti` regenerated and four runtime
+line budgets ratcheted. 116 runtime tests, `moon check` warning-free, and the
+static validators pass.
+
+Remaining: WS-C, WS-B, WS-D, WS-F — implementation not started.

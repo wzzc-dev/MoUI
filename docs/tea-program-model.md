@@ -95,6 +95,19 @@ after completion or cancellation. Same-key task replacements that change the
 descriptor kind are recorded with `EffectTaskKindChanged`, so tooling can
 distinguish a service-like task being swapped for another task category from an
 ordinary same-kind restart.
+
+Supersession itself stays silent (last writer wins), but reusing one key for a
+different descriptor is an accident worth catching: when the live task's `kind`
+or `label` differs from the incoming one, the runtime records one entry per
+distinct collision shape in the program diagnostics snapshot
+(`superseded_effect_task_key_count` / `superseded_effect_task_keys`), exposed on
+`AppRuntime::program_runtime_snapshot` and the inspector snapshot. Treat an
+effect key as a namespaced identity rather than a display label: prefix it with
+the owning module and purpose (for example `import.raster.page-3` or
+`settings.load.theme`), never share one key across different kinds or labels,
+and keep key, kind, and label identical when intentionally restarting the same
+operation so the restart stays a plain last-writer replacement without a
+collision record.
 `@runtime.effect_plan_summary` exposes the runtime-owned diagnostic summary of
 the effect tree, including batch, send, anonymous dispatch, structured run,
 task, none, scheduled leaf count, max depth, structured effect descriptors, and

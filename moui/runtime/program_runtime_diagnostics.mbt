@@ -36,6 +36,8 @@ priv struct ProgramRuntimeDiagnostics {
   mut effect_task_count : Int
   mut duplicate_effect_descriptor_key_count : Int
   duplicate_effect_descriptor_keys : Array[String]
+  mut superseded_effect_task_key_count : Int
+  superseded_effect_task_keys : Array[String]
   mut last_effect_summary : EffectPlanSummary
   mut last_scheduled_effect_summary : EffectPlanSummary
   mut next_effect_task_value : Int
@@ -77,6 +79,8 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
     effect_task_count: 0,
     duplicate_effect_descriptor_key_count: 0,
     duplicate_effect_descriptor_keys: [],
+    superseded_effect_task_key_count: 0,
+    superseded_effect_task_keys: [],
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
     next_effect_task_value: 1,
@@ -201,6 +205,29 @@ fn ProgramRuntimeDiagnostics::record_ignored_effect_task_dispatch(
 }
 
 ///|
+/// Records a live task whose key was reused by a descriptor with a different
+/// kind or label. The supersession itself stays silent-cancel (last-writer
+/// semantics); only the collision evidence is recorded so apps can discover
+/// accidental key collisions through the diagnostics snapshot.
+fn ProgramRuntimeDiagnostics::record_effect_task_key_supersession(
+  self : ProgramRuntimeDiagnostics,
+  replaced : @core.EffectDescriptor,
+  incoming : @core.EffectDescriptor,
+) -> Unit {
+  self.superseded_effect_task_key_count = self.superseded_effect_task_key_count +
+    1
+  let detail = if replaced.kind() != incoming.kind() {
+    "kind: " + replaced.kind() + " -> " + incoming.kind()
+  } else {
+    "label: " + replaced.label() + " -> " + incoming.label()
+  }
+  let record = incoming.key() + " (" + detail + ")"
+  if !self.superseded_effect_task_keys.any(existing => existing == record) {
+    self.superseded_effect_task_keys.push(record)
+  }
+}
+
+///|
 fn ProgramRuntimeDiagnostics::record_duplicate_effect_descriptor_keys(
   self : ProgramRuntimeDiagnostics,
   keys : Array[String],
@@ -234,6 +261,8 @@ fn ProgramRuntimeDiagnostics::snapshot(
     effect_task_count: self.effect_task_count,
     duplicate_effect_descriptor_key_count: self.duplicate_effect_descriptor_key_count,
     duplicate_effect_descriptor_keys: self.duplicate_effect_descriptor_keys.copy(),
+    superseded_effect_task_key_count: self.superseded_effect_task_key_count,
+    superseded_effect_task_keys: self.superseded_effect_task_keys.copy(),
     last_effect_summary: self.last_effect_summary,
     last_scheduled_effect_summary: self.last_scheduled_effect_summary,
     active_effect_task_count: self.active_effect_tasks.length(),

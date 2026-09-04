@@ -83,6 +83,10 @@ fn ProgramRuntimeDiagnostics::cancel_effect_tasks_replaced_by_descriptor(
       } else {
         EffectTaskCancelReason::EffectTaskKindChanged
       }
+      if task.descriptor.kind() != descriptor.kind() ||
+        task.descriptor.label() != descriptor.label() {
+        self.record_effect_task_key_supersession(task.descriptor, descriptor)
+      }
       self.cancel_effect_task(task, reason)
     } else {
       remaining.push(task)

@@ -68,6 +68,8 @@ pub struct ProgramRuntimeSnapshot {
   priv effect_task_count : Int
   priv duplicate_effect_descriptor_key_count : Int
   priv duplicate_effect_descriptor_keys : Array[String]
+  priv superseded_effect_task_key_count : Int
+  priv superseded_effect_task_keys : Array[String]
   priv last_effect_summary : EffectPlanSummary
   priv last_scheduled_effect_summary : EffectPlanSummary
   priv active_effect_task_count : Int
@@ -111,6 +113,8 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     effect_task_count: 0,
     duplicate_effect_descriptor_key_count: 0,
     duplicate_effect_descriptor_keys: [],
+    superseded_effect_task_key_count: 0,
+    superseded_effect_task_keys: [],
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
     active_effect_task_count: 0,
@@ -337,6 +341,20 @@ pub fn ProgramRuntimeSnapshot::duplicate_effect_descriptor_keys(
   self : ProgramRuntimeSnapshot,
 ) -> Array[String] {
   self.duplicate_effect_descriptor_keys
+}
+
+///|
+pub fn ProgramRuntimeSnapshot::superseded_effect_task_key_count(
+  self : ProgramRuntimeSnapshot,
+) -> Int {
+  self.superseded_effect_task_key_count
+}
+
+///|
+pub fn ProgramRuntimeSnapshot::superseded_effect_task_keys(
+  self : ProgramRuntimeSnapshot,
+) -> Array[String] {
+  self.superseded_effect_task_keys
 }
 
 ///|
