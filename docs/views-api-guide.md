@@ -85,6 +85,25 @@ Use the `Type::new` form only when it makes a type annotation or cross-package
 API boundary clearer. This keeps ordinary app packages on `moui + views` while
 leaving lower-level runtime, host, and renderer packages out of view code.
 
+## Message Types and `View::map` Cost
+
+`View::map` rebuilds the entire wrapped subtree on every view call: each layer
+re-creates one adapter per node, snapshots its children and semantics-handler
+arrays, and wraps its event closure. The `full_cycle` benchmark measures about
++10% rebuild cost per map layer on a 511-node deep tree (`F-deep-click` vs
+`G-deep-dblmap-click` in `benchmarks/full_cycle/native/main.mbt`).
+
+Prefer a flat top-level `Msg` enum for the program, and build child messages
+directly in the parent view (or via plain constructor helpers) instead of
+nesting `map` per feature module. `map` stays the right tool at real
+composition boundaries — mounting a standalone feature view whose messages are
+its own `Msg` into the app — but keep the number of live `map` layers on any
+root-to-leaf path small (one layer is fine; stacked layers multiply). The
+construction snapshots are a documented ownership contract (`from_node` must
+survive a producer-owned `children` array being mutated afterwards, pinned in
+`moui/core/view_node_test.mbt`), so the copies are not incidental overhead to
+strip; full message-adapter fusion is tracked as framework debt instead.
+
 ## Boundary
 
 Use `views` for ordinary app authoring: controls, layout, surfaces, scrolling,
