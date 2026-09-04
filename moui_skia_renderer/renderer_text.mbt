@@ -11,11 +11,13 @@ fn SkiaRasterRenderer::draw_text(
     return ()
   }
   match
-    skia_resolved_text_layout_for_resolution(
-      run.font,
-      run.text,
-      self.font_resolution,
-    ) {
+    self.text_shaping_cache.resolve(run.font, run.text, self.font_resolution, () => {
+      skia_resolved_text_layout_for_resolution(
+        run.font,
+        run.text,
+        self.font_resolution,
+      )
+    }) {
     Some(layout) => {
       let placement = skia_text_placement_for_layout(run, layout)
       let saved = canvas.save()

@@ -26,6 +26,15 @@ priv struct SkiaResolvedTextLayout {
 }
 
 ///|
+/// Shallow defensive copy for cache replay: segments carry font handles and
+/// immutable glyph runs, so only the arrays are duplicated.
+fn SkiaResolvedTextLayout::copy_layout(
+  self : SkiaResolvedTextLayout,
+) -> SkiaResolvedTextLayout {
+  { segments: self.segments.copy(), width: self.width, metrics: self.metrics }
+}
+
+///|
 fn skia_text_frame_can_draw(frame : @core.Rect) -> Bool {
   frame.size.width > 0.0 && frame.size.height > 0.0
 }

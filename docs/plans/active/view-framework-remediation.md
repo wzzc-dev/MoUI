@@ -64,8 +64,9 @@
   `docs/invariants.md`.
 - [x] A live task key superseded by a different kind/label emits one runtime
   diagnostic record (focused test).
-- [ ] Identical `DrawText` runs across frames report `cache_hit_count > 0`;
-  width-bucket change reports misses (wbtest in `moui_skia_renderer`).
+- [x] Identical `DrawText` runs across frames report `cache_hit_count > 0`
+  (wbtest in `moui_skia_renderer`; shaping here is width-independent, so the
+  key is `(font spec, text, font resolution)` and a text change reports a miss).
 - [ ] New `moui/runtime` tests: `expanded`/weighted text child wraps to its
   final weighted width (not the loose measure width and not clipped); all
   pre-existing flex tests stay green.
@@ -110,4 +111,13 @@ events; the key-naming convention is documented in
 line budgets ratcheted. 116 runtime tests, `moon check` warning-free, and the
 static validators pass.
 
-Remaining: WS-C, WS-B, WS-D, WS-F — implementation not started.
+WS-C (Skia shaping cache) complete: session-scoped LRU (256 entries) of
+resolved text layouts keyed by `(FontSpec, text, font resolution)` in
+`moui_skia_renderer/renderer_text_shaping_cache.mbt`; `draw_text` replays
+cached segment/glyph payloads and per-frame hit/miss deltas merge into the
+existing `RenderFrameResult` counters (no protocol change). Failed shaping
+attempts are misses but stay uncached. wbtests cover key separation, failed
+reshape, LRU bounds with eviction order, and cross-frame hit visibility
+through `render_frame`; 136 renderer tests green, no public API drift.
+
+Remaining: WS-B, WS-D, WS-F — implementation not started.
