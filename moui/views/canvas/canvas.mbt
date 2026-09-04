@@ -15,8 +15,8 @@ pub using @common {view_declaration, view_exact_channel, type PaintContext}
 /// this callback-driven API; ordinary built-in controls use their own named
 /// `ViewNode` implementations rather than going through `canvas`.
 priv struct Canvas {
-  measure : (@core.Constraints) -> @core.Size
-  draw : (PaintContext, @core.Rect) -> Unit
+  measure : (@core.Constraints) -> @core.Size // declaration-exempt: consumed only by the Uncacheable layout channel
+  draw : (PaintContext, @core.Rect) -> Unit // declaration-exempt: consumed only by the Uncacheable paint channel
   semantics_label : String
 }
 
@@ -71,8 +71,8 @@ impl @core.ViewNode for Canvas with fn semantics(self) {
 /// `draw` args: paint context, allocated frame, `now_ms` (0.0 until the first
 /// `FrameTick` arrives).
 priv struct AnimatedCanvas {
-  measure : (@core.Constraints) -> @core.Size
-  draw : (PaintContext, @core.Rect, Double) -> Unit
+  measure : (@core.Constraints) -> @core.Size // declaration-exempt: consumed only by the Uncacheable layout channel
+  draw : (PaintContext, @core.Rect, Double) -> Unit // declaration-exempt: consumed only by the Uncacheable paint channel
   semantics_label : String
 }
 

@@ -638,7 +638,7 @@ priv struct Icon {
   size : Double
   color : @core.Color
   weight : Double
-  verbs : Array[@core.PathVerb]
+  verbs : Array[@core.PathVerb] // declaration-exempt: derived from `name` at construction; `label = icon_label(name)` is injective and keyed in paint
 }
 
 ///|

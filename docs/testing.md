@@ -41,6 +41,8 @@ node scripts/lint-scripts.mjs --profile pr
 node scripts/validate-check-profiles.mjs
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
+node scripts/validate-viewnode-declaration-coverage.mjs   # ViewNode struct fields are keyed or exempt (ADR 0034, P17)
+moon test tools/moui/validate_viewnode_declaration_coverage --target native
 node scripts/generate-repo-docs.mjs --check
 node scripts/validate-window-dependency.mjs
 node scripts/validate-harness-invariants.mjs

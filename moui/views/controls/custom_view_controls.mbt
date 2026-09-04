@@ -41,9 +41,9 @@ pub fn[Msg] custom_children_layout_control(
 /// such as a layout cache. The runtime assembles `ChildLayoutInfo` entries
 /// from measured/placed children and passes them via `CustomLayoutContext`.
 priv struct CustomChildrenLayout {
-  measure : (@core.CustomLayoutContext) -> @core.Size
-  place : (@core.CustomPlacementContext) -> Array[@core.Rect]
-  paint : (@common.PaintContext, @core.Rect) -> Unit
+  measure : (@core.CustomLayoutContext) -> @core.Size // declaration-exempt: consumed only by the Uncacheable layout channel
+  place : (@core.CustomPlacementContext) -> Array[@core.Rect] // declaration-exempt: consumed only by the Uncacheable layout channel
+  paint : (@common.PaintContext, @core.Rect) -> Unit // declaration-exempt: consumed only by the Uncacheable paint channel
   semantics_role : @core.SemanticsRole
   semantics_label : String
   kind : String

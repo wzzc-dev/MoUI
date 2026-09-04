@@ -84,6 +84,12 @@ impl @core.ViewNode for Progress with fn declaration(self) {
       @common.view_record_key("Progress.semantics", [
         ("value", @core.DeclarationKey::double(self.value)),
         ("label", @core.DeclarationKey::string(self.label)),
+        (
+          "value_text",
+          @core.DeclarationKey::option(
+            self.value_text.map(@core.DeclarationKey::string),
+          ),
+        ),
       ]),
     ),
   )
