@@ -110,6 +110,11 @@ impl @core.ViewNode for FlexLayout with fn layout(self, ctx) {
       ctx.child_flex_weights,
       size,
     ),
+    // Weighted children are measured under the loose main-axis extent but
+    // placed into their narrower weighted share, so the frames below are
+    // sizing-authoritative and differing children must re-wrap in place
+    // (ADR 0035).
+    child_frames_tight=true,
   )
 }
 

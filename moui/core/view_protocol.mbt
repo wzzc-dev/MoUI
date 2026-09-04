@@ -24,6 +24,13 @@ pub(all) struct ViewLayoutResult {
   /// accumulated clip so hit regions respect clipping without consulting
   /// paint output.
   clips_children : Bool
+  /// True when the node's `child_frames` are final sizing constraints that
+  /// may be tighter than the constraints a child was measured under (flex
+  /// distributing main-axis slack by weight). The placement pass re-measures
+  /// any child whose placed frame size differs from its measured size under
+  /// tight constraints derived from that frame, so internal layout wraps to
+  /// the extent the child actually occupies (ADR 0035).
+  child_frames_tight : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -211,8 +218,9 @@ pub fn ViewLayoutResult::new(
   size~ : Size,
   child_frames? : Array[Rect] = [],
   clips_children? : Bool = false,
+  child_frames_tight? : Bool = false,
 ) -> ViewLayoutResult {
-  { size, child_frames, clips_children }
+  { size, child_frames, clips_children, child_frames_tight }
 }
 
 ///|
