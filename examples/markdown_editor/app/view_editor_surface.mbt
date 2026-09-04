@@ -910,22 +910,27 @@ fn editor_source_layout(
       _ => DismissAuxiliaryPanels
     }
   })
-  let editor_view = if !show_source && !app.source_mode_enabled {
-    floating_target_palette(
-      editor, target_bar, session, selection, target_kind, editor_font, theme, normalized_offset,
-      editor_width, viewport_height,
-    )
-  } else {
-    editor
-  }
+  // Temporarily disabled: floating block-target palette (the "Block: ..." /
+  // Apply overlay). Uncomment the if/else below and drop the direct binding
+  // to re-enable it.
+  // let editor_view = if !show_source && !app.source_mode_enabled {
+  //   floating_target_palette(
+  //     editor, target_bar, session, selection, target_kind, editor_font, theme,
+  //     normalized_offset, editor_width, viewport_height,
+  //   )
+  // } else {
+  //   editor
+  // }
+  let editor_view = editor
 
   let editor_with_indicator = @views.stack([
     editor_view,
     markdown_editor_scroll_indicator(app.editor_scroll, viewport_height~, theme),
-    markdown_editor_format_bubble_overlay(
-      app, session, selection, editor_font, theme, normalized_offset, editor_width,
-      viewport_height,
-    ),
+    // Temporarily disabled: selection-triggered format bubble (B/I/S/... toolbar).
+    // markdown_editor_format_bubble_overlay(
+    //   app, session, selection, editor_font, theme, normalized_offset, editor_width,
+    //   viewport_height,
+    // ),
   ])
   let side_children : Array[@moui.View[MarkdownEditorMsg]] = []
   if show_files {
