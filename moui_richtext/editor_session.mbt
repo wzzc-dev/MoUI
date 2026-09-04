@@ -605,8 +605,12 @@ fn markdown_document_session_apply_incremental(
           markdown_editor_text_length(transaction.source),
         ),
       )
-      let definitions = markdown_reference_definitions_cached(
+      // Definitions keyed by the previous session's (length, digest) pair:
+      // no multi-megabyte map-key hashing on the hot path.
+      let definitions = markdown_reference_definitions_cached_keyed(
         transaction.previous_source,
+        source_length=transaction.previous_source.length(),
+        source_digest=session.source_digest,
       )
       let reparsed = parse_markdown_editor_blocks_with_definitions(
         region_slice,
@@ -647,6 +651,18 @@ fn markdown_document_session_apply_incremental(
         }
       }
       hot_path_region_reparse_count.val = hot_path_region_reparse_count.val + 1
+      // The guard above proved this edit cannot change the whole-source
+      // definition set, so publish the previous set under the edited
+      // source's (length, digest) key; the next keystroke's lookup then
+      // hits instead of re-running the whole-document definition parse.
+      // The edited source's digest is computed once here and reused by the
+      // session construction below.
+      let next_source_digest = markdown_document_source_digest(transaction.source)
+      markdown_reference_definitions_cache_store_keyed(
+        source_length=transaction.source.length(),
+        source_digest=next_source_digest,
+        definitions,
+      )
       let dirty = markdown_document_dirty_range(transaction, stitched)
       let reindex : MarkdownDocumentReindexWindow = {
         prefix_count: cluster.start_index,
@@ -669,6 +685,7 @@ fn markdown_document_session_apply_incremental(
         parse_count=session.parse_count + 1,
         dirty_range=dirty,
         reindex=Some(reindex),
+        source_digest=Some(next_source_digest),
       )
       |> Some
     }
@@ -1259,13 +1276,30 @@ fn markdown_document_block_geometry(
   let gallery = markdown_document_gallery_block_heights(
     session, base, content_width,
   )
+  let height_seed = rich_text_block_height_digest_seed(base, width=content_width)
   let heights : Array[Double] = []
   let mut has_measured = false
-  for index, editor_block in session.editor_blocks {
+  for index, _editor_block in session.editor_blocks {
     hot_path_block_height_walk_blocks.val = hot_path_block_height_walk_blocks.val +
       1
+    // The measured-height table keys on block identity (id, revision),
+    // which the session's block assignment keeps in lockstep with content.
+    // session.blocks is parallel to session.editor_blocks.
+    let identity = session.blocks.get(index)
     match
-      rich_text_block_measured_height(editor_block, base, width=content_width) {
+      rich_text_block_measured_height(
+        base,
+        width=content_width,
+        seed=height_seed,
+        block_id=match identity {
+          Some(session_block) => session_block.id
+          None => index
+        },
+        block_revision=match identity {
+          Some(session_block) => session_block.revision
+          None => 0
+        },
+      ) {
       Some(height) => {
         has_measured = true
         heights.push(height)
@@ -1485,7 +1519,10 @@ fn markdown_document_height_index_full(
   editor_blocks : Array[MarkdownEditorBlock],
   blocks : Array[MarkdownDocumentBlock],
 ) -> MarkdownDocumentHeightIndex {
-  let source_chars = source.to_array()
+  let line_counts = markdown_document_block_source_line_counts(
+    source,
+    editor_blocks,
+  )
   let metrics : Array[MarkdownDocumentBlockHeightMetric] = []
   let mut visual_top_units = 0.0
   let mut source_top_units = 0.0
@@ -1494,11 +1531,7 @@ fn markdown_document_height_index_full(
     let visual_height_units = markdown_document_estimated_editor_block_height_units(
       editor_block,
     )
-    let source_height_units = markdown_document_source_range_line_count(
-        source_chars,
-        editor_block.source_range,
-      ).to_double() *
-      1.42
+    let source_height_units = line_counts[index].to_double() * 1.42
     metrics.push({
       block_id: session_block.id,
       block_index: index,
@@ -1517,6 +1550,46 @@ fn markdown_document_height_index_full(
     source_content_units: source_top_units,
     blocks: metrics,
   }
+}
+
+///|
+/// Newline count per block source range, in one forward pass over the
+/// source (line count = newlines + 1, matching
+/// `markdown_document_source_range_line_count`). The old path materialized
+/// the whole document as a char array just to count newlines per range.
+/// Block ranges tile the source in parse order; zero-width blank blocks
+/// own no characters and keep the base count of 1.
+fn markdown_document_block_source_line_counts(
+  source : String,
+  editor_blocks : Array[MarkdownEditorBlock],
+) -> Array[Int] {
+  let counts : Array[Int] = []
+  if markdown_editor_text_length(source) == 0 {
+    for _ in editor_blocks {
+      counts.push(1)
+    }
+    return counts
+  }
+  for _ in editor_blocks {
+    counts.push(1)
+  }
+  let mut block_index = 0
+  let mut char_index = 0
+  for ch in source {
+    while block_index < editor_blocks.length() &&
+          char_index >= editor_blocks[block_index].source_range.end {
+      block_index = block_index + 1
+    }
+    if block_index >= editor_blocks.length() {
+      break
+    }
+    if ch == '\n' &&
+      char_index >= editor_blocks[block_index].source_range.start {
+      counts[block_index] = counts[block_index] + 1
+    }
+    char_index = char_index + 1
+  }
+  counts
 }
 
 ///|
@@ -1893,6 +1966,9 @@ fn markdown_document_session_from_blocks(
   parse_count~ : Int,
   dirty_range~ : MarkdownDocumentDirtyRange?,
   reindex? : MarkdownDocumentReindexWindow? = None,
+  // Precomputed content digest for this source; callers that already hold
+  // one (the incremental apply) skip the second whole-source hash.
+  source_digest? : UInt64? = None,
 ) -> MarkdownDocumentSession {
   // Only trust the reindex window when it describes the sessions exactly;
   // every derived bookkeeping step falls back to its full computation
@@ -1943,7 +2019,10 @@ fn markdown_document_session_from_blocks(
   {
     source,
     source_length: markdown_editor_text_length(source),
-    source_digest: markdown_document_source_digest(source),
+    source_digest: match source_digest {
+      Some(digest) => digest
+      None => markdown_document_source_digest(source)
+    },
     blocks: assigned.blocks,
     editor_blocks,
     line_count,
@@ -2515,10 +2594,21 @@ fn markdown_document_session_reveal_selection(
 ) -> RichTextDocument {
   let blocks : Array[RichTextBlock] = []
   for block in document.blocks {
+    // The inline marker probes read only around one run, so each touched
+    // run gets a block-sized char window instead of a whole-document array.
+    let block_source_end = match block.source_range {
+      Some(source_range) => source_range.end
+      None => 0
+    }
     let runs : Array[RichTextRun] = []
     for run in block.runs {
       runs.push(
-        markdown_editor_reveal_active_inline_run(source, selection, run),
+        markdown_editor_reveal_active_inline_run(
+          source,
+          block_source_end~,
+          selection,
+          run,
+        ),
       )
     }
     blocks.push(

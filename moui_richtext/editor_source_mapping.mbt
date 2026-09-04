@@ -50,10 +50,19 @@ pub fn markdown_editor_format_for_selection(
   let document = markdown_editor_format(source, base~, base_dir~)
   let blocks : Array[RichTextBlock] = []
   for block in document.blocks {
+    let block_source_end = match block.source_range {
+      Some(source_range) => source_range.end
+      None => 0
+    }
     let runs : Array[RichTextRun] = []
     for run in block.runs {
       runs.push(
-        markdown_editor_reveal_active_inline_run(source, selection, run),
+        markdown_editor_reveal_active_inline_run(
+          source,
+          block_source_end~,
+          selection,
+          run,
+        ),
       )
     }
     blocks.push(
@@ -298,15 +307,143 @@ fn markdown_editor_source_starts_with_code_fence(source : String) -> Bool {
 }
 
 ///|
+/// A char-indexed window over the source for the inline marker probes.
+/// The probes only ever read a handful of characters around one inline
+/// span, so the reveal path builds a block-sized window; materializing the
+/// whole document as a char array per touched run (the old
+/// `source.to_array()`) cost O(document) per run per frame. Reads outside
+/// the window return None, which fails marker detection exactly like the
+/// block-adjacent newlines and blank lines the whole-source scan used to
+/// find there.
+priv struct MarkdownSourceChars {
+  chars : Array[Char]
+  offset : Int
+}
+
+///|
+fn MarkdownSourceChars::get(self : MarkdownSourceChars, index : Int) -> Char? {
+  let offset = index - self.offset
+  if offset < 0 || offset >= self.chars.length() {
+    None
+  } else {
+    Some(self.chars[offset])
+  }
+}
+
+///|
+fn MarkdownSourceChars::length(self : MarkdownSourceChars) -> Int {
+  self.offset + self.chars.length()
+}
+
+///|
+/// Slice `[start, end)` (absolute char indices) inside the window; None
+/// when either edge falls outside it.
+fn MarkdownSourceChars::slice(
+  self : MarkdownSourceChars,
+  start : Int,
+  end : Int,
+) -> Array[Char]? {
+  let lo = start - self.offset
+  let hi = end - self.offset
+  if start < self.offset || hi > self.chars.length() || lo > hi {
+    None
+  } else {
+    Some(self.chars[lo:hi].to_owned())
+  }
+}
+
+///|
+fn markdown_editor_source_chars_all(source : String) -> MarkdownSourceChars {
+  { chars: source.to_array(), offset: 0 }
+}
+
+///|
+/// A window covering one inline span's neighborhood: two characters of
+/// lookback (the `**`/`[`/`!` markers) plus the rest of the owning block
+/// and a small tail for the `]`/`)`/label reads and end-of-line scans.
+fn markdown_editor_source_chars_near(
+  source : String,
+  range : RichTextSourceRange,
+  block_source_end~ : Int,
+) -> MarkdownSourceChars {
+  let doc_length = markdown_editor_text_length(source)
+  let start = markdown_editor_clamp_int(range.start - 2, 0, doc_length)
+  let end = markdown_editor_clamp_int(block_source_end + 8, start, doc_length)
+  {
+    chars: markdown_editor_substring(source, start, end).to_array(),
+    offset: start,
+  }
+}
+
+///|
+fn markdown_editor_window_has_marker(
+  chars : MarkdownSourceChars,
+  start : Int,
+  marker : String,
+) -> Bool {
+  if start < chars.offset {
+    return false
+  }
+  let mut offset = start - chars.offset
+  for ch in marker {
+    match chars.chars.get(offset) {
+      Some(window_char) =>
+        if window_char != ch {
+          return false
+        }
+      None => return false
+    }
+    offset = offset + 1
+  }
+  true
+}
+
+///|
+fn markdown_editor_single_inline_marker_at_window(
+  chars : MarkdownSourceChars,
+  index : Int,
+  marker : Char,
+) -> Bool {
+  let ch = match chars.get(index) {
+    Some(ch) => ch
+    None => return false
+  }
+  if ch != marker {
+    return false
+  }
+  let previous_differs = match chars.get(index - 1) {
+    Some(previous) => previous != marker
+    // The near window always covers `range.start - 2`, so an out-of-window
+    // read here only happens at the document start (index 0).
+    None => true
+  }
+  let next_differs = match chars.get(index + 1) {
+    Some(next) => next != marker
+    None => true
+  }
+  previous_differs && next_differs
+}
+
+///|
 fn markdown_editor_reveal_active_inline_run(
   source : String,
+  block_source_end~ : Int,
   selection : MarkdownEditorSelection,
   run : RichTextRun,
 ) -> RichTextRun {
   match run.source_range {
     Some(range) =>
       if markdown_editor_selection_touches_range(selection, range) {
-        match markdown_editor_inline_marker_source_range(source, range) {
+        match
+          markdown_editor_inline_marker_source_range(
+            source,
+            chars=markdown_editor_source_chars_near(
+              source,
+              range,
+              block_source_end~,
+            ),
+            range,
+          ) {
           Some(full_range) =>
             {
               ..run,
@@ -344,37 +481,45 @@ fn markdown_editor_selection_touches_range(
 ///|
 fn markdown_editor_inline_marker_source_range(
   source : String,
+  chars~ : MarkdownSourceChars,
   range : RichTextSourceRange,
 ) -> RichTextSourceRange? {
-  let chars = source.to_array()
   if range.start < 0 || range.end < range.start || range.end > chars.length() {
     return None
   }
-  if markdown_editor_source_has_marker(chars, range.start - 2, "**") &&
-    markdown_editor_source_has_marker(chars, range.end, "**") {
+  if markdown_editor_window_has_marker(chars, range.start - 2, "**") &&
+    markdown_editor_window_has_marker(chars, range.end, "**") {
     return Some({ start: range.start - 2, end: range.end + 2 })
   }
-  if markdown_editor_source_has_marker(chars, range.start - 2, "__") &&
-    markdown_editor_source_has_marker(chars, range.end, "__") {
+  if markdown_editor_window_has_marker(chars, range.start - 2, "__") &&
+    markdown_editor_window_has_marker(chars, range.end, "__") {
     return Some({ start: range.start - 2, end: range.end + 2 })
   }
-  if markdown_editor_source_has_marker(chars, range.start - 2, "~~") &&
-    markdown_editor_source_has_marker(chars, range.end, "~~") {
+  if markdown_editor_window_has_marker(chars, range.start - 2, "~~") &&
+    markdown_editor_window_has_marker(chars, range.end, "~~") {
     return Some({ start: range.start - 2, end: range.end + 2 })
   }
-  if markdown_editor_source_has_marker(chars, range.start - 1, "`") &&
-    markdown_editor_source_has_marker(chars, range.end, "`") {
+  if markdown_editor_window_has_marker(chars, range.start - 1, "`") &&
+    markdown_editor_window_has_marker(chars, range.end, "`") {
     return Some({ start: range.start - 1, end: range.end + 1 })
   }
-  if markdown_editor_single_inline_marker_at(chars, range.start - 1, '*') &&
-    markdown_editor_single_inline_marker_at(chars, range.end, '*') {
+  if markdown_editor_single_inline_marker_at_window(
+      chars,
+      range.start - 1,
+      '*',
+    ) &&
+    markdown_editor_single_inline_marker_at_window(chars, range.end, '*') {
     return Some({ start: range.start - 1, end: range.end + 1 })
   }
-  if markdown_editor_single_inline_marker_at(chars, range.start - 1, '_') &&
-    markdown_editor_single_inline_marker_at(chars, range.end, '_') {
+  if markdown_editor_single_inline_marker_at_window(
+      chars,
+      range.start - 1,
+      '_',
+    ) &&
+    markdown_editor_single_inline_marker_at_window(chars, range.end, '_') {
     return Some({ start: range.start - 1, end: range.end + 1 })
   }
-  match markdown_editor_reference_source_range(source, range) {
+  match markdown_editor_reference_source_range(source, chars~, range) {
     Some(reference_range) => return Some(reference_range)
     None => ()
   }
@@ -384,32 +529,20 @@ fn markdown_editor_inline_marker_source_range(
 ///|
 fn markdown_editor_reference_source_range(
   source : String,
+  chars~ : MarkdownSourceChars,
   range : RichTextSourceRange,
 ) -> RichTextSourceRange? {
   let text_range = @core.TextRange::new(start=range.start, end=range.end)
-  match markdown_editor_range_link_bounds(source, text_range) {
+  match markdown_editor_range_link_bounds_in(source, chars~, text_range) {
     Some(bounds) =>
       return Some({ start: bounds.open_start, end: bounds.target_end + 1 })
     None => ()
   }
-  match markdown_editor_range_image_bounds(source, text_range) {
+  match markdown_editor_range_image_bounds_in(source, chars~, text_range) {
     Some(bounds) =>
       Some({ start: bounds.open_start, end: bounds.target_end + 1 })
     None => None
   }
-}
-
-///|
-fn markdown_editor_single_inline_marker_at(
-  chars : Array[Char],
-  index : Int,
-  marker : Char,
-) -> Bool {
-  index >= 0 &&
-  index < chars.length() &&
-  chars[index] == marker &&
-  (index == 0 || chars[index - 1] != marker) &&
-  (index + 1 >= chars.length() || chars[index + 1] != marker)
 }
 
 ///|
