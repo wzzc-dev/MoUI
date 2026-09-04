@@ -387,10 +387,7 @@ fn markdown_editor_window_has_marker(
   let mut offset = start - chars.offset
   for ch in marker {
     match chars.chars.get(offset) {
-      Some(window_char) =>
-        if window_char != ch {
-          return false
-        }
+      Some(window_char) => if window_char != ch { return false }
       None => return false
     }
     offset = offset + 1
@@ -503,19 +500,11 @@ fn markdown_editor_inline_marker_source_range(
     markdown_editor_window_has_marker(chars, range.end, "`") {
     return Some({ start: range.start - 1, end: range.end + 1 })
   }
-  if markdown_editor_single_inline_marker_at_window(
-      chars,
-      range.start - 1,
-      '*',
-    ) &&
+  if markdown_editor_single_inline_marker_at_window(chars, range.start - 1, '*') &&
     markdown_editor_single_inline_marker_at_window(chars, range.end, '*') {
     return Some({ start: range.start - 1, end: range.end + 1 })
   }
-  if markdown_editor_single_inline_marker_at_window(
-      chars,
-      range.start - 1,
-      '_',
-    ) &&
+  if markdown_editor_single_inline_marker_at_window(chars, range.start - 1, '_') &&
     markdown_editor_single_inline_marker_at_window(chars, range.end, '_') {
     return Some({ start: range.start - 1, end: range.end + 1 })
   }
