@@ -618,3 +618,109 @@ test "hot path: incremental apply matches the full parse block by block" {
   }
   inspect(edits, content="60")
 }
+
+///|
+fn hot_path_fence_document() -> String {
+  "# Title\n\nParagraph one.\n\n```moonbit\nfn add(a : Int, b : Int) -> Int { a + b }\nlet x = add(1, 2)\n```\n\n## More\n\nLast paragraph.\n"
+}
+
+///|
+fn hot_path_insert_at(source : String, index : Int, text : String) -> String {
+  (source[:index] + text + source[index:]).to_owned()
+}
+
+///|
+/// A3: keystrokes strictly inside a code fence keep the fence span, so
+/// the incremental path re-parses just that block instead of falling
+/// back to a full-document parse.
+test "hot path: typing inside a fenced block re-parses only the fence" {
+  let source = hot_path_fence_document()
+  let line2 = hot_path_index_of(source, "let x =") + 7
+  let next = hot_path_insert_at(source, line2, "z")
+  let start = MarkdownDocumentSession::new(source)
+  hot_path_metrics_reset()
+  let session = hot_path_apply_edit(start, next)
+  assert_eq(hot_path_full_parse_count.val, 0)
+  assert_eq(hot_path_incremental_fallback_count.val, 0)
+  assert_eq(hot_path_region_reparse_count.val, 1)
+  hot_path_assert_matches_scratch(session, next)
+}
+
+///|
+/// Newlines inside a fence are swallowed by the fence, so even adding a
+/// whole code line never merges or splits clusters.
+test "hot path: newline edits inside a fenced block stay incremental" {
+  let source = hot_path_fence_document()
+  let line2 = hot_path_index_of(source, "let x =")
+  let next = hot_path_insert_at(source, line2, "\nlet y = 1")
+  let start = MarkdownDocumentSession::new(source)
+  hot_path_metrics_reset()
+  let session = hot_path_apply_edit(start, next)
+  assert_eq(hot_path_full_parse_count.val, 0)
+  assert_eq(hot_path_incremental_fallback_count.val, 0)
+  assert_eq(hot_path_region_reparse_count.val, 1)
+  hot_path_assert_matches_scratch(session, next)
+}
+
+///|
+/// The opener line decides whether the fence opens; typing on it must
+/// still fall back to the full parse.
+test "hot path: fence opener edits fall back to the full parse" {
+  let source = hot_path_fence_document()
+  let opener = hot_path_index_of(source, "```moonbit")
+  let next = hot_path_insert_at(source, opener + 3, "z")
+  let start = MarkdownDocumentSession::new(source)
+  hot_path_metrics_reset()
+  let session = hot_path_apply_edit(start, next)
+  assert_eq(hot_path_region_reparse_count.val, 0)
+  assert_eq(hot_path_incremental_fallback_count.val, 1)
+  assert_eq(hot_path_full_parse_count.val, 1)
+  hot_path_assert_matches_scratch(session, next)
+}
+
+///|
+/// The closer line decides whether the fence closes; typing on it must
+/// still fall back (breaking the closer would swallow the whole suffix).
+test "hot path: fence closer edits fall back to the full parse" {
+  let source = hot_path_fence_document()
+  let closer = hot_path_index_of(source, "```\n\n## More")
+  let next = hot_path_insert_at(source, closer, "x")
+  let start = MarkdownDocumentSession::new(source)
+  hot_path_metrics_reset()
+  let session = hot_path_apply_edit(start, next)
+  assert_eq(hot_path_region_reparse_count.val, 0)
+  assert_eq(hot_path_incremental_fallback_count.val, 1)
+  hot_path_assert_matches_scratch(session, next)
+}
+
+///|
+/// Typing a fence character inside the block could close it early, so
+/// the character rule forces the fallback even between the markers.
+test "hot path: typing fence characters inside a block falls back" {
+  let source = hot_path_fence_document()
+  let line2 = hot_path_index_of(source, "let x =") + 7
+  let next = hot_path_insert_at(source, line2, "`")
+  let start = MarkdownDocumentSession::new(source)
+  hot_path_metrics_reset()
+  let session = hot_path_apply_edit(start, next)
+  assert_eq(hot_path_region_reparse_count.val, 0)
+  assert_eq(hot_path_incremental_fallback_count.val, 1)
+  hot_path_assert_matches_scratch(session, next)
+}
+
+///|
+/// Writing at the end of an unclosed fence (the code-growing case) keeps
+/// the fence unclosed, so appends there are incremental too.
+test "hot path: appending to an unclosed fence stays incremental" {
+  let source = hot_path_fence_document()
+  let closer = hot_path_index_of(source, "```\n\n## More")
+  let unclosed = source[:closer].to_owned()
+  let next = unclosed + "let z = 3"
+  let start = MarkdownDocumentSession::new(unclosed)
+  hot_path_metrics_reset()
+  let session = hot_path_apply_edit(start, next)
+  assert_eq(hot_path_full_parse_count.val, 0)
+  assert_eq(hot_path_incremental_fallback_count.val, 0)
+  assert_eq(hot_path_region_reparse_count.val, 1)
+  hot_path_assert_matches_scratch(session, next)
+}
