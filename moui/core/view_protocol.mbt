@@ -185,13 +185,6 @@ pub(all) struct ViewStateContext {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct TextHistoryEntryContext {
-  text : String
-  caret : Int
-  selection : TextRange?
-} derive(Eq, Debug, ToJson)
-
-///|
 pub(all) struct TextControlStateContext {
   caret : Int
   selection : TextRange?

@@ -424,16 +424,15 @@ fn MarkdownEditorApp::replace_current_find_match(
     markdown_editor_find_next_index(matches, self.selection)
   }
   let range = matches[index]
-  let before = self.history_entry()
+  let before = self.pre_edit_state()
   let next_source = markdown_editor_replace_source_range(
     source, range, replacement,
   )
   if next_source == source {
     return
   }
-  self.push_undo(before)
-  self.redo_stack = []
   self.replace_document_source(next_source, reason=ReplaceEdit)
+  self.record_edit_history(before~)
   let end = range.start + markdown_editor_text_length(replacement)
   let next_matches = self.refresh_find_matches()
   match
@@ -466,10 +465,9 @@ fn MarkdownEditorApp::replace_all_find_matches(
   if next_source == source {
     return
   }
-  let before = self.history_entry()
-  self.push_undo(before)
-  self.redo_stack = []
+  let before = self.pre_edit_state()
   self.replace_document_source(next_source, reason=ReplaceEdit)
+  self.record_edit_history(before~)
   let start = matches[0].start
   let end = start + markdown_editor_text_length(replacement)
   self.selection = {

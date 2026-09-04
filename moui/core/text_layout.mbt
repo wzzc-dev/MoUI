@@ -120,7 +120,14 @@ pub fn TextSystem::layout_paragraph(
   self : TextSystem,
   input : TextLayoutInput,
 ) -> TextParagraphLayoutResult {
-  (self.paragraph_layout)(input)
+  match text_paragraph_cache_lookup(self.id, input) {
+    Some(result) => result
+    None => {
+      let result = (self.paragraph_layout)(input)
+      text_paragraph_cache_store(self.id, input, result)
+      result
+    }
+  }
 }
 
 ///|
@@ -130,6 +137,10 @@ pub fn TextSystem::register_font_data(
   data : Bytes,
 ) -> Unit {
   (self.register_font_data)(family, data)
+  // Measured widths (and therefore cached paragraph layouts) can change
+  // whenever any font data is registered, for any backend.
+  text_paragraph_cache_font_generation.val =
+    text_paragraph_cache_font_generation.val + 1
 }
 
 ///|
@@ -377,8 +388,14 @@ fn fallback_paragraph_line_ranges(
       let candidate_width = fallback_paragraph_caret_span_width(
         measured, line_start, next,
       )
-      if fallback_paragraph_should_wrap(input.max_width, candidate_width) &&
-        line_start < cursor {
+      // Trailing spaces and tabs hang past the line box (matching
+      // SkParagraph): they never break the line by themselves, they
+      // only open a soft break that the next non-blank cluster pays
+      // for when it finally overflows.
+      let cluster_hangs = cluster == " " || cluster == "\t"
+      let overflows =
+        fallback_paragraph_should_wrap(input.max_width, candidate_width)
+      if overflows && !cluster_hangs && line_start < cursor {
         let break_end = if last_soft_break > line_start {
           last_soft_break
         } else {

@@ -46,7 +46,7 @@ fn MarkdownEditorApp::apply_command_to_selection(
   self : MarkdownEditorApp,
   command : MarkdownEditorCommand,
 ) -> Unit {
-  let before = self.history_entry()
+  let before = self.pre_edit_state()
   let result = markdown_editor_apply_command_at(
     before.source,
     command,
@@ -57,8 +57,6 @@ fn MarkdownEditorApp::apply_command_to_selection(
     result.caret == before.selection.caret {
     return
   }
-  self.push_undo(before)
-  self.redo_stack = []
   self.document_session = self.document_session.apply(
     MarkdownEditTransaction::from_edit_result(
       before.source,
@@ -66,7 +64,7 @@ fn MarkdownEditorApp::apply_command_to_selection(
       reason=CommandEdit,
     ),
   )
-
+  self.record_edit_history(before~)
   self.document = result.source
   self.refresh_find_matches_if_visible()
   self.selection = { caret: result.caret, selection: result.selection }
@@ -80,18 +78,16 @@ fn MarkdownEditorApp::apply_text_transform(
   self : MarkdownEditorApp,
   transform : @moui_richtext.RichTextInputTransform,
 ) -> Unit {
-  let before = self.history_entry()
+  let before = self.pre_edit_state()
   if transform.text == before.source &&
     transform.selection == before.selection.selection &&
     transform.caret == before.selection.caret {
     return
   }
-  self.push_undo(before)
-  self.redo_stack = []
   self.document_session = self.document_session.apply(
     MarkdownEditTransaction::from_input_transform(before.source, transform),
   )
-
+  self.record_edit_history(before~)
   self.document = transform.text
   self.refresh_find_matches_if_visible()
   self.selection = { caret: transform.caret, selection: transform.selection }
@@ -312,10 +308,44 @@ fn MarkdownEditorApp::apply_named_editor_action(
 }
 
 ///|
-fn MarkdownEditorApp::history_entry(
-  self : MarkdownEditorApp,
-) -> MarkdownEditorHistoryEntry {
+/// Pre-edit document/selection snapshot captured transiently by each
+/// command path; once the command lands, `record_edit_history` converts
+/// it into a delta entry and the snapshot is dropped.
+priv struct MarkdownEditorPreEdit {
+  source : String
+  selection : MarkdownEditorSelection
+}
+
+///|
+fn MarkdownEditorApp::pre_edit_state(self : MarkdownEditorApp) -> MarkdownEditorPreEdit {
   { source: self.document_session.source, selection: self.selection }
+}
+
+///|
+/// Push the completed command as a delta undo entry (and clear the
+/// redo branch), diffing the captured pre-edit source against the
+/// current document.
+fn MarkdownEditorApp::record_edit_history(
+  self : MarkdownEditorApp,
+  before~ : MarkdownEditorPreEdit,
+) -> Unit {
+  let (start, removed, inserted) = @core.text_history_delta(
+    before.source,
+    self.document_session.source,
+  )
+  self.push_undo(
+    {
+      delta: {
+        start,
+        before: removed,
+        after: inserted,
+        caret: before.selection.caret,
+        selection: before.selection.selection,
+      },
+      selection: before.selection,
+    },
+  )
+  self.redo_stack = []
 }
 
 ///|
@@ -351,12 +381,31 @@ fn MarkdownEditorApp::restore_history(
   ignore(stack.pop())
   if undo {
     self.undo_stack = stack
-    self.push_redo(self.history_entry())
   } else {
     self.redo_stack = stack
-    self.push_undo(self.history_entry())
   }
-  self.replace_document_source(entry.source, reason=ReplaceEdit)
+  let current = self.pre_edit_state()
+  let restored_source = if undo {
+    entry.delta.undo_text(current.source)
+  } else {
+    entry.delta.redo_text(current.source)
+  }
+  // The opposite stack receives the same delta with the position this
+  // restore leaves behind, so stepping back forward is exact.
+  let repositioned : MarkdownEditorHistoryEntry = {
+    delta: {
+      ..entry.delta,
+      caret: current.selection.caret,
+      selection: current.selection.selection,
+    },
+    selection: current.selection,
+  }
+  if undo {
+    self.push_redo(repositioned)
+  } else {
+    self.push_undo(repositioned)
+  }
+  self.replace_document_source(restored_source, reason=ReplaceEdit)
   self.selection = entry.selection
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
@@ -370,8 +419,7 @@ fn MarkdownEditorApp::toggle_task_at(
 ) -> Unit {
   match markdown_editor_toggle_task_at(self.document, content_offset) {
     Some(result) => {
-      self.push_undo(self.history_entry())
-      self.redo_stack = []
+      let before = self.pre_edit_state()
       self.document_session = self.document_session.apply(
         MarkdownEditTransaction::from_edit_result(
           self.document,
@@ -379,6 +427,7 @@ fn MarkdownEditorApp::toggle_task_at(
           reason=ToggleTaskEdit,
         ),
       )
+      self.record_edit_history(before~)
 
       self.document = result.source
       self.refresh_find_matches_if_visible()
@@ -394,8 +443,7 @@ fn MarkdownEditorApp::toggle_task_at(
 fn MarkdownEditorApp::toggle_current_task(self : MarkdownEditorApp) -> Unit {
   match markdown_editor_toggle_current_task(self.document, self.selection) {
     Some(result) => {
-      self.push_undo(self.history_entry())
-      self.redo_stack = []
+      let before = self.pre_edit_state()
       self.document_session = self.document_session.apply(
         MarkdownEditTransaction::from_edit_result(
           self.document,
@@ -403,6 +451,7 @@ fn MarkdownEditorApp::toggle_current_task(self : MarkdownEditorApp) -> Unit {
           reason=ToggleTaskEdit,
         ),
       )
+      self.record_edit_history(before~)
 
       self.document = result.source
       self.refresh_find_matches_if_visible()

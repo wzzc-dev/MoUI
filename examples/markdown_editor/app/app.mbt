@@ -77,8 +77,13 @@ pub struct MarkdownEditorApp {
 }
 
 ///|
+///|
+/// One command-level undo step over the document source: the shared
+/// core delta entry plus the editor selection to restore. The delta
+/// keeps the command history proportional to the command's edits
+/// instead of full document snapshots.
 struct MarkdownEditorHistoryEntry {
-  source : String
+  delta : @core.TextHistoryEntryContext
   selection : MarkdownEditorSelection
 } derive(Eq, Debug, ToJson)
 

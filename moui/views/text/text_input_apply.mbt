@@ -16,12 +16,20 @@ fn restore_text_history(
     return { text: current, control, changed: false }
   }
   let restored = source[source.length() - 1]
+  let restored_text = if undo {
+    restored.undo_text(current)
+  } else {
+    restored.redo_text(current)
+  }
   let next_source : Array[@core.TextHistoryEntryContext] = []
   for index in 0..<(source.length() - 1) {
     next_source.push(source[index])
   }
+  // The opposite stack receives the same delta carrying the live
+  // editor position: undo/redo are two views of one entry, so redoing
+  // re-applies the edit and lands the caret where the undo left it.
   let current_entry : @core.TextHistoryEntryContext = {
-    text: current,
+    ..restored,
     caret: control.caret,
     selection: control.selection,
   }
@@ -51,9 +59,9 @@ fn restore_text_history(
     }
   }
   {
-    text: restored.text,
+    text: restored_text,
     control: next_control,
-    changed: restored.text != current,
+    changed: restored_text != current,
   }
 }
 
@@ -217,7 +225,9 @@ fn apply_text_edit(
     undo_stack.append(control.undo_stack)
     if record_history && previous != edit.text {
       undo_stack.push({
-        text: previous,
+        start: edit.start,
+        before: edit.before,
+        after: edit.after,
         caret: control.caret,
         selection: control.selection,
       })

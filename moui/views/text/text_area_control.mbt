@@ -105,9 +105,9 @@ fn[Msg] handle_text_area_event(
   font~ : @core.FontSpec,
   line_height~ : Double,
 ) -> @core.ViewEventResult[Msg] {
-  match ctx.event {
+  let result = match ctx.event {
     @core.AppEvent::Pointer(event) =>
-      handle_text_area_pointer(ctx, value~, font~, event)
+      handle_text_area_pointer(ctx, value~, font~, line_height~, event)
     @core.AppEvent::Keyboard(event) =>
       handle_text_area_keyboard(
         ctx,
@@ -121,6 +121,74 @@ fn[Msg] handle_text_area_event(
     @core.AppEvent::TextInput(event) =>
       view_text_input_result(ctx, value~, on_input~, event, record_history=true)
     _ => @core.ViewEventResult::ignored()
+  }
+  text_area_reveal_caret(ctx, value~, font~, line_height~, result)
+}
+
+///|
+/// Caret-following postprocessor: whenever an event moved the caret or
+/// selection, adjust the self-owned scroll offset just enough to bring
+/// the caret's line slot into the viewport, merging the new offset into
+/// the event's state channel. Paint reads the slot directly, so a
+/// layout-dirty hint is enough to repaint the shifted window.
+fn[Msg] text_area_reveal_caret(
+  ctx : @core.ViewEventContext,
+  value~ : String,
+  font~ : @core.FontSpec,
+  line_height~ : Double,
+  result : @core.ViewEventResult[Msg],
+) -> @core.ViewEventResult[Msg] {
+  let control = match result.text_control {
+    None => return result
+    Some(control) => control
+  }
+  if control.caret == ctx.text_control.caret &&
+    control.selection == ctx.text_control.selection {
+    return result
+  }
+  let text_frame = text_area_text_frame(ctx.frame)
+  let display_text = text_with_composition(value, control, focused=true)
+  let paragraph = text_area_paragraph(
+    ctx.text_system,
+    display_text,
+    font,
+    text_frame,
+  )
+  let line_count = paragraph.lines.length()
+  let offset = text_area_clamped_scroll_offset(
+    text_area_scroll_offset(ctx.state),
+    line_count~,
+    line_height~,
+    viewport_height=text_frame.size.height,
+  )
+  let caret_line = text_area_line_index_for_paragraph_offset(
+    paragraph,
+    control.caret,
+  )
+  let next_offset = text_area_offset_for_caret_reveal(
+    current=offset,
+    caret_line~,
+    line_count~,
+    line_height~,
+    viewport_height=text_frame.size.height,
+  )
+  if next_offset == offset {
+    result
+  } else {
+    let base_state = match result.state {
+      None => ctx.state
+      Some(state) => state
+    }
+    {
+      ..result,
+      state: Some(
+        base_state.with_slot(
+          text_area_scroll_slot(),
+          { offset_y : next_offset },
+        ),
+      ),
+      dirty: @core.ViewDirtyHint::ViewLayoutDirty,
+    }
   }
 }
 
@@ -373,6 +441,7 @@ fn[Msg] handle_text_area_pointer(
   ctx : @core.ViewEventContext,
   value~ : String,
   font~ : @core.FontSpec,
+  line_height~ : Double,
   event : @core.PointerEvent,
 ) -> @core.ViewEventResult[Msg] {
   let text = value
@@ -382,7 +451,43 @@ fn[Msg] handle_text_area_pointer(
     ctx.text_control,
     focused=ctx.focused,
   )
-  if event.phase == @core.PointerPhase::Down &&
+  if event.wheel_delta.y != 0.0 && ctx.frame.contains(event.position) {
+    let paragraph = text_area_paragraph(
+      ctx.text_system,
+      display_text,
+      font,
+      text_frame,
+    )
+    let line_count = paragraph.lines.length()
+    let offset = text_area_clamped_scroll_offset(
+      text_area_scroll_offset(ctx.state),
+      line_count~,
+      line_height~,
+      viewport_height=text_frame.size.height,
+    )
+    let next_offset = text_area_scroll_offset_after_wheel(
+      current=offset,
+      delta_y=event.wheel_delta.y,
+      line_count~,
+      line_height~,
+      viewport_height=text_frame.size.height,
+    )
+    if next_offset == offset {
+      @core.ViewEventResult::ignored()
+    } else {
+      @common.view_event_result(
+        changed=true,
+        captured=true,
+        state=Some(
+          ctx.state.with_slot(
+            text_area_scroll_slot(),
+            { offset_y : next_offset },
+          ),
+        ),
+        dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+      )
+    }
+  } else if event.phase == @core.PointerPhase::Down &&
     ctx.frame.contains(event.position) {
     let paragraph = text_area_paragraph(
       ctx.text_system,
@@ -390,16 +495,26 @@ fn[Msg] handle_text_area_pointer(
       font,
       text_frame,
     )
+    let offset = text_area_clamped_scroll_offset(
+      text_area_scroll_offset(ctx.state),
+      line_count=paragraph.lines.length(),
+      line_height~,
+      viewport_height=text_frame.size.height,
+    )
     let local_point = @core.Point::new(
       x=event.position.x - text_frame.origin.x,
-      y=event.position.y - text_frame.origin.y,
+      y=event.position.y - text_frame.origin.y + offset,
     )
-    let hit = paragraph.hit_test(local_point)
+    let hit_offset = text_area_hit_offset_at_slot(
+      paragraph,
+      local_point,
+      line_height,
+    )
     let next_control = {
       ..ctx.text_control,
-      caret: hit.offset,
+      caret: hit_offset,
       selection: None,
-      text_selection_anchor: Some(hit.offset),
+      text_selection_anchor: Some(hit_offset),
       composition: None,
       composition_cursor: None,
     }
@@ -418,17 +533,27 @@ fn[Msg] handle_text_area_pointer(
       font,
       text_frame,
     )
+    let offset = text_area_clamped_scroll_offset(
+      text_area_scroll_offset(ctx.state),
+      line_count=paragraph.lines.length(),
+      line_height~,
+      viewport_height=text_frame.size.height,
+    )
     let local_point = @core.Point::new(
       x=event.position.x - text_frame.origin.x,
-      y=event.position.y - text_frame.origin.y,
+      y=event.position.y - text_frame.origin.y + offset,
     )
-    let hit = paragraph.hit_test(local_point)
-    if hit.offset != anchor || hit.offset != ctx.text_control.caret {
-      let start = @core.min_int(anchor, hit.offset)
-      let end = @core.max_int(anchor, hit.offset)
+    let hit_offset = text_area_hit_offset_at_slot(
+      paragraph,
+      local_point,
+      line_height,
+    )
+    if hit_offset != anchor || hit_offset != ctx.text_control.caret {
+      let start = @core.min_int(anchor, hit_offset)
+      let end = @core.max_int(anchor, hit_offset)
       let next_control = {
         ..ctx.text_control,
-        caret: hit.offset,
+        caret: hit_offset,
         selection: Some(@core.TextRange::new(start~, end~)),
       }
       @common.view_event_result(
@@ -461,24 +586,45 @@ fn text_input_state_for_multi_line(
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
   line_height~ : Double,
-  visible_lines~ : Int,
+  scroll_offset~ : Double,
 ) -> @core.TextInputState {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let display_text = text_with_composition(text, control, focused=true)
   let text_frame = text_area_text_frame(frame)
   let caret = boundaries.nearest_boundary(control.caret)
   let visual_caret = text_field_visual_caret(text, control, focused=true)
-  let adjusted_rect = if display_text == "" {
-    let glyph_h = text_area_glyph_row_height(text_system, " ", font)
-    @core.Rect::new(
-      x=text_frame.origin.x,
-      y=text_area_line_slot_y(text_frame, 0, line_height, glyph_h),
-      width=text_editing_cursor_width(),
-      height=glyph_h,
-    )
+  let paragraph = if display_text == "" {
+    None
   } else {
-    text_area_display_caret_rect(
-      text_system, display_text, text_frame, font, visual_caret, line_height, visible_lines,
+    Some(text_area_paragraph(text_system, display_text, font, text_frame))
+  }
+  let offset = text_area_clamped_scroll_offset(
+    scroll_offset,
+    line_count=match paragraph {
+      None => 1
+      Some(paragraph) => paragraph.lines.length()
+    },
+    line_height~,
+    viewport_height=text_frame.size.height,
+  )
+  let content_frame = @core.Rect::new(
+    x=text_frame.origin.x,
+    y=text_frame.origin.y - offset,
+    width=text_frame.size.width,
+    height=text_frame.size.height,
+  )
+  let adjusted_rect = match paragraph {
+    None => {
+      let glyph_h = text_area_glyph_row_height(text_system, " ", font)
+      @core.Rect::new(
+        x=text_frame.origin.x,
+        y=text_area_line_slot_y(content_frame, 0, line_height, glyph_h),
+        width=text_editing_cursor_width(),
+        height=glyph_h,
+      )
+    }
+    Some(paragraph) => text_area_display_caret_rect(
+      paragraph, text_system, content_frame, font, visual_caret, line_height,
     )
   }
   {

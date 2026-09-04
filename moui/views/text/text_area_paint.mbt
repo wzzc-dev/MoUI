@@ -17,7 +17,7 @@ fn append_text_area_commands(
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
   theme~ : @core.Theme,
-  visible_lines~ : Int,
+  scroll_offset~ : Double,
   line_height~ : Double,
 ) -> Unit {
   let border = if focused { focused_border } else { border }
@@ -39,60 +39,58 @@ fn append_text_area_commands(
     text_frame,
   )
   commands.push(@core.DrawCommand::PushClip(text_frame))
-  if is_placeholder {
-    let wrap_ranges = text_area_wrap_line_ranges(
-      text_system,
-      placeholder,
-      font,
-      text_frame.size.width,
-      visible_lines,
-    )
-    let chars = placeholder.to_array()
-    for line_index, line_range in wrap_ranges {
-      if line_range.start >= line_range.end {
-        continue
-      }
-      let line_text = String::from_array(chars[line_range.start:line_range.end])
-      text_area_draw_line_text(
-        commands,
-        text_system,
-        line_text,
-        font,
-        placeholder_color,
-        text_frame,
-        line_index,
-        line_height,
-        text_frame.origin.x,
-        text_frame.size.width,
-      )
-    }
+  let wrapped = if is_placeholder {
+    text_area_paragraph(text_system, placeholder, font, text_frame)
   } else {
-    let wrap_ranges = text_area_wrap_line_ranges(
-      text_system,
-      display_text,
-      font,
-      text_frame.size.width,
-      visible_lines,
-    )
-    let chars = display_text.to_array()
-    for line_index, line_range in wrap_ranges {
-      if line_range.start >= line_range.end {
-        continue
-      }
-      let line_text = String::from_array(chars[line_range.start:line_range.end])
-      text_area_draw_line_text(
-        commands,
-        text_system,
-        line_text,
-        font,
-        paint_color,
-        text_frame,
-        line_index,
-        line_height,
-        text_frame.origin.x,
-        text_frame.size.width,
-      )
+    paragraph
+  }
+  // The scroll offset is clamped against the painted content here so a
+  // stale stored offset (external text replacement) can never show
+  // blank space; drawing helpers receive a content frame shifted up by
+  // the offset while the clip stays pinned to the viewport frame.
+  let offset = text_area_clamped_scroll_offset(
+    scroll_offset,
+    line_count=wrapped.lines.length(),
+    line_height~,
+    viewport_height=text_frame.size.height,
+  )
+  let content_frame = @core.Rect::new(
+    x=text_frame.origin.x,
+    y=text_frame.origin.y - offset,
+    width=text_frame.size.width,
+    height=text_frame.size.height,
+  )
+  let window = text_area_visible_line_window(
+    offset~,
+    viewport_height=text_frame.size.height,
+    line_count=wrapped.lines.length(),
+    line_height~,
+  )
+  let chars = wrapped.text.to_array()
+  for line in wrapped.lines {
+    if line.line_index < window.0 {
+      continue
     }
+    if line.line_index >= window.1 {
+      break
+    }
+    let line_range = line.text_range
+    if line_range.start >= line_range.end {
+      continue
+    }
+    let line_text = String::from_array(chars[line_range.start:line_range.end])
+    text_area_draw_line_text(
+      commands,
+      text_system,
+      line_text,
+      font,
+      paint_color,
+      content_frame,
+      line.line_index,
+      line_height,
+      text_frame.origin.x,
+      text_frame.size.width,
+    )
   }
   commands.push(@core.DrawCommand::PopClip)
   if focused {
@@ -101,16 +99,12 @@ fn append_text_area_commands(
       let selection_color = theme.palette.primary.with_alpha(0.18)
       match active_text_selection(control.selection) {
         Some(sel) => {
-          let rects = paragraph.selection_rects(sel)
+          let rects = text_area_selection_slot_rects(
+            paragraph, text_system, font, sel, content_frame, line_height,
+          )
           for rect in rects {
-            let adjusted = @core.Rect::new(
-              x=text_frame.origin.x + rect.origin.x,
-              y=text_frame.origin.y + rect.origin.y,
-              width=rect.size.width,
-              height=rect.size.height,
-            )
             overlay_commands.push(
-              @core.DrawCommand::FillRect(adjusted, selection_color),
+              @core.DrawCommand::FillRect(rect, selection_color),
             )
           }
         }
@@ -133,12 +127,10 @@ fn append_text_area_commands(
               comp_start + text_length(composition),
             )
             let r0 = text_area_display_caret_rect(
-              text_system, display_text, text_frame, font, start_off, line_height,
-              visible_lines,
+              paragraph, text_system, content_frame, font, start_off, line_height,
             )
             let r1 = text_area_display_caret_rect(
-              text_system, display_text, text_frame, font, end_off, line_height,
-              visible_lines,
+              paragraph, text_system, content_frame, font, end_off, line_height,
             )
             if r1.origin.x > r0.origin.x {
               overlay_commands.push(
@@ -162,13 +154,13 @@ fn append_text_area_commands(
       let glyph_h = text_area_glyph_row_height(text_system, " ", font)
       @core.Rect::new(
         x=text_frame.origin.x,
-        y=text_area_line_slot_y(text_frame, 0, line_height, glyph_h),
+        y=text_area_line_slot_y(content_frame, 0, line_height, glyph_h),
         width=text_editing_cursor_width(),
         height=glyph_h,
       )
     } else {
       text_area_display_caret_rect(
-        text_system, display_text, text_frame, font, visual_caret, line_height, visible_lines,
+        paragraph, text_system, content_frame, font, visual_caret, line_height,
       )
     }
     overlay_commands.push(

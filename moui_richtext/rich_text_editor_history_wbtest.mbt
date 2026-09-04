@@ -33,26 +33,26 @@ fn history_test_control(caret? : Int = 0) -> @core.TextControlStateContext {
 ///|
 /// Records an accepted edit exactly like the editor apply paths do:
 /// classification uses the pre-edit caret from the control, and the
-/// entry is pushed only when the merge window declines to absorb it.
+/// stack is extended either with a fresh delta entry or, inside an
+/// open merge group, by rewriting the stack-top entry.
 fn history_apply(
   control : @core.TextControlStateContext,
   previous : String,
   next : String,
 ) -> @core.TextControlStateContext {
-  let push = rich_text_history_record_edit(
-    control,
-    previous,
-    next,
-    control.caret,
-  )
+  let (start, before, after) = @core.text_history_delta(previous, next)
   let undo_stack = control.undo_stack.copy()
-  if push {
-    undo_stack.push({
-      text: previous,
+  rich_text_history_extend_stack(
+    undo_stack,
+    rich_text_history_record_edit(control, previous, next, control.caret),
+    {
+      start,
+      before,
+      after,
       caret: control.caret,
       selection: control.selection,
-    })
-  }
+    },
+  )
   let caret = control.caret + text_length(next) - text_length(previous)
   { ..control, caret, undo_stack, redo_stack: [] }
 }
@@ -68,16 +68,39 @@ test "undo merge window: one undo reverts a typed word" {
     text = next
     history_advance(30)
   }
-  // Typing a word must open a single undo group.
+  // Typing a word must open a single undo group whose delta covers
+  // the whole run instead of a full-text snapshot.
   assert_eq(control.undo_stack.length(), 1)
   let group_entry = control.undo_stack[0]
-  assert_eq(group_entry.text, "")
+  assert_eq(group_entry.start, 0)
+  assert_eq(group_entry.before, "")
+  assert_eq(group_entry.after, "hello")
   assert_eq(group_entry.caret, 0)
   let restored = restore_text_history(control, text, undo=true)
   // One undo must revert the whole run.
   assert_eq(restored.text, "")
   assert_eq(restored.control.undo_stack.length(), 0)
   assert_eq(restored.control.redo_stack.length(), 1)
+  history_stop_fake_clock()
+}
+
+///|
+test "undo merge window: redo reapplies the merged run" {
+  history_start_fake_clock()
+  let mut control = history_test_control()
+  let mut text = ""
+  for ch in "hi".to_array() {
+    let next = text + ch.to_string()
+    control = history_apply(control, text, next)
+    text = next
+    history_advance(30)
+  }
+  let restored = restore_text_history(control, "hi", undo=true)
+  assert_eq(restored.text, "")
+  let redone = restore_text_history(restored.control, "", undo=false)
+  assert_eq(redone.text, "hi")
+  assert_eq(redone.changed, true)
+  assert_eq(redone.control.caret, 2)
   history_stop_fake_clock()
 }
 
@@ -90,7 +113,10 @@ test "undo merge window: a pause longer than the window splits the group" {
   history_advance(rich_text_history_merge_window_ms + 1)
   control = history_apply(control, "ab", "abc")
   assert_eq(control.undo_stack.length(), 2)
-  assert_eq(control.undo_stack[1].text, "ab")
+  let second = control.undo_stack[1]
+  assert_eq(second.start, 2)
+  assert_eq(second.before, "")
+  assert_eq(second.after, "c")
   history_stop_fake_clock()
 }
 
@@ -108,20 +134,33 @@ test "undo merge window: newlines and pastes always start their own group" {
   control = history_apply(control, "a\nbc", "a\nbcd")
   // An insert after a paste must start a new group.
   assert_eq(control.undo_stack.length(), 4)
+  // Each entry holds only its edit, never the surrounding document.
+  for entry in control.undo_stack {
+    assert_true(
+      text_length(entry.before) + text_length(entry.after) <= 2,
+    )
+  }
   history_stop_fake_clock()
 }
 
 ///|
-test "undo merge window: backspaces group, switches of kind push" {
+test "undo merge window: backspaces group leftward into one delta" {
   history_start_fake_clock()
-  let mut control = history_test_control()
+  let mut control = history_test_control(caret=6)
   control = history_apply(control, "", "abcdef")
   // The paste baseline pushes.
   assert_eq(control.undo_stack.length(), 1)
+  control = { ..control, caret: 6 }
   control = history_apply(control, "abcdef", "abcde")
   control = history_apply(control, "abcde", "abcd")
-  // The backspaces must share one undo group.
+  // The backspaces must share one undo group whose delta deleted "ef".
   assert_eq(control.undo_stack.length(), 2)
+  let group = control.undo_stack[1]
+  assert_eq(group.start, 4)
+  assert_eq(group.before, "ef")
+  assert_eq(group.after, "")
+  let restored = restore_text_history(control, "abcd", undo=true)
+  assert_eq(restored.text, "abcdef")
   control = history_apply(control, "abcd", "abcde")
   // An insert after backspaces must start a new group.
   assert_eq(control.undo_stack.length(), 3)
@@ -136,8 +175,15 @@ test "undo merge window: repeated forward deletes group at one position" {
   // A forward delete leaves the caret at the same column.
   control = { ..control, caret: 1 }
   control = history_apply(control, "acd", "ad")
-  // Forward deletes at one caret must share a group.
+  // Forward deletes at one caret must share a group: undoing restores
+  // both deleted characters at the one recorded position.
   assert_eq(control.undo_stack.length(), 1)
+  let group = control.undo_stack[0]
+  assert_eq(group.start, 1)
+  assert_eq(group.before, "bc")
+  assert_eq(group.after, "")
+  let restored = restore_text_history(control, "ad", undo=true)
+  assert_eq(restored.text, "abcd")
   history_stop_fake_clock()
 }
 
@@ -180,7 +226,13 @@ test "undo merge window: foreign stack changes break the merge" {
   history_start_fake_clock()
   let mut control = history_test_control()
   control = history_apply(control, "", "a")
-  control.undo_stack.push({ text: "foreign", caret: 0, selection: None })
+  control.undo_stack.push({
+    start: 0,
+    before: "foreign",
+    after: "",
+    caret: 0,
+    selection: None,
+  })
   control = history_apply(control, "a", "ab")
   // A stack change outside the group must force a push.
   assert_eq(control.undo_stack.length(), 3)
@@ -207,5 +259,6 @@ test "undo merge window: applied input edits flow through the window" {
   assert_eq(second.changed, true)
   // The editor apply path must honor the merge window.
   assert_eq(second.control.undo_stack.length(), 1)
+  assert_eq(second.control.undo_stack[0].after, "he")
   history_stop_fake_clock()
 }

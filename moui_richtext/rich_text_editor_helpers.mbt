@@ -3,6 +3,9 @@ priv struct TextEditResult {
   text : String
   caret : Int
   selection : @core.TextRange?
+  start : Int
+  before : String
+  after : String
 }
 
 ///|
@@ -31,9 +34,14 @@ fn restore_text_history(
     return { text: current, control, changed: false }
   }
   let restored = source[source.length() - 1]
+  let restored_text = if undo {
+    restored.undo_text(current)
+  } else {
+    restored.redo_text(current)
+  }
   let next_source = source[:source.length() - 1].to_owned()
   let current_entry : @core.TextHistoryEntryContext = {
-    text: current,
+    ..restored,
     caret: control.caret,
     selection: control.selection,
   }
@@ -61,9 +69,9 @@ fn restore_text_history(
     }
   }
   {
-    text: restored.text,
+    text: restored_text,
     control: next_control,
-    changed: restored.text != current,
+    changed: restored_text != current,
   }
 }
 
@@ -93,10 +101,16 @@ fn apply_text_input(
         range,
       )
       let next_text = @core.replace_text_range(text, normalized, replacement)
+      let chars = text.to_array()
       let edit : TextEditResult = {
         text: next_text,
         caret: normalized.start + text_length(replacement),
         selection: None,
+        start: normalized.start,
+        before: String::from_array(
+          chars[normalized.start:normalized.end],
+        ),
+        after: replacement,
       }
       apply_text_edit(control, text, edit, record_history~)
     }
@@ -178,10 +192,17 @@ fn apply_text_input(
     }
     @core.TextInputEvent::DeleteRange(range) => {
       let next_text = @core.replace_text_range(text, range, "")
+      let normalized = range.normalized()
+      let chars = text.to_array()
       let edit : TextEditResult = {
         text: next_text,
-        caret: range.normalized().start,
+        caret: normalized.start,
         selection: None,
+        start: normalized.start,
+        before: String::from_array(
+          chars[normalized.start:normalized.end],
+        ),
+        after: "",
       }
       apply_text_edit(control, text, edit, record_history~)
     }
@@ -193,10 +214,14 @@ fn apply_text_input(
         after,
       )
       let next_text = @core.replace_text_range(text, range, "")
+      let chars = text.to_array()
       let edit : TextEditResult = {
         text: next_text,
         caret: range.start,
         selection: None,
+        start: range.start,
+        before: String::from_array(chars[range.start:range.end]),
+        after: "",
       }
       apply_text_edit(control, text, edit, record_history~)
     }
@@ -218,14 +243,23 @@ fn apply_text_edit(
   if changed {
     let undo_stack : Array[@core.TextHistoryEntryContext] = []
     undo_stack.append(control.undo_stack)
-    if record_history &&
-      previous != edit.text &&
-      rich_text_history_record_edit(control, previous, edit.text, control.caret) {
-      undo_stack.push({
-        text: previous,
-        caret: control.caret,
-        selection: control.selection,
-      })
+    if record_history && previous != edit.text {
+      rich_text_history_extend_stack(
+        undo_stack,
+        rich_text_history_record_edit(
+          control,
+          previous,
+          edit.text,
+          control.caret,
+        ),
+        {
+          start: edit.start,
+          before: edit.before,
+          after: edit.after,
+          caret: control.caret,
+          selection: control.selection,
+        },
+      )
     }
     {
       text: edit.text,
@@ -259,7 +293,15 @@ fn replace_current_selection(
   let normalized = range.normalized()
   let next_text = @core.replace_text_range(text, range, replacement)
   let caret = normalized.start + text_length(replacement)
-  { text: next_text, caret, selection: None }
+  let chars = text.to_array()
+  {
+    text: next_text,
+    caret,
+    selection: None,
+    start: normalized.start,
+    before: String::from_array(chars[normalized.start:normalized.end]),
+    after: replacement,
+  }
 }
 
 ///|
