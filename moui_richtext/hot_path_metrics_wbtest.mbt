@@ -191,11 +191,12 @@ test "hot path: prefix-sum window matches the legacy linear scan" {
 test "hot path: wheel and rebuild walk zero blocks once geometry exists" {
   let base = @core.FontSpec::new()
   let session = MarkdownDocumentSession::new(hot_path_bench_document(30))
-  for editor_block in session.editor_blocks {
+  for index, _editor_block in session.editor_blocks {
     let _ = rich_text_record_block_measured_height(
-      editor_block,
       base,
       width=720.0,
+      block_id=session.blocks[index].id,
+      block_revision=session.blocks[index].revision,
       height=24.0,
     )
   }
@@ -306,20 +307,22 @@ test "hot path: window range matches the legacy scan after point updates" {
 test "hot path: measured-height change updates the scroll geometry in place" {
   let base = @core.FontSpec::new()
   let session = MarkdownDocumentSession::new(hot_path_bench_document(20))
-  for editor_block in session.editor_blocks {
+  for index, _editor_block in session.editor_blocks {
     let _ = rich_text_record_block_measured_height(
-      editor_block,
       base,
       width=720.0,
+      block_id=session.blocks[index].id,
+      block_revision=session.blocks[index].revision,
       height=24.0,
     )
   }
   let before = session.estimated_content_height(base~, content_width=720.0)
   hot_path_metrics_reset()
   let changed = rich_text_record_block_measured_height(
-    session.editor_blocks[0],
     base,
     width=720.0,
+    block_id=session.blocks[0].id,
+    block_revision=session.blocks[0].revision,
     height=900.0,
   )
   assert_true(changed)
@@ -342,19 +345,21 @@ test "hot path: measured-height change updates the scroll geometry in place" {
 test "hot path: repeated identical measurements are not re-applied" {
   let base = @core.FontSpec::new()
   let session = MarkdownDocumentSession::new(hot_path_bench_document(6))
-  for editor_block in session.editor_blocks {
+  for index, _editor_block in session.editor_blocks {
     let _ = rich_text_record_block_measured_height(
-      editor_block,
       base,
       width=720.0,
+      block_id=session.blocks[index].id,
+      block_revision=session.blocks[index].revision,
       height=24.0,
     )
   }
   let _ = session.estimated_content_height(base~, content_width=720.0)
   let changed = rich_text_record_block_measured_height(
-    session.editor_blocks[1],
     base,
     width=720.0,
+    block_id=session.blocks[1].id,
+    block_revision=session.blocks[1].revision,
     height=24.0,
   )
   assert_true(!changed)
@@ -385,9 +390,10 @@ test "hot path: scrolling through freshly measured blocks stays walk-free" {
     // the geometry through rich_text_window.
     for index in start..<end {
       let _ = rich_text_record_block_measured_height(
-        session.editor_blocks[index],
         base,
         width~,
+        block_id=session.blocks[index].id,
+        block_revision=session.blocks[index].revision,
         height=48.0,
       )
       // Unconditional per-slot apply, mirroring the paint path: the

@@ -52,34 +52,51 @@ test "cached rich block conversions rebase source ranges after upstream edits" {
 }
 
 ///|
-test "measured block height lookups key on content, font, and width" {
+test "measured block height lookups key on identity, font, and width" {
   let base = @core.FontSpec::new(size=16.0)
-  let block = MarkdownEditorBlock::{
-    block: MarkdownBlock::{
-      kind: Paragraph,
-      text: "Height probe",
-      inlines: [],
-      table_alignments: [],
-      code_language: None,
-    },
-    source_range: { start: 0, end: 12 },
-    content_range: { start: 0, end: 12 },
-  }
   let recorded = rich_text_record_block_measured_height(
-    block,
     base,
     width=420.0,
+    block_id=1,
+    block_revision=0,
     height=47.5,
   )
   assert_true(recorded)
-  let hit = rich_text_block_measured_height(block, base, width=420.0)
-  let other_width = rich_text_block_measured_height(block, base, width=421.0)
+  let seed = rich_text_block_height_digest_seed(base, width=420.0)
+  let hit = rich_text_block_measured_height(
+    base,
+    width=420.0,
+    seed~,
+    block_id=1,
+    block_revision=0,
+  )
+  let other_width = rich_text_block_measured_height(
+    base,
+    width=421.0,
+    seed=rich_text_block_height_digest_seed(base, width=421.0),
+    block_id=1,
+    block_revision=0,
+  )
   let other_font = rich_text_block_measured_height(
-    block,
     @core.FontSpec::new(size=18.0),
     width=420.0,
+    seed=rich_text_block_height_digest_seed(
+      @core.FontSpec::new(size=18.0),
+      width=420.0,
+    ),
+    block_id=1,
+    block_revision=0,
+  )
+  // A revision bump is a content change: the old height must not leak.
+  let other_revision = rich_text_block_measured_height(
+    base,
+    width=420.0,
+    seed~,
+    block_id=1,
+    block_revision=1,
   )
   assert_true(hit == Some(47.5))
   assert_true(other_width == None)
   assert_true(other_font == None)
+  assert_true(other_revision == None)
 }

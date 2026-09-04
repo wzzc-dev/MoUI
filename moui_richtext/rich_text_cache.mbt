@@ -356,23 +356,89 @@ fn markdown_editor_block_conversion_key(
 ///|
 
 ///|
-/// Memoize the whole-source reference-definition set. The incremental
-/// apply path reuses definitions from the previous source for edits that
-/// cannot change them, skipping the second whole-document markdown parse
-/// that `markdown_reference_definitions` performs.
+/// Whole-source reference-definition set, keyed by (source length, source
+/// digest) instead of the source string itself: a String-keyed map hash of
+/// a multi-megabyte document costs O(document) per lookup, while the
+/// session already knows its (length, digest) pair. The digest is computed
+/// once per cache entry, never per lookup.
+fn markdown_reference_definitions_cache_key(
+  source_length~ : Int,
+  source_digest~ : UInt64,
+) -> String {
+  "defs:\{source_length}:\{source_digest}"
+}
+
+///|
 fn markdown_reference_definitions_cached(
   source : String,
 ) -> Array[MarkdownReferenceDefinition] {
-  match markdown_reference_definitions_cache.get(source) {
+  markdown_reference_definitions_cached_keyed(
+    source,
+    source_length=source.length(),
+    source_digest=markdown_document_source_digest(source),
+  )
+}
+
+///|
+/// Lookup with a session-supplied (length, digest) pair, so the hot edit
+/// path never hashes the document just to consult the cache.
+fn markdown_reference_definitions_cached_keyed(
+  source : String,
+  source_length~ : Int,
+  source_digest~ : UInt64,
+) -> Array[MarkdownReferenceDefinition] {
+  let key = markdown_reference_definitions_cache_key(
+    source_length~,
+    source_digest~,
+  )
+  match markdown_reference_definitions_cache.get(key) {
     Some(definitions) => definitions
     None => {
       let definitions = markdown_reference_definitions(source)
-      if markdown_reference_definitions_cache.length() >= 16 {
-        markdown_reference_definitions_cache.clear()
-      }
-      markdown_reference_definitions_cache.set(source, definitions)
+      markdown_reference_definitions_cache_store_keyed(
+        source_length~,
+        source_digest~,
+        definitions,
+      )
       definitions
     }
+  }
+}
+
+///|
+/// Publish a definition set for a NEW source without recomputing it. The
+/// incremental-apply guard (`markdown_document_transaction_incremental_safe`)
+/// proves an edit cannot change the whole-source definition set, so the set
+/// computed for the previous source is exact for the edited source too.
+/// Storing it under the new source's key is what keeps the next keystroke's
+/// lookup a hit — without this, every keystroke re-runs the whole-document
+/// definition parse because the lookup key (the source) always changed.
+fn markdown_reference_definitions_cache_store(
+  source : String,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Unit {
+  markdown_reference_definitions_cache_store_keyed(
+    source_length=source.length(),
+    source_digest=markdown_document_source_digest(source),
+    definitions,
+  )
+}
+
+///|
+fn markdown_reference_definitions_cache_store_keyed(
+  source_length~ : Int,
+  source_digest~ : UInt64,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Unit {
+  let key = markdown_reference_definitions_cache_key(
+    source_length~,
+    source_digest~,
+  )
+  if markdown_reference_definitions_cache.get(key) is None {
+    if markdown_reference_definitions_cache.length() >= 16 {
+      markdown_reference_definitions_cache.clear()
+    }
+    markdown_reference_definitions_cache.set(key, definitions)
   }
 }
 
@@ -536,19 +602,21 @@ fn rich_text_run_width_with_cache(
 
 ///|
 /// Measured-height keys cover the inputs that determine a block's laid
-/// out pixel height: content (kind, text, inlines, images), base font,
-/// and the laid out block width. Like block conversions, offsets are
-/// excluded so upstream edits keep the entry valid.
+/// out pixel height: block identity (content via id+revision), base font,
+/// and the laid out block width. Like block conversions, absolute source
+/// offsets are excluded so upstream edits keep the entry valid.
 fn rich_text_block_measured_height_key(
-  editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
   width~ : Double,
+  block_id~ : Int,
+  block_revision~ : Int,
 ) -> String {
   rich_text_cache_join_key([
     "height",
     rich_text_cache_font_key(base),
     width.to_string(),
-    markdown_editor_block_key(editor_block.block),
+    block_id.to_string(),
+    block_revision.to_string(),
   ])
 }
 
@@ -592,75 +660,37 @@ fn rich_text_digest_string(hash : UInt64, text : String) -> UInt64 {
 }
 
 ///|
-fn rich_text_block_measured_height_digest(
-  editor_block : MarkdownEditorBlock,
+/// Seed mixing the two walk-wide digest inputs — font identity and the
+/// laid-out block width — once per geometry walk instead of re-hashing the
+/// serialized font key (and re-allocating the width string) for every
+/// block. The per-block digest chains the block identity into this seed.
+fn rich_text_block_height_digest_seed(
   base : @core.FontSpec,
   width~ : Double,
 ) -> UInt64 {
-  let block = editor_block.block
-  let mut hash = 0xcbf29ce484222325UL
-  hash = rich_text_digest_string(hash, rich_text_cache_font_key(base))
-  hash = rich_text_digest_string(hash, width.to_string())
-  hash = match block.kind {
-    Heading(level) =>
-      rich_text_digest_mix(rich_text_digest_mix(hash, 1UL), level.to_uint64())
-    Paragraph => rich_text_digest_mix(hash, 2UL)
-    UnorderedListItem => rich_text_digest_mix(hash, 3UL)
-    TaskListItem(checked) =>
-      rich_text_digest_mix(hash, if checked { 4UL } else { 5UL })
-    OrderedListItem(start) =>
-      rich_text_digest_mix(rich_text_digest_mix(hash, 6UL), start.to_uint64())
-    Blockquote => rich_text_digest_mix(hash, 7UL)
-    CodeBlock => rich_text_digest_mix(hash, 8UL)
-    HorizontalRule => rich_text_digest_mix(hash, 9UL)
-    Table => rich_text_digest_mix(hash, 10UL)
-    FootnoteDefinition(label) =>
-      rich_text_digest_string(rich_text_digest_mix(hash, 11UL), label)
-    HtmlBlock => rich_text_digest_mix(hash, 12UL)
-    FrontMatter => rich_text_digest_mix(hash, 13UL)
-  }
-  hash = rich_text_digest_string(hash, block.text)
-  hash = rich_text_digest_mix(hash, block.inlines.length().to_uint64())
-  for inline in block.inlines {
-    hash = rich_text_digest_mix(
-      hash,
-      match inline.kind {
-        Plain => 20UL
-        Bold => 21UL
-        Italic => 22UL
-        Code => 23UL
-        Strikethrough => 24UL
-        Link => 25UL
-        Autolink => 26UL
-        Image => 27UL
-        FootnoteReference => 28UL
-        HtmlInline => 29UL
-      },
-    )
-    hash = rich_text_digest_string(hash, inline.text)
-    match inline.target {
-      None => hash = rich_text_digest_mix(hash, 30UL)
-      Some(target) =>
-        hash = rich_text_digest_string(rich_text_digest_mix(hash, 31UL), target)
-    }
-  }
-  hash = rich_text_digest_mix(hash, block.table_alignments.length().to_uint64())
-  for align in block.table_alignments {
-    hash = rich_text_digest_mix(
-      hash,
-      match align {
-        None => 40UL
-        Some(@core.TextStart) => 41UL
-        Some(@core.TextCenter) => 42UL
-        Some(@core.TextEnd) => 43UL
-      },
-    )
-  }
-  match block.code_language {
-    None => rich_text_digest_mix(hash, 50UL)
-    Some(language) =>
-      rich_text_digest_string(rich_text_digest_mix(hash, 51UL), language)
-  }
+  let hash = rich_text_digest_string(
+    0xcbf29ce484222325UL,
+    rich_text_cache_font_key(base),
+  )
+  rich_text_digest_string(hash, width.to_string())
+}
+
+///|
+/// Digest keying one measured-height entry. It hashes the block's
+/// *identity* (id, revision) rather than its content: the session's block
+/// assignment guarantees content-identical blocks keep id and revision
+/// across incremental applies and full re-parses (both match by content
+/// fingerprint), and any content change bumps the revision. This keeps the
+/// geometry walk O(1) per block instead of re-hashing every block's full
+/// text (O(document) per walk) while preserving the exact invalidation
+/// semantics of the content-keyed digest.
+fn rich_text_block_height_digest(
+  seed~ : UInt64,
+  block_id~ : Int,
+  block_revision~ : Int,
+) -> UInt64 {
+  let hash = rich_text_digest_mix(seed, block_id.to_uint64())
+  rich_text_digest_mix(hash, block_revision.to_uint64())
 }
 
 ///|
@@ -671,19 +701,26 @@ fn rich_text_block_measured_height_digest(
 /// wholesale eviction bumps the epoch — per-block changes no longer
 /// invalidate cached scroll geometry.
 fn rich_text_record_block_measured_height(
-  editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
   width~ : Double,
+  block_id~ : Int,
+  block_revision~ : Int,
   height~ : Double,
 ) -> Bool {
   if width <= 0.0 || height <= 0.0 {
     return false
   }
-  let key = rich_text_block_measured_height_key(editor_block, base, width~)
-  let digest = rich_text_block_measured_height_digest(
-    editor_block,
+  let seed = rich_text_block_height_digest_seed(base, width~)
+  let digest = rich_text_block_height_digest(
+    seed~,
+    block_id~,
+    block_revision~,
+  )
+  let key = rich_text_block_measured_height_key(
     base,
     width~,
+    block_id~,
+    block_revision~,
   )
   let old_bucket = rich_text_block_heights.get(digest)
   match old_bucket {
@@ -785,9 +822,11 @@ fn markdown_document_scroll_geometry_put(
 
 ///|
 fn rich_text_block_measured_height(
-  editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
   width~ : Double,
+  seed~ : UInt64,
+  block_id~ : Int,
+  block_revision~ : Int,
 ) -> Double? {
   if width <= 0.0 {
     return None
@@ -798,17 +837,18 @@ fn rich_text_block_measured_height(
   if rich_text_block_heights_count.val == 0 {
     return None
   }
-  let digest = rich_text_block_measured_height_digest(
-    editor_block,
-    base,
-    width~,
-  )
+  let digest = rich_text_block_height_digest(seed~, block_id~, block_revision~)
   match rich_text_block_heights.get(digest) {
     None => None
     Some(bucket) => {
       // A digest hit is the only case that pays for the exact key, so
-      // misses stay allocation-free while hits remain content-verified.
-      let key = rich_text_block_measured_height_key(editor_block, base, width~)
+      // misses stay allocation-free while hits remain identity-verified.
+      let key = rich_text_block_measured_height_key(
+        base,
+        width~,
+        block_id~,
+        block_revision~,
+      )
       rich_text_bucket_lookup(bucket, key~)
     }
   }

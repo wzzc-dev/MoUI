@@ -306,12 +306,27 @@ pub(all) struct MarkdownLinkBounds {
 } derive(Eq, Debug)
 
 ///|
+/// Whole-source entry for the command and hit-test paths, which run once
+/// per interaction; the reveal path calls the windowed core directly with
+/// a block-sized window instead of materializing the whole document.
 fn markdown_editor_range_link_bounds(
   source : String,
   range : @core.TextRange,
 ) -> MarkdownLinkBounds? {
-  let chars = source.to_array()
-  match markdown_editor_range_autolink_bounds(chars, range) {
+  markdown_editor_range_link_bounds_in(
+    source,
+    chars=markdown_editor_source_chars_all(source),
+    range,
+  )
+}
+
+///|
+fn markdown_editor_range_link_bounds_in(
+  source : String,
+  chars~ : MarkdownSourceChars,
+  range : @core.TextRange,
+) -> MarkdownLinkBounds? {
+  match markdown_editor_range_autolink_bounds_in(chars~, range) {
     Some(bounds) => return Some(bounds)
     None => ()
   }
@@ -319,31 +334,61 @@ fn markdown_editor_range_link_bounds(
     return None
   }
   let open_start = range.start - 1
-  if open_start > 0 && chars[open_start - 1] == '!' {
+  // `open_start - 1 == range.start - 2` is inside the window whenever it
+  // is >= 0: the near window begins at `range.start - 2`, the all window
+  // at 0.
+  let bang_before = match chars.get(open_start - 1) {
+    Some(ch) => ch == '!'
+    None => false
+  }
+  if open_start > 0 && bang_before {
     return None
   }
-  if chars[open_start] != '[' || chars[range.end] != ']' {
+  let open_char = match chars.get(open_start) {
+    Some(ch) => ch
+    None => return None
+  }
+  let close_char = match chars.get(range.end) {
+    Some(ch) => ch
+    None => return None
+  }
+  if open_char != '[' || close_char != ']' {
     return None
   }
-  if chars[range.end + 1] == '[' {
-    return markdown_editor_reference_link_bounds(
-      source,
-      chars,
-      range,
-      open_start,
-      bang=false,
-    )
-  }
-  if chars[range.end + 1] != '(' {
-    return markdown_editor_shortcut_reference_link_bounds(
-      source, chars, range, open_start,
-    )
+  match chars.get(range.end + 1) {
+    Some('[') =>
+      return markdown_editor_reference_link_bounds_in(
+        source,
+        chars~,
+        range,
+        open_start,
+        bang=false,
+      )
+    Some('(') => ()
+    // The window tail ends on blank lines, so an out-of-window read plays
+    // the role the '\n' terminator played in the whole-source scan.
+    _ =>
+      return markdown_editor_shortcut_reference_link_bounds_in(
+        source,
+        chars~,
+        range,
+        open_start,
+      )
   }
   let mut index = range.end + 2
-  while index < chars.length() && chars[index] != ')' && chars[index] != '\n' {
-    index = index + 1
+  let mut found = false
+  while index < chars.length() {
+    match chars.get(index) {
+      Some(')') => {
+        found = true
+        break
+      }
+      Some('\n') => break
+      Some(_) => index = index + 1
+      None => break
+    }
   }
-  if index < chars.length() && chars[index] == ')' {
+  if found {
     Some({
       open_start,
       close_start: range.end,
@@ -359,17 +404,28 @@ fn markdown_editor_range_link_bounds(
 }
 
 ///|
-fn markdown_editor_range_autolink_bounds(
-  chars : Array[Char],
+fn markdown_editor_range_autolink_bounds_in(
+  chars~ : MarkdownSourceChars,
   range : @core.TextRange,
 ) -> MarkdownLinkBounds? {
   if range.start < 1 || range.end >= chars.length() {
     return None
   }
-  if chars[range.start - 1] != '<' || chars[range.end] != '>' {
+  let open_char = match chars.get(range.start - 1) {
+    Some(ch) => ch
+    None => return None
+  }
+  let close_char = match chars.get(range.end) {
+    Some(ch) => ch
+    None => return None
+  }
+  if open_char != '<' || close_char != '>' {
     return None
   }
-  let target = String::from_array(chars[range.start:range.end])
+  let target = match chars.slice(range.start, range.end) {
+    Some(slice) => String::from_array(slice)
+    None => return None
+  }
   if !markdown_editor_is_autolink_target(target) {
     return None
   }
@@ -385,13 +441,16 @@ fn markdown_editor_range_autolink_bounds(
 }
 
 ///|
-fn markdown_editor_shortcut_reference_link_bounds(
+fn markdown_editor_shortcut_reference_link_bounds_in(
   source : String,
-  chars : Array[Char],
+  chars~ : MarkdownSourceChars,
   range : @core.TextRange,
   open_start : Int,
 ) -> MarkdownLinkBounds? {
-  let label = String::from_array(chars[range.start:range.end])
+  let label = match chars.slice(range.start, range.end) {
+    Some(slice) => String::from_array(slice)
+    None => return None
+  }
   if label == "" {
     return None
   }
@@ -420,38 +479,70 @@ fn markdown_editor_shortcut_reference_link_bounds(
 }
 
 ///|
+/// Whole-source entry; see `markdown_editor_range_link_bounds`.
 fn markdown_editor_range_image_bounds(
   source : String,
   range : @core.TextRange,
 ) -> MarkdownLinkBounds? {
-  let chars = source.to_array()
+  markdown_editor_range_image_bounds_in(
+    source,
+    chars=markdown_editor_source_chars_all(source),
+    range,
+  )
+}
+
+///|
+fn markdown_editor_range_image_bounds_in(
+  source : String,
+  chars~ : MarkdownSourceChars,
+  range : @core.TextRange,
+) -> MarkdownLinkBounds? {
   if range.start < 2 || range.end + 2 > chars.length() {
     return None
   }
   let bang_start = range.start - 2
   let open_start = range.start - 1
-  if chars[bang_start] != '!' ||
-    chars[open_start] != '[' ||
-    chars[range.end] != ']' {
+  let bang_char = match chars.get(bang_start) {
+    Some(ch) => ch
+    None => return None
+  }
+  let open_char = match chars.get(open_start) {
+    Some(ch) => ch
+    None => return None
+  }
+  let close_char = match chars.get(range.end) {
+    Some(ch) => ch
+    None => return None
+  }
+  if bang_char != '!' || open_char != '[' || close_char != ']' {
     return None
   }
-  if chars[range.end + 1] == '[' {
-    return markdown_editor_reference_link_bounds(
-      source,
-      chars,
-      range,
-      bang_start,
-      bang=true,
-    )
-  }
-  if chars[range.end + 1] != '(' {
-    return None
+  match chars.get(range.end + 1) {
+    Some('[') =>
+      return markdown_editor_reference_link_bounds_in(
+        source,
+        chars~,
+        range,
+        bang_start,
+        bang=true,
+      )
+    Some('(') => ()
+    _ => return None
   }
   let mut index = range.end + 2
-  while index < chars.length() && chars[index] != ')' && chars[index] != '\n' {
-    index = index + 1
+  let mut found = false
+  while index < chars.length() {
+    match chars.get(index) {
+      Some(')') => {
+        found = true
+        break
+      }
+      Some('\n') => break
+      Some(_) => index = index + 1
+      None => break
+    }
   }
-  if index < chars.length() && chars[index] == ')' {
+  if found {
     Some({
       open_start: bang_start,
       close_start: range.end,
@@ -467,28 +558,41 @@ fn markdown_editor_range_image_bounds(
 }
 
 ///|
-fn markdown_editor_reference_link_bounds(
+fn markdown_editor_reference_link_bounds_in(
   source : String,
-  chars : Array[Char],
+  chars~ : MarkdownSourceChars,
   range : @core.TextRange,
   open_start : Int,
   bang~ : Bool,
 ) -> MarkdownLinkBounds? {
   let label_start = range.end + 2
   let mut label_end = label_start
-  while label_end < chars.length() &&
-        chars[label_end] != ']' &&
-        chars[label_end] != '\n' {
-    label_end = label_end + 1
+  let mut closed = false
+  while label_end < chars.length() {
+    match chars.get(label_end) {
+      Some(']') => {
+        closed = true
+        break
+      }
+      Some('\n') => break
+      Some(_) => label_end = label_end + 1
+      None => break
+    }
   }
-  if label_end >= chars.length() || chars[label_end] != ']' {
+  if !closed {
     return None
   }
   let fallback_start = if bang { open_start + 2 } else { open_start + 1 }
   let label = if label_end == label_start {
-    String::from_array(chars[fallback_start:range.end])
+    match chars.slice(fallback_start, range.end) {
+      Some(slice) => String::from_array(slice)
+      None => return None
+    }
   } else {
-    String::from_array(chars[label_start:label_end])
+    match chars.slice(label_start, label_end) {
+      Some(slice) => String::from_array(slice)
+      None => return None
+    }
   }
   match markdown_editor_reference_definition_target_range(source, label) {
     Some(target) =>

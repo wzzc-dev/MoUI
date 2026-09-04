@@ -616,10 +616,18 @@ fn markdown_session_record_measured_block_heights(
           text_system,
           block_width=content_width,
         )
+        let identity = session.blocks.get(window.visible_start + offset)
         let _ = rich_text_record_block_measured_height(
-          editor_block,
           base,
           width=content_width,
+          block_id=match identity {
+            Some(session_block) => session_block.id
+            None => window.visible_start + offset
+          },
+          block_revision=match identity {
+            Some(session_block) => session_block.revision
+            None => 0
+          },
           height~,
         )
         // Push the height into this block's geometry slot unconditionally:
