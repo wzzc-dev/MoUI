@@ -657,7 +657,9 @@ fn markdown_document_session_apply_incremental(
       // hits instead of re-running the whole-document definition parse.
       // The edited source's digest is computed once here and reused by the
       // session construction below.
-      let next_source_digest = markdown_document_source_digest(transaction.source)
+      let next_source_digest = markdown_document_source_digest(
+        transaction.source,
+      )
       markdown_reference_definitions_cache_store_keyed(
         source_length=transaction.source.length(),
         source_digest=next_source_digest,
@@ -1276,7 +1278,10 @@ fn markdown_document_block_geometry(
   let gallery = markdown_document_gallery_block_heights(
     session, base, content_width,
   )
-  let height_seed = rich_text_block_height_digest_seed(base, width=content_width)
+  let height_seed = rich_text_block_height_digest_seed(
+    base,
+    width=content_width,
+  )
   let heights : Array[Double] = []
   let mut has_measured = false
   for index, _editor_block in session.editor_blocks {
@@ -1520,8 +1525,7 @@ fn markdown_document_height_index_full(
   blocks : Array[MarkdownDocumentBlock],
 ) -> MarkdownDocumentHeightIndex {
   let line_counts = markdown_document_block_source_line_counts(
-    source,
-    editor_blocks,
+    source, editor_blocks,
   )
   let metrics : Array[MarkdownDocumentBlockHeightMetric] = []
   let mut visual_top_units = 0.0
@@ -1583,8 +1587,7 @@ fn markdown_document_block_source_line_counts(
     if block_index >= editor_blocks.length() {
       break
     }
-    if ch == '\n' &&
-      char_index >= editor_blocks[block_index].source_range.start {
+    if ch == '\n' && char_index >= editor_blocks[block_index].source_range.start {
       counts[block_index] = counts[block_index] + 1
     }
     char_index = char_index + 1

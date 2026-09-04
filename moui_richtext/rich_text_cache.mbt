@@ -406,25 +406,6 @@ fn markdown_reference_definitions_cached_keyed(
 }
 
 ///|
-/// Publish a definition set for a NEW source without recomputing it. The
-/// incremental-apply guard (`markdown_document_transaction_incremental_safe`)
-/// proves an edit cannot change the whole-source definition set, so the set
-/// computed for the previous source is exact for the edited source too.
-/// Storing it under the new source's key is what keeps the next keystroke's
-/// lookup a hit — without this, every keystroke re-runs the whole-document
-/// definition parse because the lookup key (the source) always changed.
-fn markdown_reference_definitions_cache_store(
-  source : String,
-  definitions : Array[MarkdownReferenceDefinition],
-) -> Unit {
-  markdown_reference_definitions_cache_store_keyed(
-    source_length=source.length(),
-    source_digest=markdown_document_source_digest(source),
-    definitions,
-  )
-}
-
-///|
 fn markdown_reference_definitions_cache_store_keyed(
   source_length~ : Int,
   source_digest~ : UInt64,
@@ -711,11 +692,7 @@ fn rich_text_record_block_measured_height(
     return false
   }
   let seed = rich_text_block_height_digest_seed(base, width~)
-  let digest = rich_text_block_height_digest(
-    seed~,
-    block_id~,
-    block_revision~,
-  )
+  let digest = rich_text_block_height_digest(seed~, block_id~, block_revision~)
   let key = rich_text_block_measured_height_key(
     base,
     width~,
