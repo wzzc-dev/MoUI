@@ -293,6 +293,20 @@ pub fn RuntimeInspectorSnapshot::duplicate_effect_descriptor_keys(
 }
 
 ///|
+pub fn RuntimeInspectorSnapshot::superseded_effect_task_key_count(
+  self : RuntimeInspectorSnapshot,
+) -> Int {
+  self.superseded_effect_task_key_count
+}
+
+///|
+pub fn RuntimeInspectorSnapshot::superseded_effect_task_keys(
+  self : RuntimeInspectorSnapshot,
+) -> Array[String] {
+  self.superseded_effect_task_keys
+}
+
+///|
 pub fn RuntimeInspectorSnapshot::last_effect_summary(
   self : RuntimeInspectorSnapshot,
 ) -> EffectPlanSummary {

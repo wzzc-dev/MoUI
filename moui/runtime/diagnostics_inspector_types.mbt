@@ -42,6 +42,8 @@ pub struct RuntimeInspectorSnapshot {
   priv program_effect_task_count : Int
   priv duplicate_effect_descriptor_key_count : Int
   priv duplicate_effect_descriptor_keys : Array[String]
+  priv superseded_effect_task_key_count : Int
+  priv superseded_effect_task_keys : Array[String]
   priv last_effect_summary : EffectPlanSummary
   priv last_scheduled_effect_summary : EffectPlanSummary
   priv active_effect_task_count : Int

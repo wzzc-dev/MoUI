@@ -346,6 +346,8 @@ pub fn ProgramRuntimeSnapshot::started_effect_task_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::started_subscription_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::subscription_lifecycle(Self) -> Array[SubscriptionLifecycleSnapshot]
 pub fn ProgramRuntimeSnapshot::subscription_plan_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::superseded_effect_task_key_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::superseded_effect_task_keys(Self) -> Array[String]
 pub fn ProgramRuntimeSnapshot::update_count(Self) -> Int
 
 pub(all) struct RedrawScheduler {
@@ -548,6 +550,8 @@ pub fn RuntimeInspectorSnapshot::size(Self) -> @core.Size
 pub fn RuntimeInspectorSnapshot::started_effect_task_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::started_subscription_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::subscription_lifecycle(Self) -> Array[SubscriptionLifecycleSnapshot]
+pub fn RuntimeInspectorSnapshot::superseded_effect_task_key_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::superseded_effect_task_keys(Self) -> Array[String]
 
 pub(all) enum SemanticsActionDispatchError {
   RuntimeClosed
