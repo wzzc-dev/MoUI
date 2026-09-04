@@ -90,6 +90,7 @@ pub struct SkiaRasterRenderer {
   priv mut layer_cache_tick : Int
   priv mut platform_view_draw_fn : (() -> Unit)?
   priv mut platform_view_recording_canvas : @skia_native.Canvas?
+  priv text_shaping_cache : SkiaTextShapingCache
 }
 
 ///|
@@ -240,6 +241,7 @@ pub fn create_with_present_target_and_route(
     layer_cache_tick: 0,
     platform_view_draw_fn: None,
     platform_view_recording_canvas: None,
+    text_shaping_cache: SkiaTextShapingCache::new(),
   }
 }
 
@@ -574,7 +576,7 @@ fn SkiaRasterRenderer::render_frame_inner(
                 draw_platform_views=true,
               )
               if !complete {
-                return stats.to_render_frame_result(presented=false)
+                return self.render_frame_result(stats, presented=false)
               }
               if !self.surface.flush_and_submit() {
                 raise SkiaRendererError::SurfaceUnavailable
@@ -594,7 +596,7 @@ fn SkiaRasterRenderer::render_frame_inner(
           Some(next_surface) => self.surface = next_surface
           None => ()
         }
-        stats.to_render_frame_result(presented=true)
+        self.render_frame_result(stats, presented=true)
       } else {
         self.invalidate_gpu_backing_surface()
         raise SkiaRendererError::PresentFailed(gpu_target.description)
@@ -609,7 +611,7 @@ fn SkiaRasterRenderer::render_frame_inner(
             draw_platform_views=true,
           )
           if !complete {
-            return stats.to_render_frame_result(presented=false)
+            return self.render_frame_result(stats, presented=false)
           }
           if !self.surface.flush_and_submit() {
             raise SkiaRendererError::SurfaceUnavailable
@@ -619,7 +621,7 @@ fn SkiaRasterRenderer::render_frame_inner(
           if (self.target.present)(skia_frame) {
             self.present_count = self.present_count + 1
             self.presented_image_cache_generation = self.image_cache_generation
-            stats.to_render_frame_result(presented=true)
+            self.render_frame_result(stats, presented=true)
           } else {
             raise SkiaRendererError::PresentFailed(self.target.description)
           }
@@ -652,6 +654,7 @@ fn SkiaRasterRenderer::draw_frame_to_canvas(
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
   let stats = SkiaCachedLayerFrameStats::new()
+  self.text_shaping_cache.begin_frame()
   let canvas_scopes : Array[@render_common.PlanScopeKind] = []
   let plan = @render_common.lower_draw_commands(frame.commands)
   let complete = self.render_cached_command_range(

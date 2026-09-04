@@ -45,16 +45,21 @@ fn SkiaCachedLayerFrameStats::new() -> SkiaCachedLayerFrameStats {
 }
 
 ///|
-fn SkiaCachedLayerFrameStats::to_render_frame_result(
-  self : SkiaCachedLayerFrameStats,
+/// Frame result assembly merges the retained-layer cache counters with the
+/// session shaping cache delta recorded since the frame began (ADR 0034
+/// batch: shaping hits are visible through the existing protocol fields).
+fn SkiaRasterRenderer::render_frame_result(
+  self : SkiaRasterRenderer,
+  stats : SkiaCachedLayerFrameStats,
   presented~ : Bool,
 ) -> @render.RenderFrameResult {
+  let (shaping_hits, shaping_misses) = self.text_shaping_cache.frame_delta()
   @render.RenderFrameResult::new(
     presented~,
-    cache_hit_count=self.cache_hit_count,
-    cache_miss_count=self.cache_miss_count,
-    cache_update_count=self.cache_update_count,
-    cache_evict_count=self.cache_evict_count,
+    cache_hit_count=stats.cache_hit_count + shaping_hits,
+    cache_miss_count=stats.cache_miss_count + shaping_misses,
+    cache_update_count=stats.cache_update_count,
+    cache_evict_count=stats.cache_evict_count,
   )
 }
 
