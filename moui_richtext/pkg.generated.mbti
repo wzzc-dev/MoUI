@@ -207,6 +207,7 @@ pub(all) struct MarkdownDocumentRichTextWindow {
 pub(all) struct MarkdownDocumentSession {
   source : String
   source_length : Int
+  source_digest : UInt64
   blocks : Array[MarkdownDocumentBlock]
   editor_blocks : Array[MarkdownEditorBlock]
   line_count : Int

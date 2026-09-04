@@ -65,7 +65,13 @@ test "measured block height lookups key on content, font, and width" {
     source_range: { start: 0, end: 12 },
     content_range: { start: 0, end: 12 },
   }
-  rich_text_record_block_measured_height(block, base, width=420.0, height=47.5)
+  let recorded = rich_text_record_block_measured_height(
+    block,
+    base,
+    width=420.0,
+    height=47.5,
+  )
+  assert_true(recorded)
   let hit = rich_text_block_measured_height(block, base, width=420.0)
   let other_width = rich_text_block_measured_height(block, base, width=421.0)
   let other_font = rich_text_block_measured_height(

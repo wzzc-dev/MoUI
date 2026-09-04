@@ -31,6 +31,11 @@ let hot_path_block_height_walk_blocks : Ref[Int] = Ref(0)
 let hot_path_scroll_geometry_cache_hits : Ref[Int] = Ref(0)
 
 ///|
+/// Measured-height landings applied to the live scroll geometry through
+/// the O(log n) Fenwick point update (instead of invalidating it).
+let hot_path_scroll_geometry_point_updates : Ref[Int] = Ref(0)
+
+///|
 /// Rich-text block conversions executed (cache misses).
 let hot_path_block_conversion_builds : Ref[Int] = Ref(0)
 

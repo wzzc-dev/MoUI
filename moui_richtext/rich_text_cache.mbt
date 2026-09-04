@@ -84,18 +84,95 @@ let markdown_parse_cache : Map[String, Array[MarkdownBlock]] = Map([])
 let rich_text_block_heights_epoch : Ref[Int] = Ref(0)
 
 ///|
-
-///|
-/// Persisted scroll geometry for one (font, content width, source): the
-/// per-block pixel heights plus their prefix sums (`prefix[i]` is the
-/// total height of the first `i` blocks), so content height is O(1) and
-/// the visible window is a binary search. An entry with an empty
-/// `heights` caches the “no measured geometry yet” verdict; the epoch
-/// check revives it once paints record measured heights.
+/// Persisted scroll geometry for one (font, content width, source digest):
+/// the per-block pixel heights plus a Fenwick tree over them, so content
+/// height and any block prefix are O(log n), the visible window is a
+/// prefix descent, and a freshly measured height for one block is an
+/// O(log n) point update instead of a full rebuild. An entry with an
+/// empty `heights` caches the “no measured geometry yet” verdict; the
+/// epoch check revives it once paints record measured heights.
 priv struct MarkdownDocumentScrollGeometry {
   heights : Array[Double]
-  prefix : Array[Double]
+  /// 1-based Fenwick tree over `heights`, length `heights.length() + 1`.
+  tree : Array[Double]
   epoch : Int
+}
+
+///|
+/// Build the geometry (and its Fenwick tree) from a full height array in
+/// O(n).
+fn markdown_document_scroll_geometry_from_heights(
+  heights : Array[Double],
+  epoch~ : Int,
+) -> MarkdownDocumentScrollGeometry {
+  let count = heights.length()
+  let limit = count + 1
+  let tree : Array[Double] = []
+  for _ in 0..<limit {
+    tree.push(0.0)
+  }
+  for index, height in heights {
+    let i = index + 1
+    tree[i] = tree[i] + height
+    let parent = i + (i & (-i))
+    if parent <= count {
+      tree[parent] = tree[parent] + tree[i]
+    }
+  }
+  { heights, tree, epoch }
+}
+
+///|
+/// Total height of the first `count` blocks (prefix sums are not stored;
+/// this is the O(log n) Fenwick descent, clamped like an array read).
+fn markdown_document_scroll_geometry_prefix_at(
+  geometry : MarkdownDocumentScrollGeometry,
+  count~ : Int,
+) -> Double {
+  let mut i = count
+  if i > geometry.heights.length() {
+    i = geometry.heights.length()
+  }
+  if i < 0 {
+    i = 0
+  }
+  let mut sum = 0.0
+  while i > 0 {
+    sum = sum + geometry.tree[i]
+    i = i - (i & (-i))
+  }
+  sum
+}
+
+///|
+/// Apply a new pixel height for one block in O(log n). Heights are
+/// mutable in place: every holder of this geometry sees the update.
+fn markdown_document_scroll_geometry_set_height(
+  geometry : MarkdownDocumentScrollGeometry,
+  index~ : Int,
+  height~ : Double,
+) -> Unit {
+  if index < 0 || index >= geometry.heights.length() {
+    return
+  }
+  let delta = height - geometry.heights[index]
+  if delta == 0.0 {
+    return
+  }
+  geometry.heights[index] = height
+  let count = geometry.heights.length()
+  let mut i = index + 1
+  while i <= count {
+    geometry.tree[i] = geometry.tree[i] + delta
+    i = i + (i & (-i))
+  }
+}
+
+///|
+/// Cheap content identity for the session source, computed once per
+/// session construction so cache keys never concatenate the document.
+fn markdown_document_source_digest(source : String) -> UInt64 {
+  rich_text_digest_string(0xcbf29ce484222325UL, source)
 }
 
 ///|
@@ -587,14 +664,20 @@ fn rich_text_block_measured_height_digest(
 }
 
 ///|
+/// Record a measured pixel height for a block. Returns `true` when the
+/// table actually gained or changed an entry (the caller then applies the
+/// same height to the live scroll geometry through the point-update
+/// path); a repeated identical measurement returns `false`. Only the
+/// wholesale eviction bumps the epoch — per-block changes no longer
+/// invalidate cached scroll geometry.
 fn rich_text_record_block_measured_height(
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
   width~ : Double,
   height~ : Double,
-) -> Unit {
+) -> Bool {
   if width <= 0.0 || height <= 0.0 {
-    return
+    return false
   }
   let key = rich_text_block_measured_height_key(editor_block, base, width~)
   let digest = rich_text_block_measured_height_digest(
@@ -606,7 +689,7 @@ fn rich_text_record_block_measured_height(
   match old_bucket {
     Some(bucket) =>
       match rich_text_bucket_lookup(bucket, key~) {
-        Some(recorded) => if recorded == height { return }
+        Some(recorded) => if recorded == height { return false }
         None => ()
       }
     None => ()
@@ -632,25 +715,27 @@ fn rich_text_record_block_measured_height(
     old_length +
     next_bucket.length()
   rich_text_block_heights.set(digest, next_bucket)
-  rich_text_block_heights_epoch.val = rich_text_block_heights_epoch.val + 1
+  true
 }
 
 ///|
-/// Read the persisted scroll geometry for a (font, content width, source)
-/// triple. Returns `None` on miss or when the entry predates the current
-/// measured-height epoch; an entry with empty `heights` is a cached
-/// “no measured geometry” verdict and is returned like any other hit.
+/// Read the persisted scroll geometry for a (font, content width,
+/// source-digest) triple. Returns `None` on miss or when the entry
+/// predates the current measured-height epoch (the epoch only bumps on a
+/// wholesale measured-height eviction; single-block height changes are
+/// applied in place through the Fenwick point update).
 fn markdown_document_scroll_geometry_get(
-  source : String,
   base : @core.FontSpec,
   width~ : Double,
+  source_digest~ : UInt64,
+  source_length~ : Int,
 ) -> MarkdownDocumentScrollGeometry? {
-  let key = rich_text_cache_join_key([
-    "scroll-geometry",
-    rich_text_cache_font_key(base),
-    width.to_string(),
-    source,
-  ])
+  let key = markdown_document_scroll_geometry_key(
+    base,
+    width~,
+    source_digest~,
+    source_length~,
+  )
   match markdown_document_scroll_geometry_cache.get(key) {
     Some(entry) =>
       if entry.epoch == rich_text_block_heights_epoch.val {
@@ -663,18 +748,35 @@ fn markdown_document_scroll_geometry_get(
 }
 
 ///|
-fn markdown_document_scroll_geometry_put(
-  source : String,
+fn markdown_document_scroll_geometry_key(
   base : @core.FontSpec,
-  width : Double,
-  geometry : MarkdownDocumentScrollGeometry,
-) -> Unit {
-  let key = rich_text_cache_join_key([
+  width~ : Double,
+  source_digest~ : UInt64,
+  source_length~ : Int,
+) -> String {
+  rich_text_cache_join_key([
     "scroll-geometry",
     rich_text_cache_font_key(base),
     width.to_string(),
-    source,
+    source_length.to_string(),
+    source_digest.to_string(),
   ])
+}
+
+///|
+fn markdown_document_scroll_geometry_put(
+  base : @core.FontSpec,
+  geometry : MarkdownDocumentScrollGeometry,
+  width~ : Double,
+  source_digest~ : UInt64,
+  source_length~ : Int,
+) -> Unit {
+  let key = markdown_document_scroll_geometry_key(
+    base,
+    width~,
+    source_digest~,
+    source_length~,
+  )
   if markdown_document_scroll_geometry_cache.length() >= 4 {
     markdown_document_scroll_geometry_cache.clear()
   }

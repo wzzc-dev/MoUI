@@ -157,13 +157,7 @@ fn legacy_window_range(
 fn geometry_of_heights(
   heights : Array[Double],
 ) -> MarkdownDocumentScrollGeometry {
-  let prefix : Array[Double] = [0.0]
-  let mut total = 0.0
-  for height in heights {
-    total = total + height
-    prefix.push(total)
-  }
-  { heights, prefix, epoch: 0 }
+  markdown_document_scroll_geometry_from_heights(heights, epoch=0)
 }
 
 ///|
@@ -195,7 +189,7 @@ test "hot path: wheel and rebuild walk zero blocks once geometry exists" {
   let base = @core.FontSpec::new()
   let session = MarkdownDocumentSession::new(hot_path_bench_document(30))
   for editor_block in session.editor_blocks {
-    rich_text_record_block_measured_height(
+    let _ = rich_text_record_block_measured_height(
       editor_block,
       base,
       width=720.0,
@@ -221,11 +215,92 @@ test "hot path: wheel and rebuild walk zero blocks once geometry exists" {
 }
 
 ///|
-test "hot path: measured-height change invalidates the scroll geometry" {
+test "hot path: fenwick point updates match a rebuild" {
+  let heights : Array[Double] = [
+    24.0, 48.0, 12.0, 96.0, 30.0, 0.0, 60.0, 45.0, 18.0, 72.0,
+  ]
+  let geometry = geometry_of_heights(heights)
+  let updates : Array[(Int, Double)] = [
+    (0, 90.0), (9, 3.5), (5, 44.0), (2, 0.0), (4, 12.5), (9, 3.5),
+  ]
+  let expected : Array[Double] = []
+  expected.append(heights)
+  for pair in updates {
+    markdown_document_scroll_geometry_set_height(
+      geometry,
+      index=pair.0,
+      height=pair.1,
+    )
+    expected[pair.0] = pair.1
+    let limit = heights.length() + 1
+    for upto in 0..<limit {
+      let mut want = 0.0
+      for j in 0..<upto {
+        want = want + expected[j]
+      }
+      assert_true(
+        markdown_document_scroll_geometry_prefix_at(
+          geometry,
+          count=upto,
+        ) == want,
+      )
+    }
+  }
+  // A no-op update (same height) must leave the tree untouched.
+  markdown_document_scroll_geometry_set_height(geometry, index=3, height=96.0)
+  let mut total = 0.0
+  for height in expected {
+    total = total + height
+  }
+  assert_true(
+    markdown_document_scroll_geometry_prefix_at(
+      geometry,
+      count=heights.length(),
+    ) == total,
+  )
+}
+
+///|
+test "hot path: window range matches the legacy scan after point updates" {
+  let heights : Array[Double] = [
+    24.0, 48.0, 12.0, 96.0, 30.0, 0.0, 60.0, 45.0, 18.0, 72.0,
+  ]
+  let geometry = geometry_of_heights(heights)
+  let expected : Array[Double] = []
+  expected.append(heights)
+  let updates : Array[(Int, Double)] = [(1, 220.0), (0, 5.0), (8, 64.0)]
+  for pair in updates {
+    markdown_document_scroll_geometry_set_height(
+      geometry,
+      index=pair.0,
+      height=pair.1,
+    )
+    expected[pair.0] = pair.1
+    for step in 0..<60 {
+      let scroll_y = step.to_double() * 13.0
+      for viewport in [0.0, 96.0, 300.0, 9000.0] {
+        let got = markdown_document_window_range_for_geometry(
+          geometry,
+          scroll_y~,
+          viewport_height=viewport,
+          overscan=24.0,
+        )
+        let want = legacy_window_range(expected, scroll_y, viewport, 24.0)
+        assert_true(got.visible_start == want.0)
+        assert_true(got.visible_end == want.1)
+        assert_true(got.top_padding == want.2)
+        assert_true(got.content_height == want.3)
+      }
+    }
+  }
+}
+
+///|
+test "hot path: measured-height change updates the scroll geometry in place" {
   let base = @core.FontSpec::new()
   let session = MarkdownDocumentSession::new(hot_path_bench_document(20))
   for editor_block in session.editor_blocks {
-    rich_text_record_block_measured_height(
+    let _ = rich_text_record_block_measured_height(
       editor_block,
       base,
       width=720.0,
@@ -233,14 +308,111 @@ test "hot path: measured-height change invalidates the scroll geometry" {
     )
   }
   let before = session.estimated_content_height(base~, content_width=720.0)
-  rich_text_record_block_measured_height(
+  hot_path_metrics_reset()
+  let changed = rich_text_record_block_measured_height(
     session.editor_blocks[0],
     base,
     width=720.0,
     height=900.0,
   )
+  assert_true(changed)
+  markdown_document_apply_measured_height(
+    session,
+    base,
+    block_index=0,
+    width=720.0,
+    height=900.0,
+  )
   let after = session.estimated_content_height(base~, content_width=720.0)
   assert_true(after - before == 876.0)
+  // The new height landed through the O(log n) point update: no block
+  // was re-walked, and the cached entry was never invalidated.
+  assert_true(hot_path_block_height_walk_blocks.val == 0)
+  assert_true(hot_path_scroll_geometry_point_updates.val == 1)
+}
+
+///|
+test "hot path: repeated identical measurements are not re-applied" {
+  let base = @core.FontSpec::new()
+  let session = MarkdownDocumentSession::new(hot_path_bench_document(6))
+  for editor_block in session.editor_blocks {
+    let _ = rich_text_record_block_measured_height(
+      editor_block,
+      base,
+      width=720.0,
+      height=24.0,
+    )
+  }
+  let _ = session.estimated_content_height(base~, content_width=720.0)
+  let changed = rich_text_record_block_measured_height(
+    session.editor_blocks[1],
+    base,
+    width=720.0,
+    height=24.0,
+  )
+  assert_true(!changed)
+}
+
+///|
+/// The regression A1 targets: while scrolling into never-painted blocks,
+/// every paint records fresh measured heights. Under the old global
+/// epoch that invalidated the whole geometry each step (one full walk
+/// per wheel event); with point updates only the very first real build
+/// may walk.
+test "hot path: scrolling through freshly measured blocks stays walk-free" {
+  let base = @core.FontSpec::new()
+  let width = 720.0
+  let session = MarkdownDocumentSession::new(hot_path_bench_document(40))
+  let count = session.editor_blocks.length()
+  assert_true(count > 40)
+  // First paint records nothing yet: geometry caches the “no measured
+  // geometry yet” verdict.
+  let _ = session.estimated_content_height(base~, content_width=width)
+  hot_path_metrics_reset()
+  let mut start = 0
+  let mut steps = 0
+  while start < count {
+    let end = markdown_editor_min_int(start + 8, count)
+    // The paint lays out the new window and records its measured
+    // heights (record + in-place apply), then the next wheel queries
+    // the geometry through rich_text_window.
+    for index in start..<end {
+      let _ = rich_text_record_block_measured_height(
+        session.editor_blocks[index],
+        base,
+        width~,
+        height=48.0,
+      )
+      // Unconditional per-slot apply, mirroring the paint path: the
+      // height table dedupes by content, the geometry keeps one slot
+      // per block position.
+      markdown_document_apply_measured_height(
+        session,
+        base,
+        block_index=index,
+        width~,
+        height=48.0,
+      )
+    }
+    let _ = session.rich_text_window(
+      { caret: 0, selection: None },
+      scroll_y=steps.to_double() * 200.0,
+      viewport_height=800.0,
+      overscan=320.0,
+      content_width=width,
+    )
+    start = end
+    steps = steps + 1
+  }
+  assert_true(steps == (count + 7) / 8)
+  assert_true(hot_path_scroll_geometry_point_updates.val >= count - 8)
+  assert_true(hot_path_scroll_geometry_cache_hits.val >= steps - 1)
+  assert_true(hot_path_scroll_geometry_cache_hits.val >= steps - 1)
+  // At most one rebuild across the whole scroll (the first real build;
+  // earlier tests in this binary may already have measured-height entries
+  // that turn the pre-reset query into that build directly). Under the
+  // old epoch semantics this counter was count × steps.
+  assert_true(hot_path_block_height_walk_blocks.val <= count)
 }
 
 ///|
