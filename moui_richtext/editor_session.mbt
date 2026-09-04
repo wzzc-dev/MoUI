@@ -99,6 +99,7 @@ pub(all) struct MarkdownDocumentRichTextWindow {
 pub(all) struct MarkdownDocumentSession {
   source : String
   source_length : Int
+  source_digest : UInt64
   blocks : Array[MarkdownDocumentBlock]
   editor_blocks : Array[MarkdownEditorBlock]
   line_count : Int
@@ -456,7 +457,10 @@ pub fn MarkdownDocumentSession::estimated_content_height(
     self.height_index.source_content_units * base.size
   } else {
     match markdown_document_block_geometry(self, base, content_width~) {
-      Some(geometry) => geometry.prefix[geometry.heights.length()]
+      Some(geometry) => markdown_document_scroll_geometry_prefix_at(
+        geometry,
+        count=geometry.heights.length(),
+      )
       None => self.height_index.visual_content_units * base.size
     }
   }
@@ -1015,9 +1019,10 @@ fn markdown_document_block_heights(
 
 ///|
 /// Persisted scroll geometry for the session at a laid out content width.
-/// Cache hits (the same source, font, and width, with no measured-height
-/// change since the last build) perform no block walk at all; a miss
-/// walks every block once, builds the prefix sums, and stores the entry.
+/// Cache hits (the same source digest, font, and width) perform no block
+/// walk at all; a miss walks every block once, builds the Fenwick tree,
+/// and stores the entry. Measured heights landing afterwards are applied
+/// through the O(log n) point update, so scrolling stays walk-free.
 /// Zero content width never has measured or gallery geometry, so it skips
 /// the walk entirely and lets callers fall back to the parse-time index.
 fn markdown_document_block_geometry(
@@ -1030,9 +1035,10 @@ fn markdown_document_block_geometry(
   }
   match
     markdown_document_scroll_geometry_get(
-      session.source,
       base,
       width=content_width,
+      source_digest=session.source_digest,
+      source_length=session.source_length,
     ) {
     Some(geometry) => {
       hot_path_scroll_geometry_cache_hits.val = hot_path_scroll_geometry_cache_hits.val +
@@ -1075,27 +1081,68 @@ fn markdown_document_block_geometry(
   if !has_measured && gallery is None {
     // Cache the “no measured geometry yet” verdict too, so wheels before
     // the first measured paint stay O(1) until a height actually lands.
-    markdown_document_scroll_geometry_put(session.source, base, content_width, {
-      heights: [],
-      prefix: [0.0],
-      epoch,
-    })
+    markdown_document_scroll_geometry_put(
+      base,
+      markdown_document_scroll_geometry_from_heights([], epoch~),
+      width=content_width,
+      source_digest=session.source_digest,
+      source_length=session.source_length,
+    )
     return None
   }
-  let prefix : Array[Double] = [0.0]
-  let mut total = 0.0
-  for height in heights {
-    total = total + height
-    prefix.push(total)
-  }
-  let geometry : MarkdownDocumentScrollGeometry = { heights, prefix, epoch }
+  let geometry = markdown_document_scroll_geometry_from_heights(
+    heights,
+    epoch~,
+  )
   markdown_document_scroll_geometry_put(
-    session.source,
     base,
-    content_width,
     geometry,
+    width=content_width,
+    source_digest=session.source_digest,
+    source_length=session.source_length,
   )
   Some(geometry)
+}
+
+///|
+/// Feed one freshly measured block height into the live scroll geometry
+/// with an O(log n) Fenwick point update, replacing the previous
+/// epoch-invalidate-and-rebuild-everything path. Falls back to dropping
+/// the cached entry (so the next query rebuilds once) when the entry is
+/// missing, stale against the epoch, or the “no measured geometry yet”
+/// verdict.
+fn markdown_document_apply_measured_height(
+  session : MarkdownDocumentSession,
+  base : @core.FontSpec,
+  block_index~ : Int,
+  width~ : Double,
+  height~ : Double,
+) -> Unit {
+  if width <= 0.0 || height <= 0.0 {
+    return
+  }
+  let key = markdown_document_scroll_geometry_key(
+    base,
+    width~,
+    source_digest=session.source_digest,
+    source_length=session.source_length,
+  )
+  match markdown_document_scroll_geometry_cache.get(key) {
+    Some(geometry) =>
+      if geometry.epoch == rich_text_block_heights_epoch.val &&
+        geometry.heights.length() == session.editor_blocks.length() {
+        hot_path_scroll_geometry_point_updates.val =
+          hot_path_scroll_geometry_point_updates.val + 1
+        markdown_document_scroll_geometry_set_height(
+          geometry,
+          index=block_index,
+          height~,
+        )
+      } else {
+        markdown_document_scroll_geometry_cache.remove(key)
+      }
+    None => ()
+  }
 }
 
 ///|
@@ -1116,7 +1163,10 @@ fn markdown_document_window_range_for_geometry(
       content_height: 0.0,
     }
   }
-  let content_height = geometry.prefix[count]
+  let content_height = markdown_document_scroll_geometry_prefix_at(
+    geometry,
+    count~,
+  )
   if viewport_height <= 0.0 {
     return {
       visible_start: 0,
@@ -1130,25 +1180,30 @@ fn markdown_document_window_range_for_geometry(
     content_height,
     scroll_y + viewport_height + overscan,
   )
-  // First block whose bottom edge (`prefix[index + 1]`) reaches the
+  // First block whose bottom edge (prefix at `index + 1`) reaches the
   // visible band; heights are non-negative, so prefix is monotone.
   let mut low = 0
   let mut high = count
   while low < high {
     let mid = low + (high - low) / 2
-    if geometry.prefix[mid + 1] >= visible_min {
+    let bottom = markdown_document_scroll_geometry_prefix_at(
+      geometry,
+      count=mid + 1,
+    )
+    if bottom >= visible_min {
       high = mid
     } else {
       low = mid + 1
     }
   }
   let visible_start = if low >= count { count - 1 } else { low }
-  // Last block whose top edge (`prefix[index]`) is still inside the band.
+  // Last block whose top edge (prefix at `index`) is still inside the band.
   let mut low = 0
   let mut high = count
   while low < high {
     let mid = low + (high - low) / 2
-    if geometry.prefix[mid] <= visible_max {
+    let top = markdown_document_scroll_geometry_prefix_at(geometry, count=mid)
+    if top <= visible_max {
       low = mid + 1
     } else {
       high = mid
@@ -1162,7 +1217,10 @@ fn markdown_document_window_range_for_geometry(
   {
     visible_start,
     visible_end,
-    top_padding: geometry.prefix[visible_start],
+    top_padding: markdown_document_scroll_geometry_prefix_at(
+      geometry,
+      count=visible_start,
+    ),
     content_height,
   }
 }
@@ -1557,6 +1615,7 @@ fn markdown_document_session_from_blocks(
   {
     source,
     source_length: markdown_editor_text_length(source),
+    source_digest: markdown_document_source_digest(source),
     blocks: assigned.blocks,
     editor_blocks,
     line_count: markdown_editor_line_count(source),

@@ -599,28 +599,40 @@ fn markdown_session_record_measured_block_heights(
   }
   for offset, _window_block in window.document.blocks {
     match session.editor_blocks.get(window.visible_start + offset) {
-      Some(editor_block) =>
-        rich_text_record_block_measured_height(
+      Some(editor_block) => {
+        let height = rich_text_block_total_height(
+          rich_text_block_soft_wrap(
+            markdown_editor_block_to_rich_text(
+              session.source,
+              editor_block,
+              base,
+              base_dir~,
+            ),
+            content_width,
+            base,
+            text_system,
+          ),
+          base,
+          text_system,
+          block_width=content_width,
+        )
+        let _ = rich_text_record_block_measured_height(
           editor_block,
           base,
           width=content_width,
-          height=rich_text_block_total_height(
-            rich_text_block_soft_wrap(
-              markdown_editor_block_to_rich_text(
-                session.source,
-                editor_block,
-                base,
-                base_dir~,
-              ),
-              content_width,
-              base,
-              text_system,
-            ),
-            base,
-            text_system,
-            block_width=content_width,
-          ),
+          height~,
         )
+        // Push the height into this block's geometry slot unconditionally:
+        // the measured-height table deduplicates by content, but the
+        // scroll geometry keeps one height slot per block position.
+        markdown_document_apply_measured_height(
+          session,
+          base,
+          block_index=window.visible_start + offset,
+          width=content_width,
+          height~,
+        )
+      }
       None => ()
     }
   }
