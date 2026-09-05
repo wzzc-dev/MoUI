@@ -285,9 +285,14 @@ pub fn MarkdownEditTransaction::from_input_transform(
 ///|
 pub fn MarkdownDocumentSession::new(source : String) -> MarkdownDocumentSession {
   hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
+  // Opening a document runs the shell parse: one linear scan for block
+  // boundaries, kinds, and statistics, with no markdown parses. Content
+  // blocks start as shells and are re-parsed on demand by
+  // `markdown_editor_block_materialized` when their inline runs are needed
+  // (the visible window, caret geometry, export).
   markdown_document_session_from_blocks(
     source,
-    parse_markdown_editor_blocks(source),
+    parse_markdown_editor_blocks_shell(source),
     previous=None,
     revision=0,
     parse_count=1,
@@ -303,17 +308,38 @@ pub fn MarkdownDocumentSession::source(
 }
 
 ///|
+/// Every block with its inline runs in place. The whole-document
+/// conversion paths (viewer prepare, snapshot export, IME command format)
+/// need real runs for all blocks, so they resolve shells first; the parse
+/// behind it is content-cached, so repeated calls only pay for blocks that
+/// were never materialized before.
+fn markdown_document_session_materialized_blocks(
+  session : MarkdownDocumentSession,
+) -> Array[MarkdownEditorBlock] {
+  session.editor_blocks.map(fn(editor_block) {
+    markdown_editor_block_materialized(
+      session.source,
+      source_length=session.source_length,
+      source_digest=session.source_digest,
+      editor_block,
+    )
+  })
+}
+
+///|
 pub fn MarkdownDocumentSession::snapshot(
   self : MarkdownDocumentSession,
   base? : @core.FontSpec = @core.FontSpec::new(),
   base_dir? : String? = None,
 ) -> MarkdownEditorSnapshot {
+  // Export-grade output: every block with its real inline runs.
+  let materialized = markdown_document_session_materialized_blocks(self)
   {
     source: self.source,
-    blocks: self.editor_blocks,
+    blocks: materialized,
     rich_text: markdown_editor_blocks_to_rich_text(
       self.source,
-      self.editor_blocks,
+      materialized,
       base,
       base_dir~,
     ),
@@ -341,7 +367,7 @@ pub fn MarkdownDocumentSession::rich_text(
   } else {
     let document = markdown_editor_blocks_to_rich_text(
       self.source,
-      self.editor_blocks,
+      markdown_document_session_materialized_blocks(self),
       base,
       base_dir~,
     )
@@ -400,7 +426,19 @@ pub fn MarkdownDocumentSession::rich_text_window(
   let rich_blocks : Array[RichTextBlock] = []
   if range.visible_start >= 0 && range.visible_end >= range.visible_start {
     for index in range.visible_start..<=range.visible_end {
-      let editor_block = self.editor_blocks[index]
+      let editor_block = if source_mode {
+        self.editor_blocks[index]
+      } else {
+        // Shell blocks from the cheap open parse carry no inline runs; the
+        // visible window is where they are needed, so re-parse on demand
+        // (a content-cached parse, near-free in steady state).
+        markdown_editor_block_materialized(
+          self.source,
+          source_length=self.source_length,
+          source_digest=self.source_digest,
+          self.editor_blocks[index],
+        )
+      }
       rich_blocks.push(
         if source_mode {
           markdown_document_source_mode_block_to_rich_text(
@@ -1001,7 +1039,23 @@ pub fn MarkdownDocumentSession::replace_source(
   source : String,
   reason? : MarkdownEditReason = ReplaceEdit,
 ) -> MarkdownDocumentSession {
-  self.apply(MarkdownEditTransaction::replace_all(self.source, source, reason~))
+  ignore(reason)
+  if source == self.source {
+    return self
+  }
+  // A whole-source replacement (document open, undo/redo, source import)
+  // is a fresh document: build it with the shell parse instead of
+  // re-parsing every block eagerly. Shell blocks materialize on demand
+  // exactly like a freshly opened document.
+  hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
+  markdown_document_session_from_blocks(
+    source,
+    parse_markdown_editor_blocks_shell(source),
+    previous=None,
+    revision=self.revision + 1,
+    parse_count=self.parse_count + 1,
+    dirty_range=None,
+  )
 }
 
 ///|
@@ -1839,8 +1893,26 @@ fn markdown_document_estimated_inset_units(
 }
 
 ///|
+///|
+/// Image blocks get a taller estimate. Shell blocks (no inline runs yet)
+/// are covered by the raw-text `![` probe; materialized blocks keep the
+/// exact inline check. This feeds the parse-time height estimate only —
+/// measured heights replace it once a block is rendered.
 fn markdown_document_block_has_image(block : MarkdownBlock) -> Bool {
-  block.inlines.any(inline => inline.kind is Image)
+  block.inlines.any(inline => inline.kind is Image) ||
+  markdown_text_contains_image_marker(block.text)
+}
+
+///|
+fn markdown_text_contains_image_marker(text : String) -> Bool {
+  let mut previous = ' '
+  for ch in text {
+    if previous == '!' && ch == '[' {
+      return true
+    }
+    previous = ch
+  }
+  false
 }
 
 ///|

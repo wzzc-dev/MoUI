@@ -547,6 +547,26 @@ fn parse_markdown_editor_blocks_uncached(
 }
 
 ///|
+/// Shell parse: the same line scan and block boundaries as the full parse,
+/// but content blocks (paragraphs, headings, list items, quotes) carry no
+/// inline runs and best-effort marker-stripped text. Used for session
+/// construction so opening a document costs one linear scan instead of one
+/// markdown parse per block; blocks are re-parsed on demand by
+/// `markdown_editor_block_materialized` the first time their inline runs
+/// are actually needed (rendering, caret geometry, export).
+fn parse_markdown_editor_blocks_shell(
+  source : String,
+) -> Array[MarkdownEditorBlock] {
+  parse_markdown_editor_blocks_with_definitions(
+    source,
+    // Shell blocks never consult reference definitions, so passing an empty
+    // set also skips the whole-document definition parse.
+    definitions=Some([]),
+    parse_inlines=false,
+  )
+}
+
+///|
 /// Parse with a precomputed whole-source reference-definition set. The
 /// session's incremental apply path passes definitions from the previous
 /// source (edits that could change the definition set fall back to the
@@ -555,6 +575,7 @@ fn parse_markdown_editor_blocks_uncached(
 fn parse_markdown_editor_blocks_with_definitions(
   source : String,
   definitions~ : Array[MarkdownReferenceDefinition]?,
+  parse_inlines? : Bool = true,
 ) -> Array[MarkdownEditorBlock] {
   let blocks : Array[MarkdownEditorBlock] = []
   if source == "" {
@@ -571,7 +592,7 @@ fn parse_markdown_editor_blocks_with_definitions(
       let mut index = front_matter.next_index
       while index < lines.length() {
         let line = lines[index]
-        if line.text.trim().to_owned() == "" {
+        if markdown_editor_line_text_is_blank(line.text) {
           blocks.push(markdown_editor_blank_line_block(line))
           index = index + 1
         } else {
@@ -589,6 +610,7 @@ fn parse_markdown_editor_blocks_with_definitions(
           block in parse_markdown_editor_blocks_with_definitions(
             rest,
             definitions=Some(definitions),
+            parse_inlines~,
           ) {
           blocks.push({
             ..block,
@@ -631,10 +653,16 @@ fn parse_markdown_editor_blocks_with_definitions(
       } else {
         code_lines.push(line.text)
       }
-    } else if line.text.trim().to_owned() == "" {
+    } else if markdown_editor_line_text_is_blank(line.text) {
       blocks.push(markdown_editor_blank_line_block(line))
     } else {
-      match markdown_editor_opening_code_fence_marker(line.text) {
+      let fence_info = if parse_inlines ||
+        markdown_editor_shell_line_may_open_fence(line.text) {
+        markdown_editor_opening_code_fence_marker(line.text)
+      } else {
+        None
+      }
+      match fence_info {
         Some(fence) => {
           in_code = true
           code_fence = fence.marker
@@ -642,8 +670,14 @@ fn parse_markdown_editor_blocks_with_definitions(
           code_start = line.start
           code_content_start = line.end + 1
         }
-        None =>
-          match markdown_editor_html_block_at(lines, index) {
+        None => {
+          let html_hit = if parse_inlines ||
+            markdown_editor_shell_line_may_open_html(line.text) {
+            markdown_editor_html_block_at(lines, index)
+          } else {
+            None
+          }
+          match html_hit {
             Some(html) => {
               blocks.push(html.block)
               index = html.end_index
@@ -658,14 +692,20 @@ fn parse_markdown_editor_blocks_with_definitions(
                   match
                     markdown_editor_setext_heading_block_at(
                       lines, index, definitions,
+                      parse_inlines~,
                     ) {
                     Some(heading) => {
                       blocks.push(heading.block)
                       index = heading.end_index
                     }
-                    None =>
-                      match
-                        markdown_editor_indented_code_block_at(lines, index) {
+                    None => {
+                      let code_hit = if parse_inlines ||
+                        markdown_editor_shell_line_is_indented(line.text) {
+                        markdown_editor_indented_code_block_at(lines, index)
+                      } else {
+                        None
+                      }
+                      match code_hit {
                         Some(code) => {
                           blocks.push(code.block)
                           index = code.end_index
@@ -674,35 +714,49 @@ fn parse_markdown_editor_blocks_with_definitions(
                           match
                             markdown_editor_soft_wrapped_paragraph_block_at(
                               lines, index, definitions,
+                              parse_inlines~,
                             ) {
                             Some(paragraph) => {
                               blocks.push(paragraph.block)
                               index = paragraph.end_index
                             }
-                            None => {
-                              let parsed = parse_markdown(line.text)
-                              for block in parsed {
-                                let block = markdown_editor_block_with_references(
-                                  block, definitions,
+                            None =>
+                              if parse_inlines {
+                                let parsed = parse_markdown(line.text)
+                                for block in parsed {
+                                  let block = markdown_editor_block_with_references(
+                                    block, definitions,
+                                  )
+                                  blocks.push({
+                                    block,
+                                    source_range: {
+                                      start: line.start,
+                                      end: line.end,
+                                    },
+                                    content_range: markdown_editor_content_range(
+                                      line,
+                                      block.kind,
+                                    ),
+                                  })
+                                }
+                              } else {
+                                // Shell mode: classify the line with cheap
+                                // prefix rules instead of running the
+                                // markdown parser per line. Shell kinds are
+                                // exact for common lines and the real parse
+                                // replaces the shell the first time its
+                                // inline runs are needed.
+                                blocks.push(
+                                  markdown_editor_shell_line_block(line),
                                 )
-                                blocks.push({
-                                  block,
-                                  source_range: {
-                                    start: line.start,
-                                    end: line.end,
-                                  },
-                                  content_range: markdown_editor_content_range(
-                                    line,
-                                    block.kind,
-                                  ),
-                                })
                               }
-                            }
                           }
                       }
+                    }
                   }
               }
           }
+        }
       }
     }
     index = index + 1
@@ -906,6 +960,7 @@ fn markdown_editor_setext_heading_block_at(
   lines : Array[MarkdownLine],
   index : Int,
   definitions : Array[MarkdownReferenceDefinition],
+  parse_inlines? : Bool = true,
 ) -> MarkdownEditorSetextHeadingParseResult? {
   let heading_lines : Array[MarkdownLine] = []
   let text_lines : Array[String] = []
@@ -925,9 +980,13 @@ fn markdown_editor_setext_heading_block_at(
               block: {
                 kind: MarkdownBlockKind::Heading(level),
                 text,
-                inlines: parse_markdown_inlines_with_definitions(
-                  text, definitions,
-                ),
+                inlines: if parse_inlines {
+                  parse_markdown_inlines_with_definitions(
+                    text, definitions,
+                  )
+                } else {
+                  []
+                },
                 table_alignments: [],
                 code_language: None,
               },
@@ -940,7 +999,7 @@ fn markdown_editor_setext_heading_block_at(
         None => ()
       }
     }
-    if markdown_editor_setext_heading_content_line(lines, next) {
+    if markdown_editor_setext_heading_content_line(lines, next, parse_inlines~) {
       heading_lines.push(lines[next])
       next = next + 1
     } else {
@@ -954,16 +1013,403 @@ fn markdown_editor_setext_heading_block_at(
 fn markdown_editor_setext_heading_content_line(
   lines : Array[MarkdownLine],
   index : Int,
+  parse_inlines? : Bool = true,
 ) -> Bool {
   if index < 0 || index >= lines.length() {
     return false
   }
   let line = lines[index]
-  if line.text.trim().to_owned() == "" ||
-    markdown_editor_opening_code_fence_marker(line.text) is Some(_) {
+  if markdown_editor_line_text_is_blank(line.text) {
     return false
   }
-  markdown_editor_is_setext_paragraph_candidate(line.text)
+  if !parse_inlines && !markdown_editor_shell_line_may_open_fence(line.text) {
+    // Shell mode: the per-line markdown parse and char-array fence scan
+    // here would dominate the open cost; the cheap marker rules agree with
+    // them on every common line.
+    if markdown_editor_shell_line_opens_html(lines, index) {
+      return false
+    }
+    return markdown_editor_shell_structural_kind(line.text) is None
+  }
+  if markdown_editor_opening_code_fence_marker(line.text) is Some(_) {
+    return false
+  }
+  if parse_inlines {
+    markdown_editor_is_setext_paragraph_candidate(line.text)
+  } else {
+    markdown_editor_shell_structural_kind(line.text) is None
+  }
+}
+
+///|
+/// Cheap pre-filter for the fence-marker check: a line can only open a
+/// code fence when, within the allowed three-space indent (no tabs), its
+/// first character is a backtick or tilde run. Lets the shell parse skip
+/// the char-array fence scan for every plain line.
+fn markdown_editor_shell_line_may_open_fence(text : String) -> Bool {
+  let length = text.length()
+  let mut cursor = 0
+  let mut spaces = 0
+  while cursor < length && spaces <= 3 {
+    let ch = text.get_char(cursor).unwrap_or(' ')
+    if ch == ' ' {
+      cursor = cursor + 1
+      spaces = spaces + 1
+    } else if ch == '\t' {
+      return false
+    } else {
+      break
+    }
+  }
+  if cursor + 2 >= length {
+    return false
+  }
+  let fence = text.get_char(cursor).unwrap_or(' ')
+  (fence == '`' || fence == '~') &&
+  text.get_char(cursor + 1).unwrap_or(' ') == fence &&
+  text.get_char(cursor + 2).unwrap_or(' ') == fence
+}
+
+///|
+/// Cheap pre-filter for the HTML-block check: a line can only start an
+/// HTML block when its first non-space character (within a small indent)
+/// is `<`.
+fn markdown_editor_shell_line_may_open_html(text : String) -> Bool {
+  let length = text.length()
+  let mut cursor = 0
+  let mut spaces = 0
+  while cursor < length && spaces <= 3 {
+    let ch = text.get_char(cursor).unwrap_or(' ')
+    if ch == ' ' {
+      cursor = cursor + 1
+      spaces = spaces + 1
+    } else if ch == '\t' {
+      return true
+    } else {
+      break
+    }
+  }
+  cursor < length && text.get_char(cursor).unwrap_or(' ') == '<'
+}
+
+///|
+/// Cheap pre-filter for the indented-code check: the line must begin with
+/// a space or tab.
+fn markdown_editor_shell_line_is_indented(text : String) -> Bool {
+  text.length() > 0 &&
+  (text.get_char(0).unwrap_or(' ') == ' ' || text.get_char(0).unwrap_or(' ') == '\t')
+}
+
+///|
+/// Full HTML-block check behind the cheap `<` gate, shared by the shell
+/// classifiers: a line that opens an HTML block is never paragraph
+/// content, even though the marker rules cannot see it.
+fn markdown_editor_shell_line_opens_html(
+  lines : Array[MarkdownLine],
+  index : Int,
+) -> Bool {
+  let line = lines[index]
+  markdown_editor_shell_line_may_open_html(line.text) &&
+  markdown_editor_html_block_at(lines, index) is Some(_)
+}
+
+///|
+/// Cheap structural-line classification for shell parses: the block kind a
+/// line's marker prefix implies (heading, list item, quote, rule, footnote
+/// definition), or None when the line is plain paragraph text.
+/// Allocation-free single pass with O(1) UTF-16 char access — the shell
+/// parse runs this once per line, and a char-array materialization per line
+/// dominated the open cost on large documents. The full markdown parser
+/// agrees with these rules on every common line; a shell block's text is
+/// exact for headings and rules, best-effort for marker-stripped
+/// list/quote content, and is always replaced by the real parse the first
+/// time its inline runs are needed.
+fn markdown_editor_shell_structural_kind(text : String) -> MarkdownBlockKind? {
+  let length = text.length()
+  let mut cursor = 0
+  while cursor < length {
+    let ch = text.get_char(cursor).unwrap_or(' ')
+    if ch == ' ' || ch == '\t' {
+      cursor = cursor + 1
+    } else {
+      break
+    }
+  }
+  if cursor >= length {
+    return None
+  }
+  let first = text.get_char(cursor).unwrap_or(' ')
+  // ATX heading: 1-6 `#` markers, a space/tab separator, and content after
+  // (bare `#` / `# ` stay paragraphs, matching the real parser).
+  if first == '#' {
+    let mut index = cursor
+    let mut level = 0
+    while index < length {
+      let ch = text.get_char(index).unwrap_or(' ')
+      if ch == '#' {
+        level = level + 1
+        index = index + 1
+      } else {
+        break
+      }
+    }
+    if level >= 1 && level <= 6 && index < length {
+      let ch = text.get_char(index).unwrap_or(' ')
+      if ch == ' ' || ch == '\t' {
+        let mut content = index
+        while content < length {
+          let c = text.get_char(content).unwrap_or(' ')
+          if c == ' ' || c == '\t' {
+            content = content + 1
+          } else {
+            break
+          }
+        }
+        if content < length {
+          return Some(MarkdownBlockKind::Heading(level))
+        }
+      }
+    }
+    return None
+  }
+  // Footnote definition: `[^label]:`
+  if first == '[' &&
+    cursor + 1 < length &&
+    text.get_char(cursor + 1).unwrap_or(' ') == '^' {
+    let mut close = cursor + 2
+    while close < length {
+      let ch = text.get_char(close).unwrap_or(' ')
+      if ch == ']' {
+        break
+      }
+      close = close + ch.utf16_len()
+    }
+    if close > cursor + 2 &&
+      close < length &&
+      close + 1 < length &&
+      text.get_char(close).unwrap_or(' ') == ']' &&
+      text.get_char(close + 1).unwrap_or(' ') == ':' {
+      let label = markdown_editor_shell_slice(text, start=cursor + 2, end=close)
+      return Some(MarkdownBlockKind::FootnoteDefinition(label))
+    }
+    return None
+  }
+  // Task list item: `- [ ] ` / `- [x] ` / `- [X] `
+  if first == '-' &&
+    cursor + 5 < length &&
+    text.get_char(cursor + 1).unwrap_or(' ') == ' ' &&
+    text.get_char(cursor + 2).unwrap_or(' ') == '[' &&
+    (text.get_char(cursor + 3).unwrap_or(' ') == ' ' ||
+    text.get_char(cursor + 3).unwrap_or(' ') == 'x' ||
+    text.get_char(cursor + 3).unwrap_or(' ') == 'X') &&
+    text.get_char(cursor + 4).unwrap_or(' ') == ']' &&
+    text.get_char(cursor + 5).unwrap_or(' ') == ' ' {
+    let checked = text.get_char(cursor + 3).unwrap_or(' ') != ' '
+    return Some(MarkdownBlockKind::TaskListItem(checked))
+  }
+  // Unordered list item
+  if (first == '-' || first == '*' || first == '+') &&
+    cursor + 1 < length &&
+    text.get_char(cursor + 1).unwrap_or(' ') == ' ' {
+    return Some(MarkdownBlockKind::UnorderedListItem)
+  }
+  // Quote
+  if first == '>' &&
+    cursor + 1 < length &&
+    text.get_char(cursor + 1).unwrap_or(' ') == ' ' {
+    return Some(MarkdownBlockKind::Blockquote)
+  }
+  // Thematic break: three or more of the same marker, spaces allowed
+  // between them, nothing else on the line. `-` falls through to nothing
+  // else (the `- item` case returned above), so a lone `-` is paragraph
+  // text, matching the real parser.
+  if first == '-' || first == '*' || first == '_' {
+    let mut index = cursor
+    let mut count = 0
+    let mut structural = true
+    while index < length {
+      let ch = text.get_char(index).unwrap_or(' ')
+      if ch == first {
+        count = count + 1
+        index = index + 1
+      } else if ch == ' ' || ch == '\t' {
+        index = index + 1
+      } else {
+        structural = false
+        break
+      }
+    }
+    if structural && count >= 3 {
+      return Some(MarkdownBlockKind::HorizontalRule)
+    }
+    return None
+  }
+  // Ordered list item: digits + `.`/`)` + space.
+  if first.is_ascii_digit() {
+    let mut index = cursor
+    let mut number = 0
+    while index < length {
+      let ch = text.get_char(index).unwrap_or(' ')
+      if ch.is_ascii_digit() {
+        number = number * 10 + ch.to_int() - 0x30
+        index = index + 1
+      } else {
+        break
+      }
+    }
+    if index > cursor &&
+      index + 1 < length &&
+      (text.get_char(index).unwrap_or(' ') == '.' ||
+      text.get_char(index).unwrap_or(' ') == ')') &&
+      text.get_char(index + 1).unwrap_or(' ') == ' ' {
+      return Some(MarkdownBlockKind::OrderedListItem(number))
+    }
+  }
+  None
+}
+
+///|
+/// Slice `[start, end)` (UTF-16 offsets) via char access; used for the
+/// rare footnote label on the shell path.
+fn markdown_editor_shell_slice(
+  text : String,
+  start~ : Int,
+  end~ : Int,
+) -> String {
+  let builder = StringBuilder()
+  let mut index = start
+  while index < end {
+    let ch = text.get_char(index).unwrap_or(' ')
+    builder.write_char(ch)
+    index = index + ch.utf16_len()
+  }
+  builder.to_string()
+}
+
+///|
+/// Marker-stripped content text for a shell list/quote/footnote line
+/// (best-effort; the real parse replaces it on materialization).
+fn markdown_editor_shell_content_text(
+  text : String,
+  skip_marker_length~ : Int,
+) -> String {
+  let chars = text.to_array()
+  let mut offset = skip_marker_length
+  while offset < chars.length() && (chars[offset] == ' ' || chars[offset] == '\t') {
+    offset = offset + 1
+  }
+  String::from_array(chars[offset:])
+}
+
+///|
+fn markdown_editor_shell_line_block(line : MarkdownLine) -> MarkdownEditorBlock {
+  let kind = match markdown_editor_shell_structural_kind(line.text) {
+    Some(kind) => kind
+    None => MarkdownBlockKind::Paragraph
+  }
+  let text = match kind {
+    MarkdownBlockKind::Heading(_) => markdown_heading_visible_source_text(
+      line.text,
+    )
+    MarkdownBlockKind::HorizontalRule => ""
+    MarkdownBlockKind::FootnoteDefinition(_) =>
+      markdown_editor_shell_content_text(
+        line.text,
+        skip_marker_length=markdown_editor_footnote_marker_prefix_length(
+          line.text,
+        ),
+      )
+    MarkdownBlockKind::Paragraph => line.text
+    _ =>
+      markdown_editor_shell_content_text(
+        line.text,
+        skip_marker_length=markdown_editor_marker_prefix_length(line.text),
+      )
+  }
+  {
+    block: {
+      kind,
+      text,
+      inlines: [],
+      table_alignments: [],
+      code_language: None,
+    },
+    source_range: { start: line.start, end: line.end },
+    content_range: markdown_editor_content_range(line, kind),
+  }
+}
+
+///|
+/// A shell block: a content block produced by the shell parse — no inline
+/// runs yet, non-empty text. Structural blocks (code, rule, table, html,
+/// front matter) and genuinely empty blocks never qualify, and a real
+/// content parse of non-empty text always yields at least one inline.
+fn markdown_editor_block_is_shell(editor_block : MarkdownEditorBlock) -> Bool {
+  let block = editor_block.block
+  if !block.inlines.is_empty() || block.text == "" {
+    return false
+  }
+  match block.kind {
+    Paragraph
+    | Heading(_)
+    | UnorderedListItem
+    | TaskListItem(_)
+    | OrderedListItem(_)
+    | Blockquote
+    | FootnoteDefinition(_) => true
+    CodeBlock | HorizontalRule | Table | HtmlBlock | FrontMatter => false
+  }
+}
+
+///|
+/// Replace a shell block with the real parse of its source slice. Pure:
+/// nothing is mutated, and `parse_markdown` memoizes per text, so repeated
+/// calls for the same visible block are cache hits. Blocks the real parser
+/// splits differently keep their shell form (rendered as plain source text)
+/// instead of corrupting block positions.
+fn markdown_editor_block_materialized(
+  source : String,
+  source_length~ : Int,
+  source_digest~ : UInt64,
+  editor_block : MarkdownEditorBlock,
+) -> MarkdownEditorBlock {
+  if !markdown_editor_block_is_shell(editor_block) {
+    return editor_block
+  }
+  let range = editor_block.source_range
+  let slice = markdown_editor_substring(source, range.start, range.end)
+  match parse_markdown(slice) {
+    [real] => {
+      // Reference-style links and footnotes need the whole-source
+      // definition set; inline syntax does not, so most documents never
+      // pay for it here.
+      let needs_definitions = real.inlines.any(inline =>
+        match inline.kind {
+          Link => inline.target is None
+          FootnoteReference(_) => true
+          _ => false
+        })
+      let definitions = if needs_definitions {
+        markdown_reference_definitions_cached_keyed(
+          source,
+          source_length~,
+          source_digest~,
+        )
+      } else {
+        []
+      }
+      let real = markdown_editor_block_with_references(real, definitions)
+      // The shell's ranges are exact (the shell scan and the real parse
+      // agree on block boundaries and the content-range formula), so they
+      // carry over unchanged.
+      {
+        block: real,
+        source_range: range,
+        content_range: editor_block.content_range,
+      }
+    }
+    _ => editor_block
+  }
 }
 
 ///|
@@ -1049,7 +1495,19 @@ fn markdown_editor_next_indented_code_line_index(
 
 ///|
 fn markdown_editor_blank_line(line : MarkdownLine) -> Bool {
-  line.text.trim().to_owned() == ""
+  markdown_editor_line_text_is_blank(line.text)
+}
+
+///|
+/// Whitespace-only check without the trimmed copy the string comparison
+/// used to allocate once per line per parse.
+fn markdown_editor_line_text_is_blank(text : String) -> Bool {
+  for ch in text {
+    if ch != ' ' && ch != '\t' && ch != '\r' {
+      return false
+    }
+  }
+  true
 }
 
 ///|
@@ -1074,15 +1532,16 @@ fn markdown_editor_soft_wrapped_paragraph_block_at(
   lines : Array[MarkdownLine],
   index : Int,
   definitions : Array[MarkdownReferenceDefinition],
+  parse_inlines? : Bool = true,
 ) -> MarkdownEditorParagraphParseResult? {
-  if !markdown_editor_soft_wrapped_paragraph_line(lines, index) {
+  if !markdown_editor_soft_wrapped_paragraph_line(lines, index, parse_inlines~) {
     return None
   }
   let paragraph_lines : Array[MarkdownLine] = [lines[index]]
   let mut next = index + 1
   while next < lines.length() &&
         markdown_editor_setext_heading_level_at(lines, next) is None &&
-        markdown_editor_soft_wrapped_paragraph_line(lines, next) {
+        markdown_editor_soft_wrapped_paragraph_line(lines, next, parse_inlines~) {
     paragraph_lines.push(lines[next])
     next = next + 1
   }
@@ -1099,7 +1558,11 @@ fn markdown_editor_soft_wrapped_paragraph_block_at(
       block: {
         kind: MarkdownBlockKind::Paragraph,
         text,
-        inlines: parse_markdown_inlines_with_definitions(text, definitions),
+        inlines: if parse_inlines {
+          parse_markdown_inlines_with_definitions(text, definitions)
+        } else {
+          []
+        },
         table_alignments: [],
         code_language: None,
       },
@@ -1117,16 +1580,46 @@ fn markdown_editor_soft_wrapped_paragraph_block_at(
 }
 
 ///|
+/// Shell-mode paragraph classification: same shape as
+/// `markdown_editor_soft_wrapped_paragraph_line` but the per-line
+/// "is this plain paragraph text" question is answered by the cheap prefix
+/// rules instead of running the markdown parser on every line.
 fn markdown_editor_soft_wrapped_paragraph_line(
   lines : Array[MarkdownLine],
   index : Int,
+  parse_inlines? : Bool = true,
 ) -> Bool {
   if index < 0 || index >= lines.length() {
     return false
   }
   let line = lines[index]
-  if line.text.trim().to_owned() == "" ||
-    markdown_editor_opening_code_fence_marker(line.text) is Some(_) ||
+  if markdown_editor_line_text_is_blank(line.text) {
+    return false
+  }
+  if !parse_inlines {
+    // Shell mode: skip the char-array fence scan, the trimmed separator
+    // scan and the per-line markdown parse — the cheap marker rules agree
+    // with them on every common line.
+    if markdown_editor_shell_line_may_open_fence(line.text) &&
+      markdown_editor_opening_code_fence_marker(line.text) is Some(_) {
+      return false
+    }
+    if markdown_editor_shell_line_opens_html(lines, index) {
+      return false
+    }
+    if index + 1 < lines.length() {
+      if lines[index + 1].text.contains("|") &&
+        markdown_editor_table_block_at(lines, index) is Some(_) {
+        return false
+      }
+      if markdown_editor_setext_underline_level(lines[index + 1].text)
+        is Some(_) {
+        return false
+      }
+    }
+    return markdown_editor_shell_structural_kind(line.text) is None
+  }
+  if markdown_editor_opening_code_fence_marker(line.text) is Some(_) ||
     markdown_editor_table_block_at(lines, index) is Some(_) ||
     markdown_editor_setext_heading_level_at(lines, index) is Some(_) {
     return false
@@ -1148,7 +1641,10 @@ fn markdown_editor_table_block_at(
   lines : Array[MarkdownLine],
   index : Int,
 ) -> MarkdownEditorTableParseResult? {
+  // A separator row must contain `|`; lines whose next line has none skip
+  // the trimmed cell scan entirely (this check runs once per line).
   if index + 1 >= lines.length() ||
+    !lines[index + 1].text.contains("|") ||
     !markdown_editor_table_separator_line(lines[index + 1].text) {
     return None
   }
@@ -1286,17 +1782,43 @@ fn markdown_editor_is_setext_paragraph_candidate(line : String) -> Bool {
 
 ///|
 fn markdown_editor_setext_underline_level(line : String) -> Int? {
-  let text = line.trim().to_owned()
-  if text == "" {
+  // Allocation-free scan: skip leading whitespace, then require a run of
+  // `=` (level 1) or `-` (level 2) covering the rest of the line.
+  let length = line.length()
+  let mut cursor = 0
+  while cursor < length {
+    let ch = line.get_char(cursor).unwrap_or(' ')
+    if ch == ' ' || ch == '\t' {
+      cursor = cursor + 1
+    } else {
+      break
+    }
+  }
+  if cursor >= length {
     return None
   }
-  let chars = text.to_array()
-  let marker = chars[0]
+  let marker = line.get_char(cursor).unwrap_or(' ')
   if marker != '=' && marker != '-' {
     return None
   }
-  for ch in chars {
-    if ch != marker {
+  let mut index = cursor + 1
+  while index < length {
+    let ch = line.get_char(index).unwrap_or(' ')
+    if ch == marker {
+      index = index + 1
+    } else if ch == ' ' || ch == '\t' {
+      // Trailing whitespace is allowed; nothing else may follow.
+      index = index + 1
+      while index < length {
+        let tail = line.get_char(index).unwrap_or(' ')
+        if tail == ' ' || tail == '\t' {
+          index = index + 1
+        } else {
+          return None
+        }
+      }
+      break
+    } else {
       return None
     }
   }

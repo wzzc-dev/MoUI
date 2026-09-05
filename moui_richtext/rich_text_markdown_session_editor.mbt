@@ -600,6 +600,13 @@ fn markdown_session_record_measured_block_heights(
   for offset, _window_block in window.document.blocks {
     match session.editor_blocks.get(window.visible_start + offset) {
       Some(editor_block) => {
+        // Measured heights must come from the block's real inline runs.
+        let editor_block = markdown_editor_block_materialized(
+          session.source,
+          source_length=session.source_length,
+          source_digest=session.source_digest,
+          editor_block,
+        )
         let height = rich_text_block_total_height(
           rich_text_block_soft_wrap(
             markdown_editor_block_to_rich_text(
@@ -660,6 +667,13 @@ fn markdown_session_estimated_caret_inset_x(
       source_caret > editor_block.source_range.end {
       continue
     }
+    // Caret geometry needs the block's real inline runs.
+    let editor_block = markdown_editor_block_materialized(
+      session.source,
+      source_length=session.source_length,
+      source_digest=session.source_digest,
+      editor_block,
+    )
     let rich_block = markdown_editor_block_to_rich_text(
       session.source,
       editor_block,

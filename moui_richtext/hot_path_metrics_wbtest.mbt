@@ -508,7 +508,28 @@ fn hot_path_assert_matches_scratch(
     assert_eq(block.kind, expected.kind)
     assert_eq(block.text, expected.text)
     assert_eq(block.fingerprint, expected.fingerprint)
-    assert_eq(block.inline_count, expected.inline_count)
+    // Shell blocks from the cheap session open carry no inline runs; the
+    // incremental path re-parses the edited window with real runs. Compare
+    // both sides at their materialized form.
+    let editor_block = markdown_editor_block_materialized(
+      session.source,
+      source_length=session.source_length,
+      source_digest=session.source_digest,
+      session.editor_blocks[index],
+    )
+    let expected_editor_block = markdown_editor_block_materialized(
+      full.source,
+      source_length=full.source_length,
+      source_digest=full.source_digest,
+      full.editor_blocks[index],
+    )
+    assert_eq(editor_block.source_range, expected_editor_block.source_range)
+    assert_eq(editor_block.block.kind, expected_editor_block.block.kind)
+    assert_eq(editor_block.block.text, expected_editor_block.block.text)
+    assert_eq(
+      editor_block.block.inlines.length(),
+      expected_editor_block.block.inlines.length(),
+    )
   }
 }
 
@@ -618,7 +639,30 @@ test "hot path: incremental apply matches the full parse block by block" {
       ),
     )
     let full = MarkdownDocumentSession::new(next_source)
-    assert_true(next.editor_blocks == full.editor_blocks)
+    // The incremental window carries real inline runs while a fresh
+    // session holds shells; compare block by block at materialized form.
+    let mut matched = next.editor_blocks.length() == full.editor_blocks.length()
+    if matched {
+      for index, editor_block in next.editor_blocks {
+        let got = markdown_editor_block_materialized(
+          next.source,
+          source_length=next.source_length,
+          source_digest=next.source_digest,
+          editor_block,
+        )
+        let expected = markdown_editor_block_materialized(
+          full.source,
+          source_length=full.source_length,
+          source_digest=full.source_digest,
+          full.editor_blocks[index],
+        )
+        if got != expected {
+          matched = false
+          break
+        }
+      }
+    }
+    assert_true(matched)
     current = next
     edits = edits + 1
   }
