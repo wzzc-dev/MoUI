@@ -96,21 +96,20 @@ fn apply_text_input(
       apply_text_edit(control, text, edit, record_history~)
     }
     @core.TextInputEvent::ReplaceText(range, replacement) => {
-      let normalized = @core.normalize_grapheme_range(
-        @core.TextGraphemeBoundaries::new(text~),
+      let (next_text, deleted, start) = @core.replace_text_range_edit(
+        text~,
         range,
+        replacement,
       )
-      let next_text = @core.replace_text_range(text, normalized, replacement)
-      let chars = text.to_array()
-      let edit : TextEditResult = {
+      let next_edit : TextEditResult = {
         text: next_text,
-        caret: normalized.start + text_length(replacement),
+        caret: start + text_length(replacement),
         selection: None,
-        start: normalized.start,
-        before: String::from_array(chars[normalized.start:normalized.end]),
+        start,
+        before: deleted,
         after: replacement,
       }
-      apply_text_edit(control, text, edit, record_history~)
+      apply_text_edit(control, text, next_edit, record_history~)
     }
     @core.TextInputEvent::SetSelection(range) => {
       let normalized = @core.normalize_grapheme_range(
@@ -286,16 +285,19 @@ fn replace_current_selection(
     Some(selection) => selection
     None => @core.TextRange::collapsed(caret)
   }
-  let normalized = range.normalized()
-  let next_text = @core.replace_text_range(text, range, replacement)
-  let caret = normalized.start + text_length(replacement)
-  let chars = text.to_array()
+  // One fused core scan yields the next text, the deleted slice, and the
+  // normalized start; no full char-array copy just to slice `before`.
+  let (next_text, deleted, start) = @core.replace_text_range_edit(
+    text~,
+    range,
+    replacement,
+  )
   {
     text: next_text,
-    caret,
+    caret: start + text_length(replacement),
     selection: None,
-    start: normalized.start,
-    before: String::from_array(chars[normalized.start:normalized.end]),
+    start,
+    before: deleted,
     after: replacement,
   }
 }

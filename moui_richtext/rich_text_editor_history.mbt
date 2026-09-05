@@ -73,37 +73,67 @@ fn rich_text_history_single_edit(
   if selection_active {
     return None
   }
-  let before = previous.to_array()
-  let after = next.to_array()
-  let before_length = before.length()
-  let after_length = after.length()
+  // Codepoint-length gate plus an allocation-free aligned scan: while the
+  // two documents agree their UTF-16 offsets advance in lockstep, so the
+  // first divergence is the edit point and its character is one
+  // `get_char` away. No char-array copy of either document.
+  let before_length = text_length(previous)
+  let after_length = text_length(next)
+  let before_units = previous.length()
+  let next_units = next.length()
   if before_length + 1 == after_length {
     let mut index = 0
-    while index < before_length && before[index] == after[index] {
-      index = index + 1
+    let mut offset = 0
+    while index < before_length &&
+          offset < before_units &&
+          previous.get_char(offset) == next.get_char(offset) {
+      match previous.get_char(offset) {
+        Some(ch) => {
+          offset = offset + ch.utf16_len()
+          index = index + 1
+        }
+        None => break
+      }
     }
-    if after[index] == '\n' || caret != index {
-      return None
+    match next.get_char(offset) {
+      Some(inserted) =>
+        if inserted == '\n' || caret != index {
+          None
+        } else {
+          Some((1, index, inserted))
+        }
+      None => None
     }
-    return Some((1, index, after[index]))
-  }
-  if after_length + 1 == before_length {
+  } else if after_length + 1 == before_length {
     let mut index = 0
-    while index < after_length && before[index] == after[index] {
-      index = index + 1
+    let mut offset = 0
+    while index < after_length &&
+          offset < next_units &&
+          previous.get_char(offset) == next.get_char(offset) {
+      match next.get_char(offset) {
+        Some(ch) => {
+          offset = offset + ch.utf16_len()
+          index = index + 1
+        }
+        None => break
+      }
     }
-    if before[index] == '\n' {
-      return None
+    match previous.get_char(offset) {
+      Some(deleted) =>
+        if deleted == '\n' {
+          None
+        } else if caret == index + 1 {
+          Some((2, index, deleted))
+        } else if caret == index {
+          Some((3, index, deleted))
+        } else {
+          None
+        }
+      None => None
     }
-    if caret == index + 1 {
-      return Some((2, index, before[index]))
-    }
-    if caret == index {
-      return Some((3, index, before[index]))
-    }
-    return None
+  } else {
+    None
   }
-  None
 }
 
 ///|
