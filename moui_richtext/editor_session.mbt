@@ -97,7 +97,10 @@ pub(all) struct MarkdownDocumentRichTextWindow {
 
 ///|
 pub(all) struct MarkdownDocumentSession {
-  source : String
+  // The document text: per-block segments with a lazily materialized
+  // whole-source view (`source`). Edits mutate the store in place; every
+  // session value derived from an edit shares it.
+  text_store : MarkdownDocumentTextStore
   source_length : Int
   source_digest : UInt64
   blocks : Array[MarkdownDocumentBlock]
@@ -304,7 +307,7 @@ pub fn MarkdownDocumentSession::new(source : String) -> MarkdownDocumentSession 
 pub fn MarkdownDocumentSession::source(
   self : MarkdownDocumentSession,
 ) -> String {
-  self.source
+  self.text_store.source()
 }
 
 ///|
@@ -318,7 +321,7 @@ fn markdown_document_session_materialized_blocks(
 ) -> Array[MarkdownEditorBlock] {
   session.editor_blocks.map(fn(editor_block) {
     markdown_editor_block_materialized(
-      session.source,
+      session.source(),
       source_length=session.source_length,
       source_digest=session.source_digest,
       editor_block,
@@ -335,10 +338,10 @@ pub fn MarkdownDocumentSession::snapshot(
   // Export-grade output: every block with its real inline runs.
   let materialized = markdown_document_session_materialized_blocks(self)
   {
-    source: self.source,
+    source: self.source(),
     blocks: materialized,
     rich_text: markdown_editor_blocks_to_rich_text(
-      self.source,
+      self.source(),
       materialized,
       base,
       base_dir~,
@@ -363,16 +366,16 @@ pub fn MarkdownDocumentSession::rich_text(
   base_dir? : String? = None,
 ) -> RichTextDocument {
   if source_mode {
-    markdown_editor_format_source_mode(self.source, base)
+    markdown_editor_format_source_mode(self.source(), base)
   } else {
     let document = markdown_editor_blocks_to_rich_text(
-      self.source,
+      self.source(),
       markdown_document_session_materialized_blocks(self),
       base,
       base_dir~,
     )
     let revealed = markdown_document_session_reveal_selection(
-      self.source,
+      self.source(),
       document,
       selection,
     )
@@ -413,7 +416,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
     let source_end = self.editor_blocks[range.visible_end].source_range.end
     (
       markdown_document_source_chars_in_range(
-        self.source,
+        self.source(),
         self.source_length,
         source_start,
         source_end,
@@ -433,7 +436,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
         // visible window is where they are needed, so re-parse on demand
         // (a content-cached parse, near-free in steady state).
         markdown_editor_block_materialized(
-          self.source,
+          self.source(),
           source_length=self.source_length,
           source_digest=self.source_digest,
           self.editor_blocks[index],
@@ -446,7 +449,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
           )
         } else {
           markdown_editor_block_to_rich_text(
-            self.source,
+            self.source(),
             editor_block,
             base,
             base_dir~,
@@ -460,7 +463,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
     document
   } else {
     let revealed = markdown_document_session_reveal_selection(
-      self.source,
+      self.source(),
       document,
       selection,
     )
@@ -546,12 +549,14 @@ pub fn MarkdownDocumentSession::apply(
   self : MarkdownDocumentSession,
   transaction : MarkdownEditTransaction,
 ) -> MarkdownDocumentSession {
-  if transaction.source == self.source {
+  if transaction.source == self.source() {
     return self
   }
-  match markdown_document_session_apply_incremental(self, transaction) {
+  match markdown_editor_probe_capture("apply.incremental", fn() {
+    markdown_document_session_apply_incremental(self, transaction)
+  }) {
     Some(next) => next
-    None => {
+    None => markdown_editor_probe_capture("apply.full", fn() {
       hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
       let blocks = parse_markdown_editor_blocks(transaction.source)
       let dirty = markdown_document_dirty_range(transaction, blocks)
@@ -563,7 +568,7 @@ pub fn MarkdownDocumentSession::apply(
         parse_count=self.parse_count + 1,
         dirty_range=dirty,
       )
-    }
+    })
   }
 }
 
@@ -635,13 +640,18 @@ fn markdown_document_session_apply_incremental(
       } else {
         cluster.end_block_end
       }
-      let region_slice = markdown_editor_substring(
-        transaction.source,
-        cluster.start_block_start,
-        markdown_editor_min_int(
-          region_end + delta,
-          markdown_editor_text_length(transaction.source),
-        ),
+      let region_slice = markdown_editor_probe_capture(
+        "inc.region_slice",
+        fn() {
+          markdown_editor_substring(
+            transaction.source,
+            cluster.start_block_start,
+            markdown_editor_min_int(
+              region_end + delta,
+              markdown_editor_text_length(transaction.source),
+            ),
+          )
+        },
       )
       // Definitions keyed by the previous session's (length, digest) pair:
       // no multi-megabyte map-key hashing on the hot path.
@@ -650,11 +660,18 @@ fn markdown_document_session_apply_incremental(
         source_length=transaction.previous_source.length(),
         source_digest=session.source_digest,
       )
-      let reparsed = parse_markdown_editor_blocks_with_definitions(
-        region_slice,
-        definitions=Some(definitions),
+      let reparsed = markdown_editor_probe_capture(
+        "inc.reparse",
+        fn() {
+          parse_markdown_editor_blocks_with_definitions(
+            region_slice,
+            definitions=Some(definitions),
+          )
+        },
       )
       let stitched : Array[MarkdownEditorBlock] = []
+      let _stitch_probe = markdown_editor_probe_bucket("inc.stitch")
+      let _stitch_started = markdown_editor_probe_now_ms()
       for index, block in session.editor_blocks {
         if index < cluster.start_index {
           stitched.push(block)
@@ -688,6 +705,9 @@ fn markdown_document_session_apply_incremental(
           })
         }
       }
+      _stitch_probe.ms.val =
+        _stitch_probe.ms.val + (markdown_editor_probe_now_ms() - _stitch_started)
+      _stitch_probe.count.val = _stitch_probe.count.val + 1
       hot_path_region_reparse_count.val = hot_path_region_reparse_count.val + 1
       // The guard above proved this edit cannot change the whole-source
       // definition set, so publish the previous set under the edited
@@ -695,8 +715,9 @@ fn markdown_document_session_apply_incremental(
       // hits instead of re-running the whole-document definition parse.
       // The edited source's digest is computed once here and reused by the
       // session construction below.
-      let next_source_digest = markdown_document_source_digest(
-        transaction.source,
+      let next_source_digest = markdown_editor_probe_capture(
+        "inc.digest",
+        fn() { markdown_document_source_digest(transaction.source) },
       )
       markdown_reference_definitions_cache_store_keyed(
         source_length=transaction.source.length(),
@@ -717,6 +738,7 @@ fn markdown_document_session_apply_incremental(
         replacement: transaction.replacement,
         char_delta: delta,
       }
+      markdown_editor_probe_capture("inc.from_blocks", fn() {
       markdown_document_session_from_blocks(
         transaction.source,
         stitched,
@@ -727,7 +749,7 @@ fn markdown_document_session_apply_incremental(
         reindex=Some(reindex),
         source_digest=Some(next_source_digest),
       )
-      |> Some
+      }) |> Some
     }
     None => {
       hot_path_incremental_fallback_count.val = hot_path_incremental_fallback_count.val +
@@ -1040,7 +1062,7 @@ pub fn MarkdownDocumentSession::replace_source(
   reason? : MarkdownEditReason = ReplaceEdit,
 ) -> MarkdownDocumentSession {
   ignore(reason)
-  if source == self.source {
+  if source == self.source() {
     return self
   }
   // A whole-source replacement (document open, undo/redo, source import)
@@ -2054,43 +2076,59 @@ fn markdown_document_session_from_blocks(
       ) => Some(window)
     _ => None
   }
-  markdown_editor_blocks_cache_put(source, editor_blocks)
-  let word_count = match (previous, reuse) {
-    (Some(prev), Some(window)) =>
-      markdown_document_word_count_after_edit(prev, window)
-    _ => markdown_editor_word_count(source)
-  }
-  let line_count = match (previous, reuse) {
-    (Some(prev), Some(window)) =>
-      markdown_document_line_count_after_edit(prev, source, window)
-    _ => markdown_editor_line_count(source)
-  }
+  markdown_editor_probe_capture("fb.cache_put", fn() {
+    markdown_editor_blocks_cache_put(source, editor_blocks)
+  })
+  let word_count = markdown_editor_probe_capture("fb.word_count", fn() {
+    match (previous, reuse) {
+      (Some(prev), Some(window)) =>
+        markdown_document_word_count_after_edit(prev, window)
+      _ => markdown_editor_word_count(source)
+    }
+  })
+  let line_count = markdown_editor_probe_capture("fb.line_count", fn() {
+    match (previous, reuse) {
+      (Some(prev), Some(window)) =>
+        markdown_document_line_count_after_edit(prev, source, window)
+      _ => markdown_editor_line_count(source)
+    }
+  })
   let metadata = markdown_editor_front_matter_metadata(editor_blocks)
   let next_block_id_seed = match previous {
     Some(prev) => prev.next_block_id
     None => 1
   }
-  let assigned = markdown_document_assign_blocks(
-    editor_blocks,
-    previous~,
-    next_id=next_block_id_seed,
-    dirty_range~,
-    reuse~,
-  )
-  let height_index = markdown_document_height_index(
-    source,
-    editor_blocks,
-    assigned.blocks,
-    previous~,
-    reuse~,
-  )
-  let outline = match (previous, reuse) {
-    (Some(prev), Some(window)) =>
-      markdown_document_outline_after_edit(editor_blocks, prev, window)
-    _ => markdown_editor_outline(editor_blocks)
-  }
+  let assigned = markdown_editor_probe_capture("fb.assign", fn() {
+    markdown_document_assign_blocks(
+      editor_blocks,
+      previous~,
+      next_id=next_block_id_seed,
+      dirty_range~,
+      reuse~,
+    )
+  })
+  let height_index = markdown_editor_probe_capture("fb.height", fn() {
+    markdown_document_height_index(
+      source,
+      editor_blocks,
+      assigned.blocks,
+      previous~,
+      reuse~,
+    )
+  })
+  let outline = markdown_editor_probe_capture("fb.outline", fn() {
+    match (previous, reuse) {
+      (Some(prev), Some(window)) =>
+        markdown_document_outline_after_edit(editor_blocks, prev, window)
+      _ => markdown_editor_outline(editor_blocks)
+    }
+  })
   {
-    source,
+    // The store seeds the whole-source view from `source`: every builder
+    // here already holds the materialized text (document open, full
+    // rebuild, or a transaction carrying the next text), so seeding costs
+    // no copy.
+    text_store: MarkdownDocumentTextStore::new(source),
     source_length: markdown_editor_text_length(source),
     source_digest: match source_digest {
       Some(digest) => digest
@@ -2101,7 +2139,10 @@ fn markdown_document_session_from_blocks(
     line_count,
     word_count,
     reading_minutes: markdown_editor_reading_minutes(word_count),
-    active_heading: markdown_editor_active_heading(editor_blocks),
+    active_heading: markdown_editor_probe_capture(
+      "fb.active_heading",
+      fn() { markdown_editor_active_heading(editor_blocks) },
+    ),
     metadata_title: metadata.title,
     metadata_tags: metadata.tags,
     outline,
@@ -2505,7 +2546,7 @@ fn markdown_document_word_count_after_edit(
   window : MarkdownDocumentReindexWindow,
 ) -> Int {
   let before = markdown_document_char_at(
-    previous.source,
+    previous.source(),
     index=window.edit_start - 1,
   )
   let before_whitespace = match before {
@@ -2522,7 +2563,7 @@ fn markdown_document_word_count_after_edit(
   )
   let deleted_length = markdown_editor_text_length(window.deleted)
   let after = markdown_document_char_at(
-    previous.source,
+    previous.source(),
     index=window.edit_start + deleted_length,
   )
   let boundary = match after {

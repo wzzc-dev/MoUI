@@ -59,8 +59,8 @@ test "hot path: plain keystrokes at document end parse only the last cluster" {
   for _ in 0..<20 {
     current = current.apply(
       MarkdownEditTransaction::from_sources(
-        current.source,
-        current.source + "x",
+        current.source(),
+        current.source() + "x",
         reason=TextInput,
       ),
     )
@@ -77,14 +77,14 @@ test "hot path: backspace into the previous cluster still avoids full parse" {
   hot_path_metrics_reset()
   let next = session.apply(
     MarkdownEditTransaction::from_sources(
-      session.source,
-      markdown_editor_substring(session.source, 0, last_end - 1),
+      session.source(),
+      markdown_editor_substring(session.source(), 0, last_end - 1),
       reason=TextInput,
     ),
   )
   inspect(hot_path_full_parse_count.val, content="0")
   inspect(hot_path_region_reparse_count.val, content="1")
-  let full = MarkdownDocumentSession::new(next.source)
+  let full = MarkdownDocumentSession::new(next.source())
   inspect(next.blocks.length(), content=full.blocks.length().to_string())
 }
 
@@ -94,14 +94,14 @@ test "hot path: newline edits keep the full-parse fallback" {
   hot_path_metrics_reset()
   let next = session.apply(
     MarkdownEditTransaction::from_sources(
-      session.source,
+      session.source(),
       "# Title\n\nBody\nNew line",
       reason=TextInput,
     ),
   )
   inspect(hot_path_full_parse_count.val, content="1")
   inspect(hot_path_region_reparse_count.val, content="0")
-  assert_true(next.source == "# Title\n\nBody\nNew line")
+  assert_true(next.source() == "# Title\n\nBody\nNew line")
 }
 
 ///|
@@ -435,7 +435,7 @@ fn hot_path_apply_edit(
 ) -> MarkdownDocumentSession {
   session.apply(
     MarkdownEditTransaction::from_sources(
-      session.source,
+      session.source(),
       next_source,
       reason=TextInput,
     ),
@@ -512,13 +512,13 @@ fn hot_path_assert_matches_scratch(
     // incremental path re-parses the edited window with real runs. Compare
     // both sides at their materialized form.
     let editor_block = markdown_editor_block_materialized(
-      session.source,
+      session.source(),
       source_length=session.source_length,
       source_digest=session.source_digest,
       session.editor_blocks[index],
     )
     let expected_editor_block = markdown_editor_block_materialized(
-      full.source,
+      full.source(),
       source_length=full.source_length,
       source_digest=full.source_digest,
       full.editor_blocks[index],
@@ -540,7 +540,7 @@ fn hot_path_assert_matches_scratch(
 test "hot path: incremental bookkeeping matches a from-scratch session" {
   let mut session = MarkdownDocumentSession::new(hot_path_bench_document(20))
   // Append at the document end (word-boundary delta: no new word).
-  let source1 = session.source + "x"
+  let source1 = session.source() + "x"
   session = hot_path_apply_edit(session, source1)
   hot_path_assert_matches_scratch(session, source1)
   // Insert into an early paragraph: everything after the edit shifts by
@@ -577,7 +577,7 @@ test "hot path: keystroke bookkeeping work stays inside the re-parse window" {
   assert_true(block_count > 600)
   hot_path_metrics_reset()
   for _ in 0..<5 {
-    session = hot_path_apply_edit(session, session.source + "x")
+    session = hot_path_apply_edit(session, session.source() + "x")
   }
   let keystrokes = 5
   assert_eq(hot_path_full_parse_count.val, 0)
@@ -596,7 +596,7 @@ test "hot path: untouched block ids and revisions survive appends" {
   let start = MarkdownDocumentSession::new(hot_path_bench_document(30))
   let mut session = start
   for _ in 0..<3 {
-    session = hot_path_apply_edit(session, session.source + "y")
+    session = hot_path_apply_edit(session, session.source() + "y")
   }
   let mut stable = 0
   for index, block in session.blocks {
@@ -628,12 +628,12 @@ test "hot path: incremental apply matches the full parse block by block" {
   let mut edits = 0
   for index in 0..<60 {
     let caret = index * 53 % markdown_editor_max_int(1, session.source_length)
-    let next_source = markdown_editor_substring(current.source, 0, caret) +
+    let next_source = markdown_editor_substring(current.source(), 0, caret) +
       "q" +
-      markdown_editor_substring(current.source, caret, current.source_length)
+      markdown_editor_substring(current.source(), caret, current.source_length)
     let next = current.apply(
       MarkdownEditTransaction::from_sources(
-        current.source,
+        current.source(),
         next_source,
         reason=TextInput,
       ),
@@ -645,13 +645,13 @@ test "hot path: incremental apply matches the full parse block by block" {
     if matched {
       for index, editor_block in next.editor_blocks {
         let got = markdown_editor_block_materialized(
-          next.source,
+          next.source(),
           source_length=next.source_length,
           source_digest=next.source_digest,
           editor_block,
         )
         let expected = markdown_editor_block_materialized(
-          full.source,
+          full.source(),
           source_length=full.source_length,
           source_digest=full.source_digest,
           full.editor_blocks[index],

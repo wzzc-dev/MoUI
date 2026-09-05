@@ -34,9 +34,9 @@ test "soft wrap: one memoized layout, hit-test lands on the wrapped line start" 
   let session = MarkdownDocumentSession::new(source)
   hot_path_metrics_reset()
   let plain = markdown_editor_block_to_rich_text(
-    session.source,
+    session.source(),
     markdown_editor_block_materialized(
-      session.source,
+      session.source(),
       source_length=session.source_length,
       source_digest=session.source_digest,
       session.editor_blocks[0],
@@ -99,9 +99,9 @@ test "soft wrap: copy across injected breaks yields canonical source text" {
   let source = wrap_fixture_words(160)
   let session = MarkdownDocumentSession::new(source)
   let plain = markdown_editor_block_to_rich_text(
-    session.source,
+    session.source(),
     markdown_editor_block_materialized(
-      session.source,
+      session.source(),
       source_length=session.source_length,
       source_digest=session.source_digest,
       session.editor_blocks[0],
@@ -127,9 +127,9 @@ test "soft wrap: a selection across wrapped lines paints one band per line" {
   let source = wrap_fixture_words(160)
   let session = MarkdownDocumentSession::new(source)
   let plain = markdown_editor_block_to_rich_text(
-    session.source,
+    session.source(),
     markdown_editor_block_materialized(
-      session.source,
+      session.source(),
       source_length=session.source_length,
       source_digest=session.source_digest,
       session.editor_blocks[0],

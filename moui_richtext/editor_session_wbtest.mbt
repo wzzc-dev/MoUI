@@ -1,7 +1,7 @@
 ///|
 test "markdown document session keeps source and cached metadata" {
   let session = MarkdownDocumentSession::new("# Title\n\nBody")
-  inspect(session.source, content="# Title\n\nBody")
+  inspect(session.source(), content="# Title\n\nBody")
   inspect(session.line_count, content="3")
   inspect(session.word_count, content="3")
   inspect(session.outline.length(), content="1")
@@ -17,7 +17,7 @@ test "markdown document session edit keeps stable ids around dirty block" {
   let tail_id = session.blocks[4].id
   let next = session.apply(
     MarkdownEditTransaction::from_sources(
-      session.source,
+      session.source(),
       "# A\n\nBody!\n\nTail",
       reason=TextInput,
     ),
@@ -35,7 +35,7 @@ test "markdown document session records dirty block window" {
   let session = MarkdownDocumentSession::new("# A\n\nBody\n\nTail")
   let next = session.apply(
     MarkdownEditTransaction::from_sources(
-      session.source,
+      session.source(),
       "# A\n\nBody!\n\nTail",
       reason=TextInput,
     ),
@@ -50,7 +50,7 @@ test "markdown document session expands global context for fences" {
   let session = MarkdownDocumentSession::new("# A\n\nBody\n\nTail")
   let next = session.apply(
     MarkdownEditTransaction::from_sources(
-      session.source,
+      session.source(),
       "# A\n\n```\nBody\n```\n\nTail",
       reason=TextInput,
     ),
@@ -165,22 +165,22 @@ test "markdown document session new parses blocks and metadata correctly" {
 ///|
 test "markdown document session apply is immutable" {
   let session = MarkdownDocumentSession::new("# Title\n\nBody")
-  let original_source = session.source
+  let original_source = session.source()
   let original_block_count = session.blocks.length()
   let original_revision = session.revision
   let next = session.apply(
     MarkdownEditTransaction::from_sources(
-      session.source,
+      session.source(),
       "# Title\n\nBody changed",
       reason=TextInput,
     ),
   )
   // The original session is unchanged.
-  inspect(session.source, content=original_source)
+  inspect(session.source(), content=original_source)
   inspect(session.blocks.length(), content=original_block_count.to_string())
   inspect(session.revision, content=original_revision.to_string())
   // The new session reflects the edit.
-  assert_true(next.source != session.source)
+  assert_true(next.source() != session.source())
   inspect(next.revision, content=(original_revision + 1).to_string())
   inspect(next.parse_count, content="2")
 }
@@ -190,13 +190,13 @@ test "markdown document session apply with same source returns same session" {
   let session = MarkdownDocumentSession::new("# Title\n\nBody")
   let next = session.apply(
     MarkdownEditTransaction::from_sources(
-      session.source,
-      session.source,
+      session.source(),
+      session.source(),
       reason=TextInput,
     ),
   )
   // When the source is unchanged, apply returns the same session.
-  inspect(next.source, content=session.source)
+  inspect(next.source(), content=session.source())
   inspect(next.revision, content=session.revision.to_string())
   inspect(next.parse_count, content=session.parse_count.to_string())
 }
@@ -346,9 +346,9 @@ test "markdown document session replace_source returns new session" {
   let session = MarkdownDocumentSession::new("# Old\n\nBody")
   let next = session.replace_source("# New\n\nBody")
   // Original session is unchanged.
-  inspect(session.source, content="# Old\n\nBody")
+  inspect(session.source(), content="# Old\n\nBody")
   // New session has the new source.
-  assert_true(next.source.contains("New"))
+  assert_true(next.source().contains("New"))
   inspect(next.revision, content="1")
 }
 
@@ -372,7 +372,7 @@ test "markdown document session snapshot produces consistent metadata" {
   let session = MarkdownDocumentSession::new("# Title\n\nParagraph text")
   let font = @core.FontSpec::new(size=16.0)
   let snapshot = session.snapshot(base=font)
-  inspect(snapshot.source, content=session.source)
+  inspect(snapshot.source, content=session.source())
   inspect(snapshot.line_count, content=session.line_count.to_string())
   inspect(snapshot.word_count, content=session.word_count.to_string())
   inspect(

@@ -246,7 +246,7 @@ fn[Msg] controlled_markdown_session_editor_snapshot(
           @core.ViewSemanticsActionResult::message(
             on_transaction(
               MarkdownEditTransaction::from_sources(
-                node.session.source,
+                node.session.source(),
                 next_source,
                 caret=text_length(next_source),
                 selection=None,
@@ -294,7 +294,7 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn declaration(self) 
     layout=rich_text_exact_channel(declaration_size_key(self.size)),
     paint=rich_text_exact_channel(
       rich_text_record_key("MarkdownSessionEditor.paint", [
-        ("source", @core.DeclarationKey::string(self.session.source)),
+        ("source", @core.DeclarationKey::string(self.session.source())),
         ("selection_caret", @core.DeclarationKey::int(self.selection.caret)),
         (
           "selection_range",
@@ -371,7 +371,7 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn text_input_state(
 ) {
   Some(
     markdown_session_input_state(
-      text=self.session.source,
+      text=self.session.source(),
       frame=ctx.frame,
       session=self.session,
       selection=self.selection,

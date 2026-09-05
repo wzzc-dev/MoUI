@@ -3,6 +3,7 @@ package "wzzc-dev/moui_richtext"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/ref",
   "wzzc-dev/moui/core",
 }
 
@@ -52,6 +53,14 @@ pub fn markdown_editor_max_int(Int, Int) -> Int
 pub fn markdown_editor_outdent_lines(String, Int, @core.TextRange?) -> RichTextInputTransform?
 
 pub fn markdown_editor_preview_text(String) -> String
+
+pub fn markdown_editor_probe_bucket(String) -> MarkdownEditorProbeBucket
+
+pub fn[A] markdown_editor_probe_capture(String, () -> A) -> A
+
+pub fn markdown_editor_probe_report() -> String
+
+pub fn markdown_editor_probe_reset() -> Unit
 
 pub fn markdown_editor_range_has_inline_marker(String, @core.TextRange, String) -> Bool
 
@@ -205,7 +214,7 @@ pub(all) struct MarkdownDocumentRichTextWindow {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct MarkdownDocumentSession {
-  source : String
+  text_store : MarkdownDocumentTextStore
   source_length : Int
   source_digest : UInt64
   blocks : Array[MarkdownDocumentBlock]
@@ -234,6 +243,23 @@ pub fn MarkdownDocumentSession::snapshot(Self, base? : @core.FontSpec, base_dir?
 pub fn MarkdownDocumentSession::source(Self) -> String
 pub fn MarkdownDocumentSession::source_offset_y(Self, Int, base? : @core.FontSpec, source_mode? : Bool, content_width? : Double) -> Double
 pub fn MarkdownDocumentSession::with_layout_cache(Self, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double, text_system? : @core.TextSystem) -> Self
+
+pub(all) struct MarkdownDocumentTextStore {
+  segments : @ref.Ref[Array[MarkdownTextSegment]]
+  revision : @ref.Ref[Int]
+  materialized : @ref.Ref[(Int, String)]
+}
+pub fn MarkdownDocumentTextStore::edit(Self, MarkdownSourceRange, String) -> Unit
+pub fn MarkdownDocumentTextStore::from_texts(Array[String]) -> Self
+pub fn MarkdownDocumentTextStore::length(Self) -> Int
+pub fn MarkdownDocumentTextStore::new(String) -> Self
+pub fn MarkdownDocumentTextStore::replace_all(Self, String) -> Unit
+pub fn MarkdownDocumentTextStore::revision(Self) -> Int
+pub fn MarkdownDocumentTextStore::source(Self) -> String
+pub fn MarkdownDocumentTextStore::text_of(Self, Int, Int) -> String
+pub impl Eq for MarkdownDocumentTextStore
+pub impl ToJson for MarkdownDocumentTextStore
+pub impl @debug.Debug for MarkdownDocumentTextStore
 
 pub(all) enum MarkdownEditReason {
   LoadDocument
@@ -315,6 +341,12 @@ pub(all) struct MarkdownEditorOutlineItem {
 
 type MarkdownEditorParagraphParseResult derive(Eq, @debug.Debug)
 
+pub struct MarkdownEditorProbeBucket {
+  label : String
+  ms : @ref.Ref[Double]
+  count : @ref.Ref[Int]
+}
+
 type MarkdownEditorRunSourceRange derive(Eq, @debug.Debug)
 
 pub(all) struct MarkdownEditorSelection {
@@ -386,6 +418,12 @@ type MarkdownSetextHeadingParseResult derive(Eq, @debug.Debug)
 pub(all) struct MarkdownSourceRange {
   start : Int
   end : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MarkdownTextSegment {
+  mut start : Int
+  mut end : Int
+  mut text : String
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RichTextBlock {

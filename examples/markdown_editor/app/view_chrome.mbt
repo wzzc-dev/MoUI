@@ -6,7 +6,7 @@ fn MarkdownEditorApp::root(
 ) -> @moui.View[MarkdownEditorMsg] {
   let theme = self.chrome_theme()
   let session = self.document_session
-  let document = session.source
+  let document = session.source()
   let appearance = self.appearance_spec()
   let editor_font = markdown_editor_appearance_font(appearance)
   let zen = self.zen_mode_enabled
@@ -777,7 +777,7 @@ fn markdown_editor_document_info_from_session(
   session : MarkdownDocumentSession,
 ) -> MarkdownEditorDocumentInfo {
   markdown_editor_document_info_from_parts(
-    session.source,
+    session.source(),
     session.editor_blocks,
   )
 }

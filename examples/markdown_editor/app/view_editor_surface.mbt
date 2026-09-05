@@ -953,7 +953,7 @@ fn editor_source_layout(
   }
   if show_source {
     side_children.push(
-      source_inspector(session.source, theme, height=viewport_height),
+      source_inspector(session.source(), theme, height=viewport_height),
     )
   }
   let editor_and_sidebars = row(

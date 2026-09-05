@@ -25,7 +25,7 @@ fn markdown_session_display_session(
   session : MarkdownDocumentSession,
   display_text : String,
 ) -> MarkdownDocumentSession {
-  if display_text == session.source {
+  if display_text == session.source() {
     session
   } else {
     // Composition is live: paints and host IME polls re-derive this
@@ -93,7 +93,10 @@ fn markdown_session_input_transform(
   range : @core.TextRange?,
   inserted : String,
 ) -> RichTextInputTransform? {
-  markdown_editor_transform_input(source, caret, range, inserted)
+  markdown_editor_probe_capture(
+    "ctrl.transform_chain",
+    fn() { markdown_editor_transform_input(source, caret, range, inserted) },
+  )
 }
 
 ///|
@@ -102,15 +105,19 @@ fn[Msg] markdown_session_on_input_edit(
   on_transaction : (MarkdownEditTransaction) -> Msg,
 ) -> (String, Int, @core.TextRange?) -> Msg {
   (next_source, caret, next_selection) => {
-    on_transaction(
-      MarkdownEditTransaction::from_sources(
-        session.source,
-        next_source,
-        caret~,
-        selection=next_selection,
-        reason=TextInput,
-      ),
+    let transaction = markdown_editor_probe_capture(
+      "txn.from_sources",
+      fn() {
+        MarkdownEditTransaction::from_sources(
+          session.source(),
+          next_source,
+          caret~,
+          selection=next_selection,
+          reason=TextInput,
+        )
+      },
     )
+    on_transaction(transaction)
   }
 }
 
@@ -148,7 +155,7 @@ fn markdown_session_editor_paint(
       border
     },
   )
-  let text = session.source
+  let text = session.source()
   let display_text = rich_text_with_composition(
     text,
     ctx.text_control,
@@ -185,7 +192,7 @@ fn markdown_session_editor_paint(
       text_system=ctx.text_system,
     )
     let window_content = window.content_rect(content)
-    if display_text == session.source &&
+    if display_text == session.source() &&
       !source_mode &&
       content.size.width > 0.0 {
       markdown_session_record_measured_block_heights(
@@ -258,7 +265,7 @@ fn[Msg] markdown_session_editor_event(
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
 ) -> @core.ViewEventResult[Msg] {
-  let value = session.source
+  let value = session.source()
   let on_input_edit = markdown_session_on_input_edit(session, on_transaction)
   match ctx.event {
     @core.AppEvent::Pointer(event) =>
@@ -284,7 +291,7 @@ fn[Msg] markdown_session_editor_event(
       // 视觉位置（考虑 scroll offset），所以在这里预处理，而不是走
       // rich_text_keyboard_event 的通用 format(text) 路径。
       if event.pressed && (event.key == "ArrowUp" || event.key == "ArrowDown") {
-        let text = session.source
+        let text = session.source()
         let window = markdown_session_visible_window(
           session,
           selection,
@@ -383,7 +390,7 @@ fn[Msg] markdown_session_pointer_event(
   match event.phase {
     @core.PointerPhase::Down =>
       if inside {
-        let text = session.source
+        let text = session.source()
         let window = markdown_session_visible_window(
           session,
           selection,
@@ -467,7 +474,7 @@ fn[Msg] markdown_session_pointer_event(
     @core.PointerPhase::Move =>
       match ctx.text_control.text_selection_anchor {
         Some(anchor) => {
-          let text = session.source
+          let text = session.source()
           let window = markdown_session_visible_window(
             session,
             selection,
@@ -602,7 +609,7 @@ fn markdown_session_record_measured_block_heights(
       Some(editor_block) => {
         // Measured heights must come from the block's real inline runs.
         let editor_block = markdown_editor_block_materialized(
-          session.source,
+          session.source(),
           source_length=session.source_length,
           source_digest=session.source_digest,
           editor_block,
@@ -610,7 +617,7 @@ fn markdown_session_record_measured_block_heights(
         let height = rich_text_block_total_height(
           rich_text_block_soft_wrap(
             markdown_editor_block_to_rich_text(
-              session.source,
+              session.source(),
               editor_block,
               base,
               base_dir~,
@@ -669,13 +676,13 @@ fn markdown_session_estimated_caret_inset_x(
     }
     // Caret geometry needs the block's real inline runs.
     let editor_block = markdown_editor_block_materialized(
-      session.source,
+      session.source(),
       source_length=session.source_length,
       source_digest=session.source_digest,
       editor_block,
     )
     let rich_block = markdown_editor_block_to_rich_text(
-      session.source,
+      session.source(),
       editor_block,
       font,
       base_dir~,
@@ -686,7 +693,7 @@ fn markdown_session_estimated_caret_inset_x(
       editor_block.source_range.end,
     )
     let before_caret = markdown_editor_substring(
-      session.source,
+      session.source(),
       editor_block.source_range.start,
       scan_end,
     )
@@ -854,7 +861,7 @@ fn[Msg] markdown_session_editor_command(
   intent : @core.CommandIntent,
   paste_text~ : String?,
 ) -> @core.ViewTextCommandResult[Msg] {
-  let value = session.source
+  let value = session.source()
   let on_input_edit = markdown_session_on_input_edit(session, on_transaction)
   let format_selection = match intent {
     @core.CommandIntent::Copy | @core.CommandIntent::Cut =>
@@ -862,7 +869,7 @@ fn[Msg] markdown_session_editor_command(
     _ => selection
   }
   let format = display_source => {
-    if display_source == session.source {
+    if display_source == session.source() {
       session.rich_text(
         format_selection,
         base=font,

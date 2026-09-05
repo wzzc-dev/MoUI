@@ -33,7 +33,7 @@ fn hot_path_bench_input(fixture : String, keystrokes : Int) -> Unit {
   let baseline_start = @bench.monotonic_clock_start()
   for _ in 0..<keystrokes {
     baseline_session = MarkdownDocumentSession::new(
-      baseline_session.source + "x",
+      baseline_session.source() + "x",
     )
     baseline_keep = baseline_keep + baseline_session.blocks.length()
   }
@@ -45,8 +45,8 @@ fn hot_path_bench_input(fixture : String, keystrokes : Int) -> Unit {
   for _ in 0..<keystrokes {
     current = current.apply(
       MarkdownEditTransaction::from_sources(
-        current.source,
-        current.source + "x",
+        current.source(),
+        current.source() + "x",
         reason=TextInput,
       ),
     )
