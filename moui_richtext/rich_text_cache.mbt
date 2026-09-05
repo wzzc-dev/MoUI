@@ -92,9 +92,17 @@ let rich_text_block_heights_epoch : Ref[Int] = Ref(0)
 /// empty `heights` caches the “no measured geometry yet” verdict; the
 /// epoch check revives it once paints record measured heights.
 priv struct MarkdownDocumentScrollGeometry {
+  // Content identity this geometry was built for. The entry is shared and
+  // mutated in place: an incremental edit rebases the live entry (splice
+  // the re-parse window, point-update or rebuild the Fenwick tree) instead
+  // of walking every block again.
+  mut source_digest : UInt64
+  mut source_length : Int
+  // Element writes go through the array; only the tree is replaced
+  // wholesale on a count-changing rebase.
   heights : Array[Double]
   /// 1-based Fenwick tree over `heights`, length `heights.length() + 1`.
-  tree : Array[Double]
+  mut tree : Array[Double]
   epoch : Int
 }
 
@@ -104,7 +112,18 @@ priv struct MarkdownDocumentScrollGeometry {
 fn markdown_document_scroll_geometry_from_heights(
   heights : Array[Double],
   epoch~ : Int,
+  source_digest~ : UInt64,
+  source_length~ : Int,
 ) -> MarkdownDocumentScrollGeometry {
+  let tree = markdown_document_scroll_geometry_build_tree(heights)
+  { heights, tree, epoch, source_digest, source_length }
+}
+
+///|
+/// O(n) Fenwick build over `heights` (1-based internal layout).
+fn markdown_document_scroll_geometry_build_tree(
+  heights : Array[Double],
+) -> Array[Double] {
   let count = heights.length()
   let limit = count + 1
   let tree : Array[Double] = []
@@ -119,7 +138,7 @@ fn markdown_document_scroll_geometry_from_heights(
       tree[parent] = tree[parent] + tree[i]
     }
   }
-  { heights, tree, epoch }
+  tree
 }
 
 ///|
@@ -757,23 +776,18 @@ fn rich_text_record_block_measured_height(
 }
 
 ///|
-/// Read the persisted scroll geometry for a (font, content width,
-/// source-digest) triple. Returns `None` on miss or when the entry
-/// predates the current measured-height epoch (the epoch only bumps on a
-/// wholesale measured-height eviction; single-block height changes are
-/// applied in place through the Fenwick point update).
+/// Read the live scroll geometry for a (font, content width) pair. The
+/// entry carries its content identity (`source_digest`/`source_length`);
+/// callers decide between an exact hit, an in-place rebase, or a full
+/// rebuild. Returns `None` when no entry exists or the entry predates the
+/// current measured-height epoch (the epoch only bumps on a wholesale
+/// measured-height eviction; single-block height changes are applied in
+/// place through the Fenwick point update).
 fn markdown_document_scroll_geometry_get(
   base : @core.FontSpec,
   width~ : Double,
-  source_digest~ : UInt64,
-  source_length~ : Int,
 ) -> MarkdownDocumentScrollGeometry? {
-  let key = markdown_document_scroll_geometry_key(
-    base,
-    width~,
-    source_digest~,
-    source_length~,
-  )
+  let key = markdown_document_scroll_geometry_key(base, width~)
   match markdown_document_scroll_geometry_cache.get(key) {
     Some(entry) =>
       if entry.epoch == rich_text_block_heights_epoch.val {
@@ -789,15 +803,11 @@ fn markdown_document_scroll_geometry_get(
 fn markdown_document_scroll_geometry_key(
   base : @core.FontSpec,
   width~ : Double,
-  source_digest~ : UInt64,
-  source_length~ : Int,
 ) -> String {
   rich_text_cache_join_key([
     "scroll-geometry",
     rich_text_cache_font_key(base),
     width.to_string(),
-    source_length.to_string(),
-    source_digest.to_string(),
   ])
 }
 
@@ -806,16 +816,10 @@ fn markdown_document_scroll_geometry_put(
   base : @core.FontSpec,
   geometry : MarkdownDocumentScrollGeometry,
   width~ : Double,
-  source_digest~ : UInt64,
-  source_length~ : Int,
 ) -> Unit {
-  let key = markdown_document_scroll_geometry_key(
-    base,
-    width~,
-    source_digest~,
-    source_length~,
-  )
-  if markdown_document_scroll_geometry_cache.length() >= 4 {
+  let key = markdown_document_scroll_geometry_key(base, width~)
+  if markdown_document_scroll_geometry_cache.length() >= 4 &&
+    !markdown_document_scroll_geometry_cache.contains(key) {
     markdown_document_scroll_geometry_cache.clear()
   }
   markdown_document_scroll_geometry_cache.set(key, geometry)

@@ -675,7 +675,9 @@ fn[Msg] view_event_result(
 
 ///|
 fn text_length(text : String) -> Int {
-  text.char_length()
+  // Route through the memoized length so per-frame caret/overlay math on
+  // a whole-document text does not re-decode megabytes every frame.
+  markdown_editor_text_length(text)
 }
 
 ///|
