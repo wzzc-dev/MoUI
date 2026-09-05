@@ -205,7 +205,7 @@ fn markdown_editor_paste_lines(input : String) -> Array[String] {
   )
   let result : Array[String] = []
   for line in lines {
-    result.push(line.text)
+    result.push(line.text.to_owned())
   }
   result
 }

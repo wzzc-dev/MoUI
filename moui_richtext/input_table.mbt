@@ -622,7 +622,7 @@ fn markdown_editor_source_lines_for_range(
   let lines : Array[String] = []
   for line in markdown_editor_lines(source) {
     if line.start >= range.start && line.end <= range.end {
-      lines.push(line.text)
+      lines.push(line.text.to_owned())
     }
   }
   lines

@@ -667,7 +667,7 @@ fn markdown_heading_source(level : Int, text : String) -> String {
 }
 
 ///|
-fn markdown_heading_visible_source_text(source : String) -> String {
+fn markdown_heading_visible_source_text(source : StringView) -> String {
   let chars = source.to_array()
   let start = markdown_heading_source_content_start_offset(source)
   let end = markdown_heading_source_content_end_offset(source, start)
@@ -675,7 +675,7 @@ fn markdown_heading_visible_source_text(source : String) -> String {
 }
 
 ///|
-fn markdown_heading_source_content_start_offset(source : String) -> Int {
+fn markdown_heading_source_content_start_offset(source : StringView) -> Int {
   let chars = source.to_array()
   let mut index = 0
   while index < chars.length() && (chars[index] == ' ' || chars[index] == '\t') {
@@ -692,7 +692,7 @@ fn markdown_heading_source_content_start_offset(source : String) -> Int {
 
 ///|
 fn markdown_heading_source_content_end_offset(
-  source : String,
+  source : StringView,
   content_start : Int,
 ) -> Int {
   let chars = source.to_array()

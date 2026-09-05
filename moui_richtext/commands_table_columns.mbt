@@ -48,18 +48,18 @@ fn markdown_editor_insert_table_column_after_cell(
     }
     if line.start < block.source_range.start ||
       line.end > block.source_range.end {
-      text = text + line.text
+      text = text + line.text.to_owned()
       continue
     }
     let inserted_text = if table_line_index == 1 {
       markdown_editor_insert_table_column_in_line(
-        line.text,
+        line.text.to_owned(),
         current.column,
         "---",
       )
     } else {
       let next = markdown_editor_insert_table_column_in_line(
-        line.text,
+        line.text.to_owned(),
         current.column,
         "",
       )
@@ -198,18 +198,18 @@ fn markdown_editor_rewrite_table_alignment(
     }
     if line.start < block.source_range.start ||
       line.end > block.source_range.end {
-      text = text + line.text
+      text = text + line.text.to_owned()
       continue
     }
     if table_line_index == 1 {
       text = text +
         markdown_editor_rewrite_table_alignment_line(
-          line.text,
+          line.text.to_owned(),
           current.column,
           align,
         )
     } else {
-      text = text + line.text
+      text = text + line.text.to_owned()
     }
     table_line_index = table_line_index + 1
   }
@@ -302,12 +302,12 @@ fn markdown_editor_rewrite_table_column(
     }
     if line.start < block.source_range.start ||
       line.end > block.source_range.end {
-      text = text + line.text
+      text = text + line.text.to_owned()
       continue
     }
     let replacement = if table_line_index == 1 {
       markdown_editor_rewrite_table_column_in_line(
-        line.text,
+        line.text.to_owned(),
         column,
         "",
         delete~,
@@ -315,7 +315,7 @@ fn markdown_editor_rewrite_table_column(
       )
     } else {
       let next = markdown_editor_rewrite_table_column_in_line(
-        line.text,
+        line.text.to_owned(),
         column,
         "",
         delete~,

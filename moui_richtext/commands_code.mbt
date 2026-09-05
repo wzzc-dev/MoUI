@@ -130,11 +130,14 @@ fn markdown_editor_containing_quoted_code_block(
   let anchor_line = markdown_editor_line_index_at_offset(lines, anchor)
   let mut open_index = anchor_line
   while open_index >= 0 {
-    match markdown_editor_quoted_code_fence_opening(lines[open_index].text) {
+    match
+      markdown_editor_quoted_code_fence_opening(
+        lines[open_index].text.to_owned(),
+      ) {
       Some(opening) =>
         for close_index in (open_index + 1)..<lines.length() {
           if markdown_editor_quoted_code_fence_closing(
-              lines[close_index].text,
+              lines[close_index].text.to_owned(),
               opening,
             ) {
             if anchor >= lines[open_index].start &&
@@ -433,7 +436,7 @@ fn markdown_editor_code_block_quote_prefix(selected : String) -> String {
   if lines.length() == 0 {
     return ""
   }
-  let prefix = markdown_editor_quote_context_prefix(lines[0].text)
+  let prefix = markdown_editor_quote_context_prefix(lines[0].text.to_owned())
   if prefix == "" {
     return ""
   }
