@@ -90,6 +90,53 @@ pub fn MarkdownDocumentTextStore::from_texts(
 }
 
 ///|
+/// Segment the document once at (mostly ascending, non-negative) char
+/// boundaries — typically the block starts, so every local read
+/// (`text_of`, `char_at`) stays bounded by one block instead of the
+/// document. One linear char pass over `source`; the materialized cache
+/// is seeded with `source` itself, so the whole text stays free to read.
+pub fn MarkdownDocumentTextStore::segmented(
+  source : String,
+  boundaries : Array[Int],
+) -> MarkdownDocumentTextStore {
+  let segments : Array[MarkdownTextSegment] = []
+  let mut next = 0
+  while next < boundaries.length() && boundaries[next] <= 0 {
+    next = next + 1
+  }
+  let mut segment_start = 0
+  let mut current = StringBuilder()
+  let mut char_index = 0
+  for ch in source {
+    current.write_char(ch)
+    char_index = char_index + 1
+    if next < boundaries.length() && char_index == boundaries[next] {
+      segments.push({
+        start: segment_start,
+        end: char_index,
+        text: current.to_string(),
+      })
+      segment_start = char_index
+      current = StringBuilder()
+      next = next + 1
+      while next < boundaries.length() && boundaries[next] <= char_index {
+        next = next + 1
+      }
+    }
+  }
+  segments.push({
+    start: segment_start,
+    end: char_index,
+    text: current.to_string(),
+  })
+  {
+    segments: Ref(segments),
+    revision: Ref(0),
+    materialized: Ref((0, source)),
+  }
+}
+
+///|
 /// Rebuild the store in place from a whole new text (open, undo restore,
 /// external replace). The previous contents are dropped entirely.
 pub fn MarkdownDocumentTextStore::replace_all(
@@ -134,6 +181,45 @@ pub fn MarkdownDocumentTextStore::source(self : MarkdownDocumentTextStore) -> St
     self.materialized.val = (revision, joined)
     joined
   }
+}
+
+///|
+/// Adopt an already-materialized whole text (a caller — typically the
+/// editing control — just produced exactly this revision's full string).
+/// Records it as the cache without copying or joining; segment reads
+/// still go through the segment array.
+pub fn MarkdownDocumentTextStore::seed(
+  self : MarkdownDocumentTextStore,
+  text : String,
+) -> Unit {
+  self.materialized.val = (self.revision.val, text)
+}
+
+///|
+/// Char at a char-space offset, resolved through the segment index: a
+/// binary search plus a scan bounded by the containing segment, never by
+/// the document.
+pub fn MarkdownDocumentTextStore::char_at(
+  self : MarkdownDocumentTextStore,
+  index : Int,
+) -> Char? {
+  let segments = self.segments.val
+  if index < 0 {
+    return None
+  }
+  let segment_index = markdown_text_store_segment_index(segments, index)
+  if segment_index >= segments.length() {
+    return None
+  }
+  let segment = segments[segment_index]
+  let mut char_index = segment.start
+  for ch in segment.text {
+    if char_index == index {
+      return Some(ch)
+    }
+    char_index = char_index + 1
+  }
+  None
 }
 
 ///|

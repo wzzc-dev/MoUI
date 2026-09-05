@@ -618,10 +618,14 @@ fn markdown_document_session_apply_incremental(
   session : MarkdownDocumentSession,
   transaction : MarkdownEditTransaction,
 ) -> MarkdownDocumentSession? {
-  let deleted = markdown_editor_substring(
-    transaction.previous_source,
-    transaction.edit_range.start,
-    transaction.edit_range.end,
+  let deleted = markdown_editor_probe_capture(
+    "inc.deleted_slice",
+    fn() {
+      session.text_store.text_of(
+        transaction.edit_range.start,
+        transaction.edit_range.end,
+      )
+    },
   )
   let blocks = session.editor_blocks
   let edit_in_front_matter = blocks.length() > 0 &&
@@ -664,19 +668,33 @@ fn markdown_document_session_apply_incremental(
         markdown_editor_text_length(deleted)
       let region_end = if cluster.end_index >=
         session.editor_blocks.length() - 1 {
-        markdown_editor_text_length(transaction.previous_source)
+        session.source_length
       } else {
         cluster.end_block_end
       }
+      // The session text store is the document's live text: advance it in
+      // place once per apply, then adopt the string the control already
+      // materialized so the whole text stays a free read. Every read the
+      // bookkeeping needs from the old text (`deleted` above) happened
+      // before this point.
+      markdown_editor_probe_capture(
+        "inc.store_edit",
+        fn() {
+          session.text_store.edit(
+            transaction.edit_range,
+            transaction.replacement,
+          )
+          session.text_store.seed(transaction.source)
+        },
+      )
       let region_slice = markdown_editor_probe_capture(
         "inc.region_slice",
         fn() {
-          markdown_editor_substring(
-            transaction.source,
+          session.text_store.text_of(
             cluster.start_block_start,
             markdown_editor_min_int(
               region_end + delta,
-              markdown_editor_text_length(transaction.source),
+              session.source_length + delta,
             ),
           )
         },
@@ -745,7 +763,15 @@ fn markdown_document_session_apply_incremental(
       // session construction below.
       let next_source_digest = markdown_editor_probe_capture(
         "inc.digest",
-        fn() { markdown_document_source_digest(transaction.source) },
+        fn() {
+          markdown_document_edit_digest(
+            session.source_digest,
+            length=session.source_length + delta,
+            start=transaction.edit_range.start,
+            deleted=deleted,
+            replacement=transaction.replacement,
+          )
+        },
       )
       markdown_reference_definitions_cache_store_keyed(
         source_length=transaction.source.length(),
@@ -776,6 +802,7 @@ fn markdown_document_session_apply_incremental(
         dirty_range=dirty,
         reindex=Some(reindex),
         source_digest=Some(next_source_digest),
+        text_store=Some(session.text_store),
       )
       }) |> Some
     }
@@ -2092,6 +2119,11 @@ fn markdown_document_session_from_blocks(
   // Precomputed content digest for this source; callers that already hold
   // one (the incremental apply) skip the second whole-source hash.
   source_digest? : UInt64? = None,
+  // The live document store already advanced by the incremental apply.
+  // When present the session adopts it; otherwise one is seeded from
+  // `source`, segmented per block on large documents so local text reads
+  // never scan the whole document.
+  text_store? : MarkdownDocumentTextStore? = None,
 ) -> MarkdownDocumentSession {
   // Only trust the reindex window when it describes the sessions exactly;
   // every derived bookkeeping step falls back to its full computation
@@ -2180,13 +2212,32 @@ fn markdown_document_session_from_blocks(
       _ => markdown_editor_outline(editor_blocks)
     }
   })
+  // The store seeds the whole-source view from `source`: every builder
+  // here already holds the materialized text (document open, full
+  // rebuild, or a transaction carrying the next text), so seeding costs
+  // no copy. Documents with many blocks get a store segmented at the
+  // block starts — one linear pass at build time that keeps every later
+  // local read (word probes, region slices) block-bounded.
+  let text_store = match text_store {
+    Some(store) => store
+    None if editor_blocks.length() > 32 =>
+      markdown_editor_probe_capture(
+        "fb.store_segment",
+        fn() {
+          let boundaries : Array[Int] = []
+          for index, block in editor_blocks {
+            if index > 0 {
+              boundaries.push(block.source_range.start)
+            }
+          }
+          MarkdownDocumentTextStore::segmented(source, boundaries)
+        },
+      )
+    None => MarkdownDocumentTextStore::new(source)
+  }
   {
-    // The store seeds the whole-source view from `source`: every builder
-    // here already holds the materialized text (document open, full
-    // rebuild, or a transaction carrying the next text), so seeding costs
-    // no copy.
-    text_store: MarkdownDocumentTextStore::new(source),
-    source_length: markdown_editor_text_length(source),
+    text_store,
+    source_length: text_store.length(),
     source_digest: match source_digest {
       Some(digest) => digest
       None => markdown_document_source_digest(source)
@@ -2602,10 +2653,11 @@ fn markdown_document_word_count_after_edit(
   previous : MarkdownDocumentSession,
   window : MarkdownDocumentReindexWindow,
 ) -> Int {
-  let before = markdown_document_char_at(
-    previous.source(),
-    index=window.edit_start - 1,
-  )
+  // The shared store already carries the post-edit text by the time the
+  // bookkeeping runs: the left probe sits before the edit start (its char
+  // is untouched by the splice) and the right probe is taken after the
+  // replacement instead of after the deleted span.
+  let before = previous.text_store.char_at(window.edit_start - 1)
   let before_whitespace = match before {
     None => true
     Some(ch) => ch.is_ascii_whitespace()
@@ -2618,10 +2670,9 @@ fn markdown_document_word_count_after_edit(
     window.replacement,
     after_whitespace=before_whitespace,
   )
-  let deleted_length = markdown_editor_text_length(window.deleted)
-  let after = markdown_document_char_at(
-    previous.source(),
-    index=window.edit_start + deleted_length,
+  let replacement_length = markdown_editor_text_length(window.replacement)
+  let after = previous.text_store.char_at(
+    window.edit_start + replacement_length,
   )
   let boundary = match after {
     Some(ch) if !ch.is_ascii_whitespace() =>

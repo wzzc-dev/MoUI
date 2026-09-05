@@ -171,8 +171,32 @@ fn markdown_document_scroll_geometry_set_height(
 ///|
 /// Cheap content identity for the session source, computed once per
 /// session construction so cache keys never concatenate the document.
+/// The keys it feeds (definition sets, scroll geometry) are process-local
+/// caches revalidated against the length and epoch carried alongside, so
+/// only injectivity matters — see `markdown_document_edit_digest` for how
+/// an incremental edit chains the identity without re-hashing the
+/// document.
 fn markdown_document_source_digest(source : String) -> UInt64 {
   rich_text_digest_string(0xcbf29ce484222325UL, source)
+}
+
+///|
+/// Chain the previous identity through one exact edit: the identity stays
+/// a (probabilistically injective) function of the document's content —
+/// the seed digest hashed the whole text, and every later change is
+/// mixed in by position and payload — while an incremental keystroke pays
+/// only for the edit strings instead of a whole-source hash.
+fn markdown_document_edit_digest(
+  previous : UInt64,
+  length~ : Int,
+  start~ : Int,
+  deleted~ : String,
+  replacement~ : String,
+) -> UInt64 {
+  let hash = rich_text_digest_mix(previous, length.to_uint64())
+  let hash = rich_text_digest_mix(hash, start.to_uint64())
+  let hash = rich_text_digest_string(hash, deleted)
+  rich_text_digest_string(hash, replacement)
 }
 
 ///|
