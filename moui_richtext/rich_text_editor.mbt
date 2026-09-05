@@ -89,6 +89,20 @@ fn[Msg] rich_text_editor_snapshot(
   kind~ : String,
   key~ : String?,
 ) -> @core.View[Msg] {
+  // Internal event paths publish the committed edit record alongside the
+  // text; the public channel keeps its three-argument shape and ignores it.
+  let on_input_edit = match on_input_edit {
+    Some(handler) =>
+      Some(
+        fn(
+          text : String,
+          caret : Int,
+          selection : @core.TextRange?,
+          _edit : RichTextInputEdit?,
+        ) { handler(text, caret, selection) },
+      )
+    None => None
+  }
   let value_snapshot = value
   @core.View::from_node(
     RichTextEditorViewNode::{
@@ -163,7 +177,7 @@ fn[Msg] rich_text_editor_snapshot(
             None => ()
           }
           match on_input_edit {
-            Some(handler) => messages.push(handler(next_text, caret, None))
+            Some(handler) => messages.push(handler(next_text, caret, None, None))
             None => ()
           }
           @core.ViewSemanticsActionResult::accepted(

@@ -279,6 +279,7 @@ pub(all) struct MarkdownEditTransaction {
   selection : @core.TextRange?
   reason : MarkdownEditReason
 } derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownEditTransaction::from_edit(String, String, Int, deleted? : String, replacement? : String, caret? : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::from_edit_result(String, MarkdownEditorEditResult, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::from_input_transform(String, RichTextInputTransform, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::from_sources(String, String, caret? : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self

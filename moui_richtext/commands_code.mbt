@@ -127,6 +127,21 @@ fn markdown_editor_containing_quoted_code_block(
     0,
     markdown_editor_text_length(source),
   )
+  markdown_editor_quoted_code_block_scan(lines, anchor)
+}
+
+///|
+/// The quoted-fence scan over precomputed absolute-offset lines: walks up
+/// from the anchor line to the opening quoted fence and closes it downward.
+/// Quoted fences only ever sit on quote-prefixed lines, so callers may
+/// narrow the line array to the enclosing quote block.
+fn markdown_editor_quoted_code_block_scan(
+  lines : Array[MarkdownLine],
+  anchor : Int,
+) -> MarkdownEditorQuotedCodeBlock? {
+  if lines.length() < 2 {
+    return None
+  }
   let anchor_line = markdown_editor_line_index_at_offset(lines, anchor)
   let mut open_index = anchor_line
   while open_index >= 0 {

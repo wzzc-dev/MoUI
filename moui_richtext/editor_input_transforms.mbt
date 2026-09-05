@@ -1,9 +1,21 @@
 ///|
+/// Block structure and text store handed to the transform chain so the
+/// code-block lookups resolve against the session's current blocks instead
+/// of re-parsing (and re-line-splitting) the whole source on every
+/// keystroke. Callers must pass the blocks of exactly the text handed to
+/// the chain (the pre-edit session state).
+pub(all) struct MarkdownEditorInputContext {
+  blocks : Array[MarkdownEditorBlock]
+  store : MarkdownDocumentTextStore
+}
+
+///|
 pub fn markdown_editor_transform_input(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
   input : String,
+  context? : MarkdownEditorInputContext? = None,
 ) -> RichTextInputTransform? {
   match
     markdown_editor_paste_footnote_definition(source, caret, selection, input) {
@@ -93,8 +105,9 @@ pub fn markdown_editor_transform_input(
       None => ()
     }
   }
-  if markdown_editor_code_block_at_content_offset(source, caret, selection)
-    is Some(block) {
+  if markdown_editor_code_block_at_content_offset(
+    source, caret, selection, context=context,
+  ) is Some(block) {
     if input == "\n" {
       match
         markdown_editor_exit_empty_code_block_on_enter(source, block, caret) {
@@ -107,7 +120,10 @@ pub fn markdown_editor_transform_input(
   }
   match
     markdown_editor_quoted_code_block_at_content_offset(
-      source, caret, selection,
+      source,
+      caret,
+      selection,
+      context=context,
     ) {
     Some(block) =>
       if input == "\n" {

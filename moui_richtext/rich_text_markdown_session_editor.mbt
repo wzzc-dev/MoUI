@@ -87,34 +87,65 @@ fn markdown_session_visible_window(
 }
 
 ///|
-fn markdown_session_input_transform(
-  source : String,
-  caret : Int,
-  range : @core.TextRange?,
-  inserted : String,
-) -> RichTextInputTransform? {
-  markdown_editor_probe_capture(
-    "ctrl.transform_chain",
-    fn() { markdown_editor_transform_input(source, caret, range, inserted) },
-  )
+/// Input transform bound to a session: hands the chain the session's
+/// current block structure and text store so code-block detection reads
+/// block ranges instead of re-parsing the whole document per keystroke.
+fn markdown_session_input_transform_for(
+  session : MarkdownDocumentSession,
+) -> (String, Int, @core.TextRange?, String) -> RichTextInputTransform? {
+  let context : MarkdownEditorInputContext = {
+    blocks: session.editor_blocks,
+    store: session.text_store,
+  }
+  fn(source : String, caret : Int, range : @core.TextRange?, inserted : String) {
+    markdown_editor_probe_capture(
+      "ctrl.transform_chain",
+      fn() {
+        markdown_editor_transform_input(
+          source,
+          caret,
+          range,
+          inserted,
+          context=Some(context),
+        )
+      },
+    )
+  }
 }
 
 ///|
 fn[Msg] markdown_session_on_input_edit(
   session : MarkdownDocumentSession,
   on_transaction : (MarkdownEditTransaction) -> Msg,
-) -> (String, Int, @core.TextRange?) -> Msg {
-  (next_source, caret, next_selection) => {
+) -> (String, Int, @core.TextRange?, RichTextInputEdit?) -> Msg {
+  (next_source, caret, next_selection, edit) => {
     let transaction = markdown_editor_probe_capture(
       "txn.from_sources",
       fn() {
-        MarkdownEditTransaction::from_sources(
-          session.source(),
-          next_source,
-          caret~,
-          selection=next_selection,
-          reason=TextInput,
-        )
+        match edit {
+          // The control knows the exact range it replaced; carrying it
+          // out skips the whole-document prefix/suffix diff that
+          // `from_sources` performs to recover it.
+          Some(edit) =>
+            MarkdownEditTransaction::from_edit(
+              session.source(),
+              next_source,
+              edit.start,
+              deleted=edit.deleted,
+              replacement=edit.replacement,
+              caret~,
+              selection=next_selection,
+              reason=TextInput,
+            )
+          None =>
+            MarkdownEditTransaction::from_sources(
+              session.source(),
+              next_source,
+              caret~,
+              selection=next_selection,
+              reason=TextInput,
+            )
+        }
       },
     )
     on_transaction(transaction)
@@ -335,7 +366,7 @@ fn[Msg] markdown_session_editor_event(
         on_input=None,
         on_input_edit=Some(on_input_edit),
         on_selection_change~,
-        input_transform=Some(markdown_session_input_transform),
+        input_transform=Some(markdown_session_input_transform_for(session)),
         accepts_tab_input~,
         event~,
       )
@@ -347,7 +378,7 @@ fn[Msg] markdown_session_editor_event(
         on_input=None,
         on_input_edit=Some(on_input_edit),
         on_selection_change~,
-        input_transform=Some(markdown_session_input_transform),
+        input_transform=Some(markdown_session_input_transform_for(session)),
         event~,
         record_history=true,
       )
@@ -896,7 +927,7 @@ fn[Msg] markdown_session_editor_command(
     on_input=None,
     on_input_edit=Some(on_input_edit),
     on_selection_change~,
-    input_transform=Some(markdown_session_input_transform),
+    input_transform=Some(markdown_session_input_transform_for(session)),
     intent,
     paste_text~,
   )

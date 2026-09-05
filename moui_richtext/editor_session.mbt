@@ -286,6 +286,34 @@ pub fn MarkdownEditTransaction::from_input_transform(
 }
 
 ///|
+/// Build a transaction directly from the committed edit range (the shape
+/// `from_sources` recovers by scanning both documents). The ranges are
+/// already grapheme-normalized by the text control.
+pub fn MarkdownEditTransaction::from_edit(
+  previous_source : String,
+  source : String,
+  start : Int,
+  deleted~ : String,
+  replacement~ : String,
+  caret~ : Int,
+  selection~ : @core.TextRange? = None,
+  reason~ : MarkdownEditReason = TextInput,
+) -> MarkdownEditTransaction {
+  {
+    previous_source,
+    source,
+    edit_range: {
+      start,
+      end: start + markdown_editor_text_length(deleted),
+    },
+    replacement,
+    caret,
+    selection,
+    reason,
+  }
+}
+
+///|
 pub fn MarkdownDocumentSession::new(source : String) -> MarkdownDocumentSession {
   hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
   // Opening a document runs the shell parse: one linear scan for block
@@ -2074,11 +2102,40 @@ fn markdown_document_session_from_blocks(
         prev,
         editor_blocks.length(),
       ) => Some(window)
+    (Some(prev), Some(window)) => {
+      // TEMP probe: attribute which fit condition fails on keystrokes.
+      let suffix_old_start =
+        window.suffix_new_start + window.suffix_shift
+      let old_window_count =
+        suffix_old_start - window.prefix_count
+      let failing = if !(window.prefix_count >= 0 &&
+          window.prefix_count <= window.suffix_new_start) {
+        "fit.c1"
+      } else if !(window.suffix_new_start <= editor_blocks.length()) {
+        "fit.c2"
+      } else if !(old_window_count >= 1) {
+        "fit.c3"
+      } else if !(suffix_old_start <= prev.blocks.length()) {
+        "fit.c4"
+      } else if !(suffix_old_start + (editor_blocks.length() -
+            window.suffix_new_start) == prev.blocks.length()) {
+        "fit.c5_count"
+      } else if !(prev.height_index.blocks.length() == prev.blocks.length()) {
+        "fit.c6_height"
+      } else {
+        "fit.c7_region"
+      }
+      let bucket = markdown_editor_probe_bucket(failing)
+      bucket.count.val = bucket.count.val + 1
+      None
+    }
     _ => None
   }
-  markdown_editor_probe_capture("fb.cache_put", fn() {
-    markdown_editor_blocks_cache_put(source, editor_blocks)
-  })
+  // NOTE: no blocks-cache publish here. The hot block-context queries now
+  // read the session's blocks directly (`MarkdownEditorInputContext`);
+  // seeding the 5MB-keyed parse cache on every keystroke was pure
+  // overhead. Command-path queries still memoize through
+  // `parse_markdown_editor_blocks_cached`.
   let word_count = markdown_editor_probe_capture("fb.word_count", fn() {
     match (previous, reuse) {
       (Some(prev), Some(window)) =>
