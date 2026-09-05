@@ -81,14 +81,30 @@ pub(all) enum MarkdownEditorCommand {
 
 ///|
 priv struct MarkdownLine {
-  text : String
+  // A view into the source, not a copy: the shell parse inspects every
+  // line of a document and only a fraction of line texts ever become
+  // block text; copying all of them was the single largest open cost.
+  text : StringView
   start : Int
   end : Int
 }
 
 ///|
+/// Word/line counts produced by the last `markdown_editor_lines` scan.
+/// The line scan already decodes the whole source, so the session
+/// builder gets both counts for free at open. The runtime is
+/// single-threaded; same memo pattern as
+/// `markdown_editor_text_length_cache`.
+let markdown_editor_line_scan_cache : Ref[(String, Int, Int)] = Ref(
+  ("", -1, -1),
+)
+
+///|
 fn markdown_editor_line_count(source : String) -> Int {
-  if source == "" {
+  let cached = markdown_editor_line_scan_cache.val
+  if cached.1 >= 0 && cached.0 == source {
+    cached.2
+  } else if source == "" {
     0
   } else {
     let mut count = 1
@@ -103,41 +119,55 @@ fn markdown_editor_line_count(source : String) -> Int {
 
 ///|
 fn markdown_editor_word_count(source : String) -> Int {
-  let mut count = 0
-  let mut in_word = false
-  for ch in source {
-    if ch.is_ascii_whitespace() {
-      if in_word {
-        count = count + 1
+  let cached = markdown_editor_line_scan_cache.val
+  if cached.1 >= 0 && cached.0 == source {
+    cached.1
+  } else {
+    let mut count = 0
+    let mut in_word = false
+    for ch in source {
+      if ch.is_ascii_whitespace() {
+        if in_word {
+          count = count + 1
+        }
+        in_word = false
+      } else {
+        in_word = true
       }
-      in_word = false
-    } else {
-      in_word = true
     }
+    if in_word {
+      count = count + 1
+    }
+    count
   }
-  if in_word {
-    count = count + 1
-  }
-  count
 }
 
 ///|
 fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
-  // One allocation per line (the owned text slice). The old version pushed
-  // every char into a transient Array[Char] first — on large documents the
-  // extra allocation churn dominated the open cost through GC growth.
-  // `start`/`end` stay in char space (iterator indices, matching the
-  // source ranges the parser produces); the slice bounds are the matching
-  // UTF-16 offsets tracked alongside.
+  // One `StringView` per line: a 3-word view into the source, never a
+  // copy. The old version materialized every line as an owned String (or
+  // before that an Array[Char]) — on large documents that allocation
+  // churn dominated the open cost. `start`/`end` stay in char space
+  // (iterator indices, matching the source ranges the parser produces);
+  // the view bounds are the matching UTF-16 offsets tracked alongside.
+  // The same pass accumulates the document word count, and the line
+  // count drops out of the result, so session construction does not
+  // rescan the source for either.
   let lines : Array[MarkdownLine] = []
   let mut char_start = 0
   let mut char_index = 0
   let mut unit_start = 0
   let mut unit_offset = 0
+  let mut words = 0
+  let mut in_word = false
   for ch in source {
     if ch == '\n' {
+      if in_word {
+        words = words + 1
+        in_word = false
+      }
       lines.push({
-        text: source.sub(start=unit_start, end=unit_offset).to_owned(),
+        text: source.sub(start=unit_start, end=unit_offset),
         start: char_start,
         end: char_index,
       })
@@ -146,15 +176,28 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
       char_start = char_index
       unit_start = unit_offset
     } else {
+      if ch.is_ascii_whitespace() {
+        if in_word {
+          words = words + 1
+        }
+        in_word = false
+      } else {
+        in_word = true
+      }
       unit_offset = unit_offset + ch.utf16_len()
       char_index = char_index + 1
     }
   }
+  if in_word {
+    words = words + 1
+  }
   lines.push({
-    text: source.sub(start=unit_start, end=unit_offset).to_owned(),
+    text: source.sub(start=unit_start, end=unit_offset),
     start: char_start,
     end: char_index,
   })
+  let line_count = if source == "" { 0 } else { lines.length() }
+  markdown_editor_line_scan_cache.val = (source, words, line_count)
   lines
 }
 

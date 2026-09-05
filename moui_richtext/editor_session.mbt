@@ -1622,14 +1622,11 @@ fn markdown_document_block_source_line_counts(
   editor_blocks : Array[MarkdownEditorBlock],
 ) -> Array[Int] {
   let counts : Array[Int] = []
-  if markdown_editor_text_length(source) == 0 {
-    for _ in editor_blocks {
-      counts.push(1)
-    }
-    return counts
-  }
   for _ in editor_blocks {
     counts.push(1)
+  }
+  if markdown_editor_text_length(source) == 0 {
+    return counts
   }
   let mut block_index = 0
   let mut char_index = 0
@@ -2384,8 +2381,16 @@ fn markdown_document_block_index_dirty(
 }
 
 ///|
+/// Content fingerprint used to carry block ids/revisions across
+/// re-parses. It is only ever compared for equality, so it is a small
+/// kind key plus the 64-bit content hash instead of the concatenated
+/// block text: a full document open builds one per block, and
+/// concatenation copied the whole document into ~100k strings on the
+/// stress fixture.
 fn markdown_document_block_fingerprint(block : MarkdownEditorBlock) -> String {
-  markdown_document_block_kind_key(block.block.kind) + ":" + block.block.text
+  markdown_document_block_kind_key(block.block.kind) +
+  ":" +
+  block.block.text.hash().to_string()
 }
 
 ///|

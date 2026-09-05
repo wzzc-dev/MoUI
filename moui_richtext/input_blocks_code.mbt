@@ -333,7 +333,7 @@ fn markdown_editor_quoted_code_content_prefix(line : String) -> String? {
 
 ///|
 fn markdown_editor_opening_code_fence_marker(
-  line : String,
+  line : StringView,
 ) -> MarkdownCodeFenceInfo? {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)

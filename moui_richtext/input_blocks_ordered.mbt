@@ -88,13 +88,13 @@ fn markdown_editor_renumber_ordered_lists(
   let replacements : Array[MarkdownEditorOffsetReplacement] = []
   let contexts : Array[MarkdownEditorOrderedRenumberContext] = []
   for line in lines {
-    match markdown_editor_ordered_line_info(line.text) {
+    match markdown_editor_ordered_line_info(line.text.to_owned()) {
       Some(info) => {
         markdown_editor_trim_ordered_renumber_contexts(contexts, info.indent)
         let next_number = markdown_editor_next_ordered_number(contexts, info)
         let next_digits = next_number.to_string()
         if next_digits == info.digits {
-          rendered.push(line.text)
+          rendered.push(line.text.to_owned())
         } else {
           let chars = line.text.to_array()
           rendered.push(
@@ -112,8 +112,11 @@ fn markdown_editor_renumber_ordered_lists(
         }
       }
       None => {
-        markdown_editor_reset_ordered_renumber_contexts(contexts, line.text)
-        rendered.push(line.text)
+        markdown_editor_reset_ordered_renumber_contexts(
+          contexts,
+          line.text.to_owned(),
+        )
+        rendered.push(line.text.to_owned())
       }
     }
   }

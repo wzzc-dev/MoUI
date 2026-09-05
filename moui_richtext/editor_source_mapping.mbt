@@ -651,7 +651,7 @@ fn parse_markdown_editor_blocks_with_definitions(
         code_language = None
         in_code = false
       } else {
-        code_lines.push(line.text)
+        code_lines.push(line.text.to_owned())
       }
     } else if markdown_editor_line_text_is_blank(line.text) {
       blocks.push(markdown_editor_blank_line_block(line))
@@ -726,7 +726,9 @@ fn parse_markdown_editor_blocks_with_definitions(
                             }
                             None =>
                               if parse_inlines {
-                                let parsed = parse_markdown(line.text)
+                                let parsed = parse_markdown(
+                                  line.text.to_owned(),
+                                )
                                 for block in parsed {
                                   let block = markdown_editor_block_with_references(
                                     block, definitions,
@@ -818,7 +820,7 @@ fn markdown_editor_front_matter_block_at(
         next_index: index + 1,
       })
     }
-    content.push(lines[index].text)
+    content.push(lines[index].text.to_owned())
     index = index + 1
   }
   None
@@ -838,16 +840,18 @@ fn markdown_editor_html_block_at(
   if index < 0 || index >= lines.length() {
     return None
   }
-  if markdown_html_block_comment_start(lines[index].text) {
+  if markdown_html_block_comment_start(lines[index].text.to_owned()) {
     return markdown_editor_html_comment_block_at(lines, index)
   }
-  if markdown_html_block_processing_instruction_start(lines[index].text) {
+  if markdown_html_block_processing_instruction_start(
+      lines[index].text.to_owned(),
+    ) {
     return markdown_editor_html_processing_instruction_block_at(lines, index)
   }
-  if markdown_html_block_cdata_start(lines[index].text) {
+  if markdown_html_block_cdata_start(lines[index].text.to_owned()) {
     return markdown_editor_html_cdata_block_at(lines, index)
   }
-  match markdown_html_block_start_tag(lines[index].text) {
+  match markdown_html_block_start_tag(lines[index].text.to_owned()) {
     Some(tag) => Some(markdown_editor_html_tag_block_at(lines, index, tag))
     None => None
   }
@@ -861,8 +865,8 @@ fn markdown_editor_html_comment_block_at(
   let html_lines : Array[String] = []
   let mut next = index
   while next < lines.length() {
-    html_lines.push(lines[next].text)
-    if markdown_html_block_comment_end(lines[next].text) {
+    html_lines.push(lines[next].text.to_owned())
+    if markdown_html_block_comment_end(lines[next].text.to_owned()) {
       return Some(
         markdown_editor_html_block_result(lines, html_lines, index, next),
       )
@@ -880,8 +884,10 @@ fn markdown_editor_html_processing_instruction_block_at(
   let html_lines : Array[String] = []
   let mut next = index
   while next < lines.length() {
-    html_lines.push(lines[next].text)
-    if markdown_html_block_processing_instruction_end(lines[next].text) {
+    html_lines.push(lines[next].text.to_owned())
+    if markdown_html_block_processing_instruction_end(
+        lines[next].text.to_owned(),
+      ) {
       return Some(
         markdown_editor_html_block_result(lines, html_lines, index, next),
       )
@@ -899,8 +905,8 @@ fn markdown_editor_html_cdata_block_at(
   let html_lines : Array[String] = []
   let mut next = index
   while next < lines.length() {
-    html_lines.push(lines[next].text)
-    if markdown_html_block_cdata_end(lines[next].text) {
+    html_lines.push(lines[next].text.to_owned())
+    if markdown_html_block_cdata_end(lines[next].text.to_owned()) {
       return Some(
         markdown_editor_html_block_result(lines, html_lines, index, next),
       )
@@ -924,9 +930,12 @@ fn markdown_editor_html_tag_block_at(
       !markdown_html_block_tag_keeps_blank_lines(tag) {
       break
     }
-    html_lines.push(lines[next].text)
-    if markdown_html_block_line_closes_tag(lines[next].text, tag) ||
-      (next == index && markdown_html_block_line_self_closes(lines[next].text)) {
+    html_lines.push(lines[next].text.to_owned())
+    if markdown_html_block_line_closes_tag(lines[next].text.to_owned(), tag) ||
+      (
+        next == index &&
+        markdown_html_block_line_self_closes(lines[next].text.to_owned())
+      ) {
       return markdown_editor_html_block_result(lines, html_lines, index, next)
     }
     next = next + 1
@@ -1037,7 +1046,7 @@ fn markdown_editor_setext_heading_content_line(
     return false
   }
   if parse_inlines {
-    markdown_editor_is_setext_paragraph_candidate(line.text)
+    markdown_editor_is_setext_paragraph_candidate(line.text.to_owned())
   } else {
     markdown_editor_shell_structural_kind(line.text) is None
   }
@@ -1048,7 +1057,7 @@ fn markdown_editor_setext_heading_content_line(
 /// code fence when, within the allowed three-space indent (no tabs), its
 /// first character is a backtick or tilde run. Lets the shell parse skip
 /// the char-array fence scan for every plain line.
-fn markdown_editor_shell_line_may_open_fence(text : String) -> Bool {
+fn markdown_editor_shell_line_may_open_fence(text : StringView) -> Bool {
   let length = text.length()
   let mut cursor = 0
   let mut spaces = 0
@@ -1076,7 +1085,7 @@ fn markdown_editor_shell_line_may_open_fence(text : String) -> Bool {
 /// Cheap pre-filter for the HTML-block check: a line can only start an
 /// HTML block when its first non-space character (within a small indent)
 /// is `<`.
-fn markdown_editor_shell_line_may_open_html(text : String) -> Bool {
+fn markdown_editor_shell_line_may_open_html(text : StringView) -> Bool {
   let length = text.length()
   let mut cursor = 0
   let mut spaces = 0
@@ -1097,7 +1106,7 @@ fn markdown_editor_shell_line_may_open_html(text : String) -> Bool {
 ///|
 /// Cheap pre-filter for the indented-code check: the line must begin with
 /// a space or tab.
-fn markdown_editor_shell_line_is_indented(text : String) -> Bool {
+fn markdown_editor_shell_line_is_indented(text : StringView) -> Bool {
   text.length() > 0 &&
   (
     text.get_char(0).unwrap_or(' ') == ' ' ||
@@ -1129,7 +1138,9 @@ fn markdown_editor_shell_line_opens_html(
 /// exact for headings and rules, best-effort for marker-stripped
 /// list/quote content, and is always replaced by the real parse the first
 /// time its inline runs are needed.
-fn markdown_editor_shell_structural_kind(text : String) -> MarkdownBlockKind? {
+fn markdown_editor_shell_structural_kind(
+  text : StringView,
+) -> MarkdownBlockKind? {
   let length = text.length()
   let mut cursor = 0
   while cursor < length {
@@ -1281,7 +1292,7 @@ fn markdown_editor_shell_structural_kind(text : String) -> MarkdownBlockKind? {
 /// Slice `[start, end)` (UTF-16 offsets) via char access; used for the
 /// rare footnote label on the shell path.
 fn markdown_editor_shell_slice(
-  text : String,
+  text : StringView,
   start~ : Int,
   end~ : Int,
 ) -> String {
@@ -1299,7 +1310,7 @@ fn markdown_editor_shell_slice(
 /// Marker-stripped content text for a shell list/quote/footnote line
 /// (best-effort; the real parse replaces it on materialization).
 fn markdown_editor_shell_content_text(
-  text : String,
+  text : StringView,
   skip_marker_length~ : Int,
 ) -> String {
   let chars = text.to_array()
@@ -1328,7 +1339,7 @@ fn markdown_editor_shell_line_block(line : MarkdownLine) -> MarkdownEditorBlock 
           line.text,
         ),
       )
-    MarkdownBlockKind::Paragraph => line.text
+    MarkdownBlockKind::Paragraph => line.text.to_owned()
     _ =>
       markdown_editor_shell_content_text(
         line.text,
@@ -1455,7 +1466,9 @@ fn markdown_editor_indented_code_block_at(
   let mut next = index
   while next < lines.length() {
     if markdown_editor_indented_code_line(lines, next) {
-      code_lines.push(markdown_indented_code_line_content(lines[next].text))
+      code_lines.push(
+        markdown_indented_code_line_content(lines[next].text.to_owned()),
+      )
       next = next + 1
     } else if markdown_editor_blank_line(lines[next]) {
       match markdown_editor_next_indented_code_line_index(lines, next + 1) {
@@ -1473,7 +1486,7 @@ fn markdown_editor_indented_code_block_at(
   let first = lines[index]
   let last = lines[next - 1]
   let content_start = first.start +
-    markdown_indented_code_content_offset(first.text)
+    markdown_indented_code_content_offset(first.text.to_owned())
   Some({
     block: {
       block: markdown_editor_code_block(markdown_join_lines(code_lines), None),
@@ -1511,7 +1524,7 @@ fn markdown_editor_blank_line(line : MarkdownLine) -> Bool {
 ///|
 /// Whitespace-only check without the trimmed copy the string comparison
 /// used to allocate once per line per parse.
-fn markdown_editor_line_text_is_blank(text : String) -> Bool {
+fn markdown_editor_line_text_is_blank(text : StringView) -> Bool {
   for ch in text {
     if ch != ' ' && ch != '\t' && ch != '\r' {
       return false
@@ -1528,7 +1541,7 @@ fn markdown_editor_indented_code_line(
   if index < 0 || index >= lines.length() {
     return false
   }
-  markdown_indented_code_content_offset(lines[index].text) > 0
+  markdown_indented_code_content_offset(lines[index].text.to_owned()) > 0
 }
 
 ///|
@@ -1560,7 +1573,7 @@ fn markdown_editor_soft_wrapped_paragraph_block_at(
   }
   let text_lines : Array[String] = []
   for line in paragraph_lines {
-    text_lines.push(line.text)
+    text_lines.push(line.text.to_owned())
   }
   let text = markdown_join_lines(text_lines)
   Some({
@@ -1634,7 +1647,7 @@ fn markdown_editor_soft_wrapped_paragraph_line(
     markdown_editor_setext_heading_level_at(lines, index) is Some(_) {
     return false
   }
-  match parse_markdown(line.text) {
+  match parse_markdown(line.text.to_owned()) {
     [{ kind: MarkdownBlockKind::Paragraph, .. }] => true
     _ => false
   }
@@ -1655,19 +1668,19 @@ fn markdown_editor_table_block_at(
   // the trimmed cell scan entirely (this check runs once per line).
   if index + 1 >= lines.length() ||
     !lines[index + 1].text.contains("|") ||
-    !markdown_editor_table_separator_line(lines[index + 1].text) {
+    !markdown_editor_table_separator_line(lines[index + 1].text.to_owned()) {
     return None
   }
   let table_lines : Array[MarkdownLine] = [lines[index], lines[index + 1]]
   let mut next = index + 2
   while next < lines.length() &&
-        markdown_editor_table_body_line(lines[next].text) {
+        markdown_editor_table_body_line(lines[next].text.to_owned()) {
     table_lines.push(lines[next])
     next = next + 1
   }
   let segment_lines : Array[String] = []
   for line in table_lines {
-    segment_lines.push(line.text)
+    segment_lines.push(line.text.to_owned())
   }
   let segment = markdown_join_lines(segment_lines)
   match parse_markdown(segment) {
@@ -1774,7 +1787,9 @@ fn markdown_editor_setext_heading_level_at(
   match markdown_editor_setext_underline_level(lines[index + 1].text) {
     None => None
     Some(level) =>
-      if markdown_editor_is_setext_paragraph_candidate(lines[index].text) {
+      if markdown_editor_is_setext_paragraph_candidate(
+          lines[index].text.to_owned(),
+        ) {
         Some(level)
       } else {
         None
@@ -1791,7 +1806,7 @@ fn markdown_editor_is_setext_paragraph_candidate(line : String) -> Bool {
 }
 
 ///|
-fn markdown_editor_setext_underline_level(line : String) -> Int? {
+fn markdown_editor_setext_underline_level(line : StringView) -> Int? {
   // Allocation-free scan: skip leading whitespace, then require a run of
   // `=` (level 1) or `-` (level 2) covering the rest of the line.
   let length = line.length()
@@ -1836,7 +1851,10 @@ fn markdown_editor_setext_underline_level(line : String) -> Int? {
 }
 
 ///|
-fn markdown_editor_closing_code_fence(line : String, fence : String) -> Bool {
+fn markdown_editor_closing_code_fence(
+  line : StringView,
+  fence : String,
+) -> Bool {
   let chars = line.to_array()
   let fence_chars = fence.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
@@ -2332,7 +2350,7 @@ fn markdown_editor_content_range(
 }
 
 ///|
-fn markdown_editor_footnote_marker_prefix_length(line : String) -> Int {
+fn markdown_editor_footnote_marker_prefix_length(line : StringView) -> Int {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() < indent + 5 ||

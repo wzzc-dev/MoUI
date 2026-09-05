@@ -346,11 +346,13 @@ fn markdown_editor_transform_line_segment(
   let transformed : Array[String] = []
   let ordered_contexts : Array[MarkdownEditorOrderedRenumberContext] = []
   for line in lines {
-    let parts = markdown_editor_line_block_parts(line.text)
+    let parts = markdown_editor_line_block_parts(line.text.to_owned())
     let content_is_blank = parts.content.trim().to_owned() == ""
     match command {
       Paragraph =>
-        transformed.push(markdown_editor_paragraph_line_text(line.text, parts))
+        transformed.push(
+          markdown_editor_paragraph_line_text(line.text.to_owned(), parts),
+        )
       BulletList =>
         if content_is_blank {
           transformed.push(markdown_editor_block_command_blank_line(parts))
@@ -377,11 +379,11 @@ fn markdown_editor_transform_line_segment(
         }
       Quote =>
         if markdown_editor_block_command_context_has_quote(parts.context_prefix) {
-          transformed.push(line.text)
+          transformed.push(line.text.to_owned())
         } else {
           transformed.push(parts.context_prefix + "> " + parts.content)
         }
-      _ => transformed.push(line.text)
+      _ => transformed.push(line.text.to_owned())
     }
   }
   markdown_join_lines(transformed)
@@ -912,7 +914,7 @@ fn markdown_editor_strip_block_marker(line : String) -> String {
 }
 
 ///|
-fn markdown_editor_marker_prefix_length(line : String) -> Int {
+fn markdown_editor_marker_prefix_length(line : StringView) -> Int {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 && chars[indent] == '#' {

@@ -375,7 +375,7 @@ fn markdown_editor_indent_segment(segment : String) -> String {
   let lines = markdown_editor_lines(segment)
   let shifted : Array[String] = []
   for line in lines {
-    shifted.push("  " + line.text)
+    shifted.push("  " + line.text.to_owned())
   }
   markdown_join_lines(shifted)
 }
@@ -385,7 +385,7 @@ fn markdown_editor_outdent_segment(segment : String) -> String {
   let lines = markdown_editor_lines(segment)
   let shifted : Array[String] = []
   for line in lines {
-    shifted.push(markdown_editor_outdent_line(line.text))
+    shifted.push(markdown_editor_outdent_line(line.text.to_owned()))
   }
   markdown_join_lines(shifted)
 }
