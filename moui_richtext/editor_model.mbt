@@ -123,22 +123,38 @@ fn markdown_editor_word_count(source : String) -> Int {
 
 ///|
 fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
+  // One allocation per line (the owned text slice). The old version pushed
+  // every char into a transient Array[Char] first — on large documents the
+  // extra allocation churn dominated the open cost through GC growth.
+  // `start`/`end` stay in char space (iterator indices, matching the
+  // source ranges the parser produces); the slice bounds are the matching
+  // UTF-16 offsets tracked alongside.
   let lines : Array[MarkdownLine] = []
-  let current : Array[Char] = []
-  let mut start = 0
-  let mut offset = 0
+  let mut char_start = 0
+  let mut char_index = 0
+  let mut unit_start = 0
+  let mut unit_offset = 0
   for ch in source {
     if ch == '\n' {
-      lines.push({ text: String::from_array(current), start, end: offset })
-      current.clear()
-      offset = offset + 1
-      start = offset
+      lines.push({
+        text: source.sub(start=unit_start, end=unit_offset).to_owned(),
+        start: char_start,
+        end: char_index,
+      })
+      unit_offset = unit_offset + ch.utf16_len()
+      char_index = char_index + 1
+      char_start = char_index
+      unit_start = unit_offset
     } else {
-      current.push(ch)
-      offset = offset + 1
+      unit_offset = unit_offset + ch.utf16_len()
+      char_index = char_index + 1
     }
   }
-  lines.push({ text: String::from_array(current), start, end: offset })
+  lines.push({
+    text: source.sub(start=unit_start, end=unit_offset).to_owned(),
+    start: char_start,
+    end: char_index,
+  })
   lines
 }
 

@@ -11,12 +11,10 @@ fn MarkdownEditorApp::replace_document_source(
   reason? : MarkdownEditReason = ReplaceEdit,
 ) -> Unit {
   let previous = self.document_session
-  let transaction = MarkdownEditTransaction::replace_all(
-    previous.source,
-    source,
-    reason~,
-  )
-  self.document_session = previous.apply(transaction)
+  // A whole-source swap is a fresh document, not an edit: the shell parse
+  // builds the session in one linear scan and blocks materialize on demand
+  // (the apply() fallback would eagerly re-parse everything).
+  self.document_session = previous.replace_source(source, reason~)
   self.document = source
   self.refresh_find_matches_if_visible()
 }
