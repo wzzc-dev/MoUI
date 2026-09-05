@@ -249,12 +249,15 @@ pub(all) struct MarkdownDocumentTextStore {
   revision : @ref.Ref[Int]
   materialized : @ref.Ref[(Int, String)]
 }
+pub fn MarkdownDocumentTextStore::char_at(Self, Int) -> Char?
 pub fn MarkdownDocumentTextStore::edit(Self, MarkdownSourceRange, String) -> Unit
 pub fn MarkdownDocumentTextStore::from_texts(Array[String]) -> Self
 pub fn MarkdownDocumentTextStore::length(Self) -> Int
 pub fn MarkdownDocumentTextStore::new(String) -> Self
 pub fn MarkdownDocumentTextStore::replace_all(Self, String) -> Unit
 pub fn MarkdownDocumentTextStore::revision(Self) -> Int
+pub fn MarkdownDocumentTextStore::segmented(String, Array[Int]) -> Self
+pub fn MarkdownDocumentTextStore::seed(Self, String) -> Unit
 pub fn MarkdownDocumentTextStore::source(Self) -> String
 pub fn MarkdownDocumentTextStore::text_of(Self, Int, Int) -> String
 pub impl Eq for MarkdownDocumentTextStore

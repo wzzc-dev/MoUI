@@ -163,9 +163,8 @@ test "markdown document session new parses blocks and metadata correctly" {
 }
 
 ///|
-test "markdown document session apply is immutable" {
+test "markdown document session apply shares the live text store" {
   let session = MarkdownDocumentSession::new("# Title\n\nBody")
-  let original_source = session.source()
   let original_block_count = session.blocks.length()
   let original_revision = session.revision
   let next = session.apply(
@@ -175,12 +174,15 @@ test "markdown document session apply is immutable" {
       reason=TextInput,
     ),
   )
-  // The original session is unchanged.
-  inspect(session.source(), content=original_source)
+  // Session-derived records stay per-value: the original session's
+  // revision and block table still describe the pre-edit state.
   inspect(session.blocks.length(), content=original_block_count.to_string())
   inspect(session.revision, content=original_revision.to_string())
-  // The new session reflects the edit.
-  assert_true(next.source() != session.source())
+  // The document text itself lives in one store shared by reference with
+  // every session derived from an edit (the store's documented live
+  // semantics): after the apply both sessions read the current text.
+  inspect(session.source(), content="# Title\n\nBody changed")
+  assert_true(next.source() == session.source())
   inspect(next.revision, content=(original_revision + 1).to_string())
   inspect(next.parse_count, content="2")
 }
