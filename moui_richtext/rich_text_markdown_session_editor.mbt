@@ -98,17 +98,12 @@ fn markdown_session_input_transform_for(
     store: session.text_store,
   }
   fn(source : String, caret : Int, range : @core.TextRange?, inserted : String) {
-    markdown_editor_probe_capture(
-      "ctrl.transform_chain",
-      fn() {
-        markdown_editor_transform_input(
-          source,
-          caret,
-          range,
-          inserted,
-          context=Some(context),
-        )
-      },
+    markdown_editor_transform_input(
+      source,
+      caret,
+      range,
+      inserted,
+      context=Some(context),
     )
   }
 }
@@ -119,35 +114,30 @@ fn[Msg] markdown_session_on_input_edit(
   on_transaction : (MarkdownEditTransaction) -> Msg,
 ) -> (String, Int, @core.TextRange?, RichTextInputEdit?) -> Msg {
   (next_source, caret, next_selection, edit) => {
-    let transaction = markdown_editor_probe_capture(
-      "txn.from_sources",
-      fn() {
-        match edit {
-          // The control knows the exact range it replaced; carrying it
-          // out skips the whole-document prefix/suffix diff that
-          // `from_sources` performs to recover it.
-          Some(edit) =>
-            MarkdownEditTransaction::from_edit(
-              session.source(),
-              next_source,
-              edit.start,
-              deleted=edit.deleted,
-              replacement=edit.replacement,
-              caret~,
-              selection=next_selection,
-              reason=TextInput,
-            )
-          None =>
-            MarkdownEditTransaction::from_sources(
-              session.source(),
-              next_source,
-              caret~,
-              selection=next_selection,
-              reason=TextInput,
-            )
-        }
-      },
-    )
+    let transaction = match edit {
+      // The control knows the exact range it replaced; carrying it
+      // out skips the whole-document prefix/suffix diff that
+      // `from_sources` performs to recover it.
+      Some(edit) =>
+        MarkdownEditTransaction::from_edit(
+          session.source(),
+          next_source,
+          edit.start,
+          deleted=edit.deleted,
+          replacement=edit.replacement,
+          caret~,
+          selection=next_selection,
+          reason=TextInput,
+        )
+      None =>
+        MarkdownEditTransaction::from_sources(
+          session.source(),
+          next_source,
+          caret~,
+          selection=next_selection,
+          reason=TextInput,
+        )
+    }
     on_transaction(transaction)
   }
 }

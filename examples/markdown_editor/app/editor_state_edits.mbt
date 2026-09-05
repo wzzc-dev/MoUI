@@ -26,29 +26,17 @@ fn MarkdownEditorApp::apply_editor_transaction(
 ) -> Unit {
   let anchor = self.editor_scroll
   let session = self.document_session
-  let next = @moui_richtext.markdown_editor_probe_capture(
-    "app.session.apply",
-    fn() { session.apply(transaction) },
-  )
+  let next = session.apply(transaction)
   self.document_session = next
   self.document = next.source()
-  @moui_richtext.markdown_editor_probe_capture(
-    "app.refresh_find",
-    fn() { self.refresh_find_matches_if_visible() },
-  )
+  self.refresh_find_matches_if_visible()
   self.selection = {
     caret: transaction.caret,
     selection: transaction.selection,
   }
   self.editor_scroll = anchor
-  @moui_richtext.markdown_editor_probe_capture(
-    "app.sync",
-    fn() { self.sync_target_inputs() },
-  )
-  @moui_richtext.markdown_editor_probe_capture(
-    "app.center",
-    fn() { self.maybe_center_typewriter_selection() },
-  )
+  self.sync_target_inputs()
+  self.maybe_center_typewriter_selection()
 }
 
 ///|
