@@ -1893,6 +1893,7 @@ fn markdown_document_estimated_inset_units(
 }
 
 ///|
+
 ///|
 /// Image blocks get a taller estimate. Shell blocks (no inline runs yet)
 /// are covered by the raw-text `![` probe; materialized blocks keep the

@@ -51,6 +51,8 @@ pub fn optional_rect_union(Rect?, Rect?) -> Rect?
 
 pub fn replace_text_range(String, TextRange, String) -> String
 
+pub fn replace_text_range_edit(text~ : String, TextRange, String) -> (String, String, Int)
+
 pub fn resolve_minimal_theme(ThemeSpec, ColorScheme) -> Theme
 
 pub fn resolve_theme(ThemeSpec, ColorScheme) -> Theme

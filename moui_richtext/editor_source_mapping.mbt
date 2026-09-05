@@ -691,7 +691,9 @@ fn parse_markdown_editor_blocks_with_definitions(
                 None =>
                   match
                     markdown_editor_setext_heading_block_at(
-                      lines, index, definitions,
+                      lines,
+                      index,
+                      definitions,
                       parse_inlines~,
                     ) {
                     Some(heading) => {
@@ -713,7 +715,9 @@ fn parse_markdown_editor_blocks_with_definitions(
                         None =>
                           match
                             markdown_editor_soft_wrapped_paragraph_block_at(
-                              lines, index, definitions,
+                              lines,
+                              index,
+                              definitions,
                               parse_inlines~,
                             ) {
                             Some(paragraph) => {
@@ -981,9 +985,7 @@ fn markdown_editor_setext_heading_block_at(
                 kind: MarkdownBlockKind::Heading(level),
                 text,
                 inlines: if parse_inlines {
-                  parse_markdown_inlines_with_definitions(
-                    text, definitions,
-                  )
+                  parse_markdown_inlines_with_definitions(text, definitions)
                 } else {
                   []
                 },
@@ -1097,7 +1099,10 @@ fn markdown_editor_shell_line_may_open_html(text : String) -> Bool {
 /// a space or tab.
 fn markdown_editor_shell_line_is_indented(text : String) -> Bool {
   text.length() > 0 &&
-  (text.get_char(0).unwrap_or(' ') == ' ' || text.get_char(0).unwrap_or(' ') == '\t')
+  (
+    text.get_char(0).unwrap_or(' ') == ' ' ||
+    text.get_char(0).unwrap_or(' ') == '\t'
+  )
 }
 
 ///|
@@ -1199,9 +1204,11 @@ fn markdown_editor_shell_structural_kind(text : String) -> MarkdownBlockKind? {
     cursor + 5 < length &&
     text.get_char(cursor + 1).unwrap_or(' ') == ' ' &&
     text.get_char(cursor + 2).unwrap_or(' ') == '[' &&
-    (text.get_char(cursor + 3).unwrap_or(' ') == ' ' ||
-    text.get_char(cursor + 3).unwrap_or(' ') == 'x' ||
-    text.get_char(cursor + 3).unwrap_or(' ') == 'X') &&
+    (
+      text.get_char(cursor + 3).unwrap_or(' ') == ' ' ||
+      text.get_char(cursor + 3).unwrap_or(' ') == 'x' ||
+      text.get_char(cursor + 3).unwrap_or(' ') == 'X'
+    ) &&
     text.get_char(cursor + 4).unwrap_or(' ') == ']' &&
     text.get_char(cursor + 5).unwrap_or(' ') == ' ' {
     let checked = text.get_char(cursor + 3).unwrap_or(' ') != ' '
@@ -1259,8 +1266,10 @@ fn markdown_editor_shell_structural_kind(text : String) -> MarkdownBlockKind? {
     }
     if index > cursor &&
       index + 1 < length &&
-      (text.get_char(index).unwrap_or(' ') == '.' ||
-      text.get_char(index).unwrap_or(' ') == ')') &&
+      (
+        text.get_char(index).unwrap_or(' ') == '.' ||
+        text.get_char(index).unwrap_or(' ') == ')'
+      ) &&
       text.get_char(index + 1).unwrap_or(' ') == ' ' {
       return Some(MarkdownBlockKind::OrderedListItem(number))
     }
@@ -1295,7 +1304,8 @@ fn markdown_editor_shell_content_text(
 ) -> String {
   let chars = text.to_array()
   let mut offset = skip_marker_length
-  while offset < chars.length() && (chars[offset] == ' ' || chars[offset] == '\t') {
+  while offset < chars.length() &&
+        (chars[offset] == ' ' || chars[offset] == '\t') {
     offset = offset + 1
   }
   String::from_array(chars[offset:])
@@ -1308,9 +1318,8 @@ fn markdown_editor_shell_line_block(line : MarkdownLine) -> MarkdownEditorBlock 
     None => MarkdownBlockKind::Paragraph
   }
   let text = match kind {
-    MarkdownBlockKind::Heading(_) => markdown_heading_visible_source_text(
-      line.text,
-    )
+    MarkdownBlockKind::Heading(_) =>
+      markdown_heading_visible_source_text(line.text)
     MarkdownBlockKind::HorizontalRule => ""
     MarkdownBlockKind::FootnoteDefinition(_) =>
       markdown_editor_shell_content_text(
@@ -1383,12 +1392,13 @@ fn markdown_editor_block_materialized(
       // Reference-style links and footnotes need the whole-source
       // definition set; inline syntax does not, so most documents never
       // pay for it here.
-      let needs_definitions = real.inlines.any(inline =>
+      let needs_definitions = real.inlines.any(inline => {
         match inline.kind {
           Link => inline.target is None
           FootnoteReference(_) => true
           _ => false
-        })
+        }
+      })
       let definitions = if needs_definitions {
         markdown_reference_definitions_cached_keyed(
           source,

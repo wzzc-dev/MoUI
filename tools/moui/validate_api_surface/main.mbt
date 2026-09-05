@@ -319,7 +319,9 @@ fn package_budgets() -> Array[PackageBudget] {
       // SurfaceMetrics is the single backend/render-neutral surface DTO.
       // Semantics DTO expansion adds roles, relations, ranges, text metadata,
       // live announcements, and typed actions in one intentional migration.
-      max_lines: 2128,
+      // The keystroke-path text-edit primitive replace_text_range_edit adds
+      // one signature line.
+      max_lines: 2136,
       max_pub_lines: 560,
       max_pub_all_lines: 189,
       required_tokens: [
