@@ -9,6 +9,17 @@ priv struct TextEditResult {
 }
 
 ///|
+/// The committed range/replacement pair of a text-input edit, published to
+/// the `on_input_edit` channel so document-backed consumers (the Markdown
+/// session) can build their transaction from the edit itself instead of
+/// re-deriving it by diffing the two whole-source strings.
+priv struct RichTextInputEdit {
+  start : Int
+  deleted : String
+  replacement : String
+}
+
+///|
 priv struct TextHistoryRestoreResult {
   text : String
   control : @core.TextControlStateContext
@@ -20,6 +31,10 @@ priv struct TextInputApplyResult {
   text : String
   control : @core.TextControlStateContext
   changed : Bool
+  // The edit that produced the text, when this result came from a
+  // range/replacement application (None for caret/selection/composition
+  // and history-restore results).
+  edit : RichTextInputEdit?
 }
 
 ///|
@@ -85,7 +100,7 @@ fn apply_text_input(
   match event {
     @core.TextInputEvent::InsertText(inserted) => {
       if inserted == "" {
-        return { text, control, changed: false }
+        return { text, control, changed: false, edit: None }
       }
       let edit = replace_current_selection(
         text,
@@ -135,6 +150,7 @@ fn apply_text_input(
         next_control.selection != control.selection ||
         control.composition is Some(_) ||
         control.composition_cursor is Some(_),
+        edit: None,
       }
     }
     @core.TextInputEvent::CompositionStart => {
@@ -143,7 +159,7 @@ fn apply_text_input(
         composition: Some(""),
         composition_cursor: None,
       }
-      { text, control: next_control, changed: true }
+      { text, control: next_control, changed: true, edit: None }
     }
     @core.TextInputEvent::CompositionUpdate(update) => {
       let next_control = {
@@ -167,7 +183,7 @@ fn apply_text_input(
           None => None
         },
       }
-      { text, control: next_control, changed: true }
+      { text, control: next_control, changed: true, edit: None }
     }
     @core.TextInputEvent::CompositionEnd(inserted) => {
       let next_control = {
@@ -176,7 +192,12 @@ fn apply_text_input(
         composition_cursor: None,
       }
       if inserted == "" {
-        { text, control: { ..next_control, selection: None }, changed: true }
+        {
+          text,
+          control: { ..next_control, selection: None },
+          changed: true,
+          edit: None,
+        }
       } else {
         let edit = replace_current_selection(
           text,
@@ -224,6 +245,54 @@ fn apply_text_input(
 }
 
 ///|
+/// Classify the undo-merge shape directly from the applied edit's known
+/// range (`start`/`before`/`after`) instead of re-deriving it by scanning
+/// the two whole documents: the edit is the exact diff, so classification
+/// is O(edit). The range/rescan-based `rich_text_history_single_edit`
+/// stays as the fallback for callers without an edit record.
+fn rich_text_history_edit_shape_at(
+  start : Int,
+  before : String,
+  after : String,
+  caret : Int,
+  selection_active~ : Bool,
+) -> (Int, Int, Char)? {
+  if selection_active {
+    return None
+  }
+  // A single-codepoint string spans at most two UTF-16 units; anything
+  // longer (or a replacement on both sides) never merges.
+  let single = fn(text : String) -> Char? {
+    if text.length() > 2 {
+      None
+    } else {
+      let chars = text.to_array()
+      if chars.length() == 1 { Some(chars[0]) } else { None }
+    }
+  }
+  if before == "" {
+    match single(after) {
+      Some(ch) if ch != '\n' && caret == start => Some((1, start, ch))
+      _ => None
+    }
+  } else if after == "" {
+    match single(before) {
+      Some(ch) if ch != '\n' =>
+        if caret == start + 1 {
+          Some((2, start, ch))
+        } else if caret == start {
+          Some((3, start, ch))
+        } else {
+          None
+        }
+      _ => None
+    }
+  } else {
+    None
+  }
+}
+
+///|
 fn apply_text_edit(
   control : @core.TextControlStateContext,
   previous : String,
@@ -246,6 +315,17 @@ fn apply_text_edit(
           previous,
           edit.text,
           control.caret,
+          shape=Some(
+            rich_text_history_edit_shape_at(
+              edit.start,
+              edit.before,
+              edit.after,
+              control.caret,
+              selection_active=(
+                @core.active_text_selection(control.selection) is Some(_)
+              ),
+            ),
+          ),
         ),
         {
           start: edit.start,
@@ -268,9 +348,14 @@ fn apply_text_edit(
         redo_stack: [],
       },
       changed: true,
+      edit: Some({
+        start: edit.start,
+        deleted: edit.before,
+        replacement: edit.after,
+      }),
     }
   } else {
-    { text: previous, control, changed: false }
+    { text: previous, control, changed: false, edit: None }
   }
 }
 
@@ -402,12 +487,15 @@ fn[Msg] text_input_messages(
 
 ///|
 fn[Msg] text_input_edit_messages(
-  on_input_edit : ((String, Int, @core.TextRange?) -> Msg)?,
+  on_input_edit : ((String, Int, @core.TextRange?, RichTextInputEdit?) -> Msg)?,
   text : String,
   control : @core.TextControlStateContext,
+  record? : RichTextInputEdit? = None,
 ) -> Array[Msg] {
   match on_input_edit {
-    Some(handler) => [handler(text, control.caret, control.selection)]
+    Some(handler) => [
+      handler(text, control.caret, control.selection, record),
+    ]
     None => []
   }
 }

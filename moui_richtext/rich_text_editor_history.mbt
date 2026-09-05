@@ -161,16 +161,24 @@ fn rich_text_history_record_edit(
   previous : String,
   next : String,
   caret : Int,
+  // Classification computed from the applied edit's known range. Absent
+  // means "rescan the documents"; `Some(None)` means "known to be not a
+  // single-character edit".
+  shape? : ((Int, Int, Char)?)? = None,
 ) -> RichTextHistoryAction {
   let now = rich_text_history_now_ms()
   let selection_active = @core.active_text_selection(control.selection)
     is Some(_)
-  let edit_shape = rich_text_history_single_edit(
-    previous,
-    next,
-    caret,
-    selection_active~,
-  )
+  let edit_shape = match shape {
+    Some(known) => known
+    None =>
+      rich_text_history_single_edit(
+        previous,
+        next,
+        caret,
+        selection_active~,
+      )
+  }
   let state = rich_text_history_group.val
   let stack_length = control.undo_stack.length()
   let merges = match edit_shape {

@@ -211,6 +211,7 @@ fn markdown_editor_code_block_at_content_offset(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
+  context? : MarkdownEditorInputContext? = None,
 ) -> MarkdownEditorBlock? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
@@ -220,7 +221,14 @@ fn markdown_editor_code_block_at_content_offset(
     0,
     markdown_editor_text_length(source),
   )
-  for block in parse_markdown_editor_blocks(source) {
+  // With the session's blocks at hand, scanning them is O(blocks) over
+  // ranges that are already exact; only callers without a session pay for
+  // the whole-document parse.
+  let blocks = match context {
+    Some(context) => context.blocks
+    None => parse_markdown_editor_blocks(source)
+  }
+  for block in blocks {
     if block.block.kind is MarkdownBlockKind::CodeBlock &&
       caret >= block.content_range.start &&
       caret <= block.content_range.end {

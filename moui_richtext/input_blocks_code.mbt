@@ -136,10 +136,28 @@ fn markdown_editor_exit_empty_code_block_on_enter(
 }
 
 ///|
+/// Index of the shell block of `kind` containing the char `offset`.
+fn markdown_editor_block_at_offset_of_kind(
+  blocks : Array[MarkdownEditorBlock],
+  offset : Int,
+  kind : MarkdownBlockKind,
+) -> MarkdownEditorBlock? {
+  for block in blocks {
+    if block.block.kind == kind &&
+      offset >= block.source_range.start &&
+      offset <= block.source_range.end {
+      return Some(block)
+    }
+  }
+  None
+}
+
+///|
 fn markdown_editor_quoted_code_block_at_content_offset(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
+  context? : MarkdownEditorInputContext? = None,
 ) -> MarkdownEditorQuotedCodeBlock? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
@@ -149,11 +167,40 @@ fn markdown_editor_quoted_code_block_at_content_offset(
     0,
     markdown_editor_text_length(source),
   )
-  match
-    markdown_editor_containing_quoted_code_block(
+  let containing = match context {
+    // Quoted fences only ever sit on quote-prefixed lines, which the
+    // shell kinds track exactly: scan the enclosing quote block's lines
+    // (read from the text store, O(block)) instead of line-splitting the
+    // whole document.
+    Some(context) =>
+      match markdown_editor_block_at_offset_of_kind(
+          context.blocks,
+          caret,
+          MarkdownBlockKind::Blockquote,
+        ) {
+        Some(block) => {
+          let range = block.source_range
+          let rebased : Array[MarkdownLine] = []
+          for line in markdown_editor_lines(context.store.text_of(
+            range.start,
+            range.end,
+          )) {
+            rebased.push({
+              text: line.text,
+              start: line.start + range.start,
+              end: line.end + range.start,
+            })
+          }
+          markdown_editor_quoted_code_block_scan(rebased, caret)
+        }
+        None => None
+      }
+    None => markdown_editor_containing_quoted_code_block(
       source,
       ({ caret, selection } : MarkdownEditorSelection),
-    ) {
+    )
+  }
+  match containing {
     Some(block) =>
       if caret >= block.content_range.start && caret <= block.content_range.end {
         Some(block)
@@ -169,10 +216,13 @@ fn markdown_editor_any_code_block_at_content_offset(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
+  context? : MarkdownEditorInputContext? = None,
 ) -> Bool {
-  markdown_editor_code_block_at_content_offset(source, caret, selection)
+  markdown_editor_code_block_at_content_offset(source, caret, selection, context=context)
   is Some(_) ||
-  markdown_editor_quoted_code_block_at_content_offset(source, caret, selection)
+  markdown_editor_quoted_code_block_at_content_offset(
+    source, caret, selection, context=context,
+  )
   is Some(_)
 }
 

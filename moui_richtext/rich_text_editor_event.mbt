@@ -5,7 +5,7 @@ fn[Msg] rich_text_editor_event(
   format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   on_input~ : ((String) -> Msg)?,
-  on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
+  on_input_edit~ : ((String, Int, @core.TextRange?, RichTextInputEdit?) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   on_prefix_click~ : ((Int) -> Msg)?,
   on_command_click~ : ((Int) -> Msg)?,
@@ -275,7 +275,7 @@ fn[Msg] rich_text_keyboard_event(
   format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   on_input~ : ((String) -> Msg)?,
-  on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
+  on_input_edit~ : ((String, Int, @core.TextRange?, RichTextInputEdit?) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   accepts_tab_input~ : Bool,
@@ -496,7 +496,7 @@ fn[Msg] rich_text_input_event(
   ctx : @core.ViewEventContext,
   value~ : String,
   on_input~ : ((String) -> Msg)?,
-  on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
+  on_input_edit~ : ((String, Int, @core.TextRange?, RichTextInputEdit?) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   event~ : @core.TextInputEvent,
@@ -508,7 +508,7 @@ fn[Msg] rich_text_input_event(
     @core.TextInputEvent::InsertText(inserted) =>
       if inserted == "" {
         (
-          { text, control: ctx.text_control, changed: false } :
+          { text, control: ctx.text_control, changed: false, edit: None } :
           TextInputApplyResult)
       } else {
         match
@@ -596,7 +596,9 @@ fn[Msg] rich_text_input_event(
     dirty=@core.ViewDirtyHint::ViewPaintDirty,
     messages=if result.changed {
       text_input_messages(on_input, result.text) +
-      text_input_edit_messages(on_input_edit, result.text, result.control) +
+      text_input_edit_messages(
+        on_input_edit, result.text, result.control, record=result.edit,
+      ) +
       selection_messages(
         on_selection_change,
         result.control.caret,
@@ -614,7 +616,7 @@ fn[Msg] rich_text_editor_command(
   value~ : String,
   format~ : RichTextFormatter,
   on_input~ : ((String) -> Msg)?,
-  on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
+  on_input_edit~ : ((String, Int, @core.TextRange?, RichTextInputEdit?) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   intent : @core.CommandIntent,
