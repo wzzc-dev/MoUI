@@ -365,7 +365,10 @@ test "markdown document session fingerprint stability for unchanged re-parse" {
     content=session_b.blocks.length().to_string(),
   )
   for index, block in session_a.blocks {
-    inspect(block.fingerprint, content=session_b.blocks[index].fingerprint)
+    inspect(
+      block.fingerprint.to_string(),
+      content=session_b.blocks[index].fingerprint.to_string(),
+    )
   }
 }
 

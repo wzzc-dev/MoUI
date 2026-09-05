@@ -36,6 +36,12 @@ let hot_path_scroll_geometry_cache_hits : Ref[Int] = Ref(0)
 let hot_path_scroll_geometry_point_updates : Ref[Int] = Ref(0)
 
 ///|
+/// Scroll geometry reads served by rebasing the live entry in place after
+/// an incremental edit (window splice + point updates) instead of walking
+/// every block again.
+let hot_path_scroll_geometry_rebase_hits : Ref[Int] = Ref(0)
+
+///|
 /// Rich-text block conversions executed (cache misses).
 let hot_path_block_conversion_builds : Ref[Int] = Ref(0)
 

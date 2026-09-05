@@ -12,6 +12,32 @@ fn hot_path_bench_enabled() -> Bool {
 }
 
 ///|
+/// Document size override for stress-scale runs; the default keeps the
+/// suite fast while still exercising the windowed paths.
+fn hot_path_bench_document_blocks() -> Int {
+  match @env.get_env_var("MOUI_EDITOR_HOT_BENCH_BLOCKS") {
+    Some(value) => {
+      let mut parsed = 0
+      let mut valid = value.length() > 0
+      for ch in value {
+        if ch >= '0' && ch <= '9' {
+          parsed = parsed * 10 + ch.to_int() - '0'.to_int()
+        } else {
+          valid = false
+          break
+        }
+      }
+      if valid && parsed > 0 {
+        parsed
+      } else {
+        300
+      }
+    }
+    None => 300
+  }
+}
+
+///|
 fn hot_path_bench_print(key : String, value : Double) -> Unit {
   let line = "hot-bench " + key + "=" + value.round().to_string() + "us"
   println(line)
@@ -219,7 +245,7 @@ test "hot path: gated end-to-end benchmark" {
   if !hot_path_bench_enabled() {
     return
   }
-  let fixture = hot_path_bench_document(300)
+  let fixture = hot_path_bench_document(hot_path_bench_document_blocks())
   hot_path_bench_input(fixture, 80)
   hot_path_bench_scroll(fixture, 120)
   hot_path_bench_rebuild(fixture, 60)

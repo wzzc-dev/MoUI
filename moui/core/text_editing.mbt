@@ -134,6 +134,13 @@ fn scan_text_for_range(
     previous = Some(ch)
     offset = offset + ch.utf16_len()
     index = index + 1
+    // Both endpoints resolved: the scan can stop. Callers that need the
+    // total length only use it in the not-found fallback paths (they pass
+    // `text.char_length()` there), so truncating `index` here is safe and
+    // keeps an early-document caret from scanning the whole document.
+    if found_start && found_end {
+      break
+    }
   }
   if !found_start {
     start_offset = offset
@@ -358,7 +365,7 @@ pub fn selected_text(text : String, selection : TextRange?) -> String {
           text,
           normalized.start,
           normalized.end,
-          length=scan.length,
+          length=text.char_length(),
         )
       }
     }
@@ -399,7 +406,7 @@ pub fn replace_text_range_edit(
       TextGraphemeBoundaries::new(text~),
       normalized,
     )
-    let length = scan.length
+    let length = text.char_length()
     let next_text = text_substring_by_char_range(text, 0, range.start, length~) +
       replacement +
       text_substring_by_char_range(text, range.end, length, length~)

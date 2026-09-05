@@ -7,8 +7,12 @@ pub(all) struct MarkdownSourceRange {
 ///|
 pub(all) struct MarkdownEditorBlock {
   block : MarkdownBlock
-  source_range : MarkdownSourceRange
-  content_range : MarkdownSourceRange
+  // Absolute source offsets are shifted in place by the incremental apply;
+  // every session value derived from an edit shares these records (same
+  // contract as the text store). Callers must not cache the ranges across
+  // an apply — read them at use time.
+  mut source_range : MarkdownSourceRange
+  mut content_range : MarkdownSourceRange
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -204,19 +208,36 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
 ///|
 /// `char_length` decodes the whole UTF-8 buffer, and the editor helpers
 /// call it on the same source document for every block conversion, caret
-/// clamp, and substring. Memoize the last (source, length) pair so one
-/// keystroke pays the scan at most once; the runtime is single-threaded.
+/// clamp, and substring. Memoize the last two (source, length) pairs so
+/// one keystroke pays the scan at most once even though the control's
+/// new source and the session's previous source alternate; the runtime
+/// is single-threaded. Comparisons are pointer-identity (`phys_equal`):
+/// the sources are long-lived objects per revision, and a content
+/// comparison would itself scan megabytes on every miss.
 let markdown_editor_text_length_cache : Ref[(String, Int)] = Ref(("", -1))
+let markdown_editor_text_length_cache_prev : Ref[(String, Int)] = Ref((
+  "",
+  -1,
+))
 
 ///|
 pub fn markdown_editor_text_length(source : String) -> Int {
   let cached = markdown_editor_text_length_cache.val
-  if cached.1 >= 0 && cached.0 == source {
+  if cached.1 >= 0 && physical_equal(cached.0, source) {
     cached.1
   } else {
-    let length = source.char_length()
-    markdown_editor_text_length_cache.val = (source, length)
-    length
+    let previous = markdown_editor_text_length_cache_prev.val
+    if previous.1 >= 0 && physical_equal(previous.0, source) {
+      // Swap the slots so an A/B/A/B alternation keeps both entries hot.
+      markdown_editor_text_length_cache_prev.val = cached
+      markdown_editor_text_length_cache.val = previous
+      previous.1
+    } else {
+      let length = source.char_length()
+      markdown_editor_text_length_cache_prev.val = cached
+      markdown_editor_text_length_cache.val = (source, length)
+      length
+    }
   }
 }
 

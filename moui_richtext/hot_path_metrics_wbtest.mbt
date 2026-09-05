@@ -160,7 +160,12 @@ fn legacy_window_range(
 fn geometry_of_heights(
   heights : Array[Double],
 ) -> MarkdownDocumentScrollGeometry {
-  markdown_document_scroll_geometry_from_heights(heights, epoch=0)
+  markdown_document_scroll_geometry_from_heights(
+    heights,
+    epoch=0,
+    source_digest=0UL,
+    source_length=heights.length(),
+  )
 }
 
 ///|
@@ -587,6 +592,64 @@ test "hot path: keystroke bookkeeping work stays inside the re-parse window" {
   // show thousands of fingerprint builds and height recomputes here.
   assert_true(hot_path_block_fingerprints_built.val < block_count)
   assert_true(hot_path_height_metrics_recomputed.val < block_count)
+}
+
+///|
+/// A2's geometry contract: after an incremental edit the scroll geometry
+/// rebases its live entry in place — no full block walk — and the rebased
+/// geometry matches what a from-scratch walk of the same source produces.
+test "hot path: scroll geometry rebases in place after a keystroke" {
+  let base = @core.FontSpec::new(size=16.0)
+  let mut session = MarkdownDocumentSession::new(hot_path_bench_document(60))
+  let width = 640.0
+  // Seed measured heights for a handful of blocks so the walked geometry
+  // is a real entry (not the empty "no measured geometry yet" verdict).
+  for index in 0..<5 {
+    let session_block = session.blocks[index]
+    ignore(
+      rich_text_record_block_measured_height(
+        base,
+        width~,
+        block_id=session_block.id,
+        block_revision=session_block.revision,
+        height=24.0,
+      ),
+    )
+  }
+  // First edit: cold cache, so this query walks and stores a real entry.
+  session = hot_path_apply_edit(session, session.source() + "x")
+  hot_path_metrics_reset()
+  ignore(markdown_document_block_geometry(session, base, content_width=width))
+  assert_true(hot_path_block_height_walk_blocks.val > 0)
+  // Second edit: the next geometry query must rebase, not walk.
+  session = hot_path_apply_edit(session, session.source() + "y")
+  hot_path_metrics_reset()
+  let rebased = markdown_document_block_geometry(
+    session, base, content_width=width,
+  )
+  assert_eq(hot_path_scroll_geometry_rebase_hits.val, 1)
+  assert_eq(hot_path_block_height_walk_blocks.val, 0)
+  // The rebased geometry agrees with a from-scratch walk of the source.
+  let scratch = MarkdownDocumentSession::new(session.source())
+  let walked = markdown_document_block_geometry(
+    scratch, base, content_width=width,
+  )
+  let rebased_geometry = match rebased {
+    Some(geometry) => geometry
+    None => abort("rebased geometry missing")
+  }
+  let walked_geometry = match walked {
+    Some(geometry) => geometry
+    None => abort("walked geometry missing")
+  }
+  let count = rebased_geometry.heights.length()
+  assert_eq(walked_geometry.heights.length(), count)
+  assert_eq(
+    markdown_document_scroll_geometry_prefix_at(rebased_geometry, count~),
+    markdown_document_scroll_geometry_prefix_at(walked_geometry, count~),
+  )
+  // And the identity moved to the new source.
+  assert_true(rebased_geometry.source_digest == session.source_digest)
 }
 
 ///|
