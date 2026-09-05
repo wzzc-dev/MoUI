@@ -29,6 +29,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_agent |
 | ./moui_agent_mcp |
 | ./examples/agent_counter |
+| ./examples/ai_native_inspector |
 | ./tools |
 | ./tools_product |
 | ./moui_cli |
@@ -95,6 +96,7 @@ This file is generated from repository manifests and validator reports.
 | 3D Viewer | examples/three_d_viewer | no |
 | 3D Physics Viewer | examples/three_d_physics_viewer | no |
 | Agent Counter | examples/agent_counter | no |
+| AI-Native Inspector | examples/ai_native_inspector | no |
 | Counter | examples/counter | no |
 | Multi Window | examples/multi_window | no |
 | HarmonyOS Demo | examples/harmonyos_demo | no |

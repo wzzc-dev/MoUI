@@ -9,7 +9,7 @@ import {
 }
 
 // Values
-pub fn agent_inspector_report(@moui_agent.AgentSemanticsSnapshot?, policy? : @moui_agent.AgentPolicyState, trace? : Array[@moui_agent.AgentTraceEntry], replay? : @moui_agent.AgentReplayResult, mcp_result? : String) -> AgentInspectorReport
+pub fn agent_inspector_report(@moui_agent.AgentSemanticsSnapshot?, policy? : @moui_agent.AgentPolicyState, trace? : Array[@moui_agent.AgentTraceEntry], replay? : @moui_agent.AgentReplayResult, mcp_result? : String, skills? : Array[@moui_agent.AgentSkillManifest], skill_result? : @moui_agent.AgentSkillResult, mcp_schema? : String) -> AgentInspectorReport
 
 pub fn agent_inspector_report_json(AgentInspectorReport, indent? : Int) -> String
 
@@ -55,8 +55,11 @@ pub(all) struct AgentAuditSummary {
 
 pub(all) struct AgentInspectorReport {
   semantics : @moui_agent.AgentSemanticsSnapshot?
+  skills : Array[@moui_agent.AgentSkillManifest]
   actions : Array[AgentActionSummary]
   policy : @moui_agent.AgentPolicyState?
+  skill_result : @moui_agent.AgentSkillResult?
+  mcp_schema : String?
   trace : Array[@moui_agent.AgentTraceEntry]
   replay : @moui_agent.AgentReplayResult?
   mcp_result : String?
@@ -64,11 +67,16 @@ pub(all) struct AgentInspectorReport {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn AgentInspectorReport::audit(Self) -> AgentAuditSummary
 pub fn AgentInspectorReport::semantics(Self) -> @moui_agent.AgentSemanticsSnapshot?
+pub fn AgentInspectorReport::skill_result(Self) -> @moui_agent.AgentSkillResult?
+pub fn AgentInspectorReport::skills(Self) -> Array[@moui_agent.AgentSkillManifest]
 pub fn AgentInspectorReport::trace(Self) -> Array[@moui_agent.AgentTraceEntry]
 
 pub(all) enum AgentInspectorWorkspace {
   Semantics
+  Skills
   Actions
+  Policy
+  MCP
   Trace
   Replay
   AIReadyAudit

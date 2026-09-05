@@ -37,6 +37,11 @@
   },
   "ratchets": [
     {
+      "path": "examples/ai_native_inspector/app/app.mbt",
+      "maxLines": 1677,
+      "reason": "Existing AI-Native Inspector demonstration state machine and dual-workspace UI."
+    },
+    {
       "path": "moui_sun/text/text_system_test.mbt",
       "maxLines": 3499,
       "reason": "Existing comprehensive text-system logic test."

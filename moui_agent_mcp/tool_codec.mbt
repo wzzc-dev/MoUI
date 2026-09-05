@@ -291,6 +291,109 @@ fn agent_read_trace_input_codec() -> ToolInputCodec {
 }
 
 ///|
+fn agent_skills_list_input_codec() -> ToolInputCodec {
+  {
+    schema: object_schema(Json::empty_object()),
+    decode: arguments => {
+      if arguments.length() == 0 {
+        Ok(ToolInvocation::AgentSkillsList)
+      } else {
+        Err("skills/list does not accept arguments.")
+      }
+    },
+  }
+}
+
+///|
+fn agent_skills_get_input_codec() -> ToolInputCodec {
+  {
+    schema: object_schema(
+      ({ "skill_id": { "type": "string", "minLength": 1 } } : Json),
+      required=["skill_id"],
+    ),
+    decode: arguments => {
+      if !fields_are_exact(arguments, ["skill_id"]) {
+        return Err("skills/get contains unknown arguments.")
+      }
+      match arguments.get("skill_id") {
+        Some(Json::String(skill_id)) if skill_id != "" =>
+          Ok(ToolInvocation::AgentSkillsGet(skill_id))
+        _ => Err("'skill_id' must be a non-empty string.")
+      }
+    },
+  }
+}
+
+///|
+fn agent_skills_call_input_codec() -> ToolInputCodec {
+  {
+    schema: object_schema(
+      (
+        {
+          "skill_id": { "type": "string", "minLength": 1 },
+          "inputs": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+          },
+          "scopes": { "type": "array", "items": { "type": "string" } },
+          "confirmation": { "type": "string", "minLength": 1 },
+        } : Json),
+      required=["skill_id"],
+    ),
+    decode: arguments => {
+      if !fields_are_exact(arguments, [
+          "skill_id", "inputs", "scopes", "confirmation",
+        ]) {
+        return Err("skills/call contains unknown arguments.")
+      }
+      let skill_id = match arguments.get("skill_id") {
+        Some(Json::String(value)) if value != "" => value
+        _ => return Err("'skill_id' must be a non-empty string.")
+      }
+      let inputs : Map[String, String] = Map([])
+      match arguments.get("inputs") {
+        None => ()
+        Some(Json::Object(values)) =>
+          for key, value in values {
+            match value {
+              Json::String(text) => inputs[key] = text
+              _ => return Err("Skill inputs must be strings.")
+            }
+          }
+        Some(_) => return Err("'inputs' must be an object.")
+      }
+      let scopes : Array[String] = []
+      match arguments.get("scopes") {
+        None => ()
+        Some(Json::Array(values)) =>
+          for value in values {
+            match value {
+              Json::String(scope) => scopes.push(scope)
+              _ => return Err("Skill scopes must be strings.")
+            }
+          }
+        Some(_) => return Err("'scopes' must be an array.")
+      }
+      let confirmation : String? = match arguments.get("confirmation") {
+        None => None
+        Some(Json::String(value)) if value != "" => Some(value)
+        Some(_) => return Err("'confirmation' must be a non-empty string.")
+      }
+      Ok(
+        ToolInvocation::AgentSkillsCall(
+          @agent.AgentSkillCall::new(
+            skill_id~,
+            inputs~,
+            scopes~,
+            confirmation=confirmation.unwrap_or(""),
+          ),
+        ),
+      )
+    },
+  }
+}
+
+///|
 fn agent_replay_trace_input_codec() -> ToolInputCodec {
   let cursor = decimal_u64_codec()
   {

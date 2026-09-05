@@ -8,6 +8,12 @@
       "featured": false
     },
     {
+      "id": "ai_native_inspector",
+      "path": "examples/ai_native_inspector",
+      "title": "AI-Native Inspector",
+      "featured": false
+    },
+    {
       "id": "counter",
       "path": "examples/counter",
       "title": "Counter",

@@ -13,7 +13,10 @@ pub(all) enum AgentAuditIssue {
 ///|
 pub(all) enum AgentInspectorWorkspace {
   Semantics
+  Skills
   Actions
+  Policy
+  MCP
   Trace
   Replay
   AIReadyAudit
@@ -37,8 +40,11 @@ pub(all) struct AgentActionSummary {
 ///|
 pub(all) struct AgentInspectorReport {
   semantics : @agent.AgentSemanticsSnapshot?
+  skills : Array[@agent.AgentSkillManifest]
   actions : Array[AgentActionSummary]
   policy : @agent.AgentPolicyState?
+  skill_result : @agent.AgentSkillResult?
+  mcp_schema : String?
   trace : Array[@agent.AgentTraceEntry]
   replay : @agent.AgentReplayResult?
   mcp_result : String?
@@ -56,7 +62,10 @@ fn audit_semantics(
   for node in nodes {
     match node.semantic_id {
       None =>
-        if node.role != @core.SemanticsRole::None {
+        // Layout, grouping and presentation nodes can legitimately remain
+        // anonymous. AI-Ready requires stable IDs at the operation boundary:
+        // only nodes advertising at least one typed action need an ID.
+        if node.actions.length() > 0 && is_operation_role(node.role) {
           issues.push(AgentAuditIssue::MissingSemanticId(node.node_id))
         }
       Some(id) =>
@@ -95,6 +104,25 @@ fn audit_semantics(
 }
 
 ///|
+/// Scroll containers and layout groups can expose navigation actions without
+/// being an Agent operation target. Audit stable IDs on user-facing controls.
+fn is_operation_role(role : @core.SemanticsRole) -> Bool {
+  match role {
+    @core.SemanticsRole::Button
+    | @core.SemanticsRole::Link
+    | @core.SemanticsRole::TextField
+    | @core.SemanticsRole::Checkbox
+    | @core.SemanticsRole::Switch
+    | @core.SemanticsRole::Radio
+    | @core.SemanticsRole::Slider
+    | @core.SemanticsRole::Tab
+    | @core.SemanticsRole::ComboBox
+    | @core.SemanticsRole::Option => true
+    _ => false
+  }
+}
+
+///|
 fn action_is_high_risk(kind : @core.SemanticsActionKind) -> Bool {
   kind == @core.SemanticsActionKind::SetText ||
   kind == @core.SemanticsActionKind::SetNumericValue ||
@@ -128,6 +156,9 @@ pub fn agent_inspector_report(
   trace? : Array[@agent.AgentTraceEntry] = [],
   replay? : @agent.AgentReplayResult,
   mcp_result? : String,
+  skills? : Array[@agent.AgentSkillManifest] = [],
+  skill_result? : @agent.AgentSkillResult,
+  mcp_schema? : String,
 ) -> AgentInspectorReport {
   let audit = match semantics {
     Some(snapshot) => audit_semantics(snapshot, policy is Some(_))
@@ -135,8 +166,11 @@ pub fn agent_inspector_report(
   }
   {
     semantics,
+    skills,
     actions: action_summaries(semantics),
     policy,
+    skill_result,
+    mcp_schema,
     trace,
     replay,
     mcp_result,
@@ -163,6 +197,20 @@ pub fn AgentInspectorReport::trace(
   self : AgentInspectorReport,
 ) -> Array[@agent.AgentTraceEntry] {
   self.trace.copy()
+}
+
+///|
+pub fn AgentInspectorReport::skills(
+  self : AgentInspectorReport,
+) -> Array[@agent.AgentSkillManifest] {
+  self.skills.copy()
+}
+
+///|
+pub fn AgentInspectorReport::skill_result(
+  self : AgentInspectorReport,
+) -> @agent.AgentSkillResult? {
+  self.skill_result
 }
 
 ///|
@@ -196,6 +244,8 @@ pub fn agent_inspector_report_text(report : AgentInspectorReport) -> String {
   semantics +
   "\n[actions] nodes=" +
   report.actions.length().to_string() +
+  "; skills=" +
+  report.skills.length().to_string() +
   "; trace_entries=" +
   report.trace.length().to_string() +
   "\n[policy] " +
@@ -225,11 +275,25 @@ pub fn agent_inspector_workspace_text(
           "; nodes " +
           snapshot.nodes().length().to_string()
       }
+    AgentInspectorWorkspace::Skills =>
+      "Skills: " + report.skills.map(skill => skill.id()).join(", ")
     AgentInspectorWorkspace::Actions =>
       "Action targets: " +
       report.actions.length().to_string() +
       "; high-risk targets: " +
       report.actions.filter(action => action.high_risk).length().to_string()
+    AgentInspectorWorkspace::Policy =>
+      match report.policy {
+        None => "Policy unavailable"
+        Some(state) =>
+          "Pending confirmations: " + state.pending().length().to_string()
+      }
+    AgentInspectorWorkspace::MCP =>
+      match report.mcp_schema {
+        None => "MCP schema not recorded"
+        Some(schema) =>
+          "MCP schema recorded (" + schema.length().to_string() + " chars)"
+      }
     AgentInspectorWorkspace::Trace =>
       "Trace entries: " + report.trace.length().to_string()
     AgentInspectorWorkspace::Replay =>

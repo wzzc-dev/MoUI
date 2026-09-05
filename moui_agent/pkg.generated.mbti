@@ -8,6 +8,7 @@ import {
 }
 
 // Values
+pub fn redact_semantics_read(AgentSemanticsRead, AgentVisibilityPolicy, scopes? : Array[String]) -> AgentSemanticsRead
 
 // Errors
 
@@ -74,6 +75,12 @@ pub(all) enum AgentDiagnosticsError {
   HostClosed
 } derive(Eq, ToJson, @debug.Debug)
 pub fn AgentDiagnosticsError::code(Self) -> String
+
+pub(all) enum AgentFieldVisibility {
+  Public
+  Protected(String)
+  Hidden
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum AgentGenerationPrecondition {
   Exact(@core.SemanticsGeneration)
@@ -147,6 +154,18 @@ pub(all) enum AgentScenarioStep {
   AssertGenerationChanged
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct AgentSecureSession[Host] {
+  inner : Host
+  visibility : AgentVisibilityPolicy
+  scopes : Array[String]
+}
+pub fn[Host : AgentHost] AgentSecureSession::execute_skill(Self[Host], AgentSkillRegistry, AgentSkillCall) -> AgentSkillResult
+pub fn[Host] AgentSecureSession::inner(Self[Host]) -> Host
+pub fn[Host] AgentSecureSession::new(Host, AgentVisibilityPolicy, scopes? : Array[String]) -> Self[Host]
+pub fn[Host] AgentSecureSession::with_scopes(Self[Host], Array[String]) -> Self[Host]
+pub impl[Host : AgentHost] AgentHost for AgentSecureSession[Host]
+pub impl[Host : AgentTraceHost] AgentTraceHost for AgentSecureSession[Host]
+
 pub(all) struct AgentSemanticsDelta {
   from : @core.SemanticsGeneration
   to : @core.SemanticsGeneration
@@ -183,6 +202,103 @@ pub fn AgentSemanticsSnapshot::focused(Self) -> @core.SemanticsNodeId?
 pub fn AgentSemanticsSnapshot::generation(Self) -> @core.SemanticsGeneration
 pub fn AgentSemanticsSnapshot::nodes(Self) -> Array[@core.SemanticsNode]
 
+pub(all) enum AgentSkillAction {
+  Activate
+  Focus
+  SetText(AgentSkillValue)
+  Submit
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct AgentSkillCall {
+  skill_id : String
+  inputs : Map[String, String]
+  scopes : Array[String]
+  confirmation : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentSkillCall::confirmation(Self) -> String?
+pub fn AgentSkillCall::inputs(Self) -> Map[String, String]
+pub fn AgentSkillCall::new(skill_id~ : String, inputs? : Map[String, String], scopes? : Array[String], confirmation? : String) -> Self
+pub fn AgentSkillCall::scopes(Self) -> Array[String]
+pub fn AgentSkillCall::skill_id(Self) -> String
+
+pub(all) enum AgentSkillError {
+  HostClosed
+  UnknownSkill(String)
+  InvalidManifest(String)
+  MissingScope(String)
+  ConfirmationRequired(String)
+  TargetNotFound(String)
+  ActionUnavailable(String, @core.SemanticsActionKind)
+  GenerationUnchanged
+  Action(AgentActionError)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentSkillError::code(Self) -> String
+
+pub struct AgentSkillExecutor {
+}
+pub fn[Host : AgentHost] AgentSkillExecutor::execute(Self, AgentSkillRegistry, Host, AgentSkillCall) -> AgentSkillResult
+pub fn AgentSkillExecutor::new() -> Self
+
+pub(all) struct AgentSkillManifest {
+  id : String
+  version : String
+  description : String
+  input_schema : Json
+  required_scopes : Array[String]
+  steps : Array[AgentSkillStep]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentSkillManifest::description(Self) -> String
+pub fn AgentSkillManifest::id(Self) -> String
+pub fn AgentSkillManifest::input_schema(Self) -> Json
+pub fn AgentSkillManifest::new(id~ : String, version~ : String, description~ : String, input_schema~ : Json, required_scopes? : Array[String], steps~ : Array[AgentSkillStep]) -> Self
+pub fn AgentSkillManifest::required_scopes(Self) -> Array[String]
+pub fn AgentSkillManifest::steps(Self) -> Array[AgentSkillStep]
+pub fn AgentSkillManifest::version(Self) -> String
+
+pub struct AgentSkillRegistry {
+  skills : Array[AgentSkillManifest]
+}
+pub fn[Host : AgentHost] AgentSkillRegistry::call(Self, Host, AgentSkillCall) -> AgentSkillResult
+pub fn[Host : AgentHost] AgentSkillRegistry::execute(Self, Host, AgentSkillManifest, AgentSkillCall) -> AgentSkillResult
+pub fn AgentSkillRegistry::get(Self, String) -> AgentSkillManifest?
+pub fn AgentSkillRegistry::list(Self) -> Array[AgentSkillManifest]
+pub fn AgentSkillRegistry::new() -> Self
+pub fn AgentSkillRegistry::register(Self, AgentSkillManifest) -> Result[Unit, AgentSkillError]
+
+pub(all) struct AgentSkillResult {
+  skill_id : String
+  success : Bool
+  completed_steps : Int
+  failed_step : Int?
+  error : AgentSkillError?
+  generation_before : @core.SemanticsGeneration?
+  generation_after : @core.SemanticsGeneration?
+  receipts : Array[AgentActionReceipt]
+  output : Json
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AgentSkillResult::completed_steps(Self) -> Int
+pub fn AgentSkillResult::error(Self) -> AgentSkillError?
+pub fn AgentSkillResult::failed_step(Self) -> Int?
+pub fn AgentSkillResult::output(Self) -> Json
+pub fn AgentSkillResult::receipts(Self) -> Array[AgentActionReceipt]
+pub fn AgentSkillResult::skill_id(Self) -> String
+pub fn AgentSkillResult::success(Self) -> Bool
+
+pub(all) enum AgentSkillStep {
+  ReadSemantics
+  AssertTarget(String)
+  AssertAction(String, @core.SemanticsActionKind)
+  Perform(String, AgentSkillAction)
+  AssertGenerationChanged
+  RequireScope(String)
+  RequireConfirmation(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum AgentSkillValue {
+  Literal(String)
+  Input(String)
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct AgentTraceEntry {
   trace_id : UInt64
   target : @core.SemanticsTarget
@@ -212,6 +328,15 @@ pub(all) struct AgentTraceRead {
 pub fn AgentTraceRead::cursor(Self) -> UInt64
 pub fn AgentTraceRead::entries(Self) -> Array[AgentTraceEntry]
 pub fn AgentTraceRead::new(cursor~ : UInt64, entries~ : Array[AgentTraceEntry]) -> Self
+
+pub struct AgentVisibilityPolicy {
+  protected_scopes : Map[String, String]
+  hidden : Array[String]
+}
+pub fn AgentVisibilityPolicy::hide(Self, semantic_id~ : String) -> Self
+pub fn AgentVisibilityPolicy::new() -> Self
+pub fn AgentVisibilityPolicy::protect(Self, semantic_id~ : String, scope~ : String) -> Self
+pub fn AgentVisibilityPolicy::visibility(Self, String) -> AgentFieldVisibility
 
 pub(all) struct DiagnosticsDispatchResult {
   accepted : Bool

@@ -730,7 +730,15 @@ struct TraceHost {}
 
 ///|
 pub impl @agent.AgentHost for TraceHost with fn read_semantics(_self, _since) {
-  Ok(@agent.AgentSemanticsRead::Unchanged(@core.SemanticsGeneration::new(2UL)))
+  Ok(
+    @agent.AgentSemanticsRead::Full({
+      generation: @core.SemanticsGeneration::new(2UL),
+      root: None,
+      focused: None,
+      nodes: [],
+      issues: [],
+    }),
+  )
 }
 
 ///|
@@ -793,4 +801,77 @@ test "agent trace calls return structured tool content" {
   assert_true(text.contains("structuredContent"))
   assert_true(text.contains("\"isError\":false"))
   assert_true(text.contains("\"cursor\":\"0\""))
+}
+
+///|
+test "Skill tools are opt-in and preserve the default two-tool route" {
+  let skill = @agent.AgentSkillManifest::new(
+    id="workbench.search",
+    version="1.0.0",
+    description="Search records",
+    input_schema=({ "type": "object" } : Json),
+    steps=[@agent.AgentSkillStep::ReadSemantics],
+  )
+  let registry = @agent.AgentSkillRegistry::new()
+  assert_true(registry.register(skill) is Ok(_))
+  let host = TraceHost::{  }
+  assert_eq(
+    listed_tool_count(
+      route(
+        host,
+        request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
+      ),
+    ),
+    2,
+  )
+  let response = route_with_skills(
+    host,
+    registry,
+    request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
+  )
+  assert_eq(listed_tool_count(response), 8)
+  assert_true(response.stringify().contains("skills/list"))
+  let call = route_with_skills(
+    host,
+    registry,
+    tool_call("skills/call", ({ "skill_id": "workbench.search" } : Json)),
+  )
+  assert_true(call.stringify().contains("\"isError\":false"))
+  assert_true(call.stringify().contains("workbench.search"))
+}
+
+///|
+test "secure Skill route applies invocation scopes" {
+  let skill = @agent.AgentSkillManifest::new(
+    id="protected.read",
+    version="1.0.0",
+    description="Read protected semantics",
+    input_schema=Json::empty_object(),
+    required_scopes=["records.sensitive.read"],
+    steps=[@agent.AgentSkillStep::ReadSemantics],
+  )
+  let registry = @agent.AgentSkillRegistry::new()
+  assert_true(registry.register(skill) is Ok(_))
+  let visibility = @agent.AgentVisibilityPolicy::new().protect(
+    semantic_id="workbench.sensitive.contact",
+    scope="records.sensitive.read",
+  )
+  let host = @agent.AgentSecureSession::new(TraceHost::{  }, visibility)
+  let denied = route_with_secure_skills(
+    host,
+    registry,
+    tool_call("skills/call", ({ "skill_id": "protected.read" } : Json)),
+  )
+  assert_true(denied.stringify().contains("missing_skill_scope"))
+  let approved = route_with_secure_skills(
+    host,
+    registry,
+    tool_call(
+      "skills/call",
+      (
+        { "skill_id": "protected.read", "scopes": ["records.sensitive.read"] } :
+        Json),
+    ),
+  )
+  assert_true(approved.stringify().contains("\"isError\":false"))
 }

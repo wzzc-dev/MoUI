@@ -73,7 +73,7 @@ pub fn agent_inspector_overlay(
 }
 
 ///|
-/// Render one of the five Inspector workspaces without coupling the overlay
+/// Render one of the eight Inspector workspaces without coupling the overlay
 /// to a particular window or transport.
 pub fn agent_inspector_workspace_overlay(
   report : @devtools.AgentInspectorReport,

@@ -3,6 +3,7 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui_agent" @agent,
   "wzzc-dev/moui_agent_mcp" @mcp,
+  "wzzc-dev/moui_devtools" @devtools,
   "moonbitlang/core/json",
   "examples/ai_native_inspector/app",
 }

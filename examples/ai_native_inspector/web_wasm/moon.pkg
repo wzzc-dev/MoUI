@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/web" @web,
+  "wzzc-dev/moui/backend/web",
   "wzzc-dev/moui_web_renderer" @web_renderer,
   "examples/ai_native_inspector" @app,
 }
@@ -15,6 +15,7 @@ options(
       "exports": [
         "web_dispatch_event",
         "web_dispatch_pointer_input",
+        "web_dispatch_route",
         "web_dispatch_semantics_action",
         "web_complete_async_clipboard_read",
         "web_complete_async_file_dialog",

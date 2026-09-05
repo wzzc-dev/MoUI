@@ -3,7 +3,7 @@
 /// policy, trace and replay surface as the windowed reference application.
 async fn main {
   let runtime = @app.runtime()
-  let host = @app.agent_host(runtime)
+  let host = @app.secure_agent_host(runtime)
   while @stdio.stdin.read_until("\n") is Some(line) {
     let trimmed = line.trim().to_owned()
     if trimmed == "" {
@@ -18,7 +18,7 @@ async fn main {
         continue
       }
     }
-    let response = @app.route_agent(host, parsed)
+    let response = @app.route_agent_with_skills(host, parsed)
     @stdio.stdout.write((response : Json).stringify() + "\n")
   }
 }

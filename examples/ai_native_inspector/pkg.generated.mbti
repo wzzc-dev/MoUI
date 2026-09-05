@@ -2,16 +2,25 @@
 package "examples/ai_native_inspector"
 
 import {
+  "examples/ai_native_inspector/app",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui_agent",
 }
 
 // Values
+pub fn agent_console_snapshot(@moui_agent.AgentSecureSession[@moui_agent.PolicyAgentHost[@moui_agent.RuntimeAgentHost]]) -> @app.AgentConsoleSnapshot
+
 pub fn agent_host(@runtime.AppRuntime) -> @moui_agent.PolicyAgentHost[@moui_agent.RuntimeAgentHost]
 
 pub fn route_agent(@moui_agent.PolicyAgentHost[@moui_agent.RuntimeAgentHost], Json) -> Json
 
+pub fn route_agent_with_skills(@moui_agent.AgentSecureSession[@moui_agent.PolicyAgentHost[@moui_agent.RuntimeAgentHost]], Json) -> Json
+
 pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
+
+pub fn secure_agent_host(@runtime.AppRuntime) -> @moui_agent.AgentSecureSession[@moui_agent.PolicyAgentHost[@moui_agent.RuntimeAgentHost]]
+
+pub fn skill_registry() -> @moui_agent.AgentSkillRegistry
 
 // Errors
 

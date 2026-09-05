@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/windows" @windows,
+  "wzzc-dev/moui/backend/windows",
   "wzzc-dev/moui_skia_renderer" @skia,
   "examples/ai_native_inspector" @app,
 }

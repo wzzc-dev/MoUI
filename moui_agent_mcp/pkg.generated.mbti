@@ -12,6 +12,10 @@ pub fn[Host : @moui_agent.AgentHost + @moui_agent.AgentTraceHost] route_with_age
 
 pub fn[Host : @moui_agent.AgentHost + @moui_agent.AgentDiagnosticsHost] route_with_diagnostics(Host, Json) -> Json
 
+pub fn[Host : @moui_agent.AgentHost + @moui_agent.AgentTraceHost] route_with_skills(Host, @moui_agent.AgentSkillRegistry, Json) -> Json
+
+pub fn[Inner : @moui_agent.AgentHost + @moui_agent.AgentTraceHost] route_with_secure_skills(@moui_agent.AgentSecureSession[Inner], @moui_agent.AgentSkillRegistry, Json) -> Json
+
 pub fn rpc_error(Json, Int, String) -> Json
 
 pub fn rpc_error_no_id(Int, String) -> Json

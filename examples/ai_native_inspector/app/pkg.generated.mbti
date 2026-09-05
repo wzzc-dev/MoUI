@@ -7,22 +7,141 @@ import {
 }
 
 // Values
-pub fn program() -> @core.Program[Model, Msg]
+pub fn program(driver? : DemoDriver) -> @core.Program[Model, Msg]
 
 pub fn update(Model, Msg) -> Model
+
+pub fn update_with_driver(Model, Msg, DemoDriver) -> (Model, @core.Effect[Msg])
 
 pub fn view(Model) -> @core.View[Msg]
 
 // Errors
 
 // Types and methods
+pub(all) struct AgentConsoleSnapshot {
+  mode : String
+  generation : String
+  active_step : DemoStep
+  demo_status : DemoStatus
+  skills : Array[String]
+  active_skill : String
+  selected_target : String
+  pending_confirmations : Int
+  pending_confirmation : String?
+  pending_confirmation_reason : String?
+  trace_entries : Int
+  trace : Array[TraceRow]
+  policy : Array[PolicyRow]
+  mcp : Array[McpCallRow]
+  replay : ReplaySummary
+  audit : AuditSummary
+  replay_status : String
+  audit_issues : Int
+  mcp_status : String
+  last_result : String
+  report_text : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct AuditSummary {
+  status : String
+  issue_count : Int
+  issues : Array[String]
+  passed : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum ConsoleWorkspace {
+  Semantics
+  Skills
+  Actions
+  Policy
+  MCP
+  Trace
+  Replay
+  Audit
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum DemoBusinessAction {
+  None
+  Reset
+  Search(String)
+  Open(Int)
+  Transition(String)
+  RevealSensitive
+  Export
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum DemoCommand {
+  RunAll
+  NextStep
+  Approve
+  Reject
+  Replay
+  Audit
+  ExportReport
+  Reset
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct DemoContext {
+  fixture_version : Int
+  selected_record : Int?
+  query : String
+  selected_status : String
+  snapshot : AgentConsoleSnapshot
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct DemoDriver {
+  run_fn : (DemoCommand, DemoContext) -> DemoResult
+}
+pub fn DemoDriver::new(run~ : (DemoCommand, DemoContext) -> DemoResult) -> Self
+pub fn DemoDriver::offline() -> Self
+pub fn DemoDriver::run(Self, DemoCommand, DemoContext) -> DemoResult
+
+pub(all) struct DemoResult {
+  snapshot : AgentConsoleSnapshot
+  event : String
+  business : DemoBusinessAction
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum DemoStatus {
+  Idle
+  Running
+  WaitingConfirmation
+  Completed
+  Failed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum DemoStep {
+  ReadSemantics
+  Search
+  OpenRecord
+  SensitiveRead
+  RequestTransitionConfirmation
+  ApproveTransition
+  RequestExportConfirmation
+  ApproveExport
+  Replay
+  Audit
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct McpCallRow {
+  tool : String
+  request : String
+  result : String
+  error_code : String
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct Model {
   query : String
   selected_status : String
   selected_record : Int?
   editor_value : String
+  assigned_owner : String
   submitted : Bool
   exported : Bool
+  sensitive_revealed : Bool
+  fixture_version : Int
+  console_workspace : ConsoleWorkspace
+  console : AgentConsoleSnapshot
   last_event : String
   records : Array[Record]
 }
@@ -34,10 +153,32 @@ pub(all) enum Msg {
   StatusChanged(String)
   SelectRecord(Int)
   EditorChanged(String)
+  Assign(String)
+  Transition(String)
   Submit
   ConfirmSubmit
   Export
+  RevealSensitive
+  ToggleFixture
+  RunDemo
+  NextStep
+  Approve
+  Reject
+  Replay
+  Audit
+  ExportReport
+  ResetDemo
+  ConsoleWorkspaceChanged(ConsoleWorkspace)
+  AgentConsoleUpdated(AgentConsoleSnapshot)
+  DemoResultReceived(DemoResult)
 }
+
+pub(all) struct PolicyRow {
+  target : String
+  decision : String
+  reason : String
+  confirmation : String
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Record {
   id : Int
@@ -45,6 +186,26 @@ pub(all) struct Record {
   owner : String
   status : String
   amount : String
+  sensitive_contact : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ReplaySummary {
+  status : String
+  completed : Int
+  failed_step : String
+  expected_target : String
+  actual_target : String
+  generation : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TraceRow {
+  step : String
+  target : String
+  action : String
+  policy : String
+  result : String
+  before_generation : String
+  after_generation : String
 } derive(Eq, ToJson, @debug.Debug)
 
 // Type aliases
