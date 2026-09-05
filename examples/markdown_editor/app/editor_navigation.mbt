@@ -481,7 +481,7 @@ fn MarkdownEditorApp::replace_all_find_matches(
 ///|
 fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
   let session = self.document_session
-  let source = session.source
+  let source = session.source()
   let selection = self.selection
   let active_block = markdown_editor_session_active_block(session, selection)
   let block_label = markdown_editor_session_active_block_label(active_block)

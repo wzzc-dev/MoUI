@@ -9,9 +9,9 @@ test "wrap probe: CJK Latin mixed paragraph line invariants" {
   let session = MarkdownDocumentSession::new(source)
   hot_path_metrics_reset()
   let plain = markdown_editor_block_to_rich_text(
-    session.source,
+    session.source(),
     markdown_editor_block_materialized(
-      session.source,
+      session.source(),
       source_length=session.source_length,
       source_digest=session.source_digest,
       session.editor_blocks[0],
@@ -59,9 +59,9 @@ test "wrap probe: CJK paragraph with code and link stays line-aligned" {
   let source = "当前主线为原生 Skia 光栅化 + Web `wasm-gc + window/web + 浏览器 WebGPU host imports` 路径。原生 WGPU 仍作为实验性诊断路径保留，等待 MoonBit WGPU 生态进一步成熟。欢迎贡献 — 请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)。"
   let session = MarkdownDocumentSession::new(source)
   let plain = markdown_editor_block_to_rich_text(
-    session.source,
+    session.source(),
     markdown_editor_block_materialized(
-      session.source,
+      session.source(),
       source_length=session.source_length,
       source_digest=session.source_digest,
       session.editor_blocks[0],

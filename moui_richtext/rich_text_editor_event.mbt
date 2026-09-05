@@ -503,7 +503,8 @@ fn[Msg] rich_text_input_event(
   record_history~ : Bool,
 ) -> @core.ViewEventResult[Msg] {
   let text = value
-  let result = match event {
+  let result = markdown_editor_probe_capture("ctrl.event", fn() {
+  match event {
     @core.TextInputEvent::InsertText(inserted) =>
       if inserted == "" {
         (
@@ -511,11 +512,16 @@ fn[Msg] rich_text_input_event(
           TextInputApplyResult)
       } else {
         match
-          rich_text_transform_insert(
-            input_transform,
-            text,
-            ctx.text_control,
-            inserted,
+          markdown_editor_probe_capture(
+            "ctrl.transform",
+            fn() {
+              rich_text_transform_insert(
+                input_transform,
+                text,
+                ctx.text_control,
+                inserted,
+              )
+            },
           ) {
           Some(transformed) =>
             apply_rich_text_input_transform(
@@ -525,7 +531,12 @@ fn[Msg] rich_text_input_event(
               record_history~,
             )
           None =>
-            apply_text_input(ctx.text_control, text, event, record_history~)
+            markdown_editor_probe_capture(
+              "ctrl.apply_text_input",
+              fn() {
+                apply_text_input(ctx.text_control, text, event, record_history~)
+              },
+            )
         }
       }
     @core.TextInputEvent::DeleteRange(_) =>
@@ -577,6 +588,7 @@ fn[Msg] rich_text_input_event(
     }
     _ => apply_text_input(ctx.text_control, text, event, record_history~)
   }
+})
   view_event_result(
     changed=result.changed,
     captured=result.changed,

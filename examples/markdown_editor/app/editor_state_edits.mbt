@@ -26,17 +26,29 @@ fn MarkdownEditorApp::apply_editor_transaction(
 ) -> Unit {
   let anchor = self.editor_scroll
   let session = self.document_session
-  let next = session.apply(transaction)
+  let next = @moui_richtext.markdown_editor_probe_capture(
+    "app.session.apply",
+    fn() { session.apply(transaction) },
+  )
   self.document_session = next
-  self.document = next.source
-  self.refresh_find_matches_if_visible()
+  self.document = next.source()
+  @moui_richtext.markdown_editor_probe_capture(
+    "app.refresh_find",
+    fn() { self.refresh_find_matches_if_visible() },
+  )
   self.selection = {
     caret: transaction.caret,
     selection: transaction.selection,
   }
   self.editor_scroll = anchor
-  self.sync_target_inputs()
-  self.maybe_center_typewriter_selection()
+  @moui_richtext.markdown_editor_probe_capture(
+    "app.sync",
+    fn() { self.sync_target_inputs() },
+  )
+  @moui_richtext.markdown_editor_probe_capture(
+    "app.center",
+    fn() { self.maybe_center_typewriter_selection() },
+  )
 }
 
 ///|
@@ -318,7 +330,7 @@ priv struct MarkdownEditorPreEdit {
 fn MarkdownEditorApp::pre_edit_state(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorPreEdit {
-  { source: self.document_session.source, selection: self.selection }
+  { source: self.document_session.source(), selection: self.selection }
 }
 
 ///|
@@ -331,7 +343,7 @@ fn MarkdownEditorApp::record_edit_history(
 ) -> Unit {
   let (start, removed, inserted) = @core.text_history_delta(
     before.source,
-    self.document_session.source,
+    self.document_session.source(),
   )
   self.push_undo({
     delta: {

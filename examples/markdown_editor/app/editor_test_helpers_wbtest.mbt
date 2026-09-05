@@ -12,7 +12,7 @@ using @moui_richtext {
 
 ///|
 fn MarkdownEditorApp::document(self : MarkdownEditorApp) -> String {
-  self.document_session.source
+  self.document_session.source()
 }
 
 ///|
@@ -48,7 +48,7 @@ fn MarkdownEditorApp::set_document_from_input(
   let selection = self.selection
   self.apply_editor_transaction(
     MarkdownEditTransaction::from_sources(
-      self.document_session.source,
+      self.document_session.source(),
       value,
       caret=selection.caret,
       selection=selection.selection,

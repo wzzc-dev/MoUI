@@ -34,9 +34,9 @@ test "cached rich block conversions rebase source ranges after upstream edits" {
   // This call hits the content-keyed conversion cache even though the
   // block's absolute offsets moved; the rebase must reproduce exactly
   // what a fresh uncached conversion produces at the new offsets.
-  let cached = markdown_editor_block_to_rich_text(next.source, shifted, base)
+  let cached = markdown_editor_block_to_rich_text(next.source(), shifted, base)
   let fresh = markdown_editor_block_to_rich_text_uncached(
-    next.source,
+    next.source(),
     shifted,
     base,
     base_dir=None,
