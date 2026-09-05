@@ -580,11 +580,9 @@ pub fn MarkdownDocumentSession::apply(
   if transaction.source == self.source() {
     return self
   }
-  match markdown_editor_probe_capture("apply.incremental", fn() {
-    markdown_document_session_apply_incremental(self, transaction)
-  }) {
+  match markdown_document_session_apply_incremental(self, transaction) {
     Some(next) => next
-    None => markdown_editor_probe_capture("apply.full", fn() {
+    None => {
       hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
       let blocks = parse_markdown_editor_blocks(transaction.source)
       let dirty = markdown_document_dirty_range(transaction, blocks)
@@ -596,7 +594,7 @@ pub fn MarkdownDocumentSession::apply(
         parse_count=self.parse_count + 1,
         dirty_range=dirty,
       )
-    })
+    }
   }
 }
 
@@ -618,14 +616,9 @@ fn markdown_document_session_apply_incremental(
   session : MarkdownDocumentSession,
   transaction : MarkdownEditTransaction,
 ) -> MarkdownDocumentSession? {
-  let deleted = markdown_editor_probe_capture(
-    "inc.deleted_slice",
-    fn() {
-      session.text_store.text_of(
-        transaction.edit_range.start,
-        transaction.edit_range.end,
-      )
-    },
+  let deleted = session.text_store.text_of(
+    transaction.edit_range.start,
+    transaction.edit_range.end,
   )
   let blocks = session.editor_blocks
   let edit_in_front_matter = blocks.length() > 0 &&
@@ -677,27 +670,14 @@ fn markdown_document_session_apply_incremental(
       // materialized so the whole text stays a free read. Every read the
       // bookkeeping needs from the old text (`deleted` above) happened
       // before this point.
-      markdown_editor_probe_capture(
-        "inc.store_edit",
-        fn() {
-          session.text_store.edit(
-            transaction.edit_range,
-            transaction.replacement,
-          )
-          session.text_store.seed(transaction.source)
-        },
-      )
-      let region_slice = markdown_editor_probe_capture(
-        "inc.region_slice",
-        fn() {
-          session.text_store.text_of(
-            cluster.start_block_start,
-            markdown_editor_min_int(
-              region_end + delta,
-              session.source_length + delta,
-            ),
-          )
-        },
+      session.text_store.edit(transaction.edit_range, transaction.replacement)
+      session.text_store.seed(transaction.source)
+      let region_slice = session.text_store.text_of(
+        cluster.start_block_start,
+        markdown_editor_min_int(
+          region_end + delta,
+          session.source_length + delta,
+        ),
       )
       // Definitions keyed by the previous session's (length, digest) pair:
       // no multi-megabyte map-key hashing on the hot path.
@@ -706,18 +686,11 @@ fn markdown_document_session_apply_incremental(
         source_length=transaction.previous_source.length(),
         source_digest=session.source_digest,
       )
-      let reparsed = markdown_editor_probe_capture(
-        "inc.reparse",
-        fn() {
-          parse_markdown_editor_blocks_with_definitions(
-            region_slice,
-            definitions=Some(definitions),
-          )
-        },
+      let reparsed = parse_markdown_editor_blocks_with_definitions(
+        region_slice,
+        definitions=Some(definitions),
       )
       let stitched : Array[MarkdownEditorBlock] = []
-      let _stitch_probe = markdown_editor_probe_bucket("inc.stitch")
-      let _stitch_started = markdown_editor_probe_now_ms()
       for index, block in session.editor_blocks {
         if index < cluster.start_index {
           stitched.push(block)
@@ -751,9 +724,6 @@ fn markdown_document_session_apply_incremental(
           })
         }
       }
-      _stitch_probe.ms.val =
-        _stitch_probe.ms.val + (markdown_editor_probe_now_ms() - _stitch_started)
-      _stitch_probe.count.val = _stitch_probe.count.val + 1
       hot_path_region_reparse_count.val = hot_path_region_reparse_count.val + 1
       // The guard above proved this edit cannot change the whole-source
       // definition set, so publish the previous set under the edited
@@ -761,17 +731,12 @@ fn markdown_document_session_apply_incremental(
       // hits instead of re-running the whole-document definition parse.
       // The edited source's digest is computed once here and reused by the
       // session construction below.
-      let next_source_digest = markdown_editor_probe_capture(
-        "inc.digest",
-        fn() {
-          markdown_document_edit_digest(
-            session.source_digest,
-            length=session.source_length + delta,
-            start=transaction.edit_range.start,
-            deleted=deleted,
-            replacement=transaction.replacement,
-          )
-        },
+      let next_source_digest = markdown_document_edit_digest(
+        session.source_digest,
+        length=session.source_length + delta,
+        start=transaction.edit_range.start,
+        deleted=deleted,
+        replacement=transaction.replacement,
       )
       markdown_reference_definitions_cache_store_keyed(
         source_length=transaction.source.length(),
@@ -792,7 +757,6 @@ fn markdown_document_session_apply_incremental(
         replacement: transaction.replacement,
         char_delta: delta,
       }
-      markdown_editor_probe_capture("inc.from_blocks", fn() {
       markdown_document_session_from_blocks(
         transaction.source,
         stitched,
@@ -803,8 +767,7 @@ fn markdown_document_session_apply_incremental(
         reindex=Some(reindex),
         source_digest=Some(next_source_digest),
         text_store=Some(session.text_store),
-      )
-      }) |> Some
+      ) |> Some
     }
     None => {
       hot_path_incremental_fallback_count.val = hot_path_incremental_fallback_count.val +
@@ -2134,33 +2097,6 @@ fn markdown_document_session_from_blocks(
         prev,
         editor_blocks.length(),
       ) => Some(window)
-    (Some(prev), Some(window)) => {
-      // TEMP probe: attribute which fit condition fails on keystrokes.
-      let suffix_old_start =
-        window.suffix_new_start + window.suffix_shift
-      let old_window_count =
-        suffix_old_start - window.prefix_count
-      let failing = if !(window.prefix_count >= 0 &&
-          window.prefix_count <= window.suffix_new_start) {
-        "fit.c1"
-      } else if !(window.suffix_new_start <= editor_blocks.length()) {
-        "fit.c2"
-      } else if !(old_window_count >= 1) {
-        "fit.c3"
-      } else if !(suffix_old_start <= prev.blocks.length()) {
-        "fit.c4"
-      } else if !(suffix_old_start + (editor_blocks.length() -
-            window.suffix_new_start) == prev.blocks.length()) {
-        "fit.c5_count"
-      } else if !(prev.height_index.blocks.length() == prev.blocks.length()) {
-        "fit.c6_height"
-      } else {
-        "fit.c7_region"
-      }
-      let bucket = markdown_editor_probe_bucket(failing)
-      bucket.count.val = bucket.count.val + 1
-      None
-    }
     _ => None
   }
   // NOTE: no blocks-cache publish here. The hot block-context queries now
@@ -2168,50 +2104,40 @@ fn markdown_document_session_from_blocks(
   // seeding the 5MB-keyed parse cache on every keystroke was pure
   // overhead. Command-path queries still memoize through
   // `parse_markdown_editor_blocks_cached`.
-  let word_count = markdown_editor_probe_capture("fb.word_count", fn() {
-    match (previous, reuse) {
-      (Some(prev), Some(window)) =>
-        markdown_document_word_count_after_edit(prev, window)
-      _ => markdown_editor_word_count(source)
-    }
-  })
-  let line_count = markdown_editor_probe_capture("fb.line_count", fn() {
-    match (previous, reuse) {
-      (Some(prev), Some(window)) =>
-        markdown_document_line_count_after_edit(prev, source, window)
-      _ => markdown_editor_line_count(source)
-    }
-  })
+  let word_count = match (previous, reuse) {
+    (Some(prev), Some(window)) =>
+      markdown_document_word_count_after_edit(prev, window)
+    _ => markdown_editor_word_count(source)
+  }
+  let line_count = match (previous, reuse) {
+    (Some(prev), Some(window)) =>
+      markdown_document_line_count_after_edit(prev, source, window)
+    _ => markdown_editor_line_count(source)
+  }
   let metadata = markdown_editor_front_matter_metadata(editor_blocks)
   let next_block_id_seed = match previous {
     Some(prev) => prev.next_block_id
     None => 1
   }
-  let assigned = markdown_editor_probe_capture("fb.assign", fn() {
-    markdown_document_assign_blocks(
-      editor_blocks,
-      previous~,
-      next_id=next_block_id_seed,
-      dirty_range~,
-      reuse~,
-    )
-  })
-  let height_index = markdown_editor_probe_capture("fb.height", fn() {
-    markdown_document_height_index(
-      source,
-      editor_blocks,
-      assigned.blocks,
-      previous~,
-      reuse~,
-    )
-  })
-  let outline = markdown_editor_probe_capture("fb.outline", fn() {
-    match (previous, reuse) {
-      (Some(prev), Some(window)) =>
-        markdown_document_outline_after_edit(editor_blocks, prev, window)
-      _ => markdown_editor_outline(editor_blocks)
-    }
-  })
+  let assigned = markdown_document_assign_blocks(
+    editor_blocks,
+    previous~,
+    next_id=next_block_id_seed,
+    dirty_range~,
+    reuse~,
+  )
+  let height_index = markdown_document_height_index(
+    source,
+    editor_blocks,
+    assigned.blocks,
+    previous~,
+    reuse~,
+  )
+  let outline = match (previous, reuse) {
+    (Some(prev), Some(window)) =>
+      markdown_document_outline_after_edit(editor_blocks, prev, window)
+    _ => markdown_editor_outline(editor_blocks)
+  }
   // The store seeds the whole-source view from `source`: every builder
   // here already holds the materialized text (document open, full
   // rebuild, or a transaction carrying the next text), so seeding costs
@@ -2220,19 +2146,15 @@ fn markdown_document_session_from_blocks(
   // local read (word probes, region slices) block-bounded.
   let text_store = match text_store {
     Some(store) => store
-    None if editor_blocks.length() > 32 =>
-      markdown_editor_probe_capture(
-        "fb.store_segment",
-        fn() {
-          let boundaries : Array[Int] = []
-          for index, block in editor_blocks {
-            if index > 0 {
-              boundaries.push(block.source_range.start)
-            }
-          }
-          MarkdownDocumentTextStore::segmented(source, boundaries)
-        },
-      )
+    None if editor_blocks.length() > 32 => {
+      let boundaries : Array[Int] = []
+      for index, block in editor_blocks {
+        if index > 0 {
+          boundaries.push(block.source_range.start)
+        }
+      }
+      MarkdownDocumentTextStore::segmented(source, boundaries)
+    }
     None => MarkdownDocumentTextStore::new(source)
   }
   {
@@ -2247,10 +2169,7 @@ fn markdown_document_session_from_blocks(
     line_count,
     word_count,
     reading_minutes: markdown_editor_reading_minutes(word_count),
-    active_heading: markdown_editor_probe_capture(
-      "fb.active_heading",
-      fn() { markdown_editor_active_heading(editor_blocks) },
-    ),
+    active_heading: markdown_editor_active_heading(editor_blocks),
     metadata_title: metadata.title,
     metadata_tags: metadata.tags,
     outline,
@@ -2598,24 +2517,6 @@ fn markdown_document_outline_after_edit(
     }
   }
   items
-}
-
-///|
-/// Char at the given char-space index, used for the one-character context
-/// probes around an edit. Probes at the document edges are O(1); an
-/// interior probe (mid-document edit) falls back to the offset scan.
-fn markdown_document_char_at(source : String, index~ : Int) -> Char? {
-  let char_length = markdown_editor_text_length(source)
-  if index < 0 || index >= char_length {
-    None
-  } else if index == 0 {
-    source.get_char(0)
-  } else if index == char_length - 1 {
-    source.rev_iter().next()
-  } else {
-    let offset = source.offset_of_nth_char(index).unwrap_or(source.length())
-    source.get_char(offset)
-  }
 }
 
 ///|

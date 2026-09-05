@@ -54,14 +54,6 @@ pub fn markdown_editor_outdent_lines(String, Int, @core.TextRange?) -> RichTextI
 
 pub fn markdown_editor_preview_text(String) -> String
 
-pub fn markdown_editor_probe_bucket(String) -> MarkdownEditorProbeBucket
-
-pub fn[A] markdown_editor_probe_capture(String, () -> A) -> A
-
-pub fn markdown_editor_probe_report() -> String
-
-pub fn markdown_editor_probe_reset() -> Unit
-
 pub fn markdown_editor_range_has_inline_marker(String, @core.TextRange, String) -> Bool
 
 pub fn markdown_editor_selected_footnote_text(String, MarkdownEditorSelection) -> String?
@@ -344,12 +336,6 @@ pub(all) struct MarkdownEditorOutlineItem {
 } derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownEditorParagraphParseResult derive(Eq, @debug.Debug)
-
-pub struct MarkdownEditorProbeBucket {
-  label : String
-  ms : @ref.Ref[Double]
-  count : @ref.Ref[Int]
-}
 
 type MarkdownEditorRunSourceRange derive(Eq, @debug.Debug)
 
