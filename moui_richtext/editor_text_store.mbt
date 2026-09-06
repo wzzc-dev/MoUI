@@ -99,6 +99,25 @@ pub fn MarkdownDocumentTextStore::segmented(
   source : String,
   boundaries : Array[Int],
 ) -> MarkdownDocumentTextStore {
+  // Fast path: when the open path's line scan just decoded `source`, the
+  // utf16 offset of every line start is already known. Block boundaries
+  // are line starts, so slicing the source at the cached line offsets
+  // reproduces the exact segment texts without a second full-source char
+  // pass. A boundary that is not a line start rejects this helper and
+  // falls through to the char walk below.
+  match markdown_editor_line_scan_cached_line_units(source) {
+    Some((lines, unit_starts)) =>
+      match MarkdownDocumentTextStore::segmented_at_line_starts(
+        source,
+        boundaries,
+        lines,
+        unit_starts,
+      ) {
+        Some(store) => return store
+        None => ()
+      }
+    None => ()
+  }
   let segments : Array[MarkdownTextSegment] = []
   let mut next = 0
   while next < boundaries.length() && boundaries[next] <= 0 {
@@ -134,6 +153,58 @@ pub fn MarkdownDocumentTextStore::segmented(
     revision: Ref(0),
     materialized: Ref((0, source)),
   }
+}
+
+///|
+/// Segmentation from the line scan's per-line utf16 offsets: every
+/// boundary must be exactly a line start; otherwise `None` and the caller
+/// falls back to the char walk.
+fn MarkdownDocumentTextStore::segmented_at_line_starts(
+  source : String,
+  boundaries : Array[Int],
+  lines : Array[MarkdownLine],
+  unit_starts : Array[Int],
+) -> MarkdownDocumentTextStore? {
+  let segments : Array[MarkdownTextSegment] = []
+  let mut next = 0
+  while next < boundaries.length() && boundaries[next] <= 0 {
+    next = next + 1
+  }
+  let mut segment_start = 0
+  let mut segment_unit_start = 0
+  let mut line_index = 0
+  while next < boundaries.length() {
+    let boundary = boundaries[next]
+    while line_index < lines.length() && lines[line_index].start < boundary {
+      line_index = line_index + 1
+    }
+    if line_index >= lines.length() || lines[line_index].start != boundary {
+      return None
+    }
+    segments.push({
+      start: segment_start,
+      end: boundary,
+      text: source
+        .sub(start=segment_unit_start, end=unit_starts[line_index])
+        .to_owned(),
+    })
+    segment_start = boundary
+    segment_unit_start = unit_starts[line_index]
+    next = next + 1
+    while next < boundaries.length() && boundaries[next] <= boundary {
+      next = next + 1
+    }
+  }
+  segments.push({
+    start: segment_start,
+    end: markdown_editor_text_length(source),
+    text: source.sub(start=segment_unit_start, end=source.length()).to_owned(),
+  })
+  Some({
+    segments: Ref(segments),
+    revision: Ref(0),
+    materialized: Ref((0, source)),
+  })
 }
 
 ///|

@@ -2313,14 +2313,7 @@ fn markdown_document_block_has_image(block : MarkdownBlock) -> Bool {
 
 ///|
 fn markdown_text_contains_image_marker(text : String) -> Bool {
-  let mut previous = ' '
-  for ch in text {
-    if previous == '!' && ch == '[' {
-      return true
-    }
-    previous = ch
-  }
-  false
+  text.contains("![")
 }
 
 ///|
