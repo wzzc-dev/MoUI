@@ -7,10 +7,25 @@ struct FCResult {
   total_nodes : Int
   frames : Int
   total_ms : Double
+  p50_ms : Double
+  p95_ms : Double
   rebuild_count : Int
   layout_count : Int
   paint_count : Int
   command_build_count : Int
+}
+
+///|
+/// Nearest-rank percentile on an ascending-sorted copy of `samples`.
+fn bench_percentile(samples : Array[Double], percent : Double) -> Double {
+  if samples.is_empty() {
+    return 0.0
+  }
+  let sorted = samples.copy()
+  sorted.sort()
+  let rank = (percent / 100.0 * samples.length().to_double()).ceil().to_int()
+  let idx = rank.clamp(min=1, max=samples.length()) - 1
+  sorted[idx]
 }
 
 ///|
@@ -82,8 +97,10 @@ fn bench_run(
     size=@core.Size::new(width=800.0, height=600.0),
   )
   let snap_before = runtime.inspector_snapshot().runtime()
+  let frame_samples : Array[Double] = []
   let start = bench_now_ms()
   for idx in 0..<frames {
+    let frame_start = bench_now_ms()
     if trigger_rebuild {
       // set_environment with a new text_scale forces
       // mark_component_tree_build_dirty → rebuild.
@@ -94,6 +111,7 @@ fn bench_run(
       )
     }
     ignore(runtime.draw_frame())
+    frame_samples.push(bench_now_ms() - frame_start)
   }
   let elapsed = bench_now_ms() - start
   let snap_after = runtime.inspector_snapshot().runtime()
@@ -103,6 +121,8 @@ fn bench_run(
     total_nodes: total,
     frames,
     total_ms: elapsed,
+    p50_ms: bench_percentile(frame_samples, 50.0),
+    p95_ms: bench_percentile(frame_samples, 95.0),
     rebuild_count: snap_after.rebuild_pass_count() -
     snap_before.rebuild_pass_count(),
     layout_count: snap_after.layout_pass_count() -
@@ -117,13 +137,13 @@ fn bench_run(
 fn bench_print(r : FCResult) -> Unit {
   let avg = if r.frames > 0 { r.total_ms / r.frames.to_double() } else { 0.0 }
   println(
-    "\{r.label}: nodes=\{r.total_nodes} frames=\{r.frames} total_ms=\{r.total_ms} avg_ms=\{avg}",
+    "\{r.label}: nodes=\{r.total_nodes} frames=\{r.frames} total_ms=\{r.total_ms} avg_ms=\{avg} p50_ms=\{r.p50_ms} p95_ms=\{r.p95_ms}",
   )
   println(
     "  rebuild=\{r.rebuild_count} layout=\{r.layout_count} paint=\{r.paint_count} commands=\{r.command_build_count}",
   )
   println(
-    "{\"label\":\"\{r.label}\",\"nodes\":\{r.total_nodes},\"frames\":\{r.frames},\"total_ms\":\{r.total_ms},\"avg_ms\":\{avg},\"rebuild\":\{r.rebuild_count},\"layout\":\{r.layout_count},\"paint\":\{r.paint_count},\"commands\":\{r.command_build_count}}",
+    "{\"label\":\"\{r.label}\",\"nodes\":\{r.total_nodes},\"frames\":\{r.frames},\"total_ms\":\{r.total_ms},\"avg_ms\":\{avg},\"p50_ms\":\{r.p50_ms},\"p95_ms\":\{r.p95_ms},\"rebuild\":\{r.rebuild_count},\"layout\":\{r.layout_count},\"paint\":\{r.paint_count},\"commands\":\{r.command_build_count}}",
   )
 }
 

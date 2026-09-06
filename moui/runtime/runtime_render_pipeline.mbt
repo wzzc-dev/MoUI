@@ -196,6 +196,15 @@ fn collect_overlay_overrides(
           pair.0 < placed.children.length() &&
           placed.children[pair.0].frame != pair.1
         })
+      // Overrides must cover every overlay-positioned child: the re-place
+      // rebuilds the spine and would otherwise drop unchanged children back to
+      // their provisional frames.
+      let any_changed = pairs
+        .iter()
+        .any(pair => {
+          pair.0 < placed.children.length() &&
+          placed.children[pair.0].frame != pair.1
+        })
       if any_changed {
         out.push((element.id.value(), pairs))
         for id in child_path {
@@ -234,7 +243,7 @@ fn collect_overlay_overrides(
 ///|
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   let previous_render = self.render_tree
-  let dirty_ids = self.dirty.dirty_paint_elements.copy()
+  let dirty_ids = self.dirty.dirty_paint_elements.to_array()
   let force_full_reason = match self.dirty.full_damage_reason {
     Some(reason) => Some(reason)
     None =>
@@ -305,6 +314,15 @@ fn RuntimeState::compute_damage_region(
       if dirty_ids.is_empty() {
         return DamageRegion::full("dirty bounds unavailable")
       }
+      let dirty = DirtyIdSet::new()
+      for id in dirty_ids {
+        dirty.push(id)
+      }
+      // One pass per tree replaces the previous up-to-four full traversals
+      // per dirty id (has_dirty_descendant + find_damage_bounds on both
+      // trees, each a fresh O(n) DFS).
+      let previous_index = DamageIndex::build(previous.root, dirty)
+      let current_index = DamageIndex::build(current.root, dirty)
       let surface = Rect::new(
         x=0.0,
         y=0.0,
@@ -314,17 +332,17 @@ fn RuntimeState::compute_damage_region(
       let rects : Array[Rect] = []
       let mut missing_bounds = false
       for id in dirty_ids {
-        if !previous.root.has_dirty_descendant(id, dirty_ids) &&
-          !current.root.has_dirty_descendant(id, dirty_ids) {
+        if !previous_index.has_dirty_descendant(id) &&
+          !current_index.has_dirty_descendant(id) {
           let mut found_bounds = false
-          match previous.root.find_damage_bounds(id) {
+          match previous_index.damage_bounds(id) {
             Some(bounds) => {
               rects.push(bounds)
               found_bounds = true
             }
             None => ()
           }
-          match current.root.find_damage_bounds(id) {
+          match current_index.damage_bounds(id) {
             Some(bounds) => {
               rects.push(bounds)
               found_bounds = true
@@ -346,23 +364,16 @@ fn RuntimeState::compute_damage_region(
 }
 
 ///|
-fn push_unique_element_id(queue : Array[ElementId], id : ElementId) -> Unit {
-  if !queue.any(existing => existing == id) {
-    queue.push(id)
-  }
-}
-
-///|
 fn RuntimeState::queue_dirty_element(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  push_unique_element_id(self.dirty.dirty_elements, id)
+  self.dirty.dirty_elements.push(id)
 }
 
 ///|
 fn RuntimeState::queue_build_dirty(self : RuntimeState, id : ElementId) -> Unit {
-  push_unique_element_id(self.dirty.dirty_build_elements, id)
+  self.dirty.dirty_build_elements.push(id)
 }
 
 ///|
@@ -370,12 +381,12 @@ fn RuntimeState::queue_layout_dirty(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  push_unique_element_id(self.dirty.dirty_layout_elements, id)
+  self.dirty.dirty_layout_elements.push(id)
 }
 
 ///|
 fn RuntimeState::queue_paint_dirty(self : RuntimeState, id : ElementId) -> Unit {
-  push_unique_element_id(self.dirty.dirty_paint_elements, id)
+  self.dirty.dirty_paint_elements.push(id)
 }
 
 ///|
@@ -383,7 +394,7 @@ fn RuntimeState::queue_semantics_dirty(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  push_unique_element_id(self.dirty.dirty_semantics_elements, id)
+  self.dirty.dirty_semantics_elements.push(id)
 }
 
 ///|
@@ -391,7 +402,7 @@ fn RuntimeState::queue_platform_dirty(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  push_unique_element_id(self.dirty.dirty_platform_elements, id)
+  self.dirty.dirty_platform_elements.push(id)
 }
 
 ///|
@@ -458,41 +469,41 @@ fn RuntimeState::mark_platform_dirty(
 
 ///|
 fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
-  let ids : Array[ElementId] = []
-  let build_ids : Array[ElementId] = []
-  let layout_ids : Array[ElementId] = []
-  let paint_ids : Array[ElementId] = []
-  let semantics_ids : Array[ElementId] = []
-  let platform_ids : Array[ElementId] = []
+  let ids = DirtyIdSet::new()
+  let build_ids = DirtyIdSet::new()
+  let layout_ids = DirtyIdSet::new()
+  let paint_ids = DirtyIdSet::new()
+  let semantics_ids = DirtyIdSet::new()
+  let platform_ids = DirtyIdSet::new()
   self.element_tree.root.collect_dirty_element_ids_by_kind(
     ids, build_ids, layout_ids, paint_ids, semantics_ids, platform_ids,
   )
   if ids.is_empty() {
     self.mark_dirty(self.element_tree.id())
   } else {
-    for id in ids {
+    for id in ids.items {
       self.queue_dirty_element(id)
     }
     if !build_ids.is_empty() {
-      for id in build_ids {
-        push_unique_element_id(self.dirty.dirty_build_elements, id)
+      for id in build_ids.items {
+        self.dirty.dirty_build_elements.push(id)
       }
       self.dirty.needs_rebuild = true
     }
     if !layout_ids.is_empty() {
       self.mark_visual_work()
-      for id in layout_ids {
-        push_unique_element_id(self.dirty.dirty_layout_elements, id)
+      for id in layout_ids.items {
+        self.dirty.dirty_layout_elements.push(id)
       }
       self.dirty.needs_layout = true
     }
-    for id in paint_ids {
-      push_unique_element_id(self.dirty.dirty_paint_elements, id)
+    for id in paint_ids.items {
+      self.dirty.dirty_paint_elements.push(id)
     }
-    for id in semantics_ids {
+    for id in semantics_ids.items {
       self.mark_semantics_dirty(id)
     }
-    for id in platform_ids {
+    for id in platform_ids.items {
       self.mark_platform_dirty(id)
     }
     if !paint_ids.is_empty() {
@@ -513,26 +524,26 @@ fn RuntimeState::dirty_count(self : RuntimeState) -> Int {
 
 ///|
 fn RuntimeState::dirty_element_ids(self : RuntimeState) -> Array[ElementId] {
-  self.dirty.dirty_elements.copy()
+  self.dirty.dirty_elements.to_array()
 }
 
 ///|
 fn RuntimeState::refresh_dirty_element_queue(self : RuntimeState) -> Unit {
   self.dirty.dirty_elements.clear()
-  for id in self.dirty.dirty_build_elements {
-    push_unique_element_id(self.dirty.dirty_elements, id)
+  for id in self.dirty.dirty_build_elements.items {
+    self.dirty.dirty_elements.push(id)
   }
-  for id in self.dirty.dirty_layout_elements {
-    push_unique_element_id(self.dirty.dirty_elements, id)
+  for id in self.dirty.dirty_layout_elements.items {
+    self.dirty.dirty_elements.push(id)
   }
-  for id in self.dirty.dirty_paint_elements {
-    push_unique_element_id(self.dirty.dirty_elements, id)
+  for id in self.dirty.dirty_paint_elements.items {
+    self.dirty.dirty_elements.push(id)
   }
-  for id in self.dirty.dirty_semantics_elements {
-    push_unique_element_id(self.dirty.dirty_elements, id)
+  for id in self.dirty.dirty_semantics_elements.items {
+    self.dirty.dirty_elements.push(id)
   }
-  for id in self.dirty.dirty_platform_elements {
-    push_unique_element_id(self.dirty.dirty_elements, id)
+  for id in self.dirty.dirty_platform_elements.items {
+    self.dirty.dirty_elements.push(id)
   }
 }
 
@@ -597,8 +608,12 @@ fn RuntimeState::track_overlay_surface_lifecycle(
 }
 
 ///|
-/// Duration of overlay enter/exit fades. Reduced-motion environments run at
-/// the runtime level elsewhere; overlays keep a single short default here.
-fn RuntimeState::overlay_transition_duration_ms(_self : RuntimeState) -> Double {
-  160.0
+/// Duration of overlay enter/exit fades, resolved from the environment's
+/// resolved theme motion tier. Reduced-motion environments complete
+/// immediately (duration 0), matching the core animation primitives.
+fn RuntimeState::overlay_transition_duration_ms(self : RuntimeState) -> Double {
+  if self.environment.reduced_motion {
+    return 0.0
+  }
+  self.environment.theme.motion.normal_ms
 }

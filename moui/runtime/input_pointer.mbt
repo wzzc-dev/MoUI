@@ -172,6 +172,13 @@ fn ElementNode::dispatch_pointer_to_children(
     event.phase == PointerPhase::Down ||
     event.phase == PointerPhase::Cancel
   let mut delivered_main_event = false
+  // Once a hoisted overlay surface covering the point has been dispatched,
+  // in-flow siblings must not receive the same main event — even when the
+  // overlay content itself is non-interactive (text, tooltips, spacer
+  // containers). Without this, clicks fall through a popup onto whatever it
+  // covers (focusing covered text fields, pressing covered buttons). Active
+  // pointer captures are exempt so an ongoing gesture keeps its target.
+  let mut overlay_covered = false
   // Hoisted overlay subtrees (control popups, presentations) receive pointer
   // events before in-flow content, top-most first — globally, via the
   // `subtree_overlay_contains` prepass: a popup hoisted anywhere inside a
@@ -216,7 +223,15 @@ fn ElementNode::dispatch_pointer_to_children(
       let hit = is_overlay_owner[index] ||
         has_capture ||
         child_render.hit_bounds().contains(event.position)
-      if hit && !delivered_main_event {
+      // In-flow children are skipped while an overlay surface covering the
+      // point has been dispatched (unless an active capture targets them).
+      let blocked_by_overlay = overlay_covered &&
+        !is_overlay_owner[index] &&
+        !has_capture
+      if hit && !delivered_main_event && !blocked_by_overlay {
+        if is_overlay_owner[index] {
+          overlay_covered = true
+        }
         let result = child.dispatch_pointer(
           event,
           child_render,
@@ -244,8 +259,11 @@ fn ElementNode::dispatch_pointer_to_children(
         // handled it — matching the original `break` condition. A hit child
         // that did not handle the event (e.g. a non-interactive container)
         // lets the traversal continue so a sibling beneath it can receive
-        // the event. For Move/Exit, the loop keeps going regardless so that
-        // previously hovered siblings get a synthetic Exit to clear hover.
+        // the event; overlay owners are the exception — reaching one means
+        // the point is inside a popup surface, so in-flow content is blocked
+        // via `overlay_covered`. For Move/Exit, the loop keeps going
+        // regardless so that previously hovered siblings get a synthetic
+        // Exit to clear hover.
         if has_capture ||
           result.changed ||
           result.activated ||

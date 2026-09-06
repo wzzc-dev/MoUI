@@ -12,12 +12,25 @@ const backendRoot = join(root, "moui", "backend");
 const ownershipConfig = JSON.parse(
   readFileSync(join(root, "checks", "backend-common-ownership.json"), "utf8"),
 );
-const rendererPackagePattern =
-  /wzzc-dev\/moui_(?:skia|sun|wgpu|web)_renderer(?:\/|"|\s|$)/;
+// Renderer module identities are derived from the release catalog so adding
+// a renderer does not require editing this validator (open-extension E7,
+// ADR 0007). Subpackage tokens that are not catalogued as their own module
+// stay in the explicit extras list.
+const rendererModules = JSON.parse(
+  readFileSync(join(root, "checks", "release-modules.json"), "utf8"),
+).modules.filter((module) => module.role === "renderer");
+const rendererShortNames = rendererModules.map((module) =>
+  module.name.replace(/^wzzc-dev\/moui_/, "").replace(/_renderer$/, ""),
+);
+const extraRendererPackageTokens = ["canvas2d"];
+const rendererPackagePattern = new RegExp(
+  `wzzc-dev\\/moui_(?:${rendererShortNames.join("|")})_renderer(?:\\/|"|\\s|$)`,
+);
 const legacyRendererPackagePattern =
   /wzzc-dev\/moui\/render\/(?:skia|sun|wgpu|canvas2d|webgpu_adapter)(?:\/|"|\s|$)/;
-const rendererNativePackagePattern =
-  /(?:wzzc-dev\/moui_(?:skia|sun)|Milky2018\/wgpu_mbt)/;
+const rendererNativePackagePattern = new RegExp(
+  `(?:wzzc-dev\\/moui_(?:${rendererShortNames.join("|")})|Milky2018\\/wgpu_mbt)`,
+);
 const concreteRendererDirectoryNames = new Set([
   "skia",
   "sun",
@@ -33,7 +46,10 @@ const concreteSourcePatterns = [
   /\bSunRaster\b/i,
   /\bCanvas2D(?:Renderer|Provider|Imports)?\b/i,
   /@(?:skia|skia_native|wgpu|wgpu_c|sun|canvas2d)\b/,
-  /moui_(?:skia|wgpu|sun|canvas2d)/i,
+  new RegExp(
+    `moui_(?:${[...rendererShortNames, ...extraRendererPackageTokens].join("|")})`,
+    "i",
+  ),
 ];
 const productionExtensions = new Set([
   ".mbt",

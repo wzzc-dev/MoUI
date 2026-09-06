@@ -40,6 +40,13 @@ fn ElementNode::find_focusable_at(
         render.children[index].subtree_overlay_contains(point)
       let hit = is_overlay_owner || child_render.hit_bounds().contains(point)
       if hit {
+        if is_overlay_owner {
+          // The point is inside a hoisted popup surface: the popup owns
+          // focus pickup. If it has no focusable descendant, in-flow content
+          // underneath must not receive focus either (a covered text field
+          // would otherwise take the caret invisibly).
+          return self.children[index].find_focusable_at(point, child_render)
+        }
         match self.children[index].find_focusable_at(point, child_render) {
           Some(id) => return Some(id)
           None => ()

@@ -208,6 +208,20 @@
           ]
         },
         {
+          "name": "renderer provider open extension",
+          "argv": [
+            "node",
+            "scripts/validate-renderer-provider-open-extension.mjs"
+          ]
+        },
+        {
+          "name": "options field drift",
+          "argv": [
+            "node",
+            "scripts/validate-options-field-drift.mjs"
+          ]
+        },
+        {
           "name": "Skia entrypoints",
           "argv": [
             "node",
@@ -450,6 +464,16 @@
           ]
         },
         {
+          "name": "throwaway renderer extension test",
+          "argv": [
+            "moon",
+            "test",
+            "moui_tests/throwaway_renderer",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "embedded runtime tests",
           "argv": [
             "moon",
@@ -547,6 +571,13 @@
           "argv": [
             "node",
             "scripts/test-accessibility-foundation.mjs"
+          ]
+        },
+        {
+          "name": "options field drift validator tests",
+          "argv": [
+            "node",
+            "scripts/test-options-field-drift.mjs"
           ]
         },
         {

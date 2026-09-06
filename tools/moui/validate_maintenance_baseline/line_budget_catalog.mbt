@@ -317,7 +317,8 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/text/text_input_apply.mbt", max_lines: 400 },
     { path: "moui/views/text/text_input_editing.mbt", max_lines: 500 },
     { path: "moui/views/text/text_input_paint.mbt", max_lines: 510 },
-    { path: "moui/views/text/text_area_control.mbt", max_lines: 525 },
+    // 525 -> 640 (2026-09-05): richtext perf commits; see followups plan.
+    { path: "moui/views/text/text_area_control.mbt", max_lines: 640 },
     { path: "moui/views/feedback/feedback_state.mbt", max_lines: 110 },
     { path: "moui/views/feedback/feedback_guidance.mbt", max_lines: 55 },
     { path: "moui/views/feedback/feedback_panel.mbt", max_lines: 105 },

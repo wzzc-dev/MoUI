@@ -1,7 +1,11 @@
 {
   "schemaVersion": 1,
   "description": "Checked-in MoUI smoke gate catalog. This is source metadata, not generated smoke evidence.",
-  "tiers": ["daily", "nightly", "release"],
+  "tiers": [
+    "daily",
+    "nightly",
+    "release"
+  ],
   "suites": [
     {
       "id": "daily.check",
@@ -12,7 +16,12 @@
       "defaultDevCheck": true,
       "commands": [
         {
-          "argv": ["sh", "scripts/check.sh", "--profile", "daily"],
+          "argv": [
+            "sh",
+            "scripts/check.sh",
+            "--profile",
+            "daily"
+          ],
           "mode": "run"
         }
       ],
@@ -23,7 +32,10 @@
         "workflow": ".github/workflows/ci.yml",
         "gate": "pull_request"
       },
-      "docs": ["docs/testing.md", "docs/release-readiness.md"],
+      "docs": [
+        "docs/testing.md",
+        "docs/release-readiness.md"
+      ],
       "artifacts": []
     },
     {
@@ -35,7 +47,10 @@
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["sh", "scripts/ci-web-runtime-presentation.sh"],
+          "argv": [
+            "sh",
+            "scripts/ci-web-runtime-presentation.sh"
+          ],
           "mode": "run"
         }
       ],
@@ -53,7 +68,10 @@
         "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "nightly"
       },
-      "docs": ["docs/testing.md", "docs/release-readiness.md"],
+      "docs": [
+        "docs/testing.md",
+        "docs/release-readiness.md"
+      ],
       "artifacts": [
         "artifacts/smoke/web-runtime-presentation/presentation-smoke.json",
         "artifacts/smoke/web-runtime-presentation/http-server.log",
@@ -97,7 +115,10 @@
         "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "release-manual"
       },
-      "docs": ["docs/testing.md", "docs/release-readiness.md"],
+      "docs": [
+        "docs/testing.md",
+        "docs/release-readiness.md"
+      ],
       "artifacts": [
         "artifacts/platform-observation/macos/skia-renderer-smoke.log",
         "artifacts/platform-observation/macos/showcase-macos-skia-first-frame.log",
@@ -113,7 +134,11 @@
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["scripts/run-window-package-smoke.sh", "<macos|web|windows|linux>", "--run"],
+          "argv": [
+            "scripts/run-window-package-smoke.sh",
+            "<macos|web|windows|linux>",
+            "--run"
+          ],
           "mode": "manual"
         }
       ],
@@ -124,8 +149,13 @@
         "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "release-manual"
       },
-      "docs": ["docs/testing.md", "docs/release-readiness.md"],
-      "artifacts": ["artifacts/window-package-smoke/<platform>.log"]
+      "docs": [
+        "docs/testing.md",
+        "docs/release-readiness.md"
+      ],
+      "artifacts": [
+        "artifacts/window-package-smoke/<platform>.log"
+      ]
     },
     {
       "id": "accessibility.screen-reader-evidence",
@@ -153,8 +183,13 @@
         "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "release-manual"
       },
-      "docs": ["docs/plans/active/native-accessibility.md", "docs/testing.md"],
-      "artifacts": ["artifacts/accessibility/<platform>/manifest.json"]
+      "docs": [
+        "docs/plans/active/native-accessibility.md",
+        "docs/testing.md"
+      ],
+      "artifacts": [
+        "artifacts/accessibility/<platform>/manifest.json"
+      ]
     },
     {
       "id": "accessibility.macos-ax-probe",
@@ -165,7 +200,12 @@
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["scripts/macos-accessibility-probe.sh", "--manifest", "artifacts/accessibility/macos/manifest.json", "--require-passed"],
+          "argv": [
+            "scripts/macos-accessibility-probe.sh",
+            "--manifest",
+            "artifacts/accessibility/macos/manifest.json",
+            "--require-passed"
+          ],
           "mode": "manual"
         }
       ],
@@ -176,7 +216,10 @@
         "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "nightly-macos"
       },
-      "docs": ["docs/plans/active/native-accessibility.md", "docs/testing.md"],
+      "docs": [
+        "docs/plans/active/native-accessibility.md",
+        "docs/testing.md"
+      ],
       "artifacts": [
         "artifacts/accessibility/macos/manifest.json",
         "artifacts/accessibility/macos/showcase.log",
@@ -192,7 +235,9 @@
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["scripts/web-accessibility-probe.sh"],
+          "argv": [
+            "scripts/web-accessibility-probe.sh"
+          ],
           "mode": "manual"
         }
       ],
@@ -203,7 +248,10 @@
         "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "nightly-web"
       },
-      "docs": ["docs/plans/active/native-accessibility.md", "docs/testing.md"],
+      "docs": [
+        "docs/plans/active/native-accessibility.md",
+        "docs/testing.md"
+      ],
       "artifacts": [
         "artifacts/accessibility/web/manifest.json",
         "artifacts/accessibility/web/http-server.log",
@@ -219,7 +267,10 @@
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["sh", "scripts/window-hosted-hostsim-smoke.sh"],
+          "argv": [
+            "sh",
+            "scripts/window-hosted-hostsim-smoke.sh"
+          ],
           "mode": "run"
         }
       ],
@@ -230,7 +281,11 @@
         "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "nightly"
       },
-      "docs": ["docs/window-hosted-moui.md", "docs/testing.md", "docs/release-readiness.md"],
+      "docs": [
+        "docs/window-hosted-moui.md",
+        "docs/testing.md",
+        "docs/release-readiness.md"
+      ],
       "artifacts": []
     },
     {
@@ -242,7 +297,10 @@
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["sh", "scripts/window-hosted-vm-smoke.sh"],
+          "argv": [
+            "sh",
+            "scripts/window-hosted-vm-smoke.sh"
+          ],
           "mode": "manual"
         }
       ],
@@ -253,8 +311,43 @@
         "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "release-manual"
       },
-      "docs": ["docs/window-hosted-moui.md", "docs/testing.md", "docs/release-readiness.md"],
+      "docs": [
+        "docs/window-hosted-moui.md",
+        "docs/testing.md",
+        "docs/release-readiness.md"
+      ],
       "artifacts": []
+    },
+    {
+      "id": "macos.host-modal",
+      "tier": "release",
+      "kind": "matching-host-smoke",
+      "host": "matching-host",
+      "purpose": "Evidence the macOS NSWindow-level modal presenter driving HostModalSession end-to-end (native sheet ordering, surface attach, close) on the host being claimed.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "scripts/macos-skia-renderer-smoke.sh",
+            "--run-modal-smoke"
+          ],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": [
+        "docs/testing.md",
+        "docs/plans/active/architecture-review-followups.md"
+      ],
+      "artifacts": [
+        "artifacts/macos-modal-smoke/modal.log"
+      ]
     }
   ]
 }

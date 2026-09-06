@@ -465,6 +465,56 @@ fn RuntimeState::request_activation_rebuild(self : RuntimeState) -> Unit {
 }
 
 ///|
+/// Insertion-ordered element-id set backing the per-phase dirty queues.
+/// The map gives O(1) dedup where `push_unique_element_id` previously
+/// scanned the array (`Array.any`, O(n²) per queue fold on full-tree
+/// invalidation); the array preserves queue order for phase processing.
+priv struct DirtyIdSet {
+  items : Array[ElementId]
+  seen : Map[Int, Unit]
+}
+
+///|
+fn DirtyIdSet::new() -> DirtyIdSet {
+  { items: [], seen: Map([]) }
+}
+
+///|
+fn DirtyIdSet::push(self : DirtyIdSet, id : ElementId) -> Unit {
+  let key = id.value()
+  if !self.seen.contains(key) {
+    self.seen[key] = ()
+    self.items.push(id)
+  }
+}
+
+///|
+fn DirtyIdSet::clear(self : DirtyIdSet) -> Unit {
+  self.items.clear()
+  self.seen.clear()
+}
+
+///|
+fn DirtyIdSet::length(self : DirtyIdSet) -> Int {
+  self.items.length()
+}
+
+///|
+fn DirtyIdSet::is_empty(self : DirtyIdSet) -> Bool {
+  self.items.is_empty()
+}
+
+///|
+fn DirtyIdSet::contains(self : DirtyIdSet, id : ElementId) -> Bool {
+  self.seen.contains(id.value())
+}
+
+///|
+fn DirtyIdSet::to_array(self : DirtyIdSet) -> Array[ElementId] {
+  self.items.copy()
+}
+
+///|
 /// Subsystem: combined dirty flags + per-phase element queues.
 priv struct DirtyTracking {
   mut needs_redraw : Bool
@@ -477,12 +527,12 @@ priv struct DirtyTracking {
   // full-surface damage request until the rebuilt tree has been painted.
   mut full_damage_reason : String?
   mut rebuild_wakeup_redraw : Bool
-  dirty_elements : Array[ElementId]
-  dirty_build_elements : Array[ElementId]
-  dirty_layout_elements : Array[ElementId]
-  dirty_paint_elements : Array[ElementId]
-  dirty_semantics_elements : Array[ElementId]
-  dirty_platform_elements : Array[ElementId]
+  dirty_elements : DirtyIdSet
+  dirty_build_elements : DirtyIdSet
+  dirty_layout_elements : DirtyIdSet
+  dirty_paint_elements : DirtyIdSet
+  dirty_semantics_elements : DirtyIdSet
+  dirty_platform_elements : DirtyIdSet
 }
 
 ///|
@@ -537,12 +587,12 @@ fn DirtyTracking::new() -> DirtyTracking {
     needs_platform: true,
     full_damage_reason: None,
     rebuild_wakeup_redraw: false,
-    dirty_elements: [],
-    dirty_build_elements: [],
-    dirty_layout_elements: [],
-    dirty_paint_elements: [],
-    dirty_semantics_elements: [],
-    dirty_platform_elements: [],
+    dirty_elements: DirtyIdSet::new(),
+    dirty_build_elements: DirtyIdSet::new(),
+    dirty_layout_elements: DirtyIdSet::new(),
+    dirty_paint_elements: DirtyIdSet::new(),
+    dirty_semantics_elements: DirtyIdSet::new(),
+    dirty_platform_elements: DirtyIdSet::new(),
   }
 }
 
