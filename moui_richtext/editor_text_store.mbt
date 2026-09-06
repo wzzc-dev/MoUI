@@ -346,33 +346,53 @@ pub fn MarkdownDocumentTextStore::edit(
     while last + 1 < segments.length() && segments[last + 1].start < end {
       last = last + 1
     }
-    let head = markdown_text_segment_slice(segments[first], segments[first].start, start)
-    let tail = markdown_text_segment_slice(segments[last], end, segments[last].end)
-    // The spliced segment replaces segments first..last wholesale: it
-    // spans head (text kept before the edit) + replacement + tail (text
-    // kept after it), starting where the first replaced segment started.
-    let spliced_start = segments[first].start
-    let spliced : MarkdownTextSegment = {
-      start: spliced_start,
-      end:
-        spliced_start +
-        (start - spliced_start) +
+    if last == first {
+      // Fast path for the dominant keystroke case: the edit stays inside
+      // one segment, so rewrite that segment in place and shift the tail
+      // offsets in place — no fresh segment array, no per-segment re-push.
+      let segment = segments[first]
+      let head = markdown_text_segment_slice(segment, segment.start, start)
+      let tail = markdown_text_segment_slice(segment, end, segment.end)
+      segment.text = head + replacement + tail
+      segment.end = segment.start + (start - segment.start) +
         replacement_length +
-        (segments[last].end - end),
-      text: head + replacement + tail,
+        (segment.end - end)
+      if delta != 0 {
+        for index = first + 1; index < segments.length(); index = index + 1 {
+          let after = segments[index]
+          after.start = after.start + delta
+          after.end = after.end + delta
+        }
+      }
+    } else {
+      let head = markdown_text_segment_slice(segments[first], segments[first].start, start)
+      let tail = markdown_text_segment_slice(segments[last], end, segments[last].end)
+      // The spliced segment replaces segments first..last wholesale: it
+      // spans head (text kept before the edit) + replacement + tail (text
+      // kept after it), starting where the first replaced segment started.
+      let spliced_start = segments[first].start
+      let spliced : MarkdownTextSegment = {
+        start: spliced_start,
+        end:
+          spliced_start +
+          (start - spliced_start) +
+          replacement_length +
+          (segments[last].end - end),
+        text: head + replacement + tail,
+      }
+      let next : Array[MarkdownTextSegment] = []
+      for index in 0..<first {
+        next.push(segments[index])
+      }
+      next.push(spliced)
+      for index = last + 1; index < segments.length(); index = index + 1 {
+        let segment = segments[index]
+        segment.start = segment.start + delta
+        segment.end = segment.end + delta
+        next.push(segment)
+      }
+      self.segments.val = next
     }
-    let next : Array[MarkdownTextSegment] = []
-    for index in 0..<first {
-      next.push(segments[index])
-    }
-    next.push(spliced)
-    for index = last + 1; index < segments.length(); index = index + 1 {
-      let segment = segments[index]
-      segment.start = segment.start + delta
-      segment.end = segment.end + delta
-      next.push(segment)
-    }
-    self.segments.val = next
   }
   self.revision.val = self.revision.val + 1
 }
