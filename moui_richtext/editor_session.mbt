@@ -1908,33 +1908,36 @@ fn markdown_document_source_digest_and_line_counts(
   for _ in editor_blocks {
     counts.push(1)
   }
-  let mut hash = rich_text_digest_mix(
-    0xcbf29ce484222325UL,
-    source.length().to_uint64(),
-  )
+  let digest = match markdown_editor_line_scan_cached_digest(source) {
+    Some(digest) => digest
+    None => rich_text_digest_string(
+      rich_text_digest_mix(0xcbf29ce484222325UL, source.length().to_uint64()),
+      source,
+    )
+  }
+  // Per-block newline counts from line structure: every line but the last
+  // terminates in a '\n' at `line.end`, and shell-parse blocks are
+  // line-aligned, so a two-pointer walk over (newline positions x block
+  // ranges) reproduces the merged char-scan's `start <= p < end` counts
+  // without touching the source again.
   let block_count = editor_blocks.length()
-  if block_count == 0 {
-    for ch in source {
-      hash = rich_text_digest_mix(hash, ch.to_int().to_uint64())
+  if block_count > 0 {
+    let lines = markdown_editor_line_scan_cached_lines(source)
+    let mut block_index = 0
+    let last_newline_index = lines.length() - 1
+    for line_index in 0..<last_newline_index {
+      let position = lines[line_index].end
+      while block_index < block_count &&
+            position >= editor_blocks[block_index].source_range.end {
+        block_index = block_index + 1
+      }
+      if block_index < block_count &&
+        position >= editor_blocks[block_index].source_range.start {
+        counts[block_index] = counts[block_index] + 1
+      }
     }
-    return (hash, counts)
   }
-  let mut block_index = 0
-  let mut char_index = 0
-  for ch in source {
-    hash = rich_text_digest_mix(hash, ch.to_int().to_uint64())
-    while block_index < block_count &&
-          char_index >= editor_blocks[block_index].source_range.end {
-      block_index = block_index + 1
-    }
-    if block_index < block_count &&
-      ch == '\n' &&
-      char_index >= editor_blocks[block_index].source_range.start {
-      counts[block_index] = counts[block_index] + 1
-    }
-    char_index = char_index + 1
-  }
-  (hash, counts)
+  (digest, counts)
 }
 
 ///|
@@ -2525,6 +2528,7 @@ fn markdown_document_session_from_blocks(
       markdown_document_outline_after_edit(editor_blocks, prev, window)
     _ => markdown_editor_outline(editor_blocks)
   }
+
   // The store seeds the whole-source view from `source`: every builder
   // here already holds the materialized text (document open, full
   // rebuild, or a transaction carrying the next text), so seeding costs
