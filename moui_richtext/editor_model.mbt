@@ -97,19 +97,55 @@ priv struct MarkdownLine {
 }
 
 ///|
-/// Word/line counts produced by the last `markdown_editor_lines` scan.
-/// The line scan already decodes the whole source, so the session
-/// builder gets both counts for free at open. The runtime is
+/// Word/line counts, the content digest, and the line views produced by
+/// the last `markdown_editor_lines` scan. The line scan already decodes
+/// the whole source, so the session builder gets the counts, the
+/// digest (mixed into the same pass), and the line views for free at
+/// open — no second full-source pass for any of them. The runtime is
 /// single-threaded; same memo pattern as
 /// `markdown_editor_text_length_cache`.
-let markdown_editor_line_scan_cache : Ref[(String, Int, Int)] = Ref(
-  ("", -1, -1),
+let markdown_editor_line_scan_cache : Ref[(String, Int, Int, UInt64, Array[MarkdownLine])] = Ref(
+  ("", -1, -1, 0UL, []),
 )
+
+///|
+/// Content digest accumulated by the last `markdown_editor_lines` scan,
+/// bit-identical to `rich_text_digest_string(seed, source)` seeded from
+/// the document length.
+fn markdown_editor_line_scan_cached_digest(
+  source : String,
+) -> UInt64? {
+  let cached = markdown_editor_line_scan_cache.val
+  if physical_equal(cached.0, source) {
+    Some(cached.3)
+  } else {
+    ignore(markdown_editor_lines(source))
+    let refreshed = markdown_editor_line_scan_cache.val
+    if physical_equal(refreshed.0, source) {
+      Some(refreshed.3)
+    } else {
+      None
+    }
+  }
+}
+
+///|
+/// The line views of the last scan for `source`, scanning only when the
+/// cache holds a different document.
+fn markdown_editor_line_scan_cached_lines(source : String) -> Array[MarkdownLine] {
+  let cached = markdown_editor_line_scan_cache.val
+  if physical_equal(cached.0, source) {
+    cached.4
+  } else {
+    ignore(markdown_editor_lines(source))
+    markdown_editor_line_scan_cache.val.4
+  }
+}
 
 ///|
 fn markdown_editor_line_count(source : String) -> Int {
   let cached = markdown_editor_line_scan_cache.val
-  if cached.1 >= 0 && cached.0 == source {
+  if cached.1 >= 0 && physical_equal(cached.0, source) {
     cached.2
   } else if source == "" {
     0
@@ -127,7 +163,7 @@ fn markdown_editor_line_count(source : String) -> Int {
 ///|
 fn markdown_editor_word_count(source : String) -> Int {
   let cached = markdown_editor_line_scan_cache.val
-  if cached.1 >= 0 && cached.0 == source {
+  if cached.1 >= 0 && physical_equal(cached.0, source) {
     cached.1
   } else {
     let mut count = 0
@@ -167,7 +203,14 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
   let mut unit_offset = 0
   let mut words = 0
   let mut in_word = false
+  // The document content digest rides the same scan: seeded from the
+  // UTF-16 length exactly like `rich_text_digest_string`, mixed per char.
+  let mut digest = rich_text_digest_mix(
+    0xcbf29ce484222325UL,
+    source.length().to_uint64(),
+  )
   for ch in source {
+    digest = rich_text_digest_mix(digest, ch.to_int().to_uint64())
     if ch == '\n' {
       if in_word {
         words = words + 1
@@ -204,7 +247,7 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
     end: char_index,
   })
   let line_count = if source == "" { 0 } else { lines.length() }
-  markdown_editor_line_scan_cache.val = (source, words, line_count)
+  markdown_editor_line_scan_cache.val = (source, words, line_count, digest, lines)
   lines
 }
 
