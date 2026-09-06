@@ -99,15 +99,15 @@ priv struct MarkdownLine {
 }
 
 ///|
-/// Word/line counts, the content digest, and the line views produced by
-/// the last `markdown_editor_lines` scan. The line scan already decodes
-/// the whole source, so the session builder gets the counts, the
-/// digest (mixed into the same pass), and the line views for free at
-/// open — no second full-source pass for any of them. The runtime is
-/// single-threaded; same memo pattern as
+/// Word/line counts, the content digest, the line views, and the utf16
+/// offset of every line start produced by the last `markdown_editor_lines`
+/// scan. The line scan already decodes the whole source, so the session
+/// builder gets the counts, the digest (mixed into the same pass), and the
+/// line views for free at open — no second full-source pass for any of
+/// them. The runtime is single-threaded; same memo pattern as
 /// `markdown_editor_text_length_cache`.
-let markdown_editor_line_scan_cache : Ref[(String, Int, Int, UInt64, Array[MarkdownLine])] = Ref(
-  ("", -1, -1, 0UL, []),
+let markdown_editor_line_scan_cache : Ref[(String, Int, Int, UInt64, Array[MarkdownLine], Array[Int])] = Ref(
+  ("", -1, -1, 0UL, [], []),
 )
 
 ///|
@@ -141,6 +141,18 @@ fn markdown_editor_line_scan_cached_lines(source : String) -> Array[MarkdownLine
   } else {
     ignore(markdown_editor_lines(source))
     markdown_editor_line_scan_cache.val.4
+  }
+}
+
+///|
+/// The line views and per-line utf16 offsets of the last scan for `source`
+/// without rescanning; `None` when the cache holds a different document.
+fn markdown_editor_line_scan_cached_line_units(
+  source : String,
+) -> (Array[MarkdownLine], Array[Int])? {
+  let cached = markdown_editor_line_scan_cache.val
+  if physical_equal(cached.0, source) { Some((cached.4, cached.5)) } else {
+    None
   }
 }
 
@@ -199,6 +211,10 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
   // count drops out of the result, so session construction does not
   // rescan the source for either.
   let lines : Array[MarkdownLine] = []
+  // The utf16 offset of each line's start, alongside the line views, so
+  // the segmented text store can slice the source at block boundaries
+  // (line starts) without its own full-source char pass.
+  let unit_starts : Array[Int] = []
   let mut char_start = 0
   let mut char_index = 0
   let mut unit_start = 0
@@ -223,6 +239,7 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
         start: char_start,
         end: char_index,
       })
+      unit_starts.push(unit_start)
       unit_offset = unit_offset + ch.utf16_len()
       char_index = char_index + 1
       char_start = char_index
@@ -248,8 +265,16 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
     start: char_start,
     end: char_index,
   })
+  unit_starts.push(unit_start)
   let line_count = if source == "" { 0 } else { lines.length() }
-  markdown_editor_line_scan_cache.val = (source, words, line_count, digest, lines)
+  markdown_editor_line_scan_cache.val = (
+    source,
+    words,
+    line_count,
+    digest,
+    lines,
+    unit_starts,
+  )
   lines
 }
 
