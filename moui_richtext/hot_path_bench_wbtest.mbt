@@ -247,6 +247,122 @@ test "hot path: gated end-to-end benchmark" {
   }
   let fixture = hot_path_bench_document(hot_path_bench_document_blocks())
   hot_path_bench_input(fixture, 80)
+  hot_path_bench_input_at_start(fixture, 80)
   hot_path_bench_scroll(fixture, 120)
   hot_path_bench_rebuild(fixture, 60)
+}
+
+///|
+/// Keystroke input at the document START. Every block after the caret must
+/// move its absolute source/content ranges by the edit delta, so this
+/// exercises the worst-case suffix path that end-of-document typing (the
+/// suffix is empty there) never touches.
+fn hot_path_bench_input_at_start(fixture : String, keystrokes : Int) -> Unit {
+  hot_path_metrics_reset()
+  let mut current = MarkdownDocumentSession::new(fixture)
+  let mut current_keep = 0
+  let current_start = @bench.monotonic_clock_start()
+  for _ in 0..<keystrokes {
+    current = current.apply(
+      MarkdownEditTransaction::from_sources(
+        current.source(),
+        "x" + current.source(),
+        reason=TextInput,
+      ),
+    )
+    current_keep = current_keep + current.blocks.length()
+  }
+  let current_us = @bench.monotonic_clock_end(current_start)
+  hot_path_bench_print_int("input_start_blocks", current.blocks.length())
+  hot_path_bench_print_int("input_start_chars", current.source_length)
+  hot_path_bench_print(
+    "input_start_per_keystroke",
+    current_us / keystrokes.to_double(),
+  )
+  hot_path_bench_print_int(
+    "input_start_full_parses",
+    hot_path_full_parse_count.val,
+  )
+  hot_path_bench_print_int(
+    "input_start_region_reparses",
+    hot_path_region_reparse_count.val,
+  )
+  hot_path_bench_print_int("input_start_keep", current_keep)
+  hot_path_metrics_reset()
+  let mut from_edit_session = MarkdownDocumentSession::new(fixture)
+  let from_edit_start = @bench.monotonic_clock_start()
+  for _ in 0..<keystrokes {
+    from_edit_session = from_edit_session.apply(
+      MarkdownEditTransaction::from_edit(
+        from_edit_session.source(),
+        "x" + from_edit_session.source(),
+        0,
+        deleted="",
+        replacement="x",
+        caret=1,
+        selection=None,
+        reason=TextInput,
+      ),
+    )
+  }
+  let from_edit_us = @bench.monotonic_clock_end(from_edit_start)
+  hot_path_bench_print(
+    "input_start_from_edit_per_keystroke",
+    from_edit_us / keystrokes.to_double(),
+  )
+  hot_path_bench_print_int(
+    "input_start_from_edit_full_parses",
+    hot_path_full_parse_count.val,
+  )
+  // Split the from_edit path into its three stages at the same scale:
+  // the next-source materialization, the transaction build, and the
+  // session apply itself. Also the same at the document END, where the
+  // cluster search and the suffix shift trade places.
+  hot_path_metrics_reset()
+  let mut split_session = MarkdownDocumentSession::new(fixture)
+  let mut concat_us = 0.0
+  let mut txn_us = 0.0
+  let mut apply_us = 0.0
+  for _ in 0..<keystrokes {
+    let t0 = @bench.monotonic_clock_start()
+    let next = "x" + split_session.source()
+    concat_us = concat_us + @bench.monotonic_clock_end(t0)
+    let t1 = @bench.monotonic_clock_start()
+    let txn = MarkdownEditTransaction::from_edit(
+      split_session.source(),
+      next,
+      0,
+      deleted="",
+      replacement="x",
+      caret=1,
+      selection=None,
+      reason=TextInput,
+    )
+    txn_us = txn_us + @bench.monotonic_clock_end(t1)
+    let t2 = @bench.monotonic_clock_start()
+    split_session = split_session.apply(txn)
+    apply_us = apply_us + @bench.monotonic_clock_end(t2)
+  }
+  hot_path_bench_print("input_start_concat_per_keystroke", concat_us / keystrokes.to_double())
+  hot_path_bench_print("input_start_txn_per_keystroke", txn_us / keystrokes.to_double())
+  hot_path_bench_print("input_start_apply_per_keystroke", apply_us / keystrokes.to_double())
+  hot_path_metrics_reset()
+  let mut end_session = MarkdownDocumentSession::new(fixture)
+  let mut end_apply_us = 0.0
+  for _ in 0..<keystrokes {
+    let txn = MarkdownEditTransaction::from_edit(
+      end_session.source(),
+      end_session.source() + "x",
+      end_session.source_length,
+      deleted="",
+      replacement="x",
+      caret=end_session.source_length + 1,
+      selection=None,
+      reason=TextInput,
+    )
+    let t1 = @bench.monotonic_clock_start()
+    end_session = end_session.apply(txn)
+    end_apply_us = end_apply_us + @bench.monotonic_clock_end(t1)
+  }
+  hot_path_bench_print("input_end_apply_per_keystroke", end_apply_us / keystrokes.to_double())
 }

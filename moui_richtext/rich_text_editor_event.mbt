@@ -331,7 +331,9 @@ fn[Msg] rich_text_keyboard_event(
       text_control=Some(result.control),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=text_input_messages(on_input, result.text) +
-        text_input_edit_messages(on_input_edit, result.text, result.control) +
+        text_input_edit_messages(
+          on_input_edit, result.text, result.control, record=result.edit,
+        ) +
         selection_messages(
           on_selection_change,
           result.control.caret,
@@ -347,7 +349,9 @@ fn[Msg] rich_text_keyboard_event(
       text_control=Some(result.control),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=text_input_messages(on_input, result.text) +
-        text_input_edit_messages(on_input_edit, result.text, result.control) +
+        text_input_edit_messages(
+          on_input_edit, result.text, result.control, record=result.edit,
+        ) +
         selection_messages(
           on_selection_change,
           result.control.caret,
@@ -686,7 +690,9 @@ fn[Msg] rich_text_editor_command(
         text_control=Some(result.control),
         messages=if result.changed {
           text_input_messages(on_input, result.text) +
-          text_input_edit_messages(on_input_edit, result.text, result.control) +
+          text_input_edit_messages(
+          on_input_edit, result.text, result.control, record=result.edit,
+        ) +
           selection_messages(
             on_selection_change,
             result.control.caret,
@@ -704,7 +710,9 @@ fn[Msg] rich_text_editor_command(
         text_control=Some(result.control),
         messages=if result.changed {
           text_input_messages(on_input, result.text) +
-          text_input_edit_messages(on_input_edit, result.text, result.control) +
+          text_input_edit_messages(
+          on_input_edit, result.text, result.control, record=result.edit,
+        ) +
           selection_messages(
             on_selection_change,
             result.control.caret,

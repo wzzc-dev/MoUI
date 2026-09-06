@@ -24,6 +24,11 @@ priv struct TextHistoryRestoreResult {
   text : String
   control : @core.TextControlStateContext
   changed : Bool
+  // The range edit the restore applied, so downstream session editors can
+  // build their transaction from it instead of re-diffing two
+  // whole-source strings (undo/redo on large documents otherwise pays
+  // the same O(document) scan as an untracked keystroke).
+  edit : RichTextInputEdit?
 }
 
 ///|
@@ -46,7 +51,7 @@ fn restore_text_history(
   rich_text_history_reset_group()
   let source = if undo { control.undo_stack } else { control.redo_stack }
   if source.length() == 0 {
-    return { text: current, control, changed: false }
+    return { text: current, control, changed: false, edit: None }
   }
   let restored = source[source.length() - 1]
   let restored_text = if undo {
@@ -83,10 +88,24 @@ fn restore_text_history(
       redo_stack: next_source,
     }
   }
+  let changed = restored_text != current
+  // Undo replaces the previously inserted text (`after`) with the removed
+  // text (`before`); redo is the inverse. Carrying the exact range keeps
+  // the downstream apply incremental.
+  let edit : RichTextInputEdit? = if changed {
+    Some({
+      start: restored.start,
+      deleted: if undo { restored.after } else { restored.before },
+      replacement: if undo { restored.before } else { restored.after },
+    })
+  } else {
+    None
+  }
   {
     text: restored_text,
     control: next_control,
-    changed: restored_text != current,
+    changed,
+    edit,
   }
 }
 

@@ -750,8 +750,7 @@ fn markdown_document_session_apply_incremental(
           editor_block.source_range.end = editor_block.source_range.end + delta
           editor_block.content_range.start =
             editor_block.content_range.start + delta
-          editor_block.content_range.end = editor_block.content_range.end +
-            delta
+          editor_block.content_range.end = editor_block.content_range.end + delta
         }
       }
       let stitched = editor_blocks
@@ -2898,17 +2897,56 @@ fn markdown_document_outline_after_edit(
   previous : MarkdownDocumentSession,
   window : MarkdownDocumentReindexWindow,
 ) -> Array[MarkdownEditorOutlineItem] {
-  let items : Array[MarkdownEditorOutlineItem] = []
-  for item in previous.outline {
+  let items = previous.outline
+  // Fast path: the re-parsed window contains no heading, the block count
+  // did not change, and no previous item originated inside the replaced
+  // region — the heading set is identical, so the previous array is
+  // reused as-is with its offsets shifted in place (same shared-mutable
+  // contract as the block ranges). The rebuild path below re-created
+  // every item per keystroke on heading-heavy documents.
+  let mut window_has_heading = false
+  for index in window.prefix_count..<window.suffix_new_start {
+    if editor_blocks[index].block.kind is Heading(_) {
+      window_has_heading = true
+      break
+    }
+  }
+  // Items are sorted by source_start; binary-search the first item whose
+  // heading could touch the replaced region.
+  let mut low = 0
+  let mut high = items.length() - 1
+  let mut first_inside = items.length()
+  while low <= high {
+    let mid = (low + high) / 2
+    if items[mid].source_start >= window.old_region_start {
+      first_inside = mid
+      high = mid - 1
+    } else {
+      low = mid + 1
+    }
+  }
+  let item_inside_region = first_inside < items.length() &&
+    items[first_inside].source_start < window.old_region_end
+  if !window_has_heading && window.suffix_shift == 0 && !item_inside_region {
+    if window.char_delta != 0 {
+      for index = first_inside; index < items.length(); index = index + 1 {
+        items[index].source_start = items[index].source_start +
+          window.char_delta
+      }
+    }
+    return items
+  }
+  let rebuilt : Array[MarkdownEditorOutlineItem] = []
+  for item in items {
     if item.source_start < window.old_region_start {
-      items.push(item)
+      rebuilt.push(item)
     }
   }
   for index in window.prefix_count..<window.suffix_new_start {
     let editor_block = editor_blocks[index]
     match editor_block.block.kind {
       Heading(level) =>
-        items.push({
+        rebuilt.push({
           level,
           title: editor_block.block.text,
           source_start: editor_block.content_range.start,
@@ -2916,16 +2954,16 @@ fn markdown_document_outline_after_edit(
       _ => ()
     }
   }
-  for item in previous.outline {
+  for item in items {
     if item.source_start >= window.old_region_end {
-      items.push({
+      rebuilt.push({
         level: item.level,
         title: item.title,
         source_start: item.source_start + window.char_delta,
       })
     }
   }
-  items
+  rebuilt
 }
 
 ///|

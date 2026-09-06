@@ -36,7 +36,9 @@ pub(all) struct MarkdownEditorSnapshot {
 pub(all) struct MarkdownEditorOutlineItem {
   level : Int
   title : String
-  source_start : Int
+  // Absolute source offset, shifted in place by the incremental apply's
+  // fast path (same shared-mutable contract as the block ranges).
+  mut source_start : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
