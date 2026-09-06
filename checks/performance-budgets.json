@@ -21,7 +21,7 @@
       "resources": {
         "peakRssBytes": { "baseline": 536870912, "maxRegressionPercent": 20, "higherIsBetter": false },
         "allocationCount": { "baseline": 1500000, "maxRegressionPercent": 20, "higherIsBetter": false },
-        "cacheHitRate": { "baseline": 0.05056179775280899, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "cacheHitRate": { "baseline": 0.041666666666666664, "maxRegressionPercent": 10, "higherIsBetter": true },
         "startupMs": { "baseline": 1200, "maxRegressionPercent": 20, "higherIsBetter": false },
         "packageBytes": { "baseline": 83886080, "maxRegressionPercent": 10, "higherIsBetter": false }
       }

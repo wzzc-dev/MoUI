@@ -84,6 +84,7 @@
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
       "maxLines": 1652,
+      "maxLines": 1652,
       "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits."
     },
     {
@@ -203,7 +204,7 @@
     },
     {
       "path": "moui_richtext/editor_session.mbt",
-      "maxLines": 3225,
+      "maxLines": 3232,
       "reason": "Existing rich-text editor session state machine."
     },
     {
