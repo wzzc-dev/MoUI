@@ -2773,8 +2773,6 @@ fn markdown_document_assign_blocks_full(
   let mut next_id = next_id
   for index, editor_block in editor_blocks {
     let fingerprint = markdown_document_block_fingerprint(editor_block)
-    hot_path_block_fingerprints_built.val = hot_path_block_fingerprints_built.val +
-      1
     let matched = markdown_document_match_previous_block(
       previous, used_previous, index, fingerprint,
     )
