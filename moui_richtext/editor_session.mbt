@@ -742,14 +742,16 @@ fn markdown_document_session_apply_incremental(
         let suffix_start = cluster.start_index + reparsed.length()
         for i = suffix_start; i < editor_blocks.length(); i = i + 1 {
           let editor_block = editor_blocks[i]
-          editor_block.source_range = {
-            start: editor_block.source_range.start + delta,
-            end: editor_block.source_range.end + delta,
-          }
-          editor_block.content_range = {
-            start: editor_block.content_range.start + delta,
-            end: editor_block.content_range.end + delta,
-          }
+          // In-place int writes: this loop runs once per keystroke over the
+          // blocks after the edit, so a fresh range record per block here
+          // meant ~100k allocations per keystroke on the stress fixture.
+          editor_block.source_range.start = editor_block.source_range.start +
+            delta
+          editor_block.source_range.end = editor_block.source_range.end + delta
+          editor_block.content_range.start =
+            editor_block.content_range.start + delta
+          editor_block.content_range.end = editor_block.content_range.end +
+            delta
         }
       }
       let stitched = editor_blocks
@@ -1029,7 +1031,7 @@ fn markdown_document_reindex_window_fits(
 /// length becomes `length - shift`. Only references move — records are
 /// neither copied nor reallocated, which is what keeps a keystroke on a
 /// 100k-block document from allocating a fresh table per pass.
-fn markdown_document_shift_tail[T](
+fn[T] markdown_document_shift_tail(
   array : Array[T],
   from : Int,
   shift : Int,
@@ -1794,11 +1796,18 @@ fn markdown_document_height_index(
   // Precomputed per-block newline counts from the open path's merged
   // scan; when present the full height index skips its own source scan.
   full_line_counts? : Array[Int]? = None,
+  // The apply's dirty block window; its ±1 revision edge decides whether
+  // the in-place reuse path can skip the suffix top re-accumulation.
+  dirty_range? : MarkdownDocumentDirtyRange? = None,
+  // The live store advanced by the incremental apply, when present: the
+  // window decode reads through it (bounded by the window) instead of
+  // scanning the whole source for char offsets.
+  text_store? : MarkdownDocumentTextStore? = None,
 ) -> MarkdownDocumentHeightIndex {
   match (previous, reuse) {
     (Some(prev), Some(window)) if reuse_ok =>
       markdown_document_height_index_reuse(
-        source, editor_blocks, blocks, prev, window,
+        source, editor_blocks, blocks, prev, window, dirty_range~, text_store~,
       )
     _ =>
       markdown_document_height_index_full(
@@ -1945,6 +1954,8 @@ fn markdown_document_height_index_reuse(
   blocks : Array[MarkdownDocumentBlock],
   previous : MarkdownDocumentSession,
   window : MarkdownDocumentReindexWindow,
+  dirty_range? : MarkdownDocumentDirtyRange? = None,
+  text_store? : MarkdownDocumentTextStore? = None,
 ) -> MarkdownDocumentHeightIndex {
   let metrics = previous.height_index.blocks
   let window_open = window.suffix_new_start > window.prefix_count
@@ -1958,15 +1969,26 @@ fn markdown_document_height_index_reuse(
   } else {
     0
   }
-  let window_chars = markdown_document_source_chars_in_range(
-    source,
-    markdown_editor_text_length(source),
-    span_start,
-    span_end,
-  )
+  let window_chars = match text_store {
+    Some(store) =>
+      // Bounded window read through the store: the full-source
+      // char-offset walk (`offset_of_nth_char`) costs O(document) twice.
+      store.text_of(span_start, span_end).to_array()
+    None =>
+      markdown_document_source_chars_in_range(
+        source,
+        markdown_editor_text_length(source),
+        span_start,
+        span_end,
+      )
+  }
   // Window metrics first: fresh records (window-sized) carrying the
   // recomputed heights; tops are filled by the running pass below.
   let window_records : Array[MarkdownDocumentBlockHeightMetric] = []
+  // Typing inside existing lines leaves every height identical and the
+  // block count untouched, so the O(suffix) top re-accumulation below can
+  // be skipped entirely — the dominant keystroke case on large documents.
+  let mut heights_changed = false
   for index = window.prefix_count; index < window.suffix_new_start; index =
     index + 1 {
     let editor_block = editor_blocks[index]
@@ -1980,15 +2002,33 @@ fn markdown_document_height_index_reuse(
       },
     ).to_double() * 1.42
     let session_block = blocks[index]
+    let previous_metric = if index < metrics.length() {
+      Some(metrics[index])
+    } else {
+      // The edit grew the block table past the previous height index; the
+      // new records count as changed.
+      None
+    }
+    let visual_height_units = markdown_document_estimated_editor_block_height_units(
+        editor_block,
+      )
+    if !heights_changed &&
+      (previous_metric is None ||
+        {
+          let metric = previous_metric.unwrap()
+          metric.source_height_units != source_height_units ||
+          metric.visual_height_units != visual_height_units ||
+          metric.block_id != session_block.id
+        }) {
+      heights_changed = true
+    }
     window_records.push({
       block_id: session_block.id,
       block_index: index,
       revision: session_block.revision,
       source_range: editor_block.source_range,
       visual_top_units: 0.0,
-      visual_height_units: markdown_document_estimated_editor_block_height_units(
-        editor_block,
-      ),
+      visual_height_units,
       source_top_units: 0.0,
       source_height_units,
     })
@@ -2003,32 +2043,90 @@ fn markdown_document_height_index_reuse(
   for offset, record in window_records {
     metrics[window.prefix_count + offset] = record
   }
-  let prefix_base = if window.prefix_count > 0 {
-    let last = metrics[window.prefix_count - 1]
-    (
-      last.visual_top_units + last.visual_height_units,
-      last.source_top_units + last.source_height_units,
-    )
+
+  if !heights_changed && window.suffix_shift == 0 {
+    // Heights inside the window are unchanged and the block count did not
+    // move, so the suffix keeps its accumulated tops. The fresh window
+    // records still need their tops filled from the prefix base — an
+    // O(window) walk instead of the O(suffix) re-accumulation.
+    let prefix_base = if window.prefix_count > 0 {
+      let last = metrics[window.prefix_count - 1]
+      (
+        last.visual_top_units + last.visual_height_units,
+        last.source_top_units + last.source_height_units,
+      )
+    } else {
+      (0.0, 0.0)
+    }
+    let mut visual_top_units = prefix_base.0
+    let mut source_top_units = prefix_base.1
+    for index = window.prefix_count; index < window.suffix_new_start; index =
+      index + 1 {
+      let metric = metrics[index]
+      metric.visual_top_units = visual_top_units
+      metric.source_top_units = source_top_units
+      visual_top_units = visual_top_units + metric.visual_height_units
+      source_top_units = source_top_units + metric.source_height_units
+    }
+    // Refresh only the suffix metrics whose blocks the dirty ±1 edge
+    // re-stamped (at most one block on each window edge).
+    let dirty_start = match dirty_range {
+      Some(range) => range.start_block
+      None => metrics.length()
+    }
+    let dirty_end = match dirty_range {
+      Some(range) => range.end_block
+      None => -1
+    }
+    let refresh_start = if dirty_start > window.suffix_new_start {
+      dirty_start
+    } else {
+      window.suffix_new_start
+    }
+    let refresh_end = if dirty_end < metrics.length() - 1 {
+      dirty_end
+    } else {
+      metrics.length() - 1
+    }
+    for index = refresh_start; index <= refresh_end; index = index + 1 {
+      metrics[index].revision = blocks[index].revision
+    }
+    let last = metrics[metrics.length() - 1]
+    {
+      visual_content_units: last.visual_top_units +
+        last.visual_height_units,
+      source_content_units: last.source_top_units +
+        last.source_height_units,
+      blocks: metrics,
+    }
   } else {
-    (0.0, 0.0)
-  }
-  let mut visual_top_units = prefix_base.0
-  let mut source_top_units = prefix_base.1
-  for index = window.prefix_count; index < metrics.length(); index = index + 1 {
-    let metric = metrics[index]
-    metric.block_index = index
-    metric.block_id = blocks[index].id
-    metric.revision = blocks[index].revision
-    metric.source_range = editor_blocks[index].source_range
-    metric.visual_top_units = visual_top_units
-    metric.source_top_units = source_top_units
-    visual_top_units = visual_top_units + metric.visual_height_units
-    source_top_units = source_top_units + metric.source_height_units
-  }
-  {
-    visual_content_units: visual_top_units,
-    source_content_units: source_top_units,
-    blocks: metrics,
+    let prefix_base = if window.prefix_count > 0 {
+      let last = metrics[window.prefix_count - 1]
+      (
+        last.visual_top_units + last.visual_height_units,
+        last.source_top_units + last.source_height_units,
+      )
+    } else {
+      (0.0, 0.0)
+    }
+    let mut visual_top_units = prefix_base.0
+    let mut source_top_units = prefix_base.1
+    for index = window.prefix_count; index < metrics.length(); index = index + 1 {
+      let metric = metrics[index]
+      metric.block_index = index
+      metric.block_id = blocks[index].id
+      metric.revision = blocks[index].revision
+      metric.source_range = editor_blocks[index].source_range
+      metric.visual_top_units = visual_top_units
+      metric.source_top_units = source_top_units
+      visual_top_units = visual_top_units + metric.visual_height_units
+      source_top_units = source_top_units + metric.source_height_units
+    }
+    {
+      visual_content_units: visual_top_units,
+      source_content_units: source_top_units,
+      blocks: metrics,
+    }
   }
 }
 
@@ -2420,6 +2518,7 @@ fn markdown_document_session_from_blocks(
     reuse~,
     reuse_ok=height_reuse_ok,
     full_line_counts=merged_scan.map(scan => scan.1),
+    dirty_range~,
   )
   let outline = match (previous, reuse) {
     (Some(prev), Some(window)) =>
@@ -2602,21 +2701,11 @@ fn markdown_document_assign_blocks_reuse(
       )
     }
   }
-  // Move the suffix into place and shift its absolute ranges.
+  // Move the suffix into place. Its absolute ranges need no shifting here:
+  // every block record's `source_range`/`content_range` share the
+  // editor-block records that the incremental apply already shifted in
+  // place, so a second pass would apply the char delta twice.
   markdown_document_shift_tail(blocks, suffix_old_start, window.suffix_shift)
-  if window.char_delta != 0 {
-    for i = window.suffix_new_start; i < blocks.length(); i = i + 1 {
-      let block = blocks[i]
-      block.source_range = {
-        start: block.source_range.start + window.char_delta,
-        end: block.source_range.end + window.char_delta,
-      }
-      block.content_range = {
-        start: block.content_range.start + window.char_delta,
-        end: block.content_range.end + window.char_delta,
-      }
-    }
-  }
   // Dirty ±1 edges outside the window re-stamp their revision in place;
   // content (and therefore fingerprint/id) is unchanged there.
   let dirty_end = match dirty_range {

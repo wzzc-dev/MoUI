@@ -1,7 +1,10 @@
 ///|
 pub(all) struct MarkdownSourceRange {
-  start : Int
-  end : Int
+  // Mutable so hot-path suffix shifts (the incremental apply moving the
+  // ranges of up to every block after an edit) can update the two ints in
+  // place instead of allocating a fresh record per block per keystroke.
+  mut start : Int
+  mut end : Int
 } derive(Eq, Debug, ToJson)
 
 ///|

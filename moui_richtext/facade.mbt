@@ -294,7 +294,15 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn declaration(self) 
     layout=rich_text_exact_channel(declaration_size_key(self.size)),
     paint=rich_text_exact_channel(
       rich_text_record_key("MarkdownSessionEditor.paint", [
-        ("source", @core.DeclarationKey::string(self.session.source())),
+        // Identity of the painted source via the session's maintained
+        // (length, digest) pair. Encoding the whole document into the key
+        // here would make every keystroke pay an O(document) UTF-8 pass,
+        // a fresh key buffer, and a full memcmp against the previous key.
+        ("source_length", @core.DeclarationKey::int(self.session.source_length)),
+        (
+          "source_digest",
+          @core.DeclarationKey::uint64(self.session.source_digest),
+        ),
         ("selection_caret", @core.DeclarationKey::int(self.selection.caret)),
         (
           "selection_range",
