@@ -92,9 +92,12 @@ test "markdown editor scroll does not reparse session" {
   )
   ignore(scroll_result)
   let dirty = runtime.inspector_snapshot()
-  inspect(dirty.runtime().dirty_layout_count(), content="7")
+  // Six layout nodes dirty while scrolling: the floating target palette
+  // overlay is detached (see the disable note in view_editor_surface), so the
+  // tree has one less dirty wrapper than when the overlay was mounted.
+  inspect(dirty.runtime().dirty_layout_count(), content="6")
   assert_true(dirty.runtime().dirty_paint_count() > 0)
-  inspect(dirty.view_tree().dirty_layout_count(), content="7")
+  inspect(dirty.view_tree().dirty_layout_count(), content="6")
   assert_true(dirty.view_tree().dirty_paint_count() > 0)
   ignore(runtime.draw_frame())
   assert_true(app.editor_scroll_y() > 0.0)
