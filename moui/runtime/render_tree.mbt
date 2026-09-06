@@ -252,45 +252,95 @@ fn RenderNode::subtree_overlay_contains(
 }
 
 ///|
-fn RenderNode::find_damage_bounds(self : RenderNode, id : ElementId) -> Rect? {
-  self.find_damage_bounds_with_boundary(id, None)
+/// One-pass per-tree index for damage computation. Built once per frame per
+/// previous/current tree in `compute_damage_region`, replacing up to four
+/// full DFS traversals per dirty id with O(1) lookups and O(depth)
+/// parent-chain walks.
+priv struct DamageIndexEntry {
+  paint_bounds : Rect
+  parent_id : Int?
+  is_repaint_boundary : Bool
+  // True when any *strict* descendant of this node is in the dirty set —
+  // mirrors the removed `has_dirty_descendant` (the node itself does not
+  // count, so a dirty leaf keeps emitting its own rect).
+  descendant_dirty : Bool
 }
 
 ///|
-fn RenderNode::find_damage_bounds_with_boundary(
-  self : RenderNode,
-  id : ElementId,
-  boundary : Rect?,
-) -> Rect? {
-  let active_boundary = if self.is_repaint_boundary {
-    Some(self.paint_bounds)
-  } else {
-    boundary
-  }
-  if self.element_id == id {
-    match active_boundary {
-      Some(bounds) => Some(bounds)
-      None => Some(self.paint_bounds)
-    }
-  } else {
-    for child in self.children {
-      match child.find_damage_bounds_with_boundary(id, active_boundary) {
-        Some(bounds) => return Some(bounds)
-        None => ()
-      }
-    }
-    None
-  }
+priv struct DamageIndex {
+  entries : Map[Int, DamageIndexEntry]
 }
 
 ///|
-fn RenderNode::has_dirty_descendant(
-  self : RenderNode,
-  id : ElementId,
-  dirty_ids : Array[ElementId],
+fn DamageIndex::build(root : RenderNode, dirty : DirtyIdSet) -> DamageIndex {
+  let entries : Map[Int, DamageIndexEntry] = Map([])
+  ignore(DamageIndex::build_node(root, None, dirty, entries))
+  { entries, }
+}
+
+///|
+fn DamageIndex::build_node(
+  node : RenderNode,
+  parent_id : Int?,
+  dirty : DirtyIdSet,
+  entries : Map[Int, DamageIndexEntry],
 ) -> Bool {
-  match self.find_render_node(id) {
-    Some(node) => node.children.any(child => child.contains_any(dirty_ids))
+  let mut descendant_dirty = false
+  for child in node.children {
+    if DamageIndex::build_node(
+        child,
+        Some(node.element_id.value()),
+        dirty,
+        entries,
+      ) {
+      descendant_dirty = true
+    }
+  }
+  entries[node.element_id.value()] = {
+    paint_bounds: node.paint_bounds,
+    parent_id,
+    is_repaint_boundary: node.is_repaint_boundary,
+    descendant_dirty,
+  }
+  dirty.contains(node.element_id) || descendant_dirty
+}
+
+///|
+/// Nearest self-or-ancestor repaint-boundary `paint_bounds`, falling back to
+/// the node's own bounds — same contract as the removed `find_damage_bounds`.
+fn DamageIndex::damage_bounds(self : DamageIndex, id : ElementId) -> Rect? {
+  match self.entries.get(id.value()) {
+    Some(entry) => {
+      if entry.is_repaint_boundary {
+        return Some(entry.paint_bounds)
+      }
+      let mut cursor = entry.parent_id
+      while cursor is Some(pid) {
+        match self.entries.get(pid) {
+          Some(parent) => {
+            if parent.is_repaint_boundary {
+              return Some(parent.paint_bounds)
+            }
+            cursor = parent.parent_id
+          }
+          // Unreachable while every entry except the root has a parent in
+          // the map; fall back to the node's own bounds like the old DFS.
+          None => return Some(entry.paint_bounds)
+        }
+      }
+      Some(entry.paint_bounds)
+    }
+    None => None
+  }
+}
+
+///|
+fn DamageIndex::has_dirty_descendant(
+  self : DamageIndex,
+  id : ElementId,
+) -> Bool {
+  match self.entries.get(id.value()) {
+    Some(entry) => entry.descendant_dirty
     None => false
   }
 }
@@ -310,15 +360,6 @@ fn RenderNode::find_render_node(
       }
     }
     None
-  }
-}
-
-///|
-fn RenderNode::contains_any(self : RenderNode, ids : Array[ElementId]) -> Bool {
-  if ids.any(id => id == self.element_id) {
-    true
-  } else {
-    self.children.any(child => child.contains_any(ids))
   }
 }
 

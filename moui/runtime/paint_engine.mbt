@@ -17,6 +17,7 @@ fn ElementNode::render_with_environment(
       overlay_enter,
       self.id,
       environment.now_ms,
+      overlay_fade_duration_ms(environment),
     )
     is Some(_)
   if environment.matches_default_cache_key() &&
@@ -118,6 +119,7 @@ fn ElementNode::render_with_environment(
       overlay_enter,
       self.id,
       environment.now_ms,
+      overlay_fade_duration_ms(environment),
     ),
     content_revision: self.render_cache.content_revision,
     is_repaint_boundary: false,
@@ -205,12 +207,25 @@ fn render_node_paint_bounds(
 }
 
 ///|
+/// Overlay enter/exit fade duration resolved from the paint environment:
+/// reduced-motion completes immediately, otherwise the resolved theme's
+/// normal motion tier (same source as `RuntimeState::overlay_transition_duration_ms`).
+fn overlay_fade_duration_ms(environment : RenderEnvironment) -> Double {
+  if environment.reduced_motion {
+    return 0.0
+  }
+  environment.environment.theme.motion.normal_ms
+}
+
+///|
 /// Enter-fade opacity for an overlay surface: 1.0 once the fade completed (or
-/// when the surface is not tracked).
+/// when the surface is not tracked). A zero duration (reduced motion) always
+/// takes the terminal branch.
 fn overlay_enter_opacity(
   overlay_enter : Array[(ElementId, Double)],
   element_id : ElementId,
   now_ms : Double,
+  duration_ms : Double,
 ) -> Double? {
   let mut started_ms : Double? = None
   for entry in overlay_enter {
@@ -221,11 +236,10 @@ fn overlay_enter_opacity(
   match started_ms {
     Some(started) => {
       let elapsed = now_ms - started
-      let duration = 160.0
-      if elapsed >= duration {
+      if elapsed >= duration_ms {
         None
       } else {
-        Some((elapsed / duration).clamp(min=0.0, max=1.0))
+        Some((elapsed / duration_ms).clamp(min=0.0, max=1.0))
       }
     }
     None => None

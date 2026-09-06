@@ -77,6 +77,10 @@ Options:
                          moui_tests first-frame smoke and verify the marker.
   --run-ime-smoke        Build and run moui_tests/tester/macos_skia_ime_smoke and
                          verify native IME marker tokens.
+  --run-modal-smoke      Run the headless macOS modal presenter session-flow
+                         tests (HostModalSession lifecycle on this host). The
+                         native sheet-ordering leg is evidenced separately by
+                         the GUI modal demo run (plan C4 remaining step).
   --run-gpu-smoke        Also run the opt-in macOS Metal/Ganesh Skia GPU route
                          smoke. This adds MOUI_SKIA_ENABLE_GPU_METAL and the
                          Metal-related frameworks for the temporary build,
@@ -151,6 +155,7 @@ run_text_emoji_smoke=0
 run_markdown_smoke=0
 run_ime_smoke=0
 run_gpu_smoke=0
+run_modal_smoke=0
 showcase_timeout=20
 markdown_timeout=20
 ime_timeout=20
@@ -282,6 +287,10 @@ while [[ $# -gt 0 ]]; do
       run_gpu_smoke=1
       shift
       ;;
+    --run-modal-smoke)
+      run_modal_smoke=1
+      shift
+      ;;
     --showcase-timeout)
       showcase_timeout="${2:-}"
       shift 2
@@ -314,6 +323,17 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ $run_modal_smoke -eq 1 ]]; then
+  # Headless leg of the macos.host-modal smoke (smoke/gates.json): the
+  # HostModalSession lifecycle driven by MacosModalPresenter must pass on the
+  # matching host. The NSWindow sheet-ordering leg is evidenced by the GUI
+  # modal demo run tracked in docs/plans/active/architecture-review-followups.md.
+  moon test moui/backend/macos --target native || exit 2
+  echo "macos.host-modal headless session-flow leg: ok"
+  echo "native sheet-ordering leg: pending GUI modal demo evidence run"
+  exit 0
+fi
 
 enable_skparagraph="$(normalize_bool MOUI_SKIA_ENABLE_SKPARAGRAPH "$enable_skparagraph")"
 require_skparagraph="$(normalize_bool MOUI_SKIA_REQUIRE_SKPARAGRAPH "$require_skparagraph")"

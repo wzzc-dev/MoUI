@@ -246,34 +246,34 @@ fn ElementNode::mark_platform_dirty_by_id(
 ///|
 fn ElementNode::collect_dirty_element_ids_by_kind(
   self : ElementNode,
-  all_ids : Array[ElementId],
-  build_ids : Array[ElementId],
-  layout_ids : Array[ElementId],
-  paint_ids : Array[ElementId],
-  semantics_ids : Array[ElementId],
-  platform_ids : Array[ElementId],
+  all_ids : DirtyIdSet,
+  build_ids : DirtyIdSet,
+  layout_ids : DirtyIdSet,
+  paint_ids : DirtyIdSet,
+  semantics_ids : DirtyIdSet,
+  platform_ids : DirtyIdSet,
 ) -> Unit {
   if self.dirty.needs_build ||
     self.dirty.needs_layout ||
     self.dirty.needs_paint ||
     self.dirty.needs_semantics ||
     self.dirty.needs_platform {
-    push_unique_element_id(all_ids, self.id)
+    all_ids.push(self.id)
   }
   if self.dirty.needs_build {
-    push_unique_element_id(build_ids, self.id)
+    build_ids.push(self.id)
   }
   if self.dirty.needs_layout {
-    push_unique_element_id(layout_ids, self.id)
+    layout_ids.push(self.id)
   }
   if self.dirty.needs_paint {
-    push_unique_element_id(paint_ids, self.id)
+    paint_ids.push(self.id)
   }
   if self.dirty.needs_semantics {
-    push_unique_element_id(semantics_ids, self.id)
+    semantics_ids.push(self.id)
   }
   if self.dirty.needs_platform {
-    push_unique_element_id(platform_ids, self.id)
+    platform_ids.push(self.id)
   }
   for child in self.children {
     child.collect_dirty_element_ids_by_kind(

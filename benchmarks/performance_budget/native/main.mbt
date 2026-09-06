@@ -164,6 +164,53 @@ fn perf_virtual_list_runtimes(
 }
 
 ///|
+fn perf_deep_tree_node(depth : Int, width : Int, msg_base : Int) -> @core.View[Int] {
+  if depth <= 0 {
+    @views.button("x", on_click=msg_base)
+  } else {
+    let children : Array[@core.View[Int]] = []
+    for col in 0..<width {
+      children.push(perf_deep_tree_node(depth - 1, width, msg_base + col * 100))
+    }
+    @views.column(children)
+  }
+}
+
+///|
+fn perf_deep_tree_runtimes(
+  width : Double,
+  height : Double,
+) -> Array[@runtime.AppRuntime] {
+  // 511-node deep tree (depth 8, width 2) — the same shape as the
+  // full_cycle F/G scenarios, which isolate rebuild/layout/paint plus
+  // dirty-queue and damage-region bookkeeping on a deep tree.
+  let program = @core.Program::simple(
+    init=0,
+    update=fn(_model, msg) { msg },
+    view=fn(model) { perf_deep_tree_node(8, 2, model + 1000) },
+  )
+  [
+    @runtime.AppRuntime::new_program(
+      program~,
+      size=@core.Size::new(width~, height~),
+    ),
+  ]
+}
+
+///|
+fn perf_drive_deep_tree(
+  runtimes : Array[@runtime.AppRuntime],
+  index : Int,
+) -> Unit {
+  // Environment toggle forces mark_component_tree_build_dirty → rebuild on
+  // every frame, mirroring full_cycle's F-deep-click scenario.
+  let scale = 1.0 + (index % 10).to_double() * 0.01
+  runtimes[0].set_environment(
+    @core.Environment::neutral().with_text_scale(scale),
+  )
+}
+
+///|
 fn perf_multi_window_runtimes(
   width : Double,
   height : Double,
@@ -459,6 +506,12 @@ fn main {
     perf_run_scenario(
       "multi-window-4", 480.0, 360.0, perf_multi_window_runtimes, perf_no_prepare,
       perf_drive_multi_window, frames, warmup,
+    ),
+  )
+  scenarios["deep-tree-env-toggle"] = perf_scenario_json(
+    perf_run_scenario(
+      "deep-tree-env-toggle", 800.0, 600.0, perf_deep_tree_runtimes, perf_no_prepare,
+      perf_drive_deep_tree, frames, warmup,
     ),
   )
   let report : Json = {

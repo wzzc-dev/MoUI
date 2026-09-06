@@ -346,3 +346,237 @@ test "closing a picker popup retains a fading ghost then prunes it" {
   ignore(runtime.draw_frame())
   assert_true(!has_fade())
 }
+
+///|
+test "overlay exit ghost follows the theme motion duration" {
+  let received : Array[String] = []
+  let runtime = AppRuntime::new_view(
+    root=@views.column(
+      [
+        @views.frame(
+          @views.picker(
+            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
+            selected="one",
+            on_select=id => id,
+            placeholder="Pick",
+            max_height=160.0,
+          ),
+          width=200.0,
+          height=40.0,
+        ),
+      ],
+      spacing=0.0,
+    ),
+    size=@core.Size::new(width=200.0, height=160.0),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(runtime.draw_frame())
+  ignore(
+    runtime.dispatch_event(
+      @core.AppEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=12.0, y=12.0),
+          phase=@core.PointerPhase::Up,
+        ),
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  let has_fade = () => {
+    runtime
+    .draw_commands()
+    .any(command => {
+      match command {
+        @core.DrawCommand::PushOpacity(_) => true
+        _ => false
+      }
+    })
+  }
+  ignore(
+    runtime.dispatch_event(
+      @core.AppEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=12.0, y=84.0),
+          phase=@core.PointerPhase::Up,
+        ),
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  assert_true(has_fade())
+  // The neutral theme's normal motion tier is 180ms: the ghost must still be
+  // fading past the former hardcoded 160ms default, proving the duration is
+  // theme-sourced.
+  runtime.advance_time(170.0)
+  ignore(runtime.draw_frame())
+  assert_true(has_fade())
+  runtime.advance_time(200.0)
+  ignore(runtime.draw_frame())
+  assert_true(!has_fade())
+}
+
+///|
+test "reduced motion completes overlay exits immediately" {
+  let received : Array[String] = []
+  let runtime = AppRuntime::new_view(
+    root=@views.column(
+      [
+        @views.frame(
+          @views.picker(
+            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
+            selected="one",
+            on_select=id => id,
+            placeholder="Pick",
+            max_height=160.0,
+          ),
+          width=200.0,
+          height=40.0,
+        ),
+      ],
+      spacing=0.0,
+    ),
+    size=@core.Size::new(width=200.0, height=160.0),
+    environment=@core.Environment::neutral().with_reduced_motion(true),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(runtime.draw_frame())
+  ignore(
+    runtime.dispatch_event(
+      @core.AppEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=12.0, y=12.0),
+          phase=@core.PointerPhase::Up,
+        ),
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  let has_fade = () => {
+    runtime
+    .draw_commands()
+    .any(command => {
+      match command {
+        @core.DrawCommand::PushOpacity(_) => true
+        _ => false
+      }
+    })
+  }
+  ignore(
+    runtime.dispatch_event(
+      @core.AppEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=12.0, y=84.0),
+          phase=@core.PointerPhase::Up,
+        ),
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  // Zero transition duration: the removed popup is pruned in the same frame
+  // it is captured instead of replaying a fading ghost.
+  assert_true(!has_fade())
+}
+
+///|
+test "portal popup covering a text field blocks focus until dismissed" {
+  let received : Array[String] = []
+  let program : @core.Program[Bool, String] = @core.Program::simple(
+    init=true,
+    update=fn(model, msg) {
+      received.push(msg)
+      match msg {
+        "close-menu" => false
+        "open" => true
+        _ => model
+      }
+    },
+    view=fn(presented) {
+      @views.column(
+        [
+          @views.popup_host(
+            @views.frame(
+              @views.button("Open", on_click="open"),
+              width=80.0,
+              height=32.0,
+            ),
+            [
+              @views.PresentationSpec::new(
+                id="menu",
+                kind=@views.PresentationKind::Popover,
+                anchor=@views.PresentationAnchor::HostBase,
+                content=@views.frame(
+                  @views.text("Item"),
+                  width=200.0,
+                  height=120.0,
+                ),
+                presented~,
+                dismiss=@views.PresentationDismissPolicy::new(
+                  message=Some("close-menu"),
+                ),
+              ),
+            ],
+          ),
+          @views.frame(
+            @views.text_field("", on_input=_ => "field", width=200.0, height=120.0),
+            width=200.0,
+            height=120.0,
+          ),
+        ],
+        spacing=0.0,
+      )
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=@core.Size::new(width=200.0, height=160.0),
+  )
+  ignore(runtime.draw_frame())
+  // The popup surface anchors below the 32px base and overlaps the top of
+  // the text field. A press on the covered field must not move focus into
+  // it: the popup owns pointer pickup, and its non-focusable content must
+  // not let the event fall through to in-flow content.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=100.0, y=45.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=100.0, y=45.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  assert_true(!runtime.focused_text_input().focused)
+  // Escape dismisses the top-most dismissal layer; the app model drops the
+  // presentation.
+  ignore(runtime.dispatch_presentation_escape())
+  if !received.contains("close-menu") {
+    fail("expected the portal popup to dismiss on escape")
+  }
+  ignore(runtime.draw_frame())
+  // With the popup gone the field is reachable again.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=100.0, y=45.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=100.0, y=45.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  assert_true(runtime.focused_text_input().focused)
+}

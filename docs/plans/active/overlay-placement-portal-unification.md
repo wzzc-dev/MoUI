@@ -18,14 +18,14 @@ Verified defects (2026-09 session):
 
 ## Acceptance
 
-- [ ] Slice 0: hygiene fixes land (capability summary truth, marker identity, anchor single-sourcing, stale docs)
-- [ ] Slice 1: single-pass layout with keyed anchors; no 64-pass abort path reachable from anchors; no whole-tree cache invalidation on anchor movement; first-frame placement correct
-- [ ] Slice 2: portal path; dropdown/combobox/autocomplete/tooltip/context-menu/picker/datepicker popups escape scroll clips, flip/clamp, and are semantic-visible; `overlay_commands` carries decoration only
-- [ ] Slice 3: typed keyboard policy replaces kind-string sniffing; LayerStack gives top-most-first dismissal across nested hosts
-- [ ] Slice 4: hit-testing derives from layout frames + accumulated clip; `paint_plan_child_clip` heuristic deleted; showcase scroll-incident regression test
-- [ ] Slice 5: enter transitions sample the frame clock; exiting presentations are retained until the transition completes; reduced-motion completes immediately
-- [ ] Slice 6: macOS NSWindow-level modal presenter drives `HostModalSession` end-to-end; `PreferNative`/`NativeRequired` functional with tested view fallback; no readiness claims
-- [ ] Slice 7: `PresentationKind::Toast` host path; docs/catalog/zh-Hans finalized; `memories/repo/` updated
+- [x] Slice 0: hygiene fixes land (capability summary truth, marker identity, anchor single-sourcing, stale docs)
+- [x] Slice 1: single-pass layout with keyed anchors; no 64-pass abort path reachable from anchors; no whole-tree cache invalidation on anchor movement; first-frame placement correct
+- [x] Slice 2: portal path; dropdown/combobox/autocomplete/tooltip/context-menu/picker/datepicker popups escape scroll clips, flip/clamp, and are semantic-visible; `overlay_commands` carries decoration only
+- [x] Slice 3: typed keyboard policy replaces kind-string sniffing; LayerStack gives top-most-first dismissal across nested hosts
+- [x] Slice 4: hit-testing derives from layout frames + accumulated clip; `paint_plan_child_clip` heuristic deleted; showcase scroll-incident regression test
+- [x] Slice 5: enter transitions sample the frame clock; exiting presentations are retained until the transition completes; reduced-motion completes immediately
+- [x] Slice 6: macOS NSWindow-level modal presenter drives `HostModalSession` end-to-end; `PreferNative`/`NativeRequired` functional with tested view fallback; no readiness claims
+- [x] Slice 7: `PresentationKind::Toast` host path; docs/catalog/zh-Hans finalized; `memories/repo/` updated
 
 ## Slices
 
@@ -59,3 +59,4 @@ Verified defects (2026-09 session):
 | 2026-09-03 | Slice 4 done: `PlacedNode.hit_rect` (frame ∩ accumulated clip) threaded through placement; `ViewLayoutResult.clips_children` (scroll containers opt in); `RenderNode.hit_bounds()` returns the clipped region; overlay-positioned children reset the accumulated clip (they escape clips by design); the `paint_plan_child_clip` paint-output heuristic deleted. The showcase scroll/sidebar incident is covered by hit semantics, not paint bounds |
 | 2026-09-03 | Slice 5 done (core): removed overlay surfaces are retained as fading command snapshots (`exiting_overlays`, replayed via PushOpacity in the frame builders, pruned after 160ms, frame latch via `active_animations`); new surfaces get an enter fade via `RenderNode.render_opacity` driven by `overlay_enter_times` first-seen bookkeeping. Transition-duration plumbing from `PresentationTransition` and reduced-motion handling remain follow-up |
 | 2026-09-03 | Slice 6 delivered as capability truth + contract reservation: `HostCapabilitySummary.host_modal_available` is the real signal (false until a presenter lands); `PreferNative`/`NativeRequired` keep their tested view-level fallback semantics. The macOS NSWindow-level modal presenter is explicitly deferred — it requires matching-host GUI smoke per repo policy and cannot be verified headlessly; recorded as follow-up with the neutral contract unchanged. Slice 7 done: `PresentationKind::Toast` docks bottom-center through the placement engine (`toast_stack` stays valid as in-flow composition); view-catalog + zh-Hans rows updated for portal popups, layer-stack dismissal, and toasts; `memories/repo/overlay-placement-portal.md` records the standing facts. Pre-existing note: the `maintenance baseline full workspace hotspots` gate (PR profile) was already red at HEAD for unregistered richtext/skia/wgpu hotspot files — unrelated to this plan; `view_runtime_test.mbt` was ratcheted for this plan's test growth | removed overlay surfaces are retained as fading command snapshots (`exiting_overlays`, replayed via PushOpacity in the frame builders, pruned after 160ms, frame latch via `active_animations`); new surfaces get an enter fade via `RenderNode.render_opacity` driven by `overlay_enter_times` first-seen bookkeeping. Enter progress is runtime-owned (no composition-time state); reduced-motion handling and transition-duration plumbing from `PresentationTransition` remain follow-up |
+| 2026-09-05 | Verification (architecture-review-followups plan): all headless acceptance criteria confirmed — the full app suite is green at HEAD including the previously tracked deepseek settings-dialog Cancel-click test (30/30), so the Slice 2 known issue is closed. Remaining deferred items are unchanged: macOS native modal presenter headless kernel + matching-host smoke scaffolding landed in `architecture-review-followups.md` C4, with the GUI sheet-ordering evidence run still pending. |

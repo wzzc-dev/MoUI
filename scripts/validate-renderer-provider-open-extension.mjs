@@ -116,34 +116,35 @@ function checkIdentityBranching() {
 }
 
 // ---------------------------------------------------------------------------
-// Check 2: Each renderer package exports its provider constructors
+// Check 2: Each catalogued renderer module exports a provider factory
+// Derived from checks/release-modules.json (role "renderer") so a new
+// renderer module is covered automatically — the open-extension E7 contract
+// (ADR 0007): adding a renderer must not require editing this validator.
 // ---------------------------------------------------------------------------
+function rendererModuleDirectories() {
+  const catalog = JSON.parse(
+    readFileSync(join(REPO_ROOT, "checks", "release-modules.json"), "utf-8"),
+  );
+  return catalog.modules
+    .filter((module) => module.role === "renderer")
+    .map((module) => module.directory);
+}
+
 function checkProviderFactoryExports() {
   const violations = [];
-  const rendererPackages = [
-    {
-      dir: "moui_skia_renderer",
-      expected: ["pub fn raster(", "pub fn gpu(", "pub fn from_env("],
-    },
-    { dir: "moui_wgpu_renderer", expected: ["pub fn native("] },
-    { dir: "moui_sun_renderer", expected: ["pub fn raster("] },
-    { dir: "moui_web_renderer/canvas2d", expected: ["pub fn canvas("] },
-    {
-      dir: "moui_web_renderer",
-      expected: ["pub fn webgpu(", "pub fn canvas2d_fallback("],
-    },
-  ];
-
-  for (const pkg of rendererPackages) {
-    const files = walkMbtFiles(pkg.dir);
+  for (const dir of rendererModuleDirectories()) {
+    const files = walkMbtFiles(dir);
     const allContent = files
       .map((f) => readFileSync(f, "utf-8"))
       .join("\n");
-
-    for (const factoryName of pkg.expected) {
-      if (!allContent.includes(factoryName)) {
-        violations.push(`  ${pkg.dir}: missing provider constructor ${factoryName}`);
-      }
+    const exportsProviderFactory =
+      /pub fn\s+\w+\s*\([^)]*\)\s*->\s*[^{\n]*RendererProvider/.test(
+        allContent,
+      );
+    if (!exportsProviderFactory) {
+      violations.push(
+        `  ${dir}: no pub fn returning @render.RendererProvider (every renderer module must export a provider factory)`,
+      );
     }
   }
 

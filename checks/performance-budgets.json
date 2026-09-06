@@ -93,6 +93,23 @@
         "startupMs": { "baseline": 3000, "maxRegressionPercent": 20, "higherIsBetter": false },
         "packageBytes": { "baseline": 104857600, "maxRegressionPercent": 10, "higherIsBetter": false }
       }
+    },
+    "deep-tree-env-toggle": {
+      "minimumSamples": 30,
+      "timings": {
+        "buildMs": { "p50": 16, "p95": 32, "p99": 48, "maxRegressionPercent": 25 },
+        "layoutMs": { "p50": 8, "p95": 16, "p99": 24, "maxRegressionPercent": 25 },
+        "paintMs": { "p50": 12, "p95": 24, "p99": 36, "maxRegressionPercent": 25 },
+        "presentMs": { "p50": 8, "p95": 16, "p99": 24, "maxRegressionPercent": 25 },
+        "frameMs": { "p50": 32, "p95": 64, "p99": 96, "maxRegressionPercent": 20 }
+      },
+      "resources": {
+        "peakRssBytes": { "baseline": 536870912, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "allocationCount": { "baseline": 4000000, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "cacheHitRate": { "baseline": 0, "maxRegressionPercent": 10, "higherIsBetter": true },
+        "startupMs": { "baseline": 1200, "maxRegressionPercent": 20, "higherIsBetter": false },
+        "packageBytes": { "baseline": 83886080, "maxRegressionPercent": 10, "higherIsBetter": false }
+      }
     }
   }
 }

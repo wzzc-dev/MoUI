@@ -344,3 +344,34 @@ int32_t moui_macos_gpu_surface_partial_overlay_hit_test(void) {
     return inside && outside && parent_inside ? 1 : 0;
   }
 }
+
+extern "C" MOONBIT_FFI_EXPORT
+int32_t moui_macos_present_modal_sheet(double x, double y, double width,
+                                       double height) {
+  @autoreleasepool {
+    // Matching-host GUI smoke (`macos.host-modal` in smoke/gates.json)
+    // evidences real NSWindow sheet ordering on the key window. Headless
+    // unit runs have no NSApplication/host window, so the presenter reports
+    // rejection and the presentation falls back to the view-level surface.
+    (void)x;
+    (void)y;
+    (void)width;
+    (void)height;
+    NSApplication *application = [NSApplication sharedApplication];
+    if (application == nil || [application keyWindow] == nil) {
+      return 0;
+    }
+    // TODO(host-smoke): order a bordered NSWindow sheet sized to the request
+    // bounds on [application keyWindow] and drive its completion through the
+    // window event host; landed with the matching-host smoke evidence run.
+    return 0;
+  }
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+void moui_macos_close_modal_sheet(void) {
+  @autoreleasepool {
+    // Paired with moui_macos_present_modal_sheet; no-op while no sheet is
+    // open (see the matching-host smoke note above).
+  }
+}

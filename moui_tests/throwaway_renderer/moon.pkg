@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/views",
+}
+
+supported_targets = "+native+wasm-gc+wasm"
+
+options(
+  targets: { },
+)
