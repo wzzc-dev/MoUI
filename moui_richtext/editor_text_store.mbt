@@ -13,6 +13,7 @@
 /// value derived from an edit carries the same `Ref`), mirroring the GPUI
 /// adapter's in-place block-array reuse. Callers must not cache segment
 /// data across an `edit`; read through `source`/`text_of` instead.
+
 ///|
 /// Internal detail of `MarkdownDocumentTextStore`; public only because the
 /// session (a `pub(all)` struct) transitively exposes the store. Do not
@@ -44,19 +45,26 @@ pub impl Eq for MarkdownDocumentTextStore with fn equal(self, other) {
   self.revision.val == other.revision.val && self.source() == other.source()
 }
 
+///|
 pub impl Debug for MarkdownDocumentTextStore with fn to_repr(self) {
   Repr::string(
-    "MarkdownDocumentTextStore(revision=" + self.revision.val.to_string() +
-      ", length=" + self.length().to_string() + ")",
+    "MarkdownDocumentTextStore(revision=" +
+    self.revision.val.to_string() +
+    ", length=" +
+    self.length().to_string() +
+    ")",
   )
 }
 
+///|
 pub impl ToJson for MarkdownDocumentTextStore with fn to_json(self) {
   self.source().to_json()
 }
 
 ///|
-pub fn MarkdownDocumentTextStore::new(text : String) -> MarkdownDocumentTextStore {
+pub fn MarkdownDocumentTextStore::new(
+  text : String,
+) -> MarkdownDocumentTextStore {
   let length = text.char_length()
   {
     segments: Ref([{ start: 0, end: length, text }]),
@@ -82,11 +90,7 @@ pub fn MarkdownDocumentTextStore::from_texts(
   if segments.length() == 0 {
     segments.push({ start: 0, end: 0, text: "" })
   }
-  {
-    segments: Ref(segments),
-    revision: Ref(0),
-    materialized: Ref((-1, "")),
-  }
+  { segments: Ref(segments), revision: Ref(0), materialized: Ref((-1, "")) }
 }
 
 ///|
@@ -129,11 +133,7 @@ pub fn MarkdownDocumentTextStore::segmented(
     end: char_index,
     text: current.to_string(),
   })
-  {
-    segments: Ref(segments),
-    revision: Ref(0),
-    materialized: Ref((0, source)),
-  }
+  { segments: Ref(segments), revision: Ref(0), materialized: Ref((0, source)) }
 }
 
 ///|
@@ -150,13 +150,17 @@ pub fn MarkdownDocumentTextStore::replace_all(
 }
 
 ///|
-pub fn MarkdownDocumentTextStore::revision(self : MarkdownDocumentTextStore) -> Int {
+pub fn MarkdownDocumentTextStore::revision(
+  self : MarkdownDocumentTextStore,
+) -> Int {
   self.revision.val
 }
 
 ///|
 /// Char length of the document. O(1) — the tail segment carries the end.
-pub fn MarkdownDocumentTextStore::length(self : MarkdownDocumentTextStore) -> Int {
+pub fn MarkdownDocumentTextStore::length(
+  self : MarkdownDocumentTextStore,
+) -> Int {
   let segments = self.segments.val
   if segments.length() == 0 {
     0
@@ -168,7 +172,9 @@ pub fn MarkdownDocumentTextStore::length(self : MarkdownDocumentTextStore) -> In
 ///|
 /// The whole document text: cached across reads of the same revision, so
 /// the single join per revision is the only materialization cost.
-pub fn MarkdownDocumentTextStore::source(self : MarkdownDocumentTextStore) -> String {
+pub fn MarkdownDocumentTextStore::source(
+  self : MarkdownDocumentTextStore,
+) -> String {
   let revision = self.revision.val
   let cached = self.materialized.val
   if cached.0 == revision {
@@ -333,7 +339,9 @@ pub fn MarkdownDocumentTextStore::edit(
   let replacement_length = replacement.char_length()
   let delta = replacement_length - (end - start)
   if segments.length() == 0 {
-    self.segments.val = [{ start: 0, end: replacement_length, text: replacement }]
+    self.segments.val = [
+      { start: 0, end: replacement_length, text: replacement },
+    ]
   } else if start >= segments[segments.length() - 1].end {
     // Edit at (or past) the document end: extend the tail segment.
     let last = segments[segments.length() - 1]
@@ -354,7 +362,8 @@ pub fn MarkdownDocumentTextStore::edit(
       let head = markdown_text_segment_slice(segment, segment.start, start)
       let tail = markdown_text_segment_slice(segment, end, segment.end)
       segment.text = head + replacement + tail
-      segment.end = segment.start + (start - segment.start) +
+      segment.end = segment.start +
+        (start - segment.start) +
         replacement_length +
         (segment.end - end)
       if delta != 0 {
@@ -365,19 +374,26 @@ pub fn MarkdownDocumentTextStore::edit(
         }
       }
     } else {
-      let head = markdown_text_segment_slice(segments[first], segments[first].start, start)
-      let tail = markdown_text_segment_slice(segments[last], end, segments[last].end)
+      let head = markdown_text_segment_slice(
+        segments[first],
+        segments[first].start,
+        start,
+      )
+      let tail = markdown_text_segment_slice(
+        segments[last],
+        end,
+        segments[last].end,
+      )
       // The spliced segment replaces segments first..last wholesale: it
       // spans head (text kept before the edit) + replacement + tail (text
       // kept after it), starting where the first replaced segment started.
       let spliced_start = segments[first].start
       let spliced : MarkdownTextSegment = {
         start: spliced_start,
-        end:
-          spliced_start +
-          (start - spliced_start) +
-          replacement_length +
-          (segments[last].end - end),
+        end: spliced_start +
+        (start - spliced_start) +
+        replacement_length +
+        (segments[last].end - end),
         text: head + replacement + tail,
       }
       let next : Array[MarkdownTextSegment] = []

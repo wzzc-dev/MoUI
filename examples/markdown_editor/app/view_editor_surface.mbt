@@ -1,6 +1,15 @@
 ///|
 using @views {fill_rect, draw_text}
 
+// Temporarily disabled (dd59fa257): the floating block-target palette
+// ("Block: ..." / Apply) and the selection-triggered format bubble
+// (B/I/S/... toolbar). Flip to true to re-enable both; the overlay wbtests
+// and the dirty-layout expectation in editor_app_cache_runtime_wbtest.mbt
+// key off this flag and resume automatically.
+
+///|
+let markdown_editor_floating_overlays_enabled = false
+
 ///|
 fn MarkdownEditorApp::target_bar(
   self : MarkdownEditorApp,
@@ -910,28 +919,30 @@ fn editor_source_layout(
       _ => DismissAuxiliaryPanels
     }
   })
-  // Temporarily disabled: floating block-target palette (the "Block: ..." /
-  // Apply overlay). Uncomment the if/else below and drop the direct binding
-  // to re-enable it.
-  // let editor_view = if !show_source && !app.source_mode_enabled {
-  //   floating_target_palette(
-  //     editor, target_bar, session, selection, target_kind, editor_font, theme,
-  //     normalized_offset, editor_width, viewport_height,
-  //   )
-  // } else {
-  //   editor
-  // }
-  let editor_view = editor
+  let editor_view = if markdown_editor_floating_overlays_enabled &&
+    !show_source &&
+    !app.source_mode_enabled {
+    floating_target_palette(
+      editor, target_bar, session, selection, target_kind, editor_font, theme, normalized_offset,
+      editor_width, viewport_height,
+    )
+  } else {
+    editor
+  }
 
-  let editor_with_indicator = @views.stack([
+  let editor_indicator_children = [
     editor_view,
     markdown_editor_scroll_indicator(app.editor_scroll, viewport_height~, theme),
-    // Temporarily disabled: selection-triggered format bubble (B/I/S/... toolbar).
-    // markdown_editor_format_bubble_overlay(
-    //   app, session, selection, editor_font, theme, normalized_offset, editor_width,
-    //   viewport_height,
-    // ),
-  ])
+  ]
+  if markdown_editor_floating_overlays_enabled {
+    editor_indicator_children.push(
+      markdown_editor_format_bubble_overlay(
+        app, session, selection, editor_font, theme, normalized_offset, editor_width,
+        viewport_height,
+      ),
+    )
+  }
+  let editor_with_indicator = @views.stack(editor_indicator_children)
   let side_children : Array[@moui.View[MarkdownEditorMsg]] = []
   if show_files {
     side_children.push(

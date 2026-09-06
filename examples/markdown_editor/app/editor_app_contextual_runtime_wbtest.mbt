@@ -45,6 +45,11 @@ test "markdown editor toolbar active state follows caret context" {
 
 ///|
 test "markdown editor floats contextual palette over editor surface" {
+  if !markdown_editor_floating_overlays_enabled {
+    // Floating palette is temporarily disabled; see
+    // markdown_editor_floating_overlays_enabled in view_editor_surface.mbt.
+    return
+  }
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
@@ -62,6 +67,11 @@ test "markdown editor floats contextual palette over editor surface" {
 
 ///|
 test "markdown editor hides contextual palette in plain writing mode" {
+  if !markdown_editor_floating_overlays_enabled {
+    // Floating palette is temporarily disabled; see
+    // markdown_editor_floating_overlays_enabled in view_editor_surface.mbt.
+    return
+  }
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)\n\nTail")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
@@ -268,6 +278,11 @@ test "markdown editor app target inputs sync from selection and apply edits" {
 
 ///|
 test "markdown editor link and image target bars show open action" {
+  if !markdown_editor_floating_overlays_enabled {
+    // Target bar rendering flows through the temporarily disabled floating
+    // palette; see markdown_editor_floating_overlays_enabled.
+    return
+  }
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
@@ -338,6 +353,11 @@ test "markdown editor app block label syncs from selection" {
 
 ///|
 test "markdown editor target bar renders contextual controls" {
+  if !markdown_editor_floating_overlays_enabled {
+    // Contextual controls render through the temporarily disabled floating
+    // palette; see markdown_editor_floating_overlays_enabled.
+    return
+  }
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://old.example) and ![logo](old.png)")
   let plain = app.runtime(width=980.0, height=700.0).draw_commands()

@@ -1,6 +1,8 @@
 ///|
 test "overlay fade duration resolves reduced motion and theme tiers" {
-  let neutral = RenderEnvironment::from_environment(@core.Environment::neutral())
+  let neutral = RenderEnvironment::from_environment(
+    @core.Environment::neutral(),
+  )
   assert_eq(overlay_fade_duration_ms(neutral), 180.0)
   let reduced = RenderEnvironment::from_environment(
     @core.Environment::neutral().with_reduced_motion(true),
@@ -35,10 +37,7 @@ test "overlay enter opacity completes immediately at zero duration" {
   let mid = overlay_enter_opacity(enter, ElementId::new(7), 190.0, 180.0)
   assert_eq(mid.unwrap(), 0.5)
   // A completed fade reports None so the render cache re-engages.
-  assert_eq(
-    overlay_enter_opacity(enter, ElementId::new(7), 500.0, 180.0),
-    None,
-  )
+  assert_eq(overlay_enter_opacity(enter, ElementId::new(7), 500.0, 180.0), None)
   // Untracked surfaces render normally.
   assert_eq(overlay_enter_opacity(enter, ElementId::new(9), 190.0, 180.0), None)
 }

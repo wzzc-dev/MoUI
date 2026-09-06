@@ -47,9 +47,7 @@ test "macos modal presenter rejection falls back to the view surface" {
   let present = fn(_request : @host.HostModalRequest) -> @host.HostModalResult {
     @host.HostModalResult::Rejected("no native host window")
   }
-  let close = fn(_presentation_id : String) -> Unit {
-    ignore(_presentation_id)
-  }
+  let close = fn(_presentation_id : String) -> Unit { ignore(_presentation_id) }
   let presenter = MacosModalPresenter::with_hooks(
     hooks=MacosModalNativeHooks::new(present~, close~),
   )

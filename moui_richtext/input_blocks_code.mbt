@@ -173,7 +173,8 @@ fn markdown_editor_quoted_code_block_at_content_offset(
     // (read from the text store, O(block)) instead of line-splitting the
     // whole document.
     Some(context) =>
-      match markdown_editor_block_at_offset_of_kind(
+      match
+        markdown_editor_block_at_offset_of_kind(
           context.blocks,
           caret,
           MarkdownBlockKind::Blockquote,
@@ -181,10 +182,10 @@ fn markdown_editor_quoted_code_block_at_content_offset(
         Some(block) => {
           let range = block.source_range
           let rebased : Array[MarkdownLine] = []
-          for line in markdown_editor_lines(context.store.text_of(
-            range.start,
-            range.end,
-          )) {
+          for
+            line in markdown_editor_lines(
+              context.store.text_of(range.start, range.end),
+            ) {
             rebased.push({
               text: line.text,
               start: line.start + range.start,
@@ -195,10 +196,11 @@ fn markdown_editor_quoted_code_block_at_content_offset(
         }
         None => None
       }
-    None => markdown_editor_containing_quoted_code_block(
-      source,
-      ({ caret, selection } : MarkdownEditorSelection),
-    )
+    None =>
+      markdown_editor_containing_quoted_code_block(
+        source,
+        ({ caret, selection } : MarkdownEditorSelection),
+      )
   }
   match containing {
     Some(block) =>
@@ -218,10 +220,18 @@ fn markdown_editor_any_code_block_at_content_offset(
   selection : @core.TextRange?,
   context? : MarkdownEditorInputContext? = None,
 ) -> Bool {
-  markdown_editor_code_block_at_content_offset(source, caret, selection, context=context)
+  markdown_editor_code_block_at_content_offset(
+    source,
+    caret,
+    selection,
+    context~,
+  )
   is Some(_) ||
   markdown_editor_quoted_code_block_at_content_offset(
-    source, caret, selection, context=context,
+    source,
+    caret,
+    selection,
+    context~,
   )
   is Some(_)
 }

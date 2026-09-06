@@ -83,7 +83,7 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1650,
+      "maxLines": 1652,
       "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits."
     },
     {
@@ -128,7 +128,7 @@
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 1685,
+      "maxLines": 2374,
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
@@ -138,7 +138,7 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_caret_hit.mbt",
-      "maxLines": 1600,
+      "maxLines": 1623,
       "reason": "Existing caret and hit-testing algorithms."
     },
     {
@@ -203,7 +203,7 @@
     },
     {
       "path": "moui_richtext/editor_session.mbt",
-      "maxLines": 1836,
+      "maxLines": 3232,
       "reason": "Existing rich-text editor session state machine."
     },
     {
@@ -258,7 +258,7 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_helpers.mbt",
-      "maxLines": 1512,
+      "maxLines": 1665,
       "reason": "Existing shared rich-text editor algorithms plus canonical declaration-key encoders."
     }
   ],

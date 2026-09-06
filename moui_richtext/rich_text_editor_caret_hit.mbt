@@ -465,9 +465,8 @@ fn apply_rich_text_input_transform(
               before,
               after,
               control.caret,
-              selection_active=(
-                @core.active_text_selection(control.selection) is Some(_)
-              ),
+              selection_active=@core.active_text_selection(control.selection)
+                is Some(_),
             ),
           ),
         ),

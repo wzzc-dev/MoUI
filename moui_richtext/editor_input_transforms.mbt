@@ -106,8 +106,12 @@ pub fn markdown_editor_transform_input(
     }
   }
   if markdown_editor_code_block_at_content_offset(
-    source, caret, selection, context=context,
-  ) is Some(block) {
+      source,
+      caret,
+      selection,
+      context~,
+    )
+    is Some(block) {
     if input == "\n" {
       match
         markdown_editor_exit_empty_code_block_on_enter(source, block, caret) {
@@ -123,7 +127,7 @@ pub fn markdown_editor_transform_input(
       source,
       caret,
       selection,
-      context=context,
+      context~,
     ) {
     Some(block) =>
       if input == "\n" {

@@ -164,7 +164,11 @@ fn perf_virtual_list_runtimes(
 }
 
 ///|
-fn perf_deep_tree_node(depth : Int, width : Int, msg_base : Int) -> @core.View[Int] {
+fn perf_deep_tree_node(
+  depth : Int,
+  width : Int,
+  msg_base : Int,
+) -> @core.View[Int] {
   if depth <= 0 {
     @views.button("x", on_click=msg_base)
   } else {
@@ -184,11 +188,11 @@ fn perf_deep_tree_runtimes(
   // 511-node deep tree (depth 8, width 2) — the same shape as the
   // full_cycle F/G scenarios, which isolate rebuild/layout/paint plus
   // dirty-queue and damage-region bookkeeping on a deep tree.
-  let program = @core.Program::simple(
-    init=0,
-    update=fn(_model, msg) { msg },
-    view=fn(model) { perf_deep_tree_node(8, 2, model + 1000) },
-  )
+  let program = @core.Program::simple(init=0, update=fn(_model, msg) { msg }, view=fn(
+    model,
+  ) {
+    perf_deep_tree_node(8, 2, model + 1000)
+  })
   [
     @runtime.AppRuntime::new_program(
       program~,

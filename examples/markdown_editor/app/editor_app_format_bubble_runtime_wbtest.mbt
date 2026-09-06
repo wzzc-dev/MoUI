@@ -1,5 +1,10 @@
 ///|
 test "markdown editor format bubble appears on non-empty selection" {
+  if !markdown_editor_floating_overlays_enabled {
+    // Format bubble is temporarily disabled; see
+    // markdown_editor_floating_overlays_enabled in view_editor_surface.mbt.
+    return
+  }
   let app = MarkdownEditorApp::new()
   app.set_document("Some text to select")
   // No selection → no bubble (no "Bold" glyph rendered).
