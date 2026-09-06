@@ -44,32 +44,32 @@ test "markdown editor toolbar active state follows caret context" {
 }
 
 ///|
-test "markdown editor floats contextual palette over editor surface" {
+test "markdown editor keeps the contextual palette overlay detached" {
+  // The floating block-target palette is temporarily disabled (see the
+  // disable note in `view_editor_surface`). While detached, the editor must
+  // still render and no palette overlay may draw. Restore the original
+  // floating-position assertion here when the overlay is re-enabled.
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
   let commands = app.runtime(width=980.0, height=700.0).draw_commands()
-  guard markdown_editor_text_frame(commands, "Visit ") is Some(editor_text) else {
+  guard markdown_editor_text_frame(commands, "Visit ") is Some(_) else {
     fail("expected editor text frame")
   }
-  guard markdown_editor_text_frame(commands, "Link target")
-    is Some(palette_text) else {
-    fail("expected floating palette text frame")
-  }
-  assert_true(palette_text.origin.y > editor_text.origin.y)
-  assert_true(palette_text.origin.y - editor_text.origin.y < 80.0)
+  assert_true(markdown_editor_text_frame(commands, "Link target") is None)
 }
 
 ///|
-test "markdown editor hides contextual palette in plain writing mode" {
+test "markdown editor renders no contextual palette in any writing mode" {
+  // Palette overlay temporarily disabled: no target chrome renders, whether
+  // the caret sits on a link target or away from any target.
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)\n\nTail")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
   let top_commands = app.runtime(width=980.0, height=700.0).draw_commands()
-  guard markdown_editor_text_frame(top_commands, "Link target")
-    is Some(top_palette) else {
-    fail("expected top palette")
-  }
+  assert_false(
+    markdown_editor_text_frame(top_commands, "Link target") is Some(_),
+  )
   app.set_selection(35, None)
   let lower_commands = app.runtime(width=980.0, height=700.0).draw_commands()
   assert_false(
@@ -78,7 +78,6 @@ test "markdown editor hides contextual palette in plain writing mode" {
   assert_false(
     markdown_editor_text_frame(lower_commands, "Image src") is Some(_),
   )
-  assert_true(top_palette.origin.y > 0.0)
 }
 
 ///|
@@ -267,12 +266,14 @@ test "markdown editor app target inputs sync from selection and apply edits" {
 }
 
 ///|
-test "markdown editor link and image target bars show open action" {
+test "markdown editor keeps the target overlay open action detached" {
+  // Target-bar overlay temporarily disabled: the "Open" action it used to
+  // render on link/image targets stays detached in both target states.
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://wzzc-dev.github.io/MoUI)")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
   let link_commands = app.runtime(width=980.0, height=640.0).draw_commands()
-  assert_true(
+  assert_false(
     link_commands.any(command => {
       command is @core.DrawCommand::DrawText({ text: "Open", .. })
     }),
@@ -280,7 +281,7 @@ test "markdown editor link and image target bars show open action" {
   app.set_document("Logo ![mark](https://wzzc-dev.github.io/MoUI/logo.png)")
   app.set_selection(9, None)
   let image_commands = app.runtime(width=980.0, height=640.0).draw_commands()
-  assert_true(
+  assert_false(
     image_commands.any(command => {
       command is @core.DrawCommand::DrawText({ text: "Open", .. })
     }),
@@ -337,82 +338,36 @@ test "markdown editor app block label syncs from selection" {
 }
 
 ///|
-test "markdown editor target bar renders contextual controls" {
+test "markdown editor keeps target bar contextual controls detached" {
+  // The target bar only renders through the floating overlay, which is
+  // temporarily disabled (see the disable note in `view_editor_surface`).
+  // Its contextual controls must stay invisible across plain, link, image,
+  // table, and html caret states; code-fence source text stays visible
+  // because it is document content, not overlay chrome. The caret-side target
+  // logic itself is covered by the target-sync tests.
+  let control_labels = [
+    "Link target", "Image src", "Table tools", "+Row", "+Col", "-Col", "-Row",
+    "Center", "Auto", "Code lang", "HTML block",
+  ]
+  let detached = (commands : Array[@core.DrawCommand]) =>
+    control_labels.all(label =>
+      !commands.any(command => {
+        match command {
+          @core.DrawCommand::DrawText({ text, .. }) => text == label
+          _ => false
+        }
+      })
+    )
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://old.example) and ![logo](old.png)")
-  let plain = app.runtime(width=980.0, height=700.0).draw_commands()
-  assert_false(
-    plain.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Link target", .. })
-    }),
-  )
-  assert_false(
-    plain.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Image src", .. })
-    }),
-  )
-  assert_false(
-    plain.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Table tools", .. })
-    }),
-  )
+  assert_true(detached(app.runtime(width=980.0, height=700.0).draw_commands()))
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
-  let link = app.runtime(width=980.0, height=700.0).draw_commands()
-  assert_true(
-    link.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Link target", .. })
-    }),
-  )
-  assert_false(
-    link.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Image src", .. })
-    }),
-  )
+  assert_true(detached(app.runtime(width=980.0, height=700.0).draw_commands()))
   app.set_selection(44, Some(@core.TextRange::new(start=40, end=44)))
-  let image = app.runtime(width=980.0, height=700.0).draw_commands()
-  assert_true(
-    image.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Image src", .. })
-    }),
-  )
+  assert_true(detached(app.runtime(width=980.0, height=700.0).draw_commands()))
   app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |")
   app.set_selection(26, None)
-  let table = app.runtime(width=980.0, height=700.0).draw_commands()
-  assert_true(
-    table.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Table tools", .. })
-    }),
-  )
-  assert_true(
-    table.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "+Row", .. })
-    }),
-  )
-  assert_true(
-    table.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "+Col", .. })
-    }),
-  )
-  assert_true(
-    table.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "-Col", .. })
-    }),
-  )
-  assert_true(
-    table.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "-Row", .. })
-    }),
-  )
-  assert_true(
-    table.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Center", .. })
-    }),
-  )
-  assert_true(
-    table.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Auto", .. })
-    }),
-  )
+  assert_true(detached(app.runtime(width=980.0, height=700.0).draw_commands()))
   app.set_document("```moonbit\nlet x = 1\n```")
   app.set_selection(15, None)
   let code = app.runtime(width=980.0, height=700.0).draw_commands()
@@ -426,18 +381,11 @@ test "markdown editor target bar renders contextual controls" {
       command is @core.DrawCommand::DrawText({ text: "```", .. })
     }),
   )
-  assert_false(
-    code.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Code lang", .. })
-    }),
-  )
+  assert_true(detached(code))
   app.set_document("Intro\n<div>Old</div>\nTail")
   app.set_selection(9, None)
-  let html = app.runtime(width=980.0, height=700.0).draw_commands()
   assert_true(
-    html.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "HTML block", .. })
-    }),
+    detached(app.runtime(width=980.0, height=700.0).draw_commands()),
   )
 }
 
