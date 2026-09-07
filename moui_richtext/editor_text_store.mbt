@@ -14,7 +14,6 @@
 /// adapter's in-place block-array reuse. Callers must not cache segment
 /// data across an `edit`; read through `source`/`text_of` instead.
 
-
 ///|
 /// Internal detail of `MarkdownDocumentTextStore`; public only because the
 /// session (a `pub(all)` struct) transitively exposes the store. Do not
@@ -47,14 +46,10 @@ pub impl Eq for MarkdownDocumentTextStore with fn equal(self, other) {
 }
 
 ///|
+
 ///|
 pub impl Debug for MarkdownDocumentTextStore with fn to_repr(self) {
   Repr::string(
-    "MarkdownDocumentTextStore(revision=" +
-    self.revision.val.to_string() +
-    ", length=" +
-    self.length().to_string() +
-    ")",
     "MarkdownDocumentTextStore(revision=" +
     self.revision.val.to_string() +
     ", length=" +
