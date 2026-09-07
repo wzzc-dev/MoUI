@@ -1592,11 +1592,14 @@ fn markdown_document_scroll_geometry_rebase(
         .map(metric => metric.visual_height_units * base.size)
         .unwrap_or(base.size * 1.55)
     }
-    if window.suffix_shift == 0 {
-      markdown_document_scroll_geometry_set_height(geometry, index~, height~)
-    } else {
-      heights[index] = height
-    }
+    // Route every recomputed height through the point update so the Fenwick
+    // tree stays in lockstep with `heights`. When the block count changed we
+    // rebuilt the tree above from the *shifted* array, whose window slots
+    // still hold stale values; writing `heights[index]` directly here would
+    // fix the array but leave the tree behind, so `prefix_at` (which feeds
+    // `top_padding` and `content_height`) would disagree with the rendered
+    // block stack — the scroll misalignment this guards against.
+    markdown_document_scroll_geometry_set_height(geometry, index~, height~)
   }
   geometry.source_digest = session.source_digest
   geometry.source_length = session.source_length
