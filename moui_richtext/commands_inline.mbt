@@ -19,7 +19,7 @@ fn markdown_editor_wrap_range(
     start=start + marker_len,
     end=start + marker_len + selected_len,
   )
-  { source: text, caret: next_selection.end, selection: Some(next_selection) }
+  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start: start, end: end }) }
 }
 
 ///|
@@ -120,7 +120,7 @@ fn markdown_editor_unwrap_range(
     start=open_start,
     end=open_start + range.end - range.start,
   )
-  { source: text, caret: next_selection.end, selection: Some(next_selection) }
+  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start: open_start, end: range.end + marker_length }) }
 }
 
 ///|
@@ -268,7 +268,7 @@ fn markdown_editor_toggle_task_block(
   let text = String::from_array(chars[:marker_index]) +
     String::from_array([next]) +
     String::from_array(chars[marker_index + 1:])
-  Some({ source: text, caret: block.content_range.start, selection: None })
+  Some({ source: text, caret: block.content_range.start, selection: None, edit_range: Some({ start: marker_index, end: marker_index + 1 }) })
 }
 
 ///|

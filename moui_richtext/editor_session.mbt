@@ -272,18 +272,75 @@ fn markdown_document_source_substring_after_prefix(
 }
 
 ///|
+/// Build a transaction from a recorded edit range without scanning both
+/// documents. Malformed ranges (out of bounds, or a negative replacement
+/// length) fall back to the O(doc) from_sources diff.
+fn MarkdownEditTransaction::from_replacement_range(
+  previous_source : String,
+  source : String,
+  edit_range : MarkdownSourceRange,
+  caret~ : Int,
+  selection~ : @core.TextRange?,
+  reason~ : MarkdownEditReason,
+) -> MarkdownEditTransaction {
+  let previous_length = markdown_editor_text_length(previous_source)
+  let source_length = markdown_editor_text_length(source)
+  let replacement_length = source_length - edit_range.start - (previous_length - edit_range.end)
+  if edit_range.start <= edit_range.end &&
+    edit_range.end <= previous_length &&
+    replacement_length >= 0 {
+    return MarkdownEditTransaction::from_edit(
+      previous_source,
+      source,
+      edit_range.start,
+      deleted=markdown_editor_substring(
+        previous_source, edit_range.start, edit_range.end,
+      ),
+      replacement=markdown_editor_substring(
+        source, edit_range.start, edit_range.start + replacement_length,
+      ),
+      caret~,
+      selection~,
+      reason~,
+    )
+  }
+  MarkdownEditTransaction::from_sources(
+    previous_source,
+    source,
+    caret~,
+    selection~,
+    reason~,
+  )
+}
+
+///|
 pub fn MarkdownEditTransaction::from_edit_result(
   previous_source : String,
   result : MarkdownEditorEditResult,
   reason? : MarkdownEditReason = CommandEdit,
 ) -> MarkdownEditTransaction {
-  MarkdownEditTransaction::from_sources(
-    previous_source,
-    result.source,
-    caret=result.caret,
-    selection=result.selection,
-    reason~,
-  )
+  match result.edit_range {
+    // The command recorded the exact range it replaced, so build the
+    // transaction directly instead of re-scanning both documents.
+    // Malformed ranges fall through to the from_sources diff below.
+    Some(range) =>
+      MarkdownEditTransaction::from_replacement_range(
+        previous_source,
+        result.source,
+        range,
+        caret=result.caret,
+        selection=result.selection,
+        reason~,
+      )
+    None =>
+      MarkdownEditTransaction::from_sources(
+        previous_source,
+        result.source,
+        caret=result.caret,
+        selection=result.selection,
+        reason~,
+      )
+  }
 }
 
 ///|
@@ -292,13 +349,27 @@ pub fn MarkdownEditTransaction::from_input_transform(
   transform : RichTextInputTransform,
   reason? : MarkdownEditReason = TextInput,
 ) -> MarkdownEditTransaction {
-  MarkdownEditTransaction::from_sources(
-    previous_source,
-    transform.text,
-    caret=transform.caret,
-    selection=transform.selection,
-    reason~,
-  )
+  match transform.edit_range {
+    // The transform chain recorded the exact range it replaced, so build
+    // the transaction directly instead of re-scanning both documents.
+    Some(range) =>
+      MarkdownEditTransaction::from_replacement_range(
+        previous_source,
+        transform.text,
+        range,
+        caret=transform.caret,
+        selection=transform.selection,
+        reason~,
+      )
+    None =>
+      MarkdownEditTransaction::from_sources(
+        previous_source,
+        transform.text,
+        caret=transform.caret,
+        selection=transform.selection,
+        reason~,
+      )
+  }
 }
 
 ///|

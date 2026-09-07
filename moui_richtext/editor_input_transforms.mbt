@@ -276,6 +276,7 @@ pub fn markdown_editor_transform_input(
           insert +
           String::from_array(chars[caret:]),
         caret=caret + markdown_editor_text_length(insert),
+        edit_range=Some({ start: caret, end: caret }),
       ),
     )
   }

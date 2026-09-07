@@ -76,6 +76,9 @@ pub fn markdown_editor_insert_hard_break(
         insert +
         String::from_array(chars[replace_range.end:]),
       caret=replace_range.start + markdown_editor_text_length(insert),
+      edit_range=Some(
+        { start: replace_range.start, end: replace_range.end },
+      ),
     ),
   )
 }
@@ -93,7 +96,10 @@ fn markdown_editor_complete_rule_on_enter(
   let text = String::from_array(chars[:caret]) +
     "\n" +
     String::from_array(chars[caret:])
-  Some(markdown_editor_transform_result(text~, caret=caret + 1))
+  Some(
+    markdown_editor_transform_result(text~, caret=caret + 1,
+      edit_range=Some({ start: caret, end: caret })),
+  )
 }
 
 ///|
@@ -119,7 +125,10 @@ fn markdown_editor_complete_setext_heading_on_enter(
   let text = String::from_array(chars[:caret]) +
     "\n" +
     String::from_array(chars[caret:])
-  Some(markdown_editor_transform_result(text~, caret=caret + 1))
+  Some(
+    markdown_editor_transform_result(text~, caret=caret + 1,
+      edit_range=Some({ start: caret, end: caret })),
+  )
 }
 
 ///|
@@ -158,9 +167,10 @@ fn markdown_editor_transform_result(
   text~ : String,
   caret~ : Int,
   selection? : @core.TextRange? = None,
+  edit_range? : MarkdownSourceRange? = None,
 ) -> RichTextInputTransform {
   markdown_editor_normalize_ordered_transform(
-    RichTextInputTransform::new(text~, caret~, selection~),
+    RichTextInputTransform::new(text~, caret~, selection~, edit_range~),
   )
 }
 
@@ -189,6 +199,7 @@ fn markdown_editor_autocomplete_block_marker(
     markdown_editor_transform_result(
       text~,
       caret=range.start + markdown_editor_text_length(marker),
+      edit_range=Some({ start: range.start, end: caret }),
     ),
   )
 }
@@ -366,6 +377,7 @@ fn markdown_editor_shift_lines(
       text~,
       caret=next_caret,
       selection=next_selection,
+      edit_range=Some({ start: range.start, end: range.end }),
     ),
   )
 }
@@ -425,6 +437,7 @@ fn markdown_editor_exit_empty_continuation(
             parent +
             String::from_array(chars[range.end:]),
           caret=range.start + markdown_editor_text_length(parent),
+          edit_range=Some({ start: range.start, end: range.end }),
         ),
       )
     None => ()
@@ -437,6 +450,7 @@ fn markdown_editor_exit_empty_continuation(
           outdented +
           String::from_array(chars[range.end:]),
         caret=range.start + markdown_editor_marker_prefix_length(outdented),
+        edit_range=Some({ start: range.start, end: range.end }),
       ),
     )
   }
@@ -445,6 +459,7 @@ fn markdown_editor_exit_empty_continuation(
       text=String::from_array(chars[:range.start]) +
         String::from_array(chars[range.end:]),
       caret=range.start,
+      edit_range=Some({ start: range.start, end: range.end }),
     ),
   )
 }
@@ -511,6 +526,7 @@ fn markdown_editor_exit_empty_heading(
             prefix +
             String::from_array(chars[range.end:]),
           caret=range.start + markdown_editor_text_length(prefix),
+          edit_range=Some({ start: range.start, end: range.end }),
         ),
       )
     None => None

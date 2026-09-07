@@ -299,6 +299,7 @@ fn markdown_editor_code_block_enter(
       insert +
       String::from_array(chars[caret:]),
     caret=caret + markdown_editor_text_length(insert),
+    edit_range=Some({ start: caret, end: caret }),
   )
 }
 
@@ -726,7 +727,7 @@ fn markdown_editor_wrap_link_range_with_target(
     start=start + 1,
     end=start + 1 + end - start,
   )
-  { source: text, caret: next_selection.end, selection: Some(next_selection) }
+  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start, end }) }
 }
 
 ///|
@@ -758,7 +759,7 @@ fn markdown_editor_wrap_image_range_with_target(
     start=start + 2,
     end=start + 2 + end - start,
   )
-  { source: text, caret: next_selection.end, selection: Some(next_selection) }
+  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start, end }) }
 }
 
 ///|
@@ -780,6 +781,11 @@ fn markdown_editor_replace_reference_target(
       source: text,
       caret: next_selection.end,
       selection: Some(next_selection),
+      // Definition append: pure insertion at the end of the previous source.
+      edit_range: Some({
+        start: markdown_editor_text_length(source),
+        end: markdown_editor_text_length(source),
+      }),
     }
   }
   let target_start = if bounds.definition_target_start >= 0 {
@@ -797,7 +803,7 @@ fn markdown_editor_replace_reference_target(
     target +
     markdown_editor_substring(source, target_end, source_length)
   let next_selection = @core.TextRange::new(start=range.start, end=range.end)
-  { source: text, caret: next_selection.end, selection: Some(next_selection) }
+  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start: target_start, end: target_end }) }
 }
 
 ///|
@@ -971,6 +977,7 @@ fn markdown_editor_replace_footnote_definition_text(
             source: next_source,
             caret: range.start + markdown_editor_text_length(text),
             selection: None,
+            edit_range: Some({ start: range.start, end: range.end }),
           })
         }
       None => ()
@@ -996,6 +1003,11 @@ fn markdown_editor_append_footnote_definition(
     source: next_source,
     caret: selection.caret,
     selection: selection.selection,
+    // Definition append: pure insertion at the end of the previous source.
+    edit_range: Some({
+      start: markdown_editor_text_length(source),
+      end: markdown_editor_text_length(source),
+    }),
   }
 }
 
@@ -1036,7 +1048,7 @@ fn markdown_editor_unwrap_link_range(
     start=bounds.open_start,
     end=bounds.open_start + range.end - range.start,
   )
-  { source: text, caret: next_selection.end, selection: Some(next_selection) }
+  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start: bounds.open_start, end: bounds.target_end + 1 }) }
 }
 
 ///|
@@ -1053,7 +1065,7 @@ fn markdown_editor_unwrap_image_range(
     start=bounds.open_start,
     end=bounds.open_start + range.end - range.start,
   )
-  { source: text, caret: next_selection.end, selection: Some(next_selection) }
+  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start: bounds.open_start, end: bounds.target_end + 1 }) }
 }
 
 ///|

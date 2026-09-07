@@ -25,10 +25,16 @@ fn markdown_editor_insert_table_row(
           cells,
           cells[index],
         )
+        let insert_at = markdown_editor_table_insert_row_end(
+          source,
+          cells,
+          cells[index],
+        )
         return {
           source: transform.text,
           caret: transform.caret,
           selection: transform.selection,
+          edit_range: Some({ start: insert_at, end: insert_at }),
         }
       }
       None => ()
@@ -157,7 +163,7 @@ fn markdown_editor_delete_table_row_at_cell(
     0,
     markdown_editor_text_length(text),
   )
-  { source: text, caret, selection: None }
+  { source: text, caret, selection: None, edit_range: Some({ start: remove_start, end: row_end }) }
 }
 
 ///|
@@ -174,7 +180,7 @@ fn markdown_editor_clear_table_row(
   let text = String::from_array(chars[:row_start]) +
     row +
     String::from_array(chars[row_end:])
-  { source: text, caret: row_start + 2, selection: None }
+  { source: text, caret: row_start + 2, selection: None, edit_range: Some({ start: row_start, end: row_end }) }
 }
 
 ///|
