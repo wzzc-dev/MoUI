@@ -332,7 +332,10 @@ fn[Msg] rich_text_keyboard_event(
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=text_input_messages(on_input, result.text) +
         text_input_edit_messages(
-          on_input_edit, result.text, result.control, record=result.edit,
+          on_input_edit,
+          result.text,
+          result.control,
+          record=result.edit,
         ) +
         selection_messages(
           on_selection_change,
@@ -350,7 +353,10 @@ fn[Msg] rich_text_keyboard_event(
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=text_input_messages(on_input, result.text) +
         text_input_edit_messages(
-          on_input_edit, result.text, result.control, record=result.edit,
+          on_input_edit,
+          result.text,
+          result.control,
+          record=result.edit,
         ) +
         selection_messages(
           on_selection_change,
@@ -528,7 +534,8 @@ fn[Msg] rich_text_input_event(
               transformed,
               record_history~,
             )
-          None => apply_text_input(ctx.text_control, text, event, record_history~)
+          None =>
+            apply_text_input(ctx.text_control, text, event, record_history~)
         }
       }
     @core.TextInputEvent::DeleteRange(_) =>
@@ -588,7 +595,10 @@ fn[Msg] rich_text_input_event(
     messages=if result.changed {
       text_input_messages(on_input, result.text) +
       text_input_edit_messages(
-        on_input_edit, result.text, result.control, record=result.edit,
+        on_input_edit,
+        result.text,
+        result.control,
+        record=result.edit,
       ) +
       selection_messages(
         on_selection_change,
@@ -691,8 +701,11 @@ fn[Msg] rich_text_editor_command(
         messages=if result.changed {
           text_input_messages(on_input, result.text) +
           text_input_edit_messages(
-          on_input_edit, result.text, result.control, record=result.edit,
-        ) +
+            on_input_edit,
+            result.text,
+            result.control,
+            record=result.edit,
+          ) +
           selection_messages(
             on_selection_change,
             result.control.caret,
@@ -711,8 +724,11 @@ fn[Msg] rich_text_editor_command(
         messages=if result.changed {
           text_input_messages(on_input, result.text) +
           text_input_edit_messages(
-          on_input_edit, result.text, result.control, record=result.edit,
-        ) +
+            on_input_edit,
+            result.text,
+            result.control,
+            record=result.edit,
+          ) +
           selection_messages(
             on_selection_change,
             result.control.caret,

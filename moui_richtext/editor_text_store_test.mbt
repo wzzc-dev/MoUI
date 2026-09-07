@@ -1,3 +1,4 @@
+///|
 test "store edits match whole-string replacement" {
   let store = MarkdownDocumentTextStore::new("hello 世界\nnext line")
   // Insert at a multi-byte boundary: char offsets, not UTF-16 units.
@@ -16,6 +17,7 @@ test "store edits match whole-string replacement" {
   inspect(store.length().to_string(), content="6")
 }
 
+///|
 test "store splices multiple segments and shifts tail offsets" {
   let store = MarkdownDocumentTextStore::from_texts([
     "aa\nbb", "\ncc\ndd", "\ndd\n",
@@ -39,6 +41,7 @@ test "store splices multiple segments and shifts tail offsets" {
   inspect(store.length().to_string(), content="0")
 }
 
+///|
 test "store revision gates materialization and aliases share the core" {
   let store = MarkdownDocumentTextStore::new("doc")
   let revision_0 = store.revision()
@@ -60,6 +63,7 @@ test "store revision gates materialization and aliases share the core" {
   guard! !(fresh == store)
 }
 
+///|
 test "store text_of reads across segment boundaries" {
   let store = MarkdownDocumentTextStore::from_texts(["012345", "6789"])
   store.edit({ start: 2, end: 2 }, "XY")

@@ -41,7 +41,9 @@ pub fn macos_host_modal_capabilities() -> @host.HostModalCapabilities {
 }
 
 ///|
-fn macos_native_present(request : @host.HostModalRequest) -> @host.HostModalResult {
+fn macos_native_present(
+  request : @host.HostModalRequest,
+) -> @host.HostModalResult {
   // The native sheet leg is exercised by the matching-host smoke
   // (the macOS renderer smoke script, `--run-modal-smoke`). Headless runs
   // have no host window: report rejection so the presentation transparently
@@ -52,7 +54,8 @@ fn macos_native_present(request : @host.HostModalRequest) -> @host.HostModalResu
       bounds.origin.y,
       bounds.size.width,
       bounds.size.height,
-    ) == 1
+    ) ==
+    1
   if accepted {
     @host.HostModalResult::Accepted
   } else {
@@ -70,17 +73,14 @@ fn macos_native_close(_presentation_id : String) -> Unit {
 pub fn macos_modal_presenter() -> MacosModalPresenter {
   {
     capabilities: macos_host_modal_capabilities(),
-    hooks: {
-      present: macos_native_present,
-      close: macos_native_close,
-    },
+    hooks: { present: macos_native_present, close: macos_native_close },
   }
 }
 
 ///|
 /// Test/alternative-host constructor with explicit native hooks.
 pub fn MacosModalPresenter::with_hooks(
-  capabilities~ : @host.HostModalCapabilities = macos_host_modal_capabilities(),
+  capabilities? : @host.HostModalCapabilities = macos_host_modal_capabilities(),
   hooks~ : MacosModalNativeHooks,
 ) -> MacosModalPresenter {
   { capabilities, hooks }
@@ -98,7 +98,8 @@ pub fn MacosModalPresenter::present(
   let session = @host_modal.HostModalSession::new(request)
   let events : Array[@host.HostModalEvent] = [session.begin()]
   let decision = (self.hooks.present)(request)
-  match session.apply_result(request.request_id(), request.generation(), decision) {
+  match
+    session.apply_result(request.request_id(), request.generation(), decision) {
     Some(event) => events.push(event)
     None => ()
   }

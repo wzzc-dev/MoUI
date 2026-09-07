@@ -343,9 +343,18 @@ fn hot_path_bench_input_at_start(fixture : String, keystrokes : Int) -> Unit {
     split_session = split_session.apply(txn)
     apply_us = apply_us + @bench.monotonic_clock_end(t2)
   }
-  hot_path_bench_print("input_start_concat_per_keystroke", concat_us / keystrokes.to_double())
-  hot_path_bench_print("input_start_txn_per_keystroke", txn_us / keystrokes.to_double())
-  hot_path_bench_print("input_start_apply_per_keystroke", apply_us / keystrokes.to_double())
+  hot_path_bench_print(
+    "input_start_concat_per_keystroke",
+    concat_us / keystrokes.to_double(),
+  )
+  hot_path_bench_print(
+    "input_start_txn_per_keystroke",
+    txn_us / keystrokes.to_double(),
+  )
+  hot_path_bench_print(
+    "input_start_apply_per_keystroke",
+    apply_us / keystrokes.to_double(),
+  )
   hot_path_metrics_reset()
   let mut end_session = MarkdownDocumentSession::new(fixture)
   let mut end_apply_us = 0.0
@@ -364,5 +373,8 @@ fn hot_path_bench_input_at_start(fixture : String, keystrokes : Int) -> Unit {
     end_session = end_session.apply(txn)
     end_apply_us = end_apply_us + @bench.monotonic_clock_end(t1)
   }
-  hot_path_bench_print("input_end_apply_per_keystroke", end_apply_us / keystrokes.to_double())
+  hot_path_bench_print(
+    "input_end_apply_per_keystroke",
+    end_apply_us / keystrokes.to_double(),
+  )
 }

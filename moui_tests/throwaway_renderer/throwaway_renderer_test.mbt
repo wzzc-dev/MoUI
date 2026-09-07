@@ -11,8 +11,7 @@ test "throwaway renderer registers through AppBuilder and binds in registry orde
       root=@views.text("throwaway"),
       size=@core.Size::new(width=120.0, height=80.0),
     ),
-  )
-  .render(throwaway_provider())
+  ).render(throwaway_provider())
   assert_eq(builder.renderer_providers.length(), 1)
   assert_eq(builder.renderer_providers[0].id(), "throwaway")
 

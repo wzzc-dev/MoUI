@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/accesskit",
+  "wzzc-dev/moui/backend/common/host_modal",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
   "wzzc-dev/window/dpi",
@@ -29,7 +30,11 @@ pub fn macos_clipboard_read_text() -> String?
 
 pub fn macos_clipboard_write_text(String) -> Bool
 
+pub fn macos_host_modal_capabilities() -> @backend.HostModalCapabilities
+
 pub fn macos_input_capabilities() -> @backend.HostInputCapabilities
+
+pub fn macos_modal_presenter() -> MacosModalPresenter
 
 pub fn macos_native_view_handle(@wzzc-dev/window/macos.Window) -> UInt64?
 
@@ -70,6 +75,23 @@ pub struct MacosHostSmokeOptions {
 }
 pub fn MacosHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool, native_ime_runtime_smoke? : Bool, performance_smoke_duration_ms? : Int, performance_smoke_warm_up_presents? : Int, performance_smoke_refresh_hz? : Int, promotion_lifecycle_enabled? : Bool, promotion_surface_cycles? : Int, promotion_fg_bg_cycles? : Int, promotion_context_loss_count? : Int) -> Self
 pub fn MacosHostSmokeOptions::performance_enabled(Self) -> Bool
+
+pub struct MacosModalNativeHooks {
+  // private fields
+}
+pub fn MacosModalNativeHooks::new(present~ : (@backend.HostModalRequest) -> @backend.HostModalResult, close~ : (String) -> Unit) -> Self
+
+pub struct MacosModalPresenter {
+  capabilities : @backend.HostModalCapabilities
+  // private fields
+}
+pub fn MacosModalPresenter::attach_surface(Self, @host_modal.HostModalSession, String) -> @backend.HostModalEvent?
+pub fn MacosModalPresenter::capabilities(Self) -> @backend.HostModalCapabilities
+pub fn MacosModalPresenter::close(Self, @host_modal.HostModalSession) -> @backend.HostModalEvent?
+pub fn MacosModalPresenter::detach_surface(Self, @host_modal.HostModalSession, String) -> @backend.HostModalEvent?
+pub fn MacosModalPresenter::present(Self, @backend.HostModalRequest) -> (@host_modal.HostModalSession, Array[@backend.HostModalEvent])
+pub fn MacosModalPresenter::route_input(Self, @host_modal.HostModalSession, @wzzc-dev/moui/core.PointerEvent) -> @backend.HostModalEvent?
+pub fn MacosModalPresenter::with_hooks(capabilities? : @backend.HostModalCapabilities, hooks~ : MacosModalNativeHooks) -> Self
 
 type MacosNativeHostBackend
 pub impl @wzzc-dev/window/macos.ApplicationHandler for MacosNativeHostBackend

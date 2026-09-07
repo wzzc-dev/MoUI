@@ -106,17 +106,15 @@ priv struct MarkdownLine {
 /// line views for free at open — no second full-source pass for any of
 /// them. The runtime is single-threaded; same memo pattern as
 /// `markdown_editor_text_length_cache`.
-let markdown_editor_line_scan_cache : Ref[(String, Int, Int, UInt64, Array[MarkdownLine], Array[Int])] = Ref(
-  ("", -1, -1, 0UL, [], []),
-)
+let markdown_editor_line_scan_cache : Ref[
+  (String, Int, Int, UInt64, Array[MarkdownLine], Array[Int]),
+] = Ref(("", -1, -1, 0UL, [], []))
 
 ///|
 /// Content digest accumulated by the last `markdown_editor_lines` scan,
 /// bit-identical to `rich_text_digest_string(seed, source)` seeded from
 /// the document length.
-fn markdown_editor_line_scan_cached_digest(
-  source : String,
-) -> UInt64? {
+fn markdown_editor_line_scan_cached_digest(source : String) -> UInt64? {
   let cached = markdown_editor_line_scan_cache.val
   if physical_equal(cached.0, source) {
     Some(cached.3)
@@ -134,7 +132,9 @@ fn markdown_editor_line_scan_cached_digest(
 ///|
 /// The line views of the last scan for `source`, scanning only when the
 /// cache holds a different document.
-fn markdown_editor_line_scan_cached_lines(source : String) -> Array[MarkdownLine] {
+fn markdown_editor_line_scan_cached_lines(
+  source : String,
+) -> Array[MarkdownLine] {
   let cached = markdown_editor_line_scan_cache.val
   if physical_equal(cached.0, source) {
     cached.4
@@ -151,7 +151,9 @@ fn markdown_editor_line_scan_cached_line_units(
   source : String,
 ) -> (Array[MarkdownLine], Array[Int])? {
   let cached = markdown_editor_line_scan_cache.val
-  if physical_equal(cached.0, source) { Some((cached.4, cached.5)) } else {
+  if physical_equal(cached.0, source) {
+    Some((cached.4, cached.5))
+  } else {
     None
   }
 }
@@ -268,12 +270,7 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
   unit_starts.push(unit_start)
   let line_count = if source == "" { 0 } else { lines.length() }
   markdown_editor_line_scan_cache.val = (
-    source,
-    words,
-    line_count,
-    digest,
-    lines,
-    unit_starts,
+    source, words, line_count, digest, lines, unit_starts,
   )
   lines
 }
@@ -288,10 +285,9 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
 /// the sources are long-lived objects per revision, and a content
 /// comparison would itself scan megabytes on every miss.
 let markdown_editor_text_length_cache : Ref[(String, Int)] = Ref(("", -1))
-let markdown_editor_text_length_cache_prev : Ref[(String, Int)] = Ref((
-  "",
-  -1,
-))
+
+///|
+let markdown_editor_text_length_cache_prev : Ref[(String, Int)] = Ref(("", -1))
 
 ///|
 pub fn markdown_editor_text_length(source : String) -> Int {

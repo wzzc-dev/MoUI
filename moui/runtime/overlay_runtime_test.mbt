@@ -517,7 +517,12 @@ test "portal popup covering a text field blocks focus until dismissed" {
             ],
           ),
           @views.frame(
-            @views.text_field("", on_input=_ => "field", width=200.0, height=120.0),
+            @views.text_field(
+              "",
+              on_input=_ => "field",
+              width=200.0,
+              height=120.0,
+            ),
             width=200.0,
             height=120.0,
           ),

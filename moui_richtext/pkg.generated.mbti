@@ -72,7 +72,7 @@ pub fn markdown_editor_toggle_current_task(String, MarkdownEditorSelection) -> M
 
 pub fn markdown_editor_toggle_task_at(String, Int) -> MarkdownEditorEditResult?
 
-pub fn markdown_editor_transform_input(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
+pub fn markdown_editor_transform_input(String, Int, @core.TextRange?, String, context? : MarkdownEditorInputContext?) -> RichTextInputTransform?
 
 pub fn markdown_join_lines(Array[String]) -> String
 
@@ -138,23 +138,23 @@ pub(all) enum MarkdownBlockKind {
 
 pub(all) struct MarkdownDocumentBlock {
   id : Int
-  revision : Int
-  source_range : MarkdownSourceRange
-  content_range : MarkdownSourceRange
+  mut revision : Int
+  mut source_range : MarkdownSourceRange
+  mut content_range : MarkdownSourceRange
   kind : MarkdownBlockKind
   text : String
-  fingerprint : String
+  fingerprint : UInt64
   inline_count : Int
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct MarkdownDocumentBlockHeightMetric {
-  block_id : Int
-  block_index : Int
-  revision : Int
-  source_range : MarkdownSourceRange
-  visual_top_units : Double
+  mut block_id : Int
+  mut block_index : Int
+  mut revision : Int
+  mut source_range : MarkdownSourceRange
+  mut visual_top_units : Double
   visual_height_units : Double
-  source_top_units : Double
+  mut source_top_units : Double
   source_height_units : Double
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -248,8 +248,8 @@ pub fn MarkdownDocumentTextStore::length(Self) -> Int
 pub fn MarkdownDocumentTextStore::new(String) -> Self
 pub fn MarkdownDocumentTextStore::replace_all(Self, String) -> Unit
 pub fn MarkdownDocumentTextStore::revision(Self) -> Int
-pub fn MarkdownDocumentTextStore::segmented(String, Array[Int]) -> Self
 pub fn MarkdownDocumentTextStore::seed(Self, String) -> Unit
+pub fn MarkdownDocumentTextStore::segmented(String, Array[Int]) -> Self
 pub fn MarkdownDocumentTextStore::source(Self) -> String
 pub fn MarkdownDocumentTextStore::text_of(Self, Int, Int) -> String
 pub impl Eq for MarkdownDocumentTextStore
@@ -270,11 +270,12 @@ pub(all) struct MarkdownEditTransaction {
   source : String
   edit_range : MarkdownSourceRange
   replacement : String
+  deleted : String
   caret : Int
   selection : @core.TextRange?
   reason : MarkdownEditReason
 } derive(Eq, ToJson, @debug.Debug)
-pub fn MarkdownEditTransaction::from_edit(String, String, Int, deleted? : String, replacement? : String, caret? : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
+pub fn MarkdownEditTransaction::from_edit(String, String, Int, deleted~ : String, replacement~ : String, caret~ : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::from_edit_result(String, MarkdownEditorEditResult, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::from_input_transform(String, RichTextInputTransform, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::from_sources(String, String, caret? : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
@@ -282,8 +283,8 @@ pub fn MarkdownEditTransaction::replace_all(String, String, caret? : Int, select
 
 pub(all) struct MarkdownEditorBlock {
   block : MarkdownBlock
-  source_range : MarkdownSourceRange
-  content_range : MarkdownSourceRange
+  mut source_range : MarkdownSourceRange
+  mut content_range : MarkdownSourceRange
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum MarkdownEditorCommand {
@@ -329,10 +330,15 @@ type MarkdownEditorHtmlBlockParseResult derive(Eq, @debug.Debug)
 
 type MarkdownEditorIndentedCodeParseResult derive(Eq, @debug.Debug)
 
+pub(all) struct MarkdownEditorInputContext {
+  blocks : Array[MarkdownEditorBlock]
+  store : MarkdownDocumentTextStore
+}
+
 pub(all) struct MarkdownEditorOutlineItem {
   level : Int
   title : String
-  source_start : Int
+  mut source_start : Int
 } derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownEditorParagraphParseResult derive(Eq, @debug.Debug)
@@ -406,8 +412,8 @@ pub(all) struct MarkdownReferenceContext {
 type MarkdownSetextHeadingParseResult derive(Eq, @debug.Debug)
 
 pub(all) struct MarkdownSourceRange {
-  start : Int
-  end : Int
+  mut start : Int
+  mut end : Int
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct MarkdownTextSegment {
