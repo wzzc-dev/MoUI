@@ -6,6 +6,10 @@ pub(all) struct RichTextInputTransform {
   text : String
   caret : Int
   selection : @core.TextRange?
+  // Char range in the previous source replaced by this transform. None means
+  // the range is unknown (from_input_transform then falls back to the O(doc)
+  // common-prefix diff in from_sources).
+  edit_range : MarkdownSourceRange?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -111,8 +115,9 @@ pub fn RichTextInputTransform::new(
   text~ : String,
   caret~ : Int,
   selection? : @core.TextRange? = None,
+  edit_range? : MarkdownSourceRange? = None,
 ) -> RichTextInputTransform {
-  { text, caret, selection }
+  { text, caret, selection, edit_range }
 }
 
 ///|

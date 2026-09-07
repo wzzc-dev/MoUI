@@ -61,12 +61,19 @@ fn markdown_editor_backspace_marker(
       markdown_editor_transform_result(
         text~,
         caret=markdown_editor_clamp_int(caret - delta, range.start, caret),
+        edit_range=Some({ start: range.start, end: range.end }),
       ),
     )
   }
   let text = String::from_array(chars[:range.start]) +
     String::from_array(chars[range.start + marker_length:])
-  Some(markdown_editor_transform_result(text~, caret=range.start))
+  Some(
+    markdown_editor_transform_result(
+      text~,
+      caret=range.start,
+      edit_range=Some({ start: range.start, end: range.end }),
+    ),
+  )
 }
 
 ///|
@@ -93,7 +100,11 @@ fn markdown_editor_backspace_quoted_inner_marker(
     String::from_array(line_chars[marker_length:]) +
     String::from_array(chars[range.end:])
   Some(
-    markdown_editor_transform_result(text~, caret=range.start + context_length),
+    markdown_editor_transform_result(
+      text~,
+      caret=range.start + context_length,
+      edit_range=Some({ start: range.start, end: range.end }),
+    ),
   )
 }
 
@@ -127,12 +138,19 @@ fn markdown_editor_delete_marker(
       markdown_editor_transform_result(
         text~,
         caret=markdown_editor_clamp_int(caret - delta, range.start, caret),
+        edit_range=Some({ start: range.start, end: range.end }),
       ),
     )
   }
   let text = String::from_array(chars[:range.start]) +
     String::from_array(chars[range.start + marker_length:])
-  Some(markdown_editor_transform_result(text~, caret=range.start))
+  Some(
+    markdown_editor_transform_result(
+      text~,
+      caret=range.start,
+      edit_range=Some({ start: range.start, end: range.end }),
+    ),
+  )
 }
 
 ///|
@@ -165,7 +183,11 @@ fn markdown_editor_delete_quoted_inner_marker(
     String::from_array(line_chars[marker_length:]) +
     String::from_array(chars[range.end:])
   Some(
-    markdown_editor_transform_result(text~, caret=range.start + context_length),
+    markdown_editor_transform_result(
+      text~,
+      caret=range.start + context_length,
+      edit_range=Some({ start: range.start, end: range.end }),
+    ),
   )
 }
 
@@ -195,7 +217,13 @@ fn markdown_editor_backspace_merge_block(
   if markdown_editor_blank_source_line(current_line) {
     let text = String::from_array(chars[:previous_end]) +
       String::from_array(chars[range.end:])
-    return Some(markdown_editor_transform_result(text~, caret=previous_end))
+    return Some(
+      markdown_editor_transform_result(
+        text~,
+        caret=previous_end,
+        edit_range=Some({ start: previous_end, end: range.end }),
+      ),
+    )
   }
   let previous_content = markdown_editor_strip_merge_block_marker(previous_line)
   let current_content = markdown_editor_strip_merge_block_marker(current_line)
@@ -214,7 +242,13 @@ fn markdown_editor_backspace_merge_block(
   let caret = previous_start +
     markdown_editor_text_length(preserve_prefix) +
     markdown_editor_text_length(previous_content)
-  Some(markdown_editor_transform_result(text~, caret~))
+  Some(
+    markdown_editor_transform_result(
+      text~,
+      caret~,
+      edit_range=Some({ start: previous_start, end: range.end }),
+    ),
+  )
 }
 
 ///|
@@ -247,7 +281,13 @@ fn markdown_editor_delete_merge_block(
   if markdown_editor_blank_source_line(next_line) {
     let text = String::from_array(chars[:range.end]) +
       String::from_array(chars[next_end:])
-    return Some(markdown_editor_transform_result(text~, caret=range.end))
+    return Some(
+      markdown_editor_transform_result(
+        text~,
+        caret=range.end,
+        edit_range=Some({ start: range.end, end: next_end }),
+      ),
+    )
   }
   let current_content = markdown_editor_strip_merge_block_marker(current_line)
   let next_content = markdown_editor_strip_merge_block_marker(next_line)
@@ -269,6 +309,7 @@ fn markdown_editor_delete_merge_block(
       caret=range.start +
         markdown_editor_text_length(preserve_prefix) +
         markdown_editor_text_length(current_content),
+      edit_range=Some({ start: range.start, end: next_end }),
     ),
   )
 }

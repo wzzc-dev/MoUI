@@ -62,6 +62,10 @@ fn markdown_editor_normalize_ordered_edit_result(
           )
         None => None
       },
+      // Renumbering touches several markers across the document, so the edit
+      // is not one contiguous replacement; leave the range unknown and let
+      // callers fall back to the from_sources diff.
+      edit_range: None,
     }
   }
 }

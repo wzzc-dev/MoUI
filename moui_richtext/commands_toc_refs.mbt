@@ -5,7 +5,7 @@ fn markdown_editor_append_snippet(
 ) -> MarkdownEditorEditResult {
   let snippet = markdown_editor_command_snippet(command)
   let text = if source == "" { snippet } else { source + "\n\n" + snippet }
-  { source: text, caret: markdown_editor_text_length(text), selection: None }
+  { source: text, caret: markdown_editor_text_length(text), selection: None, edit_range: Some({ start: markdown_editor_text_length(source), end: markdown_editor_text_length(source) }) }
 }
 
 ///|
@@ -35,11 +35,14 @@ fn markdown_editor_insert_front_matter(
           end=blocks[0].content_range.end,
         ),
       ),
+      // No source change: leave the range unknown so callers keep the
+      // from_sources fallback semantics for a noop command.
+      edit_range: None,
     }
   }
   let snippet = markdown_editor_command_snippet(InsertFrontMatter)
   let text = if source == "" { snippet } else { snippet + "\n\n" + source }
-  { source: text, caret: markdown_editor_text_length(snippet), selection: None }
+  { source: text, caret: markdown_editor_text_length(snippet), selection: None, edit_range: Some({ start: 0, end: 0 }) }
 }
 
 ///|
@@ -83,7 +86,7 @@ fn markdown_editor_replace_with_block(
   let suffix = markdown_editor_block_insert_suffix(chars, end)
   let text = before + prefix + block + suffix + after
   let caret = markdown_editor_text_length(before + prefix + block)
-  { source: text, caret, selection: None }
+  { source: text, caret, selection: None, edit_range: Some({ start, end }) }
 }
 
 ///|

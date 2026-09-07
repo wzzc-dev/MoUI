@@ -25,6 +25,7 @@ fn markdown_editor_wrap_selection_input(
           text=result.source,
           caret=result.caret,
           selection=result.selection,
+          edit_range=Some({ start: range.start, end: range.end }),
         ),
       )
     }
@@ -50,6 +51,7 @@ fn markdown_editor_pair_inline_marker_input(
         marker +
         markdown_editor_substring(source, caret, source_length),
       caret=caret + markdown_editor_text_length(marker),
+      edit_range=Some({ start: caret, end: caret }),
     ),
   )
 }
@@ -100,6 +102,7 @@ fn markdown_editor_pair_delimiter_input(
               end=end + input_length,
             ),
           ),
+          edit_range=Some({ start: start, end: end }),
         ),
       )
     }
@@ -112,6 +115,7 @@ fn markdown_editor_pair_delimiter_input(
             insert +
             markdown_editor_substring(source, caret, source_length),
           caret=caret + markdown_editor_text_length(input),
+          edit_range=Some({ start: caret, end: caret }),
         ),
       )
     }
@@ -163,6 +167,7 @@ fn markdown_editor_skip_closing_delimiter(
         markdown_editor_transform_result(
           text=source,
           caret=caret + markdown_editor_text_length(close),
+          edit_range=Some({ start: caret, end: caret }),
         ),
       )
     }
@@ -173,6 +178,7 @@ fn markdown_editor_skip_closing_delimiter(
       markdown_editor_transform_result(
         text=source,
         caret=caret + markdown_editor_text_length(close),
+        edit_range=Some({ start: caret, end: caret }),
       ),
     )
   } else {
@@ -266,6 +272,7 @@ fn markdown_editor_backspace_empty_delimiter_pair(
       text=markdown_editor_substring(source, 0, caret - 1) +
         markdown_editor_substring(source, caret + 1, source_length),
       caret=caret - 1,
+      edit_range=Some({ start: caret - 1, end: caret + 1 }),
     ),
   )
 }
@@ -320,6 +327,7 @@ fn markdown_editor_delete_empty_delimiter_pair(
       text=markdown_editor_substring(source, 0, caret) +
         markdown_editor_substring(source, caret + 2, source_length),
       caret~,
+      edit_range=Some({ start: caret, end: caret + 2 }),
     ),
   )
 }
@@ -451,6 +459,9 @@ fn markdown_editor_remove_empty_inline_marker_pair(
         source_length,
       ),
     caret=open_start,
+    edit_range=Some(
+      { start: open_start, end: open_start + marker_length * 2 },
+    ),
   )
 }
 
@@ -658,7 +669,13 @@ fn markdown_editor_remove_inline_marker_pair(
       close_start + marker_length,
       source_length,
     )
-  markdown_editor_transform_result(text~, caret=open_start)
+  markdown_editor_transform_result(
+    text~,
+    caret=open_start,
+    edit_range=Some(
+      { start: open_start, end: close_start + marker_length },
+    ),
+  )
 }
 
 ///|

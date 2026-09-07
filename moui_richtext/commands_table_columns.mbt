@@ -73,7 +73,7 @@ fn markdown_editor_insert_table_column_after_cell(
     text = text + inserted_text
     table_line_index = table_line_index + 1
   }
-  { source: text, caret, selection: None }
+  { source: text, caret, selection: None, edit_range: Some({ start: block.source_range.start, end: block.source_range.end }) }
 }
 
 ///|
@@ -213,7 +213,7 @@ fn markdown_editor_rewrite_table_alignment(
     }
     table_line_index = table_line_index + 1
   }
-  { source: text, caret: current.content_start, selection: None }
+  { source: text, caret: current.content_start, selection: None, edit_range: Some({ start: block.source_range.start, end: block.source_range.end }) }
 }
 
 ///|
@@ -338,7 +338,7 @@ fn markdown_editor_rewrite_table_column(
     text = text + replacement
     table_line_index = table_line_index + 1
   }
-  { source: text, caret, selection: None }
+  { source: text, caret, selection: None, edit_range: Some({ start: block.source_range.start, end: block.source_range.end }) }
 }
 
 ///|

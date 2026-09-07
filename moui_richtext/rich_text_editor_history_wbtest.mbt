@@ -238,14 +238,14 @@ test "undo merge window: applied input edits flow through the window" {
   let first = apply_rich_text_input_transform(
     control,
     "",
-    { text: "h", caret: 1, selection: None },
+    { text: "h", caret: 1, selection: None, edit_range: None },
     record_history=true,
   )
   history_advance(40)
   let second = apply_rich_text_input_transform(
     first.control,
     "h",
-    { text: "he", caret: 2, selection: None },
+    { text: "he", caret: 2, selection: None, edit_range: None },
     record_history=true,
   )
   assert_eq(second.changed, true)

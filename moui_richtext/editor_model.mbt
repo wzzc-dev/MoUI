@@ -52,6 +52,10 @@ pub(all) struct MarkdownEditorEditResult {
   source : String
   caret : Int
   selection : @core.TextRange?
+  // Char range in the previous source replaced by this edit. None means the
+  // range is unknown (callers then fall back to the O(doc) common-prefix
+  // diff in from_sources).
+  edit_range : MarkdownSourceRange?
 } derive(Eq, Debug, ToJson)
 
 ///|

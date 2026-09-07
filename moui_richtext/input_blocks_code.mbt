@@ -21,6 +21,7 @@ fn markdown_editor_complete_code_fence_on_enter(
     markdown_editor_transform_result(
       text~,
       caret=caret + 1 + markdown_editor_text_length(indent),
+      edit_range=Some({ start: caret, end: caret }),
     ),
   )
 }
@@ -55,6 +56,7 @@ fn markdown_editor_complete_quoted_code_fence_on_enter(
     markdown_editor_transform_result(
       text~,
       caret=caret + 1 + markdown_editor_text_length(content_prefix),
+      edit_range=Some({ start: caret, end: caret }),
     ),
   )
 }
@@ -106,18 +108,26 @@ fn markdown_editor_exit_empty_code_block_on_enter(
       markdown_editor_transform_result(
         text=source + insert,
         caret=closing_end + markdown_editor_text_length(insert),
+        edit_range=Some({ start: closing_end, end: closing_end }),
       ),
     )
   } else {
     let after_close = closing_end + 1
     if after_close >= chars.length() {
       if exit_indent == "" {
-        Some(markdown_editor_transform_result(text=source, caret=after_close))
+        Some(
+          markdown_editor_transform_result(
+            text=source,
+            caret=after_close,
+            edit_range=Some({ start: after_close, end: after_close }),
+          ),
+        )
       } else {
         Some(
           markdown_editor_transform_result(
             text=source + exit_indent,
             caret=after_close + markdown_editor_text_length(exit_indent),
+            edit_range=Some({ start: after_close, end: after_close }),
           ),
         )
       }
@@ -129,6 +139,7 @@ fn markdown_editor_exit_empty_code_block_on_enter(
             insert +
             String::from_array(chars[after_close:]),
           caret=after_close + markdown_editor_text_length(exit_indent),
+          edit_range=Some({ start: after_close, end: after_close }),
         ),
       )
     }
@@ -291,6 +302,7 @@ fn markdown_editor_exit_empty_quoted_code_block_on_enter(
       markdown_editor_transform_result(
         text=source + insert,
         caret=closing_end + markdown_editor_text_length(insert),
+        edit_range=Some({ start: closing_end, end: closing_end }),
       ),
     )
   } else {
@@ -300,6 +312,7 @@ fn markdown_editor_exit_empty_quoted_code_block_on_enter(
         markdown_editor_transform_result(
           text=source + exit_indent,
           caret=after_close + markdown_editor_text_length(exit_indent),
+          edit_range=Some({ start: after_close, end: after_close }),
         ),
       )
     } else {
@@ -310,6 +323,7 @@ fn markdown_editor_exit_empty_quoted_code_block_on_enter(
             insert +
             String::from_array(chars[after_close:]),
           caret=after_close + markdown_editor_text_length(exit_indent),
+          edit_range=Some({ start: after_close, end: after_close }),
         ),
       )
     }
@@ -340,6 +354,7 @@ fn markdown_editor_quoted_code_block_enter(
       insert +
       String::from_array(chars[caret:]),
     caret=caret + markdown_editor_text_length(insert),
+    edit_range=Some({ start: caret, end: caret }),
   )
 }
 

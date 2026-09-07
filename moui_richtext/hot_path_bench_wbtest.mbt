@@ -248,8 +248,67 @@ test "hot path: gated end-to-end benchmark" {
   let fixture = hot_path_bench_document(hot_path_bench_document_blocks())
   hot_path_bench_input(fixture, 80)
   hot_path_bench_input_at_start(fixture, 80)
+  hot_path_bench_transaction(fixture, 80)
   hot_path_bench_scroll(fixture, 120)
   hot_path_bench_rebuild(fixture, 60)
+}
+
+///|
+/// Transaction construction only, on a fixed document with a fixed
+/// mid-document insertion: the old `from_sources` common-prefix/suffix
+/// diff versus the fast path `from_input_transform` takes when the
+/// transform carries its exact replaced range (`edit_range` -> `from_edit`).
+/// The app-side cost of materializing `next` is identical in both arms
+/// and precomputed once, so the difference is purely the transaction
+/// construction this edit-range recording targets.
+fn hot_path_bench_transaction(fixture : String, ops : Int) -> Unit {
+  let insert_at = markdown_editor_text_length(fixture) / 2
+  let next = markdown_editor_substring(fixture, 0, insert_at) + "x" +
+    markdown_editor_substring(
+      fixture,
+      insert_at,
+      markdown_editor_text_length(fixture),
+    )
+  let previous = fixture
+  let mut old_keep = 0
+  let old_start = @bench.monotonic_clock_start()
+  for _ in 0..<ops {
+    let txn = MarkdownEditTransaction::from_sources(
+      previous,
+      next,
+      reason=TextInput,
+    )
+    old_keep = old_keep + txn.edit_range.start
+  }
+  let old_us = @bench.monotonic_clock_end(old_start)
+  let transform : RichTextInputTransform = {
+    text: next,
+    caret: insert_at + 1,
+    selection: None,
+    edit_range: Some({ start: insert_at, end: insert_at }),
+  }
+  let mut new_keep = 0
+  let new_start = @bench.monotonic_clock_start()
+  for _ in 0..<ops {
+    let txn = MarkdownEditTransaction::from_input_transform(previous, transform)
+    new_keep = new_keep + txn.edit_range.start
+  }
+  let new_us = @bench.monotonic_clock_end(new_start)
+  hot_path_bench_print_int(
+    "txn_fixture_chars",
+    markdown_editor_text_length(previous),
+  )
+  hot_path_bench_print_int("txn_ops", ops)
+  hot_path_bench_print("txn_from_sources_per_op", old_us / ops.to_double())
+  hot_path_bench_print("txn_from_edit_per_op", new_us / ops.to_double())
+  hot_path_bench_print_int(
+    "txn_keep",
+    if old_keep == new_keep {
+      1
+    } else {
+      0 - old_keep
+    },
+  )
 }
 
 ///|
