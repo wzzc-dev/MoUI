@@ -75,6 +75,5 @@ pub fn platform_service_bridge() -> @host.HostServiceBridge {
 - 将平台注意事项放在 `docs/platform-notes-<platform>.md`
   （例如 `platform-notes-linux.md`）。跨平台宿主契约放在 `docs/platform-notes.md`。
 - 将文本架构放在 `docs/text-system.md`。
-- 将 Markdown Editor 行为放在 `docs/markdown-editor.md`。
 - 将验证策略放在 `docs/testing.md`。
 - 当指南可能变旧时，检查 `AGENTS.md` 和 `skills/`。

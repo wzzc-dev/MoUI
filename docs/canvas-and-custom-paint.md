@@ -79,7 +79,6 @@ transition helpers and Showcase motion cards).
 | Tutorial `06-animation` | `animated_canvas` orb driven by `now_ms` |
 | `examples/showcase` Advanced Rendering | Layers, blend, filter, shader, path, transform |
 | `examples/pdf_workbench` | `custom_layout` page bitmaps |
-| `examples/markdown_editor` | Editor surface paint |
 
 Renderer capability status (gradients, filters, text shaping, …) lives in
 `docs/renderer-capability-report.md`, not in the view catalog.

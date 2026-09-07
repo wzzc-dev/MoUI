@@ -487,7 +487,6 @@ Recommended checks:
 ```sh
 moon test moui/views --target native
 moon test moui/backend --target native
-moon test examples/markdown_editor/app --target native
 moon test examples/command_palette/app --target native
 ```
 

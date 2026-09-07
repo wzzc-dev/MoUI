@@ -463,8 +463,8 @@ runtime + backend + renderer wiring。
 - `moui/backend/*`：平台 backend。
 - `moui/render/*`：renderer facade 和具体 renderer 实现。
 - `moui_richtext`：富文本/Markdown 文档、编辑、命令、输入、粘贴、表格与源码映射逻辑
-  addon，供 rich editing app（如 `examples/markdown_editor`、`examples/mo_workbench`、
-  `examples/showcase`）按需直接依赖；不进入 `core`、`views` 或领域 facade 默认依赖。
+  addon，供 rich editing app（如 MoMark（[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark)）、
+  `examples/mo_workbench`、`examples/showcase`）按需直接依赖；不进入 `core`、`views` 或领域 facade 默认依赖。
 - `moui_agent` / `moui_agent_mcp`：agent 协议、schema、host runtime 与 MCP router
   support addon，供 agent-controllable app（如 `examples/agent_counter`）按需直接依赖；
   不进入 `core`、`views` 或领域 facade 默认依赖。
@@ -473,7 +473,7 @@ runtime + backend + renderer wiring。
 普通 app 默认依赖 `moui/<领域>`（按需）与 `moui/views`；直接依赖 `moui_richtext`、
 `moui_agent*`、`moui_theme/*` 等 addon 仅在 app 明确需要该能力时才允许。直接依赖
 `moui/core`、`moui/backend` 的普通 app 由 API surface guard 的 advanced-app
-白名单约束（当前覆盖 `examples/markdown_editor/app`、`examples/mo_workbench/app`、
+白名单约束（当前覆盖 `examples/mo_workbench/app`、
 `examples/pdf_workbench/app`、`examples/showcase/app`、`website/app` 中的 core 导入，
 以及 `examples/showcase/app` 的 runtime 导入）。
 

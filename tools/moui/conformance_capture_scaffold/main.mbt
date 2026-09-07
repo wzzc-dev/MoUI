@@ -126,19 +126,7 @@ fn build_manifest(mode : String) -> Json {
     target1["metricsPath"] = Json::string(
       "artifacts/benchmarks/showcase-web-wasm.json",
     )
-    let target2 : Map[String, Json] = Map([])
-    target2["name"] = Json::string("markdown-editor-web-wasm")
-    target2["target"] = Json::string("examples/markdown_editor/web_wasm")
-    target2["url"] = Json::string(
-      "http://127.0.0.1:18080/examples/markdown_editor/web_wasm/",
-    )
-    target2["metricsPath"] = Json::string(
-      "artifacts/benchmarks/markdown-editor-web-wasm.json",
-    )
-    object["benchmarkTargets"] = Json::array([
-      Json::object(target1),
-      Json::object(target2),
-    ])
+    object["benchmarkTargets"] = Json::array([Json::object(target1)])
   }
   Json::object(object)
 }

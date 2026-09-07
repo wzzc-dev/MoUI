@@ -8,11 +8,6 @@ on:
         required: false
         default: false
         type: boolean
-      run_markdown_smoke:
-        description: Run the macOS Skia Markdown Editor first-frame smoke.
-        required: false
-        default: false
-        type: boolean
 
 jobs:
   macos-app-real-skia:
@@ -36,16 +31,10 @@ jobs:
           args=(
             --smoke-log artifacts/platform-observation/macos/skia-renderer-smoke.log
           )
-          if [[ "${{ inputs.run_showcase_smoke }}" == "true" || "${{ inputs.run_markdown_smoke }}" == "true" ]]; then
+          if [[ "${{ inputs.run_showcase_smoke }}" == "true" ]]; then
             args+=(
               --run-showcase-smoke
               --showcase-log artifacts/platform-observation/macos/showcase-macos-skia-first-frame.log
-            )
-          fi
-          if [[ "${{ inputs.run_markdown_smoke }}" == "true" ]]; then
-            args+=(
-              --run-markdown-smoke
-              --markdown-log artifacts/example-smoke/macos/markdown-macos-skia-first-frame.log
             )
           fi
           sh scripts/macos-skia-renderer-smoke.sh "${args[@]}"

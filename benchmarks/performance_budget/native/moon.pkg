@@ -1,7 +1,6 @@
 import {
   "moonbitlang/core/env",
   "examples/excel/app" @excel,
-  "examples/markdown_editor/app" @markdown,
   "examples/showcase/app" @showcase,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",

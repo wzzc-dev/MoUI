@@ -84,7 +84,7 @@ moon build examples/showcase/web_wasm --target wasm-gc
 | 示例 | 目的 | 共享应用包 | 主要能力 |
 | --- | --- | --- | --- |
 | Showcase | 视觉系统索引 | `examples/showcase/app/` | Controls、layout、theme、renderer features、Counter/Todo patterns |
-| Markdown Editor | 实用编辑演示 | `examples/markdown_editor/app/` | Rich text editing、styled runs、app-level parsing |
+| MoMark (Markdown Editor) | 实用编辑演示，已独立成仓库 | [wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark) | Rich text editing、styled runs、app-level parsing |
 
 示例工作应把业务逻辑保持在 `examples/*/app/` 中，并让平台包保持为轻薄入口点。
 
@@ -94,9 +94,7 @@ Showcase 是框架新增内容的默认可见验证 surface。影响 app author 
 
 ```sh
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 ```
 
 ## 工作流 4：渲染器能力跟踪

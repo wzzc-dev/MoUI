@@ -23,66 +23,6 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "examples/showcase/app/platform/app.mbt", max_lines: 720 },
     { path: "examples/showcase/app/diagnostics/app.mbt", max_lines: 720 },
     { path: "examples/showcase/app/diagnostics/components.mbt", max_lines: 960 },
-    {
-      path: "examples/markdown_editor/app/editor_snapshot_wbtest.mbt",
-      max_lines: 1020,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_snapshot_formatting_wbtest.mbt",
-      max_lines: 435,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_snapshot_parser_wbtest.mbt",
-      max_lines: 390,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_runtime_wbtest.mbt",
-      max_lines: 116,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_document_runtime_wbtest.mbt",
-      max_lines: 470,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_document_transfer_runtime_wbtest.mbt",
-      max_lines: 800,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_modes_runtime_wbtest.mbt",
-      max_lines: 440,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_writing_modes_runtime_wbtest.mbt",
-      max_lines: 285,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_outline_runtime_wbtest.mbt",
-      max_lines: 210,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_keyboard_runtime_wbtest.mbt",
-      max_lines: 800,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_inline_keyboard_runtime_wbtest.mbt",
-      max_lines: 301,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_task_runtime_wbtest.mbt",
-      max_lines: 56,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_backspace_delete_runtime_wbtest.mbt",
-      max_lines: 299,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_clipboard_runtime_wbtest.mbt",
-      max_lines: 352,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_app_enter_table_keyboard_runtime_wbtest.mbt",
-      max_lines: 430,
-    },
     { path: "moui/backend/host_test.mbt", max_lines: 50 },
     { path: "moui/backend/host_services_test.mbt", max_lines: 261 },
     { path: "moui/backend/host_driver_context_menu_test.mbt", max_lines: 240 },
@@ -392,18 +332,6 @@ fn file_budgets() -> Array[FileBudget] {
     {
       path: "examples/pdf_workbench/app/pdf_workbench_app_wbtest.mbt",
       max_lines: 25,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_input_wbtest.mbt",
-      max_lines: 157,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_commands_wbtest.mbt",
-      max_lines: 80,
-    },
-    {
-      path: "examples/markdown_editor/app/editor_commands_blocks_wbtest.mbt",
-      max_lines: 205,
     },
     { path: "moui_skia_renderer/renderer_text.mbt", max_lines: 50 },
     { path: "moui_tests/skia_renderer_smoke/native/main.mbt", max_lines: 1887 },

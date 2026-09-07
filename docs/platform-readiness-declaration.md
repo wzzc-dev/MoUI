@@ -121,7 +121,6 @@ git diff --exit-code -- '**/pkg.generated.mbti'
 
 # 运行示例（macOS）
 moon run examples/mo_workbench/macos_skia --target native
-moon run examples/markdown_editor/macos_skia --target native
 moon run examples/showcase/macos_skia --target native
 ```
 
@@ -335,7 +334,7 @@ of `capture_moui_runtime_evidence.sh linux`.
 
 | Evidence type | Status | Verification method | Most recent passing record |
 |----------|------|----------|-------------|
-| L0: build | ✅ Passed | `ci.yml → pr-profile` → Showcase/Markdown Editor Web wasm-gc build | Every PR |
+| L0: build | ✅ Passed | `ci.yml → pr-profile` → Showcase Web wasm-gc build | Every PR |
 | L1: Web backend tests | ✅ Passed | `ci.yml → pr-profile` → `moon test moui/backend/web --target wasm-gc` | Every PR |
 | L1: WebGPU adapter tests | ✅ Passed | `ci.yml → pr-profile` → `moon test moui_web_renderer --target wasm-gc` | Every PR |
 | L2: Web browser presentation | ✅ Passed | `checks/platforms/web.json` `rendererL2=passed` (`browser-webgpu`); CI / Pages browser session | Aligned with the structured platform contract |

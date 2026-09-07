@@ -379,29 +379,8 @@ fn app_bench_showcase_runtime(
 }
 
 ///|
-fn app_bench_markdown_runtime(
-  width : Double,
-  height : Double,
-) -> @runtime.AppRuntime {
-  let app = @markdown.MarkdownEditorApp::new()
-  @runtime.new_program_with_dimensions(program=app.program(), width~, height~)
-}
-
-///|
 fn app_bench_no_prepare(_runtime : @runtime.AppRuntime) -> Unit {
   ()
-}
-
-///|
-fn app_bench_prepare_markdown_input(runtime : @runtime.AppRuntime) -> Unit {
-  runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=84.0),
-        phase=@core.PointerPhase::Down,
-      ),
-    ),
-  )
 }
 
 ///|
@@ -434,52 +413,6 @@ fn app_bench_dispatch_showcase_sidebar_hover(
         phase=@core.PointerPhase::Move,
       ),
     ),
-  )
-}
-
-///|
-fn app_bench_markdown_token(index : Int) -> String {
-  let tokens = ["M", "o", "U", "I", " ", "c", "a", "c", "h", "e", " "]
-  tokens[index % tokens.length()]
-}
-
-///|
-fn app_bench_dispatch_markdown_input(
-  runtime : @runtime.AppRuntime,
-  index : Int,
-) -> Unit {
-  runtime.dispatch_event(
-    @core.AppEvent::TextInput(
-      @core.TextInputEvent::InsertText(app_bench_markdown_token(index)),
-    ),
-  )
-}
-
-///|
-fn app_bench_dispatch_markdown_scroll(
-  runtime : @runtime.AppRuntime,
-  index : Int,
-) -> Unit {
-  let direction = if index / 18 % 2 == 0 { -42.0 } else { 42.0 }
-  runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=470.0, y=260.0),
-        phase=@core.PointerPhase::Move,
-        wheel_delta=@core.Point::new(x=0.0, y=direction),
-      ),
-    ),
-  )
-}
-
-///|
-fn app_bench_dispatch_markdown_caret_overlay(
-  runtime : @runtime.AppRuntime,
-  index : Int,
-) -> Unit {
-  let key = if index % 2 == 0 { "ArrowRight" } else { "ArrowLeft" }
-  runtime.dispatch_event(
-    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key~)),
   )
 }
 
@@ -784,17 +717,5 @@ fn main {
   app_bench_run_scenario(
     "showcase-sidebar-hover", 1280.0, 720.0, app_bench_showcase_runtime, app_bench_no_prepare,
     app_bench_dispatch_showcase_sidebar_hover, frames, warmup,
-  )
-  app_bench_run_scenario(
-    "markdown-editor-text-input", 980.0, 640.0, app_bench_markdown_runtime, app_bench_prepare_markdown_input,
-    app_bench_dispatch_markdown_input, frames, warmup,
-  )
-  app_bench_run_scenario(
-    "markdown-editor-scroll", 980.0, 640.0, app_bench_markdown_runtime, app_bench_no_prepare,
-    app_bench_dispatch_markdown_scroll, frames, warmup,
-  )
-  app_bench_run_scenario(
-    "markdown-editor-caret-overlay", 980.0, 640.0, app_bench_markdown_runtime, app_bench_prepare_markdown_input,
-    app_bench_dispatch_markdown_caret_overlay, frames, warmup,
   )
 }

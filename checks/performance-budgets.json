@@ -26,23 +26,6 @@
         "packageBytes": { "baseline": 83886080, "maxRegressionPercent": 10, "higherIsBetter": false }
       }
     },
-    "markdown-editor-text-input": {
-      "minimumSamples": 30,
-      "timings": {
-        "buildMs": { "p50": 10, "p95": 20, "p99": 30, "maxRegressionPercent": 25 },
-        "layoutMs": { "p50": 12, "p95": 28, "p99": 42, "maxRegressionPercent": 25 },
-        "paintMs": { "p50": 14, "p95": 30, "p99": 45, "maxRegressionPercent": 25 },
-        "presentMs": { "p50": 14, "p95": 28, "p99": 42, "maxRegressionPercent": 25 },
-        "frameMs": { "p50": 32, "p95": 64, "p99": 96, "maxRegressionPercent": 20 }
-      },
-      "resources": {
-        "peakRssBytes": { "baseline": 671088640, "maxRegressionPercent": 20, "higherIsBetter": false },
-        "allocationCount": { "baseline": 2500000, "maxRegressionPercent": 20, "higherIsBetter": false },
-        "cacheHitRate": { "baseline": 1, "maxRegressionPercent": 10, "higherIsBetter": true },
-        "startupMs": { "baseline": 1600, "maxRegressionPercent": 20, "higherIsBetter": false },
-        "packageBytes": { "baseline": 94371840, "maxRegressionPercent": 10, "higherIsBetter": false }
-      }
-    },
     "excel-grid-navigation": {
       "minimumSamples": 30,
       "timings": {

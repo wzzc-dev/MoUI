@@ -92,7 +92,8 @@ moon info
 Focus areas:
 
 - Keep Text, Button, TextField, Checkbox, Container, Row/Column/Flex,
-  Stack, Scroll, List, Grid, Navigation, and Markdown Editor usable in real apps.
+  Stack, Scroll, List, Grid, Navigation, and the rich-text editor usable in
+  real apps.
 - Prefer MoonBit-style labeled and optional parameters for public constructors.
 - Add semantics for interactive controls where possible.
 - Maintain a view catalog that records API examples, theme support, semantics,
@@ -119,7 +120,7 @@ The examples should demonstrate progressively larger slices of the framework:
 | Example | Purpose | Shared app package | Primary capabilities |
 | --- | --- | --- | --- |
 | Showcase | Visual system index | `examples/showcase/app/` | Controls, layout, theme, renderer features, Counter/Todo patterns |
-| Markdown Editor | Practical editing demo | `examples/markdown_editor/app/` | Rich text editing, styled runs, app-level parsing |
+| MoMark (Markdown Editor) | Practical editing demo, now its own repository | [wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark) | Rich text editing, styled runs, app-level parsing |
 
 Example work should keep business logic in `examples/*/app/` and leave platform
 packages as thin entrypoints.
@@ -133,9 +134,7 @@ Validation:
 
 ```sh
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 ```
 
 ## Workstream 4: Renderer Capability Tracking
@@ -334,8 +333,8 @@ Use this snapshot as the final handoff checklist for the current project shape:
 - Architecture, development, platform, examples, testing, renderer capability, AI
   collaboration, release-readiness, text-system, Markdown Editor, and view
   catalog docs are linked from the README.
-- Showcase and Markdown Editor keep shared app logic under `examples/*/app/`
-  with platform packages as thin entrypoints; Counter and Todo live inside
+- Showcase keeps shared app logic under `examples/showcase/app/` with
+  platform packages as thin entrypoints; Counter and Todo live inside
   Showcase as built-in interaction patterns.
 - Showcase surfaces renderer capability status for visual review.
 - Daily validation is centralized in `sh scripts/check.sh --profile daily` and includes

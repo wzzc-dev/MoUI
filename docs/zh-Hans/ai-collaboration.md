@@ -84,7 +84,7 @@ if browser behavior changes, and update docs/examples.md if commands or coverage
 Update MoUI docs for <topic>. Keep the root README.md as the short entrypoint, put
 detailed commands in docs/development.md, platform caveats in docs/platform-notes.md,
 example behavior in docs/examples.md, text architecture in docs/text-system.md,
-Markdown Editor behavior in docs/markdown-editor.md, and validation policy in
+Markdown Editor (MoMark) behavior in the MoMark repository, and validation policy in
 docs/testing.md. Also check AGENTS.md and skills/ when the guidance surface changes.
 ```
 

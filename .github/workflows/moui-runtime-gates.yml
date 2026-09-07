@@ -116,7 +116,7 @@ jobs:
           sh scripts/ci-moon-update.sh
 
       - name: Run macOS real Skia release smoke
-        run: node scripts/smoke-gate.mjs --suite macos.skia-real-showcase-markdown --run
+        run: node scripts/smoke-gate.mjs --suite macos.skia-real-showcase --run
 
       - name: Upload macOS real Skia release artifacts
         if: ${{ always() }}

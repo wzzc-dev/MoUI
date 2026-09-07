@@ -65,7 +65,7 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | A3 | Study all target platforms before cross-platform fixes (macOS/Linux patterns ≠ Windows patterns) | code review | none |
 | A4 | Prefer existing helpers over inventing new conventions (e.g. `skia_test_temp_dir()`) | code review | none |
 | A5 | Use `moon ide doc/outline/peek-def/find-references` for API discovery | — | none |
-| A6 | After publishing a new `window` version, update the pinned version in all four consumers (`moui/`, `moui_skia/`, `moui_webview/`, `examples/markdown_editor/`) and run `moon update` | `validate-window-dependency.mjs` (shared pin + Fix/A6 anchors) | none |
+| A6 | After publishing a new `window` version, update the pinned version in all three consumers (`moui/`, `moui_skia/`, and `moui_webview/`) and run `moon update` | `validate-window-dependency.mjs` (shared pin + Fix/A6 anchors) | none |
 
 ## Button Styling Pipeline
 

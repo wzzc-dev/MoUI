@@ -51,7 +51,6 @@ const manifestPath =
 
 run(["moon", "build", "examples/showcase/web_wasm", "--target", "wasm-gc"]);
 if (mode === "benchmark") {
-  run(["moon", "build", "examples/markdown_editor/web_wasm", "--target", "wasm-gc"]);
   run([
     "node",
     "scripts/validate-web-runtime-handoff.mjs",

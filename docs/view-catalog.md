@@ -97,7 +97,7 @@ demonstrated in an example package but is not yet a reusable public constructor.
 `missing` means the catalog should not imply the capability exists.
 The catalog itself stays renderer-neutral: view helpers emit normal core
 layout, event, semantics, and draw-command surfaces. In the current preview
-push, Showcase and Markdown Editor native Skia entrypoints are the preferred
+push, the Showcase native Skia entrypoint is the preferred
 runtime consumers for proving that these surfaces remain usable on the
 Skia-first native baseline.
 
@@ -128,12 +128,12 @@ fn view(draft : String) -> @moui.View[Msg] {
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `text` | `views/views.mbt` | Font/foreground modifiers | Text role through core | `views/tests/smoke` | Showcase, Markdown Editor | Basic label primitive. |
+| `text` | `views/views.mbt` | Font/foreground modifiers | Text role through core | `views/tests/smoke` | Showcase, MoMark | Basic label primitive. |
 | `image` | `views/views.mbt` | Modifier-based | Image draw intent | `views/tests/smoke` | Showcase | Renderer image support is tracked in the capability report; Showcase Interaction Lab covers ready/loading/failed lifecycle states. |
 | `icon` | `views/views.mbt` | Modifier-based | Image role through core | `views/tests/smoke` | Showcase | Icon glyph primitive sized by `IconName`, with optional color/weight overrides. |
 | `web_view` | `views/web_view.mbt` | Host native WebView | WebView role through core | `views/tests/smoke`, WebView Demo app tests | WebView Demo | Controlled native WebView primitive. The composition root creates a `WebViewHost` and `WebViewController`; navigation uses `controller.navigate(url)` and controller tasks cover reload, stop, back, forward, JSON bridge messages, request/response, and disposal. Validated `WebViewEvent` values return through the program effect/subscription path. |
 | `canvas` | `views/canvas.mbt` | Modifier-based | Group | `views/tests/smoke` | Showcase Platform and Diagnostics workspaces | Pure drawing view (`measure` + `draw` with `PaintContext`). No children. See [Canvas and custom paint](canvas-and-custom-paint.md). |
-| `custom_layout` / `custom_children_layout` | `views/views.mbt` | N/A | Group / child semantics | `views/tests/smoke` | PDF Workbench; Markdown Editor surface; Showcase | Custom measure/paint and multi-child layout delegates for advanced controls. |
+| `custom_layout` / `custom_children_layout` | `views/views.mbt` | N/A | Group / child semantics | `views/tests/smoke` | PDF Workbench; MoMark surface; Showcase | Custom measure/paint and multi-child layout delegates for advanced controls. |
 
 ## Controls
 
@@ -145,7 +145,7 @@ fn view(draft : String) -> @moui.View[Msg] {
 | `checkbox` | `views/views.mbt` | ChoiceControlStyle with direct font/color/size overrides | Checkbox | `views/tests/smoke` | Showcase Todo pattern | TEA-first boolean control. Component-local state should be projected into explicit values and typed `on_change` messages before crossing the public `views` API boundary. |
 | `toggle` | `views/control_choice.mbt` | ChoiceControlStyle with direct color overrides | Switch | `views/tests/smoke` | Showcase | TEA-first switch control. |
 | `radio` | `views/control_choice.mbt` | ChoiceControlStyle with direct color overrides | Radio | `views/tests/smoke` | Showcase | TEA-first single-option primitive. |
-| `text_field` | `views/views.mbt`, `views/text_input_controls.mbt` | TextFieldStyle | Text field | `views/tests/smoke`, core input tests | Showcase, Markdown Editor | TEA-first text input. App, host, smoke, and cross-package tests should use this `views` entrypoint rather than direct core control constructors. |
+| `text_field` | `views/views.mbt`, `views/text_input_controls.mbt` | TextFieldStyle | Text field | `views/tests/smoke`, core input tests | Showcase, MoMark | TEA-first text input. App, host, smoke, and cross-package tests should use this `views` entrypoint rather than direct core control constructors. |
 | `searchbar` | `views/views.mbt`, `views/text_input_controls.mbt` | TextFieldStyle | Search field | `views/tests/smoke` | Showcase | TEA-first text input specialized for filtering and clear actions. |
 | `picker` | `views/views.mbt` | PickerStyle | Picker | `views/tests/smoke` | Showcase | TEA-first option picker whose popup is a real overlay subtree: placed by the runtime placement pass (flips and clamps to the viewport), hoisted above ancestor clips, and exposed to semantics/Escape via the layer stack. |
 | `datepicker` | `views/datepicker.mbt` | PickerStyle | Date picker | `views/tests/smoke` | Showcase | TEA-first date picker whose calendar panel is a real overlay subtree placed by the runtime placement pass (flips and clamps to the viewport) with min/max range enforcement; per-day cell semantics remain follow-up. |
@@ -213,7 +213,7 @@ fn view(draft : String) -> @moui.View[Msg] {
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `container` / `card` | `views/views.mbt` | SurfaceStyle | Group through child | `views/tests/smoke` | Counter, Showcase, Markdown Editor | Styled container primitives; `card` is the raised, padded entry point for simple apps. |
+| `container` / `card` | `views/views.mbt` | SurfaceStyle | Group through child | `views/tests/smoke` | Counter, Showcase, MoMark | Styled container primitives; `card` is the raised, padded entry point for simple apps. |
 | `empty` | `views/views.mbt` | N/A | None | `views/tests/smoke` | Showcase | Zero-size placeholder leaf for optional/slot composition. |
 | `toolbar` / `command_bar` / `button_group` / `status_bar` | `views/toolbar.mbt` | ButtonStyle/text/surface | Group | `views/descriptor_helpers_test.mbt`, `views/tests/smoke`, Showcase tests | Showcase Navigation Shell | App-owned command and status surfaces built from `action_item` descriptors, buttons, text, and surfaces. |
 | `command_palette` | `views/views.mbt` | ButtonStyle/text/surface | Menu | `views/tests/smoke`, `core/gesture_action_wbtest.mbt`, Showcase tests | Showcase Navigation Shell | Renders `@views.ActionCommand` metadata (`group`, `description`, shortcut label, enabled state) as a TEA-controlled palette without native menu or renderer changes. |
@@ -227,7 +227,7 @@ fn view(draft : String) -> @moui.View[Msg] {
 | `stack` | `views/layout/stack.mbt` | Child/modifier based | Children preserved | `views/tests/smoke` | General layout | Pure same-origin layout primitive. It does not own presentation ordering, hit testing, or dismissal. |
 | `overlay_host` | `views/presentation.mbt` | `PresentationSpec` list | Ordered base + presentation children | `views/presentation_test.mbt` | Showcase, app examples | Single composition entrypoint for presentations: app-owned specs via `overlay_host`, control-internal popups via `popup_host` (base-sized portal). Ordered active specs are laid out back-to-front; modal barriers block background input; Escape/Back dismiss top-most-first through the runtime layer stack. |
 | `PresentationSpec` | `views/presentation.mbt` | TEA-owned declaration | Kind, anchor, placement, modality, dismissal, host policy, transition | `views/presentation_test.mbt` | App/runtime boundary | Supports popover, dialog, sheet, tooltip, and context-menu surfaces. Stable-key anchors are resolved by runtime anchor snapshots; viewport candidates flip/clamp in declaration order. |
-| `scroll_view` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke`, `core/advanced_layout_test.mbt` | Showcase, Markdown Editor | Emits clip/offset behavior through core and can report wheel deltas through `on_scroll`. |
+| `scroll_view` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke`, `core/advanced_layout_test.mbt` | Showcase, MoMark | Emits clip/offset behavior through core and can report wheel deltas through `on_scroll`. |
 | `grid` | `views/views.mbt` | N/A | Children preserved | `views/tests/smoke` | Showcase | Fixed-column layout. |
 | `list` | `views/views.mbt` | N/A | List/list item roles through core | `views/tests/smoke`, `core/semantics_test.mbt` | Showcase Todo pattern | Eager list layout. |
 | `lazy_list` | `views/views.mbt` | N/A | List output | `views/tests/smoke`, `views/windowing_test.mbt`, `views/lazy_list_test.mbt` | Showcase | Windows visible rows from data. Fixed stride `item_height + spacing`; the app owns the scroll offset and feeds it back through `offset`/`on_scroll`. |

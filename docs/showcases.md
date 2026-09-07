@@ -12,12 +12,14 @@ sidebar, settings overlay, and an injected OpenSeek/ACP-capable backend.
 
 GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/mo_workbench
 
-## Markdown Editor
+## MoMark (Markdown Editor)
 
-Markdown Editor is a Typora-style WYSIWYG editing prototype that shares one
-typed Markdown application model between source and visual editing modes.
+MoMark is a Typora-style WYSIWYG Markdown editor that shares one typed Markdown
+application model between source and visual editing modes. It builds on the
+published `wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages and lives in
+its own repository.
 
-GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/markdown_editor
+GitHub source: https://github.com/wzzc-dev/MoMark
 
 ## Showcase
 

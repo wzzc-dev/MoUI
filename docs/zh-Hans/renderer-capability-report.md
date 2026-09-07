@@ -71,8 +71,8 @@ Skia helper 可以添加 `--run-gpu-smoke`，这要求 renderer smoke log 包含
 surface_gpu=true present_count=1 pixel-markers`；该 marker 证明显式 GPU route
 creation、GPU-backed offscreen surface rendering、readback，以及现有的
 pixel-present callback。在同一个 helper 中，`--run-gpu-smoke` 还会为 Showcase
-和 Markdown Editor first-frame runs 设置 `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu`，
-其日志必须在正常 first-frame marker 之前包含 `surface_route=metal-gpu;
+first-frame runs 设置 `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu`，其日志必须在正常
+first-frame marker 之前包含 `surface_route=metal-gpu;
 surface_gpu=true` provider diagnostics。renderer-only GPU smoke 仍只是
 offscreen/readback 证据。macOS first-frame smoke 还证明 `SkPicture` handoff
 给拥有 Ganesh/Metal context 的 native worker，该 worker 获取 `CAMetalDrawable`、
@@ -258,7 +258,7 @@ paragraph wrapping、bidi layout、selection rectangles 和 hit testing 的 `eng
 markers。更广泛的 typography benchmarks、未来 Unicode data refreshes 和 cross-platform emoji
 fallback comparisons 是 conformance maintenance items，而不是 renderer capability blockers。
 macOS Skia provider 现在与 Windows 和 Linux 一样，默认使用
-`SkiaFontResolution::SystemFontMgr`，因此正常 Showcase、Markdown Editor 和 Mo Workbench
+`SkiaFontResolution::SystemFontMgr`，因此正常 Showcase 和 Mo Workbench
 Skia entrypoints 会使用 system FontMgr path，包含 platform font lookup、emoji retry 和链接时
 可选 SkShaper。macOS tester-owned first-frame smoke entrypoints 会显式切换到
 `SkiaFontResolution::EmptyTypeface`；这让 CLI smoke runs 保持在更安全的 default-font retry

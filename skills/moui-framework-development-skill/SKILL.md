@@ -330,9 +330,8 @@ owning-package boundaries clear.
 - `examples/webview_demo/{app,macos_skia,windows_skia,linux_skia,web_wasm}`:
   native WebView host-contract demo; Web wasm is an unavailable fallback and
   not an iframe implementation.
-- `examples/showcase/{macos_skia,windows_skia,linux_skia}` and
-  `examples/markdown_editor/macos_skia`: recommended native Skia renderer
-  example entrypoints.
+- `examples/showcase/{macos_skia,windows_skia,linux_skia}`: recommended
+  native Skia renderer example entrypoints.
 - `examples/design_systems/{web_wasm,macos_skia}`:
   dedicated design-system addon diagnostic sampler entrypoints over the shared
   `examples/design_systems/app` logic.
@@ -590,7 +589,6 @@ moon test moui/backend/web --target wasm-gc
 moon test moui_tests/tester --target native
 moon test moui_devtools --target native
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 ```
 
 Use focused tests during implementation, then run the full daily script when

@@ -79,11 +79,11 @@
       ]
     },
     {
-      "id": "macos.skia-real-showcase-markdown",
+      "id": "macos.skia-real-showcase",
       "tier": "release",
       "kind": "native-real-renderer-smoke",
       "host": "macos-14",
-      "purpose": "Prove real Skia renderer pixels plus tester-owned Showcase and Markdown Editor first-frame presentation on the matching host.",
+      "purpose": "Prove real Skia renderer pixels plus tester-owned Showcase first-frame presentation on the matching host.",
       "defaultDevCheck": false,
       "commands": [
         {
@@ -91,13 +91,10 @@
             "sh",
             "scripts/macos-skia-renderer-smoke.sh",
             "--run-showcase-smoke",
-            "--run-markdown-smoke",
             "--smoke-log",
             "artifacts/platform-observation/macos/skia-renderer-smoke.log",
             "--showcase-log",
-            "artifacts/platform-observation/macos/showcase-macos-skia-first-frame.log",
-            "--markdown-log",
-            "artifacts/example-smoke/macos/markdown-macos-skia-first-frame.log"
+            "artifacts/platform-observation/macos/showcase-macos-skia-first-frame.log"
           ],
           "mode": "run"
         }
@@ -107,7 +104,6 @@
         "markers": [
           "MoUI Skia renderer smoke passed",
           "MoUI Skia async image second-frame smoke passed",
-          "Verified moui_tests first-frame smoke marker.",
           "MoUI macOS Skia renderer smoke passed."
         ]
       },
@@ -121,8 +117,7 @@
       ],
       "artifacts": [
         "artifacts/platform-observation/macos/skia-renderer-smoke.log",
-        "artifacts/platform-observation/macos/showcase-macos-skia-first-frame.log",
-        "artifacts/example-smoke/macos/markdown-macos-skia-first-frame.log"
+        "artifacts/platform-observation/macos/showcase-macos-skia-first-frame.log"
       ]
     },
     {

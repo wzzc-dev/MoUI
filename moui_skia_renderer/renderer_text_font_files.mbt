@@ -84,18 +84,11 @@ fn skia_open_sans_font_directories() -> Array[String] {
     None => ()
   }
   match @env.current_dir() {
-    Some(directory) => {
+    Some(directory) =>
       skia_push_font_directory(
         directories,
         skia_join_font_path(directory, "assets/fonts/open-sans"),
       )
-      skia_push_font_directory(
-        directories,
-        skia_join_font_path(
-          directory, "examples/markdown_editor/app/assets/fonts/open-sans",
-        ),
-      )
-    }
     None => ()
   }
   match @env.get_env_var("HOME") {

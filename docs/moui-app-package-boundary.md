@@ -587,9 +587,9 @@ may use lower-level packages.
 - `moui/backend/*`: platform backends.
 - `moui/render/*`: renderer facades and concrete renderer implementations.
 - `moui_richtext`: an addon for rich-text/Markdown documents, editing, commands,
-  input, paste, tables, and source mapping. Rich-editing apps such as
-  `examples/markdown_editor`, `examples/mo_workbench`, and `examples/showcase`
-  may depend on it directly as needed; it is not a default dependency of
+  input, paste, tables, and source mapping. Rich-editing apps such as MoMark
+  ([wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark)),
+  `examples/mo_workbench`, and `examples/showcase` may depend on it directly as needed; it is not a default dependency of
   `core`, `views`, or domain facades.
 - `moui_agent` / `moui_agent_mcp`: addons for agent protocols, schemas, host
   runtimes, and MCP router support. Agent-controllable apps such as

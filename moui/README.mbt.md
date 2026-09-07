@@ -59,7 +59,6 @@ surface, written in MoUI itself.
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/resource/screenshots/mo_workbench.png" width="400px"/>
-  <img src="https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/resource/screenshots/markdown_editor.png" width="400px"/>
   <img src="https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/resource/screenshots/showcase.png" width="400px"/>
   <img src="https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/resource/screenshots/excel.png" width="400px"/>
 </div>
@@ -97,8 +96,7 @@ surface, written in MoUI itself.
   `wzzc-dev/moui_*_renderer` publication modules.
 - `examples/*/app/` contains shared app logic, while platform subpackages are
   thin entrypoints. Featured examples: `examples/showcase` (visual catalog,
-  Skia mainline + WGPU/Sun diagnostics), `examples/markdown_editor` (WYSIWYG),
-  `examples/mo_workbench` (macOS-Skia agent desktop), `examples/excel`
+  Skia mainline + WGPU/Sun diagnostics), `examples/mo_workbench` (macOS-Skia agent desktop), `examples/excel`
   (`mbtexcel` workbook renderer), `examples/pdf_workbench` (native PDF
   read/edit). `examples/showcase` stays independent of `moui_theme`;
   `examples/design_systems` is the dedicated addon diagnostic example that
@@ -255,19 +253,6 @@ Open:
 http://127.0.0.1:8080/examples/showcase/web_wasm/index.html
 ```
 
-Build and serve the WYSIWYG Markdown editor:
-
-```sh
-moon build examples/markdown_editor/web_wasm --target wasm-gc
-python3 -m http.server 8080 --bind 127.0.0.1
-```
-
-Open:
-
-```text
-http://127.0.0.1:8080/examples/markdown_editor/web_wasm/index.html
-```
-
 ## macOS Native
 
 Native macOS examples use the platform window backend; the recommended
@@ -291,12 +276,6 @@ CoreText with Cosmic as an internal fallback:
 ```sh
 moon build examples/showcase/macos_wgpu --target native
 moon build examples/showcase/macos_sun --target native
-```
-
-Build and run the WYSIWYG Markdown editor on the Skia mainline:
-
-```sh
-moon run examples/markdown_editor/macos_skia --target native
 ```
 
 Build and run Excel Viewer on the Skia mainline:

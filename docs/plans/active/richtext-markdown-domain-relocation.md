@@ -1,5 +1,11 @@
 # Plan: Relocate the Markdown editing domain model out of `moui_richtext`
 
+> [!NOTE]
+> 2026-09-07: the Markdown Editor example graduated into its own repository,
+> [wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark). References to
+> `examples/markdown_editor` below describe the pre-graduation consumer; the
+> relocation plan itself still applies to the `moui_richtext` surface.
+
 - **Status**: active
 - **RFC**: none (no invariant change; `moui_richtext` is an addon, and the
   target package follows the existing domain-facade pattern)

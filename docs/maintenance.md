@@ -32,7 +32,6 @@ The default daily baseline covers:
 - `moui/render`, `moui_skia_renderer`, and `moui_web_renderer`
 - fallback-safe `moui_skia` checks
 - Showcase app/Web wasm-gc validation
-- Markdown Editor app/Web wasm-gc validation
 - renderer/provider static checks and lightweight Web handoff validation
 - maintenance baseline ratchets for oversized source files, source-level
   `pub(all)` counts, and root facade type-forwarding counts

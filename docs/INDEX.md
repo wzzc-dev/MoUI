@@ -41,7 +41,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [text-system.md](text-system.md) | `deep` | Text architecture |
 | [internationalization.md](internationalization.md) | `canonical` | Message catalogs, locale selection, and bilingual docs workflow |
 | [visual-theme-system.md](visual-theme-system.md) | `deep` | Theme system |
-| [markdown-editor.md](markdown-editor.md) | `deep` | Markdown editor product behavior |
+| [markdown-editor.md](markdown-editor.md) | `shallow` | Markdown editor: pointer to the MoMark repository |
 | [../examples/mo_desktop/ARCHITECTURE.md](../examples/mo_desktop/ARCHITECTURE.md) | `deep` | Desktop shell example: windows, registry, persistence, session flow |
 
 ## Platforms & readiness

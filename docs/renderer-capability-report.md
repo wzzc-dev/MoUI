@@ -85,8 +85,8 @@ include `MoUI Skia GPU Metal renderer smoke passed route=metal-gpu
 surface_gpu=true present_count=1 pixel-markers`; that marker proves explicit
 GPU route creation, GPU-backed offscreen surface rendering, readback, and the
 existing pixel-present callback. In the same helper, `--run-gpu-smoke` also
-sets `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for Showcase and Markdown Editor
-first-frame runs, and their logs must include `surface_route=metal-gpu;
+sets `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for Showcase first-frame runs,
+and its log must include `surface_route=metal-gpu;
 surface_gpu=true` provider diagnostics before the normal first-frame marker.
 The renderer-only GPU smoke remains offscreen/readback evidence only. The
 macOS first-frame smoke additionally proves `SkPicture` handoff to a native
@@ -322,7 +322,7 @@ benchmarks, future Unicode data refreshes, and cross-platform emoji fallback
 comparisons are conformance maintenance items rather than renderer capability
 blockers. The macOS Skia
 provider now matches Windows and Linux by defaulting to
-`SkiaFontResolution::SystemFontMgr`, so normal Showcase, Markdown Editor, and
+`SkiaFontResolution::SystemFontMgr`, so normal Showcase and
 Mo Workbench Skia entrypoints use the system FontMgr path with platform font
 lookup, emoji retry, and optional SkShaper when linked. macOS tester-owned
 first-frame smoke entrypoints explicitly switch to

@@ -108,7 +108,7 @@ offset conversion for IME handoff. Do not put whole-document grapheme scans,
 full Markdown parsing, full `RichTextDocument` construction, or document-height
 walks in paint, focus probing, scroll handling, or ordinary host IME polling.
 
-The expected Markdown Editor scroll/input pipeline is:
+The expected rich-text editor scroll/input pipeline is:
 
 ```text
 ScrollState -> MarkdownDocumentSession height index -> visible block window
@@ -386,7 +386,7 @@ The scanner now drives core grapheme break classes from generated Unicode 17.0 p
 
 **Native IME Runtime Readiness**
 
-Native IME runtime readiness is platform-scoped: macOS has recorded matching-host Markdown Editor/AppKit artifacts for candidate anchors, surrounding text, composition visuals, commit/delete behavior, cursor updates, scroll anchors, scale/DPR anchors, resize anchors, and Markdown Editor IME dogfood, so the macOS platform observation entry can set those observations to `yes`. Linux IME protocol functionality was verified on 2026-07-11 via WSL2 (WSLg Wayland): `check_moui_linux_smoke.sh` IME probe passed all 8 fields (enabled/hint/surrounding/cursor/updated/updated_hint/updated_cursor/disabled all `true`). Full interactive input evidence (pointer/keyboard and destroy sequence) still requires matching Wayland desktop host (Ubuntu 24.04+) Showcase or Markdown Editor runtime logs. Windows still requires equivalent matching MSVC host runtime logs before its native IME runtime path can be called ready.
+Native IME runtime readiness is platform-scoped: macOS has recorded matching-host Markdown Editor/AppKit artifacts for candidate anchors, surrounding text, composition visuals, commit/delete behavior, cursor updates, scroll anchors, scale/DPR anchors, resize anchors, and Markdown Editor IME dogfood, so the macOS platform observation entry can set those observations to `yes`. Linux IME protocol functionality was verified on 2026-07-11 via WSL2 (WSLg Wayland): `check_moui_linux_smoke.sh` IME probe passed all 8 fields (enabled/hint/surrounding/cursor/updated/updated_hint/updated_cursor/disabled all `true`). Full interactive input evidence (pointer/keyboard and destroy sequence) still requires matching Wayland desktop host (Ubuntu 24.04+) Showcase runtime logs. Windows still requires equivalent matching MSVC host runtime logs before its native IME runtime path can be called ready.
 
 **Native WGPU Provider Status**
 

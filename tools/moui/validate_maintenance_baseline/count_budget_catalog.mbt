@@ -51,12 +51,6 @@ fn pub_all_budgets() -> Array[CountBudget] {
     },
     {
       kind: "pub(all)",
-      label: "examples/markdown_editor/app",
-      path: "examples/markdown_editor/app",
-      max_count: 0,
-    },
-    {
-      kind: "pub(all)",
       label: "examples/pdf_workbench/app",
       path: "examples/pdf_workbench/app",
       max_count: 12,

@@ -10,7 +10,7 @@ MoUI 默认使用有界验证。主线包括包测试、Web `wasm-gc` 构建、�
 sh scripts/check.sh --profile daily
 ```
 
-该脚本运行本地依赖 guard、guidance consistency、maintenance baseline ratchets、API surface checks、renderer provider 和 native Skia entrypoint 静态检查、生成的 repository facts 和 source-file policy、smoke gate catalog validation、`moon check`、生成的 public-interface drift detection、core 包测试、Web wasm-gc 包测试、native Skia 主线包测试、内部 `moui_tests/tester` harness tests、`moui_devtools` snapshot/debug tests、Showcase 和 Markdown Editor app tests，以及 Web builds。
+该脚本运行本地依赖 guard、guidance consistency、maintenance baseline ratchets、API surface checks、renderer provider 和 native Skia entrypoint 静态检查、生成的 repository facts 和 source-file policy、smoke gate catalog validation、`moon check`、生成的 public-interface drift detection、core 包测试、Web wasm-gc 包测试、native Skia 主线包测试、内部 `moui_tests/tester` harness tests、`moui_devtools` snapshot/debug tests、Showcase app tests，以及 Web builds。
 
 每日门禁来源于 `checks/profiles.json`，可用 `node scripts/check.mjs --profile daily --list` 检查。应与目录保持同步的代表性 command token 包括：
 
@@ -49,9 +49,7 @@ moon test moui_skia --target native
 moon test moui_web_renderer --target wasm-gc
 moon test moui/backend/web --target wasm-gc
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/validate-web-runtime-handoff.mjs
 ```
 
@@ -139,7 +137,6 @@ moon test moui_devtools --target native
 moon test moui_skia --target native
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon test examples/excel/cell --target native
 moon test examples/excel/formula --target native
 moon test examples/excel/sheet --target native

@@ -198,10 +198,8 @@ moon check examples/showcase/ios_window_hosted --target native
 moon test examples/harmonyos_demo/app --target native
 moon check examples/showcase/harmonyos_window_hosted --target native
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```
 

@@ -17,7 +17,6 @@ MoUI 保持窄而明确的默认维护基线，让框架可以持续增长，而
 - `moui/render`、`moui_skia_renderer` 和 `moui_web_renderer`
 - fallback 安全的 `moui_skia` 检查
 - Showcase 应用/Web wasm-gc 验证
-- Markdown Editor 应用/Web wasm-gc 验证
 - 渲染器/provider 静态检查和轻量 Web handoff 验证
 - 超大源码文件、源码级 `pub(all)` 数量以及根 facade 类型转发数量的维护基线 ratchet
 - API surface 包预算，以及 `core`、`views`、`runtime`、`backend` 和 `render` 的语义分类预算
