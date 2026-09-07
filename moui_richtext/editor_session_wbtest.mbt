@@ -456,3 +456,98 @@ test "markdown document session source_mode window slices visible source" {
   )
   inspect(window.document.blocks[0].runs[0].text, content=expected)
 }
+
+///|
+/// Regression for the scroll misalignment. After an incremental edit that
+/// changes the block count *inside the re-parse cluster*, the live scroll
+/// geometry is rebased in place: the height array is spliced, the Fenwick
+/// tree is rebuilt from the spliced array, and the re-parse window's heights
+/// are recomputed. The rendered window is positioned by `top_padding`, a
+/// Fenwick prefix sum, so the tree must stay in lockstep with the `heights`
+/// array. The buggy path rebuilt the tree *before* the window recompute and
+/// then wrote the recomputed heights straight into the array, leaving the
+/// tree behind — so `prefix_at` (which feeds `top_padding` and
+/// `content_height`) disagreed with the rendered block stack and the whole
+/// visible window shifted while scrolling.
+///
+/// This drives `markdown_document_block_geometry` through the count-changing
+/// rebase branch directly (a natural keystroke rarely changes the cluster
+/// count without a full rebuild), then asserts the tree/array invariant that
+/// `top_padding` relies on.
+test "scroll geometry rebase keeps the Fenwick tree consistent across a block-count change" {
+  // A unique (font, width) key keeps this test's measured-height table and
+  // scroll-geometry entry isolated from every other test's caches.
+  let base = @core.FontSpec::new(size=15.0)
+  let width = 611.0
+  // The post-edit session: several paragraph blocks.
+  let session = MarkdownDocumentSession::new("p0\n\np1\n\np2\n\np3")
+  let new_count = session.editor_blocks.length()
+  assert_true(new_count >= 3)
+  // Give the two re-parse-window blocks measured heights that differ from
+  // whatever the splice drops into their slots, so a stale tree is visible.
+  for index in [1, 2] {
+    let block = session.blocks[index]
+    let _ = rich_text_record_block_measured_height(
+      base,
+      width~,
+      block_id=block.id,
+      block_revision=block.revision,
+      height=900.0 + index.to_double() * 11.0,
+    )
+  }
+  // A live geometry entry for the *previous* document (one block longer),
+  // cached under this (font, width) key with a stale identity so the next
+  // query must rebase rather than exact-hit.
+  let suffix_shift = 1
+  let old_heights : Array[Double] = []
+  for i in 0..<(new_count + suffix_shift) {
+    old_heights.push((i + 1).to_double() * 10.0)
+  }
+  let geometry = markdown_document_scroll_geometry_from_heights(
+    old_heights,
+    epoch=rich_text_block_heights_epoch.val,
+    source_digest=0UL,
+    source_length=-1,
+  )
+  markdown_document_scroll_geometry_put(base, geometry, width~)
+  // The reindex window of an edit that collapsed three cluster blocks into
+  // two: the array shrinks by one (suffix_shift = 1), and the window
+  // [1, 3) is the re-parsed region whose heights must be recomputed.
+  markdown_document_last_rebase.val = (
+    session.revision,
+    Some({
+      prefix_count: 1,
+      suffix_new_start: 3,
+      suffix_shift: suffix_shift,
+      old_region_start: 0,
+      old_region_end: 0,
+      edit_start: 0,
+      deleted: "",
+      replacement: "",
+      char_delta: 0,
+    }),
+  )
+  hot_path_scroll_geometry_rebase_hits.val = 0
+  guard
+    markdown_document_block_geometry(session, base, content_width=width)
+      is Some(rebased)
+  else { fail("expected the geometry to rebase in place") }
+  // Prove the count-changing rebase branch actually ran.
+  assert_true(hot_path_scroll_geometry_rebase_hits.val == 1)
+  assert_true(rebased.heights.length() == new_count)
+
+  // Invariant: every Fenwick prefix sum equals the running sum over heights.
+  // This is exactly what `top_padding` reads, so a divergence is the
+  // misalignment this guards against.
+  let mut running = 0.0
+  for index, height in rebased.heights {
+    running = running + height
+    let prefix = markdown_document_scroll_geometry_prefix_at(
+      rebased,
+      count=index + 1,
+    )
+    guard (prefix - running).abs() < 0.001 else {
+      fail("prefix sum at \{index + 1} diverged: tree=\{prefix} array=\{running}")
+    }
+  }
+}
