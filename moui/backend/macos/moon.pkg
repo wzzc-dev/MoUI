@@ -11,7 +11,7 @@ import {
   "wzzc-dev/moui/backend" @host,
   "wzzc-dev/moui/backend/accesskit" @accesskit_bridge,
   "wzzc-dev/moui/backend/common" @window_host,
-  "wzzc-dev/moui/backend/common/host_modal" @host_modal,
+  "wzzc-dev/moui/backend/common/host_modal",
   "wzzc-dev/moui/backend/common/lifecycle" @window_lifecycle,
   "wzzc-dev/moui/backend/common/frame" @window_frame,
   "wzzc-dev/moui/backend/common/image" @window_image,
@@ -27,7 +27,7 @@ import {
 
 import {
   "wzzc-dev/moui/views",
-  "wzzc-dev/moui/backend/common/host_modal" @host_modal,
+  "wzzc-dev/moui/backend/common/host_modal",
 } for "test"
 
 import {

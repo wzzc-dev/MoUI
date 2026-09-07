@@ -93,14 +93,14 @@ fn[Msg] rich_text_editor_snapshot(
   // text; the public channel keeps its three-argument shape and ignores it.
   let on_input_edit = match on_input_edit {
     Some(handler) =>
-      Some(
-        fn(
-          text : String,
-          caret : Int,
-          selection : @core.TextRange?,
-          _edit : RichTextInputEdit?,
-        ) { handler(text, caret, selection) },
-      )
+      Some(fn(
+        text : String,
+        caret : Int,
+        selection : @core.TextRange?,
+        _edit : RichTextInputEdit?,
+      ) {
+        handler(text, caret, selection)
+      })
     None => None
   }
   let value_snapshot = value
@@ -177,7 +177,8 @@ fn[Msg] rich_text_editor_snapshot(
             None => ()
           }
           match on_input_edit {
-            Some(handler) => messages.push(handler(next_text, caret, None, None))
+            Some(handler) =>
+              messages.push(handler(next_text, caret, None, None))
             None => ()
           }
           @core.ViewSemanticsActionResult::accepted(

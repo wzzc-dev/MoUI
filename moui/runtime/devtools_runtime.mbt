@@ -68,15 +68,15 @@ fn runtime_inspector_snapshot_from_state(
 ) -> RuntimeInspectorSnapshot {
   let dirty_count = state.dirty_count()
   let dirty_element_ids = state.dirty_element_ids().map(id => id.value())
-  let dirty_build_element_ids = state.dirty.dirty_build_elements.items.map(
-    id => { id.value() },
-  )
-  let dirty_layout_element_ids = state.dirty.dirty_layout_elements.items.map(
-    id => { id.value() },
-  )
-  let dirty_paint_element_ids = state.dirty.dirty_paint_elements.items.map(
-    id => { id.value() },
-  )
+  let dirty_build_element_ids = state.dirty.dirty_build_elements.items.map(id => {
+    id.value()
+  })
+  let dirty_layout_element_ids = state.dirty.dirty_layout_elements.items.map(id => {
+    id.value()
+  })
+  let dirty_paint_element_ids = state.dirty.dirty_paint_elements.items.map(id => {
+    id.value()
+  })
   let dirty_build_count = dirty_build_element_ids.length()
   let dirty_layout_count = dirty_layout_element_ids.length()
   let dirty_paint_count = dirty_paint_element_ids.length()

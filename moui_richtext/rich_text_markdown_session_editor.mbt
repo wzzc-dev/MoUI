@@ -97,7 +97,12 @@ fn markdown_session_input_transform_for(
     blocks: session.editor_blocks,
     store: session.text_store,
   }
-  fn(source : String, caret : Int, range : @core.TextRange?, inserted : String) {
+  fn(
+    source : String,
+    caret : Int,
+    range : @core.TextRange?,
+    inserted : String,
+  ) {
     markdown_editor_transform_input(
       source,
       caret,

@@ -625,14 +625,18 @@ test "hot path: scroll geometry rebases in place after a keystroke" {
   session = hot_path_apply_edit(session, session.source() + "y")
   hot_path_metrics_reset()
   let rebased = markdown_document_block_geometry(
-    session, base, content_width=width,
+    session,
+    base,
+    content_width=width,
   )
   assert_eq(hot_path_scroll_geometry_rebase_hits.val, 1)
   assert_eq(hot_path_block_height_walk_blocks.val, 0)
   // The rebased geometry agrees with a from-scratch walk of the source.
   let scratch = MarkdownDocumentSession::new(session.source())
   let walked = markdown_document_block_geometry(
-    scratch, base, content_width=width,
+    scratch,
+    base,
+    content_width=width,
   )
   let rebased_geometry = match rebased {
     Some(geometry) => geometry

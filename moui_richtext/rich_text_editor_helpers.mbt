@@ -95,18 +95,21 @@ fn restore_text_history(
   let edit : RichTextInputEdit? = if changed {
     Some({
       start: restored.start,
-      deleted: if undo { restored.after } else { restored.before },
-      replacement: if undo { restored.before } else { restored.after },
+      deleted: if undo {
+        restored.after
+      } else {
+        restored.before
+      },
+      replacement: if undo {
+        restored.before
+      } else {
+        restored.after
+      },
     })
   } else {
     None
   }
-  {
-    text: restored_text,
-    control: next_control,
-    changed,
-    edit,
-  }
+  { text: restored_text, control: next_control, changed, edit }
 }
 
 ///|
@@ -286,7 +289,11 @@ fn rich_text_history_edit_shape_at(
       None
     } else {
       let chars = text.to_array()
-      if chars.length() == 1 { Some(chars[0]) } else { None }
+      if chars.length() == 1 {
+        Some(chars[0])
+      } else {
+        None
+      }
     }
   }
   if before == "" {
@@ -340,9 +347,8 @@ fn apply_text_edit(
               edit.before,
               edit.after,
               control.caret,
-              selection_active=(
-                @core.active_text_selection(control.selection) is Some(_)
-              ),
+              selection_active=@core.active_text_selection(control.selection)
+                is Some(_),
             ),
           ),
         ),
@@ -512,9 +518,7 @@ fn[Msg] text_input_edit_messages(
   record? : RichTextInputEdit? = None,
 ) -> Array[Msg] {
   match on_input_edit {
-    Some(handler) => [
-      handler(text, control.caret, control.selection, record),
-    ]
+    Some(handler) => [handler(text, control.caret, control.selection, record)]
     None => []
   }
 }

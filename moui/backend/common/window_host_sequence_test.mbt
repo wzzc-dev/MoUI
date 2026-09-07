@@ -77,11 +77,7 @@ test "window host sequence: open, present, close with stale and cross-window int
   dispose_window(lifecycle, frames, images, services, first)
   dispose_window(lifecycle, frames, images, services, first)
   assert_eq(trace, [
-    "renderer",
-    "image-cancel",
-    "renderer",
-    "platform-views",
-    "native-surface",
+    "renderer", "image-cancel", "renderer", "platform-views", "native-surface",
   ])
   // present after dispose is a no-op (stale completion at workflow level).
   ignore(
@@ -95,11 +91,7 @@ test "window host sequence: open, present, close with stale and cross-window int
     ),
   )
   assert_eq(trace, [
-    "renderer",
-    "image-cancel",
-    "renderer",
-    "platform-views",
-    "native-surface",
+    "renderer", "image-cancel", "renderer", "platform-views", "native-surface",
   ])
 
   // cross-window isolation: second keeps its owners and the shared services.
@@ -112,15 +104,8 @@ test "window host sequence: open, present, close with stale and cross-window int
   // session, per the contract order.
   dispose_window(lifecycle, frames, images, services, second)
   assert_eq(trace, [
-    "renderer",
-    "image-cancel",
-    "renderer",
-    "platform-views",
-    "native-surface",
-    "services",
-    "renderer",
-    "platform-views",
-    "native-surface",
+    "renderer", "image-cancel", "renderer", "platform-views", "native-surface", "services",
+    "renderer", "platform-views", "native-surface",
   ])
   assert_false(services.is_open())
   assert_true(lifecycle.runtime_slots_empty())
