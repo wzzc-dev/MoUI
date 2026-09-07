@@ -514,31 +514,11 @@
           ]
         },
         {
-          "name": "Markdown Editor app tests",
-          "argv": [
-            "moon",
-            "test",
-            "examples/markdown_editor/app",
-            "--target",
-            "native"
-          ]
-        },
-        {
           "name": "Showcase Web build",
           "argv": [
             "moon",
             "build",
             "examples/showcase/web_wasm",
-            "--target",
-            "wasm-gc"
-          ]
-        },
-        {
-          "name": "Markdown Editor Web build",
-          "argv": [
-            "moon",
-            "build",
-            "examples/markdown_editor/web_wasm",
             "--target",
             "wasm-gc"
           ]
@@ -1005,17 +985,6 @@
             "moon",
             "build",
             "examples/showcase/macos_skia",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "macOS Markdown Editor native build",
-          "host": "darwin",
-          "argv": [
-            "moon",
-            "build",
-            "examples/markdown_editor/macos_skia",
             "--target",
             "native"
           ]

@@ -163,7 +163,7 @@ or disposed tokens are ignored. The required async second-frame artifact
 remains matching-host pending until a Windows/MSVC run records it from a Skia
 composition root.
 Passed Windows runtime observation still needs a Windows/MSVC host running the
-Showcase or Markdown Editor Skia entrypoints with recorded artifacts. On
+Showcase Skia entrypoints with recorded artifacts. On
 non-Windows hosts, the Win32 presenter and service stubs may fail C compilation
 because they require `windows.h`, so a Darwin failure of
 `moui/backend/windows` or `moui_skia_renderer` is a host/toolchain limit rather than Windows

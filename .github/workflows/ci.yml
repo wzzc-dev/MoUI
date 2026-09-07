@@ -140,7 +140,6 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_slow_native_examples }}
         run: |
           moon build examples/showcase/macos_skia --target native
-          moon build examples/markdown_editor/macos_skia --target native
 
       - name: Upload macOS package artifact
         uses: actions/upload-artifact@v4

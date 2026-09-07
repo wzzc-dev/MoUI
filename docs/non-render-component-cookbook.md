@@ -336,7 +336,6 @@ Recommended checks:
 ```sh
 moon test moui/services --target native
 moon test examples/showcase/app/platform --target native
-moon test examples/markdown_editor/app --target native
 ```
 
 ## Clipboard
@@ -361,7 +360,6 @@ Recommended checks:
 ```sh
 moon test moui/services --target native
 moon test examples/showcase/app/platform --target native
-moon test examples/markdown_editor/app --target native
 ```
 
 ## Keyboard Commands

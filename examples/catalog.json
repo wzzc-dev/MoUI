@@ -44,12 +44,6 @@
       "featured": false
     },
     {
-      "id": "markdown_editor",
-      "path": "examples/markdown_editor",
-      "title": "Markdown Editor",
-      "featured": true
-    },
-    {
       "id": "pdf_workbench",
       "path": "examples/pdf_workbench",
       "title": "PDF Workbench",

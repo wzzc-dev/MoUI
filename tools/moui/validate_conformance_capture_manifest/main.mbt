@@ -201,12 +201,6 @@ fn expected_benchmark_targets() -> Array[ExpectedBenchmarkTarget] {
       url: "http://127.0.0.1:18080/examples/showcase/web_wasm/",
       metrics_path: "artifacts/benchmarks/showcase-web-wasm.json",
     },
-    {
-      name: "markdown-editor-web-wasm",
-      target: "examples/markdown_editor/web_wasm",
-      url: "http://127.0.0.1:18080/examples/markdown_editor/web_wasm/",
-      metrics_path: "artifacts/benchmarks/markdown-editor-web-wasm.json",
-    },
   ]
 }
 

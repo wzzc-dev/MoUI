@@ -31,6 +31,7 @@
 - Pure function black-box tests for richtext: document model, source mapping,
   commands, input transforms, session transactions.
 - Test at the facade level only (public symbols from `pkg.generated.mbti`).
-- Don't depend on `examples/markdown_editor/app` tests for addon coverage.
+- Don't depend on MoMark app tests (own repository, outside this workspace) for
+  addon coverage.
 - `MarkdownEditReason` does not implement `Show` — use `assert_true(txn.reason == CommandEdit)` instead of `inspect`.
 - Indentation uses two-space prefix (`"  "`), not tab.

@@ -68,7 +68,6 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 <div align="center">
 
   <img src="resource/screenshots/showcase.png" width="48%" alt="Showcase"/>
-  <img src="resource/screenshots/markdown_editor.png" width="48%" alt="Markdown Editor"/>
 
   <br/><br/>
 
@@ -121,7 +120,6 @@ cd MoUI
 sh scripts/ci-moon-update.sh
 sh scripts/check.sh --profile pr
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 ```
 
 国内用户也可通过 GitCode 镜像获取代码：
@@ -130,11 +128,11 @@ moon test examples/markdown_editor/app --target native
 git clone https://gitcode.com/wzzc/MoUI.git
 ```
 
-Showcase 与 Markdown Editor 是主要的扫描与交互示例，其平台入口列于[运行示例](#运行示例)。
+Showcase 是主要的扫描与交互示例，其平台入口列于[运行示例](#运行示例)。
 
 框架安装细节（包括可选子模块与 `window/` 本地源码工作流）见 [Development](docs/development.md)。
 
-默认的 daily 基线覆盖核心框架、维护基线棘轮、Web wasm-gc、原生 Skia 主线契约、Showcase 与 Markdown Editor。Design Systems 为附加诊断覆盖；当改动 `moui_theme` 或 `examples/design_systems` 时请运行 `sh scripts/check.sh --profile theme`。
+默认的 daily 基线覆盖核心框架、维护基线棘轮、Web wasm-gc、原生 Skia 主线契约与 Showcase。Design Systems 为附加诊断覆盖；当改动 `moui_theme` 或 `examples/design_systems` 时请运行 `sh scripts/check.sh --profile theme`。
 
 当前宿主的后端/提供方检查：
 
@@ -153,7 +151,7 @@ node scripts/conformance-capture-scaffold.mjs --mode benchmark
 
 ## 运行示例
 
-精选示例 — `showcase`、`markdown_editor`、`mo_workbench` 和 `excel` — 在 `examples/<name>/app` 中共享应用逻辑，并暴露轻量平台入口。Showcase 拥有 `web_wasm`、桌面端渲染器专属入口，以及 `android_window_hosted`、`ios_window_hosted` 和 `harmonyos_window_hosted` 移动端入口。
+精选示例 — `showcase`、`mo_workbench` 和 `excel` — 在 `examples/<name>/app` 中共享应用逻辑，并暴露轻量平台入口。Showcase 拥有 `web_wasm`、桌面端渲染器专属入口，以及 `android_window_hosted`、`ios_window_hosted` 和 `harmonyos_window_hosted` 移动端入口。
 
 如需在移动端尝试 Showcase，请按对应平台的安装、构建与运行说明操作：
 [Android](docs/android-support.md)、[iOS](docs/ios-support.md) 或 [HarmonyOS](docs/harmonyos-support.md)。标准示例通过 `moui build` 使用匹配的 `wzzc-dev/window` 平台模板。
@@ -187,15 +185,10 @@ moon run examples/showcase/linux_skia --target native
 
 ### Markdown Editor
 
-所见即所得的类 Typora Markdown 编辑器。源码位于 `examples/markdown_editor/app`，保留的 macOS/Web 入口保持轻量。
-
-```sh
-# Web (wasm-gc)
-moon build examples/markdown_editor/web_wasm --target wasm-gc
-
-# macOS Skia
-moon run examples/markdown_editor/macos_skia --target native
-```
+所见即所得的类 Typora Markdown 编辑器（MoMark）已独立成仓库：
+[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark)。它基于已发布的
+`wzzc-dev/moui` 与 `wzzc-dev/moui_richtext` 包构建，环境准备与各平台入口
+请见 MoMark 仓库 README。
 
 ### Mo Workbench
 
@@ -217,7 +210,6 @@ moon run examples/excel/macos_skia --target native
 精选示例的应用包聚焦测试：
 
 ```sh
-moon test examples/markdown_editor/app --target native
 moon test examples/mo_workbench/app --target native
 moon test examples/showcase/app --target native
 moon test examples/excel/app --target native

@@ -165,12 +165,6 @@ fn handoff_targets() -> Array[HandoffTarget] {
       html_path: "examples/showcase/web_wasm/index.html",
       wasm_path: "_build/wasm-gc/debug/build/examples/showcase/web_wasm/web_wasm.wasm",
     },
-    {
-      name: "markdown-editor-web-wasm",
-      package_path: "examples/markdown_editor/web_wasm",
-      html_path: "examples/markdown_editor/web_wasm/index.html",
-      wasm_path: "_build/wasm-gc/debug/build/examples/markdown_editor/web_wasm/web_wasm.wasm",
-    },
   ]
 }
 

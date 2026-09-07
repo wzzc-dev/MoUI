@@ -22,8 +22,8 @@ struct ScenarioBudget {
 
 ///|
 let required_scenarios : Array[String] = [
-  "showcase-runtime-scroll", "markdown-editor-text-input", "excel-grid-navigation",
-  "virtual-list-100k", "multi-window-4", "deep-tree-env-toggle",
+  "showcase-runtime-scroll", "excel-grid-navigation", "virtual-list-100k", "multi-window-4",
+  "deep-tree-env-toggle",
 ]
 
 ///|

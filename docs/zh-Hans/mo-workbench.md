@@ -104,5 +104,5 @@ ACP 后端：
 - **ConnectPhone**：ADB/设备配对 UI + 文件传输 + 日志流。
 - **ScheduledTasks**：类 cron 任务调度器 + 任务历史。
 - **Plugins**：插件加载 + 配置面板。
-- **Write workspace**：Markdown 编辑器表面（`examples/markdown_editor` 包已经展示构建块）。
+- **Write workspace**：Markdown 编辑器表面（MoMark 已展示这些构建块）。
 - **跨平台入口点**：目前只有 macOS Skia 已接线；Linux/Windows/Web 入口点可作为 `linux_skia` / `windows_skia` / `web_wasm` 子包添加，而无需触碰共享应用。

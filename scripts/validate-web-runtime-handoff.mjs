@@ -51,12 +51,6 @@ const targets = [
     packagePath: "examples/showcase/web_wasm",
     wasmPath: "_build/wasm-gc/debug/build/examples/showcase/web_wasm/web_wasm.wasm",
   },
-  {
-    name: "markdown-editor-web-wasm",
-    packagePath: "examples/markdown_editor/web_wasm",
-    wasmPath:
-      "_build/wasm-gc/debug/build/examples/markdown_editor/web_wasm/web_wasm.wasm",
-  },
 ];
 
 const normalizeBaseUrl = url => url.replace(/\/+$/, "");

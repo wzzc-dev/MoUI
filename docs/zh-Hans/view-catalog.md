@@ -21,7 +21,7 @@ Showcase 按以下顺序暴露当前面向用户的 catalog：`Overview -> Text 
 
 ## Preview Control Baseline
 
-该 baseline 按 app 作者通常最先需要的 workflow 对公开控件和可复用 app pattern 分组。它刻意是一个 preview 矩阵：`ready` 表示公开 `views` API 可用、下方已记录、有聚焦测试覆盖，并在 Showcase 中可见。`partial` 表示面向用户的 surface 已存在，但重要行为仍由 app、host 拥有，或比 SwiftUI/Flutter 风格预期更窄。`example-only pattern` 表示 workflow 在示例包中演示，但尚不是可复用的公开 constructor。`missing` 表示 catalog 不应暗示该能力存在。Catalog 本身保持 renderer-neutral：view helper 发出普通 core layout、event、semantics 和 draw-command surface。在当前 preview push 中，Showcase 和 Markdown Editor 原生 Skia 入口是首选 runtime consumer，用于证明这些 surface 在 Skia-first 原生 baseline 上仍然可用。
+该 baseline 按 app 作者通常最先需要的 workflow 对公开控件和可复用 app pattern 分组。它刻意是一个 preview 矩阵：`ready` 表示公开 `views` API 可用、下方已记录、有聚焦测试覆盖，并在 Showcase 中可见。`partial` 表示面向用户的 surface 已存在，但重要行为仍由 app、host 拥有，或比 SwiftUI/Flutter 风格预期更窄。`example-only pattern` 表示 workflow 在示例包中演示，但尚不是可复用的公开 constructor。`missing` 表示 catalog 不应暗示该能力存在。Catalog 本身保持 renderer-neutral：view helper 发出普通 core layout、event、semantics 和 draw-command surface。在当前 preview push 中，Showcase 原生 Skia 入口是首选 runtime consumer，用于证明这些 surface 在 Skia-first 原生 baseline 上仍然可用。
 
 | Workflow | 当前状态 | 公开 surface | Showcase / 示例覆盖 | Preview 缺口 |
 | --- | --- | --- | --- | --- |
@@ -50,12 +50,12 @@ fn view(draft : String) -> @moui.View[Msg] {
 
 | Constructor | Source | Theme | Semantics | Tests | 示例覆盖 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `text` | `views/views.mbt` | Font/foreground modifier | core 中的 Text role | `views/tests/smoke` | Showcase、Markdown Editor | 基础 label primitive。 |
+| `text` | `views/views.mbt` | Font/foreground modifier | core 中的 Text role | `views/tests/smoke` | Showcase、MoMark | 基础 label primitive。 |
 | `image` | `views/views.mbt` | 基于 modifier | Image draw intent | `views/tests/smoke` | Showcase | Renderer image 支持在 capability report 中跟踪；Showcase Interaction Lab 覆盖 ready/loading/failed lifecycle state。 |
 | `icon` | `views/views.mbt` | 基于 modifier | core 中的 Image role | `views/tests/smoke` | Showcase | 按 `IconName` 定尺寸的 icon glyph primitive，可选 color/weight override。 |
 | `web_view` | `views/web_view.mbt` | Host native WebView | core 中的 WebView role | `views/tests/smoke`、WebView Demo app 测试 | WebView Demo | 受控 native WebView primitive。composition root 创建 `WebViewHost` 和 `WebViewController`；导航使用 `controller.navigate(url)`，controller task 覆盖 reload、stop、back、forward、JSON bridge message、request/response 和 dispose。经过校验的 `WebViewEvent` 通过 program effect/subscription path 返回。 |
 | `canvas` | `views/canvas.mbt` | 基于 modifier | Group | `views/tests/smoke` | Showcase Platform 和 Diagnostics 工作区 | 纯绘制 view（带 `PaintContext` 的 `measure` + `draw`）。无 children。参见 [Canvas and custom paint](../canvas-and-custom-paint.md)。 |
-| `custom_layout` / `custom_children_layout` | `views/views.mbt` | N/A | Group / child semantics | `views/tests/smoke` | PDF Workbench；Markdown Editor surface；Showcase | 用于高级控件的 custom measure/paint 和 multi-child layout delegate。 |
+| `custom_layout` / `custom_children_layout` | `views/views.mbt` | N/A | Group / child semantics | `views/tests/smoke` | PDF Workbench；MoMark surface；Showcase | 用于高级控件的 custom measure/paint 和 multi-child layout delegate。 |
 
 ## Controls
 
@@ -67,7 +67,7 @@ fn view(draft : String) -> @moui.View[Msg] {
 | `checkbox` | `views/views.mbt` | ChoiceControlStyle，支持直接 font/color/size override | Checkbox | `views/tests/smoke` | Showcase Todo pattern | TEA 优先 boolean control。Component-local state 应在跨越公开 `views` API 边界前投影为显式值和类型化 `on_change` 消息。 |
 | `toggle` | `views/control_choice.mbt` | ChoiceControlStyle，支持直接 color override | Switch | `views/tests/smoke` | Showcase | TEA 优先 switch control。 |
 | `radio` | `views/control_choice.mbt` | ChoiceControlStyle，支持直接 color override | Radio | `views/tests/smoke` | Showcase | TEA 优先 single-option primitive。 |
-| `text_field` | `views/views.mbt`、`views/text_input_controls.mbt` | TextFieldStyle | Text field | `views/tests/smoke`、core input 测试 | Showcase、Markdown Editor | TEA 优先 text input。App、host、smoke 和跨包测试应使用这个 `views` 入口，而不是直接使用 core control constructor。 |
+| `text_field` | `views/views.mbt`、`views/text_input_controls.mbt` | TextFieldStyle | Text field | `views/tests/smoke`、core input 测试 | Showcase、MoMark | TEA 优先 text input。App、host、smoke 和跨包测试应使用这个 `views` 入口，而不是直接使用 core control constructor。 |
 | `searchbar` | `views/views.mbt`、`views/text_input_controls.mbt` | TextFieldStyle | Search field | `views/tests/smoke` | Showcase | 专用于过滤和 clear action 的 TEA 优先 text input。 |
 | `picker` | `views/views.mbt` | PickerStyle | Picker | `views/tests/smoke` | Showcase | TEA 优先 option picker，其弹出层是真实的 overlay 子树：由 runtime placement pass 摆放（翻转并夹取到视口）、提升到祖先裁剪之上，并通过 layer stack 暴露语义与 Escape。 |
 | `datepicker` | `views/datepicker.mbt` | PickerStyle | Date picker | `views/tests/smoke` | Showcase | TEA 优先 date picker，其日历面板是真实的 overlay 子树，由 runtime placement pass 摆放（翻转并夹取到视口）并支持 min/max range enforcement；逐日单元格语义仍是后续工作。 |
@@ -133,7 +133,7 @@ fn view(draft : String) -> @moui.View[Msg] {
 
 | Constructor | Source | Theme | Semantics | Tests | 示例覆盖 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `container` / `card` | `views/views.mbt` | SurfaceStyle | 通过 child 形成 Group | `views/tests/smoke` | Counter、Showcase、Markdown Editor | Styled container primitive；`card` 是简单 app 的 raised、padded 入口。 |
+| `container` / `card` | `views/views.mbt` | SurfaceStyle | 通过 child 形成 Group | `views/tests/smoke` | Counter、Showcase、MoMark | Styled container primitive；`card` 是简单 app 的 raised、padded 入口。 |
 | `empty` | `views/views.mbt` | N/A | None | `views/tests/smoke` | Showcase | optional/slot composition 的 zero-size placeholder leaf。 |
 | `toolbar` / `command_bar` / `button_group` / `status_bar` | `views/toolbar.mbt` | ButtonStyle/text/surface | Group | `views/descriptor_helpers_test.mbt`、`views/tests/smoke`、Showcase 测试 | Showcase Navigation Shell | 从 `action_item` descriptor、button、text 和 surface 构建的 app-owned command 和 status surface。 |
 | `command_palette` | `views/views.mbt` | ButtonStyle/text/surface | Menu | `views/tests/smoke`、`core/gesture_action_wbtest.mbt`、Showcase 测试 | Showcase Navigation Shell | 将 `@views.ActionCommand` metadata（`group`、`description`、shortcut label、enabled state）渲染成 TEA-controlled palette，无需 native menu 或 renderer 变化。 |
@@ -146,7 +146,7 @@ fn view(draft : String) -> @moui.View[Msg] {
 | `padding_edges` / `padding_xy` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke` | Showcase | 基于同一个有序 modifier 的 per-edge 和 symmetric horizontal/vertical padding convenience wrapper。 |
 | `stack` / `overlay` | `views/views.mbt` | 基于 child/modifier | Children preserved | `views/tests/smoke` | Showcase、Dialog host、Tooltip | Overlay layout primitive。 |
 | `popover` | `views/popover_overlay.mbt` | SurfaceStyle | Anchor 加可选 overlay content | `views/tests/smoke` | Showcase Interaction Lab | 使用现有 stack、align 和 container primitive 的 view-level floating overlay。可选 `trap_focus=true` 路径应用 `View::focus_trap`；默认情况下 popover 保持 non-modal。Native context menu 通过 host service。 |
-| `scroll_view` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke`、`core/advanced_layout_test.mbt` | Showcase、Markdown Editor | 通过 core 发出 clip/offset 行为，并可通过 `on_scroll` 报告 wheel delta。 |
+| `scroll_view` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke`、`core/advanced_layout_test.mbt` | Showcase、MoMark | 通过 core 发出 clip/offset 行为，并可通过 `on_scroll` 报告 wheel delta。 |
 | `grid` | `views/views.mbt` | N/A | Children preserved | `views/tests/smoke` | Showcase | 固定列 layout。 |
 | `list` | `views/views.mbt` | N/A | 通过 core 的 List/list item role | `views/tests/smoke`、`core/semantics_test.mbt` | Showcase Todo pattern | Eager list layout。 |
 | `lazy_list` | `views/views.mbt` | N/A | List output | `views/tests/smoke` | Showcase | 从 data 取窗口可见 row。 |

@@ -31,7 +31,6 @@
 | ./examples/button_freeze_probe |
 | ./examples/showcase |
 | ./examples/design_systems |
-| ./examples/markdown_editor |
 | ./examples/pdf_workbench |
 | ./examples/settings |
 | ./examples/data_table |
@@ -77,7 +76,6 @@
 | Button Freeze Probe | examples/button_freeze_probe | no |
 | Showcase | examples/showcase | yes |
 | Design Systems | examples/design_systems | no |
-| Markdown Editor | examples/markdown_editor | yes |
 | PDF Workbench | examples/pdf_workbench | no |
 | Settings | examples/settings | no |
 | Data Table | examples/data_table | no |

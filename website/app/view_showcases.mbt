@@ -36,7 +36,7 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
       title_key: "showcase.markdown.title",
       subtitle_key: "showcase.markdown.subtitle",
       status_key: "showcase.status.source",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/markdown_editor/app",
+      source_url: "https://github.com/wzzc-dev/MoMark",
     },
     {
       slug: "mo_workbench",

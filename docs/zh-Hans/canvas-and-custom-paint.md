@@ -79,7 +79,6 @@ MoUI 面向应用的动画大多是**应用采样**：
 | 教程 `06-animation` | 由 `now_ms` 驱动的 `animated_canvas` orb |
 | `examples/showcase` Advanced Rendering | 图层、混合、滤镜、着色器、路径、变换 |
 | `examples/pdf_workbench` | `custom_layout` 页面位图 |
-| `examples/markdown_editor` | 编辑器表面绘制 |
 
 渲染器能力状态（渐变、滤镜、文本 shaping 等）位于
 `docs/renderer-capability-report.md`，不在视图目录中。

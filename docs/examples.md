@@ -75,7 +75,7 @@ entrypoint supplies the program and renderer provider. Run
 | Browser | Pure-MoonBit HTML browser demo | `examples/browser/app/`, `examples/browser/engine/` | crater (HTML/CSS/paint) + dowdiness/js_engine (pure-MoonBit JS) rendered through MoUI canvas: address bar, link hit-testing, data-URL navigation, page scripts |
 | PDF Workbench | PDF reading and light editing prototype | `examples/pdf_workbench/app/` | Typed binary file services, PDF adapters, and retained macOS Skia entrypoint |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette, typed `ProgramCommand`, and context-menu service flow through the same TEA queue |
-| Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
+| MoMark (Markdown Editor) | Typora-style editing prototype, now its own repository | [wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark) | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Code Editor | Native code editor shell and language-provider prototype | `examples/code_editor/app/` | Native `moui_richtext` editor shell with activity rail, file tab, line-number gutter, status bar, tokenizer-backed highlighting, bracket matching, auto indentation, multi-cursor edits, hidden find/replace overlay, runtime action-command shortcuts, completion overlay, diagnostics, hover, go-to-definition, main-editor Diff mode, and custom language/provider registration through app-owned callbacks |
 | Terminal | PTY-backed terminal emulator | `examples/terminal/app/` | Screen buffer (cells/attrs/wide chars/scroll region/scrollback), VT/ANSI parser (SGR/cursor/erase/OSC title/modes), run-merging mono rendering with 16/256/truecolor, native `openpty`+`posix_spawn` PTY host with async read loop, keyboard input encoding (Ctrl/special/function keys), ⌘-arrow scrollback review, and a macOS Skia entrypoint |
 | Mo Desktop | macOS-inspired responsive desktop simulation | `examples/mo_desktop/app/` | Lock/unlock session, image wallpaper, menu bar, live dock, calendar/weather/task widgets, responsive Finder with navigation/search/icon-list modes/selection, Safari start page and search results, searchable Apps/Actions launcher, notifications, Control Center toggles/sliders, global light/dark appearance, Web wasm-gc and macOS Skia entrypoints |
@@ -94,8 +94,7 @@ the selected same-origin Markdown file from `docs/` at runtime. For local
 preview, run `node scripts/sync-website-docs.mjs` so `website/web_wasm/docs/`
 contains the root docs plus `moui-readme.md` and `moui-skia-readme.md`. The
 GitHub Pages workflow packages `website/web_wasm` at the site root, plus
-`examples/showcase/web_wasm` at `/showcase/` and
-`examples/markdown_editor/web_wasm` at `/markdown-editor/`, using
+`examples/showcase/web_wasm` at `/showcase/`, using
 `scripts/package-web-app.mjs` for release/strip wasm, local runtime JS,
 precompressed assets, and `bundle-size.json`. It then runs
 `node scripts/sync-website-docs.mjs --out dist/pages/docs` so the published
@@ -336,11 +335,10 @@ development workflows:
 - `Examples`: Counter and Todo reusable app patterns until the dedicated
   example apps cover those workflows.
 
-The Markdown editor keeps Markdown source as the saved value while presenting a
-formatted editor surface as the primary workflow. Source preview remains
-available from the toolbar. See [Markdown Editor](markdown-editor.md) for the
-editing model, source/visual mapping, contextual commands, and validation
-guidance.
+The Typora-style WYSIWYG Markdown editor (MoMark) lives in its own repository,
+[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark), built on the published
+`wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages. See
+[Markdown Editor](markdown-editor.md) for the pointer.
 
 ## Settings
 
@@ -609,7 +607,6 @@ local static server:
 ```sh
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon build examples/mo_desktop/web_wasm --target wasm-gc
 moon build website/web_wasm --target wasm-gc
 python3 -m http.server 8080 --bind 127.0.0.1
@@ -645,7 +642,6 @@ compose it with `@macos.entry()` through `@runtime.run_app`:
 
 ```sh
 moon build examples/showcase/macos_skia --target native
-moon build examples/markdown_editor/macos_skia --target native
 moon build examples/pdf_workbench/macos_skia --target native
 moon build examples/mo_desktop/macos_skia --target native
 moon build examples/mo_workbench/macos_skia --target native
@@ -667,7 +663,7 @@ scripts/macos-skia-renderer-smoke.sh
 
 On macOS, the helper below resolves the pinned JetBrains Skia binary provider,
 temporarily wires the resulting include/library paths into `moui_skia`, the MoUI
-renderer smoke, Showcase, Markdown Editor, and Mo Workbench `macos_skia`
+renderer smoke, Showcase, and Mo Workbench `macos_skia`
 packages, then runs the renderer pixel smoke and builds the Showcase entrypoint:
 
 ```sh
@@ -687,13 +683,10 @@ to override the environment for that invocation. HarmonyOS is stricter:
 explicit `skia-raster`.
 
 For a fuller local smoke, pass `--run-showcase-smoke`. The helper builds
-Showcase and then runs the unpublished `moui_tests` first-frame smoke. Add
-`--run-markdown-smoke` to build Markdown Editor and run the same internal
-first-frame marker:
+Showcase and then runs the unpublished `moui_tests` first-frame smoke:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
-scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 ```
 
 Use `--skia-provider existing` when you already have a local Skia build:
@@ -829,12 +822,10 @@ moon test examples/pdf_workbench/pdflite_service_protocol --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon test examples/command_palette/app --target native
-moon test examples/markdown_editor/app --target native
 moon test examples/mo_desktop/app --target native
 moon test website/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon build examples/mo_desktop/web_wasm --target wasm-gc
 moon build website/web_wasm --target wasm-gc
 node scripts/web-bundle-size.mjs examples/counter/web_wasm --json

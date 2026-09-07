@@ -15,7 +15,6 @@ let required_native_pkg_vars : Map[String, String] = {
 let required_moui_entry_tokens : Map[String, Array[String]] = {
   "moui_tests/skia_renderer_smoke/native/moon.pkg": [],
   "examples/showcase/macos_skia/moon.pkg": [],
-  "examples/markdown_editor/macos_skia/moon.pkg": [],
   "examples/mo_workbench/macos_skia/moon.pkg": [],
   "examples/button_freeze_probe/macos_skia/moon.pkg": [],
   "examples/showcase/linux_skia/moon.pkg": [],

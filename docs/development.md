@@ -47,9 +47,7 @@ Use the smallest useful loop:
 ```sh
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```
 
@@ -192,7 +190,7 @@ CI) fails if `moon.work` lists either nested window module. Use dev mode only
 while editing window source, then turn it off before normal checks. After
 publishing a new window version,
 update the pinned version in `moui/moon.mod`, `moui_skia/moon.mod`,
-`moui_webview/moon.mod`, and `examples/markdown_editor/moon.mod`, then run
+and `moui_webview/moon.mod`, then run
 `moon update` to refresh the registry cache.
 
 On Windows, use the repository update helper:
@@ -414,18 +412,16 @@ smoke log proves the optional shaped-run path was available.
 
 Add `--run-showcase-smoke` when you want the helper to launch the built
 `examples/showcase/macos_skia` executable, wait for the first Skia-presented
-frame, and then exit automatically. Add `--run-markdown-smoke` to do the same
-for `examples/markdown_editor/macos_skia`:
+frame, and then exit automatically:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
-scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 ```
 
 The renderer smoke and normal macOS Skia app entrypoints use the default
 system-FontMgr text path, including optional SkShaper when enabled. The
-first-frame Showcase and Markdown Editor smokes set each entrypoint's
-exit-after-first-present flag, and those entrypoints explicitly select
+first-frame Showcase smoke sets the entrypoint's
+exit-after-first-present flag, and that entrypoint explicitly selects
 `EmptyTypeface` only for the smoke run. This keeps first-frame AppKit
 presentation evidence on the safer default-font retry path while preserving the
 normal app default that exercises platform font lookup, emoji retry, and
@@ -453,8 +449,7 @@ scripts/macos-skia-renderer-smoke.sh \
 
 It temporarily configures `moui_skia/native`,
 `moui_tests/skia_renderer_smoke/native`, `examples/showcase/macos_skia`,
-`examples/markdown_editor/macos_skia`, and
-`examples/mo_workbench/macos_skia`, runs the MoUI renderer pixel smoke, builds
+and `examples/mo_workbench/macos_skia`, runs the MoUI renderer pixel smoke, builds
 the macOS Skia Showcase entrypoint, and restores all touched `moon.pkg` files
 before exiting.
 
@@ -467,7 +462,6 @@ wasm-gc example:
 sh scripts/preview-loop.sh
 sh scripts/preview-loop.sh --watch
 sh scripts/preview-loop.sh --package examples/counter/web_wasm --watch
-sh scripts/preview-loop.sh --package examples/markdown_editor/web_wasm --watch
 sh scripts/preview-loop.sh --package website/web_wasm --watch
 ```
 
@@ -529,8 +523,7 @@ generates and validates an isolated temporary copy, so it does not require
 `website/web_wasm/docs/` to exist in a clean checkout.
 
 GitHub Pages packages `website/web_wasm` at the site root, packages the
-Showcase and Markdown Editor Web entrypoints at `/showcase/` and
-`/markdown-editor/` with `scripts/package-web-app.mjs`, and nests the
+Showcase Web entrypoint at `/showcase/` with `scripts/package-web-app.mjs`, and nests the
 Playground with
 `node scripts/package-website-playground.mjs --out dist/pages/playground`,
 then stages docs with
@@ -725,7 +718,6 @@ node scripts/validate-renderer-provider-manifests.mjs
 sh scripts/check.sh --profile platform
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdflite_service_protocol --target native
@@ -733,7 +725,6 @@ moon test examples/pdf_workbench/pdflite_service_native_transport --target nativ
 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/package-web-app.mjs examples/counter/web_wasm --out artifacts/web/counter
 sh scripts/check.sh --profile full
 moon build examples/showcase/macos_skia --target native
@@ -773,9 +764,9 @@ frontends and tooling:
 - `Milky2018/moon_zeno` powers renderer path tessellation from MoUI
   `DrawPath` / `PathSpec` values into triangle meshes. SVG parsing remains the
   importer frontend's job.
-- `mizchi/markdown` powers the Markdown Editor's package-local parser adapter
-  and rich text mapping. See [Markdown Editor](markdown-editor.md) for the
-  app-level editing model.
+- `mizchi/markdown` powers the editor parser adapter and rich text mapping
+  in MoMark ([wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark)). See
+  [Markdown Editor](markdown-editor.md) for the pointer.
 - `mizchi/svg` powers `render.import_svg(String) -> SvgImportResult`, lowering
   parsed SVG scene graph nodes into MoUI `DrawCommand` values.
 - `moonbitlang/quickcheck` and `mizchi/pixelmatch` are exercised from

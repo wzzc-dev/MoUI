@@ -10,12 +10,13 @@ DeepSeek-GUI 启发的多工作区 shell，包含 Code chat、模型/思考控�
 
 GitHub 源码：https://github.com/wzzc-dev/MoUI/tree/main/examples/mo_workbench
 
-## Markdown Editor
+## MoMark (Markdown Editor)
 
-Markdown Editor 是一个 Typora 风格的 WYSIWYG 编辑原型，在源码和可视化编辑模式之间
-共享一个带类型的 Markdown 应用模型。
+MoMark 是一个 Typora 风格的所见即所得 Markdown 编辑器，在源码和可视化编辑模式之间
+共享一个带类型的 Markdown 应用模型。它基于已发布的 `wzzc-dev/moui` 与
+`wzzc-dev/moui_richtext` 包构建，并保存在独立仓库中。
 
-GitHub 源码：https://github.com/wzzc-dev/MoUI/tree/main/examples/markdown_editor
+GitHub 源码：https://github.com/wzzc-dev/MoMark
 
 ## Showcase
 

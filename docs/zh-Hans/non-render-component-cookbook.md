@@ -321,7 +321,6 @@ fn subscriptions(
 ```sh
 moon test moui/backend --target native
 moon test examples/showcase/app/platform --target native
-moon test examples/markdown_editor/app --target native
 ```
 
 ## 剪贴板
@@ -345,7 +344,6 @@ fn write_clipboard(
 ```sh
 moon test moui/backend --target native
 moon test examples/showcase/app/platform --target native
-moon test examples/markdown_editor/app --target native
 ```
 
 ## 键盘命令

@@ -46,7 +46,6 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 <div align="center">
 
   <img src="../../resource/screenshots/showcase.png" width="48%" alt="Showcase 展示应用"/>
-  <img src="../../resource/screenshots/markdown_editor.png" width="48%" alt="Markdown 编辑器"/>
 
   <br/><br/>
 
@@ -99,10 +98,9 @@ cd MoUI
 sh scripts/ci-moon-update.sh
 sh scripts/check.sh --profile pr
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 ```
 
-Showcase 和 Markdown Editor 是主要的浏览与交互示例。它们的平台入口列在[运行示例](#running-examples)下。
+Showcase 是主要的浏览与交互示例；所见即所得 Markdown 编辑器已作为 MoMark 独立成仓库。它们的平台入口列在[运行示例](#running-examples)下。
 
 框架搭建细节，包括可选 submodule 和 `window/` 本地源码工作流，位于[开发指南](../development.md)。
 
@@ -126,7 +124,7 @@ node scripts/conformance-capture-scaffold.mjs --mode benchmark
 <a id="running-examples"></a>
 ## 运行示例
 
-重点示例 `showcase`、`markdown_editor`、`mo_workbench` 和 `excel` 在 `examples/<name>/app` 中共享 app 逻辑，并暴露很薄的平台入口。Showcase 使用 `web_wasm`、桌面 renderer 专用入口，以及 `android_window_hosted`、`ios_window_hosted` 和 `harmonyos_window_hosted` mobile 入口。
+重点示例 `showcase`、`mo_workbench` 和 `excel` 在 `examples/<name>/app` 中共享 app 逻辑，并暴露很薄的平台入口。Showcase 使用 `web_wasm`、桌面 renderer 专用入口，以及 `android_window_hosted`、`ios_window_hosted` 和 `harmonyos_window_hosted` mobile 入口。
 
 要在 mobile 平台试用 Showcase，请按平台专用的设置、构建和运行说明操作：[Android](../android-support.md)、[iOS](../ios-support.md) 或 [HarmonyOS](../harmonyos-support.md)。标准示例使用 `wzzc-dev/window` template 和 `*_window_hosted` 入口；应用代码不需要维护原生项目副本。
 
@@ -159,15 +157,10 @@ moon run examples/showcase/linux_skia --target native
 
 ### Markdown Editor
 
-Typora 风格的所见即所得 Markdown 编辑器。源码位于 `examples/markdown_editor/app`；保留的 macOS/Web 入口很薄。
-
-```sh
-# Web (wasm-gc)
-moon build examples/markdown_editor/web_wasm --target wasm-gc
-
-# macOS Skia
-moon run examples/markdown_editor/macos_skia --target native
-```
+所见即所得的类 Typora Markdown 编辑器（MoMark）已独立成仓库：
+[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark)。它基于已发布的
+`wzzc-dev/moui` 与 `wzzc-dev/moui_richtext` 包构建，环境准备与各平台入口
+请见 MoMark 仓库 README。
 
 ### Mo Workbench
 
@@ -189,7 +182,6 @@ moon run examples/excel/macos_skia --target native
 重点示例的聚焦 app-package 测试：
 
 ```sh
-moon test examples/markdown_editor/app --target native
 moon test examples/mo_workbench/app --target native
 moon test examples/showcase/app --target native
 moon test examples/excel/app --target native

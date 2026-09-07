@@ -33,7 +33,6 @@ members = [
   "./examples/showcase",
   "./examples/design_systems",
   "./examples/excel",
-  "./examples/markdown_editor",
   "./examples/pdf_workbench",
   "./examples/settings",
   "./examples/data_table",

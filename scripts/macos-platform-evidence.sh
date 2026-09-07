@@ -9,9 +9,7 @@ Collects macOS platform runtime evidence by:
 1. Configuring the repository for real Skia linking (release provider)
 2. Building and running the Showcase macos_skia entrypoint with the
    first-frame auto-exit marker (MOUI_FIRST_FRAME_EXIT=1)
-3. Building and running the Markdown Editor macos_skia entrypoint with its
-   first-frame auto-exit marker
-4. Collecting evidence logs under artifacts/platform-evidence/macos/
+3. Collecting evidence logs under artifacts/platform-evidence/macos/
 
 Options:
   --log-dir PATH          Output directory for evidence logs.
@@ -21,7 +19,6 @@ Options:
   --link-mode static|dynamic|auto
                           Skia link mode. Default: static.
   --run-showcase-smoke    Run the Showcase first-frame smoke (default: on).
-  --run-markdown-smoke    Run the Markdown Editor first-frame smoke (default: on).
   --run-ime-smoke         Run the Showcase native IME runtime smoke (default: on).
   --dry-run-config        Print resolved paths and exit without building.
   -h, --help              Show this help.
@@ -37,7 +34,6 @@ log_dir="$REPO_ROOT/artifacts/platform-evidence/macos"
 skia_provider="${MOUI_SKIA_SKIA_PROVIDER:-release}"
 skia_link_mode="${MOUI_SKIA_LINK_MODE:-static}"
 run_showcase=1
-run_markdown=1
 run_ime=1
 dry_run_config=0
 
@@ -48,8 +44,6 @@ while [[ $# -gt 0 ]]; do
     --link-mode) skia_link_mode="${2:-}"; shift 2 ;;
     --run-showcase-smoke) run_showcase=1; shift ;;
     --no-showcase-smoke) run_showcase=0; shift ;;
-    --run-markdown-smoke) run_markdown=1; shift ;;
-    --no-markdown-smoke) run_markdown=0; shift ;;
     --run-ime-smoke) run_ime=1; shift ;;
     --no-ime-smoke) run_ime=0; shift ;;
     --dry-run-config) dry_run_config=1; shift ;;
@@ -65,7 +59,6 @@ case "$log_dir" in
 esac
 
 showcase_log="$resolved_log_dir/showcase-macos-skia-first-frame.log"
-markdown_log="$resolved_log_dir/markdown-editor-macos-skia-first-frame.log"
 ime_log="$resolved_log_dir/ime-showcase-runtime.log"
 preflight_log="$resolved_log_dir/macos-platform-evidence-preflight.log"
 summary_log="$resolved_log_dir/macos-platform-evidence-summary.log"
@@ -77,7 +70,6 @@ echo "macOS platform evidence run:
   skia_provider=$skia_provider
   skia_link_mode=$skia_link_mode
   run_showcase=$run_showcase
-  run_markdown=$run_markdown
   run_ime=$run_ime
 " | tee "$preflight_log"
 
@@ -152,12 +144,7 @@ echo "=== Step 3: Configure example macos_skia moon.pkg ===" | tee -a "$prefligh
 
 showcase_pkg="$REPO_ROOT/examples/showcase/macos_skia/moon.pkg"
 showcase_backup="$showcase_pkg.moui-evidence.bak"
-markdown_pkg="$REPO_ROOT/examples/markdown_editor/macos_skia/moon.pkg"
-markdown_backup="$markdown_pkg.moui-evidence.bak"
 cp "$showcase_pkg" "$showcase_backup"
-if [[ -f "$markdown_pkg" ]]; then
-  cp "$markdown_pkg" "$markdown_backup"
-fi
 
 cat > "$showcase_pkg" <<PKGEOF
 import {
@@ -183,43 +170,11 @@ options(
 PKGEOF
 echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
 
-if [[ -f "$markdown_pkg" ]]; then
-  cat > "$markdown_pkg" <<PKGEOF
-import {
-  "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/macos" @macos_host,
-  "wzzc-dev/moui_skia_renderer" @render_skia,
-  "wzzc-dev/window/dpi",
-  "examples/markdown_editor",
-}
-
-supported_targets = "native"
-
-pkgtype(kind: "executable")
-
-options(
-  link: {
-    "native": {
-      "stub-cc-flags": "$macos_stub_cc_flags",
-      "cc-link-flags": "$macos_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-PKGEOF
-  echo "  Wrote $markdown_pkg" | tee -a "$preflight_log"
-fi
-
 restore_example_pkgs() {
   if [[ -f "$showcase_backup" ]]; then
     cp "$showcase_backup" "$showcase_pkg"
     rm -f "$showcase_backup"
     echo "Restored $showcase_pkg"
-  fi
-  if [[ -f "$markdown_backup" ]]; then
-    cp "$markdown_backup" "$markdown_pkg"
-    rm -f "$markdown_backup"
-    echo "Restored $markdown_pkg"
   fi
   cd "$REPO_ROOT"
   git checkout -- moui_skia/native/moon.pkg 2>/dev/null || true
@@ -273,52 +228,11 @@ if [[ $run_showcase -eq 1 ]]; then
 fi
 
 #
-# Step 6: Optional Markdown Editor first-frame smoke
-#
-markdown_status="skipped"
-if [[ $run_markdown -eq 1 ]]; then
-  echo "=== Step 6: Run Markdown Editor first-frame smoke ===" | tee -a "$preflight_log"
-  cd "$REPO_ROOT"
-  if [[ -d "$REPO_ROOT/examples/markdown_editor/macos_skia" ]]; then
-    MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-      MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-      MOUI_MARKDOWN_EDITOR_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
-      moon run examples/markdown_editor/macos_skia --target native \
-      > "$markdown_log" 2>&1 &
-    markdown_pid=$!
-
-    (
-      sleep 60
-      if kill -0 "$markdown_pid" 2>/dev/null; then
-        echo "Markdown Editor first-frame smoke timed out after 60s" >> "$markdown_log"
-        kill "$markdown_pid" 2>/dev/null
-      fi
-    ) &
-    markdown_watchdog=$!
-    wait "$markdown_pid"
-    markdown_status=$?
-    kill "$markdown_watchdog" 2>/dev/null || true
-    wait "$markdown_watchdog" 2>/dev/null || true
-
-    echo "  Markdown Editor exit status: $markdown_status" | tee -a "$preflight_log"
-    if grep -Fq "macOS renderer presented first frame; exiting by request; title=MoUI Markdown Editor" "$markdown_log"; then
-      echo "  Verified Markdown Editor first-frame marker." | tee -a "$preflight_log"
-    else
-      echo "  WARNING: Markdown Editor first-frame marker not found." | tee -a "$preflight_log"
-    fi
-  else
-    echo "  examples/markdown_editor/macos_skia not present; skipping." \
-      | tee -a "$preflight_log"
-    markdown_status="absent"
-  fi
-fi
-
-#
-# Step 7: Optional Showcase native IME runtime smoke
+# Step 6: Optional Showcase native IME runtime smoke
 #
 ime_status="skipped"
 if [[ $run_ime -eq 1 ]]; then
-  echo "=== Step 7: Run Showcase native IME runtime smoke ===" | tee -a "$preflight_log"
+  echo "=== Step 6: Run Showcase native IME runtime smoke ===" | tee -a "$preflight_log"
   cd "$REPO_ROOT"
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
     MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
@@ -350,18 +264,16 @@ if [[ $run_ime -eq 1 ]]; then
 fi
 
 #
-# Step 8: Generate summary
+# Step 7: Generate summary
 #
-echo "=== Step 8: Generate evidence summary ===" | tee -a "$preflight_log"
+echo "=== Step 7: Generate evidence summary ===" | tee -a "$preflight_log"
 {
   echo "macOS platform evidence summary:"
   echo "  skia_commit=$skia_commit"
   echo "  showcase_first_frame_status=$(grep -Fq "macOS renderer presented first frame; exiting by request; title=MoUI Showcase" "$showcase_log" 2>/dev/null && echo "passed" || echo "failed")"
-  echo "  markdown_first_frame_status=$(if [[ "$markdown_status" == "passed" || "$markdown_status" == "skipped" || "$markdown_status" == "absent" ]]; then echo "$markdown_status"; elif grep -Fq "macOS renderer presented first frame; exiting by request; title=MoUI Markdown Editor" "$markdown_log" 2>/dev/null; then echo "passed"; else echo "failed"; fi)"
   echo "  ime_runtime_markers=$(grep -q "NSTextInputClient" "$ime_log" 2>/dev/null && echo "present" || echo "missing")"
   echo "  preflight_log=$preflight_log"
   echo "  showcase_log=$showcase_log"
-  echo "  markdown_log=$markdown_log"
   echo "  ime_log=$ime_log"
   echo "  summary_log=$summary_log"
 } | tee "$summary_log"
@@ -369,7 +281,6 @@ echo "=== Step 8: Generate evidence summary ===" | tee -a "$preflight_log"
 echo ""
 echo "macOS platform evidence collected. Logs:"
 echo "  Showcase:           $showcase_log"
-echo "  Markdown Editor:    $markdown_log"
 echo "  IME runtime:        $ime_log"
 echo "  Summary:            $summary_log"
 echo "  Preflight:          $preflight_log"

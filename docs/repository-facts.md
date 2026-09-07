@@ -42,7 +42,6 @@ This file is generated from repository manifests and validator reports.
 | ./examples/showcase |
 | ./examples/design_systems |
 | ./examples/excel |
-| ./examples/markdown_editor |
 | ./examples/pdf_workbench |
 | ./examples/settings |
 | ./examples/data_table |
@@ -102,7 +101,6 @@ This file is generated from repository manifests and validator reports.
 | Showcase | examples/showcase | yes |
 | Design Systems | examples/design_systems | no |
 | Excel Viewer | examples/excel | yes |
-| Markdown Editor | examples/markdown_editor | yes |
 | PDF Workbench | examples/pdf_workbench | no |
 | Settings | examples/settings | no |
 | Data Table | examples/data_table | no |

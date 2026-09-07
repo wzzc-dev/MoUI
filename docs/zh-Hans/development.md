@@ -29,9 +29,7 @@ node scripts/generate-playground-assets.mjs --out dist/playground
 ```sh
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```
 
@@ -129,7 +127,7 @@ sh scripts/window-dev-mode.sh on      # add both nested window modules (local ov
 sh scripts/window-dev-mode.sh off     # remove ./window; resolve from mooncakes.io
 ```
 
-`scripts/validate-window-dependency.mjs`（由 `check.sh --profile daily` 和 CI 运行）会在 `moon.work` 列出任一嵌套 window 模块时失败。只有编辑 window 源码时才运行 `sh scripts/window-dev-mode.sh on`，完成后关闭 dev mode 再执行正常校验。发布新 window 版本后，更新 `moui/moon.mod`、`moui_skia/moon.mod`、`moui_webview/moon.mod` 和 `examples/markdown_editor/moon.mod` 中的 pinned version，然后运行 `moon update` 刷新 registry cache。
+`scripts/validate-window-dependency.mjs`（由 `check.sh --profile daily` 和 CI 运行）会在 `moon.work` 列出任一嵌套 window 模块时失败。只有编辑 window 源码时才运行 `sh scripts/window-dev-mode.sh on`，完成后关闭 dev mode 再执行正常校验。发布新 window 版本后，更新 `moui/moon.mod`、`moui_skia/moon.mod` 和 `moui_webview/moon.mod` 中的 pinned version，然后运行 `moon update` 刷新 registry cache。
 
 在 Windows 上，使用 repository update helper：
 
@@ -195,14 +193,13 @@ Skia/Metal link flags 由 `moui_skia` prebuild 注入（`${build.MOUI_SKIA_CC_LI
 
 当所选 Skia library directory 包含 SkShaper module libraries 时传入 `--enable-skshaper`。helper 随后会用 SkShaper define 配置 `moui_skia/native`，链接 `libskshaper`、`libskunicode_core`、`libskunicode_icu`、`libharfbuzz` 和 `libicu`，并验证 MoUI renderer smoke log 证明 optional shaped-run path 可用。
 
-当你希望 helper 启动已构建的 `examples/showcase/macos_skia` executable、等待首个 Skia-presented frame、然后自动退出时，添加 `--run-showcase-smoke`。添加 `--run-markdown-smoke` 对 `examples/markdown_editor/macos_skia` 执行同样操作：
+当你希望 helper 启动已构建的 `examples/showcase/macos_skia` executable、等待首个 Skia-presented frame、然后自动退出时，添加 `--run-showcase-smoke`：
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
-scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 ```
 
-renderer smoke 和普通 macOS Skia app entrypoints 使用默认 system-FontMgr text path，包括启用时的 optional SkShaper。first-frame Showcase 和 Markdown Editor smokes 设置各自 entrypoint 的 exit-after-first-present flag，并且这些 entrypoints 仅在 smoke run 中显式选择 `EmptyTypeface`。这让 first-frame AppKit presentation evidence 保持在更安全的 default-font retry path 上，同时保留正常 app default，使其继续 exercise platform font lookup、emoji retry 和链接时的 optional SkShaper。
+renderer smoke 和普通 macOS Skia app entrypoints 使用默认 system-FontMgr text path，包括启用时的 optional SkShaper。first-frame Showcase smoke 设置该 entrypoint 的 exit-after-first-present flag，并且该 entrypoint 仅在 smoke run 中显式选择 `EmptyTypeface`。这让 first-frame AppKit presentation evidence 保持在更安全的 default-font retry path 上，同时保留正常 app default，使其继续 exercise platform font lookup、emoji retry 和链接时的 optional SkShaper。
 
 当你已有 Skia checkout 或 binary package 时使用 `--skia-provider existing`：
 
@@ -222,7 +219,7 @@ scripts/macos-skia-renderer-smoke.sh \
   --work-dir .skia-cache/macos
 ```
 
-它会临时配置 `moui_skia/native`、`moui_tests/skia_renderer_smoke/native`、`examples/showcase/macos_skia`、`examples/markdown_editor/macos_skia` 和
+它会临时配置 `moui_skia/native`、`moui_tests/skia_renderer_smoke/native`、`examples/showcase/macos_skia` 和
 `examples/mo_workbench/macos_skia`，运行 MoUI renderer pixel smoke，构建 macOS Skia Showcase entrypoint，并在退出前恢复所有 touched `moon.pkg` files。
 
 ## 预览循环
@@ -233,7 +230,6 @@ scripts/macos-skia-renderer-smoke.sh \
 sh scripts/preview-loop.sh
 sh scripts/preview-loop.sh --watch
 sh scripts/preview-loop.sh --package examples/counter/web_wasm --watch
-sh scripts/preview-loop.sh --package examples/markdown_editor/web_wasm --watch
 sh scripts/preview-loop.sh --package website/web_wasm --watch
 ```
 
@@ -424,7 +420,6 @@ node scripts/validate-renderer-provider-manifests.mjs
 sh scripts/check.sh --profile platform
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdflite_service_protocol --target native
@@ -432,7 +427,6 @@ moon test examples/pdf_workbench/pdflite_service_native_transport --target nativ
 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/package-web-app.mjs examples/counter/web_wasm --out artifacts/web/counter
 sh scripts/check.sh --profile full
 moon build examples/showcase/macos_skia --target native

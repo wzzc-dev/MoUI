@@ -248,9 +248,6 @@ examples/showcase/windows_skia/ Windows showcase selecting native Skia raster
 examples/showcase/windows_wgpu/    Windows native WGPU diagnostic showcase
 examples/showcase/linux_skia/ Linux showcase selecting native Skia raster
 examples/showcase/linux_wgpu/      Linux Wayland native WGPU diagnostic showcase
-examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
-examples/markdown_editor/macos_skia/ macOS Markdown editor selecting native Skia raster
-examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
 examples/code_editor/app/ shared native code editor and language-provider demo app
 examples/code_editor/macos_skia/ retained Code Editor Skia entrypoint
 examples/webview_demo/app/ shared native WebView demo app

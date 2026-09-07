@@ -76,7 +76,7 @@ delete-range 计算、paste/input 转换、composition 光标偏移，或向 IME
 偏移转换。不要在绘制、焦点探测、滚动处理或普通宿主 IME polling 中放入整文档字素扫描、
 完整 Markdown 解析、完整 `RichTextDocument` 构造或文档高度遍历。
 
-预期的 Markdown Editor 滚动/输入管道是：
+预期的富文本编辑器滚动/输入管道是：
 
 ```text
 ScrollState -> MarkdownDocumentSession height index -> visible block window
@@ -110,8 +110,7 @@ Provider 包刻意保持分离：
 原生 WGPU 文本引擎选择属于 WGPU renderer provider，而不属于平台 host cores。入口调用
 `@wgpu_renderer.native(text_engine=...)` 并与平台 `entry()` 组合。平台默认引擎将原生 provider 与 Cosmic fallback
 组合；`MoonCosmic` 直接选择 Cosmic provider。Showcase 也有显式的 `macos_wgpu`、
-`windows_wgpu` 和 `linux_wgpu` 入口，用于比较这些路径。单独的 Showcase 和
-Markdown Editor `*_skia` 入口选择 `moui_skia_renderer` provider，而不是 WGPU 文本 provider 变体。
+`windows_wgpu` 和 `linux_wgpu` 入口，用于比较这些路径。单独的 Showcase `*_skia` 入口选择 `moui_skia_renderer` provider，而不是 WGPU 文本 provider 变体。
 默认情况下，Skia 基本文本测量和绘制会通过 `moui_skia` 的 `FontMgr` 和 `Font`
 解析 MoUI `FontSpec` family stack、weight 和 style。系统 `FontMgr` 路径现在构造
 `FontFallbackRequest`，其中包含代表性覆盖字符：优先 emoji hints，其次非 ASCII code point，
@@ -299,7 +298,7 @@ scale/DPR anchors、resize anchors 和 Markdown Editor IME dogfood，因此 macO
 `check_moui_linux_smoke.sh` IME probe 通过全部 8 个字段
 （enabled/hint/surrounding/cursor/updated/updated_hint/updated_cursor/disabled 均为 `true`）。
 完整交互输入证据（pointer/keyboard 和 destroy sequence）仍需要匹配 Wayland 桌面宿主（Ubuntu 24.04+）
-Showcase 或 Markdown Editor 运行时日志。Windows 在其原生 IME 运行时路径可称为 ready 前，仍需要等价的匹配
+Showcase 运行时日志。Windows 在其原生 IME 运行时路径可称为 ready 前，仍需要等价的匹配
 MSVC 宿主运行时日志。
 
 **原生 WGPU Provider 状态**

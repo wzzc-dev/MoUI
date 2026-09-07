@@ -5,7 +5,7 @@ fn daily_quality_gate_tokens() -> Array[String] {
     "scripts/validate-guidance-consistency.mjs", "scripts/validate-api-surface.mjs",
     "scripts/validate-window-dependency.mjs", "scripts/validate-maintenance-baseline.mjs",
     "moon", "moui/core", "moui/views", "moui/render", "moui_skia_renderer", "moui/backend",
-    "moui/backend/web", "examples/showcase/web_wasm", "examples/markdown_editor/web_wasm",
+    "moui/backend/web", "examples/showcase/web_wasm",
   ]
 }
 

@@ -108,15 +108,6 @@ fn perf_showcase_runtimes(
 }
 
 ///|
-fn perf_markdown_runtimes(
-  width : Double,
-  height : Double,
-) -> Array[@runtime.AppRuntime] {
-  let app = @markdown.MarkdownEditorApp::new()
-  [@runtime.new_program_with_dimensions(program=app.program(), width~, height~)]
-}
-
-///|
 fn perf_excel_runtimes(
   width : Double,
   height : Double,
@@ -164,7 +155,11 @@ fn perf_virtual_list_runtimes(
 }
 
 ///|
-fn perf_deep_tree_node(depth : Int, width : Int, msg_base : Int) -> @core.View[Int] {
+fn perf_deep_tree_node(
+  depth : Int,
+  width : Int,
+  msg_base : Int,
+) -> @core.View[Int] {
   if depth <= 0 {
     @views.button("x", on_click=msg_base)
   } else {
@@ -184,11 +179,11 @@ fn perf_deep_tree_runtimes(
   // 511-node deep tree (depth 8, width 2) — the same shape as the
   // full_cycle F/G scenarios, which isolate rebuild/layout/paint plus
   // dirty-queue and damage-region bookkeeping on a deep tree.
-  let program = @core.Program::simple(
-    init=0,
-    update=fn(_model, msg) { msg },
-    view=fn(model) { perf_deep_tree_node(8, 2, model + 1000) },
-  )
+  let program = @core.Program::simple(init=0, update=fn(_model, msg) { msg }, view=fn(
+    model,
+  ) {
+    perf_deep_tree_node(8, 2, model + 1000)
+  })
   [
     @runtime.AppRuntime::new_program(
       program~,
@@ -239,18 +234,6 @@ fn perf_multi_window_runtimes(
 }
 
 ///|
-fn perf_prepare_markdown(runtimes : Array[@runtime.AppRuntime]) -> Unit {
-  runtimes[0].dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=84.0),
-        phase=@core.PointerPhase::Down,
-      ),
-    ),
-  )
-}
-
-///|
 fn perf_no_prepare(_runtimes : Array[@runtime.AppRuntime]) -> Unit {
   ()
 }
@@ -268,19 +251,6 @@ fn perf_drive_showcase(
         phase=@core.PointerPhase::Move,
         wheel_delta=@core.Point::new(x=0.0, y=direction),
       ),
-    ),
-  )
-}
-
-///|
-fn perf_drive_markdown(
-  runtimes : Array[@runtime.AppRuntime],
-  index : Int,
-) -> Unit {
-  let tokens = ["M", "o", "U", "I", " ", "p", "e", "r", "f", " "]
-  runtimes[0].dispatch_event(
-    @core.AppEvent::TextInput(
-      @core.TextInputEvent::InsertText(tokens[index % tokens.length()]),
     ),
   )
 }
@@ -482,12 +452,6 @@ fn main {
     perf_run_scenario(
       "showcase-runtime-scroll", 1280.0, 720.0, perf_showcase_runtimes, perf_no_prepare,
       perf_drive_showcase, frames, warmup,
-    ),
-  )
-  scenarios["markdown-editor-text-input"] = perf_scenario_json(
-    perf_run_scenario(
-      "markdown-editor-text-input", 980.0, 640.0, perf_markdown_runtimes, perf_prepare_markdown,
-      perf_drive_markdown, frames, warmup,
     ),
   )
   scenarios["excel-grid-navigation"] = perf_scenario_json(

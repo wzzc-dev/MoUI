@@ -281,7 +281,6 @@ fn website_readme_markdown_content(content : String) -> String {
   let mut rewritten = content
   let screenshots = [
     ("showcase.png", "showcase"),
-    ("markdown_editor.png", "markdown_editor"),
     ("mo_workbench.png", "mo_workbench"),
     ("excel.png", "excel"),
     ("webview.png", "webview"),

@@ -29,7 +29,7 @@ entrypoint static checks, generated repository facts and source-file policy,
 smoke gate catalog validation, `moon check`, generated
 public-interface drift detection, core package tests, Web wasm-gc package tests,
 native Skia mainline package tests, internal `moui_tests/tester` harness tests,
-`moui_devtools` snapshot/debug tests, Showcase and Markdown Editor app tests,
+`moui_devtools` snapshot/debug tests, Showcase app tests,
 and Web builds.
 
 The daily gate is sourced from `checks/profiles.json` and can be inspected with
@@ -91,9 +91,7 @@ moon test moui_agent --target wasm-gc
 moon test moui_agent_mcp --target wasm-gc
 moon test examples/agent_counter --target wasm-gc
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
-moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/validate-web-runtime-handoff.mjs
 ```
 
@@ -311,7 +309,6 @@ moon test moui_devtools --target native
 moon test moui_skia --target native
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 moon test examples/excel/cell --target native
 moon test examples/excel/formula --target native
 moon test examples/excel/sheet --target native
@@ -393,7 +390,7 @@ native example builds.
 The PR profile validates the checked-in performance budget catalog and its
 MoonBit validator without downloading a renderer. The macOS `benchmark-scaffold`
 job is the canonical measured producer: it runs the native Skia Raster workloads
-for Showcase, Markdown Editor, Excel, a 100k-row virtual list, and four runtime
+for Showcase, Excel, a 100k-row virtual list, and four runtime
 windows, then uploads `artifacts/performance/result.json`. Run the same gate
 locally when the locked real Skia provider is available:
 
@@ -454,7 +451,6 @@ host:
 ```sh
 scripts/macos-skia-renderer-smoke.sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
-scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 scripts/macos-skia-renderer-smoke.sh --run-ime-smoke
 sh scripts/ci-web-runtime-presentation.sh
 ```

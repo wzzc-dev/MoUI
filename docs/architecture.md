@@ -345,9 +345,6 @@ examples/showcase/windows_skia/ Windows showcase selecting native Skia raster
 examples/showcase/windows_wgpu/    Windows native WGPU diagnostic showcase
 examples/showcase/linux_skia/ Linux showcase selecting native Skia raster
 examples/showcase/linux_wgpu/      Linux Wayland native WGPU diagnostic showcase
-examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
-examples/markdown_editor/macos_skia/ macOS Markdown editor selecting native Skia raster
-examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
 examples/code_editor/app/ shared native code editor and language-provider demo app
 examples/code_editor/macos_skia/ retained Code Editor Skia entrypoint
 examples/webview_demo/app/ shared native WebView demo app
@@ -469,7 +466,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   `FrameToken` and forwards complete retained-layer declarations to the
   selected renderer. Renderer sessions own offscreen surface/image caches and
   reports cache hit/miss/update/evict diagnostics. The real-app cached-layer
-  benchmark uses Showcase hover/scroll and Markdown Editor text input, scroll,
+  benchmark uses Showcase hover/scroll,
   and caret-overlay interactions to verify sibling-boundary reuse, state-backed
   scroll redraw, rich-text block boundaries, editing overlays, command-count
   changes, and remaining rebuild, layout, and damage bottlenecks; OS-level

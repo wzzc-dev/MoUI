@@ -67,7 +67,6 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 <div align="center">
 
   <img src="resource/screenshots/showcase.png" width="48%" alt="Showcase"/>
-  <img src="resource/screenshots/markdown_editor.png" width="48%" alt="Markdown Editor"/>
 
   <br/><br/>
 
@@ -120,14 +119,13 @@ cd MoUI
 sh scripts/ci-moon-update.sh
 sh scripts/check.sh --profile pr
 moon test examples/showcase/app --target native
-moon test examples/markdown_editor/app --target native
 ```
 
-Showcase and Markdown Editor are the primary scanning and interaction examples. Their platform entrypoints are listed under [Running Examples](#running-examples).
+Showcase is the primary scanning and interaction example. Their platform entrypoints are listed under [Running Examples](#running-examples).
 
 Framework setup details, including optional submodules and the `window/` local-source workflow, live in [Development](docs/development.md).
 
-The default daily baseline covers the core framework, maintenance baseline ratchets, Web wasm-gc, native Skia mainline contracts, Showcase, and Markdown Editor. Design Systems is addon diagnostic coverage; run `sh scripts/check.sh --profile theme` when changing `moui_theme` or `examples/design_systems`.
+The default daily baseline covers the core framework, maintenance baseline ratchets, Web wasm-gc, native Skia mainline contracts, and Showcase. Design Systems is addon diagnostic coverage; run `sh scripts/check.sh --profile theme` when changing `moui_theme` or `examples/design_systems`.
 
 For current-host backend/provider checks, run:
 
@@ -146,7 +144,7 @@ These commands generate local scaffold manifests and logs under `artifacts/`; re
 
 ## Running Examples
 
-The featured examples — `showcase`, `markdown_editor`, `mo_workbench`, and `excel` — share app logic in `examples/<name>/app` and expose thin platform entrypoints. Showcase uses `web_wasm`, desktop renderer-specific entrypoints, and `android_window_hosted`, `ios_window_hosted`, and `harmonyos_window_hosted` mobile entrypoints.
+The featured examples — `showcase`, `mo_workbench`, and `excel` — share app logic in `examples/<name>/app` and expose thin platform entrypoints. Showcase uses `web_wasm`, desktop renderer-specific entrypoints, and `android_window_hosted`, `ios_window_hosted`, and `harmonyos_window_hosted` mobile entrypoints.
 
 To try Showcase on a mobile platform, follow the platform-specific setup, build, and run instructions for [Android](docs/android-support.md), [iOS](docs/ios-support.md), or [HarmonyOS](docs/harmonyos-support.md). Standard examples use the matching `wzzc-dev/window` platform template through `moui build`.
 
@@ -179,15 +177,10 @@ moon run examples/showcase/linux_skia --target native
 
 ### Markdown Editor
 
-Typora-style WYSIWYG Markdown editor. Source lives in `examples/markdown_editor/app`; the retained macOS/Web entrypoints are thin.
-
-```sh
-# Web (wasm-gc)
-moon build examples/markdown_editor/web_wasm --target wasm-gc
-
-# macOS Skia
-moon run examples/markdown_editor/macos_skia --target native
-```
+The Typora-style WYSIWYG Markdown editor (MoMark) graduated into its own
+repository: [wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark). It builds
+on published `wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages; see the
+MoMark README for setup and platform entrypoints.
 
 ### Mo Workbench
 
@@ -209,7 +202,6 @@ moon run examples/excel/macos_skia --target native
 Focused app-package tests for the featured examples:
 
 ```sh
-moon test examples/markdown_editor/app --target native
 moon test examples/mo_workbench/app --target native
 moon test examples/showcase/app --target native
 moon test examples/excel/app --target native

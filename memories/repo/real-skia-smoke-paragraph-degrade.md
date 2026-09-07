@@ -20,7 +20,7 @@
 ## SkParagraph 行度量是 UTF-16 码元 + 宿主检查前的 stub 二进制陷阱
 
 - `LineMetrics.fStartIndex/fEndIndex` 是 **UTF-16 码元** 索引(与 Flutter 同),而 rect/hit-test API 收 UTF-8 字节偏移。`skia_paragraph_line_metrics` 必须走 `skia_utf16_char_offsets(text)` 生成的专用表;ASCII 下两者一致,只有中英混排才暴露(README.zh-CN 换行乱位 bug 根因,回归测试在 `skia_renderer_test.mbt`)。
-- `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build examples/markdown_editor/macos_skia` 会把真实 Skia 二进制**替换成秒退 fallback stub**。任何宿主目检/截图验证前,必须先 `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke` 重建真实二进制,否则会拿旧/降级二进制误判渲染 bug。
+- `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build examples/showcase/macos_skia` 会把真实 Skia 二进制**替换成秒退 fallback stub**。任何宿主目检/截图验证前,必须先 `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke` 重建真实二进制,否则会拿旧/降级二进制误判渲染 bug。
 - markdown_editor 的 macos_skia 入口支持 `macos_skia.exe <document.md>` 启动即打开文档:入口解析 `@env.args()`,`program` 经 `initial_document_path?` 在 init 里 batch `Effect::send(OpenRecentDocument(path))`(与最近文件菜单同一消息)。
 
 ## 绘制字形 id 必须属于绘制字体:SkShaper fallback 的 FFI 扁平化陷阱

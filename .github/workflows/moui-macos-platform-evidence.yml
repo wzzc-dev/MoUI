@@ -10,11 +10,6 @@ on:
         required: false
         default: true
         type: boolean
-      run_markdown_smoke:
-        description: Run the macOS Skia Markdown Editor first-frame smoke.
-        required: false
-        default: true
-        type: boolean
       run_ime_smoke:
         description: Run the macOS Showcase native IME runtime smoke.
         required: false
@@ -68,7 +63,7 @@ jobs:
             release-skia-macos-static-
             release-skia-macos-
 
-      - name: Run macOS platform evidence (showcase + optional markdown + ime)
+      - name: Run macOS platform evidence (showcase + ime)
         shell: bash
         env:
           MOUI_SKIA_SKIA_PROVIDER: ${{ inputs.skia_provider }}
@@ -85,11 +80,6 @@ jobs:
             args+=(--run-showcase-smoke)
           else
             args+=(--no-showcase-smoke)
-          fi
-          if [[ "${{ inputs.run_markdown_smoke }}" == "true" ]]; then
-            args+=(--run-markdown-smoke)
-          else
-            args+=(--no-markdown-smoke)
           fi
           if [[ "${{ inputs.run_ime_smoke }}" == "true" ]]; then
             args+=(--run-ime-smoke)
@@ -142,7 +132,6 @@ jobs:
             echo "### Logs"
             echo "- Preflight: artifacts/platform-evidence/macos/macos-platform-evidence-preflight.log"
             echo "- Showcase: artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log"
-            echo "- Markdown Editor: artifacts/platform-evidence/macos/markdown-editor-macos-skia-first-frame.log"
             echo "- IME runtime: artifacts/platform-evidence/macos/ime-showcase-runtime.log"
             echo "- Summary: artifacts/platform-evidence/macos/macos-platform-evidence-summary.log"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -106,7 +106,6 @@ git diff --exit-code -- '**/pkg.generated.mbti'
 
 # 运行示例（macOS）
 moon run examples/mo_workbench/macos_skia --target native
-moon run examples/markdown_editor/macos_skia --target native
 moon run examples/showcase/macos_skia --target native
 ```
 
