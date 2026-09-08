@@ -1434,8 +1434,11 @@ fn markdown_document_gallery_block_heights(
       base.size * 1.55
     }
     if editor_block.block.kind is HtmlBlock &&
-      markdown_html_image_gallery(editor_block.block.text, base, None)
-      is Some(_) {
+      markdown_block_view_project(
+        editor_block.block,
+        base,
+        base_dir=None,
+      ) is Some(_) {
       let rich_block = markdown_block_to_rich_text(
         editor_block.block,
         base,

@@ -68,7 +68,10 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 <div align="center">
 
   <img src="resource/screenshots/showcase.png" width="48%" alt="Showcase"/>
-
+  <a href="https://github.com/wzzc-dev/MoMark">
+    <img src="resource/screenshots/markdown_editor.png" width="48%" alt="MoMark — 所见即所得 Markdown 编辑器"/>
+  </a>
+  
   <br/><br/>
 
   <img src="resource/screenshots/mo_workbench.png" width="48%" alt="Mo Workbench"/>
@@ -85,8 +88,6 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   <img src="resource/screenshots/android-componentgallery.jpg" width="48%" alt="Android Component Gallery"/>
 
   <br/><br/>
-
-  <a href="https://github.com/wzzc-dev/MoMark"><img src="resource/screenshots/markdown_editor.png" width="70%" alt="MoMark — 所见即所得 Markdown 编辑器"/></a>
 
 </div>
 

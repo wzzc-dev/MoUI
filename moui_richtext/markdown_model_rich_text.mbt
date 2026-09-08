@@ -119,13 +119,13 @@ pub fn markdown_block_to_rich_text(
         line_height=Some(base.size * 1.45),
       )
     HtmlBlock =>
-      match markdown_html_image_gallery(block.text, base, base_dir) {
-        Some(gallery) =>
+      match markdown_block_view_project(block, base, base_dir~) {
+        Some(projection) =>
           RichTextBlock::new(
-            runs=gallery.runs,
+            runs=projection.runs,
             inset={ top: 4.0, right: 0.0, bottom: 4.0, left: 0.0 },
             line_height=Some(base.size * 1.25),
-            line_align=Some(gallery.line_align),
+            line_align=projection.line_align,
           )
         None => markdown_html_raw_block_rich_text(block.text, base)
       }

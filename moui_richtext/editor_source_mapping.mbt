@@ -922,25 +922,88 @@ fn markdown_editor_html_tag_block_at(
   index : Int,
   tag : String,
 ) -> MarkdownEditorHtmlBlockParseResult {
+  let container = markdown_html_block_tag_keeps_blank_lines(tag)
   let html_lines : Array[String] = []
+  let mut depth = 0
   let mut next = index
   while next < lines.length() {
     if next > index &&
       markdown_editor_blank_line(lines[next]) &&
-      !markdown_html_block_tag_keeps_blank_lines(tag) {
+      !(container &&
+      markdown_editor_html_container_closes_within(
+        lines,
+        next + 1,
+        tag,
+        depth,
+        64,
+      )) {
       break
     }
-    html_lines.push(lines[next].text.to_owned())
-    if markdown_html_block_line_closes_tag(lines[next].text.to_owned(), tag) ||
+    let text = lines[next].text.to_owned()
+    html_lines.push(text)
+    if container {
+      depth = depth + markdown_html_block_tag_depth_delta(text, tag)
+      if next == index &&
+        markdown_html_block_line_self_closes(
+          lines[next].text.to_owned(),
+        ) {
+        return markdown_editor_html_block_result(
+          lines,
+          html_lines,
+          index,
+          next,
+        )
+      }
+      if depth <= 0 && text.to_lower().contains("</" + tag) {
+        return markdown_editor_html_block_result(
+          lines,
+          html_lines,
+          index,
+          next,
+        )
+      }
+    } else if markdown_html_block_line_closes_tag(text, tag) ||
       (
         next == index &&
         markdown_html_block_line_self_closes(lines[next].text.to_owned())
       ) {
-      return markdown_editor_html_block_result(lines, html_lines, index, next)
+      return markdown_editor_html_block_result(
+        lines,
+        html_lines,
+        index,
+        next,
+      )
     }
     next = next + 1
   }
   markdown_editor_html_block_result(lines, html_lines, index, next - 1)
+}
+
+///|
+fn markdown_editor_html_container_closes_within(
+  lines : Array[MarkdownLine],
+  start : Int,
+  tag : String,
+  depth : Int,
+  cap : Int,
+) -> Bool {
+  let mut depth = depth
+  let limit = if start + cap < lines.length() {
+    start + cap
+  } else {
+    lines.length()
+  }
+  for cursor in start..<limit {
+    let delta = markdown_html_block_tag_depth_delta(
+      lines[cursor].text.to_owned(),
+      tag,
+    )
+    depth = depth + delta
+    if depth <= 0 {
+      return true
+    }
+  }
+  false
 }
 
 ///|
