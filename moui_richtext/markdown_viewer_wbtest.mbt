@@ -991,7 +991,7 @@ test "markdown viewer keeps fixed html image dimensions and raw html fallback" {
   assert_true((frames[0].origin.x - 190.0).abs() < 0.01)
 
   let unsupported = markdown_document(
-    "<div align=\"center\"><img src=\"a.png\"/><span>caption</span></div>",
+    "<div align=\"center\"><img src=\"a.png\"/><ul><li>caption</li></ul></div>",
     base=mv_font(),
   )
   guard unsupported.blocks[0]
@@ -1000,6 +1000,6 @@ test "markdown viewer keeps fixed html image dimensions and raw html fallback" {
   }
   inspect(
     text,
-    content="<div align=\"center\"><img src=\"a.png\"/><span>caption</span></div>",
+    content="<div align=\"center\"><img src=\"a.png\"/><ul><li>caption</li></ul></div>",
   )
 }

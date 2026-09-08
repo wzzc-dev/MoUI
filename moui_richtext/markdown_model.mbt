@@ -253,16 +253,33 @@ fn markdown_html_tag_block_at(
   index : Int,
   tag : String,
 ) -> MarkdownHtmlBlockParseResult {
+  let container = markdown_html_block_tag_keeps_blank_lines(tag)
   let html_lines : Array[String] = []
+  let mut depth = 0
   let mut next = index
   while next < lines.length() {
     if next > index &&
       markdown_blank_line(lines[next]) &&
-      !markdown_html_block_tag_keeps_blank_lines(tag) {
+      !(container &&
+      markdown_html_block_container_closes_within(
+        lines,
+        next + 1,
+        tag,
+        depth,
+        64,
+      )) {
       break
     }
     html_lines.push(lines[next])
-    if markdown_html_block_line_closes_tag(lines[next], tag) ||
+    if container {
+      depth = depth + markdown_html_block_tag_depth_delta(lines[next], tag)
+      if next == index && markdown_html_block_line_self_closes(lines[next]) {
+        return markdown_html_block_result(html_lines, next)
+      }
+      if depth <= 0 && lines[next].to_lower().contains("</" + tag) {
+        return markdown_html_block_result(html_lines, next)
+      }
+    } else if markdown_html_block_line_closes_tag(lines[next], tag) ||
       (next == index && markdown_html_block_line_self_closes(lines[next])) {
       return markdown_html_block_result(html_lines, next)
     }
@@ -443,10 +460,130 @@ fn markdown_html_block_line_self_closes(line : String) -> Bool {
 
 ///|
 /// Gallery containers commonly use blank lines to separate image rows. Keep
-/// scanning these containers until their own closing tag instead of treating a
-/// formatting blank as the end of the HTML block.
+/// scanning these containers until their own closing tag instead of treating
+/// a formatting blank as the end of the HTML block. To bound the damage of a
+/// mistyped container, the scan only crosses a blank line while the current
+/// nesting depth can still return to zero within the lookahead cap; an
+/// unclosed container then terminates like an ordinary HTML block.
 fn markdown_html_block_tag_keeps_blank_lines(tag : String) -> Bool {
   tag == "div" || tag == "center"
+}
+
+///|
+/// Whether an open container of `tag` still reaches depth zero within
+/// `cap` lines after `start`, counting nesting the same way the block
+/// terminator does.
+fn markdown_html_block_container_closes_within(
+  lines : Array[String],
+  start : Int,
+  tag : String,
+  depth : Int,
+  cap : Int,
+) -> Bool {
+  let mut depth = depth
+  let limit = if start + cap < lines.length() {
+    start + cap
+  } else {
+    lines.length()
+  }
+  for cursor in start..<limit {
+    depth = depth + markdown_html_block_tag_depth_delta(lines[cursor], tag)
+    if depth <= 0 {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// Container tag occurrences on one source line: `+1` for each `<div`
+/// opener and `-1` for each `</div`, ignoring HTML comment content. The
+/// block terminators use this nesting-aware count instead of a first
+/// closing-tag search, so a container closes at its own depth.
+fn markdown_html_block_tag_depth_delta(line : String, tag : String) -> Int {
+  let chars = line.to_array()
+  let tag_chars = tag.to_array()
+  let mut index = 0
+  let mut delta = 0
+  while index < chars.length() {
+    if markdown_html_block_line_comment_at(chars, index) {
+      index = markdown_html_block_line_comment_end(chars, index)
+      continue
+    }
+    if chars[index] == '<' {
+      let mut cursor = index + 1
+      let closing = cursor < chars.length() && chars[cursor] == '/'
+      if closing {
+        cursor = cursor + 1
+      }
+      if markdown_html_block_tag_name_at(chars, cursor, tag_chars) {
+        delta = delta + (if closing { -1 } else { 1 })
+        index = cursor + tag_chars.length()
+      } else {
+        index = cursor
+      }
+      continue
+    }
+    index = index + 1
+  }
+  delta
+}
+
+///|
+fn markdown_html_block_tag_name_at(
+  chars : Array[Char],
+  index : Int,
+  tag_chars : Array[Char],
+) -> Bool {
+  if index + tag_chars.length() > chars.length() {
+    return false
+  }
+  for offset in 0..<tag_chars.length() {
+    if !markdown_html_block_ci_char(
+      chars[index + offset],
+      tag_chars[offset],
+    ) {
+      return false
+    }
+  }
+  let next = index + tag_chars.length()
+  !(next < chars.length() && markdown_html_tag_name_char(chars[next]))
+}
+
+///|
+fn markdown_html_block_ci_char(actual : Char, want_lower : Char) -> Bool {
+  actual == want_lower ||
+  (actual >= 'A' &&
+  actual <= 'Z' && actual.to_int() + 32 == want_lower.to_int())
+}
+
+///|
+fn markdown_html_block_line_comment_at(
+  chars : Array[Char],
+  index : Int,
+) -> Bool {
+  index + 4 <= chars.length() &&
+  chars[index] == '<' &&
+  chars[index + 1] == '!' &&
+  chars[index + 2] == '-' &&
+  chars[index + 3] == '-'
+}
+
+///|
+fn markdown_html_block_line_comment_end(
+  chars : Array[Char],
+  index : Int,
+) -> Int {
+  let mut cursor = index + 4
+  while cursor + 3 <= chars.length() {
+    if chars[cursor] == '-' &&
+      chars[cursor + 1] == '-' &&
+      chars[cursor + 2] == '>' {
+      return cursor + 3
+    }
+    cursor = cursor + 1
+  }
+  chars.length()
 }
 
 ///|

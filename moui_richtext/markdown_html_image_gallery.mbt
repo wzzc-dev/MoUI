@@ -1,13 +1,15 @@
 ///|
-/// A deliberately small HTML subset for Markdown presentation blocks. Raw
-/// HTML remains raw by default; this only recognizes a closed `div`/`center`
-/// container whose body consists entirely of `img` and `br` tags.
-priv struct MarkdownHtmlImageGallery {
-  runs : Array[RichTextRun]
-  line_align : @core.TextAlign
-}
-
-///|
+/// Presentation-only projection of raw HTML container blocks, registered as
+/// a `MarkdownBlockView` contribution.
+///
+/// Raw HTML stays raw by default. This view only recognizes `div`/`center`
+/// containers whose children are all in a narrow displayable subset:
+/// images (optionally wrapped in a single anchor), line breaks, comments,
+/// `&nbsp;`-style spacing, paragraphs, headings, spans, plain text, and
+/// nested containers (flattened into rows). Everything else — tables,
+/// lists, unknown tags, malformed structure — declines so the block keeps
+/// its raw source presentation. The canonical block source remains the
+/// editable truth; this module never rewrites it.
 priv struct MarkdownHtmlImageGalleryAttribute {
   name : String
   value : String?
@@ -35,11 +37,57 @@ priv enum MarkdownHtmlImageGalleryDimension {
 }
 
 ///|
-fn markdown_html_image_gallery(
+/// Mutable walker state shared while projecting one container block.
+priv struct MarkdownHtmlImageGalleryWalk {
+  chars : Array[Char]
+  index : Ref[Int]
+  base : @core.FontSpec
+  base_dir : String?
+  runs : Array[RichTextRun]
+  line_open : Ref[Bool]
+  invalid : Ref[Bool]
+}
+
+///|
+pub let markdown_html_image_gallery_view : MarkdownBlockView = {
+  name: "html-image-gallery",
+  matches: markdown_html_image_gallery_signature,
+  project: (block, context) =>
+    markdown_html_image_gallery_project(
+      block.text,
+      context.base,
+      context.base_dir,
+    ),
+}
+
+///|
+/// Cheap candidacy signature: first tag of an HTML block must be an opened
+/// `div`/`center`. No body parsing happens here so the height walk can
+/// probe every block through the registry.
+fn markdown_html_image_gallery_signature(block : MarkdownBlock) -> Bool {
+  match block.kind {
+    MarkdownBlockKind::HtmlBlock => {
+      let chars = block.text.to_array()
+      match markdown_html_image_gallery_tag_at(
+        chars,
+        markdown_html_image_gallery_skip_space(chars, 0),
+      ) {
+        Some(parsed) =>
+          !parsed.tag.closing &&
+          (parsed.tag.name == "div" || parsed.tag.name == "center")
+        None => false
+      }
+    }
+    _ => false
+  }
+}
+
+///|
+fn markdown_html_image_gallery_project(
   html : String,
   base : @core.FontSpec,
   base_dir : String?,
-) -> MarkdownHtmlImageGallery? {
+) -> MarkdownBlockViewProjection? {
   let chars = html.to_array()
   let start = markdown_html_image_gallery_skip_space(chars, 0)
   match markdown_html_image_gallery_tag_at(chars, start) {
@@ -55,53 +103,557 @@ fn markdown_html_image_gallery(
         Some(align) => align
         None => return None
       }
-      let runs : Array[RichTextRun] = []
-      let mut image_count = 0
-      let mut index = opening.end
-      while index < chars.length() {
-        index = markdown_html_image_gallery_skip_space(chars, index)
-        match markdown_html_image_gallery_tag_at(chars, index) {
-          Some(parsed) => {
-            let tag = parsed.tag
-            index = parsed.end
-            if tag.closing {
-              if tag.name != outer.name ||
-                image_count == 0 ||
-                markdown_html_image_gallery_skip_space(chars, index) !=
-                chars.length() {
-                return None
-              }
-              return Some({ runs, line_align })
-            }
-            match tag.name {
-              "img" =>
-                match
-                  markdown_html_image_gallery_image_run(tag, base, base_dir) {
-                  Some(run) => {
-                    runs.push(run)
-                    image_count = image_count + 1
-                  }
-                  None => return None
-                }
-              "br" =>
-                runs.push(
-                  RichTextRun::new(
-                    text=tag.raw,
-                    visual_text=Some("\n"),
-                    font=Some(base),
-                  ),
-                )
-              _ => return None
-            }
-          }
-          None => return None
-        }
-      } nobreak {
+      let walk : MarkdownHtmlImageGalleryWalk = {
+        chars,
+        index: Ref(opening.end),
+        base,
+        base_dir,
+        runs: [],
+        line_open: Ref(false),
+        invalid: Ref(false),
+      }
+      markdown_html_image_gallery_walk_body(walk, outer.name)
+      if !walk.invalid.val {
+        markdown_html_image_gallery_walk_tail(walk)
+      }
+      if walk.invalid.val || walk.runs.length() == 0 {
         None
+      } else {
+        Some({ runs: walk.runs, line_align: Some(line_align) })
       }
     }
     None => None
   }
+}
+
+///|
+/// Walk a container body until its matching closing tag is consumed,
+/// marking the walk invalid on any construct outside the displayable
+/// subset.
+fn markdown_html_image_gallery_walk_body(
+  walk : MarkdownHtmlImageGalleryWalk,
+  closing : String,
+) -> Unit {
+  let chars = walk.chars
+  while !walk.invalid.val && walk.index.val < chars.length() {
+    walk.index.val = markdown_html_image_gallery_skip_space(
+      chars,
+      walk.index.val,
+    )
+    if walk.index.val >= chars.length() {
+      break
+    }
+    match markdown_html_image_gallery_comment_end(chars, walk.index.val) {
+      Some(end) => { walk.index.val = end; continue }
+      None => ()
+    }
+    if chars[walk.index.val] != '<' {
+      markdown_html_image_gallery_read_text(walk)
+      continue
+    }
+    let element_start = walk.index.val
+    match markdown_html_image_gallery_tag_at(chars, walk.index.val) {
+      None => walk.invalid.val = true
+      Some(parsed) => {
+        let tag = parsed.tag
+        walk.index.val = parsed.end
+        if tag.closing {
+          if tag.name == closing {
+            return
+          }
+          walk.invalid.val = true
+        } else {
+          match tag.name {
+            "img" =>
+              markdown_html_image_gallery_walk_image(walk, tag)
+            "br" => {
+              walk.runs.push(
+                RichTextRun::new(
+                  text=tag.raw,
+                  visual_text=Some("\n"),
+                  font=Some(walk.base),
+                ),
+              )
+              walk.line_open.val = false
+            }
+            "div" | "center" => {
+              if tag.self_closing {
+                walk.invalid.val = true
+              } else {
+                markdown_html_image_gallery_break_before(walk)
+                markdown_html_image_gallery_walk_body(walk, tag.name)
+                markdown_html_image_gallery_break_before(walk)
+              }
+            }
+            "a" => markdown_html_image_gallery_walk_anchor(walk)
+            "p" => markdown_html_image_gallery_block_text(
+              walk,
+              element_start,
+              tag.name,
+              walk.base,
+              true,
+            )
+            "h1" | "h2" | "h3" | "h4" | "h5" | "h6" =>
+              markdown_html_image_gallery_block_text(
+                walk,
+                element_start,
+                tag.name,
+                {
+                  ..walk.base,
+                  size: walk.base.size * 1.15,
+                  weight: 700,
+                },
+                false,
+              )
+            "span" =>
+              markdown_html_image_gallery_span_text(walk, element_start)
+            _ => walk.invalid.val = true
+          }
+        }
+      }
+    }
+  }
+  if !walk.invalid.val {
+    // Reached the end of the block without the container's own closing
+    // tag: the structure is malformed, so the block stays raw.
+    walk.invalid.val = true
+  }
+}
+
+///|
+/// Walk what follows the first closed container: trailing text and sibling
+/// containers remain displayable; anything else keeps the block raw.
+fn markdown_html_image_gallery_walk_tail(
+  walk : MarkdownHtmlImageGalleryWalk,
+) -> Unit {
+  let chars = walk.chars
+  while !walk.invalid.val && walk.index.val < chars.length() {
+    walk.index.val = markdown_html_image_gallery_skip_space(
+      chars,
+      walk.index.val,
+    )
+    if walk.index.val >= chars.length() {
+      break
+    }
+    match markdown_html_image_gallery_comment_end(chars, walk.index.val) {
+      Some(end) => { walk.index.val = end; continue }
+      None => ()
+    }
+    if chars[walk.index.val] != '<' {
+      markdown_html_image_gallery_read_text(walk)
+      continue
+    }
+    match markdown_html_image_gallery_tag_at(chars, walk.index.val) {
+      None => walk.invalid.val = true
+      Some(parsed) => {
+        let tag = parsed.tag
+        walk.index.val = parsed.end
+        if !tag.closing &&
+          !tag.self_closing &&
+          (tag.name == "div" || tag.name == "center") {
+          markdown_html_image_gallery_break_before(walk)
+          markdown_html_image_gallery_walk_body(walk, tag.name)
+          markdown_html_image_gallery_break_before(walk)
+        } else {
+          walk.invalid.val = true
+        }
+      }
+    }
+  }
+}
+
+///|
+fn markdown_html_image_gallery_walk_image(
+  walk : MarkdownHtmlImageGalleryWalk,
+  tag : MarkdownHtmlImageGalleryTag,
+) -> Unit {
+  match
+    markdown_html_image_gallery_image_run(tag, walk.base, walk.base_dir) {
+    Some(run) => {
+      walk.runs.push(run)
+      walk.line_open.val = true
+    }
+    None => walk.invalid.val = true
+  }
+}
+
+///|
+/// An anchor is displayable only when it wraps a single image (badge rows).
+fn markdown_html_image_gallery_walk_anchor(
+  walk : MarkdownHtmlImageGalleryWalk,
+) -> Unit {
+  let chars = walk.chars
+  while !walk.invalid.val {
+    walk.index.val = markdown_html_image_gallery_skip_space(
+      chars,
+      walk.index.val,
+    )
+    if walk.index.val >= chars.length() {
+      walk.invalid.val = true
+      return
+    }
+    match markdown_html_image_gallery_comment_end(chars, walk.index.val) {
+      Some(end) => { walk.index.val = end; continue }
+      None => ()
+    }
+    match markdown_html_image_gallery_tag_at(chars, walk.index.val) {
+      None => { walk.invalid.val = true; return }
+      Some(parsed) => {
+        let tag = parsed.tag
+        walk.index.val = parsed.end
+        if tag.closing {
+          if tag.name == "a" {
+            return
+          }
+          walk.invalid.val = true
+          return
+        }
+        if tag.name != "img" {
+          walk.invalid.val = true
+          return
+        }
+        markdown_html_image_gallery_walk_image(walk, tag)
+      }
+    }
+  }
+}
+
+///|
+fn markdown_html_image_gallery_read_text(
+  walk : MarkdownHtmlImageGalleryWalk,
+) -> Unit {
+  let chars = walk.chars
+  let start = walk.index.val
+  while walk.index.val < chars.length() && chars[walk.index.val] != '<' {
+    walk.index.val = walk.index.val + 1
+  }
+  if walk.index.val == start {
+    return
+  }
+  if markdown_html_image_gallery_space_entity_only(
+    chars,
+    start,
+    walk.index.val,
+  ) {
+    if walk.line_open.val {
+      markdown_html_image_gallery_push_inline(
+        walk,
+        String::from_array(chars[start:walk.index.val]),
+        " ",
+        walk.base,
+        None,
+      )
+    }
+    return
+  }
+  match markdown_html_image_gallery_decode_text(chars, start, walk.index.val) {
+    Some(visual) => {
+      markdown_html_image_gallery_break_before(walk)
+      markdown_html_image_gallery_push_inline(
+        walk,
+        String::from_array(chars[start:walk.index.val]),
+        visual,
+        walk.base,
+        Some(@core.Color::black().multiply_alpha(0.78)),
+      )
+      markdown_html_image_gallery_push_newline(walk)
+    }
+    None => ()
+  }
+}
+
+///|
+fn markdown_html_image_gallery_block_text(
+  walk : MarkdownHtmlImageGalleryWalk,
+  element_start : Int,
+  name : String,
+  font : @core.FontSpec,
+  dim : Bool,
+) -> Unit {
+  match markdown_html_image_gallery_inline_content(walk, name) {
+    (false, _) => { walk.invalid.val = true }
+    (true, None) => ()
+    (true, Some(visual)) => {
+      markdown_html_image_gallery_break_before(walk)
+      markdown_html_image_gallery_push_inline(
+        walk,
+        String::from_array(walk.chars[element_start:walk.index.val]),
+        visual,
+        font,
+        if dim {
+          Some(@core.Color::black().multiply_alpha(0.78))
+        } else {
+          None
+        },
+      )
+      markdown_html_image_gallery_push_newline(walk)
+    }
+  }
+}
+
+///|
+fn markdown_html_image_gallery_span_text(
+  walk : MarkdownHtmlImageGalleryWalk,
+  element_start : Int,
+) -> Unit {
+  match markdown_html_image_gallery_inline_content(walk, "span") {
+    (false, _) => { walk.invalid.val = true }
+    (true, None) => ()
+    (true, Some(visual)) => {
+      markdown_html_image_gallery_push_inline(
+        walk,
+        String::from_array(walk.chars[element_start:walk.index.val]),
+        visual,
+        walk.base,
+        Some(@core.Color::black().multiply_alpha(0.78)),
+      )
+    }
+  }
+}
+
+///|
+/// Collect the plain-text content of an opened `name` element up to its
+/// closing tag. Any nested markup inside declines the element.
+fn markdown_html_image_gallery_inline_content(
+  walk : MarkdownHtmlImageGalleryWalk,
+  name : String,
+) -> (Bool, String?) {
+  let chars = walk.chars
+  let start = walk.index.val
+  let mut index = start
+  while index < chars.length() {
+    if chars[index] == '<' {
+      if markdown_html_image_gallery_ci_at(
+        chars,
+        index,
+        "</" + name,
+      ) {
+        let mut cursor = index + 2 + name.length()
+        while cursor < chars.length() && chars[cursor] != '>' {
+          cursor = cursor + 1
+        }
+        if cursor >= chars.length() {
+          return (false, None)
+        }
+        walk.index.val = cursor + 1
+        return (
+          true,
+          markdown_html_image_gallery_decode_text(chars, start, index),
+        )
+      }
+      return (false, None)
+    }
+    index = index + 1
+  }
+  (false, None)
+}
+
+///|
+fn markdown_html_image_gallery_push_newline(
+  walk : MarkdownHtmlImageGalleryWalk,
+) -> Unit {
+  walk.runs.push(
+    RichTextRun::new(
+      text="",
+      visual_text=Some("\n"),
+      font=Some(walk.base),
+    ),
+  )
+  walk.line_open.val = false
+}
+
+///|
+fn markdown_html_image_gallery_break_before(
+  walk : MarkdownHtmlImageGalleryWalk,
+) -> Unit {
+  if walk.line_open.val {
+    markdown_html_image_gallery_push_newline(walk)
+  }
+}
+
+///|
+fn markdown_html_image_gallery_push_inline(
+  walk : MarkdownHtmlImageGalleryWalk,
+  raw : String,
+  visual : String,
+  font : @core.FontSpec,
+  color : @core.Color?,
+) -> Unit {
+  let run = match color {
+    None => RichTextRun::new(
+      text=raw,
+      visual_text=Some(visual),
+      font=Some(font),
+    )
+    Some(color) => RichTextRun::new(
+      text=raw,
+      visual_text=Some(visual),
+      font=Some(font),
+      color=Some(color),
+    )
+  }
+  walk.runs.push(run)
+  walk.line_open.val = true
+}
+
+///|
+/// Decode HTML entities and collapse whitespace runs into single spaces.
+/// Returns `None` when the segment carries no visible content.
+fn markdown_html_image_gallery_decode_text(
+  chars : Array[Char],
+  start : Int,
+  end : Int,
+) -> String? {
+  let output = StringBuilder()
+  let mut index = start
+  let mut pending_space = false
+  let mut visible = false
+  while index < end {
+    let ch = chars[index]
+    if markdown_html_image_gallery_space(ch) {
+      pending_space = true
+      index = index + 1
+    } else {
+      let (text, next) = match markdown_html_image_gallery_entity_at(
+        chars,
+        index,
+        end,
+      ) {
+        Some((text, next)) => (text, next)
+        None => (String::from_array([ch]), index + 1)
+      }
+      if text == " " {
+        pending_space = true
+      } else {
+        if pending_space && visible {
+          output.write_string(" ")
+        }
+        pending_space = false
+        output.write_string(text)
+        visible = true
+      }
+      index = next
+    }
+  }
+  if visible {
+    Some(output.to_string())
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_html_image_gallery_space_entity_only(
+  chars : Array[Char],
+  start : Int,
+  end : Int,
+) -> Bool {
+  let mut index = start
+  while index < end {
+    let ch = chars[index]
+    if markdown_html_image_gallery_space(ch) {
+      index = index + 1
+    } else if ch == '&' {
+      match markdown_html_image_gallery_entity_at(chars, index, end) {
+        Some((" ", next)) => index = next
+        _ => return false
+      }
+    } else {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn markdown_html_image_gallery_entity_at(
+  chars : Array[Char],
+  index : Int,
+  end : Int,
+) -> (String, Int)? {
+  // chars[index] == '&'
+  let name_start = index + 1
+  let mut cursor = name_start
+  while cursor < end &&
+        markdown_html_image_gallery_entity_char(chars[cursor]) {
+    cursor = cursor + 1
+  }
+  if cursor >= end || chars[cursor] != ';' || cursor == name_start {
+    return None
+  }
+  let name = String::from_array(chars[name_start:cursor]).to_lower()
+  match name {
+    "nbsp" => Some((" ", cursor + 1))
+    "amp" => Some(("&", cursor + 1))
+    "lt" => Some(("<", cursor + 1))
+    "gt" => Some((">", cursor + 1))
+    "quot" => Some(("\"", cursor + 1))
+    "#39" => Some(("'", cursor + 1))
+    _ => None
+  }
+}
+
+///|
+fn markdown_html_image_gallery_entity_char(ch : Char) -> Bool {
+  (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+  (ch >= '0' && ch <= '9') || ch == '#'
+}
+
+///|
+/// Skip an HTML comment at `index`, returning its end when a comment
+/// starts there. An unterminated comment consumes the remaining text.
+fn markdown_html_image_gallery_comment_end(
+  chars : Array[Char],
+  index : Int,
+) -> Int? {
+  if index + 4 > chars.length() ||
+    chars[index] != '<' ||
+    chars[index + 1] != '!' ||
+    chars[index + 2] != '-' ||
+    chars[index + 3] != '-' {
+    return None
+  }
+  let mut cursor = index + 4
+  while cursor + 3 <= chars.length() {
+    if chars[cursor] == '-' &&
+      chars[cursor + 1] == '-' &&
+      chars[cursor + 2] == '>' {
+      return Some(cursor + 3)
+    }
+    cursor = cursor + 1
+  }
+  Some(chars.length())
+}
+
+///|
+fn markdown_html_image_gallery_ci_at(
+  chars : Array[Char],
+  index : Int,
+  needle : String,
+) -> Bool {
+  let needle_chars = needle.to_array()
+  if index + needle_chars.length() > chars.length() {
+    return false
+  }
+  for offset in 0..<needle_chars.length() {
+    if !markdown_html_image_gallery_ci_char(
+      chars[index + offset],
+      needle_chars[offset],
+    ) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn markdown_html_image_gallery_ci_char(
+  actual : Char,
+  want_lower : Char,
+) -> Bool {
+  actual == want_lower ||
+  (actual >= 'A' &&
+  actual <= 'Z' && actual.to_int() + 32 == want_lower.to_int())
 }
 
 ///|
