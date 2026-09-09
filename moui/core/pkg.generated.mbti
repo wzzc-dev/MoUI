@@ -391,6 +391,7 @@ pub fn DamageRegion::full(String) -> Self
 pub fn DamageRegion::full_reason(Self) -> String
 pub fn DamageRegion::kind(Self) -> String
 pub fn DamageRegion::rect_count(Self) -> Int
+pub fn DamageRegion::union_with(Self, Self, surface~ : Rect) -> Self
 
 pub(all) struct DateValue {
   year : Int

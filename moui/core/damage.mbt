@@ -76,6 +76,31 @@ pub fn DamageRegion::from_rects(
 }
 
 ///|
+/// Merge a newly computed damage region into one already accumulated for the
+/// frame being built. The runtime can paint more than once between two
+/// presented frames (event handling runs `ensure_render_tree`), and every
+/// painted change must reach the renderer, so the shipped damage is the union
+/// across all paints since the last frame build.
+pub fn DamageRegion::union_with(
+  self : DamageRegion,
+  other : DamageRegion,
+  surface~ : Rect,
+) -> DamageRegion {
+  match (self, other) {
+    (Empty, _) => other
+    (_, Empty) => self
+    (Rects(a), Rects(b)) => {
+      let merged : Array[Rect] = a.copy()
+      for rect in b {
+        merged.push(rect)
+      }
+      DamageRegion::from_rects(merged, surface)
+    }
+    _ => DamageRegion::full("damage accumulated across paint passes")
+  }
+}
+
+///|
 fn coalesce_damage_rects(rects : Array[Rect]) -> Array[Rect] {
   let mut merged = rects.copy()
   let mut changed = true

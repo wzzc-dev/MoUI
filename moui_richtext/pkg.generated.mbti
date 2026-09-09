@@ -18,6 +18,8 @@ pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) ->
 
 pub fn markdown_block_to_rich_text(MarkdownBlock, @core.FontSpec, base_dir? : String?) -> RichTextBlock
 
+pub let markdown_block_views : Array[MarkdownBlockView]
+
 pub fn[Msg] markdown_editor(value~ : String, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, accepts_tab_input? : Bool, key? : String?) -> @core.View[Msg]
 
 pub fn markdown_editor_active_block_label(String, MarkdownEditorSelection) -> String
@@ -73,6 +75,8 @@ pub fn markdown_editor_toggle_current_task(String, MarkdownEditorSelection) -> M
 pub fn markdown_editor_toggle_task_at(String, Int) -> MarkdownEditorEditResult?
 
 pub fn markdown_editor_transform_input(String, Int, @core.TextRange?, String, context? : MarkdownEditorInputContext?) -> RichTextInputTransform?
+
+pub let markdown_html_image_gallery_view : MarkdownBlockView
 
 pub fn markdown_join_lines(Array[String]) -> String
 
@@ -135,6 +139,22 @@ pub(all) enum MarkdownBlockKind {
   HtmlBlock
   FrontMatter
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct MarkdownBlockView {
+  name : String
+  matches : (MarkdownBlock) -> Bool
+  project : (MarkdownBlock, MarkdownBlockViewContext) -> MarkdownBlockViewProjection?
+}
+
+pub struct MarkdownBlockViewContext {
+  base : @core.FontSpec
+  base_dir : String?
+}
+
+pub struct MarkdownBlockViewProjection {
+  runs : Array[RichTextRun]
+  line_align : @core.TextAlign?
+}
 
 pub(all) struct MarkdownDocumentBlock {
   id : Int
@@ -324,6 +344,7 @@ pub(all) struct MarkdownEditorEditResult {
   source : String
   caret : Int
   selection : @core.TextRange?
+  edit_range : MarkdownSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownEditorHtmlBlockParseResult derive(Eq, @debug.Debug)
@@ -454,8 +475,9 @@ pub(all) struct RichTextInputTransform {
   text : String
   caret : Int
   selection : @core.TextRange?
+  edit_range : MarkdownSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextInputTransform::new(text~ : String, caret~ : Int, selection? : @core.TextRange?) -> Self
+pub fn RichTextInputTransform::new(text~ : String, caret~ : Int, selection? : @core.TextRange?, edit_range? : MarkdownSourceRange?) -> Self
 
 pub(all) struct RichTextRun {
   text : String

@@ -1,4 +1,7 @@
 ///|
+/// Frame contract regression suite for the Skia route: every presented frame
+/// fully overwrites the surface. Damage rects from the runtime must never
+/// leave previous-frame pixels (e.g. a scrolled image ghost) behind.
 test "skia render_frame full damage clears entire surface" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
@@ -91,7 +94,7 @@ test "skia preserves transparent modal scrim pixels" {
 }
 
 ///|
-test "skia render_frame rects damage clears only dirty rects" {
+test "skia frame contract fully overwrites despite rect damage" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
@@ -102,7 +105,7 @@ test "skia render_frame rects damage clears only dirty rects" {
   ) catch {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
-  // Frame 1: paint entire surface black.
+  // Frame 1: paint entire surface black (the previous scroll frame's image).
   let _ = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [
@@ -114,9 +117,10 @@ test "skia render_frame rects damage clears only dirty rects" {
       @core.DamageRegion::full("baseline black"),
     ),
   )
-  // Frame 2: damage only the left half; draw black on the right half.
-  // Left half should be cleared to white; right half retains black from
-  // frame 1 and gets black drawn over it.
+  // Frame 2: runtime damage covers only the left half, but the frame must
+  // fully overwrite the surface: the right half loses its previous-frame
+  // pixels even though no command draws there. This pins the ghost fix —
+  // retained backing pixels must never survive into a presented frame.
   let second = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [
@@ -134,18 +138,41 @@ test "skia render_frame rects damage clears only dirty rects" {
   guard renderer.last_frame() is Some(second_frame) else {
     fail("expected second frame")
   }
-  // Left half: cleared to white by partial damage clear.
+  // Left half: cleared to white (nothing drawn there this frame).
   assert_false(
     skia_test_region_has_dark_pixel(
       second_frame,
       @core.Rect::new(x=0.0, y=0.0, width=8.0, height=16.0),
     ),
   )
-  // Right half: retains black (not cleared, then black drawn).
+  // Right half: cleared too, then drawn black again by this frame's command.
+  // Under the old contract it stayed black via retention; the black now
+  // comes from this frame's FillRect, and a command-less region proves the
+  // clear covers outside the damage rect (see the empty-command variant).
   assert_true(
     skia_test_region_has_dark_pixel(
       second_frame,
       @core.Rect::new(x=8.0, y=0.0, width=8.0, height=16.0),
+    ),
+  )
+  // Same shape, no commands at all: the full clear alone must reach the
+  // region outside the damage rect.
+  let third = renderer.render_frame(
+    skia_test_draw_frame_with_damage(
+      [],
+      @core.DamageRegion::Rects([
+        @core.Rect::new(x=0.0, y=0.0, width=8.0, height=16.0),
+      ]),
+    ),
+  )
+  inspect(third.presented, content="true")
+  guard renderer.last_frame() is Some(third_frame) else {
+    fail("expected third frame")
+  }
+  assert_false(
+    skia_test_region_has_dark_pixel(
+      third_frame,
+      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
     ),
   )
 }
@@ -192,7 +219,7 @@ test "skia render_frame empty damage falls back to full clear" {
 }
 
 ///|
-test "skia render_frame skips retained layer outside damage rects" {
+test "skia redraws retained layer outside damage rects instead of retaining" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
@@ -204,7 +231,7 @@ test "skia render_frame skips retained layer outside damage rects" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   let spec = @core.RetainedLayerSpec::new(
-    key="skia-damage-skip",
+    key="skia-damage-redraw",
     frame=@core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
     content_revision=1,
   )
@@ -227,9 +254,9 @@ test "skia render_frame skips retained layer outside damage rects" {
   inspect(first.cache_update_count, content="1")
   inspect(first.cache_hit_count, content="0")
   inspect(first.cache_miss_count, content="1")
-  // Frame 2 includes a complete declaration and a full-surface Clear. Damage
-  // at (10,10,4,4) does not intersect the retained layer at
-  // (2,2,4,4), so the damage clip must keep the skipped layer visible.
+  // Frame 2: damage at (10,10,4,4) does not intersect the retained layer.
+  // The contract forbids skipping the layer and letting surface retention
+  // keep it visible; the layer must be re-blitted from its cached raster.
   let second = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [
@@ -244,7 +271,7 @@ test "skia render_frame skips retained layer outside damage rects" {
     ),
   )
   inspect(second.presented, content="true")
-  inspect(second.cache_hit_count, content="0")
+  inspect(second.cache_hit_count, content="1")
   inspect(second.cache_miss_count, content="0")
   guard renderer.last_frame() is Some(second_frame) else {
     fail("expected second frame")
@@ -258,7 +285,7 @@ test "skia render_frame skips retained layer outside damage rects" {
 }
 
 ///|
-test "skia rect damage uses logical coordinates on hidpi surfaces" {
+test "skia frame contract clears hidpi surface despite rect damage" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
@@ -295,92 +322,18 @@ test "skia rect damage uses logical coordinates on hidpi surfaces" {
   guard renderer.last_frame() is Some(second_frame) else {
     fail("expected second frame")
   }
+  // The full clear is applied before the logical-coordinate scale, so the
+  // entire physical surface loses the previous frame's pixels.
   assert_false(
     skia_test_region_has_dark_pixel(
       second_frame,
-      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=32.0),
-    ),
-  )
-  assert_true(
-    skia_test_region_has_dark_pixel(
-      second_frame,
-      @core.Rect::new(x=16.0, y=0.0, width=16.0, height=32.0),
+      @core.Rect::new(x=0.0, y=0.0, width=32.0, height=32.0),
     ),
   )
 }
 
 ///|
-test "skia effective damage policy preserves safe Metal rects" {
-  let dirty = @core.Rect::new(x=2.0, y=3.0, width=4.0, height=5.0)
-  let resolved = skia_effective_damage_policy(
-    @core.DamageRegion::Rects([dirty]),
-    [@core.DrawCommand::FillRect(dirty, @core.Color::black())],
-    gpu_target=true,
-    metal_backing_ready=true,
-    image_generation_changed=false,
-  )
-  match resolved {
-    @core.DamageRegion::Rects([rect]) => assert_true(rect == dirty)
-    _ => fail("expected safe Metal backing to preserve rect damage")
-  }
-}
-
-///|
-test "skia effective damage policy keeps host GPU safety fallbacks" {
-  let dirty = @core.Rect::new(x=2.0, y=3.0, width=4.0, height=5.0)
-  let commands = [@core.DrawCommand::FillRect(dirty, @core.Color::black())]
-  match
-    skia_effective_damage_policy(
-      @core.DamageRegion::Rects([dirty]),
-      commands,
-      gpu_target=true,
-      metal_backing_ready=false,
-      image_generation_changed=false,
-    ) {
-    @core.DamageRegion::FullSurface(reason) =>
-      assert_eq(reason, "host-gpu drawable has no preserved backbuffer")
-    _ => fail("expected a fresh host drawable to force full damage")
-  }
-  match
-    skia_effective_damage_policy(
-      @core.DamageRegion::Rects([dirty]),
-      commands,
-      gpu_target=true,
-      metal_backing_ready=true,
-      image_generation_changed=true,
-    ) {
-    @core.DamageRegion::FullSurface(reason) =>
-      assert_eq(reason, "image resource completed")
-    _ => fail("expected image completion to force full damage")
-  }
-  match
-    skia_effective_damage_policy(
-      @core.DamageRegion::Rects([dirty]),
-      [@core.DrawCommand::PushOpacity(0.5), @core.DrawCommand::PopOpacity],
-      gpu_target=true,
-      metal_backing_ready=true,
-      image_generation_changed=false,
-    ) {
-    @core.DamageRegion::FullSurface(reason) =>
-      assert_eq(reason, "scope commands present with damage rects")
-    _ => fail("expected scope commands to force full damage")
-  }
-  match
-    skia_effective_damage_policy(
-      @core.DamageRegion::Empty,
-      [],
-      gpu_target=false,
-      metal_backing_ready=false,
-      image_generation_changed=false,
-    ) {
-    @core.DamageRegion::FullSurface(reason) =>
-      assert_eq(reason, "empty damage fallback")
-    _ => fail("expected empty damage to force a full raster fallback")
-  }
-}
-
-///|
-test "skia render_frame falls back to full damage when scope commands present" {
+test "skia scope commands never rely on partial damage" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
@@ -403,9 +356,8 @@ test "skia render_frame falls back to full damage when scope commands present" {
       @core.DamageRegion::full("baseline black"),
     ),
   )
-  // Frame 2: Rects damage but commands contain PushOpacity/PopOpacity.
-  // resolve_effective_damage should fall back to FullSurface, clearing the
-  // entire surface to white despite the small damage rect.
+  // Frame 2: Rects damage with PushOpacity/PopOpacity in the stream. The
+  // frame contract clears everything regardless of scope commands.
   let second = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [@core.DrawCommand::PushOpacity(1.0), @core.DrawCommand::PopOpacity],
