@@ -35,7 +35,7 @@ test "DamageIndex damage bounds resolve the nearest repaint boundary" {
     is_repaint_boundary=true,
     children=[mid],
   )
-  let index = DamageIndex::build(root, DirtyIdSet::new())
+  let index = DamageIndex::build(root)
   let leaf_bounds = index.damage_bounds(ElementId::new(3)).unwrap()
   assert_eq(leaf_bounds.origin.x, 0.0)
   assert_eq(leaf_bounds.size.width, 100.0)
@@ -43,6 +43,8 @@ test "DamageIndex damage bounds resolve the nearest repaint boundary" {
   let root_bounds = index.damage_bounds(ElementId::new(1)).unwrap()
   assert_eq(root_bounds.origin.x, 0.0)
   assert_eq(root_bounds.size.width, 100.0)
+  // Unknown ids report no bounds.
+  assert_eq(index.damage_bounds(ElementId::new(99)), None)
 }
 
 ///|
@@ -58,7 +60,7 @@ test "DamageIndex damage bounds fall back to own bounds without a boundary" {
     Rect::new(x=0.0, y=0.0, width=50.0, height=50.0),
     children=[leaf],
   )
-  let index = DamageIndex::build(root, DirtyIdSet::new())
+  let index = DamageIndex::build(root)
   let leaf_bounds = index.damage_bounds(ElementId::new(2)).unwrap()
   assert_eq(leaf_bounds.origin.x, 5.0)
   assert_eq(leaf_bounds.origin.y, 6.0)
@@ -77,63 +79,28 @@ test "DamageIndex damage bounds fall back to own bounds without a boundary" {
     is_repaint_boundary=true,
     children=[inner_boundary],
   )
-  let nested = DamageIndex::build(outer_root, DirtyIdSet::new())
+  let nested = DamageIndex::build(outer_root)
   let nested_bounds = nested.damage_bounds(ElementId::new(2)).unwrap()
   assert_eq(nested_bounds.origin.x, 10.0)
   assert_eq(nested_bounds.size.width, 20.0)
 }
 
 ///|
-test "DamageIndex descendant dirty excludes the node itself" {
-  let dirty = DirtyIdSet::new()
-  dirty.push(ElementId::new(2))
-  // root(1) → child(2): root has a dirty descendant; child(2) is dirty
-  // itself but has no strict dirty descendant.
-  let child = damage_index_node(
-    2,
-    Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
+test "DamageIndex shared ids resolve to the outermost node" {
+  // Rich-text editors emit ViewPaintLayer nodes that reuse the owning
+  // element's id; the index must resolve that id to the owner's own bounds
+  // (written after its same-id children), not to any single layer.
+  let layer = damage_index_node(
+    7,
+    Rect::new(x=0.0, y=90.0, width=100.0, height=20.0),
+    is_repaint_boundary=true,
   )
-  let root = damage_index_node(
-    1,
-    Rect::new(x=0.0, y=0.0, width=50.0, height=50.0),
-    children=[child],
+  let owner = damage_index_node(
+    7,
+    Rect::new(x=0.0, y=0.0, width=100.0, height=80.0),
+    children=[layer],
   )
-  let index = DamageIndex::build(root, dirty)
-  assert_eq(index.has_dirty_descendant(ElementId::new(1)), true)
-  assert_eq(index.has_dirty_descendant(ElementId::new(2)), false)
-  // Unknown ids report no dirty descendant and no bounds.
-  assert_eq(index.has_dirty_descendant(ElementId::new(99)), false)
-  assert_eq(index.damage_bounds(ElementId::new(99)), None)
-}
-
-///|
-test "DamageIndex folds dirty state up through deep chains" {
-  let dirty = DirtyIdSet::new()
-  dirty.push(ElementId::new(4))
-  // root(1) → mid(2) → mid(3) → leaf(4, dirty): only strict ancestors of 4
-  // report a dirty descendant.
-  let leaf = damage_index_node(
-    4,
-    Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
-  )
-  let mid3 = damage_index_node(
-    3,
-    Rect::new(x=1.0, y=1.0, width=4.0, height=4.0),
-    children=[leaf],
-  )
-  let mid2 = damage_index_node(
-    2,
-    Rect::new(x=1.0, y=1.0, width=6.0, height=6.0),
-    children=[mid3],
-  )
-  let root = damage_index_node(
-    1,
-    Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
-    children=[mid2],
-  )
-  let index = DamageIndex::build(root, dirty)
-  assert_eq(index.has_dirty_descendant(ElementId::new(1)), true)
-  assert_eq(index.has_dirty_descendant(ElementId::new(2)), true)
-  assert_eq(index.has_dirty_descendant(ElementId::new(3)), true)
-  assert_eq(index.has_dirty_descendant(ElementId::new(4)), false)
+  let index = DamageIndex::build(owner)
+  let owner_bounds = index.damage_bounds(ElementId::new(7)).unwrap()
+  assert_eq(owner_bounds.size.height, 80.0)
 }

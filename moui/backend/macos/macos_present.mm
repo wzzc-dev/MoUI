@@ -131,9 +131,13 @@ int32_t moui_macos_present_pixels_to_view(uint64_t raw_view,
   }
   CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
   CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
+  // The Skia raster surface stores RGBA8888 premul bytes (see
+  // `ImageInfo::n32_premul` = RGBA8888 in moui_skia). Interpret the buffer as
+  // R,G,B,A memory order; reading it as BGRA would swap red and blue in every
+  // presented frame (images rendered with the wrong hue on the raster route).
   CGImageRef image = CGImageCreate(width, height, 8, 32, width * 4,
                                    color_space,
-                                   kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst,
+                                   kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast,
                                    provider, NULL, false,
                                    kCGRenderingIntentDefault);
   if (provider != NULL) CGDataProviderRelease(provider);

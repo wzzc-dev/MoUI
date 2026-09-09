@@ -253,17 +253,13 @@ fn RenderNode::subtree_overlay_contains(
 
 ///|
 /// One-pass per-tree index for damage computation. Built once per frame per
-/// previous/current tree in `compute_damage_region`, replacing up to four
-/// full DFS traversals per dirty id with O(1) lookups and O(depth)
+/// previous/current tree in `compute_damage_region`, replacing the previous
+/// up-to-two full DFS traversals per dirty id with O(1) lookups and O(depth)
 /// parent-chain walks.
 priv struct DamageIndexEntry {
   paint_bounds : Rect
   parent_id : Int?
   is_repaint_boundary : Bool
-  // True when any *strict* descendant of this node is in the dirty set —
-  // mirrors the removed `has_dirty_descendant` (the node itself does not
-  // count, so a dirty leaf keeps emitting its own rect).
-  descendant_dirty : Bool
 }
 
 ///|
@@ -272,9 +268,9 @@ priv struct DamageIndex {
 }
 
 ///|
-fn DamageIndex::build(root : RenderNode, dirty : DirtyIdSet) -> DamageIndex {
+fn DamageIndex::build(root : RenderNode) -> DamageIndex {
   let entries : Map[Int, DamageIndexEntry] = Map([])
-  ignore(DamageIndex::build_node(root, None, dirty, entries))
+  DamageIndex::build_node(root, None, entries)
   { entries, }
 }
 
@@ -282,27 +278,16 @@ fn DamageIndex::build(root : RenderNode, dirty : DirtyIdSet) -> DamageIndex {
 fn DamageIndex::build_node(
   node : RenderNode,
   parent_id : Int?,
-  dirty : DirtyIdSet,
   entries : Map[Int, DamageIndexEntry],
-) -> Bool {
-  let mut descendant_dirty = false
+) -> Unit {
   for child in node.children {
-    if DamageIndex::build_node(
-        child,
-        Some(node.element_id.value()),
-        dirty,
-        entries,
-      ) {
-      descendant_dirty = true
-    }
+    DamageIndex::build_node(child, Some(node.element_id.value()), entries)
   }
   entries[node.element_id.value()] = {
     paint_bounds: node.paint_bounds,
     parent_id,
     is_repaint_boundary: node.is_repaint_boundary,
-    descendant_dirty,
   }
-  dirty.contains(node.element_id) || descendant_dirty
 }
 
 ///|
@@ -331,17 +316,6 @@ fn DamageIndex::damage_bounds(self : DamageIndex, id : ElementId) -> Rect? {
       Some(entry.paint_bounds)
     }
     None => None
-  }
-}
-
-///|
-fn DamageIndex::has_dirty_descendant(
-  self : DamageIndex,
-  id : ElementId,
-) -> Bool {
-  match self.entries.get(id.value()) {
-    Some(entry) => entry.descendant_dirty
-    None => false
   }
 }
 

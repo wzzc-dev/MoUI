@@ -368,11 +368,16 @@ fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
     Color::white()
   }
   self.stats.last_command_count = commands.length()
+  // Ship the union of damage across every paint pass since the last frame
+  // build (event handling can paint mid-batch), then start accumulating for
+  // the next frame.
+  let damage = self.dirty.accumulated_damage
+  self.dirty.accumulated_damage = DamageRegion::empty()
   DrawFrame::new(
     commands~,
     platform_views~,
     overlay_bounds~,
-    damage=self.stats.last_damage_region,
+    damage~,
     clear_color~,
   )
 }
@@ -505,11 +510,6 @@ fn DirtyIdSet::is_empty(self : DirtyIdSet) -> Bool {
 }
 
 ///|
-fn DirtyIdSet::contains(self : DirtyIdSet, id : ElementId) -> Bool {
-  self.seen.contains(id.value())
-}
-
-///|
 fn DirtyIdSet::to_array(self : DirtyIdSet) -> Array[ElementId] {
   self.items.copy()
 }
@@ -526,6 +526,11 @@ priv struct DirtyTracking {
   // Rebuilding can remove pixels that no current render node covers. Keep a
   // full-surface damage request until the rebuilt tree has been painted.
   mut full_damage_reason : String?
+  // Union of damage from every paint pass since the last frame build. Events
+  // can paint (via `ensure_render_tree`) before the host asks for a frame;
+  // shipping only the latest pass's damage would leave earlier changes —
+  // e.g. a scrolled image's moved pixels — outside the rendered clip.
+  mut accumulated_damage : DamageRegion
   mut rebuild_wakeup_redraw : Bool
   dirty_elements : DirtyIdSet
   dirty_build_elements : DirtyIdSet
@@ -586,6 +591,7 @@ fn DirtyTracking::new() -> DirtyTracking {
     needs_semantics: true,
     needs_platform: true,
     full_damage_reason: None,
+    accumulated_damage: DamageRegion::empty(),
     rebuild_wakeup_redraw: false,
     dirty_elements: DirtyIdSet::new(),
     dirty_build_elements: DirtyIdSet::new(),
@@ -611,6 +617,7 @@ fn DirtyTracking::clear(self : DirtyTracking) -> Unit {
   self.needs_semantics = false
   self.needs_platform = false
   self.full_damage_reason = None
+  self.accumulated_damage = DamageRegion::empty()
   self.rebuild_wakeup_redraw = false
   self.dirty_elements.clear()
   self.dirty_build_elements.clear()

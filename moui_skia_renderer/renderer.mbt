@@ -57,12 +57,10 @@ pub struct SkiaRasterRenderer {
   priv gpu_context : @skia_native.GpuContext?
   priv mut surface : @skia_native.Surface
   priv mut gpu_surface_attached : Bool
-  // Metal window drawables rotate every frame and do not preserve pixels. Keep
-  // a context-owned offscreen surface so local damage can update retained
-  // content before the complete frame is copied into the fresh drawable.
+  // Metal window drawables rotate every frame and do not preserve pixels.
+  // Render into a context-owned offscreen surface and copy its complete
+  // pixels into each fresh drawable.
   priv mut gpu_backing : @skia_native.Surface?
-  priv mut gpu_backing_valid : Bool
-  priv mut gpu_backing_rendering : Bool
   priv image_cache : Map[String, @skia_native.Image]
   priv failed_images : Map[String, String]
   priv image_lifecycle : @render_common.ImageResourceLifecycle
@@ -71,10 +69,6 @@ pub struct SkiaRasterRenderer {
   // this generation so placeholders are never replayed after an image is
   // ready.
   priv mut image_cache_generation : Int
-  // Generation last committed to the host surface. A completion can arrive
-  // between runtime paints, leaving the runtime's damage region stale; the
-  // next frame must therefore use full damage until the new pixels present.
-  priv mut presented_image_cache_generation : Int
   priv async_image_loading : Bool
   priv mut present_count : Int
   priv mut unsupported_command_count : Int
@@ -219,13 +213,10 @@ pub fn create_with_present_target_and_route(
     surface,
     gpu_surface_attached: gpu_target is None,
     gpu_backing: None,
-    gpu_backing_valid: false,
-    gpu_backing_rendering: false,
     image_cache: Map([]),
     failed_images: Map([]),
     image_lifecycle: @render_common.ImageResourceLifecycle::new(),
     image_cache_generation: 0,
-    presented_image_cache_generation: 0,
     async_image_loading,
     present_count: 0,
     unsupported_command_count: 0,
@@ -290,7 +281,6 @@ pub fn SkiaRasterRenderer::render(
           let outcome = (gpu_target.present_gpu)(self.gpu_context, self.surface)
           if outcome.succeeded() {
             self.present_count = self.present_count + 1
-            self.presented_image_cache_generation = self.image_cache_generation
             self.last_frame = None
             match outcome.next_surface() {
               Some(next_surface) => self.surface = next_surface
@@ -305,7 +295,6 @@ pub fn SkiaRasterRenderer::render(
           self.last_frame = Some(frame)
           if (self.target.present)(frame) {
             self.present_count = self.present_count + 1
-            self.presented_image_cache_generation = self.image_cache_generation
           } else {
             raise SkiaRendererError::PresentFailed(self.target.description)
           }
@@ -334,7 +323,6 @@ fn SkiaRasterRenderer::invalidate_gpu_backing_surface(
   self : SkiaRasterRenderer,
 ) -> Unit {
   self.gpu_backing = None
-  self.gpu_backing_valid = false
 }
 
 ///|
@@ -363,7 +351,6 @@ fn SkiaRasterRenderer::ensure_gpu_backing_surface(
         _ => return false
       }
       self.gpu_backing = Some(backing)
-      self.gpu_backing_valid = false
       true
     }
   }
@@ -371,8 +358,9 @@ fn SkiaRasterRenderer::ensure_gpu_backing_surface(
 
 ///|
 /// Update the persistent backing and copy its complete pixels into the fresh
-/// host drawable. The drawable is still treated as uninitialized; only the
-/// backing surface is allowed to consume partial damage.
+/// host drawable. The drawable is treated as uninitialized, so the copy must
+/// cover it entirely; the frame contract already resolves damage to a
+/// full-surface overwrite.
 fn SkiaRasterRenderer::render_to_gpu_backing(
   self : SkiaRasterRenderer,
   frame : @core.DrawFrame,
@@ -388,7 +376,6 @@ fn SkiaRasterRenderer::render_to_gpu_backing(
       return None
     }
   }
-  self.gpu_backing_rendering = true
   let previous_recording_canvas = self.platform_view_recording_canvas
   self.platform_view_recording_canvas = Some(canvas)
   let (stats, complete) = self.draw_frame_to_canvas(
@@ -397,7 +384,6 @@ fn SkiaRasterRenderer::render_to_gpu_backing(
     draw_platform_views=true,
   )
   self.platform_view_recording_canvas = previous_recording_canvas
-  self.gpu_backing_rendering = false
   if !complete || !backing.flush_and_submit() {
     self.invalidate_gpu_backing_surface()
     return None
@@ -406,99 +392,25 @@ fn SkiaRasterRenderer::render_to_gpu_backing(
     self.invalidate_gpu_backing_surface()
     return None
   }
-  self.gpu_backing_valid = true
   Some(stats)
 }
 
 ///|
-/// Resolve damage against renderer-owned state before any canvas work starts.
-/// This stays pure so the host-GPU safety contract can be regression-tested
-/// without constructing a drawable or performing native readback.
-fn skia_effective_damage_policy(
-  damage : @core.DamageRegion,
-  commands : Array[@core.DrawCommand],
-  gpu_target~ : Bool,
-  metal_backing_ready~ : Bool,
-  image_generation_changed~ : Bool,
-) -> @core.DamageRegion {
-  // Image decode completion changes renderer-owned pixels without rebuilding
-  // the runtime tree. Runtime damage can still describe an earlier sidebar or
-  // scroll event, so painting only that stale rect would leave the newly ready
-  // image (and any retained layer containing it) untouched. Force one full
-  // surface pass after each image-cache generation change.
-  if image_generation_changed {
-    return @core.DamageRegion::full("image resource completed")
-  }
-  // Host GPU surfaces (EGL/Metal/Vulkan/D3D window drawables) swap into a fresh
-  // back buffer that does not retain prior frame pixels. Metal can opt into a
-  // renderer-owned offscreen backing surface; only that surface has stable
-  // pixels that make partial damage safe. Other host-GPU routes stay on the
-  // conservative full-surface path.
-  if gpu_target && !metal_backing_ready {
-    return @core.DamageRegion::full(
-      "host-gpu drawable has no preserved backbuffer",
-    )
-  }
-  match damage {
-    @core.DamageRegion::Empty =>
-      @core.DamageRegion::full("empty damage fallback")
-    @core.DamageRegion::FullSurface(reason) =>
-      @core.DamageRegion::FullSurface(reason)
-    @core.DamageRegion::Rects(rects) => {
-      let mut has_scope = false
-      for command in commands {
-        match command {
-          @core.DrawCommand::PushOpacity(_)
-          | @core.DrawCommand::PushLayer(_)
-          | @core.DrawCommand::PushFilter(_) => {
-            has_scope = true
-            break
-          }
-          _ => ()
-        }
-      }
-      if has_scope {
-        @core.DamageRegion::full("scope commands present with damage rects")
-      } else {
-        match skia_damage_rect_union(rects) {
-          Some(rect) => @core.DamageRegion::Rects([rect])
-          None => @core.DamageRegion::full("empty damage rects fallback")
-        }
-      }
-    }
-  }
-}
-
-///|
+/// Frame contract: every presented frame fully overwrites the target
+/// surface. Runtime damage still rides on the frame for other renderers and
+/// diagnostics, but this route never relies on pixels retained from an
+/// earlier frame. A partially cleared surface plus a clipped command stream
+/// is exactly how a scrolled image left the previous frame's pixels behind
+/// when damage under-covered its moved content (see the damage contract in
+/// `moui/runtime/runtime_render_pipeline.mbt`). Re-enabling partial damage
+/// here requires a pixel-comparison self-check gate for damage coverage.
 fn SkiaRasterRenderer::resolve_effective_damage(
   self : SkiaRasterRenderer,
   frame : @core.DrawFrame,
 ) -> @core.DamageRegion {
-  skia_effective_damage_policy(
-    frame.damage,
-    frame.commands,
-    gpu_target=self.gpu_target is Some(_),
-    metal_backing_ready=self.surface_route is MetalGpuSurfaceRoute &&
-      self.gpu_backing_rendering &&
-      self.gpu_backing_valid &&
-      self.gpu_backing is Some(_),
-    image_generation_changed=self.image_cache_generation !=
-      self.presented_image_cache_generation,
-  )
-}
-
-///|
-fn skia_damage_rect_union(rects : Array[@core.Rect]) -> @core.Rect? {
-  match rects {
-    [] => None
-    [first, .. rest] => {
-      let mut bounds = first
-      for rect in rest {
-        bounds = bounds.union(rect)
-      }
-      Some(bounds)
-    }
-  }
+  let _ = self
+  let _ = frame
+  @core.DamageRegion::full("frame contract: full surface overwrite")
 }
 
 ///|
@@ -590,7 +502,6 @@ fn SkiaRasterRenderer::render_frame_inner(
       let outcome = (gpu_target.present_gpu)(self.gpu_context, self.surface)
       if outcome.succeeded() {
         self.present_count = self.present_count + 1
-        self.presented_image_cache_generation = self.image_cache_generation
         self.last_frame = None
         match outcome.next_surface() {
           Some(next_surface) => self.surface = next_surface
@@ -620,7 +531,6 @@ fn SkiaRasterRenderer::render_frame_inner(
           self.last_frame = Some(skia_frame)
           if (self.target.present)(skia_frame) {
             self.present_count = self.present_count + 1
-            self.presented_image_cache_generation = self.image_cache_generation
             self.render_frame_result(stats, presented=true)
           } else {
             raise SkiaRendererError::PresentFailed(self.target.description)
@@ -648,7 +558,9 @@ fn SkiaRasterRenderer::draw_frame_to_canvas(
   )
   // Damage bounds are logical coordinates. Keep every command, including
   // full-surface backgrounds and explicit compatibility Clears, inside the
-  // same damage clip so skipped cached layers retain their previous pixels.
+  // same damage clip so clip and clear stay coherent. The frame contract
+  // resolves damage to a full-surface overwrite, so this clip is a no-op
+  // for frames this route presents.
   self.apply_damage_clip(canvas, effective_damage)
   self.apply_damage_clear(canvas, effective_damage, frame.clear_color)
   self.unsupported_command_count = 0

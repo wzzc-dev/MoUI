@@ -150,7 +150,7 @@ impl @core.ViewNode for SkiaHoverDamageStageNode with fn paint(_self, ctx) {
 }
 
 ///|
-test "skia hover damage preserves cached sibling pixels" {
+test "skia hover damage redraws cached sibling layers under rect damage" {
   guard skia_available() else { return () }
   let renderer = create_with_present_target(
     @core.SurfaceMetrics::from_logical(

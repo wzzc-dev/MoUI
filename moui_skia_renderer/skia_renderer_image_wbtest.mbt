@@ -396,8 +396,10 @@ test "skia renderer retained layer refreshes after async image completion" {
     ),
   )
   // The completion can race with a scroll/sidebar damage rect that does not
-  // overlap the editor layer. The renderer must promote this frame to full
-  // damage or the placeholder remains visible in the untouched region.
+  // overlap the editor layer. The frame contract fully overwrites the
+  // surface and the completion advanced the image generation baked into the
+  // retained-layer key, so the layer re-rasterizes with real pixels instead
+  // of replaying the placeholder from a cache hit.
   let second = renderer.render_frame(
     @core.DrawFrame::new(
       commands~,

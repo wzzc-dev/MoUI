@@ -196,15 +196,6 @@ fn collect_overlay_overrides(
           pair.0 < placed.children.length() &&
           placed.children[pair.0].frame != pair.1
         })
-      // Overrides must cover every overlay-positioned child: the re-place
-      // rebuilds the spine and would otherwise drop unchanged children back to
-      // their provisional frames.
-      let any_changed = pairs
-        .iter()
-        .any(pair => {
-          pair.0 < placed.children.length() &&
-          placed.children[pair.0].frame != pair.1
-        })
       if any_changed {
         out.push((element.id.value(), pairs))
         for id in child_path {
@@ -283,11 +274,26 @@ fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
       None => ()
     }
   }
-  self.stats.last_damage_region = self.compute_damage_region(
+  let damage = self.compute_damage_region(
     previous_render,
     self.render_tree,
     dirty_ids,
     force_full_reason~,
+  )
+  self.stats.last_damage_region = damage
+  // Accumulate across paint passes: events can force a paint
+  // (`ensure_render_tree`) long before the host builds the next frame, and
+  // each pass's damage describes only what that pass re-painted. The frame
+  // must carry the union of everything painted since the last frame, or the
+  // renderer clips away earlier changes and stale pixels ghost through.
+  self.dirty.accumulated_damage = self.dirty.accumulated_damage.union_with(
+    damage,
+    surface=Rect::new(
+      x=0.0,
+      y=0.0,
+      width=self.size.width,
+      height=self.size.height,
+    ),
   )
   self.dirty.full_damage_reason = None
   self.dirty.needs_rebuild = false
@@ -314,15 +320,16 @@ fn RuntimeState::compute_damage_region(
       if dirty_ids.is_empty() {
         return DamageRegion::full("dirty bounds unavailable")
       }
-      let dirty = DirtyIdSet::new()
-      for id in dirty_ids {
-        dirty.push(id)
-      }
-      // One pass per tree replaces the previous up-to-four full traversals
-      // per dirty id (has_dirty_descendant + find_damage_bounds on both
-      // trees, each a fresh O(n) DFS).
-      let previous_index = DamageIndex::build(previous.root, dirty)
-      let current_index = DamageIndex::build(current.root, dirty)
+      // Every id in the dirty set was marked paint-dirty on itself, so its
+      // own paint output may change anywhere inside its bounds. Descendant
+      // rects never cover that: a scroll offset that an ancestor re-paints
+      // moves content across the whole subtree, and clearing only the leaf
+      // rects would leave previous-frame pixels (e.g. a scrolled image)
+      // ghosting outside them. Union each id's previous and current damage
+      // bounds unconditionally. One pass per tree keeps the index build O(n)
+      // regardless of the number of dirty ids.
+      let previous_index = DamageIndex::build(previous.root)
+      let current_index = DamageIndex::build(current.root)
       let surface = Rect::new(
         x=0.0,
         y=0.0,
@@ -332,26 +339,23 @@ fn RuntimeState::compute_damage_region(
       let rects : Array[Rect] = []
       let mut missing_bounds = false
       for id in dirty_ids {
-        if !previous_index.has_dirty_descendant(id) &&
-          !current_index.has_dirty_descendant(id) {
-          let mut found_bounds = false
-          match previous_index.damage_bounds(id) {
-            Some(bounds) => {
-              rects.push(bounds)
-              found_bounds = true
-            }
-            None => ()
+        let mut found_bounds = false
+        match previous_index.damage_bounds(id) {
+          Some(bounds) => {
+            rects.push(bounds)
+            found_bounds = true
           }
-          match current_index.damage_bounds(id) {
-            Some(bounds) => {
-              rects.push(bounds)
-              found_bounds = true
-            }
-            None => ()
+          None => ()
+        }
+        match current_index.damage_bounds(id) {
+          Some(bounds) => {
+            rects.push(bounds)
+            found_bounds = true
           }
-          if !found_bounds {
-            missing_bounds = true
-          }
+          None => ()
+        }
+        if !found_bounds {
+          missing_bounds = true
         }
       }
       if missing_bounds || rects.is_empty() {
