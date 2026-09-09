@@ -686,15 +686,17 @@ fn markdown_html_image_gallery_image_run(
       let alt = markdown_html_image_gallery_attribute(tag.attributes, "alt").unwrap_or(
         "",
       )
+      let resolved = markdown_resolve_image_source(source, base_dir)
       let (image_size, image_width_fraction) = markdown_html_image_gallery_image_size(
         tag.attributes,
         base,
+        resolved,
       )
       Some(
         RichTextRun::new(
           text=tag.raw,
           visual_text=Some(alt),
-          image_source=Some(markdown_resolve_image_source(source, base_dir)),
+          image_source=Some(resolved),
           image_size=Some(image_size),
           image_width_fraction~,
           font=Some({ ..base, weight: 600 }),
@@ -706,11 +708,24 @@ fn markdown_html_image_gallery_image_run(
 }
 
 ///|
+/// Box size plus optional content-column fraction for one gallery image.
+/// Explicit pixel attributes win; otherwise the intrinsic header size (when
+/// the host can provide it) supplies the aspect ratio, so percentage-width
+/// images keep their real shape instead of a placeholder 16:9 box.
 fn markdown_html_image_gallery_image_size(
   attributes : Array[MarkdownHtmlImageGalleryAttribute],
   base : @core.FontSpec,
+  source : String,
 ) -> (@core.Size, Double?) {
   let fallback = @core.Size::new(width=base.size * 8.0, height=base.size * 4.5)
+  let intrinsic = match markdown_image_metrics_size(source) {
+    Some(size) if size.width > 0.0 && size.height > 0.0 => Some(size)
+    _ => None
+  }
+  let aspect = match intrinsic {
+    Some(size) => size.width / size.height
+    None => fallback.width / fallback.height
+  }
   let width = match markdown_html_image_gallery_attribute(attributes, "width") {
     Some(value) => markdown_html_image_gallery_dimension(value)
     None => None
@@ -720,7 +735,6 @@ fn markdown_html_image_gallery_image_size(
     Some(value) => markdown_html_image_gallery_dimension(value)
     None => None
   }
-  let aspect = fallback.width / fallback.height
   match (width, height) {
     (Some(Pixels(width)), Some(Pixels(height))) =>
       (@core.Size::new(width~, height~), None)
@@ -728,10 +742,12 @@ fn markdown_html_image_gallery_image_size(
       (@core.Size::new(width~, height=width / aspect), None)
     (Some(Fraction(fraction)), Some(Pixels(height))) =>
       (@core.Size::new(width=fallback.width, height~), Some(fraction))
-    (Some(Fraction(fraction)), _) => (fallback, Some(fraction))
+    (Some(Fraction(fraction)), _) =>
+      (intrinsic.unwrap_or(fallback), Some(fraction))
     (None, Some(Pixels(height))) =>
       (@core.Size::new(width=height * aspect, height~), None)
-    (None, Some(Fraction(_))) | (None, None) => (fallback, None)
+    (None, Some(Fraction(_))) | (None, None) =>
+      (intrinsic.unwrap_or(fallback), None)
   }
 }
 

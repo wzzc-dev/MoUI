@@ -272,7 +272,7 @@ fn markdown_inlines_to_rich_text(
         text=markdown_inline_source_text(span),
         visual_text=Some(markdown_inline_visual_text(span)),
         image_source=markdown_inline_image_source(span, base_dir~),
-        image_size=markdown_inline_image_size(span, base),
+        image_size=markdown_inline_image_size(span, base, base_dir~),
         font=Some(markdown_inline_font(span.kind, base)),
         color=markdown_inline_color(span.kind),
         background=markdown_inline_background(span.kind),
@@ -357,13 +357,32 @@ fn markdown_join_path(dir : String, rel : String) -> String {
 }
 
 ///|
+/// Box size for a plain markdown image. The intrinsic header size (when the
+/// host can provide it) keeps the image's real shape; otherwise a
+/// placeholder box reserves the space until layout learns more. The drawn
+/// width is capped to the content column by the resolver, mirroring the
+/// usual `max-width: 100%` behavior.
 fn markdown_inline_image_size(
   inline : MarkdownInline,
   base : @core.FontSpec,
+  base_dir~ : String?,
 ) -> @core.Size? {
   match inline.kind {
-    Image =>
-      Some(@core.Size::new(width=base.size * 8.0, height=base.size * 4.5))
+    Image => {
+      let fallback = @core.Size::new(
+        width=base.size * 8.0,
+        height=base.size * 4.5,
+      )
+      Some(
+        match inline.target {
+          Some(target) if target.trim().to_owned() != "" =>
+            markdown_image_metrics_size(
+              markdown_resolve_image_source(target, base_dir),
+            ).unwrap_or(fallback)
+          _ => fallback
+        },
+      )
+    }
     _ => None
   }
 }

@@ -78,7 +78,13 @@ pub fn markdown_editor_transform_input(String, Int, @core.TextRange?, String, co
 
 pub let markdown_html_image_gallery_view : MarkdownBlockView
 
+pub fn markdown_image_metrics_size(String) -> @core.Size?
+
+pub fn markdown_image_metrics_size_from_bytes(Bytes) -> @core.Size?
+
 pub fn markdown_join_lines(Array[String]) -> String
+
+pub fn markdown_set_image_metrics_reader((String) -> Bytes?) -> Unit
 
 pub fn markdown_split_lines(String) -> Array[String]
 
