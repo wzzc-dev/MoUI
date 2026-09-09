@@ -408,6 +408,10 @@ static void moonbit_skia_surface_finalize(void* ptr) {
     moonbit_skia_egl_release_window(wrapper->host_present_handle);
     wrapper->host_present_handle = nullptr;
   }
+  if (wrapper->gpu_queue != nullptr) {
+    moonbit_skia_objc_release(wrapper->gpu_queue);
+    wrapper->gpu_queue = nullptr;
+  }
 }
 
 static void moonbit_skia_gpu_context_finalize(void* ptr) {
@@ -1463,6 +1467,7 @@ MoonbitSkiaSurface* moonbit_skia_make_surface_wrapper(
   );
   wrapper->surface = surface;
   wrapper->gpu_context_owner = nullptr;
+  wrapper->gpu_queue = nullptr;
   wrapper->host_present_handle = nullptr;
   return wrapper;
 }

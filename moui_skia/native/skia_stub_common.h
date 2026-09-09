@@ -219,6 +219,9 @@ struct MoonbitSkiaSurface {
   void* surface;
   void* gpu_context_owner;
 #endif
+  /// Retained Metal command queue used to enqueue presentation after Skia's
+  /// render command buffer. Null for raster / non-Metal surfaces.
+  void* gpu_queue;
   /// Retained host present handle (e.g. id<CAMetalDrawable>) that owns the
   /// MTLTexture backing this surface. Null for raster / offscreen GPU surfaces.
   void* host_present_handle;
