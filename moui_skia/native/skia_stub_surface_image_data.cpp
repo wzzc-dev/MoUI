@@ -1891,6 +1891,13 @@ moonbit_skia_surface_metal_window(
     surface.release(),
     context->context
   );
+  // Skia submits rendering through this queue. Keep the same queue on the
+  // surface so presentation can be enqueued after that work, preserving the
+  // GPU ordering required by CAMetalLayer.
+  wrapper->gpu_queue = context->queue;
+  if (wrapper->gpu_queue != nullptr) {
+    moonbit_skia_objc_retain(wrapper->gpu_queue);
+  }
   wrapper->host_present_handle = drawable;
   return wrapper;
 #else
@@ -1932,12 +1939,38 @@ moonbit_skia_surface_metal_present_and_acquire_next(
   GrDirectContext* gpu_context = wrapper->gpu_context_owner;
 
   // The host renderer has already called flush_and_submit() on the surface.
-  // Present the drawable so Core Animation displays the rendered content.
-  using ObjcSendVoidNoArg = void (*)(void*, SEL);
-  reinterpret_cast<ObjcSendVoidNoArg>(objc_msgSend)(
-    old_drawable,
-    sel_registerName("present")
-  );
+  // Enqueue presentation on the same Metal queue. A bare drawable `present`
+  // is not ordered with Skia's submitted command buffer, which can expose an
+  // old drawable while the window is moving or scrolling.
+  void* command_buffer = nullptr;
+  if (wrapper->gpu_queue != nullptr) {
+    using ObjcSendNoArg = void* (*)(void*, SEL);
+    command_buffer = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
+      wrapper->gpu_queue,
+      sel_registerName("commandBuffer")
+    );
+  }
+  if (command_buffer != nullptr) {
+    using ObjcSendOneObject = void (*)(void*, SEL, void*);
+    using ObjcSendVoidNoArg = void (*)(void*, SEL);
+    reinterpret_cast<ObjcSendOneObject>(objc_msgSend)(
+      command_buffer,
+      sel_registerName("presentDrawable:"),
+      old_drawable
+    );
+    reinterpret_cast<ObjcSendVoidNoArg>(objc_msgSend)(
+      command_buffer,
+      sel_registerName("commit")
+    );
+  } else {
+    // Keep the legacy fallback for an incomplete/unsupported context. Normal
+    // Metal surfaces always carry the queue captured above.
+    using ObjcSendVoidNoArg = void (*)(void*, SEL);
+    reinterpret_cast<ObjcSendVoidNoArg>(objc_msgSend)(
+      old_drawable,
+      sel_registerName("present")
+    );
+  }
 
   // Release the old drawable and SkSurface; they are no longer needed.
   moonbit_skia_objc_release(old_drawable);
@@ -1967,6 +2000,12 @@ moonbit_skia_surface_metal_present_and_acquire_next(
       next_surface.release(),
       gpu_context
     );
+  // The next drawable is rendered by the same context and therefore uses the
+  // same queue as the previous surface.
+  new_wrapper->gpu_queue = wrapper->gpu_queue;
+  if (new_wrapper->gpu_queue != nullptr) {
+    moonbit_skia_objc_retain(new_wrapper->gpu_queue);
+  }
   new_wrapper->host_present_handle = next_drawable;
   return new_wrapper;
 #else
