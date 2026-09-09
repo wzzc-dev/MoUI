@@ -971,6 +971,10 @@ fn rich_text_run_segment_height(
 }
 
 ///|
+///|
+/// Drawn width of an image run: a percentage-width image scales with the
+/// content column, and any image is capped to the column so oversized
+/// intrinsic sizes never overflow the page (the usual `max-width: 100%`).
 fn rich_text_run_resolved_image_width(
   run : RichTextRun,
   available_width : Double,
@@ -988,7 +992,14 @@ fn rich_text_run_resolved_image_width(
               ),
             ),
           )
-        _ => Some(size.width)
+        _ =>
+          Some(
+            if available_width > 0.0 {
+              min_double(size.width, available_width)
+            } else {
+              size.width
+            },
+          )
       }
     None => None
   }
