@@ -1,0 +1,11 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/http",
+  "wzzc-dev/moui/backend/common/image" @window_image,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

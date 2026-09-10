@@ -42,7 +42,23 @@ pub fn env_flag(String) -> Bool
 
 pub fn host_surface_metrics_error(@render.HostSurface) -> String?
 
+pub fn image_decoder_plugin_chain(@render.RendererImageDecoder, builtin? : Array[@render.RendererImageDecoder]) -> @render.RendererImageDecoder
+
+pub fn image_decoder_plugin_clear() -> Unit
+
+pub fn image_decoder_plugin_count() -> Int
+
+pub fn image_decoder_plugin_register(@render.RendererImageDecoder) -> Unit
+
 pub fn image_placement(@core.Rect, @core.Size, @core.ImageFit) -> ImagePlacement
+
+pub fn image_source_provider_clear() -> Unit
+
+pub fn image_source_provider_count() -> Int
+
+pub fn image_source_provider_read(String) -> Bytes?
+
+pub fn image_source_provider_register(prefix~ : String, read~ : (String) -> Bytes?) -> Unit
 
 pub fn import_svg(String) -> SvgImportResult
 
@@ -73,6 +89,18 @@ pub fn representative_fallback_codepoint(String, skip_joiners? : Bool) -> Int
 pub fn resolve_renderer(Array[@render.RendererProvider], @render.HostSurface) -> @render.RendererSession?
 
 pub fn resolve_shader_effect(@core.ShaderEffectSpec) -> ShaderRegistryResult
+
+pub fn svg_image_decoder() -> @render.RendererImageDecoder
+
+pub fn svg_intrinsic_size(String) -> @core.Size?
+
+pub fn svg_intrinsic_size_from_bytes(Bytes) -> @core.Size?
+
+pub fn svg_raster_target_size(@core.Size) -> (Int, Int)
+
+pub fn svg_rasterize_rgba(String, Int, Int) -> Bytes?
+
+pub fn svg_source_is_svg(String, Bytes) -> Bool
 
 pub fn tessellate_path(@core.PathSpec) -> PathMesh
 

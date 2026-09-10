@@ -214,6 +214,40 @@ test "skia image load completion from bytes decodes provided image bytes" {
 }
 
 ///|
+test "skia image decoder rasterizes svg ahead of the raster codec" {
+  let decoder = skia_image_decoder()
+  let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 10\">" +
+    "<rect width=\"20\" height=\"10\" fill=\"#2288ff\"/></svg>"
+  // SVG needs no Skia codec support: the shared plugin rasterizes it and the
+  // result arrives as premultiplied RGBA, exactly like a decoded PNG.
+  let completion = decoder.decode(
+    "assets/mark.svg",
+    Some(@utf8.encode(svg, bom=false)),
+  )
+  assert_true(completion.has_decoded_rgba_payload())
+  inspect(completion.width, content="40")
+  inspect(completion.height, content="20")
+  inspect(completion.decoded_row_bytes, content="160")
+
+  // A raster source still reaches the Skia codec unchanged.
+  if skia_available() {
+    let png_source = skia_test_png_data_uri()
+    match skia_image_data_uri_bytes(png_source) {
+      Some(bytes) => {
+        let raster = decoder.decode(png_source, Some(bytes))
+        assert_true(
+          raster.status ==
+          @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
+        )
+        inspect(raster.width, content="1")
+        inspect(raster.height, content="1")
+      }
+      None => fail("expected embedded test PNG bytes")
+    }
+  }
+}
+
+///|
 test "skia renderer dispose clears cached image resources and records disposal" {
   guard skia_available() else { return () }
   let source = skia_test_png_data_uri()

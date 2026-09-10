@@ -98,14 +98,26 @@ pub fn gpu(
 }
 
 ///|
+/// The renderer's image decoder: the shared vector decoder first, then Skia's
+/// encoded-image codec.
+///
+/// Skia decodes raster formats only, so an `.svg` source would otherwise fall
+/// through to the placeholder. SVG is rasterized by the cross-target plugin in
+/// `moui/render/common`, which needs no host support, and the result is
+/// delivered as ordinary premultiplied RGBA — indistinguishable downstream
+/// from a codec's output. App-registered decoder plugins still take priority.
 fn skia_image_decoder() -> @render.RendererImageDecoder {
-  @render.RendererImageDecoder::new(decode=(source, bytes) => {
+  let raster = @render.RendererImageDecoder::new(decode=(source, bytes) => {
     match bytes {
       Some(data) =>
         skia_image_load_completion_from_bytes(source, data, background_io=true)
       None => skia_image_load_completion(source)
     }
   })
+  @render_common.image_decoder_plugin_chain(
+    raster,
+    builtin=[@render_common.svg_image_decoder()],
+  )
 }
 
 ///|

@@ -25,6 +25,97 @@ pub fn WindowImageTaskStarter::immediate() -> WindowImageTaskStarter {
 }
 
 ///|
+/// A starter that resolves remote sources on a worker and everything else
+/// synchronously.
+///
+/// The completion callback must never run on a worker thread: it mutates
+/// `WindowImageTasks` bookkeeping and the renderer's image lifecycle, both of
+/// which belong to the UI thread. `deferred` therefore takes two host hooks
+/// and keeps the ordering explicit:
+///
+/// * `spawn` runs a closure off the caller's thread and returns an optional
+///   cancel handle — an OS thread, a thread pool, a GCD queue.
+/// * `post` marshals a closure back onto the UI thread — a main-queue
+///   dispatch. The worker only ever touches `post`.
+///
+/// Non-remote sources complete inline, so a local file never leaves the UI
+/// thread. Without host hooks a platform can keep using `immediate`, which
+/// makes this a purely additive seam.
+pub fn WindowImageTaskStarter::deferred(
+  fetch~ : (String) -> Bytes?,
+  spawn~ : ((() -> Unit)) -> (() -> Unit)?,
+  post~ : ((() -> Unit)) -> Unit,
+) -> WindowImageTaskStarter {
+  WindowImageTaskStarter::new(start=(request, complete) => {
+    let source = request.source()
+    if !window_image_source_is_remote(source) {
+      complete(request.load())
+      return None
+    }
+    spawn(() => {
+      match fetch(source) {
+        Some(bytes) =>
+          post(() => {
+            complete(request.load_bytes(bytes))
+          })
+        // A failed fetch falls back to the default path, which surfaces the
+        // failure through the renderer's image lifecycle rather than stalling
+        // the request in the loading state.
+        None =>
+          post(() => {
+            complete(request.load())
+          })
+      }
+    })
+  })
+}
+
+///|
+/// True for sources a platform must reach over the network rather than through
+/// the filesystem.
+pub fn window_image_source_is_remote(source : String) -> Bool {
+  source.has_prefix("http://") || source.has_prefix("https://")
+}
+
+///|
+/// App-installed starter that replaces the backends' built-in default.
+///
+/// Platform backends create one image task workspace per window and otherwise
+/// hardcode `immediate()`. An application that can resolve sources the backend
+/// cannot — remote `https:` assets fetched through an async runtime, say —
+/// installs its starter here before launching, and every backend picks it up
+/// without each app needing a bespoke host option. An explicitly passed
+/// `image_task_starter` still wins, which keeps tests and multi-starter hosts
+/// unaffected.
+let window_image_task_starter_override : Ref[WindowImageTaskStarter?] = Ref(
+  None,
+)
+
+///|
+/// Install the starter used by backends that were not given one explicitly.
+pub fn window_image_task_starter_install(
+  starter : WindowImageTaskStarter,
+) -> Unit {
+  window_image_task_starter_override.val = Some(starter)
+}
+
+///|
+/// Drop the installed starter, restoring the synchronous default.
+pub fn window_image_task_starter_reset() -> Unit {
+  window_image_task_starter_override.val = None
+}
+
+///|
+/// The starter a backend should use when it has none of its own: the installed
+/// starter when present, otherwise the synchronous `immediate` starter.
+pub fn window_image_task_starter_default() -> WindowImageTaskStarter {
+  match window_image_task_starter_override.val {
+    Some(starter) => starter
+    None => WindowImageTaskStarter::immediate()
+  }
+}
+
+///|
 priv struct WindowImageTask {
   token : @render.RendererImageLoadToken
   cancel : (() -> Unit)?

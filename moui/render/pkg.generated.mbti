@@ -375,6 +375,7 @@ pub struct RendererImageLoadRequest {
   // private fields
 }
 pub fn RendererImageLoadRequest::load(Self) -> RendererImageLoadCompletion
+pub fn RendererImageLoadRequest::load_bytes(Self, Bytes) -> RendererImageLoadCompletion
 pub fn RendererImageLoadRequest::source(Self) -> String
 pub fn RendererImageLoadRequest::token(Self) -> RendererImageLoadToken
 

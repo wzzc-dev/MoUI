@@ -141,12 +141,14 @@ test "html gallery percentage images use the intrinsic aspect ratio" {
     fail("expected a percentage gallery image")
   }
   assert_eq(probed.width, 1200.0)
-  assert_eq(probed.height, 636.0)
-  // Unprobed image: the placeholder aspect is retained.
+  // Intrinsic 636 plus the 12px gallery row gap (the image draws contain-
+  // fitted at its real shape, centered inside the padded line frame).
+  assert_eq(probed.height, 648.0)
+  // Unprobed image: the placeholder aspect is retained above the row gap.
   guard block.runs[1] is { image_size: Some(missing), .. } else {
     fail("expected the second gallery image")
   }
-  assert_eq(missing.width / missing.height, 8.0 / 4.5)
+  assert_eq(missing.width / (missing.height - 12.0), 8.0 / 4.5)
 }
 
 ///|
@@ -171,4 +173,85 @@ test "plain markdown images use the intrinsic size" {
   }
   assert_eq(size.width, 1200.0)
   assert_eq(size.height, 636.0)
+}
+
+///|
+test "image metrics resolve svg intrinsic size from viewBox" {
+  let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 720\">" +
+    "<circle cx=\"360\" cy=\"360\" r=\"300\" fill=\"#f5c542\"/></svg>"
+  match markdown_image_metrics_size_from_bytes(@utf8.encode(svg, bom=false)) {
+    Some(size) => {
+      assert_eq(size.width, 720.0)
+      assert_eq(size.height, 720.0)
+    }
+    None => fail("expected the svg viewBox size")
+  }
+  // Root width/height without a viewBox is still resolvable.
+  let sized = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"64\" height=\"32\">" +
+    "<rect width=\"64\" height=\"32\" fill=\"black\"/></svg>"
+  match markdown_image_metrics_size_from_bytes(@utf8.encode(sized, bom=false)) {
+    Some(size) => {
+      assert_eq(size.width, 64.0)
+      assert_eq(size.height, 32.0)
+    }
+    None => fail("expected the svg root size")
+  }
+}
+
+///|
+test "image metrics consult the remote reader for http sources" {
+  let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 20\"></svg>"
+  let mut reads = 0
+  markdown_set_remote_image_reader(source => {
+    reads = reads + 1
+    if source == "https://img.shields.io/badge.svg" {
+      Some(@utf8.encode(svg, bom=false))
+    } else {
+      None
+    }
+  })
+  defer markdown_set_remote_image_reader(_ => None)
+
+  match markdown_image_metrics_size("https://img.shields.io/badge.svg") {
+    Some(size) => {
+      assert_eq(size.width, 100.0)
+      assert_eq(size.height, 20.0)
+    }
+    None => fail("expected the remote reader's svg size")
+  }
+  // The lookup is cached, so a second probe does not re-read the source.
+  ignore(markdown_image_metrics_size("https://img.shields.io/badge.svg"))
+  assert_eq(reads, 1)
+  // Unresolvable remote sources still fall back.
+  assert_true(markdown_image_metrics_size("https://example.com/missing.png") is None)
+}
+
+///|
+test "noted remote bytes feed the intrinsic-size cache" {
+  let source = "https://img.shields.io/noted-badge.svg"
+  // Before the bytes arrive the probe falls back, as in a fresh layout.
+  assert_true(markdown_image_metrics_size(source) is None)
+  // The async load completion notes the fetched SVG; the cached size changes.
+  let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"250\" height=\"54\"></svg>"
+  assert_true(markdown_image_metrics_note_bytes(source, @utf8.encode(svg, bom=false)))
+  match markdown_image_metrics_size(source) {
+    Some(size) => {
+      assert_eq(size.width, 250.0)
+      assert_eq(size.height, 54.0)
+    }
+    None => fail("expected the noted svg size")
+  }
+  // Noting identical bytes is a no-op; unusable bytes never clobber the cache.
+  assert_eq(
+    markdown_image_metrics_note_bytes(source, @utf8.encode(svg, bom=false)),
+    false,
+  )
+  assert_eq(
+    markdown_image_metrics_note_bytes(source, b"not-an-image"),
+    false,
+  )
+  match markdown_image_metrics_size(source) {
+    Some(size) => assert_eq(size.width, 250.0)
+    None => fail("expected the cached size to survive")
+  }
 }

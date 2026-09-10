@@ -987,7 +987,9 @@ test "markdown viewer keeps fixed html image dimensions and raw html fallback" {
   }
   inspect(frames.length(), content="1")
   assert_true((frames[0].size.width - 120.0).abs() < 0.01)
-  assert_true((frames[0].size.height - 60.0).abs() < 0.01)
+  // The line frame carries the 12px gallery row gap; the image itself still
+  // draws contain-fitted at its fixed 120x60 size, centered in the frame.
+  assert_true((frames[0].size.height - 72.0).abs() < 0.01)
   assert_true((frames[0].origin.x - 190.0).abs() < 0.01)
 
   let unsupported = markdown_document(

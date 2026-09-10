@@ -7,6 +7,13 @@ import {
 }
 
 // Values
+pub fn window_image_source_is_remote(String) -> Bool
+
+pub fn window_image_task_starter_default() -> WindowImageTaskStarter
+
+pub fn window_image_task_starter_install(WindowImageTaskStarter) -> Unit
+
+pub fn window_image_task_starter_reset() -> Unit
 
 // Errors
 
@@ -14,6 +21,7 @@ import {
 pub struct WindowImageTaskStarter {
   // private fields
 }
+pub fn WindowImageTaskStarter::deferred(fetch~ : (String) -> Bytes?, spawn~ : (() -> Unit) -> (() -> Unit)?, post~ : (() -> Unit) -> Unit) -> Self
 pub fn WindowImageTaskStarter::immediate() -> Self
 pub fn WindowImageTaskStarter::new(start~ : (@render.RendererImageLoadRequest, (@render.RendererImageLoadCompletion) -> Unit) -> (() -> Unit)?) -> Self
 
