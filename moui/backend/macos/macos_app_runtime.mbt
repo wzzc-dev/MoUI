@@ -28,6 +28,7 @@ pub fn entry(
         request.runtime(),
         binding~,
         options~,
+        smoke_options~,
         window_requests=request.window_requests(),
         frame_interval_ms~,
       )
@@ -140,6 +141,7 @@ async fn launch_macos_app_async_pump(
   runtime : @runtime.AppRuntime,
   binding~ : MacosSurfaceBinding,
   options? : MacosHostAppOptions = MacosHostAppOptions::new(),
+  smoke_options? : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
   window_requests? : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
   frame_interval_ms? : Int = 8,
 ) -> Unit {
@@ -148,9 +150,13 @@ async fn launch_macos_app_async_pump(
     runtime,
     binding~,
     options~,
-    smoke_options=MacosHostSmokeOptions::new(),
+    smoke_options~,
     window_requests~,
   )
+  if smoke_options.first_frame_smoke_auto_exit {
+    run_async_pump_until_first_present(event_loop, app, frame_interval_ms)
+    return ()
+  }
   while !event_loop.exiting() {
     match event_loop.pump_app_events(Some(0), app) {
       @window_core.PumpStatus::Exit(_) => return ()
@@ -263,6 +269,36 @@ fn run_app_until_first_present(
       @window_core.PumpStatus::Continue => ()
     }
     remaining = remaining - 1
+  }
+  if app.first_frame_smoke_auto_exit {
+    println(
+      "macOS renderer first-frame smoke did not present before pump limit",
+    )
+    event_loop.exit()
+  }
+}
+
+///|
+/// Cooperative counterpart to `run_app_until_first_present`.
+///
+/// The async pump owns the frame loop, so the synchronous bounded pump cannot
+/// be reused verbatim: this one yields to the runtime between attempts, which
+/// keeps sibling background tasks making progress while the window settles.
+/// The bound matters — without it a first frame that never presents would spin
+/// forever and stall CI instead of failing it.
+async fn run_async_pump_until_first_present(
+  event_loop : @window_macos.EventLoop,
+  app : MacosNativeHostBackend,
+  frame_interval_ms : Int,
+) -> Unit {
+  let mut remaining = macos_first_present_pump_limit
+  while remaining > 0 && !event_loop.exiting() {
+    match event_loop.pump_app_events(Some(1), app) {
+      @window_core.PumpStatus::Exit(_) => return ()
+      @window_core.PumpStatus::Continue => ()
+    }
+    remaining = remaining - 1
+    @async.sleep(frame_interval_ms)
   }
   if app.first_frame_smoke_auto_exit {
     println(

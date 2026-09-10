@@ -476,6 +476,52 @@ pub fn MarkdownDocumentSession::snapshot(
 }
 
 ///|
+/// An html block under the caret reveals its raw markup in place, like a code
+/// block: the rendered gallery view (badges, image rows) hides the source the
+/// caret is meant to reach, so the block collapses to its raw text while the
+/// selection is inside it and flips back to the rendered view otherwise.
+/// Source/content ranges stay attached, so typing in the raw view edits the
+/// block's markup through the normal edit path.
+fn markdown_editor_session_reveal_html_block_source(
+  source : String,
+  editor_block : MarkdownEditorBlock,
+  block : RichTextBlock,
+  selection : MarkdownEditorSelection,
+  base : @core.FontSpec,
+) -> RichTextBlock {
+  let anchor = match markdown_editor_active_selection(selection.selection) {
+    Some(range) => range.start
+    None => selection.caret
+  }
+  // A freshly opened document parks an untouched caret at offset 0; without a
+  // user-placed selection, a first block that happens to be html must keep
+  // its rendered view instead of opening as raw text.
+  if anchor == 0 && selection.selection is None {
+    return block
+  }
+  if anchor < editor_block.source_range.start ||
+    anchor > editor_block.source_range.end {
+    return block
+  }
+  match editor_block.block.kind {
+    HtmlBlock => {
+      let raw = markdown_html_raw_block_rich_text(editor_block.block.text, base)
+      {
+        ..raw,
+        runs: markdown_editor_runs_with_source_ranges(
+          raw.runs,
+          source,
+          editor_block,
+        ),
+        source_range: block.source_range,
+        content_range: block.content_range,
+      }
+    }
+    _ => block
+  }
+}
+
+///|
 pub fn MarkdownDocumentSession::rich_text(
   self : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
@@ -487,15 +533,30 @@ pub fn MarkdownDocumentSession::rich_text(
   if source_mode {
     markdown_editor_format_source_mode(self.source(), base)
   } else {
+    let materialized = markdown_document_session_materialized_blocks(self)
     let document = markdown_editor_blocks_to_rich_text(
       self.source(),
-      markdown_document_session_materialized_blocks(self),
+      materialized,
       base,
       base_dir~,
     )
+    // The rendered html gallery hides the block source, so the block under
+    // the caret collapses to its raw markup in place, like a code block.
+    let blocks : Array[RichTextBlock] = []
+    for index, block in document.blocks {
+      blocks.push(
+        markdown_editor_session_reveal_html_block_source(
+          self.source(),
+          materialized[index],
+          block,
+          selection,
+          base,
+        ),
+      )
+    }
     let revealed = markdown_document_session_reveal_selection(
       self.source(),
-      document,
+      RichTextDocument::new(blocks~),
       selection,
     )
     if focus_mode {
@@ -567,11 +628,17 @@ pub fn MarkdownDocumentSession::rich_text_window(
             source_chars, source_char_offset, editor_block, base,
           )
         } else {
-          markdown_editor_block_to_rich_text(
+          markdown_editor_session_reveal_html_block_source(
             self.source(),
             editor_block,
+            markdown_editor_block_to_rich_text(
+              self.source(),
+              editor_block,
+              base,
+              base_dir~,
+            ),
+            selection,
             base,
-            base_dir~,
           )
         },
       )

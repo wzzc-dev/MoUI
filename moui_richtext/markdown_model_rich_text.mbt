@@ -11,17 +11,28 @@ pub fn markdown_block_to_rich_text(
         size: base.size * markdown_heading_size_scale(level),
         weight: 700,
       }
-      RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, font, base_dir~),
-        font=Some(font),
-        line_height=Some(base.size * markdown_heading_line_height_scale(level)),
-        // Typora-style heading spacing: breath above, a little below.
-        inset={
+      // GitHub-like rhythm: big titles get a full blank line above and half
+      // below; smaller headings keep the tighter Typora-style spacing.
+      let inset : @core.Insets = if level <= 2 {
+        {
+          top: base.size * 1.0,
+          right: 0.0,
+          bottom: base.size * 0.5,
+          left: 0.0,
+        }
+      } else {
+        {
           top: base.size * 0.6,
           right: 0.0,
           bottom: base.size * 0.3,
           left: 0.0,
-        },
+        }
+      }
+      RichTextBlock::new(
+        runs=markdown_inlines_to_rich_text(block.inlines, font, base_dir~),
+        font=Some(font),
+        line_height=Some(base.size * markdown_heading_line_height_scale(level)),
+        inset~,
       )
     }
     UnorderedListItem =>
@@ -123,8 +134,10 @@ pub fn markdown_block_to_rich_text(
         Some(projection) =>
           RichTextBlock::new(
             runs=projection.runs,
-            inset={ top: 4.0, right: 0.0, bottom: 4.0, left: 0.0 },
-            line_height=Some(base.size * 1.25),
+            // Generous outer insets so consecutive html blocks (a badge row
+            // followed by another badge block) read as separate lines.
+            inset={ top: 8.0, right: 0.0, bottom: 10.0, left: 0.0 },
+            line_height=Some(base.size * 1.45),
             line_align=projection.line_align,
           )
         None => markdown_html_raw_block_rich_text(block.text, base)
@@ -182,8 +195,10 @@ fn markdown_html_raw_block_rich_text(
     background=Some(
       @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.12, b=0.12, a=0.06)),
     ),
-    inset={ top: 4.0, right: 10.0, bottom: 4.0, left: 10.0 },
-    line_height=Some(base.size * 1.25),
+    inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0 },
+    // ~1.67x the monospace run size (editor-style leading) so multi-line
+    // markup reads line by line instead of stacking on itself.
+    line_height=Some(base.size * 1.5),
     corner_radius=6.0,
   )
 }
@@ -232,11 +247,11 @@ fn markdown_code_block_runs(
 ///|
 fn markdown_heading_size_scale(level : Int) -> Double {
   if level <= 1 {
-    1.45
+    1.95
   } else if level == 2 {
-    1.22
+    1.5
   } else if level == 3 {
-    1.08
+    1.25
   } else if level == 4 {
     1.0
   } else if level == 5 {

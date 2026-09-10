@@ -8,7 +8,7 @@ pub fn attach_window_surface(
   id : @backend_host.WindowId,
   renderer : @render.RendererSession,
   actions : @window_lifecycle.WindowSurfaceActions,
-  image_task_starter? : @window_image.WindowImageTaskStarter = @window_image.WindowImageTaskStarter::immediate(),
+  image_task_starter? : @window_image.WindowImageTaskStarter = @window_image.window_image_task_starter_default(),
 ) -> Bool {
   if lifecycle.surface_actions(id) is Some(_) ||
     frames.lookup(id) is Some(_) ||

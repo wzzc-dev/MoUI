@@ -26,37 +26,101 @@ pub fn markdown_set_image_metrics_reader(reader : (String) -> Bytes?) -> Unit {
 }
 
 ///|
+/// Host reader for remote (`http:`/`https:`) image sources, consulted by the
+/// intrinsic-size probe. Remote bytes are ordinarily fetched asynchronously,
+/// so this reader is optional: without one, a remote source keeps the
+/// placeholder box until its real size arrives with the load completion.
+let markdown_remote_image_reader : Ref[(String) -> Bytes?] = Ref(_ => None)
+
+///|
+/// Register the reader that resolves remote image sources for the size probe.
+/// Passing a `None`-returning reader restores pure-fallback mode.
+pub fn markdown_set_remote_image_reader(reader : (String) -> Bytes?) -> Unit {
+  markdown_remote_image_reader.val = reader
+  markdown_image_metrics_sizes.clear()
+}
+
+///|
+/// Feed asynchronously fetched image bytes into the intrinsic-size cache.
+///
+/// Remote sources are fetched outside the layout pass, so their real size only
+/// becomes available at load completion; noting it lets later projections
+/// reserve the correct box instead of the placeholder ratio. Returns `true`
+/// when the cached size for `source` changed, which is the signal to re-project
+/// the document. Unusable bytes never overwrite a cached size.
+pub fn markdown_image_metrics_note_bytes(
+  source : String,
+  bytes : Bytes,
+) -> Bool {
+  if source == "" {
+    return false
+  }
+  let size = markdown_image_metrics_size_from_bytes(bytes)
+  match size {
+    None => false
+    Some(new_size) => {
+      let changed = match markdown_image_metrics_sizes.get(source) {
+        Some(Some(previous)) =>
+          previous.width != new_size.width || previous.height != new_size.height
+        _ => true
+      }
+      if markdown_image_metrics_sizes.length() >= 1024 {
+        markdown_image_metrics_sizes.clear()
+      }
+      markdown_image_metrics_sizes.set(source, size)
+      if changed {
+        // The projected rich text for image-bearing blocks depends on these
+        // sizes; drop the cached conversions so the next projection reserves
+        // the corrected box instead of the placeholder ratio.
+        rich_text_block_conversions.clear()
+      }
+      changed
+    }
+  }
+}
+
+///|
 /// Return the intrinsic pixel size of a resolved image source, or `None`
-/// when the format is unknown, the source is remote, or it cannot be read.
+/// when the format is unknown, the source is remote without a registered
+/// reader, or it cannot be read.
 pub fn markdown_image_metrics_size(source : String) -> @core.Size? {
-  if source == "" ||
-    source.has_prefix("http://") ||
-    source.has_prefix("https://") ||
-    source.has_prefix("data:") ||
-    source.has_prefix("file://") {
-    None
-  } else {
-    match markdown_image_metrics_sizes.get(source) {
-      Some(cached) => cached
-      None => {
-        let size = match (markdown_image_metrics_reader.val)(source) {
+  if source == "" || source.has_prefix("data:") || source.has_prefix("file://") {
+    return None
+  }
+  match markdown_image_metrics_sizes.get(source) {
+    Some(cached) => cached
+    None => {
+      let size = if source.has_prefix("http://") || source.has_prefix("https://") {
+        match (markdown_remote_image_reader.val)(source) {
           Some(bytes) => markdown_image_metrics_size_from_bytes(bytes)
           None => None
         }
-        if markdown_image_metrics_sizes.length() >= 1024 {
-          markdown_image_metrics_sizes.clear()
+      } else {
+        match (markdown_image_metrics_reader.val)(source) {
+          Some(bytes) => markdown_image_metrics_size_from_bytes(bytes)
+          None => None
         }
-        markdown_image_metrics_sizes.set(source, size)
-        size
       }
+      if markdown_image_metrics_sizes.length() >= 1024 {
+        markdown_image_metrics_sizes.clear()
+      }
+      markdown_image_metrics_sizes.set(source, size)
+      size
     }
   }
 }
 
 ///|
 /// Parse the intrinsic size from the leading bytes of a PNG, JPEG, GIF,
-/// BMP, or WebP image.
+/// BMP, WebP or SVG image.
 pub fn markdown_image_metrics_size_from_bytes(bytes : Bytes) -> @core.Size? {
+  // SVG has no raster header; the shared vector probe reads its viewBox or
+  // root width/height instead. An unrecognized payload returns `None` and
+  // falls through to the raster header scan below.
+  match @render_common.svg_intrinsic_size_from_bytes(bytes) {
+    Some(size) => return Some(size)
+    None => ()
+  }
   let length = bytes.length()
   let size = if length >= 24 &&
     markdown_image_metrics_bytes_are(bytes, 0, [0x89, 0x50, 0x4e, 0x47]) &&

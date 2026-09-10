@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/image_remote"
+
+import {
+  "wzzc-dev/moui/backend/common/image",
+}
+
+// Values
+pub fn remote_image_starter(RemoteImageOwner) -> @image.WindowImageTaskStarter
+
+pub async fn remote_image_worker_loop(RemoteImageOwner) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct RemoteImageOwner {
+  // private fields
+}
+pub fn RemoteImageOwner::new() -> Self
+
+// Type aliases
+
+// Traits

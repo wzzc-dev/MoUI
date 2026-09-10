@@ -94,6 +94,9 @@ pub fn RendererImageLoadRequest::source(
 }
 
 ///|
+///|
+/// Decode this request, reading the source through the host's synchronous
+/// `HostImageSource`.
 pub fn RendererImageLoadRequest::load(
   self : RendererImageLoadRequest,
 ) -> RendererImageLoadCompletion {
@@ -101,6 +104,23 @@ pub fn RendererImageLoadRequest::load(
   RendererImageLoadCompletion::new(
     token=self.token,
     result=self.decoder.decode(self.source, bytes),
+  )
+}
+
+///|
+/// Decode this request from bytes the host already obtained out-of-band.
+///
+/// A host that fetches asynchronously — remote sources on a worker, for
+/// example — must not re-read through the synchronous `HostImageSource`, which
+/// would either block the caller or return nothing. It hands the fetched
+/// payload here instead, and decoding stays in the renderer-owned decoder.
+pub fn RendererImageLoadRequest::load_bytes(
+  self : RendererImageLoadRequest,
+  bytes : Bytes,
+) -> RendererImageLoadCompletion {
+  RendererImageLoadCompletion::new(
+    token=self.token,
+    result=self.decoder.decode(self.source, Some(bytes)),
   )
 }
 

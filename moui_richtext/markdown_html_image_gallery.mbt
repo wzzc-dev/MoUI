@@ -936,6 +936,13 @@ fn markdown_html_image_gallery_container_align(
 }
 
 ///|
+/// Vertical breathing room added around every gallery row. The layout stacks
+/// image rows at exactly their pixel height, so without this padding rows
+/// (mascot, badge row, single badge) sit flush against each other; the extra
+/// height letterboxes the image inside its (Contain-fitted) line frame.
+let markdown_html_image_gallery_row_gap : Double = 12.0
+
+///|
 fn markdown_html_image_gallery_image_run(
   tag : MarkdownHtmlImageGalleryTag,
   base : @core.FontSpec,
@@ -951,6 +958,10 @@ fn markdown_html_image_gallery_image_run(
         tag.attributes,
         base,
         resolved,
+      )
+      let image_size = @core.Size::new(
+        width=image_size.width,
+        height=image_size.height + markdown_html_image_gallery_row_gap,
       )
       Some(
         RichTextRun::new(
