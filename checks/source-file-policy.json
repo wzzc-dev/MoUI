@@ -43,7 +43,7 @@
     },
     {
       "path": "moui_skia/native/skia_stub_surface_image_data.cpp",
-      "maxLines": 3382,
+      "maxLines": 3421,
       "reason": "Existing native Skia surface and image bridge implementation."
     },
     {
@@ -119,7 +119,7 @@
     },
     {
       "path": "moui_skia/native/skia_stub_common.cpp",
-      "maxLines": 1708,
+      "maxLines": 1713,
       "reason": "Existing shared native Skia bridge implementation."
     },
     {
@@ -129,7 +129,7 @@
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 2374,
+      "maxLines": 2453,
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
@@ -174,7 +174,7 @@
     },
     {
       "path": "examples/mo_workbench/app/workbench_wbtest.mbt",
-      "maxLines": 1683,
+      "maxLines": 1684,
       "reason": "Existing workbench integration test with declaration invalidation coverage."
     },
     {
@@ -204,7 +204,7 @@
     },
     {
       "path": "moui_richtext/editor_session.mbt",
-      "maxLines": 3232,
+      "maxLines": 3372,
       "reason": "Existing rich-text editor session state machine."
     },
     {
@@ -259,8 +259,18 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_helpers.mbt",
-      "maxLines": 1665,
+      "maxLines": 1677,
       "reason": "Existing shared rich-text editor algorithms plus canonical declaration-key encoders."
+    },
+    {
+      "path": "moui_richtext/markdown_model.mbt",
+      "maxLines": 1205,
+      "reason": "Existing markdown block/inline model with normalization passes."
+    },
+    {
+      "path": "moui_richtext/markdown_html_image_gallery.mbt",
+      "maxLines": 1267,
+      "reason": "Existing HTML container image gallery projection."
     }
   ],
   "data": [

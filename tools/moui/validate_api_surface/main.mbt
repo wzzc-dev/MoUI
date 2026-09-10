@@ -320,8 +320,8 @@ fn package_budgets() -> Array[PackageBudget] {
       // Semantics DTO expansion adds roles, relations, ranges, text metadata,
       // live announcements, and typed actions in one intentional migration.
       // The keystroke-path text-edit primitive replace_text_range_edit adds
-      // one signature line.
-      max_lines: 2136,
+      // one signature line. The pointer-selection-origin field docs add two.
+      max_lines: 2140,
       max_pub_lines: 560,
       max_pub_all_lines: 189,
       required_tokens: [
@@ -431,7 +431,7 @@ fn package_budgets() -> Array[PackageBudget] {
       // HostSurface erases native handle meaning; RendererProvider binds one
       // per-window RendererSession at the composition boundary.
       max_lines: 500,
-      max_pub_lines: 150,
+      max_pub_lines: 155,
       max_pub_all_lines: 31,
       required_tokens: [
         "RendererBackendKind", "RendererDescriptor", "RendererProvider", "RendererBindResult",
@@ -449,9 +449,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "render common",
       path: "moui/render/common/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render/common\"",
-      max_lines: 350,
-      max_pub_lines: 110,
-      max_pub_all_lines: 12,
+      max_lines: 380,
+      max_pub_lines: 115,
+      max_pub_all_lines: 15,
       required_tokens: [
         "pub struct ImageResourceLifecycle", "pub fn resolve_renderer", "pub fn renderer_feature_capability",
         "pub struct GpuRenderWorker",

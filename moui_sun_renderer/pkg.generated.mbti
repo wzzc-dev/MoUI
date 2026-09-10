@@ -16,6 +16,8 @@ pub fn backend_info() -> @render.RendererBackendInfo
 
 pub fn create_with_present_target(@core.SurfaceMetrics, SunPresentTarget, async_image_loading? : Bool) -> SunRasterRenderer raise SunRendererError
 
+pub fn install_svg_text_path_resolver() -> Bool
+
 pub fn raster() -> @render.RendererProvider
 
 pub fn renderer_descriptor() -> @render.RendererDescriptor

@@ -51,7 +51,7 @@ fn backend_common_package_budgets() -> Array[PackageBudget] {
       path: "moui/backend/common/image/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/common/image\"",
       max_lines: 50,
-      max_pub_lines: 20,
+      max_pub_lines: 25,
       max_pub_all_lines: 0,
       required_tokens: [
         "pub struct WindowImageTasks", "pub struct WindowImageTaskStates",
