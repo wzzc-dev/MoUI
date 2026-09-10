@@ -416,6 +416,7 @@ fn markdown_inline_font(
     Bold => { ..font, weight: 700 }
     Italic => { ..font, weight: 500 }
     Strikethrough => { ..font, weight: 400 }
+    Highlight => font
     Link | Autolink => { ..font, weight: 500 }
     Image => { ..font, weight: 600 }
     FootnoteReference => { ..font, size: font.size * 0.76, weight: 700 }
@@ -459,6 +460,8 @@ fn markdown_inline_background(kind : MarkdownInlineKind) -> @core.Brush? {
       Some(@core.Brush::solid(@core.Color::rgba(r=0.18, g=0.4, b=0.7, a=0.08)))
     HtmlInline =>
       Some(@core.Brush::solid(@core.Color::black().multiply_alpha(0.06)))
+    Highlight =>
+      Some(@core.Brush::solid(@core.Color::rgba(r=1.0, g=0.83, b=0.2, a=0.4)))
     Plain | Bold | Italic | Strikethrough | Link | Autolink => None
   }
 }
@@ -471,6 +474,7 @@ fn markdown_inline_decoration(kind : MarkdownInlineKind) -> RichTextDecoration? 
     | Bold
     | Italic
     | Code
+    | Highlight
     | Link
     | Autolink
     | Image

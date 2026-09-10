@@ -288,6 +288,7 @@ fn markdown_editor_block_key(block : MarkdownBlock) -> String {
       Italic => '2'
       Code => '3'
       Strikethrough => '4'
+      Highlight => 'A'
       Link => '5'
       Autolink => '6'
       Image => '7'

@@ -5,6 +5,7 @@ pub(all) enum MarkdownInlineKind {
   Italic
   Code
   Strikethrough
+  Highlight
   Link
   Autolink
   Image
@@ -423,9 +424,7 @@ fn append_markdown_inline_ast(
   match inline {
     Text(content~, ..) =>
       if content != "" {
-        spans.push(
-          markdown_inline(markdown_decode_html_entities(content), Plain),
-        )
+        markdown_split_plain_highlights(spans, content)
       }
     SoftBreak(..) | HardBreak(..) => spans.push(markdown_inline("\n", Plain))
     Emphasis(children~, ..) =>
@@ -481,6 +480,70 @@ fn append_markdown_inline_ast(
       spans.push(markdown_inline(markdown_html_inline_source(html), HtmlInline))
     FootnoteReference(label~, ..) =>
       spans.push(markdown_inline(label, FootnoteReference))
+  }
+}
+
+///|
+/// Split a plain text segment on `==mark==` spans so highlighted runs render
+/// with their own inline kind. The `@md` parser has no mark node and emits
+/// `==...==` as plain text, so highlight spans are recovered here from the
+/// plain content: an opening `==` pairs with the next `==` that leaves
+/// non-empty inner text, and entity decoding still runs per segment.
+fn markdown_split_plain_highlights(
+  spans : Array[MarkdownInline],
+  content : String,
+) -> Unit {
+  let chars = content.to_array()
+  let length = chars.length()
+  let mut segment_start = 0
+  let mut index = 0
+  while index + 1 < length {
+    if chars[index] != '=' || chars[index + 1] != '=' {
+      index = index + 1
+      continue
+    }
+    let inner_start = index + 2
+    let mut close = inner_start
+    let mut found = -1
+    while close + 1 < length {
+      if chars[close] == '=' && chars[close + 1] == '=' {
+        found = close
+        break
+      }
+      close = close + 1
+    }
+    if found > inner_start {
+      if index > segment_start {
+        spans.push(
+          markdown_inline(
+            markdown_decode_html_entities(
+              String::from_array(chars[segment_start:index]),
+            ),
+            Plain,
+          ),
+        )
+      }
+      spans.push(
+        markdown_inline(
+          markdown_decode_html_entities(
+            String::from_array(chars[inner_start:found]),
+          ),
+          Highlight,
+        ),
+      )
+      index = found + 2
+      segment_start = index
+    } else {
+      index = index + 1
+    }
+  }
+  if segment_start < length {
+    spans.push(
+      markdown_inline(
+        markdown_decode_html_entities(String::from_array(chars[segment_start:])),
+        Plain,
+      ),
+    )
   }
 }
 

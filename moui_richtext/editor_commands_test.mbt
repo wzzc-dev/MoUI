@@ -111,6 +111,31 @@ test "Strikethrough command wraps and unwraps symmetrically" {
 }
 
 ///|
+test "Highlight command wraps and unwraps symmetrically" {
+  let wrap_selection : MarkdownEditorSelection = {
+    caret: 4,
+    selection: Some(@core.TextRange::new(start=0, end=4)),
+  }
+  let wrapped = markdown_editor_apply_command_at(
+    "text",
+    Highlight,
+    Some(wrap_selection),
+  )
+  inspect(wrapped.source, content="==text==")
+  // Unwrap by selecting the inner text [2, 6) of "==text=="
+  let unwrap_selection : MarkdownEditorSelection = {
+    caret: 6,
+    selection: Some(@core.TextRange::new(start=2, end=6)),
+  }
+  let unwrapped = markdown_editor_apply_command_at(
+    "==text==",
+    Highlight,
+    Some(unwrap_selection),
+  )
+  inspect(unwrapped.source, content="text")
+}
+
+///|
 test "Link and image commands preserve unicode scalar selections" {
   let link_selection : MarkdownEditorSelection = {
     caret: 9,
@@ -262,6 +287,7 @@ test "markdown_editor_inline_marker returns marker strings" {
   inspect(markdown_editor_inline_marker(Italic), content="*")
   inspect(markdown_editor_inline_marker(Code), content="`")
   inspect(markdown_editor_inline_marker(Strikethrough), content="~~")
+  inspect(markdown_editor_inline_marker(Highlight), content="==")
   // Non-inline commands return an empty marker.
   inspect(markdown_editor_inline_marker(Paragraph), content="")
 }
