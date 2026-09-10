@@ -25,7 +25,7 @@ pub fn import_svg(svg : String) -> SvgImportResult {
   }
   match @svg.parse_svg_document(svg) {
     Some(doc) => {
-      lower_svg_node(doc.root, result)
+      lower_svg_node(doc.root(), result)
       collect_svg_feature_diagnostics(svg, result)
     }
     None => result.diagnostics.push("parse failed")

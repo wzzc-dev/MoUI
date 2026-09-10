@@ -1,6 +1,6 @@
 import {
   "Milky2018/moon_zeno" @zeno,
-  "mizchi/svg",
+  "Milky2018/svg",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "wzzc-dev/moui/core",
