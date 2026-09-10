@@ -441,8 +441,7 @@ fn markdown_editor_reveal_active_inline_run(
         range,
         block_source_end~,
       )
-      match
-        markdown_editor_inline_marker_source_range(source, chars~, range) {
+      match markdown_editor_inline_marker_source_range(source, chars~, range) {
         Some(full_range) =>
           if markdown_editor_reveal_anchor_active(selection, full_range) {
             {

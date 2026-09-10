@@ -52,10 +52,7 @@ pub fn FontFace::text_run_outline(
         GlyphData::Simple(simple) =>
           for contour in simple.contours {
             let polygon = flatten_contour_polygon(
-              contour,
-              pen_x,
-              run_baseline,
-              scale,
+              contour, pen_x, run_baseline, scale,
             )
             if polygon.length() >= 3 {
               polygons.push(polygon)
@@ -106,9 +103,7 @@ fn flatten_contour_polygon(
     for i in 0..<count {
       let a = points[i]
       let b = points[(i + 1) % count]
-      midpoints.push(
-        { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, on_curve: true },
-      )
+      midpoints.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, on_curve: true })
     }
     return flatten_contour_polygon(
       { points: midpoints },
@@ -118,16 +113,14 @@ fn flatten_contour_polygon(
     )
   }
   fn emit(x : Int, y : Int) -> Unit {
-    out.push((origin_x + x.to_double() * scale, baseline_y - y.to_double() * scale))
+    out.push(
+      (origin_x + x.to_double() * scale, baseline_y - y.to_double() * scale),
+    )
   }
 
   /// Subdivide the quadratic with control point `ctrl` and on-curve end `end`,
   /// emitting interior points; the caller emits `end` itself.
-  fn quad_steps(
-    from : GlyphPoint,
-    ctrl : GlyphPoint,
-    end : GlyphPoint,
-  ) -> Int {
+  fn quad_steps(from : GlyphPoint, ctrl : GlyphPoint, end : GlyphPoint) -> Int {
     let dx = (from.x - ctrl.x).to_double().abs() +
       (ctrl.x - end.x).to_double().abs()
     let dy = (from.y - ctrl.y).to_double().abs() +
@@ -143,11 +136,7 @@ fn flatten_contour_polygon(
     }
   }
 
-  fn emit_quad(
-    ctrl : GlyphPoint,
-    end : GlyphPoint,
-    from : GlyphPoint,
-  ) -> Unit {
+  fn emit_quad(ctrl : GlyphPoint, end : GlyphPoint, from : GlyphPoint) -> Unit {
     let steps = quad_steps(from, ctrl, end)
     for s = 1; s < steps; s = s + 1 {
       let t = s.to_double() / steps.to_double()

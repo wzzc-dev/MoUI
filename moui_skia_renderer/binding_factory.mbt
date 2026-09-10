@@ -114,10 +114,9 @@ fn skia_image_decoder() -> @render.RendererImageDecoder {
       None => skia_image_load_completion(source)
     }
   })
-  @render_common.image_decoder_plugin_chain(
-    raster,
-    builtin=[@render_common.svg_image_decoder()],
-  )
+  @render_common.image_decoder_plugin_chain(raster, builtin=[
+    @render_common.svg_image_decoder(),
+  ])
 }
 
 ///|

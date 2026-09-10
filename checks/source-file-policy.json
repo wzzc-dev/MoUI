@@ -129,7 +129,7 @@
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 2453,
+      "maxLines": 2452,
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
@@ -269,7 +269,7 @@
     },
     {
       "path": "moui_richtext/markdown_html_image_gallery.mbt",
-      "maxLines": 1267,
+      "maxLines": 1273,
       "reason": "Existing HTML container image gallery projection."
     }
   ],

@@ -82,10 +82,7 @@ pub fn svg_intrinsic_size(svg_text : String) -> @core.Size? {
         Some(view_box) =>
           if view_box.width > 0.0 && view_box.height > 0.0 {
             return Some(
-              @core.Size::new(
-                width=view_box.width,
-                height=view_box.height,
-              ),
+              @core.Size::new(width=view_box.width, height=view_box.height),
             )
           }
         None => ()
@@ -252,7 +249,11 @@ fn svg_pixel_dimension(value : Double) -> Int {
     return 1
   }
   let rounded = value.round().to_int()
-  if rounded < 1 { 1 } else { rounded }
+  if rounded < 1 {
+    1
+  } else {
+    rounded
+  }
 }
 
 ///|
@@ -269,9 +270,7 @@ fn svg_pixel_dimension(value : Double) -> Int {
 /// The synthesis happens at the text level: the renderer's document keeps its
 /// resource registries (gradients, patterns, masks) privately, so a parsed
 /// document cannot be rebuilt around a mutated root without losing them.
-fn svg_ensure_root_view_box(
-  svg_text : String,
-) -> String {
+fn svg_ensure_root_view_box(svg_text : String) -> String {
   let chars = svg_text.to_array()
   let limit = chars.length()
   // Locate the root `<svg` start tag: the first `<svg` occurrence plus the
@@ -354,11 +353,7 @@ pub fn svg_rasterize_rgba(
   match @svg.parse_svg_document(svg_ensure_root_view_box(svg_text)) {
     Some(document) => {
       svg_install_text_paths(document, svg_text)
-      let pixels = svg_render_document_rgba(
-        document,
-        pixel_width,
-        pixel_height,
-      )
+      let pixels = svg_render_document_rgba(document, pixel_width, pixel_height)
       Some(svg_pixels_to_premultiplied_rgba(pixels, pixel_width, pixel_height))
     }
     None => None
@@ -439,7 +434,11 @@ fn svg_premultiply(channel : Int, alpha : Int) -> Int {
     return 0
   }
   let scaled = (clamped * alpha + 127) / 255
-  if scaled > 255 { 255 } else { scaled }
+  if scaled > 255 {
+    255
+  } else {
+    scaled
+  }
 }
 
 ///|

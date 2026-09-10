@@ -43,8 +43,8 @@ pub fn WindowImageTaskStarter::immediate() -> WindowImageTaskStarter {
 /// makes this a purely additive seam.
 pub fn WindowImageTaskStarter::deferred(
   fetch~ : (String) -> Bytes?,
-  spawn~ : ((() -> Unit)) -> (() -> Unit)?,
-  post~ : ((() -> Unit)) -> Unit,
+  spawn~ : (() -> Unit) -> (() -> Unit)?,
+  post~ : (() -> Unit) -> Unit,
 ) -> WindowImageTaskStarter {
   WindowImageTaskStarter::new(start=(request, complete) => {
     let source = request.source()
@@ -54,17 +54,11 @@ pub fn WindowImageTaskStarter::deferred(
     }
     spawn(() => {
       match fetch(source) {
-        Some(bytes) =>
-          post(() => {
-            complete(request.load_bytes(bytes))
-          })
+        Some(bytes) => post(() => complete(request.load_bytes(bytes)))
         // A failed fetch falls back to the default path, which surfaces the
         // failure through the renderer's image lifecycle rather than stalling
         // the request in the loading state.
-        None =>
-          post(() => {
-            complete(request.load())
-          })
+        None => post(() => complete(request.load()))
       }
     })
   })

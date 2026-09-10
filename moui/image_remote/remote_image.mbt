@@ -115,10 +115,7 @@ pub async fn with_remote_images(
   @async.with_task_group(group => {
     // `no_wait` is required: without it the group would wait for a worker that
     // is designed to run until it is cancelled, reintroducing the hang.
-    group.spawn_bg(
-      no_wait=true,
-      async fn() { remote_image_worker_loop(owner) },
-    )
+    group.spawn_bg(no_wait=true, async fn() { remote_image_worker_loop(owner) })
     window()
   })
 }

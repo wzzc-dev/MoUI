@@ -12,10 +12,7 @@ pub fn filesystem_image_source() -> @render.HostImageSource {
     }
     match @render_common.image_source_provider_read(source) {
       Some(bytes) => Some(bytes)
-      None =>
-        Some(@fs.read_file_to_bytes(source)) catch {
-          _ => None
-        }
+      None => Some(@fs.read_file_to_bytes(source)) catch { _ => None }
     }
   })
 }
