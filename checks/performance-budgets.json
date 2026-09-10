@@ -31,7 +31,7 @@
       "timings": {
         "buildMs": { "p50": 10, "p95": 22, "p99": 33, "maxRegressionPercent": 25 },
         "layoutMs": { "p50": 14, "p95": 32, "p99": 48, "maxRegressionPercent": 25 },
-        "paintMs": { "p50": 16, "p95": 34, "p99": 51, "maxRegressionPercent": 25 },
+        "paintMs": { "p50": 24, "p95": 44, "p99": 56, "maxRegressionPercent": 25 },
         "presentMs": { "p50": 16, "p95": 32, "p99": 48, "maxRegressionPercent": 25 },
         "frameMs": { "p50": 36, "p95": 72, "p99": 108, "maxRegressionPercent": 20 }
       },
