@@ -10,6 +10,10 @@ pub fn remote_image_starter(RemoteImageOwner) -> @image.WindowImageTaskStarter
 
 pub async fn remote_image_worker_loop(RemoteImageOwner) -> Unit
 
+pub fn set_remote_image_completed_listener((String, Bytes) -> Unit) -> Unit
+
+pub async fn with_remote_images(RemoteImageOwner, window~ : async () -> Unit) -> Unit
+
 // Errors
 
 // Types and methods

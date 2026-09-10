@@ -79,6 +79,7 @@ pub fn FontFace::from_data(FontData) -> Result[Self, FontParseError]
 pub fn FontFace::get_metrics(Self) -> FontMetrics
 pub fn FontFace::get_units_per_em(Self) -> Int
 pub fn FontFace::has_glyph_for_char(Self, Int) -> Bool
+pub fn FontFace::text_run_outline(Self, String, Double, Double, Double, target_length? : Double) -> TextRunOutline
 
 type FontFaceCache derive(@debug.Debug)
 pub fn FontFaceCache::capacity(Self) -> Int
@@ -401,6 +402,11 @@ pub fn TextMaskCache::with_capacity(Int) -> Self
 type TextMaskCacheRenderResult derive(@debug.Debug)
 pub fn TextMaskCacheRenderResult::did_render(Self) -> Bool
 pub fn TextMaskCacheRenderResult::get_mask(Self) -> CoverageMask
+
+pub(all) struct TextRunOutline {
+  width : Double
+  polygons : Array[Array[(Double, Double)]]
+} derive(@debug.Debug)
 
 type TextSelectionRect derive(Eq, @debug.Debug)
 pub fn TextSelectionRect::get_baseline_y(Self) -> Double

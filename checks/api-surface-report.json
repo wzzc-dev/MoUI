@@ -53,8 +53,8 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2136,
-      "public_declarations": 555,
+      "lines": 2138,
+      "public_declarations": 556,
       "pub_all_declarations": 189
     },
     {
@@ -74,16 +74,16 @@
     {
       "label": "render protocols",
       "path": "moui/render/pkg.generated.mbti",
-      "lines": 475,
-      "public_declarations": 150,
+      "lines": 476,
+      "public_declarations": 151,
       "pub_all_declarations": 31
     },
     {
       "label": "render common",
       "path": "moui/render/common/pkg.generated.mbti",
-      "lines": 323,
-      "public_declarations": 95,
-      "pub_all_declarations": 10
+      "lines": 376,
+      "public_declarations": 112,
+      "pub_all_declarations": 13
     },
     {
       "label": "skia renderer",
@@ -95,8 +95,8 @@
     {
       "label": "sun renderer",
       "path": "moui_sun_renderer/pkg.generated.mbti",
-      "lines": 237,
-      "public_declarations": 141,
+      "lines": 239,
+      "public_declarations": 142,
       "pub_all_declarations": 1
     },
     {
@@ -144,8 +144,8 @@
     {
       "label": "backend common image owner",
       "path": "moui/backend/common/image/pkg.generated.mbti",
-      "lines": 42,
-      "public_declarations": 17,
+      "lines": 50,
+      "public_declarations": 22,
       "pub_all_declarations": 0
     },
     {

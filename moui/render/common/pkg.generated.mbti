@@ -12,6 +12,8 @@ pub fn async_image_read_i32_le(Bytes, Int) -> Int
 
 pub fn builtin_shader_names() -> Array[String]
 
+pub fn clear_svg_text_path_resolver() -> Unit
+
 pub fn codepoint_is_cjk(Int) -> Bool
 
 pub fn codepoint_is_cjk_ideograph(Int) -> Bool
@@ -89,6 +91,8 @@ pub fn representative_fallback_codepoint(String, skip_joiners? : Bool) -> Int
 pub fn resolve_renderer(Array[@render.RendererProvider], @render.HostSurface) -> @render.RendererSession?
 
 pub fn resolve_shader_effect(@core.ShaderEffectSpec) -> ShaderRegistryResult
+
+pub fn set_svg_text_path_resolver((SvgTextRun) -> SvgTextRunOutline?) -> Unit
 
 pub fn svg_image_decoder() -> @render.RendererImageDecoder
 
@@ -346,6 +350,27 @@ pub struct SvgImportResult {
 pub fn SvgImportResult::commands(Self) -> Array[@core.DrawCommand]
 pub fn SvgImportResult::diagnostics(Self) -> Array[String]
 
+pub(all) enum SvgTextAnchor {
+  Start
+  Middle
+  End
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SvgTextRun {
+  text : String
+  font_size : Double
+  x : Double
+  baseline_y : Double
+  anchor : SvgTextAnchor
+  text_length : Double
+} derive(@debug.Debug)
+
+pub(all) struct SvgTextRunOutline {
+  width : Double
+  polygons : Array[Array[(Double, Double)]]
+} derive(@debug.Debug)
+
 // Type aliases
+pub type SvgTextPathResolver = (SvgTextRun) -> SvgTextRunOutline?
 
 // Traits
