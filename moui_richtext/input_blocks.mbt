@@ -76,9 +76,7 @@ pub fn markdown_editor_insert_hard_break(
         insert +
         String::from_array(chars[replace_range.end:]),
       caret=replace_range.start + markdown_editor_text_length(insert),
-      edit_range=Some(
-        { start: replace_range.start, end: replace_range.end },
-      ),
+      edit_range=Some({ start: replace_range.start, end: replace_range.end }),
     ),
   )
 }
@@ -97,8 +95,11 @@ fn markdown_editor_complete_rule_on_enter(
     "\n" +
     String::from_array(chars[caret:])
   Some(
-    markdown_editor_transform_result(text~, caret=caret + 1,
-      edit_range=Some({ start: caret, end: caret })),
+    markdown_editor_transform_result(
+      text~,
+      caret=caret + 1,
+      edit_range=Some({ start: caret, end: caret }),
+    ),
   )
 }
 
@@ -126,8 +127,11 @@ fn markdown_editor_complete_setext_heading_on_enter(
     "\n" +
     String::from_array(chars[caret:])
   Some(
-    markdown_editor_transform_result(text~, caret=caret + 1,
-      edit_range=Some({ start: caret, end: caret })),
+    markdown_editor_transform_result(
+      text~,
+      caret=caret + 1,
+      edit_range=Some({ start: caret, end: caret }),
+    ),
   )
 }
 

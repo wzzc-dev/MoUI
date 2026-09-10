@@ -727,7 +727,12 @@ fn markdown_editor_wrap_link_range_with_target(
     start=start + 1,
     end=start + 1 + end - start,
   )
-  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start, end }) }
+  {
+    source: text,
+    caret: next_selection.end,
+    selection: Some(next_selection),
+    edit_range: Some({ start, end }),
+  }
 }
 
 ///|
@@ -759,7 +764,12 @@ fn markdown_editor_wrap_image_range_with_target(
     start=start + 2,
     end=start + 2 + end - start,
   )
-  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start, end }) }
+  {
+    source: text,
+    caret: next_selection.end,
+    selection: Some(next_selection),
+    edit_range: Some({ start, end }),
+  }
 }
 
 ///|
@@ -803,7 +813,12 @@ fn markdown_editor_replace_reference_target(
     target +
     markdown_editor_substring(source, target_end, source_length)
   let next_selection = @core.TextRange::new(start=range.start, end=range.end)
-  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start: target_start, end: target_end }) }
+  {
+    source: text,
+    caret: next_selection.end,
+    selection: Some(next_selection),
+    edit_range: Some({ start: target_start, end: target_end }),
+  }
 }
 
 ///|
@@ -1048,7 +1063,12 @@ fn markdown_editor_unwrap_link_range(
     start=bounds.open_start,
     end=bounds.open_start + range.end - range.start,
   )
-  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start: bounds.open_start, end: bounds.target_end + 1 }) }
+  {
+    source: text,
+    caret: next_selection.end,
+    selection: Some(next_selection),
+    edit_range: Some({ start: bounds.open_start, end: bounds.target_end + 1 }),
+  }
 }
 
 ///|
@@ -1065,7 +1085,12 @@ fn markdown_editor_unwrap_image_range(
     start=bounds.open_start,
     end=bounds.open_start + range.end - range.start,
   )
-  { source: text, caret: next_selection.end, selection: Some(next_selection), edit_range: Some({ start: bounds.open_start, end: bounds.target_end + 1 }) }
+  {
+    source: text,
+    caret: next_selection.end,
+    selection: Some(next_selection),
+    edit_range: Some({ start: bounds.open_start, end: bounds.target_end + 1 }),
+  }
 }
 
 ///|

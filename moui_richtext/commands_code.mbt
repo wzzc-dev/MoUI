@@ -36,7 +36,15 @@ fn markdown_editor_replace_html_block_text(
     text +
     String::from_array(chars[block.source_range.end:])
   let caret = block.source_range.start + markdown_editor_text_length(text)
-  { source: next_source, caret, selection: selection.selection, edit_range: Some({ start: block.source_range.start, end: block.source_range.end }) }
+  {
+    source: next_source,
+    caret,
+    selection: selection.selection,
+    edit_range: Some({
+      start: block.source_range.start,
+      end: block.source_range.end,
+    }),
+  }
 }
 
 ///|
@@ -59,7 +67,12 @@ fn markdown_editor_replace_code_language(
   } else {
     selection.caret
   }
-  { source: text, caret, selection: selection.selection, edit_range: Some({ start: marker_end, end: block.content_range.start - 1 }) }
+  {
+    source: text,
+    caret,
+    selection: selection.selection,
+    edit_range: Some({ start: marker_end, end: block.content_range.start - 1 }),
+  }
 }
 
 ///|
@@ -283,7 +296,15 @@ fn markdown_editor_unwrap_quoted_code_block(
       )
     None => None
   }
-  { source: text, caret, selection: next_selection, edit_range: Some({ start: block.source_range.start, end: block.source_range.end }) }
+  {
+    source: text,
+    caret,
+    selection: next_selection,
+    edit_range: Some({
+      start: block.source_range.start,
+      end: block.source_range.end,
+    }),
+  }
 }
 
 ///|
@@ -384,7 +405,15 @@ fn markdown_editor_unwrap_code_block(
       )
     None => None
   }
-  { source: text, caret, selection: next_selection, edit_range: Some({ start: block.source_range.start, end: block.source_range.end }) }
+  {
+    source: text,
+    caret,
+    selection: next_selection,
+    edit_range: Some({
+      start: block.source_range.start,
+      end: block.source_range.end,
+    }),
+  }
 }
 
 ///|
@@ -442,7 +471,12 @@ fn markdown_editor_wrap_lines_in_code_block(
       )
     None => None
   }
-  { source: text, caret, selection: next_selection, edit_range: Some({ start: range.start, end: range.end }) }
+  {
+    source: text,
+    caret,
+    selection: next_selection,
+    edit_range: Some({ start: range.start, end: range.end }),
+  }
 }
 
 ///|

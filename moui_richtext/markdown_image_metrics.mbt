@@ -56,47 +56,44 @@ pub fn markdown_image_metrics_size(source : String) -> @core.Size? {
 ///|
 /// Parse the intrinsic size from the leading bytes of a PNG, JPEG, GIF,
 /// BMP, or WebP image.
-pub fn markdown_image_metrics_size_from_bytes(
-  bytes : Bytes,
-) -> @core.Size? {
+pub fn markdown_image_metrics_size_from_bytes(bytes : Bytes) -> @core.Size? {
   let length = bytes.length()
-  let size =
-    if length >= 24 &&
-      markdown_image_metrics_bytes_are(bytes, 0, [0x89, 0x50, 0x4e, 0x47]) &&
-      markdown_image_metrics_bytes_are(bytes, 12, [0x49, 0x48, 0x44, 0x52]) {
-      Some(
-        @core.Size::new(
-          width=markdown_image_metrics_be32(bytes, 16).to_double(),
-          height=markdown_image_metrics_be32(bytes, 20).to_double(),
-        ),
-      )
-    } else if length >= 10 &&
-      markdown_image_metrics_bytes_are(bytes, 0, [0x47, 0x49, 0x46]) {
-      Some(
-        @core.Size::new(
-          width=markdown_image_metrics_le16(bytes, 6).to_double(),
-          height=markdown_image_metrics_le16(bytes, 8).to_double(),
-        ),
-      )
-    } else if length >= 26 &&
-      markdown_image_metrics_bytes_are(bytes, 0, [0x42, 0x4d]) {
-      let height = markdown_image_metrics_le32(bytes, 22)
-      Some(
-        @core.Size::new(
-          width=markdown_image_metrics_le32(bytes, 18).to_double(),
-          height=(if height < 0 { -height } else { height }).to_double(),
-        ),
-      )
-    } else if length >= 25 &&
-      markdown_image_metrics_bytes_are(bytes, 0, [0x52, 0x49, 0x46, 0x46]) &&
-      markdown_image_metrics_bytes_are(bytes, 8, [0x57, 0x45, 0x42, 0x50]) {
-      markdown_image_metrics_webp_size(bytes, length)
-    } else if length >= 12 &&
-      markdown_image_metrics_bytes_are(bytes, 0, [0xff, 0xd8]) {
-      markdown_image_metrics_jpeg_size(bytes, length)
-    } else {
-      None
-    }
+  let size = if length >= 24 &&
+    markdown_image_metrics_bytes_are(bytes, 0, [0x89, 0x50, 0x4e, 0x47]) &&
+    markdown_image_metrics_bytes_are(bytes, 12, [0x49, 0x48, 0x44, 0x52]) {
+    Some(
+      @core.Size::new(
+        width=markdown_image_metrics_be32(bytes, 16).to_double(),
+        height=markdown_image_metrics_be32(bytes, 20).to_double(),
+      ),
+    )
+  } else if length >= 10 &&
+    markdown_image_metrics_bytes_are(bytes, 0, [0x47, 0x49, 0x46]) {
+    Some(
+      @core.Size::new(
+        width=markdown_image_metrics_le16(bytes, 6).to_double(),
+        height=markdown_image_metrics_le16(bytes, 8).to_double(),
+      ),
+    )
+  } else if length >= 26 &&
+    markdown_image_metrics_bytes_are(bytes, 0, [0x42, 0x4d]) {
+    let height = markdown_image_metrics_le32(bytes, 22)
+    Some(
+      @core.Size::new(
+        width=markdown_image_metrics_le32(bytes, 18).to_double(),
+        height=(if height < 0 { -height } else { height }).to_double(),
+      ),
+    )
+  } else if length >= 25 &&
+    markdown_image_metrics_bytes_are(bytes, 0, [0x52, 0x49, 0x46, 0x46]) &&
+    markdown_image_metrics_bytes_are(bytes, 8, [0x57, 0x45, 0x42, 0x50]) {
+    markdown_image_metrics_webp_size(bytes, length)
+  } else if length >= 12 &&
+    markdown_image_metrics_bytes_are(bytes, 0, [0xff, 0xd8]) {
+    markdown_image_metrics_jpeg_size(bytes, length)
+  } else {
+    None
+  }
   match size {
     Some(size) if size.width > 0.0 && size.height > 0.0 => Some(size)
     _ => None
@@ -104,10 +101,7 @@ pub fn markdown_image_metrics_size_from_bytes(
 }
 
 ///|
-fn markdown_image_metrics_webp_size(
-  bytes : Bytes,
-  length : Int,
-) -> @core.Size? {
+fn markdown_image_metrics_webp_size(bytes : Bytes, length : Int) -> @core.Size? {
   if markdown_image_metrics_byte(bytes, 12) != 0x56 ||
     markdown_image_metrics_byte(bytes, 13) != 0x50 ||
     markdown_image_metrics_byte(bytes, 14) != 0x38 {
@@ -157,10 +151,7 @@ fn markdown_image_metrics_webp_size(
 
 ///|
 /// Scan JPEG marker segments for a start-of-frame carrying the dimensions.
-fn markdown_image_metrics_jpeg_size(
-  bytes : Bytes,
-  length : Int,
-) -> @core.Size? {
+fn markdown_image_metrics_jpeg_size(bytes : Bytes, length : Int) -> @core.Size? {
   let mut index = 2
   while index + 9 <= length {
     if markdown_image_metrics_byte(bytes, index) != 0xff {
@@ -218,29 +209,29 @@ fn markdown_image_metrics_bytes_are(
 ///|
 fn markdown_image_metrics_be16(bytes : Bytes, start : Int) -> Int {
   (markdown_image_metrics_byte(bytes, start) << 8) |
-    markdown_image_metrics_byte(bytes, start + 1)
+  markdown_image_metrics_byte(bytes, start + 1)
 }
 
 ///|
 fn markdown_image_metrics_be32(bytes : Bytes, start : Int) -> Int {
   (markdown_image_metrics_be16(bytes, start) << 16) |
-    markdown_image_metrics_be16(bytes, start + 2)
+  markdown_image_metrics_be16(bytes, start + 2)
 }
 
 ///|
 fn markdown_image_metrics_le16(bytes : Bytes, start : Int) -> Int {
   markdown_image_metrics_byte(bytes, start) |
-    (markdown_image_metrics_byte(bytes, start + 1) << 8)
+  (markdown_image_metrics_byte(bytes, start + 1) << 8)
 }
 
 ///|
 fn markdown_image_metrics_le24(bytes : Bytes, start : Int) -> Int {
   markdown_image_metrics_le16(bytes, start) |
-    (markdown_image_metrics_byte(bytes, start + 2) << 16)
+  (markdown_image_metrics_byte(bytes, start + 2) << 16)
 }
 
 ///|
 fn markdown_image_metrics_le32(bytes : Bytes, start : Int) -> Int {
   markdown_image_metrics_le16(bytes, start) |
-    (markdown_image_metrics_le16(bytes, start + 2) << 16)
+  (markdown_image_metrics_le16(bytes, start + 2) << 16)
 }

@@ -52,12 +52,13 @@ priv struct MarkdownHtmlImageGalleryWalk {
 pub let markdown_html_image_gallery_view : MarkdownBlockView = {
   name: "html-image-gallery",
   matches: markdown_html_image_gallery_signature,
-  project: (block, context) =>
+  project: (block, context) => {
     markdown_html_image_gallery_project(
       block.text,
       context.base,
       context.base_dir,
-    ),
+    )
+  },
 }
 
 ///|
@@ -68,10 +69,11 @@ fn markdown_html_image_gallery_signature(block : MarkdownBlock) -> Bool {
   match block.kind {
     MarkdownBlockKind::HtmlBlock => {
       let chars = block.text.to_array()
-      match markdown_html_image_gallery_tag_at(
-        chars,
-        markdown_html_image_gallery_skip_space(chars, 0),
-      ) {
+      match
+        markdown_html_image_gallery_tag_at(
+          chars,
+          markdown_html_image_gallery_skip_space(chars, 0),
+        ) {
         Some(parsed) =>
           !parsed.tag.closing &&
           (parsed.tag.name == "div" || parsed.tag.name == "center")
@@ -144,7 +146,10 @@ fn markdown_html_image_gallery_walk_body(
       break
     }
     match markdown_html_image_gallery_comment_end(chars, walk.index.val) {
-      Some(end) => { walk.index.val = end; continue }
+      Some(end) => {
+        walk.index.val = end
+        continue
+      }
       None => ()
     }
     if chars[walk.index.val] != '<' {
@@ -164,8 +169,7 @@ fn markdown_html_image_gallery_walk_body(
           walk.invalid.val = true
         } else {
           match tag.name {
-            "img" =>
-              markdown_html_image_gallery_walk_image(walk, tag)
+            "img" => markdown_html_image_gallery_walk_image(walk, tag)
             "br" => {
               walk.runs.push(
                 RichTextRun::new(
@@ -176,7 +180,7 @@ fn markdown_html_image_gallery_walk_body(
               )
               walk.line_open.val = false
             }
-            "div" | "center" => {
+            "div" | "center" =>
               if tag.self_closing {
                 walk.invalid.val = true
               } else {
@@ -184,29 +188,24 @@ fn markdown_html_image_gallery_walk_body(
                 markdown_html_image_gallery_walk_body(walk, tag.name)
                 markdown_html_image_gallery_break_before(walk)
               }
-            }
             "a" => markdown_html_image_gallery_walk_anchor(walk)
-            "p" => markdown_html_image_gallery_block_text(
-              walk,
-              element_start,
-              tag.name,
-              walk.base,
-              true,
-            )
+            "p" =>
+              markdown_html_image_gallery_block_text(
+                walk,
+                element_start,
+                tag.name,
+                walk.base,
+                true,
+              )
             "h1" | "h2" | "h3" | "h4" | "h5" | "h6" =>
               markdown_html_image_gallery_block_text(
                 walk,
                 element_start,
                 tag.name,
-                {
-                  ..walk.base,
-                  size: walk.base.size * 1.15,
-                  weight: 700,
-                },
+                { ..walk.base, size: walk.base.size * 1.15, weight: 700 },
                 false,
               )
-            "span" =>
-              markdown_html_image_gallery_span_text(walk, element_start)
+            "span" => markdown_html_image_gallery_span_text(walk, element_start)
             _ => walk.invalid.val = true
           }
         }
@@ -236,7 +235,10 @@ fn markdown_html_image_gallery_walk_tail(
       break
     }
     match markdown_html_image_gallery_comment_end(chars, walk.index.val) {
-      Some(end) => { walk.index.val = end; continue }
+      Some(end) => {
+        walk.index.val = end
+        continue
+      }
       None => ()
     }
     if chars[walk.index.val] != '<' {
@@ -267,8 +269,7 @@ fn markdown_html_image_gallery_walk_image(
   walk : MarkdownHtmlImageGalleryWalk,
   tag : MarkdownHtmlImageGalleryTag,
 ) -> Unit {
-  match
-    markdown_html_image_gallery_image_run(tag, walk.base, walk.base_dir) {
+  match markdown_html_image_gallery_image_run(tag, walk.base, walk.base_dir) {
     Some(run) => {
       walk.runs.push(run)
       walk.line_open.val = true
@@ -293,11 +294,17 @@ fn markdown_html_image_gallery_walk_anchor(
       return
     }
     match markdown_html_image_gallery_comment_end(chars, walk.index.val) {
-      Some(end) => { walk.index.val = end; continue }
+      Some(end) => {
+        walk.index.val = end
+        continue
+      }
       None => ()
     }
     match markdown_html_image_gallery_tag_at(chars, walk.index.val) {
-      None => { walk.invalid.val = true; return }
+      None => {
+        walk.invalid.val = true
+        return
+      }
       Some(parsed) => {
         let tag = parsed.tag
         walk.index.val = parsed.end
@@ -330,11 +337,7 @@ fn markdown_html_image_gallery_read_text(
   if walk.index.val == start {
     return
   }
-  if markdown_html_image_gallery_space_entity_only(
-    chars,
-    start,
-    walk.index.val,
-  ) {
+  if markdown_html_image_gallery_space_entity_only(chars, start, walk.index.val) {
     if walk.line_open.val {
       markdown_html_image_gallery_push_inline(
         walk,
@@ -371,7 +374,7 @@ fn markdown_html_image_gallery_block_text(
   dim : Bool,
 ) -> Unit {
   match markdown_html_image_gallery_inline_content(walk, name) {
-    (false, _) => { walk.invalid.val = true }
+    (false, _) => walk.invalid.val = true
     (true, None) => ()
     (true, Some(visual)) => {
       markdown_html_image_gallery_break_before(walk)
@@ -397,9 +400,9 @@ fn markdown_html_image_gallery_span_text(
   element_start : Int,
 ) -> Unit {
   match markdown_html_image_gallery_inline_content(walk, "span") {
-    (false, _) => { walk.invalid.val = true }
+    (false, _) => walk.invalid.val = true
     (true, None) => ()
-    (true, Some(visual)) => {
+    (true, Some(visual)) =>
       markdown_html_image_gallery_push_inline(
         walk,
         String::from_array(walk.chars[element_start:walk.index.val]),
@@ -407,7 +410,6 @@ fn markdown_html_image_gallery_span_text(
         walk.base,
         Some(@core.Color::black().multiply_alpha(0.78)),
       )
-    }
   }
 }
 
@@ -423,11 +425,7 @@ fn markdown_html_image_gallery_inline_content(
   let mut index = start
   while index < chars.length() {
     if chars[index] == '<' {
-      if markdown_html_image_gallery_ci_at(
-        chars,
-        index,
-        "</" + name,
-      ) {
+      if markdown_html_image_gallery_ci_at(chars, index, "</" + name) {
         let mut cursor = index + 2 + name.length()
         while cursor < chars.length() && chars[cursor] != '>' {
           cursor = cursor + 1
@@ -453,11 +451,7 @@ fn markdown_html_image_gallery_push_newline(
   walk : MarkdownHtmlImageGalleryWalk,
 ) -> Unit {
   walk.runs.push(
-    RichTextRun::new(
-      text="",
-      visual_text=Some("\n"),
-      font=Some(walk.base),
-    ),
+    RichTextRun::new(text="", visual_text=Some("\n"), font=Some(walk.base)),
   )
   walk.line_open.val = false
 }
@@ -480,17 +474,15 @@ fn markdown_html_image_gallery_push_inline(
   color : @core.Color?,
 ) -> Unit {
   let run = match color {
-    None => RichTextRun::new(
-      text=raw,
-      visual_text=Some(visual),
-      font=Some(font),
-    )
-    Some(color) => RichTextRun::new(
-      text=raw,
-      visual_text=Some(visual),
-      font=Some(font),
-      color=Some(color),
-    )
+    None =>
+      RichTextRun::new(text=raw, visual_text=Some(visual), font=Some(font))
+    Some(color) =>
+      RichTextRun::new(
+        text=raw,
+        visual_text=Some(visual),
+        font=Some(font),
+        color=Some(color),
+      )
   }
   walk.runs.push(run)
   walk.line_open.val = true
@@ -514,11 +506,8 @@ fn markdown_html_image_gallery_decode_text(
       pending_space = true
       index = index + 1
     } else {
-      let (text, next) = match markdown_html_image_gallery_entity_at(
-        chars,
-        index,
-        end,
-      ) {
+      let (text, next) = match
+        markdown_html_image_gallery_entity_at(chars, index, end) {
         Some((text, next)) => (text, next)
         None => (String::from_array([ch]), index + 1)
       }
@@ -574,8 +563,7 @@ fn markdown_html_image_gallery_entity_at(
   // chars[index] == '&'
   let name_start = index + 1
   let mut cursor = name_start
-  while cursor < end &&
-        markdown_html_image_gallery_entity_char(chars[cursor]) {
+  while cursor < end && markdown_html_image_gallery_entity_char(chars[cursor]) {
     cursor = cursor + 1
   }
   if cursor >= end || chars[cursor] != ';' || cursor == name_start {
@@ -595,8 +583,10 @@ fn markdown_html_image_gallery_entity_at(
 
 ///|
 fn markdown_html_image_gallery_entity_char(ch : Char) -> Bool {
-  (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-  (ch >= '0' && ch <= '9') || ch == '#'
+  (ch >= 'a' && ch <= 'z') ||
+  (ch >= 'A' && ch <= 'Z') ||
+  (ch >= '0' && ch <= '9') ||
+  ch == '#'
 }
 
 ///|
@@ -637,9 +627,9 @@ fn markdown_html_image_gallery_ci_at(
   }
   for offset in 0..<needle_chars.length() {
     if !markdown_html_image_gallery_ci_char(
-      chars[index + offset],
-      needle_chars[offset],
-    ) {
+        chars[index + offset],
+        needle_chars[offset],
+      ) {
       return false
     }
   }
@@ -652,8 +642,11 @@ fn markdown_html_image_gallery_ci_char(
   want_lower : Char,
 ) -> Bool {
   actual == want_lower ||
-  (actual >= 'A' &&
-  actual <= 'Z' && actual.to_int() + 32 == want_lower.to_int())
+  (
+    actual >= 'A' &&
+    actual <= 'Z' &&
+    actual.to_int() + 32 == want_lower.to_int()
+  )
 }
 
 ///|
