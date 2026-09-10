@@ -734,7 +734,7 @@ fn clamp_double(value : Double, min : Double, max : Double) -> Double {
 
 ///|
 pub fn rich_text_editor_content_rect(frame : @core.Rect) -> @core.Rect {
-  frame.inset(@core.Insets::symmetric(horizontal=14.0, vertical=12.0))
+  frame.inset(@core.Insets::symmetric(horizontal=14.0, vertical=2.0))
 }
 
 ///|
