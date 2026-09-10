@@ -258,3 +258,68 @@ test "markdown editor maps structured html gallery tags without changing source"
   )
   inspect(source_mode.blocks[0].runs[0].text, content=source)
 }
+
+///|
+test "image reveal keeps raw source while the caret is in the target" {
+  let source = "![xx](img.png)"
+  // The reveal anchor is the whole construct, so a caret anywhere between the
+  // delimiters — here inside the `(...)` target — must keep the raw Markdown
+  // and drop the image binding instead of drawing the picture.
+  let in_target = markdown_editor_format_for_selection(source, {
+    caret: 6,
+    selection: None,
+  })
+  guard in_target.blocks[0].runs[0]
+    is {
+      text: "![xx](img.png)",
+      visual_text: None,
+      image_source: None,
+      source_range: Some({ start: 0, end: 14 }),
+      ..,
+    } else {
+    fail("expected raw source while the caret is in the image target")
+  }
+  // Leaving the span through the closing `)` restores the rendered image.
+  let after = markdown_editor_format_for_selection(source, {
+    caret: 14,
+    selection: None,
+  })
+  guard after.blocks[0].runs[0]
+    is {
+      text: "xx",
+      visual_text: Some("xx"),
+      image_source: Some("img.png"),
+      source_range: Some({ start: 2, end: 4 }),
+      ..,
+    } else {
+    fail("expected the image to render once the caret leaves the target")
+  }
+  // A caret parked just before the opening `!` is outside the span and keeps
+  // the rendered image, so an untouched image does not flip to source.
+  let before = markdown_editor_format_for_selection(source, {
+    caret: 0,
+    selection: None,
+  })
+  guard before.blocks[0].runs[0]
+    is { image_source: Some("img.png"), .. } else {
+    fail("expected the image to render when the caret precedes the marker")
+  }
+}
+
+///|
+test "auto-completed empty image target shows raw source, not a placeholder" {
+  let document = markdown_editor_format_for_selection("![xx]()", {
+    caret: 6,
+    selection: None,
+  })
+  guard document.blocks[0].runs[0]
+    is {
+      text: "![xx]()",
+      visual_text: None,
+      image_source: None,
+      source_range: Some({ start: 0, end: 7 }),
+      ..,
+    } else {
+    fail("expected raw source for an auto-completed empty image target")
+  }
+}

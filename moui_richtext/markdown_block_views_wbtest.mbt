@@ -205,3 +205,110 @@ test "session editor projects container blocks through the registry" {
     fail("expected the session container block to project an image")
   }
 }
+
+///|
+test "paragraph with an inline anchor projects instead of staying raw" {
+  let blocks = parse_markdown(
+    "<div align=\"center\">\n<p>\n简体中文 | <a href=\"./README.md\">English</a>\n</p>\n</div>",
+  )
+  inspect(blocks.length(), content="1")
+  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+    fail("expected a single html block")
+  }
+  match
+    markdown_block_view_project(
+      blocks[0],
+      @core.FontSpec::new(size=16.0),
+      base_dir=None,
+    ) {
+    None => fail("expected the inline-link paragraph to project")
+    Some(projection) => {
+      let mut english = false
+      for run in projection.runs {
+        if run.visual_text.unwrap_or("").contains("English") {
+          english = true
+        }
+      }
+      guard english else { fail("expected the inline link text as a run") }
+    }
+  }
+}
+
+///|
+test "badge row anchored inside a paragraph projects its images" {
+  let blocks = parse_markdown(
+    "<div align=\"center\">\n<p>\n<a href=\"#\"><img src=\"b1.svg\"/></a>\n<a href=\"#\"><img src=\"b2.svg\"/></a>\n</p>\n</div>",
+  )
+  inspect(blocks.length(), content="1")
+  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+    fail("expected a single html block")
+  }
+  inspect(markdown_block_view_wbtest_images(blocks[0]), content="2")
+}
+
+///|
+/// End-to-end reproduction of a README hero block: a multi-line `img` tag,
+/// a heading, a paragraph with an inline link, and anchored badge rows —
+/// all of which must project instead of falling back to raw HTML source.
+test "readme hero container projects images, heading and links" {
+  let source =
+    #|<div align="center">
+    #|<img src="resource/branding/moonbud-mascot.svg" width="100"
+    #|alt="MoUI Logo" />
+    #|<h1>MoUI</h1>
+    #|<p>多平台 MoonBit 声明式 GUI 框架</p>
+    #|<p>
+    #|简体中文 | <a href="./README.md">English</a>
+    #|</p>
+    #|<p>
+    #|<a href="./LICENSE"><img src="https://img.shields.io/badge/license.svg" alt="license" /></a>
+    #|<a href="https://github.com/wzzc-dev/MoUI"><img src="https://img.shields.io/github/stars.svg" alt="stars" /></a>
+    #|</p>
+    #|<p>
+    #|<a href="#快速开始">快速开始</a> ·
+    #|<a href="#项目结构">项目结构</a>
+    #|</p>
+    #|</div>
+  let blocks = parse_markdown(source)
+  inspect(blocks.length(), content="1")
+  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+    fail("expected a single html block")
+  }
+  match
+    markdown_block_view_project(
+      blocks[0],
+      @core.FontSpec::new(size=16.0),
+      base_dir=None,
+    ) {
+    None => fail("expected the README hero container to project")
+    Some(projection) => {
+      let mut mascot = false
+      let mut heading = false
+      let mut english = false
+      let mut nav = false
+      for run in projection.runs {
+        match run.image_source {
+          Some(path) => if path.contains("moonbud-mascot") { mascot = true }
+          None => ()
+        }
+        let visual = run.visual_text.unwrap_or("")
+        if visual.contains("MoUI") {
+          heading = true
+        }
+        if visual.contains("English") {
+          english = true
+        }
+        if visual.contains("快速开始") {
+          nav = true
+        }
+      }
+      guard mascot else { fail("expected the mascot image run") }
+      guard heading else { fail("expected the heading text run") }
+      guard english else { fail("expected the inline link run") }
+      guard nav else { fail("expected the nav link run") }
+      guard projection.line_align is Some(@core.TextAlign::TextCenter) else {
+        fail("expected the container to project center alignment")
+      }
+    }
+  }
+}
