@@ -373,8 +373,15 @@ fn markdown_html_image_gallery_block_text(
   font : @core.FontSpec,
   dim : Bool,
 ) -> Unit {
+  let color = if dim {
+    Some(@core.Color::black().multiply_alpha(0.78))
+  } else {
+    None
+  }
+  // Fast path: a pure-text paragraph/heading projects as one run covering
+  // the whole element, which keeps the source mapping exact. Rich content
+  // (nested anchors/images) falls through to the inline walker below.
   match markdown_html_image_gallery_inline_content(walk, name) {
-    (false, _) => walk.invalid.val = true
     (true, None) => ()
     (true, Some(visual)) => {
       markdown_html_image_gallery_break_before(walk)
@@ -383,13 +390,20 @@ fn markdown_html_image_gallery_block_text(
         String::from_array(walk.chars[element_start:walk.index.val]),
         visual,
         font,
-        if dim {
-          Some(@core.Color::black().multiply_alpha(0.78))
-        } else {
-          None
-        },
+        color,
       )
       markdown_html_image_gallery_push_newline(walk)
+    }
+    (false, _) => {
+      markdown_html_image_gallery_break_before(walk)
+      let before = walk.runs.length()
+      if !markdown_html_image_gallery_walk_inline_until(walk, name, font, color) {
+        walk.invalid.val = true
+        return
+      }
+      if walk.runs.length() > before {
+        markdown_html_image_gallery_push_newline(walk)
+      }
     }
   }
 }
@@ -399,8 +413,8 @@ fn markdown_html_image_gallery_span_text(
   walk : MarkdownHtmlImageGalleryWalk,
   element_start : Int,
 ) -> Unit {
+  let color = Some(@core.Color::black().multiply_alpha(0.78))
   match markdown_html_image_gallery_inline_content(walk, "span") {
-    (false, _) => walk.invalid.val = true
     (true, None) => ()
     (true, Some(visual)) =>
       markdown_html_image_gallery_push_inline(
@@ -408,9 +422,262 @@ fn markdown_html_image_gallery_span_text(
         String::from_array(walk.chars[element_start:walk.index.val]),
         visual,
         walk.base,
-        Some(@core.Color::black().multiply_alpha(0.78)),
+        color,
       )
+    (false, _) =>
+      if !markdown_html_image_gallery_walk_inline_until(
+          walk,
+          "span",
+          walk.base,
+          color,
+        ) {
+        walk.invalid.val = true
+      }
   }
+}
+
+///|
+/// Walk the inline children of an opened `closing` element, pushing text,
+/// images, anchors and line breaks as runs. Returns `false` — declining the
+/// whole container — on any construct outside the displayable subset.
+fn markdown_html_image_gallery_walk_inline_until(
+  walk : MarkdownHtmlImageGalleryWalk,
+  closing : String,
+  font : @core.FontSpec,
+  color : @core.Color?,
+) -> Bool {
+  let chars = walk.chars
+  while walk.index.val < chars.length() {
+    match markdown_html_image_gallery_comment_end(chars, walk.index.val) {
+      Some(end) => {
+        walk.index.val = end
+        continue
+      }
+      None => ()
+    }
+    if chars[walk.index.val] != '<' {
+      let start = walk.index.val
+      while walk.index.val < chars.length() && chars[walk.index.val] != '<' {
+        walk.index.val = walk.index.val + 1
+      }
+      match
+        markdown_html_image_gallery_decode_text_inline(
+          chars, start, walk.index.val,
+        ) {
+        None => ()
+        Some(visual) => {
+          // A whitespace-only segment only becomes a run mid-line, so a
+          // paragraph's own indentation never leaks a leading space.
+          if visual != " " || walk.line_open.val {
+            markdown_html_image_gallery_push_inline(
+              walk,
+              String::from_array(chars[start:walk.index.val]),
+              visual,
+              font,
+              color,
+            )
+          }
+        }
+      }
+      continue
+    }
+    let tag_start = walk.index.val
+    match markdown_html_image_gallery_tag_at(chars, tag_start) {
+      None => return false
+      Some(parsed) => {
+        let tag = parsed.tag
+        walk.index.val = parsed.end
+        if tag.closing {
+          return tag.name == closing
+        }
+        match tag.name {
+          "img" =>
+            match
+              markdown_html_image_gallery_image_run(
+                tag, walk.base, walk.base_dir,
+              ) {
+              Some(run) => {
+                walk.runs.push(run)
+                walk.line_open.val = true
+              }
+              None => return false
+            }
+          "br" => {
+            walk.runs.push(
+              RichTextRun::new(
+                text=tag.raw,
+                visual_text=Some("\n"),
+                font=Some(walk.base),
+              ),
+            )
+            walk.line_open.val = false
+          }
+          "a" =>
+            if !markdown_html_image_gallery_walk_inline_anchor(
+                walk, tag_start, font, color,
+              ) {
+              return false
+            }
+          "span" | "strong" | "b" | "em" | "i" | "code" =>
+            if !markdown_html_image_gallery_walk_inline_until(
+                walk, tag.name, font, color,
+              ) {
+              return false
+            }
+          _ => return false
+        }
+      }
+    }
+  }
+  false
+}
+
+///|
+/// Inline anchor: displayable only when it wraps either a single image or
+/// plain text (badge rows and inline links). Mixed content declines so the
+/// container keeps its raw source presentation.
+fn markdown_html_image_gallery_walk_inline_anchor(
+  walk : MarkdownHtmlImageGalleryWalk,
+  element_start : Int,
+  font : @core.FontSpec,
+  color : @core.Color?,
+) -> Bool {
+  let chars = walk.chars
+  let inner_start = walk.index.val
+  let mut has_text = false
+  let mut has_image = false
+  let mut image_run : RichTextRun? = None
+  while walk.index.val < chars.length() {
+    match markdown_html_image_gallery_comment_end(chars, walk.index.val) {
+      Some(end) => {
+        walk.index.val = end
+        continue
+      }
+      None => ()
+    }
+    if chars[walk.index.val] != '<' {
+      let start = walk.index.val
+      while walk.index.val < chars.length() && chars[walk.index.val] != '<' {
+        walk.index.val = walk.index.val + 1
+      }
+      if markdown_html_image_gallery_decode_text_inline(
+          chars, start, walk.index.val,
+        )
+        is Some(_) {
+        has_text = true
+      }
+      continue
+    }
+    let tag_start = walk.index.val
+    match markdown_html_image_gallery_tag_at(chars, tag_start) {
+      None => return false
+      Some(parsed) => {
+        let tag = parsed.tag
+        walk.index.val = parsed.end
+        if tag.closing {
+          if tag.name != "a" {
+            return false
+          }
+          if has_image && !has_text {
+            match image_run {
+              Some(run) => {
+                walk.runs.push(run)
+                walk.line_open.val = true
+                return true
+              }
+              None => return false
+            }
+          }
+          if has_text && !has_image {
+            match
+              markdown_html_image_gallery_decode_text_inline(
+                chars, inner_start, tag_start,
+              ) {
+              None => ()
+              Some(visual) =>
+                if visual != " " || walk.line_open.val {
+                  markdown_html_image_gallery_push_inline(
+                    walk,
+                    String::from_array(chars[element_start:walk.index.val]),
+                    visual,
+                    font,
+                    color,
+                  )
+                }
+            }
+            return true
+          }
+          return false
+        }
+        if tag.name == "img" && !has_text && !has_image {
+          match
+            markdown_html_image_gallery_image_run(
+              tag, walk.base, walk.base_dir,
+            ) {
+            Some(run) => {
+              image_run = Some(run)
+              has_image = true
+            }
+            None => return false
+          }
+        } else {
+          return false
+        }
+      }
+    }
+  }
+  false
+}
+
+///|
+/// Inline text decoding: collapses whitespace runs to single spaces, keeps a
+/// single trailing space so adjacent inline elements stay separated, and
+/// returns `Some(" ")` for a whitespace-only segment (the caller drops it at
+/// line start).
+fn markdown_html_image_gallery_decode_text_inline(
+  chars : Array[Char],
+  start : Int,
+  end : Int,
+) -> String? {
+  let output = StringBuilder()
+  let mut index = start
+  let mut pending_space = false
+  let mut started = false
+  while index < end {
+    let ch = chars[index]
+    if markdown_html_image_gallery_space(ch) {
+      if started {
+        pending_space = true
+      }
+      index = index + 1
+    } else {
+      let (text, next) = match
+        markdown_html_image_gallery_entity_at(chars, index, end) {
+        Some((text, next)) => (text, next)
+        None => (String::from_array([ch]), index + 1)
+      }
+      if text == " " {
+        if started {
+          pending_space = true
+        }
+      } else {
+        if pending_space {
+          output.write_string(" ")
+          pending_space = false
+        }
+        output.write_string(text)
+        started = true
+      }
+      index = next
+    }
+  }
+  if !started {
+    return if start < end { Some(" ") } else { None }
+  }
+  if pending_space {
+    output.write_string(" ")
+  }
+  Some(output.to_string())
 }
 
 ///|

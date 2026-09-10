@@ -429,19 +429,22 @@ fn markdown_editor_reveal_active_inline_run(
   run : RichTextRun,
 ) -> RichTextRun {
   match run.source_range {
-    Some(range) =>
-      if markdown_editor_selection_touches_range(selection, range) {
-        match
-          markdown_editor_inline_marker_source_range(
-            source,
-            chars=markdown_editor_source_chars_near(
-              source,
-              range,
-              block_source_end~,
-            ),
-            range,
-          ) {
-          Some(full_range) =>
+    Some(range) => {
+      // Probe the whole construct (markers and, for links/images, the target
+      // `(...)` too) once. The reveal anchor is that full range — not the
+      // run's visible span — so a caret anywhere inside the construct,
+      // including while the target is being typed, keeps the raw source in
+      // view. `None` means the run is not part of a marker span and has
+      // nothing to reveal.
+      let chars = markdown_editor_source_chars_near(
+        source,
+        range,
+        block_source_end~,
+      )
+      match
+        markdown_editor_inline_marker_source_range(source, chars~, range) {
+        Some(full_range) =>
+          if markdown_editor_reveal_anchor_active(selection, full_range) {
             {
               ..run,
               text: markdown_editor_substring(
@@ -450,14 +453,44 @@ fn markdown_editor_reveal_active_inline_run(
                 full_range.end,
               ),
               visual_text: None,
+              // Drop the image binding while the raw source is shown: the
+              // painter keys image-vs-text purely off `image_source`, so
+              // leaving it set would keep drawing the picture (or its empty
+              // `()` placeholder) instead of the revealed Markdown text.
+              image_source: None,
+              image_size: None,
+              image_width_fraction: None,
               source_range: Some(full_range),
             }
-          None => run
-        }
-      } else {
-        run
+          } else {
+            run
+          }
+        None => run
       }
+    }
     None => run
+  }
+}
+
+///|
+/// Whether the caret/selection sits *inside* a full inline construct span
+/// `[start, end)` — delimiters and link/image target included — so the raw
+/// Markdown should be shown. Unlike `markdown_editor_selection_touches_range`,
+/// the collapsed-caret bounds are exclusive: a caret resting just before the
+/// opening `!`/`[`/`**` or just after the closing `)`/`]`/`**` is outside the
+/// span and keeps the formatted view, so parking the caret against an image's
+/// opening marker does not flip it back to source.
+fn markdown_editor_reveal_anchor_active(
+  selection : MarkdownEditorSelection,
+  full_range : RichTextSourceRange,
+) -> Bool {
+  match markdown_editor_active_selection(selection.selection) {
+    Some(active) => {
+      let active = active.normalized()
+      active.start < full_range.end && active.end > full_range.start
+    }
+    None =>
+      selection.caret > full_range.start && selection.caret < full_range.end
   }
 }
 
