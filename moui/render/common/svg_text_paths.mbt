@@ -144,7 +144,11 @@ fn svg_scan_text_anchors(svg_text : String) -> Array[SvgScannedText] {
     }
   }
 
-  fn chars_equal_at(tag : Array[Char], offset : Int, name : Array[Char]) -> Bool {
+  fn chars_equal_at(
+    tag : Array[Char],
+    offset : Int,
+    name : Array[Char],
+  ) -> Bool {
     let name_len = name.length()
     if offset + name_len > tag.length() {
       return false
@@ -174,7 +178,9 @@ fn svg_scan_text_anchors(svg_text : String) -> Array[SvgScannedText] {
               end = end + 1
             }
             if end > value_start + 1 && end <= tag.length() {
-              return Some(String::from_array(tag[value_start + 1:end].to_owned()))
+              return Some(
+                String::from_array(tag[value_start + 1:end].to_owned()),
+              )
             }
           }
         }
@@ -208,7 +214,9 @@ fn svg_scan_text_anchors(svg_text : String) -> Array[SvgScannedText] {
     }
     if body[0] == '/' {
       // Closing tag: pop containers pushed by their start tags.
-      let name = String::from_array(svg_tag_name(body[1:body.length()].to_owned()))
+      let name = String::from_array(
+        svg_tag_name(body[1:body.length()].to_owned()),
+      )
       if name == "g" || name == "svg" {
         if stack.length() > 1 {
           let _ = stack.pop()
@@ -325,14 +333,15 @@ fn svg_apply_text_paths(
         None => 0.0
       }
       cursor.value = cursor.value + 1
-      match resolver({
-        text,
-        font_size: run_font_size,
-        x,
-        baseline_y: y,
-        anchor,
-        text_length: run_text_length,
-      }) {
+      match
+        resolver({
+          text,
+          font_size: run_font_size,
+          x,
+          baseline_y: y,
+          anchor,
+          text_length: run_text_length,
+        }) {
         Some(outline) =>
           if outline.polygons.is_empty() {
             0
@@ -354,14 +363,13 @@ fn svg_apply_text_paths(
         None => 0
       }
     }
-    @svg.Shape::Group =>
-      {
-        let mut total = 0
-        for child in node.children {
-          total = total + svg_apply_text_paths(child, resolver, anchors, cursor)
-        }
-        total
+    @svg.Shape::Group => {
+      let mut total = 0
+      for child in node.children {
+        total = total + svg_apply_text_paths(child, resolver, anchors, cursor)
       }
+      total
+    }
     _ => 0
   }
   replaced

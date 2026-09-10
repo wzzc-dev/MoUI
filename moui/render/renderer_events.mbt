@@ -94,6 +94,7 @@ pub fn RendererImageLoadRequest::source(
 }
 
 ///|
+
 ///|
 /// Decode this request, reading the source through the host's synchronous
 /// `HostImageSource`.

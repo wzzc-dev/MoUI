@@ -90,7 +90,8 @@ pub fn markdown_image_metrics_size(source : String) -> @core.Size? {
   match markdown_image_metrics_sizes.get(source) {
     Some(cached) => cached
     None => {
-      let size = if source.has_prefix("http://") || source.has_prefix("https://") {
+      let size = if source.has_prefix("http://") ||
+        source.has_prefix("https://") {
         match (markdown_remote_image_reader.val)(source) {
           Some(bytes) => markdown_image_metrics_size_from_bytes(bytes)
           None => None

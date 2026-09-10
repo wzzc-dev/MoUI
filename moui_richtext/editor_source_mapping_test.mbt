@@ -300,8 +300,7 @@ test "image reveal keeps raw source while the caret is in the target" {
     caret: 0,
     selection: None,
   })
-  guard before.blocks[0].runs[0]
-    is { image_source: Some("img.png"), .. } else {
+  guard before.blocks[0].runs[0] is { image_source: Some("img.png"), .. } else {
     fail("expected the image to render when the caret precedes the marker")
   }
 }

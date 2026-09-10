@@ -462,10 +462,12 @@ fn markdown_html_image_gallery_walk_inline_until(
       }
       match
         markdown_html_image_gallery_decode_text_inline(
-          chars, start, walk.index.val,
+          chars,
+          start,
+          walk.index.val,
         ) {
         None => ()
-        Some(visual) => {
+        Some(visual) =>
           // A whitespace-only segment only becomes a run mid-line, so a
           // paragraph's own indentation never leaks a leading space.
           if visual != " " || walk.line_open.val {
@@ -477,7 +479,6 @@ fn markdown_html_image_gallery_walk_inline_until(
               color,
             )
           }
-        }
       }
       continue
     }
@@ -494,7 +495,9 @@ fn markdown_html_image_gallery_walk_inline_until(
           "img" =>
             match
               markdown_html_image_gallery_image_run(
-                tag, walk.base, walk.base_dir,
+                tag,
+                walk.base,
+                walk.base_dir,
               ) {
               Some(run) => {
                 walk.runs.push(run)
@@ -520,7 +523,10 @@ fn markdown_html_image_gallery_walk_inline_until(
             }
           "span" | "strong" | "b" | "em" | "i" | "code" =>
             if !markdown_html_image_gallery_walk_inline_until(
-                walk, tag.name, font, color,
+                walk,
+                tag.name,
+                font,
+                color,
               ) {
               return false
             }
@@ -561,7 +567,9 @@ fn markdown_html_image_gallery_walk_inline_anchor(
         walk.index.val = walk.index.val + 1
       }
       if markdown_html_image_gallery_decode_text_inline(
-          chars, start, walk.index.val,
+          chars,
+          start,
+          walk.index.val,
         )
         is Some(_) {
         has_text = true
@@ -611,9 +619,7 @@ fn markdown_html_image_gallery_walk_inline_anchor(
         }
         if tag.name == "img" && !has_text && !has_image {
           match
-            markdown_html_image_gallery_image_run(
-              tag, walk.base, walk.base_dir,
-            ) {
+            markdown_html_image_gallery_image_run(tag, walk.base, walk.base_dir) {
             Some(run) => {
               image_run = Some(run)
               has_image = true

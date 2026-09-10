@@ -14,19 +14,9 @@ pub fn markdown_block_to_rich_text(
       // GitHub-like rhythm: big titles get a full blank line above and half
       // below; smaller headings keep the tighter Typora-style spacing.
       let inset : @core.Insets = if level <= 2 {
-        {
-          top: base.size * 1.0,
-          right: 0.0,
-          bottom: base.size * 0.5,
-          left: 0.0,
-        }
+        { top: base.size * 1.0, right: 0.0, bottom: base.size * 0.5, left: 0.0 }
       } else {
-        {
-          top: base.size * 0.6,
-          right: 0.0,
-          bottom: base.size * 0.3,
-          left: 0.0,
-        }
+        { top: base.size * 0.6, right: 0.0, bottom: base.size * 0.3, left: 0.0 }
       }
       RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, font, base_dir~),

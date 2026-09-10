@@ -223,7 +223,9 @@ test "image metrics consult the remote reader for http sources" {
   ignore(markdown_image_metrics_size("https://img.shields.io/badge.svg"))
   assert_eq(reads, 1)
   // Unresolvable remote sources still fall back.
-  assert_true(markdown_image_metrics_size("https://example.com/missing.png") is None)
+  assert_true(
+    markdown_image_metrics_size("https://example.com/missing.png") is None,
+  )
 }
 
 ///|
@@ -233,7 +235,9 @@ test "noted remote bytes feed the intrinsic-size cache" {
   assert_true(markdown_image_metrics_size(source) is None)
   // The async load completion notes the fetched SVG; the cached size changes.
   let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"250\" height=\"54\"></svg>"
-  assert_true(markdown_image_metrics_note_bytes(source, @utf8.encode(svg, bom=false)))
+  assert_true(
+    markdown_image_metrics_note_bytes(source, @utf8.encode(svg, bom=false)),
+  )
   match markdown_image_metrics_size(source) {
     Some(size) => {
       assert_eq(size.width, 250.0)
@@ -246,10 +250,7 @@ test "noted remote bytes feed the intrinsic-size cache" {
     markdown_image_metrics_note_bytes(source, @utf8.encode(svg, bom=false)),
     false,
   )
-  assert_eq(
-    markdown_image_metrics_note_bytes(source, b"not-an-image"),
-    false,
-  )
+  assert_eq(markdown_image_metrics_note_bytes(source, b"not-an-image"), false)
   match markdown_image_metrics_size(source) {
     Some(size) => assert_eq(size.width, 250.0)
     None => fail("expected the cached size to survive")

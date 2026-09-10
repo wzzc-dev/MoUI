@@ -7,8 +7,7 @@ test "svg_source_is_svg recognizes suffixes and root tags" {
   // Tag sniffing, for sources served without a useful extension.
   assert_true(
     svg_source_is_svg(
-      "https://example.com/asset",
-      b"<?xml version=\"1.0\"?><svg xmlns=\"http://www.w3.org/2000/svg\"/>",
+      "https://example.com/asset", b"<?xml version=\"1.0\"?><svg xmlns=\"http://www.w3.org/2000/svg\"/>",
     ),
   )
   // A raster payload is not SVG.
@@ -104,15 +103,13 @@ test "svg image decoder declines non-svg and missing bytes" {
 
   let raster = decoder.decode("photo.png", Some(b"\x89PNG\r\n\x1a\n"))
   assert_true(
-    raster.status ==
-    @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
+    raster.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
   )
   assert_false(raster.has_decoded_rgba_payload())
 
   let missing = decoder.decode("assets/mark.svg", None)
   assert_true(
-    missing.status ==
-    @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
+    missing.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
   )
 }
 
@@ -147,7 +144,10 @@ test "svg decoder falls back to the default box when size is undeclared" {
   // No viewBox and no root width/height: the document is still renderable.
   let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\">" +
     "<rect width=\"10\" height=\"10\" fill=\"black\"/></svg>"
-  let completion = decoder.decode("mark.svg", Some(@utf8.encode(svg, bom=false)))
+  let completion = decoder.decode(
+    "mark.svg",
+    Some(@utf8.encode(svg, bom=false)),
+  )
   assert_true(completion.has_decoded_rgba_payload())
   inspect(completion.width, content="600")
   inspect(completion.height, content="300")

@@ -14,8 +14,7 @@ test "image decoder plugin chain prefers plugins and falls back" {
   let outcome = chained.decode("a.png", None)
   inspect(fallback_calls.val, content="1")
   assert_true(
-    outcome.status ==
-    @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
+    outcome.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
   )
 
   // A plugin that claims the source short-circuits the fallback.
@@ -30,8 +29,7 @@ test "image decoder plugin chain prefers plugins and falls back" {
   let claimed = chained_claimed.decode("b.svg", None)
   inspect(fallback_calls.val, content="1")
   assert_true(
-    claimed.status ==
-    @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
+    claimed.status == @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
   )
   inspect(claimed.width, content="4")
   inspect(claimed.height, content="2")
@@ -62,10 +60,9 @@ test "image source providers match by prefix in registration order" {
     fail("expected an empty registry to match nothing")
   }
 
-  image_source_provider_register(
-    prefix="https://",
-    read=_source => Some(b"payload"),
-  )
+  image_source_provider_register(prefix="https://", read=_source => {
+    Some(b"payload")
+  })
   inspect(image_source_provider_count(), content="1")
 
   guard image_source_provider_read("https://example.com/a.png") is Some(bytes) else {
@@ -78,10 +75,9 @@ test "image source providers match by prefix in registration order" {
   }
 
   // A later, more specific prefix is consulted only after the earlier match.
-  image_source_provider_register(
-    prefix="https://example.com/",
-    read=_source => Some(b"specific"),
-  )
+  image_source_provider_register(prefix="https://example.com/", read=_source => {
+    Some(b"specific")
+  })
   inspect(image_source_provider_count(), content="2")
   guard image_source_provider_read("https://example.com/a.png") is Some(bytes2) else {
     fail("expected a match")
@@ -91,10 +87,9 @@ test "image source providers match by prefix in registration order" {
   // A matching provider that cannot produce bytes falls through to the next.
   image_source_provider_clear()
   image_source_provider_register(prefix="https://", read=_source => None)
-  image_source_provider_register(
-    prefix="https://",
-    read=_source => Some(b"fallback"),
-  )
+  image_source_provider_register(prefix="https://", read=_source => {
+    Some(b"fallback")
+  })
   guard image_source_provider_read("https://example.com/a.png") is Some(bytes3) else {
     fail("expected the second provider to serve the source")
   }

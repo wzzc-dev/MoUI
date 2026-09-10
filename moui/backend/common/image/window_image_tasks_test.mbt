@@ -130,9 +130,7 @@ test "deferred image starter fetches remote sources through the worker" {
   let posts = Ref(0)
   let bytes_len = Ref(0)
   let renderer = deferred_image_starter_session(
-    "https://example.com/mark.svg",
-    applied,
-    bytes_len,
+    "https://example.com/mark.svg", applied, bytes_len,
   )
   let tasks = WindowImageTasks::new(
     starter=WindowImageTaskStarter::deferred(
@@ -174,9 +172,7 @@ test "deferred image starter completes local sources without a worker" {
   let fetches = Ref(0)
   let bytes_len = Ref(0)
   let renderer = deferred_image_starter_session(
-    "/tmp/notes/local.png",
-    applied,
-    bytes_len,
+    "/tmp/notes/local.png", applied, bytes_len,
   )
   let tasks = WindowImageTasks::new(
     starter=WindowImageTaskStarter::deferred(

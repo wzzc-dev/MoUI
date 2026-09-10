@@ -26,9 +26,7 @@ pub fn image_source_provider_register(
   prefix~ : String,
   read~ : (String) -> Bytes?,
 ) -> Unit {
-  image_source_providers.val = image_source_providers.val + [
-    { prefix, read },
-  ]
+  image_source_providers.val = image_source_providers.val + [{ prefix, read }]
 }
 
 ///|
