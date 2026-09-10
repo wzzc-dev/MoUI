@@ -71,18 +71,33 @@ fn markdown_editor_transform_current_block(
       )
     }
     let next_caret = range.start + paragraph_offset
-    { source: next_source, caret: next_caret, selection: None, edit_range: Some({ start: range.start, end: range.end }) }
+    {
+      source: next_source,
+      caret: next_caret,
+      selection: None,
+      edit_range: Some({ start: range.start, end: range.end }),
+    }
   } else if command == HorizontalRule {
     let next_source = String::from_array(chars[:range.start]) +
       "---" +
       String::from_array(chars[range.end:])
-    { source: next_source, caret: range.start + 3, selection: None, edit_range: Some({ start: range.start, end: range.end }) }
+    {
+      source: next_source,
+      caret: range.start + 3,
+      selection: None,
+      edit_range: Some({ start: range.start, end: range.end }),
+    }
   } else if command == Table {
     let snippet = markdown_editor_command_snippet(Table)
     let next_source = String::from_array(chars[:range.start]) +
       snippet +
       String::from_array(chars[range.end:])
-    { source: next_source, caret: range.start + 2, selection: None, edit_range: Some({ start: range.start, end: range.end }) }
+    {
+      source: next_source,
+      caret: range.start + 2,
+      selection: None,
+      edit_range: Some({ start: range.start, end: range.end }),
+    }
   } else if prefix == "" {
     markdown_editor_append_snippet(source, command)
   } else if markdown_editor_block_command_context_has_quote(
@@ -111,7 +126,12 @@ fn markdown_editor_transform_current_block(
         parts,
         selection.caret - range.start,
       )
-    { source: next_source, caret: next_caret, selection: None, edit_range: Some({ start: range.start, end: range.end }) }
+    {
+      source: next_source,
+      caret: next_caret,
+      selection: None,
+      edit_range: Some({ start: range.start, end: range.end }),
+    }
   } else {
     let replacement = if markdown_editor_line_has_same_block_marker(
         line, command,
@@ -131,7 +151,12 @@ fn markdown_editor_transform_current_block(
         line,
         selection.caret - range.start,
       )
-    { source: next_source, caret: next_caret, selection: None, edit_range: Some({ start: range.start, end: range.end }) }
+    {
+      source: next_source,
+      caret: next_caret,
+      selection: None,
+      edit_range: Some({ start: range.start, end: range.end }),
+    }
   }
 }
 
@@ -185,7 +210,15 @@ fn markdown_editor_transform_setext_block(
     markdown_editor_text_length(text) +
     offset
   }
-  { source: next_source, caret, selection: None, edit_range: Some({ start: block.source_range.start, end: block.source_range.end }) }
+  {
+    source: next_source,
+    caret,
+    selection: None,
+    edit_range: Some({
+      start: block.source_range.start,
+      end: block.source_range.end,
+    }),
+  }
 }
 
 ///|
@@ -234,7 +267,12 @@ fn markdown_editor_replace_selected_lines_with_table(
     start=range.start,
     end=range.start + markdown_editor_text_length(snippet),
   )
-  { source: text, caret: range.start + 2, selection: Some(next_selection), edit_range: Some({ start: range.start, end: range.end }) }
+  {
+    source: text,
+    caret: range.start + 2,
+    selection: Some(next_selection),
+    edit_range: Some({ start: range.start, end: range.end }),
+  }
 }
 
 ///|
@@ -251,7 +289,12 @@ fn markdown_editor_replace_selected_lines_with_rule(
     start=range.start,
     end=range.start + 3,
   )
-  { source: text, caret: range.start + 3, selection: Some(next_selection), edit_range: Some({ start: range.start, end: range.end }) }
+  {
+    source: text,
+    caret: range.start + 3,
+    selection: Some(next_selection),
+    edit_range: Some({ start: range.start, end: range.end }),
+  }
 }
 
 ///|
@@ -334,7 +377,12 @@ fn markdown_editor_transform_selected_lines(
   } else {
     selection.caret + delta
   }
-  { source: text, caret, selection: next_selection, edit_range: Some({ start: range.start, end: range.end }) }
+  {
+    source: text,
+    caret,
+    selection: next_selection,
+    edit_range: Some({ start: range.start, end: range.end }),
+  }
 }
 
 ///|
@@ -567,9 +615,19 @@ fn markdown_editor_noop_result(
 ) -> MarkdownEditorEditResult {
   match selection {
     Some(selection) =>
-      { source, caret: selection.caret, selection: selection.selection, edit_range: None }
+      {
+        source,
+        caret: selection.caret,
+        selection: selection.selection,
+        edit_range: None,
+      }
     None =>
-      { source, caret: markdown_editor_text_length(source), selection: None, edit_range: None }
+      {
+        source,
+        caret: markdown_editor_text_length(source),
+        selection: None,
+        edit_range: None,
+      }
   }
 }
 

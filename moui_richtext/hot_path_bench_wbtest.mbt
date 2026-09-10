@@ -263,7 +263,8 @@ test "hot path: gated end-to-end benchmark" {
 /// construction this edit-range recording targets.
 fn hot_path_bench_transaction(fixture : String, ops : Int) -> Unit {
   let insert_at = markdown_editor_text_length(fixture) / 2
-  let next = markdown_editor_substring(fixture, 0, insert_at) + "x" +
+  let next = markdown_editor_substring(fixture, 0, insert_at) +
+    "x" +
     markdown_editor_substring(
       fixture,
       insert_at,

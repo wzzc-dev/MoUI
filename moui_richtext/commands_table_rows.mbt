@@ -163,7 +163,12 @@ fn markdown_editor_delete_table_row_at_cell(
     0,
     markdown_editor_text_length(text),
   )
-  { source: text, caret, selection: None, edit_range: Some({ start: remove_start, end: row_end }) }
+  {
+    source: text,
+    caret,
+    selection: None,
+    edit_range: Some({ start: remove_start, end: row_end }),
+  }
 }
 
 ///|
@@ -180,7 +185,12 @@ fn markdown_editor_clear_table_row(
   let text = String::from_array(chars[:row_start]) +
     row +
     String::from_array(chars[row_end:])
-  { source: text, caret: row_start + 2, selection: None, edit_range: Some({ start: row_start, end: row_end }) }
+  {
+    source: text,
+    caret: row_start + 2,
+    selection: None,
+    edit_range: Some({ start: row_start, end: row_end }),
+  }
 }
 
 ///|

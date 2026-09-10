@@ -539,10 +539,7 @@ fn markdown_html_block_tag_name_at(
     return false
   }
   for offset in 0..<tag_chars.length() {
-    if !markdown_html_block_ci_char(
-      chars[index + offset],
-      tag_chars[offset],
-    ) {
+    if !markdown_html_block_ci_char(chars[index + offset], tag_chars[offset]) {
       return false
     }
   }
@@ -553,8 +550,11 @@ fn markdown_html_block_tag_name_at(
 ///|
 fn markdown_html_block_ci_char(actual : Char, want_lower : Char) -> Bool {
   actual == want_lower ||
-  (actual >= 'A' &&
-  actual <= 'Z' && actual.to_int() + 32 == want_lower.to_int())
+  (
+    actual >= 'A' &&
+    actual <= 'Z' &&
+    actual.to_int() + 32 == want_lower.to_int()
+  )
 }
 
 ///|

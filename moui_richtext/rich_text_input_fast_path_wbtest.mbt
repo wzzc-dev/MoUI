@@ -23,7 +23,9 @@ fn check_transform(
     fail("expected edit_range for \"\{previous}\" -> \"\{transform.text}\"")
   }
   let source_length = markdown_editor_text_length(transform.text)
-  let replacement_length = source_length - range.start - (previous_length - range.end)
+  let replacement_length = source_length -
+    range.start -
+    (previous_length - range.end)
   // The guard conditions of from_replacement_range: when these hold the
   // fast path engages instead of the O(doc) fallback.
   assert_true(range.start <= range.end)
@@ -36,7 +38,8 @@ fn check_transform(
     fast.deleted == markdown_editor_substring(previous, range.start, range.end),
   )
   assert_true(
-    transform.text == markdown_editor_substring(previous, 0, range.start) +
+    transform.text ==
+    markdown_editor_substring(previous, 0, range.start) +
     fast.replacement +
     markdown_editor_substring(previous, range.end, previous_length),
   )
@@ -66,10 +69,14 @@ fn check_fast_path(
   input : String,
   context? : MarkdownEditorInputContext? = None,
 ) -> MarkdownEditTransaction raise Error {
-  guard
-    markdown_editor_transform_input(previous, caret, selection, input, context~)
-    is Some(transform)
-  else {
+  guard markdown_editor_transform_input(
+      previous,
+      caret,
+      selection,
+      input,
+      context~,
+    )
+    is Some(transform) else {
     fail("expected a transform for input \"\{input}\" in \"\{previous}\"")
   }
   check_transform(previous, transform)
@@ -110,9 +117,7 @@ test "fast path: selection wrap" {
   let selection = @core.TextRange::new(start=0, end=4)
   let tx = check_fast_path("text", 4, Some(selection), "(")
   inspect(tx.source, content="(text)")
-  guard tx.selection is Some(range) else {
-    fail("expected wrapped selection")
-  }
+  guard tx.selection is Some(range) else { fail("expected wrapped selection") }
   inspect(range.start, content="1")
   inspect(range.end, content="5")
 }
@@ -201,5 +206,13 @@ test "fast path: enter inside a code block" {
 ///|
 test "fast path: exiting an empty code block" {
   let source = "```\n\n```"
-  ignore(check_fast_path(source, 4, None, "\n", context=Some(code_block_context(source))))
+  ignore(
+    check_fast_path(
+      source,
+      4,
+      None,
+      "\n",
+      context=Some(code_block_context(source)),
+    ),
+  )
 }

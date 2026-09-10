@@ -944,35 +944,18 @@ fn markdown_editor_html_tag_block_at(
     if container {
       depth = depth + markdown_html_block_tag_depth_delta(text, tag)
       if next == index &&
-        markdown_html_block_line_self_closes(
-          lines[next].text.to_owned(),
-        ) {
-        return markdown_editor_html_block_result(
-          lines,
-          html_lines,
-          index,
-          next,
-        )
+        markdown_html_block_line_self_closes(lines[next].text.to_owned()) {
+        return markdown_editor_html_block_result(lines, html_lines, index, next)
       }
       if depth <= 0 && text.to_lower().contains("</" + tag) {
-        return markdown_editor_html_block_result(
-          lines,
-          html_lines,
-          index,
-          next,
-        )
+        return markdown_editor_html_block_result(lines, html_lines, index, next)
       }
     } else if markdown_html_block_line_closes_tag(text, tag) ||
       (
         next == index &&
         markdown_html_block_line_self_closes(lines[next].text.to_owned())
       ) {
-      return markdown_editor_html_block_result(
-        lines,
-        html_lines,
-        index,
-        next,
-      )
+      return markdown_editor_html_block_result(lines, html_lines, index, next)
     }
     next = next + 1
   }

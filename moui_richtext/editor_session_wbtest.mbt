@@ -518,7 +518,7 @@ test "scroll geometry rebase keeps the Fenwick tree consistent across a block-co
     Some({
       prefix_count: 1,
       suffix_new_start: 3,
-      suffix_shift: suffix_shift,
+      suffix_shift,
       old_region_start: 0,
       old_region_end: 0,
       edit_start: 0,
@@ -528,10 +528,10 @@ test "scroll geometry rebase keeps the Fenwick tree consistent across a block-co
     }),
   )
   hot_path_scroll_geometry_rebase_hits.val = 0
-  guard
-    markdown_document_block_geometry(session, base, content_width=width)
-      is Some(rebased)
-  else { fail("expected the geometry to rebase in place") }
+  guard markdown_document_block_geometry(session, base, content_width=width)
+    is Some(rebased) else {
+    fail("expected the geometry to rebase in place")
+  }
   // Prove the count-changing rebase branch actually ran.
   assert_true(hot_path_scroll_geometry_rebase_hits.val == 1)
   assert_true(rebased.heights.length() == new_count)
@@ -547,7 +547,9 @@ test "scroll geometry rebase keeps the Fenwick tree consistent across a block-co
       count=index + 1,
     )
     guard (prefix - running).abs() < 0.001 else {
-      fail("prefix sum at \{index + 1} diverged: tree=\{prefix} array=\{running}")
+      fail(
+        "prefix sum at \{index + 1} diverged: tree=\{prefix} array=\{running}",
+      )
     }
   }
 }

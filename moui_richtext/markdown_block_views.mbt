@@ -8,6 +8,7 @@
 /// next contribution — or the raw source fallback — takes over. The
 /// canonical block source stays the single editable truth; views may only
 /// project it.
+
 ///|
 pub struct MarkdownBlockViewContext {
   base : @core.FontSpec
@@ -26,8 +27,7 @@ pub struct MarkdownBlockView {
   /// Cheap candidacy check: a prefix/tag-signature scan that must not do
   /// real parsing, so the height walk can probe every block with it.
   matches : (MarkdownBlock) -> Bool
-  project : (MarkdownBlock, MarkdownBlockViewContext)
-            -> MarkdownBlockViewProjection?
+  project : (MarkdownBlock, MarkdownBlockViewContext) -> MarkdownBlockViewProjection?
 }
 
 ///|

@@ -5,7 +5,15 @@ fn markdown_editor_append_snippet(
 ) -> MarkdownEditorEditResult {
   let snippet = markdown_editor_command_snippet(command)
   let text = if source == "" { snippet } else { source + "\n\n" + snippet }
-  { source: text, caret: markdown_editor_text_length(text), selection: None, edit_range: Some({ start: markdown_editor_text_length(source), end: markdown_editor_text_length(source) }) }
+  {
+    source: text,
+    caret: markdown_editor_text_length(text),
+    selection: None,
+    edit_range: Some({
+      start: markdown_editor_text_length(source),
+      end: markdown_editor_text_length(source),
+    }),
+  }
 }
 
 ///|
@@ -42,7 +50,12 @@ fn markdown_editor_insert_front_matter(
   }
   let snippet = markdown_editor_command_snippet(InsertFrontMatter)
   let text = if source == "" { snippet } else { snippet + "\n\n" + source }
-  { source: text, caret: markdown_editor_text_length(snippet), selection: None, edit_range: Some({ start: 0, end: 0 }) }
+  {
+    source: text,
+    caret: markdown_editor_text_length(snippet),
+    selection: None,
+    edit_range: Some({ start: 0, end: 0 }),
+  }
 }
 
 ///|

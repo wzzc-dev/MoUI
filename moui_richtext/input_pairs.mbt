@@ -102,7 +102,7 @@ fn markdown_editor_pair_delimiter_input(
               end=end + input_length,
             ),
           ),
-          edit_range=Some({ start: start, end: end }),
+          edit_range=Some({ start, end }),
         ),
       )
     }
@@ -459,9 +459,7 @@ fn markdown_editor_remove_empty_inline_marker_pair(
         source_length,
       ),
     caret=open_start,
-    edit_range=Some(
-      { start: open_start, end: open_start + marker_length * 2 },
-    ),
+    edit_range=Some({ start: open_start, end: open_start + marker_length * 2 }),
   )
 }
 
@@ -672,9 +670,7 @@ fn markdown_editor_remove_inline_marker_pair(
   markdown_editor_transform_result(
     text~,
     caret=open_start,
-    edit_range=Some(
-      { start: open_start, end: close_start + marker_length },
-    ),
+    edit_range=Some({ start: open_start, end: close_start + marker_length }),
   )
 }
 

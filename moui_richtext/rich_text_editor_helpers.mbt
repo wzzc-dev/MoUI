@@ -971,6 +971,7 @@ fn rich_text_run_segment_height(
 }
 
 ///|
+
 ///|
 /// Drawn width of an image run: a percentage-width image scales with the
 /// content column, and any image is capped to the column so oversized

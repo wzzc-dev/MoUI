@@ -285,7 +285,9 @@ fn MarkdownEditTransaction::from_replacement_range(
 ) -> MarkdownEditTransaction {
   let previous_length = markdown_editor_text_length(previous_source)
   let source_length = markdown_editor_text_length(source)
-  let replacement_length = source_length - edit_range.start - (previous_length - edit_range.end)
+  let replacement_length = source_length -
+    edit_range.start -
+    (previous_length - edit_range.end)
   if edit_range.start <= edit_range.end &&
     edit_range.end <= previous_length &&
     replacement_length >= 0 {
@@ -294,10 +296,14 @@ fn MarkdownEditTransaction::from_replacement_range(
       source,
       edit_range.start,
       deleted=markdown_editor_substring(
-        previous_source, edit_range.start, edit_range.end,
+        previous_source,
+        edit_range.start,
+        edit_range.end,
       ),
       replacement=markdown_editor_substring(
-        source, edit_range.start, edit_range.start + replacement_length,
+        source,
+        edit_range.start,
+        edit_range.start + replacement_length,
       ),
       caret~,
       selection~,
@@ -1434,11 +1440,8 @@ fn markdown_document_gallery_block_heights(
       base.size * 1.55
     }
     if editor_block.block.kind is HtmlBlock &&
-      markdown_block_view_project(
-        editor_block.block,
-        base,
-        base_dir=None,
-      ) is Some(_) {
+      markdown_block_view_project(editor_block.block, base, base_dir=None)
+      is Some(_) {
       let rich_block = markdown_block_to_rich_text(
         editor_block.block,
         base,
