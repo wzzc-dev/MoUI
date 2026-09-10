@@ -2,10 +2,7 @@
 /// Fake outline used by the resolver tests: a closed triangle 20 wide, 8 tall
 /// above the baseline (negative y is up in SVG user space).
 fn svg_test_triangle() -> SvgTextRunOutline {
-  {
-    width: 20.0,
-    polygons: [[(0.0, 0.0), (20.0, 0.0), (10.0, -8.0)]],
-  }
+  { width: 20.0, polygons: [[(0.0, 0.0), (20.0, 0.0), (10.0, -8.0)]] }
 }
 
 ///|
@@ -63,12 +60,16 @@ test "svg_apply_text_paths replaces resolved runs with anchored paths" {
   // Document order: the centered run first, then the start-anchored run.
   let first_commands : Array[String] = []
   svg_text_path_collect_first_commands(document.root(), first_commands)
-  debug_inspect(first_commands, content="[MoveTo(40, 15), MoveTo(10, 15)]")
+  debug_inspect(
+    first_commands,
+    content="[\"MoveTo(40, 15)\", \"MoveTo(10, 15)\"]",
+  )
   // The request carried the scan results.
   inspect(requested.length(), content="2")
   debug_inspect(requested[0].anchor, content="Middle")
-  debug_inspect(requested[0].text, content="build")
+  debug_inspect(requested[0].text, content="\"build\"")
   debug_inspect(requested[1].anchor, content="Start")
+  debug_inspect(requested[1].text, content="\"left\"")
 }
 
 ///|
@@ -90,9 +91,10 @@ test "svg_apply_text_paths keeps declined runs on their original shape" {
   fn walk(node : @svg.SVGNode) -> Unit {
     match node.shape {
       @svg.Shape::Text(..) => saw_text = true
-      @svg.Shape::Group => for child in node.children {
-        walk(child)
-      }
+      @svg.Shape::Group =>
+        for child in node.children {
+          walk(child)
+        }
       _ => ()
     }
   }

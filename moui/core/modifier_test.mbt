@@ -76,6 +76,7 @@ fn paint_ctx(frame~ : @core.Rect) -> @core.ViewPaintContext {
       caret: 0,
       selection: None,
       text_selection_anchor: None,
+      text_selection_origin: None,
       composition: None,
       composition_cursor: None,
       undo_stack: [],
