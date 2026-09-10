@@ -165,6 +165,7 @@ fn workbench_view_test_text_control() -> @core.TextControlStateContext {
     caret: 0,
     selection: None,
     text_selection_anchor: None,
+    text_selection_origin: None,
     composition: None,
     composition_cursor: None,
     undo_stack: [],
