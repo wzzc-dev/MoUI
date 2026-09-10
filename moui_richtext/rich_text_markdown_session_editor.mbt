@@ -480,6 +480,7 @@ fn[Msg] markdown_session_pointer_event(
               caret,
               selection: None,
               text_selection_anchor: Some(caret),
+              text_selection_origin: Some(event.position),
               composition: None,
               composition_cursor: None,
             }
@@ -501,58 +502,82 @@ fn[Msg] markdown_session_pointer_event(
       match ctx.text_control.text_selection_anchor {
         Some(anchor) => {
           let text = session.source()
-          let window = markdown_session_visible_window(
-            session,
-            selection,
-            font,
-            source_mode~,
-            focus_mode~,
-            base_dir~,
-            visible_scroll_y~,
-            visible_viewport_height~,
-            visible_overscan~,
-            content_width~,
-          )
-          let content = window.content_rect(
-            rich_text_editor_content_rect(ctx.frame),
-          )
-          let caret = rich_text_document_source_offset_at_point(
-            window.document,
-            event.position,
-            content,
-            font,
-            ctx.text_system,
-          ).unwrap_or(text_length(text))
-          let next_selection = if caret == anchor {
-            None
-          } else {
-            Some(@core.TextRange::new(start=anchor, end=caret))
+          // A Move on the gesture's own down point is the click's event
+          // stream, not pointer travel: the view may have scrolled
+          // (typewriter centering) or expanded hidden markers in between,
+          // and re-deriving the caret from the screen point would then
+          // fabricate a selection. Same point => nothing moves.
+          let stationary = match ctx.text_control.text_selection_origin {
+            Some(origin) =>
+              (event.position.x - origin.x).abs() <= 1.0 &&
+              (event.position.y - origin.y).abs() <= 1.0
+            None => false
           }
-          let changed = ctx.text_control.caret != caret ||
-            ctx.text_control.selection != next_selection
-          if changed {
-            view_event_result(
-              changed=true,
-              focused=true,
-              captured=true,
-              text_control=Some({
-                ..ctx.text_control,
-                caret,
-                selection: next_selection,
-                composition: None,
-                composition_cursor: None,
-              }),
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
-              messages=selection_messages(
-                on_selection_change, caret, next_selection,
-              ),
-            )
-          } else {
+          if stationary {
             view_event_result(
               focused=true,
               captured=true,
               text_control=Some(ctx.text_control),
             )
+          } else {
+            // Hit-test against the document frozen at the gesture anchor,
+            // not the live selection: a growing selection keeps revealing
+            // new markers mid-drag, which would shift the mapping under
+            // the pointer and inflate the selection on its own.
+            let window = markdown_session_visible_window(
+              session,
+              { caret: anchor, selection: None },
+              font,
+              source_mode~,
+              focus_mode~,
+              base_dir~,
+              visible_scroll_y~,
+              visible_viewport_height~,
+              visible_overscan~,
+              content_width~,
+              text_system=ctx.text_system,
+            )
+            let content = window.content_rect(
+              rich_text_editor_content_rect(ctx.frame),
+            )
+            let caret = rich_text_document_source_offset_at_point(
+              window.document,
+              event.position,
+              content,
+              font,
+              ctx.text_system,
+            ).unwrap_or(text_length(text))
+            let next_selection = if caret == anchor {
+              None
+            } else {
+              Some(@core.TextRange::new(start=anchor, end=caret))
+            }
+            let changed = ctx.text_control.caret != caret ||
+              ctx.text_control.selection != next_selection
+            if changed {
+              view_event_result(
+                changed=true,
+                focused=true,
+                captured=true,
+                text_control=Some({
+                  ..ctx.text_control,
+                  caret,
+                  selection: next_selection,
+                  composition: None,
+                  composition_cursor: None,
+                }),
+                dirty=@core.ViewDirtyHint::ViewPaintDirty,
+                messages=selection_messages(
+                  on_selection_change, caret, next_selection,
+                ),
+              )
+            } else {
+              view_event_result(
+                focused=true,
+                captured=true,
+                text_control=Some(ctx.text_control),
+              )
+            }
           }
         }
         None => @core.ViewEventResult::ignored()
@@ -563,7 +588,11 @@ fn[Msg] markdown_session_pointer_event(
           changed=true,
           focused=true,
           captured=true,
-          text_control=Some({ ..ctx.text_control, text_selection_anchor: None }),
+          text_control=Some({
+            ..ctx.text_control,
+            text_selection_anchor: None,
+            text_selection_origin: None,
+          }),
           dirty=@core.ViewDirtyHint::ViewPaintDirty,
         )
       } else {

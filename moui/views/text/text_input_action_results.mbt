@@ -60,6 +60,7 @@ fn[Msg] text_semantics_set_text(
     composition: None,
     composition_cursor: None,
     text_selection_anchor: None,
+    text_selection_origin: None,
     undo_stack,
     redo_stack: [],
   }
