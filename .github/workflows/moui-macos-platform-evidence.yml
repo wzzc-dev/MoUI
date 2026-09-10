@@ -69,19 +69,30 @@ jobs:
           MOUI_SKIA_SKIA_PROVIDER: ${{ inputs.skia_provider }}
           MOUI_SKIA_LINK_MODE: ${{ inputs.link_mode }}
         run: |
+          # `inputs.*` are only populated on workflow_dispatch; scheduled
+          # runs default to the full smoke matrix instead of empty values
+          # that disable every smoke and fail the marker verification.
+          run_showcase="${{ inputs.run_showcase_smoke }}"
+          run_ime="${{ inputs.run_ime_smoke }}"
+          skia_provider="${{ inputs.skia_provider }}"
+          link_mode="${{ inputs.link_mode }}"
+          [[ -z "$run_showcase" ]] && run_showcase=true
+          [[ -z "$run_ime" ]] && run_ime=true
+          [[ -z "$skia_provider" ]] && skia_provider=release
+          [[ -z "$link_mode" ]] && link_mode=static
           log_dir="$GITHUB_WORKSPACE/artifacts/platform-evidence/macos"
           mkdir -p "$log_dir"
           args=(
             --log-dir "$log_dir"
-            --skia-provider "${{ inputs.skia_provider }}"
-            --link-mode "${{ inputs.link_mode }}"
+            --skia-provider "$skia_provider"
+            --link-mode "$link_mode"
           )
-          if [[ "${{ inputs.run_showcase_smoke }}" == "true" ]]; then
+          if [[ "$run_showcase" == "true" ]]; then
             args+=(--run-showcase-smoke)
           else
             args+=(--no-showcase-smoke)
           fi
-          if [[ "${{ inputs.run_ime_smoke }}" == "true" ]]; then
+          if [[ "$run_ime" == "true" ]]; then
             args+=(--run-ime-smoke)
           else
             args+=(--no-ime-smoke)
