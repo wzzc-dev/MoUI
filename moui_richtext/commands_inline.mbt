@@ -140,6 +140,7 @@ pub fn markdown_editor_inline_marker(command : MarkdownEditorCommand) -> String 
     Italic => "*"
     Code => "`"
     Strikethrough => "~~"
+    Highlight => "=="
     _ => ""
   }
 }
@@ -151,6 +152,7 @@ fn markdown_editor_command_snippet(command : MarkdownEditorCommand) -> String {
     Italic => "*italic text*"
     Code => "`code`"
     Strikethrough => "~~old text~~"
+    Highlight => "==highlighted text=="
     Link => "[link text](https://example.com)"
     Image => "![image alt](image.png)"
     SetLinkTarget(target) => "[link text](" + target + ")"

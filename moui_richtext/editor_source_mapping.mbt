@@ -528,6 +528,10 @@ fn markdown_editor_inline_marker_source_range(
     markdown_editor_window_has_marker(chars, range.end, "~~") {
     return Some({ start: range.start - 2, end: range.end + 2 })
   }
+  if markdown_editor_window_has_marker(chars, range.start - 2, "==") &&
+    markdown_editor_window_has_marker(chars, range.end, "==") {
+    return Some({ start: range.start - 2, end: range.end + 2 })
+  }
   if markdown_editor_window_has_marker(chars, range.start - 1, "`") &&
     markdown_editor_window_has_marker(chars, range.end, "`") {
     return Some({ start: range.start - 1, end: range.end + 1 })
@@ -2263,6 +2267,7 @@ fn markdown_editor_inline_source(inlines : Array[MarkdownInline]) -> String {
       Italic => parts.push("*" + inline.text + "*")
       Code => parts.push("`" + inline.text + "`")
       Strikethrough => parts.push("~~" + inline.text + "~~")
+      Highlight => parts.push("==" + inline.text + "==")
       Link =>
         parts.push(
           "[" + inline.text + "](" + markdown_editor_inline_target(inline) + ")",

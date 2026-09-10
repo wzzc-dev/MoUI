@@ -5,7 +5,7 @@ pub fn markdown_editor_apply_command_at(
   selection : MarkdownEditorSelection?,
 ) -> MarkdownEditorEditResult {
   let result = match command {
-    Bold | Italic | Code | Strikethrough =>
+    Bold | Italic | Code | Strikethrough | Highlight =>
       match selection {
         Some(selection) =>
           match markdown_editor_active_selection(selection.selection) {

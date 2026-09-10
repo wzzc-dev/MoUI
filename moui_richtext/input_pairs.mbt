@@ -9,6 +9,7 @@ fn markdown_editor_wrap_selection_input(
     "**" => "**"
     "__" => "__"
     "~~" => "~~"
+    "==" => "=="
     "`" => "`"
     "*" => "*"
     "_" => "_"
@@ -136,6 +137,7 @@ fn markdown_editor_skip_closing_delimiter(
     "**" => "**"
     "__" => "__"
     "~~" => "~~"
+    "==" => "=="
     "_" => "_"
     ")" => ")"
     "]" => "]"
@@ -343,7 +345,7 @@ fn markdown_editor_backspace_empty_inline_marker_pair(
   }
   let source_length = markdown_editor_text_length(source)
   let caret = markdown_editor_clamp_int(caret, 0, source_length)
-  for marker in ["**", "__", "~~", "`"] {
+  for marker in ["**", "__", "~~", "==", "`"] {
     let marker_length = markdown_editor_text_length(marker)
     if caret >= marker_length &&
       markdown_editor_empty_inline_marker_pair_at_source(
@@ -392,7 +394,7 @@ fn markdown_editor_delete_empty_inline_marker_pair(
   }
   let source_length = markdown_editor_text_length(source)
   let caret = markdown_editor_clamp_int(caret, 0, source_length)
-  for marker in ["**", "__", "~~", "`"] {
+  for marker in ["**", "__", "~~", "==", "`"] {
     let marker_length = markdown_editor_text_length(marker)
     if markdown_editor_empty_inline_marker_pair_at_source(
         source, source_length, caret, marker,
@@ -483,7 +485,7 @@ fn markdown_editor_backspace_inline_marker(
     Some(transform) => return Some(transform)
     None => ()
   }
-  for marker in ["**", "__", "~~", "`", "*", "_"] {
+  for marker in ["**", "__", "~~", "==", "`", "*", "_"] {
     let marker_length = markdown_editor_text_length(marker)
     if caret >= marker_length &&
       markdown_editor_source_has_marker(chars, caret - marker_length, marker) {
@@ -558,7 +560,7 @@ fn markdown_editor_delete_inline_marker(
     Some(transform) => return Some(transform)
     None => ()
   }
-  for marker in ["**", "__", "~~", "`", "*", "_"] {
+  for marker in ["**", "__", "~~", "==", "`", "*", "_"] {
     let marker_length = markdown_editor_text_length(marker)
     if markdown_editor_source_has_marker(chars, caret, marker) {
       match

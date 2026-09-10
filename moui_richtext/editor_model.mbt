@@ -64,6 +64,7 @@ pub(all) enum MarkdownEditorCommand {
   Italic
   Code
   Strikethrough
+  Highlight
   Link
   Image
   SetLinkTarget(String)

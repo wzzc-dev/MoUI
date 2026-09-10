@@ -322,6 +322,7 @@ pub(all) enum MarkdownEditorCommand {
   Italic
   Code
   Strikethrough
+  Highlight
   Link
   Image
   SetLinkTarget(String)
@@ -416,6 +417,7 @@ pub(all) enum MarkdownInlineKind {
   Italic
   Code
   Strikethrough
+  Highlight
   Link
   Autolink
   Image

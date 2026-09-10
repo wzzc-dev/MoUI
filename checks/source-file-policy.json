@@ -129,7 +129,7 @@
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 2452,
+      "maxLines": 2457,
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
