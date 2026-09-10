@@ -12,7 +12,7 @@ priv struct RichTextHistoryGroupState {
   mut kind : Int
   mut start : Int
   mut after_length : Int
-  mut last_push_ms : Int
+  mut last_push_ms : Int64
   mut expected_stack_length : Int
 }
 
@@ -21,7 +21,7 @@ let rich_text_history_group : Ref[RichTextHistoryGroupState] = Ref({
   kind: 0,
   start: -1,
   after_length: -1,
-  last_push_ms: -1,
+  last_push_ms: -1L,
   expected_stack_length: -1,
 })
 
@@ -29,15 +29,19 @@ let rich_text_history_group : Ref[RichTextHistoryGroupState] = Ref({
 /// Optional fake millisecond clock for the merge window. A negative
 /// value falls back to the real wall clock; tests install a fake tick
 /// so grouping never depends on wall time.
-let rich_text_history_fake_clock_ms : Ref[Int] = Ref(-1)
+let rich_text_history_fake_clock_ms : Ref[Int64] = Ref(-1L)
 
 ///|
-fn rich_text_history_now_ms() -> Int {
+/// Epoch milliseconds stay Int64 all the way through: truncating them
+/// into a 32-bit Int flips the sign, which silently disabled the
+/// `last_push_ms >= 0` unset sentinel and with it the whole merge
+/// window.
+fn rich_text_history_now_ms() -> Int64 {
   let fake = rich_text_history_fake_clock_ms.val
-  if fake >= 0 {
+  if fake >= 0L {
     fake
   } else {
-    @env.now().to_int()
+    @env.now().to_int64()
   }
 }
 
@@ -181,9 +185,9 @@ fn rich_text_history_record_edit(
       state.kind == kind &&
       stack_length == state.expected_stack_length &&
       text_length(previous) == state.after_length &&
-      state.last_push_ms >= 0 &&
+      state.last_push_ms >= 0L &&
       state.last_push_ms <= now &&
-      now - state.last_push_ms <= rich_text_history_merge_window_ms &&
+      now - state.last_push_ms <= rich_text_history_merge_window_ms.to_int64() &&
       start == state.start + rich_text_history_group_delta(kind)
     None => false
   }

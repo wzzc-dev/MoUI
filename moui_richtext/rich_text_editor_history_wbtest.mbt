@@ -3,17 +3,18 @@
 /// install a fake millisecond clock so the grouping never depends on
 /// wall time, and hand the clock back to the real source afterwards.
 fn history_start_fake_clock() -> Unit {
-  rich_text_history_fake_clock_ms.val = 0
+  rich_text_history_fake_clock_ms.val = 0L
 }
 
 ///|
 fn history_stop_fake_clock() -> Unit {
-  rich_text_history_fake_clock_ms.val = -1
+  rich_text_history_fake_clock_ms.val = -1L
 }
 
 ///|
 fn history_advance(ms : Int) -> Unit {
-  rich_text_history_fake_clock_ms.val = rich_text_history_fake_clock_ms.val + ms
+  rich_text_history_fake_clock_ms.val = rich_text_history_fake_clock_ms.val +
+    ms.to_int64()
 }
 
 ///|
