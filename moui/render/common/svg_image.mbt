@@ -77,7 +77,7 @@ let svg_default_size : @core.Size = @core.Size::new(width=300.0, height=150.0)
 pub fn svg_intrinsic_size(svg_text : String) -> @core.Size? {
   match @svg.parse_svg_document(svg_text) {
     Some(document) => {
-      let root = document.root
+      let root = document.root()
       match root.view_box {
         Some(view_box) =>
           if view_box.width > 0.0 && view_box.height > 0.0 {
@@ -258,35 +258,82 @@ fn svg_pixel_dimension(value : Double) -> Int {
 ///|
 /// Make sure the root element carries a `viewBox`.
 ///
-/// The rasterizer only maps user units onto the target canvas through a
-/// `viewBox` -> viewport transform. A document that declares just `width` and
-/// `height` therefore gets no scaling at all: its content is painted at 1:1
-/// user units into whatever canvas we allocate, so an oversampled raster ends
-/// up with the artwork shrunk into one corner and the rest transparent. Real
-/// assets do this — the shields.io badges are `width="120" height="20"` with no
-/// `viewBox` — so derive the missing viewBox from the declared size.
+/// The renderer maps user units onto the target canvas through a
+/// `viewBox` -> viewport transform. A document that declares just `width`
+/// and `height` gets no such transform: its content is painted at 1:1 user
+/// units into whatever canvas we allocate, so an oversampled raster ends up
+/// with the artwork shrunk into one corner and the rest transparent. Real
+/// assets do this — the shields.io badges are `width="120" height="20"` with
+/// no `viewBox` — so derive the missing viewBox from the declared size.
+///
+/// The synthesis happens at the text level: the renderer's document keeps its
+/// resource registries (gradients, patterns, masks) privately, so a parsed
+/// document cannot be rebuilt around a mutated root without losing them.
 fn svg_ensure_root_view_box(
-  document : @svg.SVGDocument,
-  declared : @core.Size?,
-) -> Unit {
-  match document.root.view_box {
-    Some(_) => ()
-    None =>
-      match declared {
-        Some(size) =>
-          if size.width > 0.0 && size.height > 0.0 {
-            document.root.view_box = Some(
-              @svg.ViewBox::{
-                min_x: 0.0,
-                min_y: 0.0,
-                width: size.width,
-                height: size.height,
-              },
-            )
-          }
-        None => ()
+  svg_text : String,
+) -> String {
+  let chars = svg_text.to_array()
+  let limit = chars.length()
+  // Locate the root `<svg` start tag: the first `<svg` occurrence plus the
+  // next `>`, mirroring `svg_root_tag_text`'s segment semantics.
+  let mut start = -1
+  let mut end = -1
+  let mut index = 0
+  while index + 4 <= limit {
+    if chars[index] == '<' &&
+      chars[index + 1] == 's' &&
+      chars[index + 2] == 'v' &&
+      chars[index + 3] == 'g' {
+      start = index
+      index = index + 4
+      while index < limit {
+        if chars[index] == '>' {
+          end = index
+          break
+        }
+        index = index + 1
       }
+      break
+    }
+    index = index + 1
   }
+  if start < 0 || end < 0 {
+    return svg_text
+  }
+  let tag = String::from_array(chars[start:end + 1])
+  if svg_attr_value(tag, "viewBox") is Some(_) {
+    return svg_text
+  }
+  let width = match svg_attr_value(tag, "width") {
+    Some(raw) => svg_parse_length_literal(raw)
+    None => None
+  }
+  let height = match svg_attr_value(tag, "height") {
+    Some(raw) => svg_parse_length_literal(raw)
+    None => None
+  }
+  match (width, height) {
+    (Some(width), Some(height)) =>
+      if width > 0.0 && height > 0.0 {
+        let self_closing = chars[end - 1] == '/'
+        let body_end = if self_closing { end - 1 } else { end }
+        let builder = StringBuilder()
+        for i in 0..<body_end {
+          builder.write_char(chars[i])
+        }
+        builder.write(" viewBox=\"0 0 ")
+        builder.write(width)
+        builder.write(" ")
+        builder.write(height)
+        builder.write(if self_closing { "\"/>" } else { "\">" })
+        for i in (end + 1)..<limit {
+          builder.write_char(chars[i])
+        }
+        return builder.to_string()
+      }
+    _ => ()
+  }
+  svg_text
 }
 
 ///|
@@ -304,9 +351,9 @@ pub fn svg_rasterize_rgba(
   if pixel_width <= 0 || pixel_height <= 0 {
     return None
   }
-  match @svg.parse_svg_document(svg_text) {
+  match @svg.parse_svg_document(svg_ensure_root_view_box(svg_text)) {
     Some(document) => {
-      svg_ensure_root_view_box(document, svg_root_viewport_size(svg_text))
+      svg_install_text_paths(document, svg_text)
       let pixels = svg_render_document_rgba(
         document,
         pixel_width,
@@ -319,73 +366,34 @@ pub fn svg_rasterize_rgba(
 }
 
 ///|
-/// Rasterize a document into straight-alpha pixels using **source-over**
-/// compositing.
+/// Rasterize a document into straight-alpha pixels.
 ///
-/// The stock `render_svg_document_to_image` paints through `Image::set_pixel`,
-/// which overwrites the destination. Nothing that relies on translucency can
-/// survive that: a 10%-opacity gradient overlay — which is exactly how
-/// shields.io shades its badges — replaces the badge body with near-transparent
-/// grey, so the badge renders blank. Compositing here instead of overwriting
-/// keeps the layers stacked the way the document intends.
+/// The renderer composites layers internally (gradients, group opacity,
+/// masks), so the returned buffer already reflects the document's intended
+/// stacking — no per-pixel host compositing is needed here.
 fn svg_render_document_rgba(
   document : @svg.SVGDocument,
   pixel_width : Int,
   pixel_height : Int,
 ) -> Array[@svg.Color] {
+  let result = @svg.render_svg_document(
+    document,
+    pixel_width,
+    pixel_height,
+    @svg.RenderOptions::default(),
+  )
+  let image = result.image
   let pixels : Array[@svg.Color] = Array::make(
     pixel_width * pixel_height,
     @svg.Color::transparent(),
   )
-  let setter : @svg.PixelSetter = {
-    set: (x, y, color) => {
-      if x < 0 || y < 0 || x >= pixel_width || y >= pixel_height {
-        return
-      }
-      let index = y * pixel_width + x
-      pixels[index] = svg_composite_over(pixels[index], color)
-    },
+  for y = 0; y < pixel_height; y = y + 1 {
+    let row = y * pixel_width
+    for x = 0; x < pixel_width; x = x + 1 {
+      pixels[row + x] = image.get_pixel(x, y)
+    }
   }
-  document.render(@svg.RenderContext::new(setter, pixel_width, pixel_height))
   pixels
-}
-
-///|
-/// Porter-Duff source-over blend of a straight-alpha `src` onto `dst`.
-fn svg_composite_over(dst : @svg.Color, src : @svg.Color) -> @svg.Color {
-  let src_alpha = svg_clamp_channel(src.a)
-  if src_alpha <= 0 {
-    return dst
-  }
-  if src_alpha >= 255 {
-    return src
-  }
-  let dst_alpha = svg_clamp_channel(dst.a)
-  let keep = 255 - src_alpha
-  let out_alpha = src_alpha + (dst_alpha * keep + 127) / 255
-  if out_alpha <= 0 {
-    return @svg.Color::transparent()
-  }
-  let dst_weight = dst_alpha * keep
-  @svg.Color::rgba(
-    svg_blend_channel(src.r, src_alpha, dst.r, dst_weight, out_alpha),
-    svg_blend_channel(src.g, src_alpha, dst.g, dst_weight, out_alpha),
-    svg_blend_channel(src.b, src_alpha, dst.b, dst_weight, out_alpha),
-    out_alpha,
-  )
-}
-
-///|
-fn svg_blend_channel(
-  src : Int,
-  src_alpha : Int,
-  dst : Int,
-  dst_weight : Int,
-  out_alpha : Int,
-) -> Int {
-  let weighted = svg_clamp_channel(src) * src_alpha +
-    svg_clamp_channel(dst) * dst_weight / 255
-  svg_clamp_channel((weighted + out_alpha / 2) / out_alpha)
 }
 
 ///|
