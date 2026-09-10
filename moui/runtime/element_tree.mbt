@@ -29,6 +29,7 @@ priv struct ElementControlState {
   mut caret : Int
   mut selection : TextRange?
   mut text_selection_anchor : Int?
+  mut text_selection_origin : Point?
   mut composition : String?
   mut composition_cursor : TextRange?
   text_undo_stack : Array[@core.TextHistoryEntryContext]
@@ -101,6 +102,7 @@ fn ElementControlState::text_context(
     caret: self.caret,
     selection: self.selection,
     text_selection_anchor: self.text_selection_anchor,
+    text_selection_origin: self.text_selection_origin,
     composition: self.composition,
     composition_cursor: self.composition_cursor,
     undo_stack: self.text_undo_stack.copy(),
@@ -116,6 +118,7 @@ fn ElementControlState::apply_text_context(
   self.caret = value.caret
   self.selection = value.selection
   self.text_selection_anchor = value.text_selection_anchor
+  self.text_selection_origin = value.text_selection_origin
   self.composition = value.composition
   self.composition_cursor = value.composition_cursor
   self.text_undo_stack.clear()
@@ -253,6 +256,7 @@ fn ElementControlState::new() -> ElementControlState {
     caret: 0,
     selection: None,
     text_selection_anchor: None,
+    text_selection_origin: None,
     composition: None,
     composition_cursor: None,
     text_undo_stack: [],

@@ -196,6 +196,11 @@ pub(all) struct TextControlStateContext {
   caret : Int
   selection : TextRange?
   text_selection_anchor : Int?
+  /// Screen position where the current pointer selection gesture began
+  /// (set on Down, cleared on Up). A Move landing on this point is the
+  /// click's own event stream, not pointer travel: the selection must not
+  /// extend, even when the view scrolled or re-laid out in between.
+  text_selection_origin : Point?
   composition : String?
   composition_cursor : TextRange?
   undo_stack : Array[TextHistoryEntryContext]

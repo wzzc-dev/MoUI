@@ -1515,6 +1515,7 @@ pub(all) struct TextControlStateContext {
   caret : Int
   selection : TextRange?
   text_selection_anchor : Int?
+  text_selection_origin : Point?
   composition : String?
   composition_cursor : TextRange?
   undo_stack : Array[TextHistoryEntryContext]
