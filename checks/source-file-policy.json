@@ -271,6 +271,11 @@
       "path": "moui_richtext/markdown_html_image_gallery.mbt",
       "maxLines": 1273,
       "reason": "Existing HTML container image gallery projection."
+    },
+    {
+      "path": "moui_richtext/editor_selection.mbt",
+      "maxLines": 1223,
+      "reason": "Existing selection, hit-test, and block-context helpers."
     }
   ],
   "data": [

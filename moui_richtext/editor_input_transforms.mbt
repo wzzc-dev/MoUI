@@ -266,7 +266,31 @@ pub fn markdown_editor_transform_input(
   }
   let marker = markdown_editor_continuation_marker(line)
   if marker == "" {
-    None
+    // Raw HTML blocks and front matter keep the plain newline: a blank
+    // line would close the construct being edited.
+    if markdown_editor_verbatim_block_at_content_offset(
+        source,
+        caret,
+        selection,
+        context~,
+      )
+      is Some(_) {
+      return None
+    }
+    // A plain paragraph or non-empty heading has no continuation marker:
+    // Enter splits the block with a blank writing line for the caret, the
+    // same paragraph model Typora uses. A single newline would only create
+    // a soft break, which the formatted surface renders as a space.
+    let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+    Some(
+      markdown_editor_transform_result(
+        text=String::from_array(chars[:caret]) +
+          "\n\n" +
+          String::from_array(chars[caret:]),
+        caret=caret + 2,
+        edit_range=Some({ start: caret, end: caret }),
+      ),
+    )
   } else {
     let insert = "\n" + marker
     let caret = markdown_editor_clamp_int(caret, 0, chars.length())
