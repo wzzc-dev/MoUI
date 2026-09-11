@@ -751,3 +751,31 @@ test "arrow walk keeps distinct offsets for identical paragraphs" {
   )
   inspect(caret, content="10")
 }
+
+///|
+test "every line box covers the font it renders" {
+  // The painter clips every run to its line box, so a box shorter than the
+  // font's own ascent plus descent slices the glyph bottoms: with the old
+  // base-relative factors a level-2 heading box was 1.1x its font and the
+  // descender of "Today" was cut off. Every run therefore has to get at least
+  // the framework's natural line height (1.25em) from its line step.
+  let base = @core.FontSpec::new(size=17.0)
+  let text_system = @core.TextSystem::fallback()
+  let document = markdown_editor_format_for_selection(
+    "# Editor notes\n\nThis **WYSIWYG** surface keeps `Markdown` as the saved value.\n\n## Today\n- Type into the formatted page\n\n> Unsupported syntax stays editable as plain text.\n\n```\nlet saved = markdown\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\n---\n\n[^note]: definition",
+    { caret: 0, selection: None },
+    base~,
+  )
+  let mut checked = 0
+  for block in document.blocks {
+    let step = rich_text_block_line_step(block, base, text_system)
+    for run in block.runs {
+      let font = run.font.unwrap_or(rich_text_block_font(block, base))
+      assert_true(step >= font.size * 1.25)
+      checked = checked + 1
+    }
+  }
+  // The document above renders headings, paragraphs, a list, a quote, a code
+  // block, a table, a rule, and a footnote definition.
+  inspect(checked > 8, content="true")
+}

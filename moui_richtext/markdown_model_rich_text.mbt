@@ -67,7 +67,9 @@ pub fn markdown_block_to_rich_text(
           @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.06)),
         ),
         inset={ top: 12.0, right: 14.0, bottom: 12.0, left: 14.0 },
-        line_height=Some(base.size * 1.1),
+        // 1.3x the base font is 1.4x the 0.92 code font, so descenders in code
+        // stay inside the line box the painter clips to.
+        line_height=Some(base.size * 1.3),
         corner_radius=8.0,
       )
     HorizontalRule =>
@@ -252,16 +254,15 @@ fn markdown_heading_size_scale(level : Int) -> Double {
 }
 
 ///|
+/// Editor-style leading for a heading line box, expressed against the heading's
+/// own font size. The painter clips every run to its line box, so a box shorter
+/// than the font's own line height slices the glyph bottoms: with the old
+/// base-relative factors the level-2 heading box was 1.1x its font and the
+/// descender of "Today" was cut off. Every heading therefore gets this leading
+/// over its scaled size, which also covers CJK fallback faces whose ascent plus
+/// descent is taller than a Latin font's.
 fn markdown_heading_line_height_scale(level : Int) -> Double {
-  if level <= 1 {
-    2.0
-  } else if level == 2 {
-    1.65
-  } else if level == 3 {
-    1.45
-  } else {
-    1.35
-  }
+  markdown_heading_size_scale(level) * 1.4
 }
 
 ///|

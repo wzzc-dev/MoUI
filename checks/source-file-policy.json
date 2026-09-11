@@ -138,7 +138,7 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_caret_hit.mbt",
-      "maxLines": 1660,
+      "maxLines": 1658,
       "reason": "Existing caret and hit-testing algorithms."
     },
     {
