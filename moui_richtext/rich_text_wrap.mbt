@@ -10,7 +10,7 @@
 /// never needs eviction hooks beyond its size cap.
 
 ///|
-let rich_text_soft_wrap_cache : Map[String, RichTextBlock] = Map([])
+let rich_text_soft_wrap_cache : Map[String, RichTextBlockCacheEntry] = Map([])
 
 ///|
 /// Wrap one block for a laid out content width. Blocks whose geometry is
@@ -30,11 +30,19 @@ fn rich_text_block_soft_wrap(
     return block
   }
   let key = rich_text_block_soft_wrap_key(block, width, base_font, text_system)
+  // The key is content identity, so a hit holds the offsets of whichever
+  // block built the entry. Two identical paragraphs must not share one
+  // source mapping: re-base the wrapped block onto this block's offsets
+  // (same contract as the block-conversion cache).
+  let source_start = rich_text_block_source_start(block)
   match rich_text_soft_wrap_cache.get(key) {
-    Some(wrapped) => {
+    Some(entry) => {
       hot_path_block_wrap_cache_hits.val = hot_path_block_wrap_cache_hits.val +
         1
-      wrapped
+      markdown_editor_rich_block_shift(
+        entry.block,
+        source_start - entry.source_start,
+      )
     }
     None => {
       hot_path_block_wrap_builds.val = hot_path_block_wrap_builds.val + 1
@@ -44,9 +52,24 @@ fn rich_text_block_soft_wrap(
       if rich_text_soft_wrap_cache.length() >= 4096 {
         rich_text_soft_wrap_cache.clear()
       }
-      rich_text_soft_wrap_cache.set(key, wrapped)
+      rich_text_soft_wrap_cache.set(key, { source_start, block: wrapped })
       wrapped
     }
+  }
+}
+
+///|
+/// The absolute source offset a block's own ranges start at. Every run and
+/// cell offset inside the block is relative to it, so it is the anchor the
+/// content-identity caches re-base on.
+fn rich_text_block_source_start(block : RichTextBlock) -> Int {
+  match block.source_range {
+    Some(range) => range.start
+    None =>
+      match block.content_range {
+        Some(range) => range.start
+        None => 0
+      }
   }
 }
 
@@ -69,7 +92,10 @@ fn rich_text_document_soft_wrap(
 /// the laid out width, the vertical inset, the block line height, and the
 /// visible text with the fonts that may draw it. Inline runs share one
 /// layout pass, so per-run styling beyond the font (colors, links) does
-/// not change break positions and is deliberately excluded.
+/// not change break positions and is deliberately excluded. Absolute
+/// offsets are excluded too — the entry is re-based on a hit — but the
+/// content offset inside the block is kept: hidden marker widths shift it
+/// independently of the visible text.
 fn rich_text_block_soft_wrap_key(
   block : RichTextBlock,
   width : Double,
@@ -77,6 +103,10 @@ fn rich_text_block_soft_wrap_key(
   text_system : @core.TextSystem,
 ) -> String {
   let block_font = rich_text_block_font(block, base_font)
+  let content_offset = match (block.source_range, block.content_range) {
+    (Some(source), Some(content)) => content.start - source.start
+    _ => 0
+  }
   let parts : Array[String] = [
     "soft-wrap",
     text_system.id(),
@@ -91,6 +121,7 @@ fn rich_text_block_soft_wrap_key(
     block.inset.right.to_string(),
     block.line_height.unwrap_or(-1.0).to_string(),
     block.prefix,
+    content_offset.to_string(),
   ]
   for run in block.runs {
     parts.push(run.text)

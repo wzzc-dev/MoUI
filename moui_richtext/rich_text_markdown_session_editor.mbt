@@ -92,6 +92,7 @@ fn markdown_session_visible_window(
 /// block ranges instead of re-parsing the whole document per keystroke.
 fn markdown_session_input_transform_for(
   session : MarkdownDocumentSession,
+  split_paragraph_on_enter~ : Bool,
 ) -> (String, Int, @core.TextRange?, String) -> RichTextInputTransform? {
   let context : MarkdownEditorInputContext = {
     blocks: session.editor_blocks,
@@ -109,6 +110,7 @@ fn markdown_session_input_transform_for(
       range,
       inserted,
       context=Some(context),
+      split_paragraph_on_enter~,
     )
   }
 }
@@ -361,7 +363,12 @@ fn[Msg] markdown_session_editor_event(
         on_input=None,
         on_input_edit=Some(on_input_edit),
         on_selection_change~,
-        input_transform=Some(markdown_session_input_transform_for(session)),
+        input_transform=Some(
+          markdown_session_input_transform_for(
+            session,
+            split_paragraph_on_enter=!source_mode,
+          ),
+        ),
         accepts_tab_input~,
         event~,
       )
@@ -373,7 +380,12 @@ fn[Msg] markdown_session_editor_event(
         on_input=None,
         on_input_edit=Some(on_input_edit),
         on_selection_change~,
-        input_transform=Some(markdown_session_input_transform_for(session)),
+        input_transform=Some(
+          markdown_session_input_transform_for(
+            session,
+            split_paragraph_on_enter=!source_mode,
+          ),
+        ),
         event~,
         record_history=true,
       )
@@ -951,7 +963,12 @@ fn[Msg] markdown_session_editor_command(
     on_input=None,
     on_input_edit=Some(on_input_edit),
     on_selection_change~,
-    input_transform=Some(markdown_session_input_transform_for(session)),
+    input_transform=Some(
+      markdown_session_input_transform_for(
+        session,
+        split_paragraph_on_enter=!source_mode,
+      ),
+    ),
     intent,
     paste_text~,
   )

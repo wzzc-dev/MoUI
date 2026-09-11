@@ -653,10 +653,13 @@ pub fn MarkdownDocumentSession::rich_text_window(
       document,
       selection,
     )
+    let collapsed = markdown_editor_collapse_inactive_blank_gaps(
+      revealed, selection, base,
+    )
     if focus_mode {
-      markdown_editor_dim_inactive_blocks(revealed, selection)
+      markdown_editor_dim_inactive_blocks(collapsed, selection)
     } else {
-      revealed
+      collapsed
     }
   }
   {
@@ -2376,6 +2379,20 @@ fn markdown_document_height_metric_height_units(
 fn markdown_document_estimated_editor_block_height_units(
   editor_block : MarkdownEditorBlock,
 ) -> Double {
+  // A blank source line renders as the paragraph separator when the caret is
+  // not on it (see `markdown_editor_collapse_inactive_blank_gaps`), not as a
+  // full text line, so the parse-time estimate uses the separator margin. The
+  // alternation that turns every second blank line into a visible empty line
+  // is deliberately not modelled here: the estimate only has to keep the
+  // scroll geometry close and every blank line positive. A zero estimate
+  // would be a real bug — the visible-block window is derived from these
+  // units, and a block whose bottom is flush with the block before it can
+  // never be selected by that search, so a zero-height block at the end of
+  // the document would drop out of the window and take the caret's line with
+  // it. Measured paint heights replace the estimate once a block is rendered.
+  if markdown_document_editor_block_is_blank(editor_block) {
+    return markdown_editor_blank_gap_line_height_scale()
+  }
   let line_count = markdown_document_estimated_visual_line_count(editor_block)
   let line_height = markdown_document_estimated_line_height_units(
     editor_block.block.kind,

@@ -368,6 +368,13 @@ fn rich_text_document_view_wrap_block(
   if soft_breaks.is_empty() {
     return block
   }
+  // The no-double-newline guard must look at the JOINED visual text: a
+  // layout line boundary can sit exactly where one run ends and the next
+  // run starts with '\n' (a hard break in the source). Checking only the
+  // run's own text would inject a second newline there and render an
+  // extra empty line between the two halves of the paragraph.
+  let visual_chars = visual.to_array()
+  let visual_length = visual_chars.length()
   let runs : Array[RichTextRun] = []
   let mut offset = block.prefix.to_array().length()
   for run in block.runs {
@@ -382,12 +389,18 @@ fn rich_text_document_view_wrap_block(
     if local_breaks.is_empty() {
       runs.push(run)
     } else {
-      runs.push({
-        ..run,
-        visual_text: Some(
-          rich_text_document_view_insert_breaks(run_visual, local_breaks),
-        ),
-      })
+      let run_chars = run_visual.to_array()
+      let output : Array[Char] = []
+      for index, ch in run_chars {
+        output.push(ch)
+        let boundary = index + 1
+        let next_is_newline = offset + boundary < visual_length &&
+          visual_chars[offset + boundary] == '\n'
+        if local_breaks.contains(boundary) && ch != '\n' && !next_is_newline {
+          output.push('\n')
+        }
+      }
+      runs.push({ ..run, visual_text: Some(String::from_array(output)) })
     }
     offset = offset + run_length
   }

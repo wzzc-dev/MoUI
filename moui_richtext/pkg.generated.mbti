@@ -74,7 +74,7 @@ pub fn markdown_editor_toggle_current_task(String, MarkdownEditorSelection) -> M
 
 pub fn markdown_editor_toggle_task_at(String, Int) -> MarkdownEditorEditResult?
 
-pub fn markdown_editor_transform_input(String, Int, @core.TextRange?, String, context? : MarkdownEditorInputContext?) -> RichTextInputTransform?
+pub fn markdown_editor_transform_input(String, Int, @core.TextRange?, String, context? : MarkdownEditorInputContext?, split_paragraph_on_enter? : Bool) -> RichTextInputTransform?
 
 pub let markdown_html_image_gallery_view : MarkdownBlockView
 

@@ -162,3 +162,59 @@ test "soft wrap: a selection across wrapped lines paints one band per line" {
   // start.
   assert_true(commands.length() >= 3)
 }
+
+///|
+test "soft wrap: repeated paragraphs keep their own source offsets" {
+  // A document whose paragraphs have identical text renders each one
+  // through the same content-identity wrap entry. A cache hit therefore
+  // has to re-base the stored block onto the requesting block's offsets:
+  // otherwise every paragraph after the first reports the first one's
+  // source range, and a caret inside them maps back into the first
+  // paragraph (ArrowUp then lands on the blank gap instead of the
+  // paragraph above).
+  let base = @core.FontSpec::new(size=17.0)
+  let text_system = @core.TextSystem::fallback()
+  // A text no other test wraps, so this test owns its cache entry.
+  let session = MarkdownDocumentSession::new(
+    "rebase fixture 41\n\nrebase fixture 41\n\nrebase fixture 41",
+  )
+  let first = markdown_editor_block_materialized(
+    session.source(),
+    source_length=session.source_length,
+    source_digest=session.source_digest,
+    session.editor_blocks[0],
+  )
+  let second = markdown_editor_block_materialized(
+    session.source(),
+    source_length=session.source_length,
+    source_digest=session.source_digest,
+    session.editor_blocks[2],
+  )
+  let first_rich = markdown_editor_block_to_rich_text(
+    session.source(), first, base, base_dir=None,
+  )
+  let second_rich = markdown_editor_block_to_rich_text(
+    session.source(), second, base, base_dir=None,
+  )
+  let hits_before = hot_path_block_wrap_cache_hits.val
+  let builds_before = hot_path_block_wrap_builds.val
+  let wrapped_first = rich_text_block_soft_wrap(
+    first_rich, 640.0, base, text_system,
+  )
+  let wrapped_second = rich_text_block_soft_wrap(
+    second_rich, 640.0, base, text_system,
+  )
+  // One build, then one content-identity hit that still produced the
+  // second paragraph's own offsets.
+  assert_true(hot_path_block_wrap_builds.val == builds_before + 1)
+  assert_true(hot_path_block_wrap_cache_hits.val == hits_before + 1)
+  match (wrapped_first.source_range, wrapped_second.source_range) {
+    (Some(first_range), Some(second_range)) => {
+      inspect(first_range.start, content="0")
+      inspect(first_range.end, content="17")
+      inspect(second_range.start, content="19")
+      inspect(second_range.end, content="36")
+    }
+    _ => fail("expected source ranges on both wrapped paragraphs")
+  }
+}

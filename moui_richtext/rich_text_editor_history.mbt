@@ -41,7 +41,7 @@ fn rich_text_history_now_ms() -> Int64 {
   if fake >= 0L {
     fake
   } else {
-    @env.now().to_int64()
+    @env.now().reinterpret_as_int64()
   }
 }
 
