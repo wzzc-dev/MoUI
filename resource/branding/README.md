@@ -14,10 +14,19 @@ artwork.
 | `moui-logo.svg` / `.png` | Primary horizontal lockup |
 | `moui-logo-reversed.svg` / `.png` | Horizontal lockup for dark backgrounds |
 | `moonbud-mascot.svg` / `.png` | Onboarding, empty states, release notes, events |
+| `moonbud-mascot-100.svg` / `.png` | Fixed 100 px Moonbud for README headers, avatars, and small UI slots |
 | `moui-brand-board.svg` / `.png` | Design overview and presentation preview |
 
 The SVG files are the editable sources. PNG files are generated previews and
 should not replace the SVGs in scalable contexts.
+
+The 100 px Moonbud reuses the `0 0 720 720` viewBox from `moonbud-mascot.svg`,
+so it stays on the shared coordinate grid and only declares `width="100"
+height="100"` as its default display size. Regenerate the preview with:
+
+```sh
+rsvg-convert -w 100 -h 100 -a -o moonbud-mascot-100.png moonbud-mascot-100.svg
+```
 
 ## Palette
 
