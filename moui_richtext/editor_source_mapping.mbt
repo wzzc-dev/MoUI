@@ -72,7 +72,144 @@ pub fn markdown_editor_format_for_selection(
       }),
     )
   }
+  markdown_editor_collapse_inactive_blank_gaps(
+    RichTextDocument::new(blocks~),
+    selection,
+    base,
+  )
+}
+
+///|
+/// Fraction of the body font size a blank source line contributes when it is
+/// the paragraph separator rather than a writing line. Typora separates
+/// sibling paragraphs with a collapsed `p { margin: 0.8em 0 }` (measured in
+/// its stock Github theme: 12.8px at a 16px root). A paragraph already
+/// contributes `inset.bottom` (0.4em, see `markdown_block_to_rich_text`); the
+/// separator supplies the other 0.4em, which makes one blank line between
+/// paragraphs read as Typora's 0.8em gap.
+fn markdown_editor_blank_gap_line_height_scale() -> Double {
+  0.4
+}
+
+///|
+/// Whether the blank line at `offset` renders as a writing line rather than as
+/// the paragraph separator. Typora spends one blank line on every paragraph
+/// break and one more on each empty paragraph it keeps, so a run alternates:
+/// the first blank line is a bare break with no node at all, the second is an
+/// empty line the caret can sit on, the third a break again, and so on. Its
+/// stock Github theme measures 2.34em from paragraph to paragraph for one
+/// blank line and 4.72em for three, which is exactly this alternation.
+fn markdown_editor_blank_gap_is_writing_line(
+  offset : Int,
+  run_start : Int,
+) -> Bool {
+  (offset - run_start) % 2 == 1
+}
+
+///|
+/// Exclusive end index of the run of consecutive blank gap blocks starting
+/// at `start`.
+fn markdown_editor_blank_gap_run_end(
+  blocks : Array[RichTextBlock],
+  start : Int,
+) -> Int {
+  let mut end = start
+  while end < blocks.length() && rich_text_block_is_blank_gap(blocks[end]) {
+    end = end + 1
+  }
+  end
+}
+
+///|
+/// Blank lines alternate between paragraph separator and writing line: a
+/// separator carries the paragraph margin (0.4em, which with the paragraph's
+/// own inset is Typora's collapsed `p { margin: 0.8em 0 }`) and no line box,
+/// so it reads as plain spacing and nothing can park a caret in it, while a
+/// writing line is a full empty line box plus the spacing that follows it and
+/// is a caret target like any other line. A run therefore shows one empty line
+/// for every two blank source lines, the way Typora's paragraph model spends
+/// one blank line on the break and one more on the empty paragraph.
+///
+/// A document with no content at all stays a plain writing surface: its blank
+/// lines are all writing lines, so an empty editor still has a caret line.
+fn markdown_editor_collapse_inactive_blank_gaps(
+  document : RichTextDocument,
+  selection : MarkdownEditorSelection,
+  base_font : @core.FontSpec,
+) -> RichTextDocument {
+  let margin = base_font.size * markdown_editor_blank_gap_line_height_scale()
+  let source = document.blocks
+  // A document whose blocks are all blank lines is a plain writing surface,
+  // so every one of them stays a writing line and the caret always has a line.
+  let has_content = source.any(block => !rich_text_block_is_blank_gap(block))
+  let blocks : Array[RichTextBlock] = []
+  let mut index = 0
+  while index < source.length() {
+    if !rich_text_block_is_blank_gap(source[index]) {
+      blocks.push(source[index])
+      index = index + 1
+      continue
+    }
+    let run_end = markdown_editor_blank_gap_run_end(source, index)
+    for offset = index; offset < run_end; offset = offset + 1 {
+      let gap = source[offset]
+      let writing_line = !has_content ||
+        markdown_editor_blank_gap_is_writing_line(offset, index) ||
+        markdown_editor_gap_selection_active(gap, selection)
+      if writing_line {
+        // A full empty line box plus the paragraph spacing that follows it,
+        // so the caret can sit and type on it.
+        blocks.push({
+          ..gap,
+          inset: {
+            top: 0.0,
+            right: gap.inset.right,
+            bottom: margin,
+            left: gap.inset.left,
+          },
+        })
+      } else {
+        // The paragraph separator: the run's margin with no line box at all.
+        blocks.push({
+          ..gap,
+          line_height: Some(0.0),
+          inset: {
+            top: margin,
+            right: gap.inset.right,
+            bottom: 0.0,
+            left: gap.inset.left,
+          },
+        })
+      }
+    }
+    index = run_end
+  }
   RichTextDocument::new(blocks~)
+}
+
+///|
+/// The gap is the active writing line when the caret sits inside it or the
+/// selection reaches into it (a selection crossing the gap keeps its full
+/// height so the highlighted band stays visible).
+fn markdown_editor_gap_selection_active(
+  block : RichTextBlock,
+  selection : MarkdownEditorSelection,
+) -> Bool {
+  match block.source_range {
+    Some(range) => {
+      if selection.caret >= range.start && selection.caret <= range.end {
+        return true
+      }
+      match selection.selection {
+        Some(range_selection) => {
+          let normalized = range_selection.normalized()
+          normalized.start <= range.end && normalized.end >= range.start
+        }
+        None => false
+      }
+    }
+    None => false
+  }
 }
 
 ///|
@@ -626,14 +763,10 @@ fn parse_markdown_editor_blocks_with_definitions(
     Some(front_matter) => {
       blocks.push(front_matter.block)
       let mut index = front_matter.next_index
-      while index < lines.length() {
-        let line = lines[index]
-        if markdown_editor_line_text_is_blank(line.text) {
-          blocks.push(markdown_editor_blank_line_block(line))
-          index = index + 1
-        } else {
-          break
-        }
+      while index < lines.length() &&
+            markdown_editor_line_text_is_blank(lines[index].text) {
+        blocks.push(markdown_editor_blank_line_block(lines[index]))
+        index = index + 1
       }
       if index < lines.length() {
         let rest_start = lines[index].start
@@ -690,6 +823,10 @@ fn parse_markdown_editor_blocks_with_definitions(
         code_lines.push(line.text.to_owned())
       }
     } else if markdown_editor_line_text_is_blank(line.text) {
+      // Each blank line stays its own editable gap block (one per line, so
+      // every blank line is individually caret-addressable); the visual
+      // narrowing comes from the inactive-gap collapse at render time, and
+      // vertical navigation crosses consecutive gap blocks.
       blocks.push(markdown_editor_blank_line_block(line))
     } else {
       let fence_info = if parse_inlines ||

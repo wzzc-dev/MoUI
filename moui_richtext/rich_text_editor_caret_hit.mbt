@@ -197,56 +197,58 @@ fn rich_text_vertical_target_offset(
   }
   let block = document.blocks[block_index]
   let step = rich_text_block_line_step(block, base_font, text_system)
-  let line_height = rich_text_block_line_height(block, base_font, text_system)
-  let block_top = y
   let frame_top = y + block.inset.top
-  let line_center_y = if visual_line >= 0 &&
-    visual_line < rich_text_block_visual_line_count(block) {
+  let line_count = rich_text_block_visual_line_count(block)
+  // Leaving the block: step straight to the neighbouring line, skipping the
+  // paragraph separators (blocks with no line box) in between. The pointer hit
+  // test is deliberately not used here — its half-band rule answers "which
+  // line did I click", not "which way am I travelling".
+  if (up && visual_line == 0) || (!up && visual_line >= line_count - 1) {
+    return rich_text_vertical_block_boundary_offset(
+      document,
+      block_index,
+      source_caret,
+      base_font,
+      text_system,
+      up~,
+    )
+  }
+  let line_center_y = if visual_line >= 0 && visual_line < line_count {
     frame_top + (visual_line.to_double() + 0.5) * step
   } else {
     caret_rect.origin.y + caret_rect.size.height * 0.5
   }
-  let target_y = if up {
-    if visual_line == 0 {
-      block_top - 1.0
-    } else {
-      line_center_y - step
-    }
-  } else {
-    let line_count = rich_text_block_visual_line_count(block)
-    if visual_line >= line_count - 1 {
-      block_top + line_height + block.inset.top + block.inset.bottom + 1.0
-    } else {
-      line_center_y + step
-    }
-  }
+  // Within the block: keep the caret column and move one visual line.
   let target_point = @core.Point::new(
     x=caret_rect.origin.x + caret_rect.size.width * 0.5,
-    y=target_y,
+    y=if up { line_center_y - step } else { line_center_y + step },
   )
   match
     rich_text_document_source_offset_at_point(
       document, target_point, content, base_font, text_system,
     ) {
-    Some(offset) =>
-      if offset != source_caret {
-        offset
-      } else {
-        rich_text_vertical_block_boundary_offset(
-          document,
-          block_index,
-          source_caret,
-          up~,
-        )
-      }
+    Some(offset) => offset
     None =>
       rich_text_vertical_block_boundary_offset(
         document,
         block_index,
         source_caret,
+        base_font,
+        text_system,
         up~,
       )
   }
+}
+
+///|
+/// A blank line renders as an empty paragraph with no runs. Vertical caret
+/// movement stops on it like on any other line: the caret walks into the
+/// blank line and it expands to the writing line while the caret is there.
+fn rich_text_block_is_blank_gap(block : RichTextBlock) -> Bool {
+  block.runs.is_empty() &&
+  block.prefix == "" &&
+  block.table is None &&
+  !block.rule
 }
 
 ///|
@@ -254,30 +256,45 @@ fn rich_text_vertical_block_boundary_offset(
   document : RichTextDocument,
   block_index : Int,
   source_caret : Int,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
   up~ : Bool,
 ) -> Int {
+  // Blocks with no line box are pure spacing — the paragraph separator a
+  // blank source line renders as — so the caret steps over them to the
+  // neighbouring line, exactly like the pointer hit test does.
   if up {
-    if block_index <= 0 {
-      return 0
+    let mut index = block_index - 1
+    while index >= 0 {
+      let prev_block = document.blocks[index]
+      if rich_text_block_line_height(prev_block, base_font, text_system) <= 0.0 {
+        index = index - 1
+        continue
+      }
+      return match rich_text_block_end_source_offset(prev_block) {
+        Some(end) => end
+        None => source_caret
+      }
     }
-    let prev_block = document.blocks[block_index - 1]
-    match rich_text_block_end_source_offset(prev_block) {
-      Some(end) => end
-      None => source_caret
-    }
+    0
   } else {
-    if block_index >= document.blocks.length() - 1 {
-      return source_caret
+    let mut index = block_index + 1
+    while index < document.blocks.length() {
+      let next_block = document.blocks[index]
+      if rich_text_block_line_height(next_block, base_font, text_system) <= 0.0 {
+        index = index + 1
+        continue
+      }
+      return match next_block.content_range {
+        Some(range) => range.start
+        None =>
+          match next_block.source_range {
+            Some(range) => range.start
+            None => source_caret
+          }
+      }
     }
-    let next_block = document.blocks[block_index + 1]
-    match next_block.content_range {
-      Some(range) => range.start
-      None =>
-        match next_block.source_range {
-          Some(range) => range.start
-          None => source_caret
-        }
-    }
+    source_caret
   }
 }
 
@@ -783,22 +800,40 @@ fn rich_text_document_source_offset_at_point(
       ),
       height=line_height,
     )
+    // A block with no line box is pure spacing: the paragraph separator a
+    // blank source line renders as (see
+    // `markdown_editor_collapse_inactive_blank_gaps`). Nothing can park a
+    // caret on it, so the pointer resolves to the content on the far side —
+    // the paragraph above for the upper half of the band, the next line for
+    // the lower half.
+    let spacing = line_height <= 0.0
     if point.y < y + block_height {
-      match
-        rich_text_block_table_source_offset_at_point(
+      if spacing {
+        if point.y < y + block_height * 0.5 {
+          match last_offset {
+            Some(offset) => return Some(offset)
+            None => ()
+          }
+        }
+      } else {
+        match
+          rich_text_block_table_source_offset_at_point(
+            block, point, frame, base_font, text_system,
+          ) {
+          Some(offset) => return Some(offset)
+          None => ()
+        }
+        let offset = rich_text_block_source_offset_at_point(
           block, point, frame, base_font, text_system,
-        ) {
-        Some(offset) => return Some(offset)
-        None => ()
+        )
+        return Some(offset)
       }
-      let offset = rich_text_block_source_offset_at_point(
-        block, point, frame, base_font, text_system,
-      )
-      return Some(offset)
     }
-    last_block = Some(block)
-    last_frame = frame
-    last_offset = rich_text_block_end_source_offset(block)
+    if !spacing {
+      last_block = Some(block)
+      last_frame = frame
+      last_offset = rich_text_block_end_source_offset(block)
+    }
     y = y + block_height
   }
   match last_block {

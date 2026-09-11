@@ -16,6 +16,9 @@ pub fn markdown_editor_transform_input(
   selection : @core.TextRange?,
   input : String,
   context? : MarkdownEditorInputContext? = None,
+  // The formatted surface splits plain paragraphs with a blank writing
+  // line on Enter; the raw source-mode editor keeps the plain newline.
+  split_paragraph_on_enter? : Bool = true,
 ) -> RichTextInputTransform? {
   match
     markdown_editor_paste_footnote_definition(source, caret, selection, input) {
@@ -268,7 +271,8 @@ pub fn markdown_editor_transform_input(
   if marker == "" {
     // Raw HTML blocks and front matter keep the plain newline: a blank
     // line would close the construct being edited.
-    if markdown_editor_verbatim_block_at_content_offset(
+    if !split_paragraph_on_enter ||
+      markdown_editor_verbatim_block_at_content_offset(
         source,
         caret,
         selection,
