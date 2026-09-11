@@ -262,6 +262,41 @@ fn markdown_editor_code_block_at_selection(
 }
 
 ///|
+/// Raw HTML blocks and front matter are edited as verbatim text: a blank
+/// line inside them would close the construct, so Enter keeps the plain
+/// newline there instead of splitting with a blank writing line.
+fn markdown_editor_verbatim_block_at_content_offset(
+  source : String,
+  caret : Int,
+  selection : @core.TextRange?,
+  context? : MarkdownEditorInputContext? = None,
+) -> MarkdownEditorBlock? {
+  if markdown_editor_active_selection(selection) is Some(_) {
+    return None
+  }
+  let caret = markdown_editor_clamp_int(
+    caret,
+    0,
+    markdown_editor_text_length(source),
+  )
+  let blocks = match context {
+    Some(context) => context.blocks
+    None => parse_markdown_editor_blocks(source)
+  }
+  for block in blocks {
+    if (
+        block.block.kind is MarkdownBlockKind::HtmlBlock ||
+        block.block.kind is MarkdownBlockKind::FrontMatter
+      ) &&
+      caret >= block.source_range.start &&
+      caret <= block.source_range.end {
+      return Some(block)
+    }
+  }
+  None
+}
+
+///|
 fn markdown_editor_html_block_at_selection(
   source : String,
   selection : MarkdownEditorSelection,
