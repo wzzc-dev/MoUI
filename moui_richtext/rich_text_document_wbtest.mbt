@@ -102,7 +102,7 @@ test "parse_markdown keeps soft-wrapped paragraph lines in one block" {
 }
 
 ///|
-test "markdown_block_to_rich_text replaces newlines with spaces in paragraph visual_text" {
+test "markdown_block_to_rich_text keeps soft breaks as visual newlines" {
   let blocks = parse_markdown("word1\nword2")
   let block = markdown_block_to_rich_text(blocks[0], @core.FontSpec::new())
   let mut has_newline_in_visual = false
@@ -122,16 +122,15 @@ test "markdown_block_to_rich_text replaces newlines with spaces in paragraph vis
       has_newline_in_visual = true
     }
   }
-  if has_newline_in_visual || all_visual_text.contains("  ") {
+  if !has_newline_in_visual {
     fail("debug: \{run_details} all_visual=\{all_visual_text}")
   }
-  assert_false(has_newline_in_visual)
-  assert_true(all_visual_text.contains("word1 word2"))
-  assert_false(all_visual_text.contains("  "))
+  assert_true(has_newline_in_visual)
+  assert_true(all_visual_text.contains("word1\nword2"))
 }
 
 ///|
-test "real markdown paragraph soft-break joins with single space" {
+test "real markdown paragraph soft-break renders one visual line per source line" {
   let src = "MoUI is a multi-platform MoonBit GUI framework for building\ndeclarative UI apps with shared platform-neutral app logic. Native host cores\nown windows, events, services, and lifecycle, then receive concrete renderers\nthrough platform renderer provider packages."
   let blocks = parse_markdown(src)
   let block = markdown_block_to_rich_text(blocks[0], @core.FontSpec::new())
@@ -149,8 +148,17 @@ test "real markdown paragraph soft-break joins with single space" {
     idx = idx + 1
   }
   assert_false(all_visual.contains("  "))
-  assert_true(all_visual.contains("cores own"))
-  assert_true(all_visual.contains("renderers through"))
+  assert_true(all_visual.contains("cores\nown"))
+  assert_true(all_visual.contains("renderers\nthrough"))
+  // Paint segments and block heights both split on the same newlines, so
+  // the paragraph renders four visual lines.
+  let heights = rich_text_block_line_heights(
+    block,
+    @core.FontSpec::new(),
+    @core.TextSystem::fallback(),
+    640.0,
+  )
+  inspect(heights.length(), content="4")
 }
 
 ///|

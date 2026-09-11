@@ -289,13 +289,16 @@ fn markdown_inlines_to_rich_text(
 }
 
 ///|
+/// Visual text keeps soft breaks as real newlines: paint, block heights,
+/// caret geometry, and hit-test all split on them, so a single newline in
+/// the source shows as its own line instead of silently joining into one
+/// run-on line with a space.
 fn markdown_inline_visual_text(inline : MarkdownInline) -> String {
-  let text = match inline.kind {
+  match inline.kind {
     Image => markdown_inline_source_text(inline)
     FootnoteReference => inline.text
     _ => inline.text
   }
-  text.replace(old="\n", new=" ")
 }
 
 ///|
