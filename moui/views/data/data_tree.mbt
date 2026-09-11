@@ -84,14 +84,17 @@ fn[Msg] tree_row(
   theme~ : @core.Theme,
   width~ : Double,
 ) -> @core.View[Msg] {
-  let indent = depth.to_double() * 18.0
+  let indent = depth.to_double() * 16.0
+  // Real disclosure glyphs, not ASCII 'v'/'>': a filled triangle reads as a
+  // control at caption size, and the app's other fold buttons use them too.
   let toggle_label = if item.children.length() == 0 {
     ""
   } else if expanded {
-    "v"
+    "▾"
   } else {
-    ">"
+    "▸"
   }
+  let toggle_width = 20.0
   let toggle = match on_toggle {
     Some(handler) =>
       @button.button(
@@ -99,7 +102,7 @@ fn[Msg] tree_row(
         on_click=handler(item.id),
         variant=@style.ButtonVariant::Ghost,
         theme~,
-        width=28.0,
+        width=toggle_width,
         height=30.0,
       )
     None =>
@@ -107,10 +110,14 @@ fn[Msg] tree_row(
         toggle_label,
         role=@style.TextRole::Caption,
         theme~,
-        width=28.0,
+        width=toggle_width,
         height=30.0,
       )
   }
+  // The label is left-aligned and stretches over the rest of the row: a
+  // centered label inside a wide box left a gap after the disclosure glyph and
+  // made every row's text float, which is what made the tree read as ragged.
+  let label_width = @common.view_max_double(40.0, width - indent - 26.0)
   let label_view = match on_select {
     Some(handler) =>
       @button.button(
@@ -122,22 +129,25 @@ fn[Msg] tree_row(
           @style.ButtonVariant::Ghost
         },
         theme~,
-        width=@common.view_max_double(80.0, width - indent - 34.0),
+        width=label_width,
         height=30.0,
+        label_align=@core.TextAlign::TextStart,
       )
     None =>
       @text.text(
         item.label,
         role=@style.TextRole::Body,
         theme~,
-        width=@common.view_max_double(80.0, width - indent - 34.0),
+        width=label_width,
         height=30.0,
       )
   }
-  @layout.row(
-    [@container.spacer(min_length=indent, weight=0.0), toggle, label_view],
-    spacing=3.0,
-    align=@style.CrossAlign::Center,
+  // Depth is a left padding, not a spacer child: a spacer with weight 0 still
+  // absorbed the row's slack here, which pushed the label to the right edge and
+  // left a gap after the disclosure glyph.
+  @layout.padding_edges(
+    @layout.row([toggle, label_view], spacing=2.0, align=@style.CrossAlign::Center),
+    left=indent,
   )
   .semantics_role(@core.SemanticsRole::TreeItem)
   .semantics_expanded(expanded~)
