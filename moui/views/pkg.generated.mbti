@@ -45,7 +45,7 @@ pub fn[Msg] breadcrumb(Array[@navigation.BreadcrumbItem[Msg]], theme? : @core.Th
 
 pub fn[Msg] breadcrumb_item(id~ : String, label~ : String, message? : Msg?) -> @navigation.BreadcrumbItem[Msg]
 
-pub fn[Msg] button(String, on_click? : Msg, variant? : @style.ButtonVariant, theme? : @core.Theme, style? : @style.ButtonStyle, icon? : @style.IconName?, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] button(String, on_click? : Msg, variant? : @style.ButtonVariant, theme? : @core.Theme, style? : @style.ButtonStyle, icon? : @style.IconName?, width? : Double, height? : Double, label_align? : @core.TextAlign) -> @core.View[Msg]
 
 pub fn[Msg] button_group(Array[@controls.ActionItem[Msg]], selected? : String, theme? : @core.Theme, button_width? : Double, height? : Double) -> @core.View[Msg]
 

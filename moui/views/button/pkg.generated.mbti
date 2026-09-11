@@ -7,7 +7,7 @@ import {
 }
 
 // Values
-pub fn[Msg] button(String, on_click? : Msg, variant? : @style.ButtonVariant, theme? : @core.Theme, style? : @style.ButtonStyle, icon? : @style.IconName?, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] button(String, on_click? : Msg, variant? : @style.ButtonVariant, theme? : @core.Theme, style? : @style.ButtonStyle, icon? : @style.IconName?, width? : Double, height? : Double, label_align? : @core.TextAlign) -> @core.View[Msg]
 
 pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardShortcut, variant? : @style.ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double, shortcut_width? : Double) -> @core.View[Msg]
 

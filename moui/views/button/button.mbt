@@ -1,4 +1,8 @@
 ///|
+///|
+/// `label_align` positions the label inside the button frame. It defaults to
+/// center, the usual button look; a list row that has to read as a column of
+/// left-aligned labels (a tree row, a menu row) passes `TextStart`.
 pub fn[Msg] button(
   text : String,
   on_click? : Msg,
@@ -8,6 +12,7 @@ pub fn[Msg] button(
   icon? : @style.IconName? = None,
   width? : Double = 100.0,
   height? : Double = 40.0,
+  label_align? : @core.TextAlign = @core.TextAlign::TextCenter,
 ) -> @core.View[Msg] {
   button_control(
     text~,
@@ -17,6 +22,7 @@ pub fn[Msg] button(
     style?,
     leading_icon=icon,
     on_click~,
+    label_align~,
   )
 }
 
@@ -31,6 +37,7 @@ fn[Msg] button_control(
   on_click? : Msg? = None,
   kind? : String = "Button",
   key? : String? = None,
+  label_align? : @core.TextAlign = @core.TextAlign::TextCenter,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     Button::{
@@ -40,6 +47,7 @@ fn[Msg] button_control(
       theme,
       style,
       leading_icon,
+      label_align,
       has_on_click: on_click is Some(_),
       kind,
       key,
@@ -67,6 +75,7 @@ priv struct Button {
   theme : @core.Theme?
   style : @style.ButtonStyle?
   leading_icon : @style.IconName?
+  label_align : @core.TextAlign
   has_on_click : Bool
   kind : String
   key : String?
@@ -92,6 +101,16 @@ impl @core.ViewNode for Button with fn declaration(self) {
     ),
   ])
   let paint_key = @common.view_record_key("Button.paint", [
+    (
+      "label_align",
+      @core.DeclarationKey::int(
+        match self.label_align {
+          @core.TextAlign::TextStart => 0
+          @core.TextAlign::TextCenter => 1
+          @core.TextAlign::TextEnd => 2
+        },
+      ),
+    ),
     (
       "variant",
       @core.DeclarationKey::int(
@@ -320,6 +339,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
         frame=text_frame,
         font~,
         color=foreground,
+        align=self.label_align,
       ),
     ),
   )
