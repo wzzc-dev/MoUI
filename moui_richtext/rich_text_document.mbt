@@ -24,6 +24,18 @@ pub(all) enum RichTextDecoration {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// Shape-and-state marker drawn in a block's prefix lane instead of a glyph.
+///
+/// Task list items render a real rounded box with a vector checkmark; a font
+/// glyph (`☑`/`☐`) depends on which installed face happens to cover U+2610,
+/// so its shape, weight, and color drift per machine. The block keeps a
+/// text-shaped `prefix` so caret, selection, and hit-test arithmetic stay
+/// character-indexed; only the painted lane swaps the glyph for the marker.
+pub(all) enum RichTextMarker {
+  TaskCheckbox(Bool)
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct RichTextRun {
   text : String
   visual_text : String?
@@ -61,6 +73,7 @@ pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
   table : RichTextTable?
   prefix : String
+  marker : RichTextMarker?
   font : @core.FontSpec?
   color : @core.Color?
   background : @core.Brush?
@@ -125,6 +138,7 @@ pub fn RichTextBlock::new(
   runs~ : Array[RichTextRun],
   table? : RichTextTable? = None,
   prefix? : String = "",
+  marker? : RichTextMarker? = None,
   font? : @core.FontSpec? = None,
   color? : @core.Color? = None,
   background? : @core.Brush? = None,
@@ -141,6 +155,7 @@ pub fn RichTextBlock::new(
     runs,
     table,
     prefix,
+    marker,
     font,
     color,
     background,

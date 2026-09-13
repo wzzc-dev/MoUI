@@ -459,6 +459,7 @@ pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
   table : RichTextTable?
   prefix : String
+  marker : RichTextMarker?
   font : @core.FontSpec?
   color : @core.Color?
   background : @core.Brush?
@@ -471,7 +472,7 @@ pub(all) struct RichTextBlock {
   source_range : RichTextSourceRange?
   content_range : RichTextSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextBlock::new(runs~ : Array[RichTextRun], table? : RichTextTable?, prefix? : String, font? : @core.FontSpec?, color? : @core.Color?, background? : @core.Brush?, border_left? : @core.BorderStyle?, inset? : @core.Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool, source_range? : RichTextSourceRange?, content_range? : RichTextSourceRange?, line_align? : @core.TextAlign?) -> Self
+pub fn RichTextBlock::new(runs~ : Array[RichTextRun], table? : RichTextTable?, prefix? : String, marker? : RichTextMarker?, font? : @core.FontSpec?, color? : @core.Color?, background? : @core.Brush?, border_left? : @core.BorderStyle?, inset? : @core.Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool, source_range? : RichTextSourceRange?, content_range? : RichTextSourceRange?, line_align? : @core.TextAlign?) -> Self
 
 pub(all) enum RichTextDecoration {
   Strikethrough
@@ -490,6 +491,10 @@ pub(all) struct RichTextInputTransform {
   edit_range : MarkdownSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RichTextInputTransform::new(text~ : String, caret~ : Int, selection? : @core.TextRange?, edit_range? : MarkdownSourceRange?) -> Self
+
+pub(all) enum RichTextMarker {
+  TaskCheckbox(Bool)
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RichTextRun {
   text : String

@@ -834,7 +834,7 @@ fn rich_text_block_line_widths(
 ) -> Array[Double] {
   let block_font = rich_text_block_font(block, base_font)
   let widths : Array[Double] = [
-    rich_text_width(block.prefix, block_font, text_system),
+    rich_text_block_marker_lane(block, block_font, text_system),
   ]
   for run in block.runs {
     let font = run.font.unwrap_or(block_font)

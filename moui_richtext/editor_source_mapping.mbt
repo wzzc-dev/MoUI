@@ -355,7 +355,9 @@ fn markdown_editor_reveal_active_block_marker(
         content_range.start,
       )
       if block.prefix != "" {
-        return { ..block, prefix, }
+        // Revealing the editable marker text replaces the projected lane, so
+        // the marker has to go with it: a task item shows its raw `- [x] `.
+        return { ..block, prefix, marker: None }
       }
       let runs = block.runs.copy()
       let first = runs[0]

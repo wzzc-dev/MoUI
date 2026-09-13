@@ -34,7 +34,11 @@ pub fn markdown_block_to_rich_text(
     TaskListItem(checked) =>
       RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
-        prefix=if checked { "☑ " } else { "☐ " },
+        // One placeholder char keeps prefix-indexed caret, selection, and
+        // hit-test arithmetic intact; the painter draws the vector checkbox at
+        // the lane width instead of this glyph.
+        prefix=" ",
+        marker=Some(RichTextMarker::TaskCheckbox(checked)),
         line_height=Some(base.size * 1.55),
       )
     OrderedListItem(number) =>

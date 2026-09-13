@@ -121,6 +121,15 @@ fn rich_text_block_soft_wrap_key(
     block.inset.right.to_string(),
     block.line_height.unwrap_or(-1.0).to_string(),
     block.prefix,
+    match block.marker {
+      Some(RichTextMarker::TaskCheckbox(checked)) =>
+        if checked {
+          "task-checkbox:checked"
+        } else {
+          "task-checkbox"
+        }
+      None => ""
+    },
     content_offset.to_string(),
   ]
   for run in block.runs {

@@ -958,9 +958,8 @@ fn rich_text_block_prefix_source_offset_at_point(
     return None
   }
   let font = rich_text_block_font(block, base_font)
-  let width = max_double(
-    rich_text_width(block.prefix, font, text_system),
-    font.size * 1.8,
+  let width = rich_text_block_prefix_hit_width(
+    block, font, base_font, text_system,
   )
   if point.x >= frame.origin.x && point.x <= frame.origin.x + width {
     match block.content_range {
@@ -969,6 +968,27 @@ fn rich_text_block_prefix_source_offset_at_point(
     }
   } else {
     None
+  }
+}
+
+///|
+/// Hit width of a block's prefix lane. Text prefixes keep the historical
+/// `1.8em` floor so a long indented lane stays clickable; a marker lane is
+/// already wider than the drawn box and must not swallow the label's caret
+/// positions.
+fn rich_text_block_prefix_hit_width(
+  block : RichTextBlock,
+  font : @core.FontSpec,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+) -> Double {
+  match block.marker {
+    Some(_) => rich_text_block_marker_lane(block, font, text_system)
+    None =>
+      max_double(
+        rich_text_width(block.prefix, font, text_system),
+        base_font.size * 1.8,
+      )
   }
 }
 
@@ -984,9 +1004,8 @@ fn rich_text_point_in_prefix_lane(
     return false
   }
   let font = rich_text_block_font(block, base_font)
-  let width = max_double(
-    rich_text_width(block.prefix, font, text_system),
-    font.size * 1.8,
+  let width = rich_text_block_prefix_hit_width(
+    block, font, base_font, text_system,
   )
   point.x >= frame.origin.x && point.x <= frame.origin.x + width
 }
@@ -1026,20 +1045,31 @@ fn rich_text_block_visual_offset_at_point(
   let mut line_end = 0
   if block.prefix != "" {
     let prefix_length = text_length(block.prefix)
-    let hit = rich_text_run_visual_offset_at_x(
-      block.prefix,
-      font,
-      point.x,
-      origin,
-      text_system,
-    )
-    let width = rich_text_width(block.prefix, font, text_system)
-    if target_line == 0 && (hit < prefix_length || point.x <= origin + width) {
-      return hit
+    let width = rich_text_block_marker_lane(block, font, text_system)
+    // A marker lane is one atomic slot: it has no interior caret position, so
+    // the whole lane maps to the offset in front of the label.
+    if block.marker is Some(_) {
+      if target_line == 0 && point.x <= origin + width {
+        return 0
+      }
+      visual_offset = visual_offset + prefix_length
+      line_end = visual_offset
+      origin = origin + width
+    } else {
+      let hit = rich_text_run_visual_offset_at_x(
+        block.prefix,
+        font,
+        point.x,
+        origin,
+        text_system,
+      )
+      if target_line == 0 && (hit < prefix_length || point.x <= origin + width) {
+        return hit
+      }
+      visual_offset = visual_offset + prefix_length
+      line_end = visual_offset
+      origin = origin + width
     }
-    visual_offset = visual_offset + prefix_length
-    line_end = visual_offset
-    origin = origin + width
   }
   for run in block.runs {
     let run_font = run.font.unwrap_or(font)
@@ -1274,9 +1304,20 @@ fn rich_text_block_caret_rect(
   let mut y = frame.origin.y
   if block.prefix != "" {
     let prefix_length = text_length(block.prefix)
+    let lane = rich_text_block_marker_lane(block, font, text_system)
     if remaining <= prefix_length {
-      let prefix = rich_text_prefix(block.prefix, remaining)
-      x = x + rich_text_width(prefix, font, text_system)
+      // The marker lane is atomic, so any offset inside it sits at the lane
+      // start; only a text prefix has interior caret stops.
+      let advance = match block.marker {
+        Some(_) => 0.0
+        None =>
+          rich_text_width(
+            rich_text_prefix(block.prefix, remaining),
+            font,
+            text_system,
+          )
+      }
+      x = x + advance
       return rich_text_cursor_rect_at(
         x,
         @core.Rect::new(
@@ -1289,7 +1330,7 @@ fn rich_text_block_caret_rect(
       )
     }
     remaining = remaining - prefix_length
-    x = x + rich_text_width(block.prefix, font, text_system)
+    x = x + lane
   }
   for run in block.runs {
     let run_font = run.font.unwrap_or(font)
