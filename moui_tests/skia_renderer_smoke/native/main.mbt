@@ -1684,7 +1684,7 @@ fn main {
       assert_pixel_luma_between(frame, 155, 109, 0, 160, 255)
       assert_pixel_luma_between(frame, 148, 109, 20, 245, 255)
       assert_pixel_near(frame, 142, 109, 255, 255, 255, 255, 2)
-      assert_pixel_near(frame, 171, 92, 145, 163, 189, 255, 55)
+      assert_pixel_near(frame, 171, 92, 245, 245, 247, 255, 8)
       assert_pixel_near(frame, 173, 109, 0, 255, 0, 255, 45)
       assert_pixel_luma_between(frame, 181, 101, 0, 95, 255)
       assert_pixel_near_filter_aware(

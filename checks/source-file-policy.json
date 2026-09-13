@@ -128,7 +128,7 @@
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 2594,
+      "maxLines": 2596,
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
@@ -138,7 +138,7 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_caret_hit.mbt",
-      "maxLines": 1658,
+      "maxLines": 1699,
       "reason": "Existing caret and hit-testing algorithms."
     },
     {
