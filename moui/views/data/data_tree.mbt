@@ -146,7 +146,11 @@ fn[Msg] tree_row(
   // absorbed the row's slack here, which pushed the label to the right edge and
   // left a gap after the disclosure glyph.
   @layout.padding_edges(
-    @layout.row([toggle, label_view], spacing=2.0, align=@style.CrossAlign::Center),
+    @layout.row(
+      [toggle, label_view],
+      spacing=2.0,
+      align=@style.CrossAlign::Center,
+    ),
     left=indent,
   )
   .semantics_role(@core.SemanticsRole::TreeItem)

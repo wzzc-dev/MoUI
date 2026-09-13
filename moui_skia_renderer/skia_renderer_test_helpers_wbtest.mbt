@@ -122,3 +122,73 @@ fn skia_test_font(font : @core.FontSpec) -> @skia_native.Font? {
     SkiaFontResolution::SystemFontMgr,
   )
 }
+
+///|
+/// The darkest channel value found in `rect`, or `255` when the region holds
+/// no pixel. Lets a test ask "is there ink here?" without pinning an exact
+/// anti-aliased shade, which varies with the Skia build.
+fn skia_test_region_darkest_channel(
+  frame : SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Int {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  let mut darkest = 255
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      let offset = y * frame.row_bytes + x * 4
+      if offset + 3 < frame.pixels.length() {
+        for channel in 0..<3 {
+          let value = frame.pixels[offset + channel].to_int()
+          if value < darkest {
+            darkest = value
+          }
+        }
+      }
+    }
+  }
+  darkest
+}
+
+///|
+/// True when every pixel in `rect` is fully opaque and its channel spread is
+/// within `tolerance` — the test-side definition of "a neutral surface of this
+/// lightness". A full-frame gradient scores far outside both bounds, which is
+/// exactly the regression the placeholder redesign has to keep out.
+fn skia_test_region_is_flat_neutral(
+  frame : SkiaPixelFrame,
+  rect : @core.Rect,
+  min_channel~ : Int,
+  tolerance~ : Int,
+) -> Bool {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      let offset = y * frame.row_bytes + x * 4
+      if offset + 3 >= frame.pixels.length() {
+        return false
+      }
+      let r = frame.pixels[offset].to_int()
+      let g = frame.pixels[offset + 1].to_int()
+      let b = frame.pixels[offset + 2].to_int()
+      let a = frame.pixels[offset + 3].to_int()
+      let high = r.max(g).max(b)
+      let low = r.min(g).min(b)
+      if a < 250 || low < min_channel || high - low > tolerance {
+        return false
+      }
+    }
+  }
+  true
+}

@@ -191,10 +191,16 @@ test "soft wrap: repeated paragraphs keep their own source offsets" {
     session.editor_blocks[2],
   )
   let first_rich = markdown_editor_block_to_rich_text(
-    session.source(), first, base, base_dir=None,
+    session.source(),
+    first,
+    base,
+    base_dir=None,
   )
   let second_rich = markdown_editor_block_to_rich_text(
-    session.source(), second, base, base_dir=None,
+    session.source(),
+    second,
+    base,
+    base_dir=None,
   )
   let hits_before = hot_path_block_wrap_cache_hits.val
   let builds_before = hot_path_block_wrap_builds.val

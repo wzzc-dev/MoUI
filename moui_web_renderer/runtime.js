@@ -3239,6 +3239,41 @@ async function instantiateWasm(url, imports, report) {
   return WebAssembly.instantiate(bytes, imports);
 }
 
+/**
+ * Imports for the MoonBit runtime modules a wasm-gc binary links against.
+ *
+ * `moonc` lowers a handful of `moonbitlang/core` externals to imports from
+ * namespaced runtime modules instead of inlining them. `@env.now()` is one:
+ * `core/env/env_wasm.mbt` declares
+ * `now_internal() -> UInt64 = "__moonbit_time_unstable" "now"`, so every
+ * wasm-gc binary that reads the clock — which is most of them, because the
+ * animation scheduler does — refuses to instantiate until the host supplies a
+ * module of that name. `WebAssembly.instantiate` reports the first missing one
+ * as `Import #N "__moonbit_time_unstable": module is not an object or
+ * function`, which is what the presentation smoke caught.
+ *
+ * The host owns these by construction: the wasm module only carries the import
+ * declaration. Supplying them here rather than in each app's `index.html` keeps
+ * every MoUI web host on the same clock. Only `now` is implemented — the other
+ * declarations in the same namespaces (`instant_now`, `args_get`,
+ * `current_dir`, …) belong to packages no MoUI web target uses, and a stub that
+ * returned a wrong-shaped value would be worse than the loud instantiation
+ * failure a missing one produces.
+ */
+export function createMoonbitRuntimeImports() {
+  return {
+    __moonbit_time_unstable: {
+      // Milliseconds since the Unix epoch, matching the native runtime's
+      // `moonbit_get_ms_since_epoch` (the same `now_internal()` contract).
+      // The wasm signature is `() -> i64`, so the host side must return a
+      // BigInt: a Number throws a TypeError at instantiation.
+      now() {
+        return BigInt(Date.now());
+      },
+    },
+  };
+}
+
 export async function bootMouiWasmGcApp(options = {}) {
   const report = options.onStatus ?? (() => {});
   if (!options.wasmUrl) {
@@ -3262,6 +3297,7 @@ export async function bootMouiWasmGcApp(options = {}) {
     onImageResourceChange: notifyImageResourceChanged,
   });
   const imports = {
+    ...createMoonbitRuntimeImports(),
     ...(options.imports ?? {}),
     window_web: windowWeb,
     webgpu,

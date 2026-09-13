@@ -522,22 +522,11 @@ fn RendererHandle::prepare_native_image_items(
           }
           None => {
             let start = self.visual_vertices.length()
-            append_visual_quad(
+            append_native_image_placeholder(
               self.visual_vertices,
-              run.frame,
-              radius=0.0,
-              brush=native_image_placeholder_brush(run),
-              mode=visual_mode_fill,
-              stroke_width=0.0,
-              blur_radius=0.0,
-              state={
-                opacity: 1.0,
-                transform: run.transform,
-                clip: None,
-                clip_radius: 0.0,
-                clip_empty: false,
-              },
-              size=self.size,
+              run,
+              self.native_image_placeholder_failed(run.source),
+              self.size,
             )
             items.push(
               NativeDrawItem::NativeVisual(
@@ -591,22 +580,11 @@ fn RendererHandle::prepare_native_image_plan(
           }
           None => {
             let start = plan.visual_vertices.length()
-            append_visual_quad(
+            append_native_image_placeholder(
               plan.visual_vertices,
-              run.frame,
-              radius=0.0,
-              brush=native_image_placeholder_brush(run),
-              mode=visual_mode_fill,
-              stroke_width=0.0,
-              blur_radius=0.0,
-              state={
-                opacity: 1.0,
-                transform: run.transform,
-                clip: None,
-                clip_radius: 0.0,
-                clip_empty: false,
-              },
-              size=self.size,
+              run,
+              self.native_image_placeholder_failed(run.source),
+              self.size,
             )
             items.push(
               NativeDrawItem::NativeVisual(
@@ -669,15 +647,107 @@ fn NativeImageResource::release(self : NativeImageResource) -> Unit {
 }
 
 ///|
-fn native_image_placeholder_brush(run : NativeImageRun) -> @core.Brush {
-  @core.Brush::linear_gradient(
-    start=run.frame.origin,
-    end=@core.Point::new(
-      x=run.frame.origin.x + run.frame.size.width,
-      y=run.frame.origin.y + run.frame.size.height,
-    ),
-    start_color=@core.Color::rgba(r=0.72, g=0.78, b=0.86, a=run.opacity),
-    end_color=@core.Color::rgba(r=0.42, g=0.50, b=0.62, a=run.opacity),
+/// Placeholder for an image that is not on screen yet. Same card as the Skia
+/// and Sun renderers (see `moui_skia_renderer/renderer_image.mbt`): a
+/// near-transparent neutral rounded rect with a hairline border, instead of a
+/// full-frame opaque gradient. The visual-quad stream already carries
+/// `radius`/`mode`/`stroke_width`, so the card is two quads and no new
+/// primitive is needed; the centered "picture" glyph the raster renderers draw
+/// is omitted here because the quad stream has no curve/line primitive for it.
+fn append_native_image_placeholder(
+  vertices : Array[VisualVertex],
+  run : NativeImageRun,
+  failed : Bool,
+  size : @core.Size,
+) -> Unit {
+  let radius = native_image_placeholder_radius(run.frame)
+  let state : NativePaintState = {
+    opacity: 1.0,
+    transform: run.transform,
+    clip: None,
+    clip_radius: 0.0,
+    clip_empty: false,
+  }
+  append_visual_quad(
+    vertices,
+    run.frame,
+    radius~,
+    brush=native_image_placeholder_fill(run),
+    mode=visual_mode_fill,
+    stroke_width=0.0,
+    blur_radius=0.0,
+    state~,
+    size~,
+  )
+  append_visual_quad(
+    vertices,
+    run.frame,
+    radius~,
+    brush=native_image_placeholder_border(run, failed),
+    mode=visual_mode_stroke,
+    stroke_width=native_image_placeholder_border_width,
+    blur_radius=0.0,
+    state~,
+    size~,
+  )
+}
+
+///|
+/// True when this source is known to have failed, read from the same two
+/// records the decode path writes.
+fn RendererHandle::native_image_placeholder_failed(
+  self : RendererHandle,
+  source : String,
+) -> Bool {
+  if self.failed_images.get(source).unwrap_or(false) {
+    return true
+  }
+  match self.image_lifecycle.lookup(source) {
+    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) => true
+    _ => false
+  }
+}
+
+///|
+/// Card corner radius, clamped so a box shorter than the radius still gets a
+/// sensible quarter-round instead of an over-rounded pill.
+let native_image_placeholder_radius_max : Double = 8.0
+
+///|
+fn native_image_placeholder_radius(frame : @core.Rect) -> Double {
+  let short = if frame.size.width < frame.size.height {
+    frame.size.width
+  } else {
+    frame.size.height
+  }
+  let half = short / 2.0
+  if half < native_image_placeholder_radius_max {
+    half
+  } else {
+    native_image_placeholder_radius_max
+  }
+}
+
+///|
+let native_image_placeholder_border_width : Double = 1.0
+
+///|
+fn native_image_placeholder_fill(run : NativeImageRun) -> @core.Brush {
+  @core.Brush::solid(
+    @core.Color::rgba(r=0.42, g=0.47, b=0.55, a=0.07 * run.opacity),
+  )
+}
+
+///|
+/// A failed load is drawn firmer than a pending one — "still coming" and "will
+/// never come" should not look identical.
+fn native_image_placeholder_border(
+  run : NativeImageRun,
+  failed : Bool,
+) -> @core.Brush {
+  let alpha = if failed { 0.34 } else { 0.18 }
+  @core.Brush::solid(
+    @core.Color::rgba(r=0.42, g=0.47, b=0.55, a=alpha * run.opacity),
   )
 }
 
