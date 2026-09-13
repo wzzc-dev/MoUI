@@ -181,18 +181,204 @@ fn SunRasterRenderer::draw_image_pixmap(
 }
 
 ///|
+/// Placeholder for an image that is not on screen yet. Same design as the Skia
+/// renderer's (see `moui_skia_renderer/renderer_image.mbt`): a near-transparent
+/// neutral card with a hairline border and a centered "picture" glyph, instead
+/// of a full-frame opaque gradient. Only the primitives differ — this canvas
+/// paints through `@sun_graphics`, which has its own rounded-rect, circle,
+/// polygon and line calls.
 fn SunRasterRenderer::draw_image_placeholder(
   self : SunRasterRenderer,
   image : @core.ImageRun,
   opacity : Double,
 ) -> Unit {
-  self.canvas.fill_rect(
-    image.frame.origin.x,
-    image.frame.origin.y,
-    image.frame.size.width,
-    image.frame.size.height,
-    sun_brush_paint(sun_image_placeholder_brush(image), opacity),
+  let frame = image.frame
+  guard frame.size.width > 0.0 && frame.size.height > 0.0 else { return }
+  let failed = self.sun_image_placeholder_failed(image.source)
+  let radius = sun_image_placeholder_radius(frame)
+  self.canvas.fill_rounded_rect(
+    frame.origin.x,
+    frame.origin.y,
+    frame.size.width,
+    frame.size.height,
+    radius,
+    sun_brush_paint(sun_image_placeholder_fill(image), opacity),
   )
+  self.canvas.stroke_rounded_rect(
+    frame.origin.x,
+    frame.origin.y,
+    frame.size.width,
+    frame.size.height,
+    radius,
+    sun_brush_paint(sun_image_placeholder_border(image, failed), opacity).set_stroke_width(
+      sun_image_placeholder_border_width,
+    ),
+  )
+  match sun_image_placeholder_glyph_box(frame) {
+    Some(box) => self.draw_image_placeholder_glyph(box, image, opacity, failed)
+    None => ()
+  }
+}
+
+///|
+/// Card corner radius, clamped so a box shorter than the radius still gets a
+/// sensible quarter-round instead of an over-rounded pill.
+let sun_image_placeholder_radius_max : Double = 8.0
+
+///|
+fn sun_image_placeholder_radius(frame : @core.Rect) -> Double {
+  let half = sun_image_placeholder_min(frame.size.width, frame.size.height) /
+    2.0
+  if half < sun_image_placeholder_radius_max {
+    half
+  } else {
+    sun_image_placeholder_radius_max
+  }
+}
+
+///|
+fn sun_image_placeholder_min(a : Double, b : Double) -> Double {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn sun_image_placeholder_max(a : Double, b : Double) -> Double {
+  if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+let sun_image_placeholder_border_width : Double = 1.0
+
+///|
+/// Shortest side that still fits a legible glyph; below this the card stands
+/// alone (badges and inline thumbnails are too small to draw into).
+let sun_image_placeholder_glyph_min_side : Double = 48.0
+
+///|
+let sun_image_placeholder_glyph_stroke : Double = 1.5
+
+///|
+fn sun_image_placeholder_fill(run : @core.ImageRun) -> @core.Brush {
+  @core.Brush::solid(
+    @core.Color::rgba(r=0.42, g=0.47, b=0.55, a=0.07 * run.opacity),
+  )
+}
+
+///|
+fn sun_image_placeholder_border(
+  run : @core.ImageRun,
+  failed : Bool,
+) -> @core.Brush {
+  let alpha = if failed { 0.34 } else { 0.18 }
+  @core.Brush::solid(
+    @core.Color::rgba(r=0.42, g=0.47, b=0.55, a=alpha * run.opacity),
+  )
+}
+
+///|
+fn sun_image_placeholder_glyph_brush(
+  run : @core.ImageRun,
+  failed : Bool,
+) -> @core.Brush {
+  let alpha = if failed { 0.62 } else { 0.45 }
+  @core.Brush::solid(
+    @core.Color::rgba(r=0.38, g=0.44, b=0.54, a=alpha * run.opacity),
+  )
+}
+
+///|
+/// True when the source is known to have failed, read from the same lifecycle
+/// record `sun_image_for_source` writes.
+fn SunRasterRenderer::sun_image_placeholder_failed(
+  self : SunRasterRenderer,
+  source : String,
+) -> Bool {
+  match self.image_lifecycle.lookup(source) {
+    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) => true
+    _ => false
+  }
+}
+
+///|
+/// Square glyph box centered in the card, or `None` when the card is too small.
+fn sun_image_placeholder_glyph_box(frame : @core.Rect) -> @core.Rect? {
+  let short = sun_image_placeholder_min(frame.size.width, frame.size.height)
+  if short < sun_image_placeholder_glyph_min_side {
+    return None
+  }
+  let side = sun_image_placeholder_max(
+    short * 0.34,
+    sun_image_placeholder_glyph_min_side * 0.34,
+  )
+  let side = sun_image_placeholder_min(side, 40.0)
+  Some(
+    @core.Rect::new(
+      x=frame.origin.x + (frame.size.width - side) / 2.0,
+      y=frame.origin.y + (frame.size.height - side) / 2.0,
+      width=side,
+      height=side,
+    ),
+  )
+}
+
+///|
+/// The "picture" glyph: rounded frame, sun, peak, plus a slash when the load
+/// failed. Fractions of `box`, so one geometry serves every size.
+fn SunRasterRenderer::draw_image_placeholder_glyph(
+  self : SunRasterRenderer,
+  box : @core.Rect,
+  run : @core.ImageRun,
+  opacity : Double,
+  failed : Bool,
+) -> Unit {
+  let paint = sun_brush_paint(
+    sun_image_placeholder_glyph_brush(run, failed),
+    opacity,
+  )
+  let stroke = sun_image_placeholder_glyph_stroke
+  let at = (fx : Double, fy : Double) => {
+    @sun_graphics.Point::new(
+      x=box.origin.x + box.size.width * fx,
+      y=box.origin.y + box.size.height * fy,
+    )
+  }
+  let side = sun_image_placeholder_min(box.size.width, box.size.height)
+  let inset = stroke / 2.0
+  self.canvas.stroke_rounded_rect(
+    box.origin.x + inset,
+    box.origin.y + inset,
+    box.size.width - stroke,
+    box.size.height - stroke,
+    side * 0.18,
+    paint.set_stroke_width(stroke),
+  )
+  let sun_center = at(0.33, 0.34)
+  self.canvas.fill_circle(sun_center.x, sun_center.y, side * 0.085, paint)
+  self.canvas.fill_polygon(
+    [at(0.16, 0.76), at(0.45, 0.44), at(0.74, 0.76)],
+    paint,
+  )
+  if failed {
+    // Slash across the frame, past both corners so it cannot be mistaken for
+    // part of the picture.
+    let from = at(0.06, 0.06)
+    let to = at(0.94, 0.94)
+    self.canvas.stroke_line(
+      from.x,
+      from.y,
+      to.x,
+      to.y,
+      paint.set_stroke_width(stroke),
+    )
+  }
 }
 
 ///|
@@ -534,19 +720,6 @@ fn sun_image_format_for_bytes(data : Bytes) -> SunImageFormat? {
   } else {
     None
   }
-}
-
-///|
-fn sun_image_placeholder_brush(run : @core.ImageRun) -> @core.Brush {
-  @core.Brush::linear_gradient(
-    start=run.frame.origin,
-    end=@core.Point::new(
-      x=run.frame.origin.x + run.frame.size.width,
-      y=run.frame.origin.y + run.frame.size.height,
-    ),
-    start_color=@core.Color::rgba(r=0.72, g=0.78, b=0.86, a=run.opacity),
-    end_color=@core.Color::rgba(r=0.42, g=0.50, b=0.62, a=run.opacity),
-  )
 }
 
 ///|

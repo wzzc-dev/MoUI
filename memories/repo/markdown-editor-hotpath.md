@@ -29,6 +29,19 @@
   completion updates renderer-owned pixels without a runtime content revision.
   `SkiaRasterRenderer` advances an image-cache generation, clears old layer
   entries, and forces one full-damage frame until the decoded pixels present.
+- The placeholder those layers cache is a near-transparent neutral card
+  (fill alpha 0.07, 1 px border, centered "picture" glyph), for all three
+  renderers — Skia, Sun, WGPU — instead of the old full-frame opaque
+  blue-gray gradient. Two consequences to keep in mind: the card is
+  deliberately translucent so the tinted rounded rect `moui_richtext` paints
+  before `DrawImage` shows through (that is the only theme information a
+  renderer without a palette can get), and the "loading" vs "failed" variants
+  differ only in border/ink alpha, read from `image_lifecycle` (Skia also
+  consults `failed_images`). Cost is a constant handful of raster calls with
+  no text shaping, so a failed image can repaint every frame. The Skia
+  appearance is pinned by pixel tests in
+  `moui_skia_renderer/skia_renderer_image_wbtest.mbt` — reverting the card to
+  a gradient fails them.
 - macOS CPU presentation must use one persistent layer-backed `NSView` and
   replace `CALayer.contents` inside a transaction with actions disabled;
   recreating an `NSImage`/`NSImageView.image` per frame lets AppKit expose a

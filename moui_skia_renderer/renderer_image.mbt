@@ -36,12 +36,258 @@ fn SkiaRasterRenderer::draw_image(
 }
 
 ///|
+/// Draw the placeholder that stands in for an image that is not on screen yet.
+///
+/// Replaces a full-frame diagonal gradient (`(0.72,0.78,0.86)` →
+/// `(0.42,0.50,0.62)`, opaque) that read as a broken render: a large,
+/// high-contrast block in the middle of a document pulls the eye away from the
+/// text and says nothing about the image it stands for.
+///
+/// The card is built from three cheap parts:
+///
+/// 1. A near-transparent neutral fill (alpha 0.07). Low enough that the tinted
+///    rounded rect the rich-text painter already emits before `DrawImage`
+///    (`moui_richtext`'s `rgba(0.18,0.4,0.7,0.08)`) shows through, so the card
+///    picks up the application's own image tint without the renderer needing a
+///    theme it does not have — and stays legible on both a white and a dark
+///    page.
+/// 2. A hairline border, one notch stronger for a failed image than for one
+///    still loading, so the two states differ without a second layout.
+/// 3. A centered "picture" glyph (frame + sun + peak, plus a slash when the
+///    load failed). Drawn only when the short side is at least
+///    [`skia_image_placeholder_glyph_min_side`] — in a 32 px badge row a glyph
+///    is mud, so those boxes keep just the card.
+///
+/// Cost is a constant handful of Skia calls (one rounded fill, one rounded
+/// stroke, one or two paths). No text shaping, no font lookup, no per-pixel
+/// work: a failed image can be repainted every frame without entering the hot
+/// path, which is what keeps placeholder rendering off the load-time budget.
 fn SkiaRasterRenderer::draw_image_placeholder(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   run : @core.ImageRun,
 ) -> Unit {
-  self.draw_brush_rect(canvas, run.frame, skia_image_placeholder_brush(run))
+  let frame = run.frame
+  if frame.size.width <= 0.0 || frame.size.height <= 0.0 {
+    return
+  }
+  let failed = self.skia_image_placeholder_failed(run.source)
+  let rounded = @core.RoundedRect::new(
+    rect=frame,
+    radius=skia_image_placeholder_radius(frame),
+  )
+  self.draw_brush_rounded_rect(
+    canvas,
+    rounded,
+    skia_image_placeholder_fill(run),
+    stroke_width=None,
+  )
+  self.draw_brush_rounded_rect(
+    canvas,
+    rounded,
+    skia_image_placeholder_border(run, failed),
+    stroke_width=Some(skia_image_placeholder_border_width),
+  )
+  match skia_image_placeholder_glyph_box(frame) {
+    Some(box) => self.draw_image_placeholder_glyph(canvas, box, run, failed)
+    None => ()
+  }
+}
+
+///|
+/// Card corner radius, clamped so a box shorter than the radius still gets a
+/// sensible quarter-round instead of an over-rounded pill.
+let skia_image_placeholder_radius_max : Double = 8.0
+
+///|
+fn skia_image_placeholder_radius(frame : @core.Rect) -> Double {
+  let half = frame.size.width.min(frame.size.height) / 2.0
+  if half < skia_image_placeholder_radius_max {
+    half
+  } else {
+    skia_image_placeholder_radius_max
+  }
+}
+
+///|
+let skia_image_placeholder_border_width : Double = 1.0
+
+///|
+/// Shortest side that still fits a legible glyph. Below this the card stands
+/// alone: badges and inline thumbnails are simply too small to draw into.
+let skia_image_placeholder_glyph_min_side : Double = 48.0
+
+///|
+/// Card fill: a neutral cool gray at very low alpha, scaled by the run's own
+/// opacity so a faded image fades its placeholder with it.
+fn skia_image_placeholder_fill(run : @core.ImageRun) -> @core.Brush {
+  @core.Brush::solid(
+    @core.Color::rgba(r=0.42, g=0.47, b=0.55, a=0.07 * run.opacity),
+  )
+}
+
+///|
+/// Card border: the same hue as the fill, three steps up in alpha. A failed
+/// load is drawn firmer than a pending one — "still coming" and "will never
+/// come" should not look identical.
+fn skia_image_placeholder_border(
+  run : @core.ImageRun,
+  failed : Bool,
+) -> @core.Brush {
+  let alpha = if failed { 0.34 } else { 0.18 }
+  @core.Brush::solid(
+    @core.Color::rgba(r=0.42, g=0.47, b=0.55, a=alpha * run.opacity),
+  )
+}
+
+///|
+/// Glyph color: a muted ink one step darker than the border.
+fn skia_image_placeholder_glyph_brush(
+  run : @core.ImageRun,
+  failed : Bool,
+) -> @core.Brush {
+  let alpha = if failed { 0.62 } else { 0.45 }
+  @core.Brush::solid(
+    @core.Color::rgba(r=0.38, g=0.44, b=0.54, a=alpha * run.opacity),
+  )
+}
+
+///|
+/// True when this source is known to have failed: either the decoded-image
+/// failure cache or the lifecycle record. Both are already consulted by
+/// `skia_image_for_source`, so the placeholder reuses the same verdict rather
+/// than inventing a second one.
+fn SkiaRasterRenderer::skia_image_placeholder_failed(
+  self : SkiaRasterRenderer,
+  source : String,
+) -> Bool {
+  if self.failed_images.get(source) is Some(_) {
+    return true
+  }
+  match self.image_lifecycle.lookup(source) {
+    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) => true
+    _ => false
+  }
+}
+
+///|
+/// Square glyph box centered in the card, or `None` when the card is too small
+/// to draw into. The glyph is sized off the short side so it never touches the
+/// border, and capped so a poster-sized image does not get a giant icon.
+fn skia_image_placeholder_glyph_box(frame : @core.Rect) -> @core.Rect? {
+  let short = frame.size.width.min(frame.size.height)
+  if short < skia_image_placeholder_glyph_min_side {
+    return None
+  }
+  let side = (short * 0.34).max(skia_image_placeholder_glyph_min_side * 0.34)
+  let side = side.min(40.0)
+  Some(
+    @core.Rect::new(
+      x=frame.origin.x + (frame.size.width - side) / 2.0,
+      y=frame.origin.y + (frame.size.height - side) / 2.0,
+      width=side,
+      height=side,
+    ),
+  )
+}
+
+///|
+/// The "picture" glyph: a rounded frame, a sun, a peak — and a slash across it
+/// when the load failed. Coordinates are fractions of `box` so one geometry
+/// serves every size.
+fn SkiaRasterRenderer::draw_image_placeholder_glyph(
+  self : SkiaRasterRenderer,
+  canvas : @skia_native.Canvas,
+  box : @core.Rect,
+  run : @core.ImageRun,
+  failed : Bool,
+) -> Unit {
+  let brush = skia_image_placeholder_glyph_brush(run, failed)
+  let stroke = skia_image_placeholder_glyph_stroke
+  let at = (fx : Double, fy : Double) => {
+    @core.Point::new(
+      x=box.origin.x + box.size.width * fx,
+      y=box.origin.y + box.size.height * fy,
+    )
+  }
+  let side = box.size.width.min(box.size.height)
+  // Frame: the outer rounded rectangle, inset by half the stroke so the line
+  // stays inside the glyph box.
+  let inset = stroke / 2.0
+  self.draw_brush_rounded_rect(
+    canvas,
+    @core.RoundedRect::new(
+      rect=@core.Rect::new(
+        x=box.origin.x + inset,
+        y=box.origin.y + inset,
+        width=box.size.width - stroke,
+        height=box.size.height - stroke,
+      ),
+      radius=side * 0.18,
+    ),
+    brush,
+    stroke_width=Some(stroke),
+  )
+  // Sun + peak travel as one filled path: two closed subpaths, so a single
+  // Skia draw fills both.
+  let sun_radius = side * 0.085
+  let sun_center = at(0.33, 0.34)
+  self.draw_path(
+    canvas,
+    @core.PathSpec::new(
+      verbs=skia_image_placeholder_sun_and_peak(at, sun_center, sun_radius),
+      fill=Some(brush),
+      stroke=None,
+      stroke_width=0.0,
+    ),
+  )
+  if failed {
+    // Slash: the one universally read "this did not load" mark. Drawn corner to
+    // corner across the frame, past it at both ends so it cannot be mistaken
+    // for part of the picture.
+    self.draw_path(
+      canvas,
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(at(0.06, 0.06)),
+          @core.PathVerb::LineTo(at(0.94, 0.94)),
+        ],
+        fill=None,
+        stroke=Some(brush),
+        stroke_width=stroke,
+      ),
+    )
+  }
+}
+
+///|
+let skia_image_placeholder_glyph_stroke : Double = 1.5
+
+///|
+/// Sun and peak as one vertex list: the sun is four cubic Béziers (control
+/// offset `r * 0.5523`, the standard circle approximation — `PathVerb` has no
+/// arc primitive), then a closed triangle for the mountain.
+fn skia_image_placeholder_sun_and_peak(
+  at : (Double, Double) -> @core.Point,
+  center : @core.Point,
+  radius : Double,
+) -> Array[@core.PathVerb] {
+  let k = radius * 0.5523
+  let p = (dx : Double, dy : Double) => {
+    @core.Point::new(x=center.x + dx, y=center.y + dy)
+  }
+  [
+    @core.PathVerb::MoveTo(p(0.0, -radius)),
+    @core.PathVerb::CubicTo(p(k, -radius), p(radius, -k), p(radius, 0.0)),
+    @core.PathVerb::CubicTo(p(radius, k), p(k, radius), p(0.0, radius)),
+    @core.PathVerb::CubicTo(p(-k, radius), p(-radius, k), p(-radius, 0.0)),
+    @core.PathVerb::CubicTo(p(-radius, -k), p(-k, -radius), p(0.0, -radius)),
+    @core.PathVerb::Close,
+    @core.PathVerb::MoveTo(at(0.16, 0.76)),
+    @core.PathVerb::LineTo(at(0.45, 0.44)),
+    @core.PathVerb::LineTo(at(0.74, 0.76)),
+    @core.PathVerb::Close,
+  ]
 }
 
 ///|
@@ -245,19 +491,6 @@ fn skia_image_data_uri_bytes(source : String) -> Bytes? {
   Some(@base64.decode(parts[1], ignore_whitespace=true)) catch {
     _ => None
   }
-}
-
-///|
-fn skia_image_placeholder_brush(run : @core.ImageRun) -> @core.Brush {
-  @core.Brush::linear_gradient(
-    start=run.frame.origin,
-    end=@core.Point::new(
-      x=run.frame.origin.x + run.frame.size.width,
-      y=run.frame.origin.y + run.frame.size.height,
-    ),
-    start_color=@core.Color::rgba(r=0.72, g=0.78, b=0.86, a=run.opacity),
-    end_color=@core.Color::rgba(r=0.42, g=0.50, b=0.62, a=run.opacity),
-  )
 }
 
 ///|

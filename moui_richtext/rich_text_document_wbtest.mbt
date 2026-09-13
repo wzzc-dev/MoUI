@@ -522,7 +522,11 @@ test "vertical caret movement steps onto the visible blank line" {
 /// Gap metrics are `scale * base.size`; the products are not exactly
 /// representable in binary floating point, so compare with a tolerance
 /// instead of an exact literal.
-fn blank_gap_height_matches(actual : Double, em : Double, size : Double) -> Bool {
+fn blank_gap_height_matches(
+  actual : Double,
+  em : Double,
+  size : Double,
+) -> Bool {
   let diff = actual - size * em
   (if diff < 0.0 { -diff } else { diff }) < 0.0001
 }
@@ -563,11 +567,7 @@ test "blank line runs alternate separator and visible empty line" {
   // 0.4em inset plus the run. Typora measures 2.34em for one blank line and
   // 4.72em for three in the same reference document.
   let rhythm_em : Array[Double] = [2.35, 4.7, 7.05]
-  let sources = [
-    "123\n\n456",
-    "123\n\n\n\n456",
-    "123\n\n\n\n\n\n456",
-  ]
+  let sources = ["123\n\n456", "123\n\n\n\n456", "123\n\n\n\n\n\n456"]
   for index, source in sources {
     let document = markdown_editor_format_for_selection(
       source,
@@ -575,10 +575,7 @@ test "blank line runs alternate separator and visible empty line" {
       base~,
     )
     let run_height = markdown_editor_blank_gap_run_height(
-      document,
-      base,
-      text_system,
-      640.0,
+      document, base, text_system, 640.0,
     )
     assert_true(blank_gap_height_matches(run_height, run_em[index], 16.0))
     let mut lines = 0
@@ -628,10 +625,7 @@ test "blank lines are pointer targets and the caret line stays a writing line" {
     ) +
     document.blocks[0].inset.bottom
   let run_height = markdown_editor_blank_gap_run_height(
-    document,
-    base,
-    text_system,
-    640.0,
+    document, base, text_system, 640.0,
   )
   for share in [0.25, 0.5, 0.75] {
     match
@@ -661,13 +655,7 @@ test "blank lines are pointer targets and the caret line stays a writing line" {
   // up on the first keystroke.
   inspect(active.blocks[1].inset.top, content="6.4")
   inspect(active.blocks[2].inset.top, content="0")
-  match
-    rich_text_document_caret_rect_at_source(
-      active,
-      5,
-      content,
-      base,
-    ) {
+  match rich_text_document_caret_rect_at_source(active, 5, content, base) {
     Some(rect) => inspect(rect.size.height > 0.0, content="true")
     None => fail("expected a caret rect on the blank writing line")
   }
@@ -709,7 +697,13 @@ fn vertical_caret_step(
     session.source(),
   )
   rich_text_vertical_target_offset(
-    window.document, caret, caret_rect, content, base, text_system, up~,
+    window.document,
+    caret,
+    caret_rect,
+    content,
+    base,
+    text_system,
+    up~,
   )
 }
 
@@ -729,25 +723,68 @@ test "arrow walk keeps distinct offsets for identical paragraphs" {
   let mut caret = 13
   // Each single blank line is a bare paragraph separator, so the walk steps
   // straight from one paragraph to the one above: 8, 3, then the top.
-  caret = vertical_caret_step(session, caret, base, content, text_system, up=true)
+  caret = vertical_caret_step(
+    session,
+    caret,
+    base,
+    content,
+    text_system,
+    up=true,
+  )
   inspect(caret, content="8")
-  caret = vertical_caret_step(session, caret, base, content, text_system, up=true)
+  caret = vertical_caret_step(
+    session,
+    caret,
+    base,
+    content,
+    text_system,
+    up=true,
+  )
   inspect(caret, content="3")
-  caret = vertical_caret_step(session, caret, base, content, text_system, up=true)
+  caret = vertical_caret_step(
+    session,
+    caret,
+    base,
+    content,
+    text_system,
+    up=true,
+  )
   inspect(caret, content="0")
-  caret = vertical_caret_step(session, caret, base, content, text_system, up=true)
+  caret = vertical_caret_step(
+    session,
+    caret,
+    base,
+    content,
+    text_system,
+    up=true,
+  )
   inspect(caret, content="0")
   // And back down: the middle paragraph, then the last one.
   caret = vertical_caret_step(
-    session, caret, base, content, text_system, up=false,
+    session,
+    caret,
+    base,
+    content,
+    text_system,
+    up=false,
   )
   inspect(caret, content="5")
   caret = vertical_caret_step(
-    session, caret, base, content, text_system, up=false,
+    session,
+    caret,
+    base,
+    content,
+    text_system,
+    up=false,
   )
   inspect(caret, content="10")
   caret = vertical_caret_step(
-    session, caret, base, content, text_system, up=false,
+    session,
+    caret,
+    base,
+    content,
+    text_system,
+    up=false,
   )
   inspect(caret, content="10")
 }

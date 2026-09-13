@@ -898,3 +898,97 @@ test "skia image placement records contain and cover sampling geometry" {
   inspect(degenerate.u1, content="1")
   inspect(degenerate.v1, content="1")
 }
+
+// --- Placeholder appearance (issue #103) -------------------------------------
+//
+// The placeholder replaced a full-frame opaque blue-gray gradient
+// ((0.72,0.78,0.86) → (0.42,0.50,0.62)) that read as a broken render. These
+// two tests pin the two properties that made it ugly — it covered the whole
+// box with saturated color, and it looked identical whether the image was
+// still coming or never would.
+
+///|
+test "skia renderer image placeholder is a neutral card with a border and glyph" {
+  guard skia_available() else { return }
+  let missing = "moui-skia-placeholder-style://not-a-file"
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=96.0, height=64.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: missing,
+      frame: @core.Rect::new(x=8.0, y=8.0, width=80.0, height=48.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]) catch {
+    err => fail("expected Skia placeholder render: \{err.message()}")
+  }
+  guard renderer.last_frame() is Some(last) else {
+    fail("expected a presented placeholder frame")
+  }
+  // Interior, away from both the border and the centered glyph: a neutral
+  // surface a few levels below the white page. The old gradient put (184,199,
+  // 219) at this corner, so `min_channel` is what rejects it.
+  assert_true(
+    skia_test_region_is_flat_neutral(
+      last,
+      @core.Rect::new(x=14.0, y=14.0, width=20.0, height=20.0),
+      min_channel=238,
+      tolerance=12,
+    ),
+  )
+  // Border: the left edge must be visibly darker than that interior.
+  let interior = skia_test_region_darkest_channel(
+    last,
+    @core.Rect::new(x=14.0, y=14.0, width=20.0, height=20.0),
+  )
+  let border = skia_test_region_darkest_channel(
+    last,
+    @core.Rect::new(x=8.0, y=18.0, width=2.0, height=12.0),
+  )
+  assert_true(border + 6 < interior)
+  // Glyph: the centered "picture" mark puts ink inside the middle of the card
+  // (an empty card would leave this region at interior lightness).
+  let glyph = skia_test_region_darkest_channel(
+    last,
+    @core.Rect::new(x=38.0, y=22.0, width=20.0, height=20.0),
+  )
+  assert_true(glyph + 20 < interior)
+}
+
+///|
+test "skia renderer image placeholder draws firmer once the load has failed" {
+  // The draw path derives both variants from the same helpers, so comparing the
+  // helpers keeps the distinction pinned without driving the async loader into
+  // a second frame.
+  let run = @core.ImageRun::{
+    source: "moui-skia-placeholder-style://not-a-file",
+    frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=48.0),
+    opacity: 1.0,
+    fit: @core.ImageFit::Contain,
+  }
+  let pending = skia_image_placeholder_alpha(
+    skia_image_placeholder_border(run, false),
+  )
+  let failed = skia_image_placeholder_alpha(
+    skia_image_placeholder_border(run, true),
+  )
+  assert_true(pending > 0.0)
+  assert_true(failed > pending)
+}
+
+///|
+fn skia_image_placeholder_alpha(brush : @core.Brush) -> Double {
+  match brush {
+    @core.Brush::Solid(color) => color.a
+    _ => -1.0
+  }
+}
