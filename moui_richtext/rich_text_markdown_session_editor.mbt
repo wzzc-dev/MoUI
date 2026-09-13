@@ -782,7 +782,7 @@ fn markdown_session_estimated_caret_inset_x(
       max_double(0.0, content_width - rich_block.inset.left),
     )
     return rich_block.inset.left +
-      rich_text_width(rich_block.prefix, block_font, text_system) +
+      rich_text_block_marker_lane(rich_block, block_font, text_system) +
       line_width
   }
   0.0

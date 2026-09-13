@@ -328,26 +328,38 @@ fn append_rich_text_block_runs(
   let mut line = 0
   let mut x = rich_text_block_line_start_x(block, frame, line_widths, line)
   if block.prefix != "" {
-    let width = rich_text_width(block.prefix, block_font, text_system)
-    let prefix_frame = rich_text_text_paint_frame(
+    let width = rich_text_block_marker_lane(block, block_font, text_system)
+    let lane = @core.Rect::new(
       x~,
       y=frame.origin.y,
       width~,
       height=line_heights.get(0).unwrap_or(line_step),
-      line_right=frame.origin.x + frame.size.width,
-      font=block_font,
     )
-    commands.push(
-      @core.DrawCommand::DrawText(
-        @core.TextRun::new(
-          text=block.prefix,
-          frame=prefix_frame,
+    match block.marker {
+      Some(marker) =>
+        append_rich_text_marker_commands(commands, marker, lane, block_font)
+      None => {
+        let prefix_frame = rich_text_text_paint_frame(
+          x~,
+          y=frame.origin.y,
+          width~,
+          height=line_heights.get(0).unwrap_or(line_step),
+          line_right=frame.origin.x + frame.size.width,
           font=block_font,
-          color=block_color,
-          align=@core.TextAlign::TextStart,
-        ),
-      ),
-    )
+        )
+        commands.push(
+          @core.DrawCommand::DrawText(
+            @core.TextRun::new(
+              text=block.prefix,
+              frame=prefix_frame,
+              font=block_font,
+              color=block_color,
+              align=@core.TextAlign::TextStart,
+            ),
+          ),
+        )
+      }
+    }
     x = x + width
   }
   for run in block.runs {

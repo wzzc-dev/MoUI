@@ -192,11 +192,16 @@ test "parse_markdown recognizes plus unordered list markers" {
 }
 
 ///|
-test "markdown_document parses task list items with checkbox prefix" {
+/// Task list items project a vector checkbox marker, not a `☑`/`☐` glyph: the
+/// block keeps a one-char placeholder lane so prefix-indexed caret and
+/// hit-test arithmetic keep working, and the painter draws the box.
+test "markdown_document projects task list items as checkbox markers" {
   let document = markdown_document("- [ ] todo\n- [x] done")
+  let markers = document.blocks.map(block => block.marker)
+  assert_true(markers.contains(Some(RichTextMarker::TaskCheckbox(false))))
+  assert_true(markers.contains(Some(RichTextMarker::TaskCheckbox(true))))
   let prefixes = document.blocks.map(block => block.prefix)
-  assert_true(prefixes.contains("☐ "))
-  assert_true(prefixes.contains("☑ "))
+  assert_true(prefixes.contains(" "))
 }
 
 ///|

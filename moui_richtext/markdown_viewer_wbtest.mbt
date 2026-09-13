@@ -329,6 +329,163 @@ test "markdown_viewer renders ordered list with number prefix" {
 }
 
 ///|
+/// Collect the filled rounded rects of a painted document (marker boxes and
+/// block backgrounds).
+fn mv_layer_fill_rounded_commands(
+  layers : Array[@core.ViewPaintLayer],
+) -> Array[(@core.RoundedRect, @core.Color)] {
+  let boxes : Array[(@core.RoundedRect, @core.Color)] = []
+  for layer in layers {
+    for command in layer.commands {
+      match command {
+        @core.DrawCommand::FillRoundedRect(rounded, color) =>
+          boxes.push((rounded, color))
+        _ => ()
+      }
+    }
+  }
+  boxes
+}
+
+///|
+/// Collect the stroked rounded rects of a painted document.
+fn mv_layer_stroke_rounded_commands(
+  layers : Array[@core.ViewPaintLayer],
+) -> Array[(@core.RoundedRect, @core.Color, Double)] {
+  let boxes : Array[(@core.RoundedRect, @core.Color, Double)] = []
+  for layer in layers {
+    for command in layer.commands {
+      match command {
+        @core.DrawCommand::StrokeRoundedRect(rounded, color, width) =>
+          boxes.push((rounded, color, width))
+        _ => ()
+      }
+    }
+  }
+  boxes
+}
+
+///|
+/// Collect the filled paths of a painted document.
+fn mv_layer_path_commands(
+  layers : Array[@core.ViewPaintLayer],
+) -> Array[@core.PathSpec] {
+  let paths : Array[@core.PathSpec] = []
+  for layer in layers {
+    for command in layer.commands {
+      match command {
+        @core.DrawCommand::DrawPath(path) => paths.push(path)
+        _ => ()
+      }
+    }
+  }
+  paths
+}
+
+///|
+/// Paint one markdown source through the shared document painter.
+fn mv_paint(source : String) -> Array[@core.ViewPaintLayer] {
+  let content = @core.Rect::new(x=0.0, y=0.0, width=400.0, height=500.0)
+  let layers : Array[@core.ViewPaintLayer] = []
+  append_rich_text_document_layers(
+    layers,
+    markdown_document(source, base=mv_font()),
+    content,
+    mv_font(),
+    @core.Color::black(),
+    text_system=mv_text_system(),
+    clip_rect=Some(content),
+  )
+  layers
+}
+
+///|
+/// A checked task draws a filled accent-colored box with a white vector
+/// checkmark, and never paints the `☑` glyph as text.
+test "markdown_viewer paints checked task as filled checkbox with checkmark" {
+  let layers = mv_paint("- [x] done")
+  let boxes = mv_layer_fill_rounded_commands(layers)
+  assert_true(
+    boxes.any(box => {
+      let (rounded, color) = box
+      color == rich_text_marker_accent_color() &&
+      rounded.rect.size.width == mv_font().size &&
+      rounded.radius > 0.0
+    }),
+  )
+  let paths = mv_layer_path_commands(layers)
+  assert_true(
+    paths.any(path => {
+      path.fill == Some(@core.Brush::solid(@core.Color::white())) &&
+      path.verbs.length() == 7
+    }),
+  )
+  let runs = mv_layer_text_commands(layers)
+  assert_false(runs.iter().any(run => run.text.contains("☑")))
+}
+
+///|
+/// An unchecked task draws only a gray rounded outline: no fill, no
+/// checkmark.
+test "markdown_viewer paints unchecked task as outline checkbox" {
+  let layers = mv_paint("- [ ] todo")
+  let boxes = mv_layer_fill_rounded_commands(layers)
+  assert_false(boxes.any(box => box.1 == rich_text_marker_accent_color()))
+  let strokes = mv_layer_stroke_rounded_commands(layers)
+  assert_true(
+    strokes.any(stroke => {
+      let (rounded, color, width) = stroke
+      // Inset by half the stroke, so the outline stays inside the box.
+      rounded.rect.size.width + width == mv_font().size &&
+      color == rich_text_marker_outline_color() &&
+      width > 0.0
+    }),
+  )
+  assert_true(mv_layer_path_commands(layers).is_empty())
+  let runs = mv_layer_text_commands(layers)
+  assert_false(runs.iter().any(run => run.text.contains("☐")))
+}
+
+///|
+/// The checkmark polygon stays inside its box.
+test "markdown_viewer checkmark path stays inside the marker box" {
+  let layers = mv_paint("- [x] done")
+  let boxes = mv_layer_fill_rounded_commands(layers)
+  guard boxes.length() >= 1 else { fail("expected a filled checkbox box") }
+  let box = boxes[0].0.rect
+  let paths = mv_layer_path_commands(layers)
+  guard paths.length() >= 1 else { fail("expected a checkmark path") }
+  for verb in paths[0].verbs {
+    match verb {
+      @core.PathVerb::MoveTo(point) | @core.PathVerb::LineTo(point) => {
+        assert_true(
+          point.x >= box.origin.x && point.x <= box.origin.x + box.size.width,
+        )
+        assert_true(
+          point.y >= box.origin.y && point.y <= box.origin.y + box.size.height,
+        )
+      }
+      _ => ()
+    }
+  }
+}
+
+///|
+/// The marker lane reserves room for the box plus the label gap: the task
+/// label must start at or after the box's right edge, otherwise the checkbox
+/// would sit on top of the text at some font size.
+test "markdown_viewer keeps task label clear of the marker box" {
+  let layers = mv_paint("- [x] done")
+  let boxes = mv_layer_fill_rounded_commands(layers)
+  guard boxes.length() >= 1 else { fail("expected a filled checkbox box") }
+  let box = boxes[0].0.rect
+  let runs = mv_layer_text_commands(layers)
+  let label = runs.iter().find_first(run => run.text == "done")
+  guard label is Some(run) else { fail("expected the task label run") }
+  assert_true(run.frame.origin.x >= box.origin.x + box.size.width)
+}
+
+///|
 test "markdown_viewer renders blockquote with left border" {
   let document = markdown_document("> Quoted text", base=mv_font())
   let content = @core.Rect::new(x=0.0, y=0.0, width=400.0, height=500.0)
