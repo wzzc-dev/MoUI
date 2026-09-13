@@ -439,22 +439,3 @@ fn rich_text_document_view_block_visual_text(block : RichTextBlock) -> String {
   }
   parts.join("")
 }
-
-///|
-fn rich_text_document_view_insert_breaks(
-  value : String,
-  breaks : Array[Int],
-) -> String {
-  let chars = value.to_array()
-  let output : Array[Char] = []
-  for index, ch in chars {
-    output.push(ch)
-    let boundary = index + 1
-    if breaks.any(value => value == boundary) &&
-      ch != '\n' &&
-      (boundary >= chars.length() || chars[boundary] != '\n') {
-      output.push('\n')
-    }
-  }
-  String::from_array(output)
-}
