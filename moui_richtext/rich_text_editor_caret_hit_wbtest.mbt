@@ -260,3 +260,328 @@ test "caret rect stays inside the clicked block's painted band" {
   }
   assert_true(checked >= 6)
 }
+
+///|
+/// Table cells wrap instead of clipping, rows grow with their tallest cell,
+/// clicks map into the wrapped line, and selection bands follow the cell
+/// geometry instead of the block's text-line box.
+test "table cells wrap and selection follows cell geometry" {
+  let source = "| 平台 | 形态 | 说明 |\n| --- | --- | --- |\n| HarmonyOS | experimental | 同上；已签名真机的完整 signing 流程待补充 |\n"
+  let session = MarkdownDocumentSession::new(source)
+  let font = @core.FontSpec::new(size=17.0)
+  let text_system = @core.TextSystem::fallback()
+  let content_width = 960.0
+  let window = session.rich_text_window(
+    { caret: 0, selection: None },
+    base=font,
+    scroll_y=0.0,
+    viewport_height=900.0,
+    overscan=0.0,
+    content_width~,
+  )
+  let content = @core.Rect::new(x=0.0, y=0.0, width=content_width, height=900.0)
+  let window_content = window.content_rect(content)
+  let mut table_block : RichTextBlock? = None
+  let mut table_y = 0.0
+  let mut y = window_content.origin.y
+  for block in window.document.blocks {
+    let line_height = rich_text_block_line_height(
+      block,
+      font,
+      text_system,
+      block_width=window_content.size.width,
+    )
+    if block.table is Some(_) {
+      table_block = Some(block)
+      table_y = y
+    }
+    y = y + line_height + block.inset.top + block.inset.bottom
+  }
+  let block = match table_block {
+    Some(block) => block
+    None => fail("table block missing")
+  }
+  let table = match block.table {
+    Some(table) => table
+    None => fail("table missing")
+  }
+  let frame = @core.Rect::new(
+    x=window_content.origin.x + block.inset.left,
+    y=table_y + block.inset.top,
+    width=max_double(
+      0.0,
+      window_content.size.width - block.inset.left - block.inset.right,
+    ),
+    height=1000.0,
+  )
+  let layout = rich_text_table_layout(
+    table,
+    block,
+    font,
+    frame_width=frame.size.width,
+    text_system~,
+  )
+  // 说明 column (index 2) text is too long for its column: it must wrap and
+  // the row must grow past the single-line row height.
+  let last_row = layout.rows[layout.rows.length() - 1]
+  let long_cell = last_row.cells[2]
+  assert_true(long_cell.lines.length() >= 2)
+  assert_true(last_row.height > table.row_height)
+  let mut wrapped_text = ""
+  for line in long_cell.lines {
+    wrapped_text = wrapped_text + line.text
+  }
+  assert_true(wrapped_text.contains("signing"))
+  assert_true(wrapped_text.contains("待补充"))
+  // A click on the wrapped cell's SECOND line resolves into the cell's source
+  // range, past the first line's characters.
+  let cell_range = match table.rows[table.rows.length() - 1][2].source_range {
+    Some(range) => range
+    None => fail("cell source range missing")
+  }
+  let second_line = long_cell.lines[1]
+  let click_y = frame.origin.y +
+    layout.row_top(layout.rows.length() - 1) +
+    table.cell_padding.top +
+    layout.line_step * 1.5
+  let click_x = frame.origin.x +
+    layout.column_width * 2.0 +
+    table.cell_padding.left +
+    4.0
+  let caret = rich_text_document_source_offset_at_point(
+      window.document,
+      @core.Point::new(x=click_x, y=click_y),
+      window_content,
+      font,
+      text_system,
+    )
+    .unwrap_or(-1)
+  assert_true(caret >= cell_range.start && caret <= cell_range.end)
+  assert_true(caret >= cell_range.start + second_line.start)
+  // Selecting part of the cell draws the highlight over the cell band, not
+  // the block's first text line.
+  let sel_start = cell_range.start + second_line.start
+  let sel_end = cell_range.start + second_line.end
+  let commands : Array[@core.DrawCommand] = []
+  append_rich_text_selection_commands(
+    commands,
+    window.document,
+    window_content,
+    font,
+    text_system,
+    Some(@core.TextRange::new(start=sel_start, end=sel_end)),
+  )
+  let mut has_band_in_row = false
+  for command in commands {
+    match command {
+      @core.DrawCommand::FillRect(rect, _) =>
+        if rect.origin.y >= frame.origin.y +
+          layout.row_top(layout.rows.length() - 1) &&
+          rect.origin.y <
+          frame.origin.y +
+          layout.row_top(layout.rows.length() - 1) +
+          last_row.height {
+          has_band_in_row = true
+        }
+      _ => ()
+    }
+  }
+  assert_true(has_band_in_row)
+}
+
+///|
+/// The caret drawn for a click inside a wrapped table cell must sit inside
+/// that cell's row band (previously the walk could push it out of view).
+test "table caret rect stays inside the clicked cell band" {
+  let source = "| 平台 | 形态 | 说明 |\n| --- | --- | --- |\n| HarmonyOS | experimental | 同上；已签名真机的完整 signing 流程待补充 |\n"
+  let session = MarkdownDocumentSession::new(source)
+  let font = @core.FontSpec::new(size=17.0)
+  let text_system = @core.TextSystem::fallback()
+  let content_width = 960.0
+  let window = session.rich_text_window(
+    { caret: 0, selection: None },
+    base=font,
+    scroll_y=0.0,
+    viewport_height=900.0,
+    overscan=0.0,
+    content_width~,
+  )
+  let content = @core.Rect::new(x=0.0, y=0.0, width=content_width, height=900.0)
+  let window_content = window.content_rect(content)
+  let mut table_block : RichTextBlock? = None
+  let mut table_y = 0.0
+  let mut y = window_content.origin.y
+  for block in window.document.blocks {
+    let line_height = rich_text_block_line_height(
+      block,
+      font,
+      text_system,
+      block_width=window_content.size.width,
+    )
+    if block.table is Some(_) {
+      table_block = Some(block)
+      table_y = y
+    }
+    y = y + line_height + block.inset.top + block.inset.bottom
+  }
+  let block = match table_block {
+    Some(block) => block
+    None => fail("table block missing")
+  }
+  let table = match block.table {
+    Some(table) => table
+    None => fail("table missing")
+  }
+  let frame = @core.Rect::new(
+    x=window_content.origin.x + block.inset.left,
+    y=table_y + block.inset.top,
+    width=max_double(
+      0.0,
+      window_content.size.width - block.inset.left - block.inset.right,
+    ),
+    height=1000.0,
+  )
+  let layout = rich_text_table_layout(
+    table,
+    block,
+    font,
+    frame_width=frame.size.width,
+    text_system~,
+  )
+  let last_row_index = layout.rows.length() - 1
+  let row_top = frame.origin.y + layout.row_top(last_row_index)
+  let row_height = layout.rows[last_row_index].height
+  let cell_range = match table.rows[last_row_index][2].source_range {
+    Some(range) => range
+    None => fail("cell source range missing")
+  }
+  // Click mid first line of the wrapped cell.
+  let click = @core.Point::new(
+    x=frame.origin.x + layout.column_width * 2.0 + 30.0,
+    y=row_top + table.cell_padding.top + layout.line_step * 0.5,
+  )
+  let caret = rich_text_document_source_offset_at_point(
+      window.document,
+      click,
+      window_content,
+      font,
+      text_system,
+    )
+    .unwrap_or(-1)
+  assert_true(caret >= cell_range.start && caret <= cell_range.end)
+  let rect = rich_text_document_caret_rect_at_source(
+    window.document,
+    caret,
+    window_content,
+    font,
+    text_system~,
+  )
+  let rect = match rect {
+    Some(rect) => rect
+    None => fail("table caret rect missing")
+  }
+  assert_true(
+    rect.origin.y >= row_top - 1.0 &&
+    rect.origin.y + rect.size.height <= row_top + row_height + 1.0,
+  )
+}
+
+///|
+/// With the table partially scrolled, a click on a visible row must draw the
+/// caret in THAT row (walk y-accumulation must match the painted layout).
+test "table caret lands in clicked row while scrolled" {
+  let source = "# Title\n\nIntro paragraph before the table.\n\n| 平台 | 说明 |\n| --- | --- |\n| macOS | 产品主线（证据完备） |\n| Web | 产品主线（wasm-gc） |\n| Windows | 产品主线（证据完备） |\n| HarmonyOS | 同上；已签名真机的完整 smoke 仍待补齐 |\n"
+  let session = MarkdownDocumentSession::new(source)
+  let font = @core.FontSpec::new(size=17.0)
+  let text_system = @core.TextSystem::fallback()
+  let content_width = 960.0
+  let viewport_height = 640.0
+  let needle = "Windows"
+  let chars = source.to_array()
+  let needle_chars = needle.to_array()
+  let mut caret_anchor = 0
+  for start in 0..=(chars.length() - needle_chars.length()) {
+    let mut matched = true
+    for offset in 0..<needle_chars.length() {
+      if chars[start + offset] != needle_chars[offset] {
+        matched = false
+        break
+      }
+    }
+    if matched {
+      caret_anchor = start
+      break
+    }
+  }
+  let window = session.rich_text_window(
+    { caret: caret_anchor, selection: None },
+    base=font,
+    scroll_y=120.0,
+    viewport_height~,
+    overscan=0.0,
+    content_width~,
+  )
+  let content = @core.Rect::new(x=0.0, y=0.0, width=content_width, height=viewport_height)
+  let window_content = window.content_rect(content)
+  // Painted bands.
+  let mut y = window_content.origin.y
+  let bands : Array[@core.Rect] = []
+  for block in window.document.blocks {
+    let line_height = rich_text_block_line_height(
+      block,
+      font,
+      text_system,
+      block_width=window_content.size.width,
+    )
+    if block.table is Some(_) {
+      let frame = @core.Rect::new(
+        x=window_content.origin.x + block.inset.left,
+        y=y + block.inset.top,
+        width=max_double(
+          0.0,
+          window_content.size.width - block.inset.left - block.inset.right,
+        ),
+        height=line_height,
+      )
+      let table = match block.table { Some(t) => t; None => fail("table") }
+      let layout = rich_text_table_layout(
+        table, block, font, frame_width=frame.size.width, text_system~,
+      )
+      for row_index, row in table.rows {
+        if row_index == 0 { continue }
+        let row_top = frame.origin.y + layout.row_top(row_index)
+        let row_bottom = row_top + layout.rows[row_index].height
+        bands.push(@core.Rect::new(x=frame.origin.x, y=row_top, width=frame.size.width, height=row_bottom - row_top))
+      }
+    }
+    y = y + line_height + block.inset.top + block.inset.bottom
+  }
+  // Click the macOS row (first data row) at its visible band center.
+  let mac_band = bands[0]
+  let click = @core.Point::new(
+    x=mac_band.origin.x + 40.0,
+    y=mac_band.origin.y + mac_band.size.height * 0.5,
+  )
+  assert_true(click.y >= window_content.origin.y && click.y <= window_content.origin.y + viewport_height)
+  let caret = rich_text_document_source_offset_at_point(
+      window.document,
+      click,
+      window_content,
+      font,
+      text_system,
+    )
+    .unwrap_or(-1)
+  let rect = rich_text_document_caret_rect_at_source(
+    window.document,
+    caret,
+    window_content,
+    font,
+    text_system~,
+  )
+  let rect = match rect { Some(r) => r; None => fail("caret rect missing") }
+  // The caret must sit in the same band that was clicked.
+  assert_true(
+    rect.origin.y >= mac_band.origin.y - 1.0 &&
+    rect.origin.y <= mac_band.origin.y + mac_band.size.height + 1.0,
+  )
+}
