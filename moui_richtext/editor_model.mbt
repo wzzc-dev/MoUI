@@ -283,36 +283,48 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
 ///|
 /// `char_length` decodes the whole UTF-8 buffer, and the editor helpers
 /// call it on the same source document for every block conversion, caret
-/// clamp, and substring. Memoize the last two (source, length) pairs so
+/// clamp, and substring. Memoize the last few (source, length) pairs so
 /// one keystroke pays the scan at most once even though the control's
 /// new source and the session's previous source alternate; the runtime
 /// is single-threaded. Comparisons are pointer-identity (`phys_equal`):
 /// the sources are long-lived objects per revision, and a content
 /// comparison would itself scan megabytes on every miss.
-let markdown_editor_text_length_cache : Ref[(String, Int)] = Ref(("", -1))
+///
+/// Strings below `MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_MIN_UNITS` decode in
+/// negligible time and bypass the cache entirely — the 197 call sites on
+/// markers, prefixes, and block slices would otherwise evict the cached
+/// whole-document sources several times per keystroke and force a fresh
+/// multi-megabyte decode for each.
+const MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_MIN_UNITS : Int = 256
+
+const MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_SLOTS : Int = 4
 
 ///|
-let markdown_editor_text_length_cache_prev : Ref[(String, Int)] = Ref(("", -1))
+let markdown_editor_text_length_cache : Ref[Array[(String, Int)]] = Ref([])
 
 ///|
 pub fn markdown_editor_text_length(source : String) -> Int {
-  let cached = markdown_editor_text_length_cache.val
-  if cached.1 >= 0 && physical_equal(cached.0, source) {
-    cached.1
-  } else {
-    let previous = markdown_editor_text_length_cache_prev.val
-    if previous.1 >= 0 && physical_equal(previous.0, source) {
-      // Swap the slots so an A/B/A/B alternation keeps both entries hot.
-      markdown_editor_text_length_cache_prev.val = cached
-      markdown_editor_text_length_cache.val = previous
-      previous.1
-    } else {
-      let length = source.char_length()
-      markdown_editor_text_length_cache_prev.val = cached
-      markdown_editor_text_length_cache.val = (source, length)
-      length
+  if source.length() < MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_MIN_UNITS {
+    return source.char_length()
+  }
+  let cache = markdown_editor_text_length_cache.val
+  for entry in cache {
+    if physical_equal(entry.0, source) {
+      return entry.1
     }
   }
+  let length = source.char_length()
+  // Most-recent first, capped: per keystroke the working set is the
+  // control's new source and the session's previous source, plus at most
+  // a transient whole-source string from the session bookkeeping.
+  let next : Array[(String, Int)] = [(source, length)]
+  for entry in cache {
+    if next.length() < MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_SLOTS {
+      next.push(entry)
+    }
+  }
+  markdown_editor_text_length_cache.val = next
+  length
 }
 
 ///|
