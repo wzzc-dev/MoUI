@@ -338,42 +338,29 @@ fn rich_text_document_view_wrap_block(
   if block.runs.any(run => run.image_source is Some(_)) {
     return block
   }
+  // Break lines on `TextSystem::measure_text` — the same measurement the
+  // draw pass uses for its glyph runs. SkParagraph shapes fallback runs
+  // slightly differently, and that drift used to push the line's last glyph
+  // past the paint frame's clip edge (a half-drawn 练/宿 at line ends).
   let available_width = max_double(
     1.0,
     width - block.inset.left - block.inset.right,
   )
-  let visual = rich_text_document_view_block_visual_text(block)
-  let wrap_font = rich_text_document_view_wrap_font(
-    block, visual, base_font, text_system,
+  let soft_breaks = rich_text_measure_based_soft_breaks(
+    block,
+    available_width~,
+    base_font~,
+    text_system~,
   )
-  let layout = text_system.layout_paragraph(
-    @core.TextLayoutInput::new(
-      text=visual,
-      font=wrap_font,
-      max_width=available_width,
-    ),
-  )
-  if layout.lines.length() <= 1 {
-    return block
-  }
-  let soft_breaks : Array[Int] = []
-  let visual_length = visual.to_array().length()
-  for index, line in layout.lines {
-    if index + 1 < layout.lines.length() &&
-      line.text_range.end > 0 &&
-      line.text_range.end < visual_length {
-      soft_breaks.push(line.text_range.end)
-    }
-  }
   if soft_breaks.is_empty() {
     return block
   }
   // The no-double-newline guard must look at the JOINED visual text: a
-  // layout line boundary can sit exactly where one run ends and the next
-  // run starts with '\n' (a hard break in the source). Checking only the
+  // wrap boundary can sit exactly where one run ends and the next run
+  // starts with '\n' (a hard break in the source). Checking only the
   // run's own text would inject a second newline there and render an
   // extra empty line between the two halves of the paragraph.
-  let visual_chars = visual.to_array()
+  let visual_chars = rich_text_document_view_block_visual_text(block).to_array()
   let visual_length = visual_chars.length()
   let runs : Array[RichTextRun] = []
   let mut offset = block.prefix.to_array().length()

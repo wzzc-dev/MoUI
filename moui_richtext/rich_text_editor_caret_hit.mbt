@@ -561,12 +561,20 @@ fn append_rich_text_selection_commands(
           ),
           height=line_height,
         )
-        match rich_text_block_selection_visual_range(block, selection) {
-          Some(range) =>
-            append_rich_text_block_selection_rect(
-              commands, block, range, frame, base_font, text_system,
+        match block.table {
+          // 表格按单元格几何绘制高亮；文本块仍走行盒路径。
+          Some(table) =>
+            append_rich_text_table_selection_rects(
+              commands, block, table, frame, selection, base_font, text_system,
             )
-          None => ()
+          None =>
+            match rich_text_block_selection_visual_range(block, selection) {
+              Some(range) =>
+                append_rich_text_block_selection_rect(
+                  commands, block, range, frame, base_font, text_system,
+                )
+              None => ()
+            }
         }
         y = y + block_height
       }
@@ -626,6 +634,96 @@ fn rich_text_block_selection_visual_range(
 }
 
 ///|
+
+///|
+/// Table selection highlight: per cell, intersect the selection with the
+/// cell's source range and draw one band per covered visual line, matching
+/// the table painter's per-line geometry. Cells without source ranges (the
+/// read-only viewer) contribute nothing.
+fn append_rich_text_table_selection_rects(
+  commands : Array[@core.DrawCommand],
+  block : RichTextBlock,
+  table : RichTextTable,
+  frame : @core.Rect,
+  selection : @core.TextRange,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+) -> Unit {
+  let layout = rich_text_table_layout(
+    table,
+    block,
+    base_font,
+    frame_width=frame.size.width,
+    text_system~,
+  )
+  for row_index, row_layout in layout.rows {
+    if row_index >= table.rows.length() {
+      continue
+    }
+    let table_row = table.rows[row_index]
+    let row_y = frame.origin.y + layout.row_top(row_index)
+    for column_index, cell_layout in row_layout.cells {
+      if column_index >= table_row.length() {
+        continue
+      }
+      let cell = table_row[column_index]
+      let range = match cell.source_range {
+        Some(range) => range
+        None => continue
+      }
+      if selection.end <= range.start || selection.start >= range.end {
+        continue
+      }
+      let chars = cell.text.to_array()
+      let cs = @core.clamp_int(selection.start - range.start, 0, chars.length())
+      let ce = @core.clamp_int(selection.end - range.start, 0, chars.length())
+      if ce <= cs {
+        continue
+      }
+      let cell_x = frame.origin.x +
+        layout.column_width * column_index.to_double()
+      let inner_x = cell_x + table.cell_padding.left
+      for line_index, line in cell_layout.lines {
+        let s = @core.max_int(cs, line.start)
+        let e = @core.min_int(ce, line.end)
+        if e <= s {
+          continue
+        }
+        let line_chars = line.text.to_array()
+        let before = String::from_array(line_chars[0:(s - line.start)])
+        let covered = String::from_array(line_chars[0:(e - line.start)])
+        let text_x = match cell.align.unwrap_or(@core.TextAlign::TextStart) {
+          TextStart => inner_x
+          TextCenter =>
+            inner_x +
+            max_double(0.0, (layout.cell_inner_width - line.width) / 2.0)
+          TextEnd =>
+            inner_x + max_double(0.0, layout.cell_inner_width - line.width)
+        }
+        let x0 = text_x +
+          rich_text_width(before, cell_layout.font, text_system)
+        let x1 = text_x +
+          rich_text_width(covered, cell_layout.font, text_system)
+        if x1 > x0 {
+          commands.push(
+            @core.DrawCommand::FillRect(
+              @core.Rect::new(
+                x=x0,
+                y=row_y +
+                table.cell_padding.top +
+                layout.line_step * line_index.to_double() +
+                3.0,
+                width=x1 - x0,
+                height=max_double(10.0, layout.line_step - 6.0),
+              ),
+              @core.Color::blue().with_alpha(0.18),
+            ),
+          )
+        }
+      }
+    }
+  }
+}
 
 ///|
 /// One highlight band per visual line the range touches. With soft-wrap
@@ -1575,14 +1673,25 @@ fn rich_text_block_table_source_offset_at_point(
       if row_count == 0 || column_count == 0 || table.row_height <= 0.0 {
         return None
       }
-      let row_index = @core.clamp_int(
-        ((point.y - frame.origin.y) / table.row_height).floor().to_int(),
-        0,
-        row_count - 1,
+      let layout = rich_text_table_layout(
+        table,
+        block,
+        base_font,
+        frame_width=frame.size.width,
+        text_system~,
       )
-      let column_width = frame.size.width / column_count.to_double()
+      // Walk the dynamic row heights; a click past the last row clamps into
+      // it so dragging below the table keeps editing its final row.
+      let mut row_index = row_count - 1
+      for index in 0..<row_count {
+        let top = frame.origin.y + layout.row_top(index)
+        if point.y < top + layout.rows[index].height {
+          row_index = index
+          break
+        }
+      }
       let column_index = @core.clamp_int(
-        ((point.x - frame.origin.x) / column_width).floor().to_int(),
+        ((point.x - frame.origin.x) / layout.column_width).floor().to_int(),
         0,
         column_count - 1,
       )
@@ -1594,67 +1703,83 @@ fn rich_text_block_table_source_offset_at_point(
       match cell.source_range {
         Some(range) => {
           // 与渲染端 (append_rich_text_block_table) 保持一致的几何：
-          // cell 文本 frame = cell_frame.inset(cell_padding)，按 cell.align 决定 x 起点。
-          let cell_x = frame.origin.x + column_width * column_index.to_double()
+          // cell 文本按行绘制，行 frame = cell_frame.inset(cell_padding)，
+          // 按 cell.align 决定每行 x 起点。
+          let cell_x = frame.origin.x +
+            layout.column_width * column_index.to_double()
           let inner_x = cell_x + table.cell_padding.left
-          let inner_width = max_double(
-            0.0,
-            column_width - table.cell_padding.left - table.cell_padding.right,
-          )
+          let inner_width = layout.cell_inner_width
           // 空 cell 直接钳到 range.start，避免后续除零/无效测量。
           if range.end <= range.start || cell.text == "" {
             return Some(range.start)
           }
-          let base_block_font = rich_text_block_font(block, base_font)
-          // 渲染端对 header cell 加重 weight=700，body 用 400。
-          let cell_font = if cell.header {
-            { ..base_block_font, weight: 700 }
-          } else {
-            { ..base_block_font, weight: 400 }
-          }
-          let text_width = rich_text_width(cell.text, cell_font, text_system)
-          if text_width <= 0.0 {
-            return Some(range.start)
+          let row_layout = layout.rows[row_index]
+          let cell_layout = row_layout.cells[column_index]
+          let cell_font = cell_layout.font
+          // 行按 y 选择；拖到单元格底部时钳在最后一行。
+          let cell_top = frame.origin.y + layout.row_top(row_index)
+          let line_index = @core.clamp_int(
+            ((point.y - cell_top - table.cell_padding.top) /
+            layout.line_step)
+            .floor()
+            .to_int(),
+            0,
+            cell_layout.lines.length() - 1,
+          )
+          let line = cell_layout.lines[line_index]
+          if line.end <= line.start {
+            return Some(
+              @core.clamp_int(range.start + line.start, range.start, range.end),
+            )
           }
           let text_x = match cell.align.unwrap_or(@core.TextAlign::TextStart) {
             TextStart => inner_x
-            TextCenter => inner_x + (inner_width - text_width) / 2.0
-            TextEnd => inner_x + inner_width - text_width
+            TextCenter =>
+              inner_x + max_double(0.0, (inner_width - line.width) / 2.0)
+            TextEnd => inner_x + max_double(0.0, inner_width - line.width)
           }
-          let text_x_end = text_x + text_width
-          // 点击落在文本左右两侧空白时，clamp 到 range 边界。
+          let text_x_end = text_x + line.width
+          // 点击落在文本左右两侧空白时，clamp 到该行文本边界。
           if point.x < text_x {
-            return Some(range.start)
+            return Some(
+              @core.clamp_int(range.start + line.start, range.start, range.end),
+            )
           }
           if point.x > text_x_end {
-            return Some(range.end)
+            return Some(
+              @core.clamp_int(range.start + line.end, range.start, range.end),
+            )
           }
           // 点击落在文本渲染范围内：按逐字符中点命中，再钳到图形素边界。
           // 参考 rich_text_run_visual_offset_at_x 的 for index in 0..<chars.length() 分支。
           let chars = cell.text.to_array()
-          let boundaries = @core.TextGraphemeBoundaries::new(text=cell.text)
-          let mut local_offset = chars.length()
-          for index in 0..<chars.length() {
+          let line_chars = line.end - line.start
+          let mut local_offset = line_chars
+          for index in 0..<line_chars {
             let before = rich_text_width(
-              String::from_array(chars[0:index]),
+              String::from_array(
+                chars[line.start:line.start + index],
+              ),
               cell_font,
               text_system,
             )
             let after = rich_text_width(
-              String::from_array(chars[0:index + 1]),
+              String::from_array(
+                chars[line.start:line.start + index + 1],
+              ),
               cell_font,
               text_system,
             )
             if point.x < text_x + (before + after) / 2.0 {
-              local_offset = boundaries.nearest_boundary(index)
+              local_offset = index
               break
             }
           }
-          if local_offset == chars.length() {
-            local_offset = boundaries.nearest_boundary(chars.length())
-          }
+          let line_boundaries = @core.TextGraphemeBoundaries::new(text=line.text)
+          let char_offset = line.start +
+            line_boundaries.nearest_boundary(local_offset)
           Some(
-            @core.clamp_int(range.start + local_offset, range.start, range.end),
+            @core.clamp_int(range.start + char_offset, range.start, range.end),
           )
         }
         None => None
@@ -1675,14 +1800,18 @@ fn rich_text_block_table_caret_rect(
 ) -> @core.Rect {
   let column_count = rich_text_table_column_count(table)
   let row_count = table.rows.length()
-  let column_width = if column_count > 0 {
-    frame.size.width / column_count.to_double()
-  } else {
-    0.0
-  }
+  // 与渲染端 (append_rich_text_block_table) 一致的动态行布局。
+  let layout = rich_text_table_layout(
+    table,
+    block,
+    base_font,
+    frame_width=frame.size.width,
+    text_system~,
+  )
+  let column_width = layout.column_width
   // 默认 caret 矩形：表格起点。
   let base_font_resolved = rich_text_block_font(block, base_font)
-  let line_step = rich_text_block_line_step(block, base_font, text_system)
+  let line_step = layout.line_step
   let caret_rect = rich_text_cursor_rect_at(
     frame.origin.x,
     @core.Rect::new(
@@ -1763,9 +1892,9 @@ fn rich_text_block_table_caret_rect(
     Some(c) => c
     None => return caret_rect
   }
-  // 与渲染端一致的 cell 几何。
+  // 与渲染端一致的 cell 几何（行高随换行动态增长）。
   let cell_x = frame.origin.x + column_width * found_col.to_double()
-  let row_y = frame.origin.y + table.row_height * found_row.to_double()
+  let row_y = frame.origin.y + layout.row_top(found_row)
   let text_frame = @core.Rect::new(
     x=cell_x + table.cell_padding.left,
     y=row_y + table.cell_padding.top,
@@ -1773,7 +1902,7 @@ fn rich_text_block_table_caret_rect(
       0.0,
       column_width - table.cell_padding.left - table.cell_padding.right,
     ),
-    height=table.row_height - table.cell_padding.top - table.cell_padding.bottom,
+    height=layout.line_step,
   )
   // cell 字体（header 加重，与渲染端一致）。
   let cell_font = if cell.header {
@@ -1793,21 +1922,41 @@ fn rich_text_block_table_caret_rect(
         0,
         cell.text.to_array().length(),
       )
-      // prefix 宽度。
-      let chars = cell.text.to_array()
+      // 定位 local_offset 所在的视觉行，caret y 随行推进。
+      let cell_layout = layout.rows[found_row].cells[found_col]
+      let mut line_index = cell_layout.lines.length() - 1
+      for index, line in cell_layout.lines {
+        if local_offset < line.end {
+          line_index = index
+          break
+        }
+      }
+      let line = cell_layout.lines[line_index]
+      let line_local = @core.clamp_int(
+        local_offset - line.start,
+        0,
+        line.end - line.start,
+      )
+      let line_chars = line.text.to_array()
       let prefix = String::from_array(
-        chars[0:@core.clamp_int(local_offset, 0, chars.length())],
+        line_chars[0:@core.clamp_int(line_local, 0, line_chars.length())],
       )
       let prefix_width = rich_text_width(prefix, cell_font, text_system)
       // 按 align 计算 text_x（与点击映射对称）。
-      let text_width = rich_text_width(cell.text, cell_font, text_system)
       let inner_width = text_frame.size.width
       let text_x = match cell.align.unwrap_or(@core.TextAlign::TextStart) {
         TextStart => text_frame.origin.x
-        TextCenter => text_frame.origin.x + (inner_width - text_width) / 2.0
-        TextEnd => text_frame.origin.x + inner_width - text_width
+        TextCenter =>
+          text_frame.origin.x + (inner_width - line.width) / 2.0
+        TextEnd => text_frame.origin.x + inner_width - line.width
       }
-      rich_text_cursor_rect_at(text_x + prefix_width, text_frame, cell_font)
+      let line_frame = @core.Rect::new(
+        x=text_frame.origin.x,
+        y=text_frame.origin.y + layout.line_step * line_index.to_double(),
+        width=text_frame.size.width,
+        height=layout.line_step,
+      )
+      rich_text_cursor_rect_at(text_x + prefix_width, line_frame, cell_font)
     }
     None => rich_text_cursor_rect_at(text_frame.origin.x, text_frame, cell_font)
   }

@@ -989,12 +989,17 @@ test "markdown_viewer table cell text stays within cell bounds" {
     text_system=mv_text_system(),
     clip_rect=Some(content),
   )
-  // With 200px width and 2 columns, each cell is 100px.
-  // "VeryLongHeaderName" at 14px is likely wider than 100px.
-  // This test documents the current behavior (text may overflow cell).
+  // With 200px width and 2 columns, each cell is 100px. The long header no
+  // longer clips at the cell edge: it wraps, so the drawn lines concatenated
+  // in draw order still carry the full text, and every line frame stays
+  // within the 100px column.
   let runs = mv_layer_text_commands(layers)
-  let has_long = runs.iter().any(run => run.text.contains("VeryLongHeaderName"))
-  assert_true(has_long)
+  let mut joined = ""
+  for run in runs {
+    joined = joined + run.text
+  }
+  assert_true(joined.contains("VeryLongHeaderName"))
+  assert_true(runs.iter().all(run => run.frame.size.width <= 100.0))
 }
 
 ///|

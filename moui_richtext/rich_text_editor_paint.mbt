@@ -280,6 +280,7 @@ fn append_rich_text_block_commands(
       ),
       base_font,
       foreground,
+      text_system~,
     )
   } else {
     append_rich_text_block_runs(
@@ -559,17 +560,23 @@ fn append_rich_text_block_table(
   frame : @core.Rect,
   base_font : @core.FontSpec,
   foreground : @core.Color,
+  text_system~ : @core.TextSystem,
 ) -> Unit {
   match block.table {
     Some(table) => {
-      let row_count = table.rows.length()
-      let column_count = rich_text_table_column_count(table)
-      if row_count == 0 || column_count == 0 {
+      let layout = rich_text_table_layout(
+        table,
+        block,
+        base_font,
+        frame_width=frame.size.width,
+        text_system~,
+      )
+      if layout.rows.length() == 0 || layout.column_width <= 0.0 {
         return
       }
-      let column_width = frame.size.width / column_count.to_double()
-      for row_index in 0..<row_count {
-        let row_y = frame.origin.y + table.row_height * row_index.to_double()
+      for row_index, row in layout.rows {
+        let row_y = frame.origin.y + layout.row_top(row_index)
+        let table_row = table.rows[row_index]
         if row_index == 0 {
           match table.header_background {
             Some(background) =>
@@ -580,7 +587,7 @@ fn append_rich_text_block_table(
                       x=frame.origin.x,
                       y=row_y,
                       width=frame.size.width,
-                      height=table.row_height,
+                      height=row.height,
                     ),
                     radius=block.corner_radius,
                   ),
@@ -590,38 +597,45 @@ fn append_rich_text_block_table(
             None => ()
           }
         }
-        let row = table.rows[row_index]
-        for column_index in 0..<column_count {
-          let cell_x = frame.origin.x + column_width * column_index.to_double()
+        for column_index, cell_layout in row.cells {
+          let cell_x = frame.origin.x +
+            layout.column_width * column_index.to_double()
           let cell_frame = @core.Rect::new(
             x=cell_x,
             y=row_y,
-            width=column_width,
-            height=table.row_height,
+            width=layout.column_width,
+            height=row.height,
           )
           commands.push(
             @core.DrawCommand::StrokeRect(cell_frame, table.border, 1.0),
           )
-          if column_index < row.length() {
-            let cell = row[column_index]
-            commands.push(
-              @core.DrawCommand::DrawText(
-                @core.TextRun::new(
-                  text=cell.text,
-                  frame=cell_frame.inset(table.cell_padding),
-                  font={
-                    ..rich_text_block_font(block, base_font),
-                    weight: if cell.header {
-                      700
-                    } else {
-                      400
-                    },
-                  },
-                  color=rich_text_block_color(block, foreground),
-                  align=cell.align.unwrap_or(@core.TextAlign::TextStart),
+          if column_index < table_row.length() {
+            let cell = table_row[column_index]
+            let align = cell.align.unwrap_or(@core.TextAlign::TextStart)
+            for line_index, line in cell_layout.lines {
+              if line.text == "" {
+                continue
+              }
+              let line_y = row_y +
+                table.cell_padding.top +
+                layout.line_step * line_index.to_double()
+              commands.push(
+                @core.DrawCommand::DrawText(
+                  @core.TextRun::new(
+                    text=line.text,
+                    frame=@core.Rect::new(
+                      x=cell_x + table.cell_padding.left,
+                      y=line_y,
+                      width=layout.cell_inner_width,
+                      height=layout.line_step,
+                    ),
+                    font=cell_layout.font,
+                    color=rich_text_block_color(block, foreground),
+                    align~,
+                  ),
                 ),
-              ),
-            )
+              )
+            }
           }
         }
       }
