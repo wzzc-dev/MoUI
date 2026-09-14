@@ -748,11 +748,12 @@ pub fn rich_text_document_height(
   document : RichTextDocument,
   base_font : @core.FontSpec,
   text_system? : @core.TextSystem = @core.TextSystem::fallback(),
+  block_width? : Double = 0.0,
 ) -> Double {
   let mut height = 0.0
   for block in document.blocks {
     height = height +
-      rich_text_block_line_height(block, base_font, text_system) +
+      rich_text_block_line_height(block, base_font, text_system, block_width~) +
       block.inset.top +
       block.inset.bottom
   }
