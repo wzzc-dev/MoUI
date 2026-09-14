@@ -172,9 +172,18 @@ fn rich_text_vertical_target_offset(
     }
     match block.table {
       Some(_) => {
-        block_index = index
-        visual_line = 0
-        break
+        // Stop on the table only when the caret maps into it; a caret below
+        // the table must keep walking to its own block, exactly like the
+        // caret rect walk.
+        let caret_in_table = match block.source_range {
+          Some(range) => source_caret <= range.end
+          None => false
+        }
+        if caret_in_table {
+          block_index = index
+          visual_line = 0
+          break
+        }
       }
       None => ()
     }
@@ -766,12 +775,36 @@ fn rich_text_document_caret_rect(
       )
     }
     match block.table {
-      Some(table) =>
-        return Some(
-          rich_text_block_table_caret_rect(
-            block, table, source_caret, frame, base_font, text_system,
-          ),
+      Some(table) => {
+        // Only short-circuit while the caret maps into this table; a caret
+        // parked in a block AFTER the table must keep walking, otherwise the
+        // caret is drawn at the table's last cell and never shows up where
+        // the user clicked.
+        let caret_in_table = match block.source_range {
+          Some(range) => source_caret <= range.end
+          None => false
+        }
+        if caret_in_table {
+          return Some(
+            rich_text_block_table_caret_rect(
+              block, table, source_caret, frame, base_font, text_system,
+            ),
+          )
+        }
+        last_rect = rich_text_block_table_caret_rect(
+          block,
+          table,
+          match block.source_range {
+            Some(range) => range.end
+            None => source_caret
+          },
+          frame,
+          base_font,
+          text_system,
         )
+        y = y + block_height
+        continue
+      }
       None => ()
     }
     match rich_text_block_visual_offset(block, source_caret) {
