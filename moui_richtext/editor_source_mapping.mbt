@@ -1530,17 +1530,26 @@ fn markdown_editor_shell_slice(
 ///|
 /// Marker-stripped content text for a shell list/quote/footnote line
 /// (best-effort; the real parse replaces it on materialization).
+/// Allocation-light: one owned-string build from the view, no intermediate
+/// char array — the shell parse runs this once per list/quote line and the
+/// array round-trip dominated the per-line cost on large documents.
+/// Marker prefixes are ASCII, so char indices and UTF-16 unit indices
+/// coincide for `skip_marker_length`.
 fn markdown_editor_shell_content_text(
   text : StringView,
   skip_marker_length~ : Int,
 ) -> String {
-  let chars = text.to_array()
+  let length = text.length()
   let mut offset = skip_marker_length
-  while offset < chars.length() &&
-        (chars[offset] == ' ' || chars[offset] == '\t') {
-    offset = offset + 1
+  while offset < length {
+    let ch = text.get_char(offset).unwrap_or(' ')
+    if ch == ' ' || ch == '\t' {
+      offset = offset + 1
+    } else {
+      break
+    }
   }
-  String::from_array(chars[offset:])
+  text.sub(start=offset, end=length).to_owned()
 }
 
 ///|
@@ -2573,21 +2582,31 @@ fn markdown_editor_content_range(
 
 ///|
 fn markdown_editor_footnote_marker_prefix_length(line : StringView) -> Int {
-  let chars = line.to_array()
-  let indent = markdown_editor_leading_indent_length(chars)
-  if chars.length() < indent + 5 ||
-    chars[indent] != '[' ||
-    chars[indent + 1] != '^' {
+  // Allocation-free view scan; marker prefixes are ASCII, so char indices
+  // and UTF-16 unit indices coincide.
+  let length = line.length()
+  let mut indent = 0
+  while indent < length {
+    let ch = line.get_char(indent).unwrap_or(' ')
+    if ch == ' ' || ch == '\t' {
+      indent = indent + 1
+    } else {
+      break
+    }
+  }
+  if length < indent + 5 ||
+    line.get_char(indent).unwrap_or(' ') != '[' ||
+    line.get_char(indent + 1).unwrap_or(' ') != '^' {
     return 0
   }
   let mut close = indent + 2
-  while close < chars.length() && chars[close] != ']' {
+  while close < length && line.get_char(close).unwrap_or(' ') != ']' {
     close = close + 1
   }
   if close <= indent + 2 ||
-    close + 2 >= chars.length() ||
-    chars[close + 1] != ':' ||
-    chars[close + 2] != ' ' {
+    close + 2 >= length ||
+    line.get_char(close + 1).unwrap_or(' ') != ':' ||
+    line.get_char(close + 2).unwrap_or(' ') != ' ' {
     return 0
   }
   close + 3
