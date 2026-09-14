@@ -897,7 +897,12 @@ fn markdown_session_estimated_caret_rect(
   base_dir~ : String?,
   text_system~ : @core.TextSystem,
 ) -> @core.Rect {
-  let source_y = session.source_offset_y(source_caret, base=font, source_mode~)
+  let source_y = session.source_offset_y(
+    source_caret,
+    base=font,
+    source_mode~,
+    content_width=content.size.width,
+  )
   let inset_x = markdown_session_estimated_caret_inset_x(
     session,
     source_caret,

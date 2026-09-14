@@ -87,6 +87,7 @@ fn[Msg] rich_text_pointer_event(
       visible_scroll_y~,
       on_scroll~,
       visible_viewport_height~,
+      content_width=rich_text_editor_content_rect(ctx.frame).size.width,
     )
   }
   match event.phase {
@@ -237,6 +238,7 @@ fn[Msg] rich_text_scroll_event(
   visible_scroll_y~ : Double,
   on_scroll~ : ((Double) -> Msg)?,
   visible_viewport_height~ : Double,
+  content_width? : Double = 0.0,
 ) -> @core.ViewEventResult[Msg] {
   match on_scroll {
     Some(handler) => {
@@ -249,6 +251,7 @@ fn[Msg] rich_text_scroll_event(
           format(value),
           font,
           text_system~,
+          block_width=content_width,
         ) +
         48.0
       let max_scroll = max_double(0.0, content_height - viewport_height)

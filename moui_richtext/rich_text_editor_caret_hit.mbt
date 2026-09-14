@@ -158,7 +158,12 @@ fn rich_text_vertical_target_offset(
   let mut visual_line = 0
   let mut y = content.origin.y
   for index, block in document.blocks {
-    let line_height = rich_text_block_line_height(block, base_font, text_system)
+    let line_height = rich_text_block_line_height(
+      block,
+      base_font,
+      text_system,
+      block_width=content.size.width,
+    )
     let block_height = line_height + block.inset.top + block.inset.bottom
     if rich_text_caret_before_block(source_caret, block) {
       block_index = index
@@ -188,7 +193,10 @@ fn rich_text_vertical_target_offset(
     let last_block = document.blocks[block_index]
     visual_line = rich_text_block_visual_line_count(last_block) - 1
     let last_line_height = rich_text_block_line_height(
-      last_block, base_font, text_system,
+      last_block,
+      base_font,
+      text_system,
+      block_width=content.size.width,
     )
     let last_block_height = last_line_height +
       last_block.inset.top +
@@ -529,7 +537,10 @@ fn append_rich_text_selection_commands(
       let mut y = content.origin.y
       for block in document.blocks {
         let line_height = rich_text_block_line_height(
-          block, base_font, text_system,
+          block,
+          base_font,
+          text_system,
+          block_width=content.size.width,
         )
         let block_height = line_height + block.inset.top + block.inset.bottom
         let frame = @core.Rect::new(
@@ -695,7 +706,12 @@ pub fn rich_text_document_caret_rect_at_source(
   text_system? : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> @core.Rect? {
   rich_text_document_caret_rect(
-    document, source_caret, content, base_font, text_system,
+    document,
+    source_caret,
+    content,
+    base_font,
+    text_system,
+    block_width=content.size.width,
   )
 }
 
@@ -706,6 +722,7 @@ fn rich_text_document_caret_rect(
   content : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
+  block_width~ : Double,
 ) -> @core.Rect? {
   if !rich_text_document_has_source_ranges(document) {
     return None
@@ -718,7 +735,12 @@ fn rich_text_document_caret_rect(
     height=max_double(10.0, base_font.size * 1.55 - 8.0),
   )
   for block in document.blocks {
-    let line_height = rich_text_block_line_height(block, base_font, text_system)
+    let line_height = rich_text_block_line_height(
+      block,
+      base_font,
+      text_system,
+      block_width~,
+    )
     let block_height = line_height + block.inset.top + block.inset.bottom
     let frame = @core.Rect::new(
       x=content.origin.x + block.inset.left,
@@ -789,7 +811,16 @@ fn rich_text_document_source_offset_at_point(
   let mut last_block : RichTextBlock? = None
   let mut last_frame = @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0)
   for block in document.blocks {
-    let line_height = rich_text_block_line_height(block, base_font, text_system)
+    // Block heights must match the painted layout: percentage-width image
+    // runs only reach their drawn height once the content column width is
+    // known. A width-blind walk drifts out of sync with the screen and
+    // resolves clicks below an image gallery into the wrong block.
+    let line_height = rich_text_block_line_height(
+      block,
+      base_font,
+      text_system,
+      block_width=content.size.width,
+    )
     let block_height = line_height + block.inset.top + block.inset.bottom
     let frame = @core.Rect::new(
       x=content.origin.x + block.inset.left,
@@ -916,7 +947,12 @@ fn rich_text_document_prefix_source_offset_at_point(
   let mut y = content.origin.y
   let mut fallback : Int? = None
   for block in document.blocks {
-    let line_height = rich_text_block_line_height(block, base_font, text_system)
+    let line_height = rich_text_block_line_height(
+      block,
+      base_font,
+      text_system,
+      block_width=content.size.width,
+    )
     let block_height = line_height + block.inset.top + block.inset.bottom
     let frame = @core.Rect::new(
       x=content.origin.x + block.inset.left,
@@ -1025,6 +1061,33 @@ fn rich_text_block_source_offset_at_point(
 }
 
 ///|
+/// Index of the visual line whose band contains `offset_y` within a block.
+/// Lines are not uniform when image runs scale with the content column, so
+/// this walks the same per-line heights painting uses instead of assuming a
+/// fixed `line_step`.
+fn rich_text_block_line_index_at_y(
+  block : RichTextBlock,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+  available_width~ : Double,
+  offset_y~ : Double,
+) -> Int {
+  let mut cursor = 0.0
+  for index, height in rich_text_block_line_heights(
+      block,
+      base_font,
+      text_system,
+      available_width,
+    ) {
+    if offset_y < cursor + height {
+      return index
+    }
+    cursor = cursor + height
+  }
+  @core.max_int(rich_text_block_visual_line_count(block) - 1, 0)
+}
+
+///|
 fn rich_text_block_visual_offset_at_point(
   block : RichTextBlock,
   point : @core.Point,
@@ -1033,9 +1096,14 @@ fn rich_text_block_visual_offset_at_point(
   text_system : @core.TextSystem,
 ) -> Int {
   let font = rich_text_block_font(block, base_font)
-  let line_step = rich_text_block_line_step(block, base_font, text_system)
   let target_line = @core.clamp_int(
-    ((point.y - frame.origin.y) / line_step).floor().to_int(),
+    rich_text_block_line_index_at_y(
+      block,
+      base_font,
+      text_system,
+      available_width=frame.size.width,
+      offset_y=point.y - frame.origin.y,
+    ),
     0,
     rich_text_block_visual_line_count(block) - 1,
   )
@@ -1077,7 +1145,11 @@ fn rich_text_block_visual_offset_at_point(
     for index, segment in segments {
       let segment_length = text_length(segment)
       let segment_width = rich_text_run_segment_width(
-        run, segment, run_font, text_system,
+        run,
+        segment,
+        run_font,
+        text_system,
+        available_width=frame.size.width,
       )
       if line == target_line {
         line_end = visual_offset + segment_length
@@ -1295,6 +1367,15 @@ fn rich_text_block_caret_rect(
 ) -> @core.Rect {
   let font = rich_text_block_font(block, base_font)
   let line_step = rich_text_block_line_step(block, base_font, text_system)
+  // Wrapped-line y positions follow the per-line heights painting uses, so a
+  // caret below a column-scaled image line lands on the image line's band.
+  let line_heights = rich_text_block_line_heights(
+    block,
+    base_font,
+    text_system,
+    frame.size.width,
+  )
+  let mut line_slot = rich_text_text_newline_count(block.prefix)
   let mut remaining = @core.clamp_int(
     visual_offset,
     0,
@@ -1369,7 +1450,8 @@ fn rich_text_block_caret_rect(
           )
         }
         remaining = remaining - 1
-        y = y + line_step
+        y = y + line_heights.get(line_slot).unwrap_or(line_step)
+        line_slot = line_slot + 1
         x = frame.origin.x
       }
     }
