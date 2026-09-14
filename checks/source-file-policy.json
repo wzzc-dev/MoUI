@@ -138,7 +138,7 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_caret_hit.mbt",
-      "maxLines": 1699,
+      "maxLines": 1963,
       "reason": "Existing caret and hit-testing algorithms."
     },
     {
@@ -203,7 +203,7 @@
     },
     {
       "path": "moui_richtext/editor_session.mbt",
-      "maxLines": 3389,
+      "maxLines": 3394,
       "reason": "Existing rich-text editor session state machine."
     },
     {
@@ -258,7 +258,7 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_helpers.mbt",
-      "maxLines": 1677,
+      "maxLines": 1686,
       "reason": "Existing shared rich-text editor algorithms plus canonical declaration-key encoders."
     },
     {

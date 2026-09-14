@@ -2690,15 +2690,20 @@ fn markdown_document_session_from_blocks(
   // The store seeds the whole-source view from `source`: every builder
   // here already holds the materialized text (document open, full
   // rebuild, or a transaction carrying the next text), so seeding costs
-  // no copy. Documents with many blocks get a store segmented at the
-  // block starts — one linear pass at build time that keeps every later
-  // local read (word probes, region slices) block-bounded.
+  // no copy. Documents with many blocks get a store segmented at block
+  // starts — one linear pass at build time that keeps every later local
+  // read (word probes, region slices) bounded by one segment instead of
+  // the document. The stride groups ~64 blocks per segment: local reads
+  // still scan at most a few KB, while the open path builds thousands of
+  // segments instead of one per block (the 200k-segment copy pass and the
+  // per-keystroke tail-offset shift were measurable on stress documents).
   let text_store = match text_store {
     Some(store) => store
     None if editor_blocks.length() > 32 => {
       let boundaries : Array[Int] = []
+      let stride = 64
       for index, block in editor_blocks {
-        if index > 0 {
+        if index > 0 && index % stride == 0 {
           boundaries.push(block.source_range.start)
         }
       }
