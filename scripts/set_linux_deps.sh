@@ -6,10 +6,10 @@ usage() {
 Usage: scripts/set_linux_deps.sh [options]
 
 Installs the Ubuntu/Debian packages needed to build and run MoUI on Linux.
-The default set covers the MoonBit toolchain prerequisites, the Wayland
-window core (backend/linux + wzzc-dev/window), GLib/zlib link libraries,
-Weston for headless compositor checks, desktop integration (zenity), and the
-Skia renderer stack (fontconfig/FreeType/HarfBuzz, Clang/Ninja, fonts,
+The default set covers the MoonBit toolchain prerequisites, the Wayland and
+X11 window cores (backend/linux + wzzc-dev/window), GLib/zlib link libraries,
+headless check tools (Weston compositor, Xvfb), desktop integration (zenity),
+and the Skia renderer stack (fontconfig/FreeType/HarfBuzz, Clang/Ninja, fonts,
 Vulkan headers). Native WebView (WebKitGTK) is optional and off by default.
 
 Options:
@@ -40,6 +40,18 @@ wayland_packages=(
   wayland-protocols
   libglib2.0-dev
   zlib1g-dev
+)
+
+x11_packages=(
+  libx11-dev
+  libxext-dev
+  libxrandr-dev
+)
+
+smoke_packages=(
+  xvfb
+  x11-utils
+  x11-apps
 )
 
 runtime_packages=(
@@ -85,7 +97,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-packages=("${base_packages[@]}" "${wayland_packages[@]}" "${runtime_packages[@]}")
+packages=("${base_packages[@]}" "${wayland_packages[@]}" "${x11_packages[@]}" "${smoke_packages[@]}" "${runtime_packages[@]}")
 if [[ $minimal_only -eq 0 ]]; then
   packages+=("${skia_packages[@]}")
 fi

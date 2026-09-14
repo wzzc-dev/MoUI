@@ -52,9 +52,18 @@ fn linux_surface_binding(
         0
       },
     )
+    // X11 windows omit the display handle on purpose: the Skia GPU provider
+    // rejects Linux surfaces without one (`skia_native_surface_error`), which
+    // steers hybrid resolution to the CPU raster route. The GPU route is
+    // Vulkan-Wayland only; forwarding an Xlib `Display*` there would be
+    // misinterpreted as a `wl_display`.
+    let display_handle = match window.windowing_backend() {
+      @window_linux.WindowingBackend::X11 => None
+      @window_linux.WindowingBackend::Wayland => Some(window.wl_display())
+    }
     let native_surface = @render.NativeSurface::new(
       surface_handle=window.wl_surface(),
-      display_handle=Some(window.wl_display()),
+      display_handle~,
       present=_ => true,
     )
     let surface = @render.HostSurface::new(

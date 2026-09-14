@@ -1,7 +1,8 @@
 # Linux Platform Notes
 
-`backend/linux` is a minimal native Wayland host core. It uses the
-`wzzc-dev/window@0.5.4-0.1.7` Linux package for Wayland event-loop and window handles,
+`backend/linux` is a minimal native Linux host core with two windowing
+backends — Wayland (xdg-shell, default) and X11 (Xlib) — sharing one API. It
+uses the `wzzc-dev/window@0.5.4-0.1.7` Linux package for event-loop and window handles,
 normalizes window/input events through the shared `Event` contract, and runs
 the Showcase entrypoints through the same renderer/runtime boundary as macOS
 and Windows. Application entrypoints supply ordered
@@ -29,6 +30,37 @@ grapheme-normalized cursor/anchor character positions, UTF-8 offsets for
 surrounding text, the logical candidate-anchor caret rectangle, and whether
 surrounding-text payloads fit the window package's IME contract.
 
+## Windowing Backend Selection (Wayland / X11)
+
+The window package selects its backend at startup before the MoUI host runs:
+
+1. `MOUI_LINUX_WINDOWING=x11|wayland` forces one backend.
+2. `auto` (default) prefers Wayland when `WAYLAND_DISPLAY` or
+   `XDG_SESSION_TYPE=wayland` is set, uses X11 when only `DISPLAY` exists, and
+   falls back to the other backend if the preferred one fails to connect.
+
+The selection is logged to stderr as `moui windowing backend: <backend>`.
+`@window_linux.EventLoop::windowing_backend()` and
+`Window::windowing_backend()` expose the active backend to the host:
+`moui/backend/linux` uses it to skip client-side decorations (X11 uses
+window-manager decorations) and to steer renderer resolution — the X11 host
+binding omits the native display handle so the Skia hybrid provider rejects
+GPU surfaces and the CPU raster route is used. The X11 backend presents CPU
+raster frames through MIT-SHM (double-buffered) with an `XPutImage` fallback.
+
+X11 slice limitations (matching `docs/plans/active/linux-x11-backend.md`): no
+GPU surface route, no IME, no XDND drag-and-drop, and clipboard is limited to
+the `CLIPBOARD` selection with `UTF8_STRING` targets.
+
+On Wayland sessions without server-side decorations (GNOME mutter), the
+backend adds client-side window management: edge/corner zones start an
+interactive resize via `xdg_toplevel.resize`, and standard resize cursors are
+rendered through `wp_cursor_shape_device_v1` when the compositor offers it.
+macOS hosts running the app inside a VM/SPICE guest should align the guest's
+`org.gnome.desktop.peripherals.mouse natural-scroll` with the host trackpad
+feel, since the host client translates trackpad gestures into wheel button
+events before the guest sees them.
+
 ## Runtime Requirements
 
 Linux runtime requirements are intentionally native:
@@ -49,13 +81,16 @@ Linux runtime requirements are intentionally native:
   The individual requirements below describe what each package set provides
   and how the MoUI prebuilds consume them.
 
-- A Wayland compositor. For repeatable headless checks, run Weston with the
-  headless backend and point `WAYLAND_DISPLAY` at its socket.
+- A Wayland compositor, or an X server (desktop Xorg, Xvfb, or XWayland) when
+  forcing or falling back to the X11 backend. For repeatable headless checks,
+  run Weston with the headless backend and point `WAYLAND_DISPLAY` at its
+  socket, or run `Xvfb` and point `DISPLAY` at it.
 - A usable Vulkan stack only when running WGPU diagnostics. Headless software
   validation can use Mesa llvmpipe through `vulkan-swrast`/Lavapipe when
   hardware Vulkan is not available.
-- Wayland development headers and generated xdg-shell protocol sources for the
-  `wzzc-dev/window@0.5.4-0.1.7` native stub.
+- Wayland development headers and generated xdg-shell protocol sources, plus
+  X11 development headers (`libx11-dev`, `libxext-dev`, `libxrandr-dev`) for
+  the `wzzc-dev/window@0.5.4-0.1.7` native stubs.
 - `wl_data_device_manager` from the compositor for native clipboard selection
   and file drag/drop runtime behavior.
 - XDG desktop integration for Linux services: OpenURI goes through
@@ -236,6 +271,13 @@ those claims still require matching-host runtime runs and smoke logs
 manifest entries.
 
 ## Runtime Evidence
+
+X11 backend validation runs the window-module smoke natively on a Linux host
+or the UTM Ubuntu VM (`scripts/linux-x11-vm-smoke.sh`): the X11 forced leg,
+the `auto`-selection leg (DISPLAY-only), and the Wayland regression leg
+(headless Weston). Sentinel evidence lands in `artifacts/linux-x11-vm/`.
+Skia first-frame evidence below is recorded on the matching Wayland host; the
+X11 slice is CPU raster only.
 
 For Linux Skia runtime evidence, record these as separate ignored
 `artifacts/` logs on the matching Wayland host:

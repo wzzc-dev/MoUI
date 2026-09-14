@@ -51,7 +51,7 @@ leaving direct pointer hit testing offset on scaled displays.
 ## Non-goals（本计划明确不做）
 
 - 完整 winit 功能全集（DnD 产品化、exclusive fullscreen 产品化、多窗口移动端等）。
-- X11 后端（除非后续 RFC）。
+- X11 后端（已通过 [linux-x11-backend](active/linux-x11-backend.md) 计划落地 Xlib 后端；本计划的 X11 语义对齐项在该计划内跟进）。
 - 把 macOS 独有 API（`content_view_handle`、系统菜单产品、tabbing）强推到其它平台。
 - 在 `window` 内重做第二套 MoUI 专用 ABI 或 PlatformView 产品。
 - 把 `./window` 加入根 `moon.work`。
