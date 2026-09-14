@@ -2680,6 +2680,11 @@ fn markdown_document_session_from_blocks(
     reuse_ok=height_reuse_ok,
     full_line_counts=merged_scan.map(scan => scan.1),
     dirty_range~,
+    // The incremental apply already advanced the live store: forward it so
+    // the reuse path decodes only the re-parse window instead of walking
+    // the whole document for `markdown_editor_text_length` and char
+    // offsets.
+    text_store~,
   )
   let outline = match (previous, reuse) {
     (Some(prev), Some(window)) =>

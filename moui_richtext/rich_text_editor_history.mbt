@@ -195,7 +195,11 @@ fn rich_text_history_record_edit(
     match edit_shape {
       Some((kind, start, character)) => {
         state.start = start
-        state.after_length = text_length(next)
+        // A merged edit is a single codepoint insert or delete by
+        // construction (`edit_shape_at`); stepping the running length by
+        // that delta avoids decoding the whole new document here.
+        state.after_length = state.after_length +
+        rich_text_history_shape_char_delta(kind)
         state.last_push_ms = now
         MergeHistory(kind, character)
       }
@@ -206,16 +210,31 @@ fn rich_text_history_record_edit(
       Some((kind, start, _)) => {
         state.kind = kind
         state.start = start
+        state.after_length = text_length(previous) +
+        rich_text_history_shape_char_delta(kind)
       }
       None => {
         state.kind = 0
         state.start = -1
+        // Multi-codepoint edits (paste, replacements) are the only path
+        // that still decodes the new document, and they are rare.
+        state.after_length = text_length(next)
       }
     }
-    state.after_length = text_length(next)
     state.last_push_ms = now
     state.expected_stack_length = stack_length + 1
     PushHistory
+  }
+}
+
+///|
+/// Codepoint delta of a single-edit shape: kind 1 inserts one codepoint,
+/// kinds 2 (backspace) and 3 (forward delete) remove one.
+fn rich_text_history_shape_char_delta(kind : Int) -> Int {
+  if kind == 1 {
+    1
+  } else {
+    -1
   }
 }
 

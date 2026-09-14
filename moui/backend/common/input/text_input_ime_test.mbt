@@ -63,7 +63,7 @@ test "text input session enables updates and disables ime requests" {
 }
 
 ///|
-test "text input session enables ime when surrounding text is too long" {
+test "text input session enables ime with a truncated surrounding text window for oversized texts" {
   let session = TextInputSession::new()
   let state = @core.TextInputState::{
     focused: true,
@@ -75,22 +75,46 @@ test "text input session enables ime when surrounding text is too long" {
     frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
     caret_rect: @core.Rect::new(x=8.0, y=8.0, width=1.0, height=20.0),
   }
+  let mut window_text = ""
   match session.sync(state) {
     EnableIme(@window_core.ImeRequest::Enable(request)) => {
-      assert_true(!request.capabilities().surrounding_text())
-      assert_true(!request.request_data().has_surrounding_text())
+      // The whole text cannot fit the surrounding-text budget, so the IME
+      // receives a bounded window around the cursor instead of nothing.
+      assert_true(request.capabilities().surrounding_text())
+      assert_true(request.request_data().has_surrounding_text())
       match session.last_diagnostics() {
         Some(diagnostics) => {
-          assert_false(diagnostics.has_surrounding_text)
+          assert_true(diagnostics.has_surrounding_text)
           assert_true(
-            diagnostics.surrounding_text_utf8_length >
+            diagnostics.surrounding_text_utf8_length <=
             @window_core.ImeSurroundingText::max_text_bytes(),
           )
+          let surrounding = diagnostics.surrounding_text.unwrap()
+          assert_true(surrounding.length() < state.text.length())
+          // The caret sits at the text start, so the window starts there
+          // and the cursor maps to its first byte.
+          assert_true(diagnostics.cursor_utf8 == 0)
+          assert_true(diagnostics.anchor_utf8 == 0)
+          assert_true(diagnostics.cursor == 0)
+          assert_true(diagnostics.cursor_is_grapheme_boundary)
+          window_text = surrounding
         }
         None => fail("expected ime diagnostics")
       }
     }
     _ => fail("focused text field should still enable ime")
+  }
+  // A resync on the unchanged state reuses the cached diagnostics and
+  // request without another recompute.
+  match session.sync(state) {
+    NoImeChange => ()
+    _ => fail("unchanged state should not re-request ime")
+  }
+  // The delivered window text is stable across the resync.
+  match session.last_diagnostics() {
+    Some(diagnostics) =>
+      assert_true(diagnostics.surrounding_text.unwrap() == window_text)
+    None => fail("expected cached ime diagnostics")
   }
 }
 
