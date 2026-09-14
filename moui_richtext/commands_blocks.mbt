@@ -977,40 +977,70 @@ fn markdown_editor_strip_block_marker(line : String) -> String {
 
 ///|
 fn markdown_editor_marker_prefix_length(line : StringView) -> Int {
-  let chars = line.to_array()
-  let indent = markdown_editor_leading_indent_length(chars)
-  if chars.length() >= indent + 2 && chars[indent] == '#' {
+  // Allocation-free prefix scan over the view: the shell parse runs this
+  // once per content line on large documents, and a per-line char-array
+  // materialization dominated that cost. Marker prefixes are ASCII, so
+  // char indices and UTF-16 unit indices coincide.
+  let length = line.length()
+  let mut indent = 0
+  while indent < length {
+    let ch = line.get_char(indent).unwrap_or(' ')
+    if ch == ' ' || ch == '\t' {
+      indent = indent + 1
+    } else {
+      break
+    }
+  }
+  if length >= indent + 2 && line.get_char(indent).unwrap_or(' ') == '#' {
     let mut index = indent
-    while index < chars.length() && chars[index] == '#' {
+    while index < length && line.get_char(index).unwrap_or(' ') == '#' {
       index = index + 1
     }
-    if index < chars.length() && chars[index] == ' ' {
+    if index < length && line.get_char(index).unwrap_or(' ') == ' ' {
       index + 1
     } else {
       0
     }
-  } else if chars.length() >= indent + 6 &&
-    chars[indent] == '-' &&
-    chars[indent + 1] == ' ' &&
-    chars[indent + 2] == '[' &&
+  } else if length >= indent + 6 &&
+    line.get_char(indent).unwrap_or(' ') == '-' &&
+    line.get_char(indent + 1).unwrap_or(' ') == ' ' &&
+    line.get_char(indent + 2).unwrap_or(' ') == '[' &&
     (
-      chars[indent + 3] == ' ' ||
-      chars[indent + 3] == 'x' ||
-      chars[indent + 3] == 'X'
+      line.get_char(indent + 3).unwrap_or(' ') == ' ' ||
+      line.get_char(indent + 3).unwrap_or(' ') == 'x' ||
+      line.get_char(indent + 3).unwrap_or(' ') == 'X'
     ) &&
-    chars[indent + 4] == ']' &&
-    chars[indent + 5] == ' ' {
+    line.get_char(indent + 4).unwrap_or(' ') == ']' &&
+    line.get_char(indent + 5).unwrap_or(' ') == ' ' {
     indent + 6
-  } else if chars.length() >= indent + 2 &&
-    (chars[indent] == '-' || chars[indent] == '*' || chars[indent] == '+') &&
-    chars[indent + 1] == ' ' {
+  } else if length >= indent + 2 &&
+    (
+      line.get_char(indent).unwrap_or(' ') == '-' ||
+      line.get_char(indent).unwrap_or(' ') == '*' ||
+      line.get_char(indent).unwrap_or(' ') == '+'
+    ) &&
+    line.get_char(indent + 1).unwrap_or(' ') == ' ' {
     indent + 2
-  } else if chars.length() >= indent + 2 &&
-    chars[indent] == '>' &&
-    chars[indent + 1] == ' ' {
+  } else if length >= indent + 2 &&
+    line.get_char(indent).unwrap_or(' ') == '>' &&
+    line.get_char(indent + 1).unwrap_or(' ') == ' ' {
     indent + 2
   } else {
-    markdown_editor_ordered_marker_length(chars)
+    let mut index = indent
+    while index < length && line.get_char(index).unwrap_or(' ').is_ascii_digit() {
+      index = index + 1
+    }
+    if index > indent &&
+      index + 1 < length &&
+      (
+        line.get_char(index).unwrap_or(' ') == '.' ||
+        line.get_char(index).unwrap_or(' ') == ')'
+      ) &&
+      line.get_char(index + 1).unwrap_or(' ') == ' ' {
+      index + 2
+    } else {
+      0
+    }
   }
 }
 
