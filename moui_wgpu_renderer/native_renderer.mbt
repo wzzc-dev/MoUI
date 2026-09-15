@@ -264,7 +264,11 @@ fn create_with_surface(
   surface : @wgpu_mbt.Surface,
   text_engine : NativeTextEngine,
 ) -> RendererHandle raise @wgpu_mbt.WgpuError {
-  let adapter = instance.request_adapter_sync_options_surface_u32(surface)
+  let adapter = instance.request_adapter_sync_options_surface_u32(
+    surface,
+    power_preference_u32=@wgpu_mbt.POWER_PREFERENCE_HIGH_PERFORMANCE,
+    backend_type_u32=@wgpu_mbt.BACKEND_TYPE_D3_D12,
+  )
   let device = adapter.request_device_sync(instance)
   let queue = device.queue()
   let usage = @wgpu_mbt.TextureUsage::from_u64(

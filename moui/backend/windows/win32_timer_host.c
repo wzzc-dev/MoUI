@@ -10,6 +10,22 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+// The cooperative async pump relies on millisecond-scale sleep/timer
+// deadlines; without raising the scheduler's clock resolution the default
+// ~15.625 ms tick quantizes every @async.sleep to one or two extra ticks,
+// which directly caps the presented-frame rate.
+#pragma comment(lib, "winmm.lib")
+
+MOONBIT_FFI_EXPORT
+void moui_windows_time_begin_period(void) {
+  timeBeginPeriod(1);
+}
+
+MOONBIT_FFI_EXPORT
+void moui_windows_time_end_period(void) {
+  timeEndPeriod(1);
+}
+
 // Trampoline: invokes the MoonBit tick closure captured by `closure`.
 typedef void (*moui_windows_timer_trampoline_t)(void *closure);
 
@@ -108,5 +124,11 @@ MOONBIT_FFI_EXPORT
 void moui_windows_timer_cancel(void *handle) {
   (void)handle;
 }
+
+MOONBIT_FFI_EXPORT
+void moui_windows_time_begin_period(void) {}
+
+MOONBIT_FFI_EXPORT
+void moui_windows_time_end_period(void) {}
 
 #endif

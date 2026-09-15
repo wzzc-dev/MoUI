@@ -261,20 +261,36 @@ async fn launch_windows_app_async_pump(
     smoke_options=WindowsHostSmokeOptions::new(),
     window_requests~,
   )
+  // The pump's inter-iteration sleep is what paces presented frames; raise
+  // the scheduler clock resolution so the sleep deadline is honored within
+  // ~1 ms instead of being quantized to the default 15.625 ms system tick
+  // (which caps the pump at 2 ticks per frame on Windows).
+  windows_time_begin_period()
   while !event_loop.exiting() {
     match event_loop.pump_app_events(Some(0), app) {
-      @window_core.PumpStatus::Exit(_) => return ()
+      @window_core.PumpStatus::Exit(_) => {
+        windows_time_end_period()
+        return ()
+      }
       @window_core.PumpStatus::Continue => ()
     }
     match options.pump_tick {
       Some(tick) => if tick() {
+        windows_time_end_period()
         return ()
       }
       None => ()
     }
     @async.sleep(frame_interval_ms)
   }
+  windows_time_end_period()
 }
+
+///|
+extern "C" fn windows_time_begin_period() -> Unit = "moui_windows_time_begin_period"
+
+///|
+extern "C" fn windows_time_end_period() -> Unit = "moui_windows_time_end_period"
 
 ///|
 fn create_windows_app(
