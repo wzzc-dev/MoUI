@@ -3,8 +3,11 @@
 #endif
 #include "skia_stub_common.h"
 
+#include <atomic>
 #include <cstdio>
 #include <cstdlib>
+#include <mutex>
+#include <thread>
 
 #ifndef __has_include
 #define __has_include(x) 0
@@ -196,11 +199,30 @@ void moonbit_skia_com_release(void* object) {
   static_cast<IUnknown*>(object)->Release();
 }
 
+// D3D12 objects produced by the one-time availability probe. Creating the
+// device is the expensive part (~200 ms cold, multiplied by indirect-display
+// adapters), so the real context creation reuses them instead of probing the
+// adapters a second time.
+static std::mutex g_d3d_shared_mutex;
+static bool g_d3d_shared_ready = false;
+static ComPtr<IDXGIAdapter1> g_d3d_shared_adapter;
+static ComPtr<ID3D12Device> g_d3d_shared_device;
+static ComPtr<ID3D12CommandQueue> g_d3d_shared_queue;
+
 static bool moonbit_skia_make_d3d12_objects(
   ComPtr<IDXGIAdapter1>& adapter,
   ComPtr<ID3D12Device>& device,
   ComPtr<ID3D12CommandQueue>& queue
 ) {
+  {
+    std::lock_guard<std::mutex> lock(g_d3d_shared_mutex);
+    if (g_d3d_shared_ready) {
+      adapter = g_d3d_shared_adapter;
+      device = g_d3d_shared_device;
+      queue = g_d3d_shared_queue;
+      return true;
+    }
+  }
   ComPtr<IDXGIFactory4> factory;
   HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory));
   if (FAILED(hr)) {
@@ -382,19 +404,33 @@ extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_surface_gpu_d3d_runtime_available(void) {
 #if defined(MOUI_SKIA_ENABLE_GPU_D3D) && \
   defined(MOUI_SKIA_HAS_GANESH_D3D_HEADERS)
-  ComPtr<IDXGIAdapter1> adapter;
-  ComPtr<ID3D12Device> device;
-  ComPtr<ID3D12CommandQueue> queue;
-  GrDirectContext* context = moonbit_skia_make_d3d_direct_context(
-    adapter,
-    device,
-    queue
-  );
-  if (context == nullptr) {
-    return 0;
+  // Answering the availability question requires creating the D3D12 stack
+  // (~200 ms cold on multi-adapter systems). The adapter set cannot change
+  // under a running process, so probe once, stash the created objects, and
+  // let `moonbit_skia_gpu_context_direct3d` reuse them for the real context.
+  static std::atomic<int32_t> cached(0);
+  int32_t expected = 0;
+  if (cached.compare_exchange_strong(expected, -1,
+      std::memory_order_acquire, std::memory_order_acquire)) {
+    ComPtr<IDXGIAdapter1> adapter;
+    ComPtr<ID3D12Device> device;
+    ComPtr<ID3D12CommandQueue> queue;
+    const bool ok = moonbit_skia_make_d3d12_objects(adapter, device, queue);
+    if (ok) {
+      std::lock_guard<std::mutex> lock(g_d3d_shared_mutex);
+      g_d3d_shared_adapter = adapter;
+      g_d3d_shared_device = device;
+      g_d3d_shared_queue = queue;
+      g_d3d_shared_ready = true;
+    }
+    cached.store(ok ? 1 : -2, std::memory_order_release);
+    return ok ? 1 : 0;
   }
-  context->unref();
-  return 1;
+  int32_t verdict;
+  while ((verdict = cached.load(std::memory_order_acquire)) == -1) {
+    std::this_thread::yield();
+  }
+  return verdict == 1 ? 1 : 0;
 #else
   return 0;
 #endif
