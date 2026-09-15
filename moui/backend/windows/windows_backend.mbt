@@ -69,6 +69,18 @@ pub struct WindowsHostAppOptions {
   priv scene_resolver : @runtime.WindowSceneResolver
   priv event_sources : @runtime.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
+  /// Same contract as `MacosHostAppOptions::frame_clock`: invoked around
+  /// every runtime-owned frame phase of driver-driven redraws, so embedders
+  /// can observe frame completion without touching the shared redraw path.
+  priv frame_clock : (() -> Double)?
+  /// Invoked on the pump thread after each presented frame. Embedders use it
+  /// to timestamp first presentation without polling runtime state.
+  priv on_frame_presented : (() -> Unit)?
+  /// Invoked between async pump iterations, on the pump task. Returning true
+  /// stops the pump. Embedders that must drive the runtime themselves (for
+  /// example benchmark harnesses) use it instead of spawning a concurrent
+  /// task, keeping every runtime mutation on the pump thread.
+  priv pump_tick : (async () -> Bool)?
 }
 
 ///|
@@ -100,6 +112,7 @@ struct WindowsNativeHostBackend {
   accessibility_state : WindowsAccessibilityState
   platform_slots : @window_lifecycle.WindowSlotMap[@win.Window, Unit]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
+  on_frame_presented : (() -> Unit)?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
@@ -110,8 +123,18 @@ pub fn WindowsHostAppOptions::new(
   scene_resolver? : @runtime.WindowSceneResolver = @runtime.WindowSceneResolver::unavailable(),
   event_sources? : @runtime.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
+  frame_clock? : (() -> Double)? = None,
+  on_frame_presented? : (() -> Unit)? = None,
+  pump_tick? : (async () -> Bool)? = None,
 ) -> WindowsHostAppOptions {
-  { scene_resolver, event_sources, platform_view_plugins }
+  {
+    scene_resolver,
+    event_sources,
+    platform_view_plugins,
+    frame_clock,
+    on_frame_presented,
+    pump_tick,
+  }
 }
 
 ///|
@@ -243,6 +266,12 @@ async fn launch_windows_app_async_pump(
       @window_core.PumpStatus::Exit(_) => return ()
       @window_core.PumpStatus::Continue => ()
     }
+    match options.pump_tick {
+      Some(tick) => if tick() {
+        return ()
+      }
+      None => ()
+    }
     @async.sleep(frame_interval_ms)
   }
 }
@@ -264,7 +293,11 @@ fn create_windows_app(
   let app = WindowsNativeHostBackend::{
     title,
     runtime,
-    driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
+    driver: @runtime.HostRuntimeDriver::new(
+      runtime~,
+      schedule_redraw=() => (),
+      frame_clock=options.frame_clock,
+    ),
     lifecycle: @window_lifecycle.WindowLifecycle::new(
       requests=window_requests,
       scene_resolver=options.scene_resolver,
@@ -279,6 +312,7 @@ fn create_windows_app(
     accessibility_state: WindowsAccessibilityState::new(),
     platform_slots: @window_lifecycle.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
+    on_frame_presented: options.on_frame_presented,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
@@ -628,6 +662,10 @@ fn WindowsNativeHostBackend::redraw_window(
           result
         },
         finish_presented=runtime_slot => {
+          match self.on_frame_presented {
+            Some(callback) => callback()
+            None => ()
+          }
           @runtime.finish_first_frame_smoke_auto_exit(
             platform_name="Windows",
             title=runtime_slot.record.title,
