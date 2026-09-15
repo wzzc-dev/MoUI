@@ -22,7 +22,8 @@ request channel for opening, focusing, closing, resizing, minimizing, showing,
 and changing the primary window. `OpenWindow` requests include a scene id and
 payload in addition to title, metrics, and primary-window intent, giving future
 multi-window hosts a stable app-level key for selecting content/runtime when a
-new platform window is created. `WindowSceneResolver` resolves those
+new platform window is created. `WindowSceneResolver` in
+`backend/common/lifecycle` resolves those
 requests into new `AppRuntime` instances or explicit scene rejections without
 embedding platform policy in app code. `@backend_common.resolve_open_request`
 then binds a resolved runtime to the registry record that owns the new window

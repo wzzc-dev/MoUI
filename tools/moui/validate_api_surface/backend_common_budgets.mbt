@@ -21,9 +21,9 @@ fn backend_common_package_budgets() -> Array[PackageBudget] {
       label: "backend common lifecycle owner",
       path: "moui/backend/common/lifecycle/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/common/lifecycle\"",
-      max_lines: 255,
-      max_pub_lines: 155,
-      max_pub_all_lines: 3,
+      max_lines: 320,
+      max_pub_lines: 170,
+      max_pub_all_lines: 10,
       required_tokens: [
         "pub struct WindowLifecycle", "pub struct EmbeddedLifecycle", "pub struct WindowRegistry",
         "pub struct WindowRequestQueue",

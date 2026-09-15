@@ -35,9 +35,9 @@ fn WebApp::open_window(
   request : @host.WindowOpenRequest,
 ) -> @host.WindowRequestResult {
   match self.lifecycle.open_resolution(request) {
-    @runtime.WindowOpenResolution::OpenRejected(message) =>
+    @window_lifecycle.WindowOpenResolution::OpenRejected(message) =>
       @host.WindowRequestResult::WindowRejected(message)
-    @runtime.WindowOpenResolution::OpenResolved(resolved) =>
+    @window_lifecycle.WindowOpenResolution::OpenResolved(resolved) =>
       self.create_resolved_window(event_loop, resolved)
   }
 }
@@ -46,7 +46,7 @@ fn WebApp::open_window(
 fn WebApp::create_resolved_window(
   self : WebApp,
   event_loop : @window_web.ActiveEventLoop,
-  resolved : @runtime.WindowResolvedOpen,
+  resolved : @window_lifecycle.WindowResolvedOpen,
 ) -> @host.WindowRequestResult {
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
@@ -71,7 +71,7 @@ fn WebApp::create_resolved_window(
 fn WebApp::attach_resolved_window(
   self : WebApp,
   window : @window_web.Window,
-  resolved : @runtime.WindowResolvedOpen,
+  resolved : @window_lifecycle.WindowResolvedOpen,
 ) -> @host.WindowRequestResult {
   let metrics = surface_metrics_from_physical(
     window.surface_size(),

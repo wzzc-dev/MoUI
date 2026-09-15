@@ -73,9 +73,9 @@ fn MacosNativeHostBackend::open_window(
   request : @host.WindowOpenRequest,
 ) -> @host.WindowRequestResult {
   match self.lifecycle.open_resolution(request) {
-    @runtime.WindowOpenResolution::OpenRejected(message) =>
+    @window_lifecycle.WindowOpenResolution::OpenRejected(message) =>
       @host.WindowRequestResult::WindowRejected(message)
-    @runtime.WindowOpenResolution::OpenResolved(resolved) =>
+    @window_lifecycle.WindowOpenResolution::OpenResolved(resolved) =>
       self.create_resolved_window(event_loop, resolved)
   }
 }
@@ -84,7 +84,7 @@ fn MacosNativeHostBackend::open_window(
 fn MacosNativeHostBackend::create_resolved_window(
   self : MacosNativeHostBackend,
   event_loop : @window_macos.ActiveEventLoop,
-  resolved : @runtime.WindowResolvedOpen,
+  resolved : @window_lifecycle.WindowResolvedOpen,
 ) -> @host.WindowRequestResult {
   let platform = @window_core.PlatformWindowAttributes::default()
     .with_fullsize_content_view(true)
@@ -119,7 +119,7 @@ fn MacosNativeHostBackend::create_resolved_window(
 fn MacosNativeHostBackend::attach_resolved_window(
   self : MacosNativeHostBackend,
   window : @window_macos.Window,
-  resolved : @runtime.WindowResolvedOpen,
+  resolved : @window_lifecycle.WindowResolvedOpen,
 ) -> @host.WindowRequestResult {
   let metrics = @window_input.surface_metrics_from_physical(
     window.surface_size(),

@@ -26,8 +26,9 @@ open, focus, close, resize, minimize, show, and primary-window requests without
 embedding those requests in a platform backend. `OpenWindow` requests carry a
 platform-neutral scene id and payload alongside title and metrics, so future
 multi-window hosts have enough app-level identity to choose the runtime/content
-for the new platform window. `WindowSceneResolver` is the matching shared
-contract for resolving those scene requests into new `AppRuntime` instances or
+for the new platform window. `WindowSceneResolver` in `backend/common/lifecycle`
+is the matching shared contract for resolving those scene requests into new
+`AppRuntime` instances or
 explicit scene rejections before a platform backend allocates a native window.
 `HostEventSource` in `runtime` is the subscription adapter for app-owned
 host-event fanout: platform code can publish normalized `Event` values,

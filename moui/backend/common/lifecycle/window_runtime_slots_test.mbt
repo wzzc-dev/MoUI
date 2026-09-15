@@ -3,9 +3,9 @@ test "host window runtime slots manage multiple window drivers" {
   let registry = WindowRegistry::new()
   let slots = WindowRuntimeSlots::new()
   inspect(slots.is_empty(), content="true")
-  let resolver = @runtime.WindowSceneResolver::new(resolve=request => {
-    @runtime.WindowSceneResolution::SceneResolved(
-      @runtime.WindowSceneInstance::new(
+  let resolver = WindowSceneResolver::new(resolve=request => {
+    WindowSceneResolution::SceneResolved(
+      WindowSceneInstance::new(
         request~,
         runtime=window_test_runtime(
           root=@views.empty(),
@@ -24,7 +24,7 @@ test "host window runtime slots manage multiple window drivers" {
   )
   let main_redraws = Ref(0)
   let main_slot = match resolve_open_request(registry, main_request, resolver) {
-    @runtime.WindowOpenResolution::OpenResolved(resolved) =>
+    WindowOpenResolution::OpenResolved(resolved) =>
       WindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
         main_redraws.val = main_redraws.val + 1
       })
@@ -51,7 +51,7 @@ test "host window runtime slots manage multiple window drivers" {
   let inspector_redraws = Ref(0)
   let inspector_slot = match
     resolve_open_request(registry, inspector_request, resolver) {
-    @runtime.WindowOpenResolution::OpenResolved(resolved) =>
+    WindowOpenResolution::OpenResolved(resolved) =>
       WindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
         inspector_redraws.val = inspector_redraws.val + 1
       })

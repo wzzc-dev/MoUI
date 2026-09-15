@@ -46,9 +46,9 @@
     {
       "label": "runtime facade",
       "path": "moui/runtime/pkg.generated.mbti",
-      "lines": 751,
-      "public_declarations": 433,
-      "pub_all_declarations": 28
+      "lines": 721,
+      "public_declarations": 427,
+      "pub_all_declarations": 24
     },
     {
       "label": "core",
@@ -130,9 +130,9 @@
     {
       "label": "backend common lifecycle owner",
       "path": "moui/backend/common/lifecycle/pkg.generated.mbti",
-      "lines": 254,
-      "public_declarations": 152,
-      "pub_all_declarations": 3
+      "lines": 284,
+      "public_declarations": 158,
+      "pub_all_declarations": 7
     },
     {
       "label": "backend common frame owner",

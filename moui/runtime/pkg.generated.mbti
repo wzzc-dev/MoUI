@@ -716,36 +716,6 @@ pub fn ViewTreeInspectorSnapshot::node_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::nodes(Self) -> Array[ViewInspectorSummary]
 pub fn ViewTreeInspectorSnapshot::root_kind(Self) -> String
 
-pub(all) enum WindowOpenResolution {
-  OpenResolved(WindowResolvedOpen)
-  OpenRejected(String)
-}
-
-pub(all) struct WindowResolvedOpen {
-  id : @backend.WindowId
-  record : @backend.WindowRecord
-  instance : WindowSceneInstance
-}
-pub fn WindowResolvedOpen::new(id~ : @backend.WindowId, record~ : @backend.WindowRecord, instance~ : WindowSceneInstance) -> Self
-
-pub(all) struct WindowSceneInstance {
-  request : @backend.WindowOpenRequest
-  runtime : AppRuntime
-}
-pub fn WindowSceneInstance::new(request~ : @backend.WindowOpenRequest, runtime~ : AppRuntime) -> Self
-
-pub(all) enum WindowSceneResolution {
-  SceneResolved(WindowSceneInstance)
-  SceneRejected(String)
-}
-
-pub struct WindowSceneResolver {
-  resolve : (@backend.WindowOpenRequest) -> WindowSceneResolution
-}
-pub fn WindowSceneResolver::new(resolve~ : (@backend.WindowOpenRequest) -> WindowSceneResolution) -> Self
-pub fn WindowSceneResolver::resolve(Self, @backend.WindowOpenRequest) -> WindowSceneResolution
-pub fn WindowSceneResolver::unavailable(reason? : String) -> Self
-
 // Type aliases
 
 // Traits

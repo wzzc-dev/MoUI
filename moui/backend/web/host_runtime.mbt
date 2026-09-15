@@ -32,7 +32,7 @@ let web_active_app : Ref[WebApp?] = Ref(None)
 
 ///|
 pub(all) struct WebAppOptions {
-  scene_resolver : @runtime.WindowSceneResolver
+  scene_resolver : @window_lifecycle.WindowSceneResolver
   event_sources : @runtime.HostPlatformEventSources?
   route_source : @services.RouteSource?
   platform_view_plugins : Array[@host.PlatformViewPlugin]
@@ -153,7 +153,7 @@ pub fn entry(
 
 ///|
 pub fn WebAppOptions::new(
-  scene_resolver? : @runtime.WindowSceneResolver = @runtime.WindowSceneResolver::unavailable(),
+  scene_resolver? : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
   event_sources? : @runtime.HostPlatformEventSources? = None,
   route_source? : @services.RouteSource? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],

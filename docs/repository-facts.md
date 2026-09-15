@@ -28,6 +28,8 @@ This file is generated from repository manifests and validator reports.
 | ./moui_devtools |
 | ./moui_agent |
 | ./moui_agent_mcp |
+| ./window/modules/window |
+| ./window/modules/windowing |
 | ./examples/agent_counter |
 | ./tools |
 | ./tools_product |
@@ -69,7 +71,7 @@ This file is generated from repository manifests and validator reports.
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 751 | 433 | 28 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 721 | 427 | 24 |
 | core (moui/core/pkg.generated.mbti) | 2138 | 556 | 189 |
 | views facade (moui/views/pkg.generated.mbti) | 671 | 323 | 0 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 467 | 84 | 44 |
@@ -81,7 +83,7 @@ This file is generated from repository manifests and validator reports.
 | native wgpu renderer (moui_wgpu_renderer/pkg.generated.mbti) | 142 | 65 | 3 |
 | native text protocol (moui_wgpu_renderer/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
 | backend common (moui/backend/common/pkg.generated.mbti) | 54 | 16 | 0 |
-| backend common lifecycle owner (moui/backend/common/lifecycle/pkg.generated.mbti) | 254 | 152 | 3 |
+| backend common lifecycle owner (moui/backend/common/lifecycle/pkg.generated.mbti) | 284 | 158 | 7 |
 | backend common frame owner (moui/backend/common/frame/pkg.generated.mbti) | 57 | 22 | 0 |
 | backend common image owner (moui/backend/common/image/pkg.generated.mbti) | 50 | 22 | 0 |
 | backend common input owner (moui/backend/common/input/pkg.generated.mbti) | 149 | 50 | 7 |

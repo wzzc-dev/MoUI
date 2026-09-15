@@ -33,7 +33,7 @@ pub fn WindowRuntimeSlot::from_driver(
 
 ///|
 pub fn WindowRuntimeSlot::from_resolved_open(
-  resolved : @runtime.WindowResolvedOpen,
+  resolved : WindowResolvedOpen,
   schedule_redraw~ : () -> Unit,
 ) -> WindowRuntimeSlot {
   WindowRuntimeSlot::new(

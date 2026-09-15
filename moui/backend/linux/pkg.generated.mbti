@@ -6,6 +6,7 @@ import {
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/accesskit",
   "wzzc-dev/moui/backend/common/input",
+  "wzzc-dev/moui/backend/common/lifecycle",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
 }
@@ -118,7 +119,7 @@ pub fn LinuxClientDecorationState::new(active~ : Bool, titlebar_height? : Double
 pub struct LinuxHostAppOptions {
   // private fields
 }
-pub fn LinuxHostAppOptions::new(scene_resolver? : @runtime.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes) -> Self
+pub fn LinuxHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes) -> Self
 
 pub struct LinuxHostSmokeOptions {
   // private fields

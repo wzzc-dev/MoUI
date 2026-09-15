@@ -11,7 +11,7 @@ import {
 // Values
 pub fn drain_to_runtime_slots(WindowCommands, WindowRegistry, WindowRuntimeSlots) -> Array[@backend.WindowRequestCompletion]
 
-pub fn resolve_open_request(WindowRegistry, @backend.WindowOpenRequest, @runtime.WindowSceneResolver) -> @runtime.WindowOpenResolution
+pub fn resolve_open_request(WindowRegistry, @backend.WindowOpenRequest, WindowSceneResolver) -> WindowOpenResolution
 
 // Errors
 
@@ -128,8 +128,8 @@ pub fn WindowLifecycle::drain_window_requests(Self, (@backend.WindowRequest) -> 
 pub fn WindowLifecycle::exit_intent(Self) -> Int?
 pub fn WindowLifecycle::finish_close(Self, @backend.WindowId) -> Unit
 pub fn WindowLifecycle::lookup_window(Self, @wzzc-dev/window/core.WindowId) -> @backend.WindowId?
-pub fn WindowLifecycle::new(requests~ : @backend.WindowRequests, scene_resolver~ : @runtime.WindowSceneResolver) -> Self
-pub fn WindowLifecycle::open_resolution(Self, @backend.WindowOpenRequest) -> @runtime.WindowOpenResolution
+pub fn WindowLifecycle::new(requests~ : @backend.WindowRequests, scene_resolver~ : WindowSceneResolver) -> Self
+pub fn WindowLifecycle::open_resolution(Self, @backend.WindowOpenRequest) -> WindowOpenResolution
 pub fn WindowLifecycle::register_primary_runtime_slot(Self, @backend.WindowId, @runtime.HostRuntimeDriver) -> Unit
 pub fn WindowLifecycle::register_runtime_slot(Self, WindowRuntimeSlot) -> Bool
 pub fn WindowLifecycle::request_exit(Self, Int) -> Unit
@@ -143,6 +143,11 @@ pub fn WindowLifecycle::sync_runtime_slot(Self, @backend.WindowId) -> Unit
 pub fn WindowLifecycle::sync_runtime_slots(Self) -> Unit
 pub fn WindowLifecycle::unbind_platform_window(Self, @backend.WindowId) -> @wzzc-dev/window/core.WindowId?
 pub fn WindowLifecycle::window_registry(Self) -> WindowRegistry
+
+pub(all) enum WindowOpenResolution {
+  OpenResolved(WindowResolvedOpen)
+  OpenRejected(String)
+}
 
 pub struct WindowRegistry {
   mut next_value : Int
@@ -190,13 +195,20 @@ pub fn WindowRequestQueue::set_primary_window(Self, @backend.WindowId) -> Unit
 pub fn WindowRequestQueue::show_window(Self, @backend.WindowId) -> Unit
 pub fn WindowRequestQueue::subscribe_completed(Self, (@backend.WindowRequestCompletion) -> Unit) -> () -> Unit
 
+pub(all) struct WindowResolvedOpen {
+  id : @backend.WindowId
+  record : @backend.WindowRecord
+  instance : WindowSceneInstance
+}
+pub fn WindowResolvedOpen::new(id~ : @backend.WindowId, record~ : @backend.WindowRecord, instance~ : WindowSceneInstance) -> Self
+
 pub(all) struct WindowRuntimeSlot {
   id : @backend.WindowId
   record : @backend.WindowRecord
   driver : @runtime.HostRuntimeDriver
 }
 pub fn WindowRuntimeSlot::from_driver(record~ : @backend.WindowRecord, driver~ : @runtime.HostRuntimeDriver) -> Self
-pub fn WindowRuntimeSlot::from_resolved_open(@runtime.WindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
+pub fn WindowRuntimeSlot::from_resolved_open(WindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
 pub fn WindowRuntimeSlot::new(record~ : @backend.WindowRecord, runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
 
 pub struct WindowRuntimeSlots {
@@ -218,6 +230,24 @@ pub fn WindowRuntimeSlots::remove_closed(Self) -> Int
 pub fn WindowRuntimeSlots::sync_from_registry(Self, WindowRegistry, @backend.WindowId) -> Bool
 pub fn WindowRuntimeSlots::sync_open_from_registry(Self, WindowRegistry) -> Int
 pub fn WindowRuntimeSlots::sync_record(Self, @backend.WindowRecord) -> Bool
+
+pub(all) struct WindowSceneInstance {
+  request : @backend.WindowOpenRequest
+  runtime : @runtime.AppRuntime
+}
+pub fn WindowSceneInstance::new(request~ : @backend.WindowOpenRequest, runtime~ : @runtime.AppRuntime) -> Self
+
+pub(all) enum WindowSceneResolution {
+  SceneResolved(WindowSceneInstance)
+  SceneRejected(String)
+}
+
+pub struct WindowSceneResolver {
+  resolve : (@backend.WindowOpenRequest) -> WindowSceneResolution
+}
+pub fn WindowSceneResolver::new(resolve~ : (@backend.WindowOpenRequest) -> WindowSceneResolution) -> Self
+pub fn WindowSceneResolver::resolve(Self, @backend.WindowOpenRequest) -> WindowSceneResolution
+pub fn WindowSceneResolver::unavailable(reason? : String) -> Self
 
 pub struct WindowSlot[W, X] {
   host_id : @backend.WindowId

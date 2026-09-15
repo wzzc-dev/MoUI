@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/accesskit",
+  "wzzc-dev/moui/backend/common/lifecycle",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
 }
@@ -44,7 +45,7 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 pub struct WindowsHostAppOptions {
   // private fields
 }
-pub fn WindowsHostAppOptions::new(scene_resolver? : @runtime.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin]) -> Self
+pub fn WindowsHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], frame_clock? : (() -> Double)?, on_frame_presented? : (() -> Unit)?, pump_tick? : (async () -> Bool)?) -> Self
 
 pub struct WindowsHostSmokeOptions {
   // private fields

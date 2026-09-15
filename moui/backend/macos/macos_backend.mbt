@@ -17,7 +17,7 @@ pub(all) struct MacosAccessibilityBridgeInfo {
 
 ///|
 pub struct MacosHostAppOptions {
-  priv scene_resolver : @runtime.WindowSceneResolver
+  priv scene_resolver : @window_lifecycle.WindowSceneResolver
   priv event_sources : @runtime.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
@@ -126,7 +126,7 @@ struct MacosNativeHostBackend {
 /// `show_after_first_present=false` only when creation-time visibility is
 /// required.
 pub fn MacosHostAppOptions::new(
-  scene_resolver? : @runtime.WindowSceneResolver = @runtime.WindowSceneResolver::unavailable(),
+  scene_resolver? : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
   event_sources? : @runtime.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,

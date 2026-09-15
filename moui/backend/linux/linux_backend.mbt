@@ -43,7 +43,7 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
 
 ///|
 pub struct LinuxHostAppOptions {
-  priv scene_resolver : @runtime.WindowSceneResolver
+  priv scene_resolver : @window_lifecycle.WindowSceneResolver
   priv event_sources : @runtime.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
@@ -97,7 +97,7 @@ struct LinuxNativeHostBackend {
 
 ///|
 pub fn LinuxHostAppOptions::new(
-  scene_resolver? : @runtime.WindowSceneResolver = @runtime.WindowSceneResolver::unavailable(),
+  scene_resolver? : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
   event_sources? : @runtime.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
