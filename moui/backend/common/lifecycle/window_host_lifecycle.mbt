@@ -53,7 +53,7 @@ priv struct WindowSurfaceEntry {
 /// input-session, or service-bridge state.
 pub struct WindowLifecycle {
   priv requests : @backend_host.WindowRequests
-  priv scene_resolver : @runtime.WindowSceneResolver
+  priv scene_resolver : WindowSceneResolver
   priv windows : WindowRegistry
   priv runtime_slots : WindowRuntimeSlots
   priv platform_windows : PlatformWindowMap
@@ -66,7 +66,7 @@ pub struct WindowLifecycle {
 ///|
 pub fn WindowLifecycle::new(
   requests~ : @backend_host.WindowRequests,
-  scene_resolver~ : @runtime.WindowSceneResolver,
+  scene_resolver~ : WindowSceneResolver,
 ) -> WindowLifecycle {
   {
     requests,
@@ -213,7 +213,7 @@ pub fn WindowLifecycle::exit_intent(self : WindowLifecycle) -> Int? {
 pub fn WindowLifecycle::open_resolution(
   self : WindowLifecycle,
   request : @backend_host.WindowOpenRequest,
-) -> @runtime.WindowOpenResolution {
+) -> WindowOpenResolution {
   resolve_open_request(self.windows, request, self.scene_resolver)
 }
 

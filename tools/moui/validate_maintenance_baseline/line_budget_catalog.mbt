@@ -80,7 +80,10 @@ fn file_budgets() -> Array[FileBudget] {
       path: "moui/backend/common/lifecycle/window_registry.mbt",
       max_lines: 325,
     },
-    { path: "moui/runtime/window_scene_resolution.mbt", max_lines: 115 },
+    {
+      path: "moui/backend/common/lifecycle/window_scene_resolution.mbt",
+      max_lines: 140,
+    },
     {
       path: "moui/backend/common/lifecycle/window_runtime_slots.mbt",
       max_lines: 247,

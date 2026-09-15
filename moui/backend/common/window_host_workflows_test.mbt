@@ -2,7 +2,7 @@
 fn workflow_test_lifecycle() -> @window_lifecycle.WindowLifecycle {
   @window_lifecycle.WindowLifecycle::new(
     requests=@window_lifecycle.WindowRequestQueue::new().requests(),
-    scene_resolver=@runtime.WindowSceneResolver::unavailable(),
+    scene_resolver=@window_lifecycle.WindowSceneResolver::unavailable(),
   )
 }
 

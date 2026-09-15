@@ -287,9 +287,9 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/runtime\"",
       // AppBuilder, PlatformEntry, and AppLaunchRequest are the public
       // application/platform composition contract.
-      max_lines: 864,
-      max_pub_lines: 468,
-      max_pub_all_lines: 35,
+      max_lines: 745,
+      max_pub_lines: 460,
+      max_pub_all_lines: 28,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend\"", "\"wzzc-dev/moui/render\"",
         "pub struct AppRuntime", "pub fn[Model, Msg] new_program(", "pub fn[Model, Msg] new_program_with_dimensions(",

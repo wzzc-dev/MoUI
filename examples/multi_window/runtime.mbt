@@ -1,12 +1,12 @@
 ///|
 pub fn runtime_and_host() -> (
   @runtime.AppRuntime,
-  @runtime.WindowSceneResolver,
+  @backend_common.WindowSceneResolver,
   @backend_common.WindowRequestQueue,
 ) {
   let queue = @backend_common.WindowRequestQueue::new()
   let windows = window_actions(queue)
-  let resolver = @runtime.WindowSceneResolver::new(resolve=request => {
+  let resolver = @backend_common.WindowSceneResolver::new(resolve=request => {
     match
       @multi_window_app.scene_from_window(
         @multi_window_app.WindowScene::new(
@@ -15,14 +15,16 @@ pub fn runtime_and_host() -> (
         ),
       ) {
       Some(scene) =>
-        @runtime.WindowSceneResolution::SceneResolved(
-          @runtime.WindowSceneInstance::new(
+        @backend_common.WindowSceneResolution::SceneResolved(
+          @backend_common.WindowSceneInstance::new(
             request~,
             runtime=runtime_for(scene, windows, request.metrics.logical_size),
           ),
         )
       None =>
-        @runtime.WindowSceneResolution::SceneRejected("unknown sample scene")
+        @backend_common.WindowSceneResolution::SceneRejected(
+          "unknown sample scene",
+        )
     }
   })
   (

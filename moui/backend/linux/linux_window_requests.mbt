@@ -79,9 +79,9 @@ fn LinuxNativeHostBackend::open_window(
   request : @host.WindowOpenRequest,
 ) -> @host.WindowRequestResult {
   match self.lifecycle.open_resolution(request) {
-    @runtime.WindowOpenResolution::OpenRejected(message) =>
+    @window_lifecycle.WindowOpenResolution::OpenRejected(message) =>
       @host.WindowRequestResult::WindowRejected(message)
-    @runtime.WindowOpenResolution::OpenResolved(resolved) =>
+    @window_lifecycle.WindowOpenResolution::OpenResolved(resolved) =>
       self.create_resolved_window(event_loop, resolved)
   }
 }
@@ -90,7 +90,7 @@ fn LinuxNativeHostBackend::open_window(
 fn LinuxNativeHostBackend::create_resolved_window(
   self : LinuxNativeHostBackend,
   event_loop : @window_linux.ActiveEventLoop,
-  resolved : @runtime.WindowResolvedOpen,
+  resolved : @window_lifecycle.WindowResolvedOpen,
 ) -> @host.WindowRequestResult {
   let requested_surface_metrics = linux_surface_metrics_for_content(
     resolved.record.metrics,
@@ -127,7 +127,7 @@ fn LinuxNativeHostBackend::create_resolved_window(
 fn LinuxNativeHostBackend::attach_resolved_window(
   self : LinuxNativeHostBackend,
   window : @window_linux.Window,
-  resolved : @runtime.WindowResolvedOpen,
+  resolved : @window_lifecycle.WindowResolvedOpen,
 ) -> @host.WindowRequestResult {
   let initial_surface_metrics = linux_window_surface_metrics(window)
   let decorations = linux_client_decoration_state(window)

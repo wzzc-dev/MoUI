@@ -66,7 +66,7 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 
 ///|
 pub struct WindowsHostAppOptions {
-  priv scene_resolver : @runtime.WindowSceneResolver
+  priv scene_resolver : @window_lifecycle.WindowSceneResolver
   priv event_sources : @runtime.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   /// Same contract as `MacosHostAppOptions::frame_clock`: invoked around
@@ -120,7 +120,7 @@ struct WindowsNativeHostBackend {
 
 ///|
 pub fn WindowsHostAppOptions::new(
-  scene_resolver? : @runtime.WindowSceneResolver = @runtime.WindowSceneResolver::unavailable(),
+  scene_resolver? : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
   event_sources? : @runtime.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   frame_clock? : (() -> Double)? = None,
@@ -830,9 +830,9 @@ fn WindowsNativeHostBackend::open_window(
   request : @host.WindowOpenRequest,
 ) -> @host.WindowRequestResult {
   match self.lifecycle.open_resolution(request) {
-    @runtime.WindowOpenResolution::OpenRejected(message) =>
+    @window_lifecycle.WindowOpenResolution::OpenRejected(message) =>
       @host.WindowRequestResult::WindowRejected(message)
-    @runtime.WindowOpenResolution::OpenResolved(resolved) =>
+    @window_lifecycle.WindowOpenResolution::OpenResolved(resolved) =>
       self.create_resolved_window(event_loop, resolved)
   }
 }
@@ -841,7 +841,7 @@ fn WindowsNativeHostBackend::open_window(
 fn WindowsNativeHostBackend::create_resolved_window(
   self : WindowsNativeHostBackend,
   event_loop : @win.ActiveEventLoop,
-  resolved : @runtime.WindowResolvedOpen,
+  resolved : @window_lifecycle.WindowResolvedOpen,
 ) -> @host.WindowRequestResult {
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
@@ -869,7 +869,7 @@ fn WindowsNativeHostBackend::create_resolved_window(
 fn WindowsNativeHostBackend::attach_resolved_window(
   self : WindowsNativeHostBackend,
   window : @win.Window,
-  resolved : @runtime.WindowResolvedOpen,
+  resolved : @window_lifecycle.WindowResolvedOpen,
 ) -> @host.WindowRequestResult {
   let metrics = @window_input.make_surface_metrics(
     window.surface_size(),

@@ -8,14 +8,14 @@ test "linux host options carry optional scene resolver and smoke options stay se
     ),
   )
   match LinuxHostAppOptions::new().scene_resolver.resolve(request) {
-    @runtime.WindowSceneResolution::SceneRejected(message) =>
+    @window_lifecycle.WindowSceneResolution::SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Linux scene resolver rejection")
   }
   assert_false(LinuxHostSmokeOptions::new().first_frame_smoke_auto_exit)
-  let resolver = @runtime.WindowSceneResolver::new(resolve=request => {
-    @runtime.WindowSceneResolution::SceneResolved(
-      @runtime.WindowSceneInstance::new(
+  let resolver = @window_lifecycle.WindowSceneResolver::new(resolve=request => {
+    @window_lifecycle.WindowSceneResolution::SceneResolved(
+      @window_lifecycle.WindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
@@ -40,7 +40,7 @@ test "linux host options carry optional scene resolver and smoke options stay se
     None => fail("expected configured Linux platform event sources")
   }
   match options.scene_resolver.resolve(request) {
-    @runtime.WindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    @window_lifecycle.WindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Linux scene resolver")
   }

@@ -21,8 +21,9 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/runtime",
       path: "moui/runtime",
-      // 35 = 34 (ADR 0018 host split) + 1 (window scene lifecycle growth).
-      max_count: 35,
+      // 31 = 34 (ADR 0018 host split); the window scene resolution family
+      // moved to backend/common/lifecycle (window-scene-family-relocation).
+      max_count: 31,
     },
     {
       kind: "pub(all)",
@@ -30,8 +31,9 @@ fn pub_all_budgets() -> Array[CountBudget] {
       path: "moui/backend",
       // AccessKit's backend-owned adapter plus application-menu placement add
       // two package-level protocol records while common owners replace the
-      // former coordinator.
-      max_count: 104,
+      // former coordinator; +4 for the relocated window scene resolution
+      // family now owned by backend/common/lifecycle.
+      max_count: 108,
     },
     {
       kind: "pub(all)",

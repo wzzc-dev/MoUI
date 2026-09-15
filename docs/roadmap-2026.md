@@ -233,7 +233,8 @@ Focus areas:
   set-primary requests. Drained request completions are recorded back onto the
   queue through a shared host helper so request outcomes stay observable.
   `OpenWindow` requests carry a platform-neutral scene id and payload.
-  `WindowSceneResolver` is the shared scene-to-`AppRuntime` contract for
+  `WindowSceneResolver` in `backend/common/lifecycle` is the shared
+  scene-to-`AppRuntime` contract for
   that resolution step, and `@backend_common.resolve_open_request` pairs
   successful resolutions with window records. `WindowRuntimeSlot` wraps
   those records with per-window `HostRuntimeDriver` instances, while
