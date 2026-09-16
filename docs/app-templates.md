@@ -13,7 +13,7 @@ moui new my_app
 cd my_app
 moon update
 moon check
-moon run macos_skia --target native   # or windows_skia / linux_skia
+moui run macos .   # or windows / linux / web
 ```
 
 `moui new` generates:

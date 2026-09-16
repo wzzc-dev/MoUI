@@ -140,11 +140,23 @@ test "test_parse_run_args_help_flag" {
 }
 
 ///|
-test "test_parse_run_args_rejects_desktop" {
+test "test_parse_run_args_accepts_desktop" {
   let parsed = parse_run_args(["web", "demo"], "/tmp", detect_host_platform())
   match parsed {
-    Ok(_) => fail("expected parse error for desktop platform")
-    Err(message) => assert_true(message.contains("use `moon run`"))
+    Ok(value) => {
+      assert_eq(value.platform, "web")
+      assert_eq(value.app, "demo")
+    }
+    Err(message) => fail("parse_run_args failed: " + message)
+  }
+  let parsed_windows = parse_run_args(
+    ["windows", "demo"],
+    "/tmp",
+    detect_host_platform(),
+  )
+  match parsed_windows {
+    Ok(value) => assert_eq(value.platform, "windows")
+    Err(message) => fail("parse_run_args failed: " + message)
   }
 }
 

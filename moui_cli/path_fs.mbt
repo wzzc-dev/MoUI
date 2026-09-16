@@ -203,6 +203,19 @@ extern "C" fn path_is_executable_native(path : Bytes) -> Int = "moui_cli_path_is
 
 ///|
 #borrow(path)
+extern "C" fn make_executable_native(path : Bytes) -> Int = "moui_cli_make_executable"
+
+///|
+fn make_executable(path : String) -> Result[Unit, String] {
+  if make_executable_native(nul_terminated(path)) == 0 {
+    Ok(())
+  } else {
+    Err("could not mark file as executable: " + path)
+  }
+}
+
+///|
+#borrow(path)
 extern "C" fn path_is_symlink_native(path : Bytes) -> Int = "moui_cli_path_is_symlink"
 
 ///|

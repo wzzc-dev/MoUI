@@ -61,22 +61,32 @@ entrypoint (macOS / Windows / Linux Skia). Mobile platforms are opt-in with
 ### Run desktop (host-dependent)
 
 ```sh
-# macOS
-moon run macos_skia --target native
+# Any desktop platform: moui run <platform> .
+moui run macos .
+moui run windows .
+moui run linux .
 
-# Windows
-moon run windows_skia --target native
+# Or package the app as a distributable:
+moui package macos .     # -> dist/macos/<Name>.app
+moui package windows .   # -> dist/windows-msvc/<Name>/ (exe + run.cmd)
 
-# Linux (Wayland)
-moon run linux_skia --target native
+# Direct moon invocation still works:
+# moon run macos_skia --target native
 ```
+
+On Windows, `moui build|run|package windows` configures the MSVC environment
+automatically (vswhere + vcvarsall), so sourcing `msvc_env.ps1` first is no
+longer required.
 
 ### Run Web
 
 ```sh
-moon build web_wasm --target wasm-gc
-# Serve the web_wasm package (static HTTP) and open index.html in a
-# WebGPU-capable browser.
+moui run web .
+# Serve the built wasm with the dev runner (refresh + error overlay).
+
+# Or build only and serve statically:
+moui build web .
+# Open index.html in a WebGPU-capable browser.
 ```
 
 ### Run mobile (Android / iOS / HarmonyOS)
