@@ -548,6 +548,75 @@ fn markdown_split_plain_highlights(
 }
 
 ///|
+///|
+/// Definition set from the single-line scanner only. The full-parser union
+/// below costs a whole-document markdown parse (~700 ms on a 5 MB fixture),
+/// which a definition-cache miss would otherwise charge to an interactive
+/// keystroke. The scanner catches every single-line definition, including
+/// the indented ones inside containers, and the session's incremental apply
+/// carries the set forward per edit; multi-line definitions (label and URL
+/// on separate lines) are only found by the full-parse paths.
+fn markdown_reference_definitions_scan_only(
+  source : String,
+) -> Array[MarkdownReferenceDefinition] {
+  markdown_scan_reference_definitions_fast(source)
+}
+
+///|
+fn markdown_source_char_is_ascii_or_nbsp_whitespace(c : Char) -> Bool {
+  c == ' ' ||
+  c == '\t' ||
+  c == '\r' ||
+  c == '\n' ||
+  c == '\u{000B}' ||
+  c == '\u{000C}' ||
+  c == '\u{00A0}'
+}
+
+///|
+/// Single-line-scan definition extraction without materializing every
+/// line. One pass over the source locates candidate lines by their first
+/// non-whitespace character; only candidates are handed to the allocating
+/// per-line scanner, so the matching semantics live in exactly one place.
+/// On multi-megabyte documents the split-into-lines version spent
+/// hundreds of milliseconds per call on line-string and char-array
+/// allocations alone.
+fn markdown_scan_reference_definitions_fast(
+  source : String,
+) -> Array[MarkdownReferenceDefinition] {
+  let definitions : Array[MarkdownReferenceDefinition] = []
+  // One flat char array: a single large allocation beats the per-line
+  // string and char-array allocations of the split-into-lines version.
+  let chars = source.to_array()
+  let n = chars.length()
+  let mut index = 0
+  while index < n {
+    let line_start = index
+    while index < n && chars[index] != '\n' {
+      index = index + 1
+    }
+    let line_end = index
+    index = index + 1
+    // Quick reject on the unmaterialized line: a definition line's
+    // trimmed content starts with '['.
+    let mut scan = line_start
+    while scan < line_end &&
+      markdown_source_char_is_ascii_or_nbsp_whitespace(chars[scan]) {
+      scan = scan + 1
+    }
+    if scan >= line_end || chars[scan] != '[' {
+      continue
+    }
+    let line = String::from_array(chars[line_start:line_end])
+    match markdown_scan_reference_definition_line(line) {
+      Some(definition) => definitions.push(definition)
+      None => ()
+    }
+  }
+  definitions
+}
+
+///|
 fn markdown_reference_definitions(
   source : String,
 ) -> Array[MarkdownReferenceDefinition] {

@@ -405,6 +405,26 @@ pub fn MarkdownEditTransaction::from_edit(
 }
 
 ///|
+/// Seed the keyed definition cache for a freshly built session with the
+/// single-line scanner. Leaving the cache empty charged the first edit
+/// after load a whole-document markdown parse (~700 ms on a 5 MB fixture).
+/// The scanner catches every single-line definition; the incremental apply
+/// carries the set forward per keystroke. Takes the raw constructor source:
+/// reading it back through `source()` would materialize the whole-text
+/// view (a multi-megabyte join) on the open path.
+fn markdown_document_session_seed_definitions(
+  source : String,
+  source_length~ : Int,
+  source_digest~ : UInt64,
+) -> Unit {
+  markdown_reference_definitions_cache_store_keyed(
+    source_length~,
+    source_digest~,
+    markdown_reference_definitions_scan_only(source),
+  )
+}
+
+///|
 pub fn MarkdownDocumentSession::new(source : String) -> MarkdownDocumentSession {
   hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
   // Opening a document runs the shell parse: one linear scan for block
@@ -412,7 +432,7 @@ pub fn MarkdownDocumentSession::new(source : String) -> MarkdownDocumentSession 
   // blocks start as shells and are re-parsed on demand by
   // `markdown_editor_block_materialized` when their inline runs are needed
   // (the visible window, caret geometry, export).
-  markdown_document_session_from_blocks(
+  let session = markdown_document_session_from_blocks(
     source,
     parse_markdown_editor_blocks_shell(source),
     previous=None,
@@ -420,6 +440,12 @@ pub fn MarkdownDocumentSession::new(source : String) -> MarkdownDocumentSession 
     parse_count=1,
     dirty_range=None,
   )
+  markdown_document_session_seed_definitions(
+    source,
+    source_length=session.source_length,
+    source_digest=session.source_digest,
+  )
+  session
 }
 
 ///|
@@ -738,7 +764,11 @@ pub fn MarkdownDocumentSession::apply(
   self : MarkdownDocumentSession,
   transaction : MarkdownEditTransaction,
 ) -> MarkdownDocumentSession {
-  if transaction.source == self.source() {
+  // Splicing `replacement` over `deleted` at one range yields the previous
+  // source exactly when the two strings are equal, so the O(doc) whole-source
+  // compare only has to run for the (rare) no-op re-commit case.
+  if transaction.replacement == transaction.deleted &&
+    transaction.source == self.source() {
     return self
   }
   match markdown_document_session_apply_incremental(self, transaction) {
@@ -747,7 +777,7 @@ pub fn MarkdownDocumentSession::apply(
       hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
       let blocks = parse_markdown_editor_blocks(transaction.source)
       let dirty = markdown_document_dirty_range(transaction, blocks)
-      markdown_document_session_from_blocks(
+      let session = markdown_document_session_from_blocks(
         transaction.source,
         blocks,
         previous=Some(self),
@@ -755,6 +785,13 @@ pub fn MarkdownDocumentSession::apply(
         parse_count=self.parse_count + 1,
         dirty_range=dirty,
       )
+      // Keep the next keystroke off the definition-cache miss path.
+      markdown_document_session_seed_definitions(
+        transaction.source,
+        source_length=session.source_length,
+        source_digest=session.source_digest,
+      )
+      session
     }
   }
 }
@@ -1307,7 +1344,7 @@ pub fn MarkdownDocumentSession::replace_source(
   // re-parsing every block eagerly. Shell blocks materialize on demand
   // exactly like a freshly opened document.
   hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
-  markdown_document_session_from_blocks(
+  let session = markdown_document_session_from_blocks(
     source,
     parse_markdown_editor_blocks_shell(source),
     previous=None,
@@ -1315,6 +1352,12 @@ pub fn MarkdownDocumentSession::replace_source(
     parse_count=self.parse_count + 1,
     dirty_range=None,
   )
+  markdown_document_session_seed_definitions(
+    source,
+    source_length=session.source_length,
+    source_digest=session.source_digest,
+  )
+  session
 }
 
 ///|
