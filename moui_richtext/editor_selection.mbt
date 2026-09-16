@@ -216,26 +216,34 @@ fn markdown_editor_code_block_at_content_offset(
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
-  let caret = markdown_editor_clamp_int(
-    caret,
-    0,
-    markdown_editor_text_length(source),
-  )
-  // With the session's blocks at hand, scanning them is O(blocks) over
-  // ranges that are already exact; only callers without a session pay for
-  // the whole-document parse.
+  // With the session context the char length is the text store's O(1) tail
+  // offset; without one, fall back to the cached whole-source length.
+  let source_length = match context {
+    Some(context) => context.store.length()
+    None => markdown_editor_text_length(source)
+  }
+  let caret = markdown_editor_clamp_int(caret, 0, source_length)
+  // With the session's blocks at hand the ranges are already exact; only
+  // callers without a session pay for the whole-document parse. Block
+  // ranges are ordered and non-overlapping, so the caret sits inside at
+  // most one block and a binary search replaces the per-keystroke scan.
   let blocks = match context {
     Some(context) => context.blocks
     None => parse_markdown_editor_blocks(source)
   }
-  for block in blocks {
-    if block.block.kind is MarkdownBlockKind::CodeBlock &&
-      caret >= block.content_range.start &&
-      caret <= block.content_range.end {
-      return Some(block)
+  match markdown_editor_block_index_at_offset(blocks, caret) {
+    Some(index) => {
+      let block = blocks[index]
+      if block.block.kind is MarkdownBlockKind::CodeBlock &&
+        caret >= block.content_range.start &&
+        caret <= block.content_range.end {
+        Some(block)
+      } else {
+        None
+      }
     }
+    None => None
   }
-  None
 }
 
 ///|
