@@ -72,6 +72,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [crater-browser-integration](active/crater-browser-integration.md) | Pure-MoonBit browser demo: crater HTML engine + js_engine scripts rendered through MoUI canvas |
 | [moui-tier-tea-debt-convergence](active/moui-tier-tea-debt-convergence.md) | Converge platform tiers, strict TEA boundaries, entrypoints, and documentation debt |
 | [window-scene-family-relocation](done/window-scene-family-relocation.md) | Move the window scene resolution family from runtime to backend/common/lifecycle, the P10 neutral-lifecycle owner |
+| [moui-cli-desktop-commands](done/moui-cli-desktop-commands.md) | Extend moui build/run/package to all platforms with in-process MSVC env configuration and script-absorbed packaging |
 | [3d-moui-viewer](active/3d-moui-viewer.md) | Independent static glTF/GLB viewer addon with explicit GPU capability status |
 | [richtext-markdown-domain-relocation](active/richtext-markdown-domain-relocation.md) | Move the Markdown editing domain model out of `moui_richtext` into `moui_markdown` to converge its public surface toward ~30 pub lines |
 | [overlay-system-redesign](done/overlay-system-redesign.md) | Ordered `OverlayHost + PresentationSpec` with runtime placement/input/focus and neutral host-modal transport |

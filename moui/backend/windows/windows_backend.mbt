@@ -275,10 +275,11 @@ async fn launch_windows_app_async_pump(
       @window_core.PumpStatus::Continue => ()
     }
     match options.pump_tick {
-      Some(tick) => if tick() {
-        windows_time_end_period()
-        return ()
-      }
+      Some(tick) =>
+        if tick() {
+          windows_time_end_period()
+          return ()
+        }
       None => ()
     }
     @async.sleep(frame_interval_ms)

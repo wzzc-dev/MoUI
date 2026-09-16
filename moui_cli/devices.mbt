@@ -393,6 +393,7 @@ fn run_devices(parsed : ParsedDevices, host : HostPlatform) -> CliOutcome {
             Err(message) =>
               return failed_outcome(message, parsed.json, devices_usage())
           }
+        "macos" | "windows" | "linux" => desktop_host_devices(platform, host)
         _ =>
           return failed_outcome(
             "unsupported platform: " + platform,
@@ -400,7 +401,16 @@ fn run_devices(parsed : ParsedDevices, host : HostPlatform) -> CliOutcome {
             "",
           )
       }
-    None => list_all_devices(host)
+    None => {
+      let all = list_all_devices(host)
+      let host_name = host.name()
+      if host_name != "unknown" {
+        for entry in desktop_host_devices(host_name, host) {
+          all.push(entry)
+        }
+      }
+      all
+    }
   }
   if parsed.json {
     let entries : Array[Json] = []
@@ -438,4 +448,29 @@ fn run_devices(parsed : ParsedDevices, host : HostPlatform) -> CliOutcome {
     }
     stdout_outcome(text)
   }
+}
+
+///|
+/// Report the local host as a desktop run target for `moui devices`.
+/// Desktop targets are always available on a matching host; the caller
+/// supplies the requested platform (or the detected host name).
+fn desktop_host_devices(
+  platform : String,
+  host : HostPlatform,
+) -> Array[Device] {
+  let host_matches = (platform == "macos" && host == Macos) ||
+    (platform == "windows" && host == Windows) ||
+    (platform == "linux" && host == Linux)
+  if !host_matches {
+    return []
+  }
+  [
+    {
+      platform,
+      id: "host",
+      name: "This computer",
+      state: "online",
+      kind: "desktop",
+    },
+  ]
 }

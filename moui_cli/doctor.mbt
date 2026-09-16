@@ -298,7 +298,7 @@ fn msvc_doctor_check(
         Fail,
         true,
         "Visual Studio is configured but cl.exe is not on PATH",
-        remediation="Run moui from a Visual Studio Developer PowerShell or initialize the MSVC environment.",
+        remediation="Run moui from a Visual Studio Developer PowerShell, or let `moui build windows` configure the MSVC environment automatically via vswhere/vcvarsall.",
       )
     None =>
       doctor_check(
@@ -306,7 +306,34 @@ fn msvc_doctor_check(
         Fail,
         true,
         "MSVC Build Tools were not detected",
-        remediation="Install Visual Studio Build Tools with the Desktop development with C++ workload.",
+        remediation="Install Visual Studio Build Tools with: winget install --id Microsoft.VisualStudio.2022.BuildTools -e; `moui build windows` then configures the environment automatically.",
+      )
+  }
+}
+
+///|
+/// Web builds and the dev runner need Node.js on PATH.
+fn web_doctor_check(required : Bool) -> DoctorCheck {
+  if !required {
+    return skipped_check("web", "Web is not required by the selected platforms")
+  }
+  let host = detect_host_platform()
+  match find_executable("node", host) {
+    Some(path) =>
+      doctor_check(
+        "web",
+        Pass,
+        true,
+        "Node.js is available for web build hooks and the dev runner",
+        detail=path,
+      )
+    None =>
+      doctor_check(
+        "web",
+        Fail,
+        true,
+        "Node.js was not found on PATH",
+        remediation="Install Node.js; `moui dev` and web packaging require it.",
       )
   }
 }
@@ -477,6 +504,7 @@ fn run_doctor(options : DoctorOptions) -> Result[DoctorReport, String] {
       host_platform,
       platforms.contains("windows"),
     ),
+    web_doctor_check(platforms.contains("web")),
     wayland_doctor_check(host_platform, platforms.contains("linux")),
     android_doctor_check(
       options.project_root,

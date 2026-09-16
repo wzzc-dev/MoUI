@@ -9,6 +9,7 @@ priv struct ParsedBuild {
   help : Bool
   json : Bool
   platform : String
+  app : String
   options : BuildCommandOptions?
 }
 
@@ -25,6 +26,7 @@ priv struct BuildCommandOptions {
   renderer : String?
   fallback_skia : Bool
   prepare_only : Bool
+  release : Bool
   // Platform-specific product override.
   product_name : String?
   abi : String?
@@ -44,13 +46,16 @@ fn build_usage() -> String {
   (
     #|Usage: moui build <platform> <app> [options]
     #|
-    #|Build a MoUI mobile app artifact (APK / .app / .hap) without installing
-    #|or launching. The platform toolchain (Gradle / Xcode / hvigor) must be
-    #|on PATH. Configuration defaults come from `moui config`.
+    #|Build a MoUI app artifact. Mobile platforms produce APK / .app / .hap
+    #|artifacts; desktop/web platforms build the entrypoint package in place.
+    #|Configuration defaults come from `moui config`.
     #|
     #|Arguments:
-    #|  platform     Target platform: android, ios, or harmonyos.
-    #|  app          Application id (matches moui.mobile.json `id`).
+    #|  platform     Target platform: macos, windows, linux, web, android,
+    #|               ios, or harmonyos.
+    #|  app          Project directory holding the entrypoint packages (or
+    #|               the entrypoint package itself) for desktop/web; the
+    #|               application id matching moui.mobile.json for mobile.
     #|
     #|Options:
     #|  --mobile-config PATH        Path to moui.mobile.json. Defaults to ./moui.mobile.json.
@@ -59,7 +64,9 @@ fn build_usage() -> String {
     #|  --skia-root PATH            Skia package root. Defaults from `moui config`.
     #|  --build-dir PATH            Build output directory. Defaults to ./artifacts/<platform>.
     #|  --output PATH                Output artifact path. Defaults to <build-dir>/<app-id>.<ext>.
-    #|  --renderer NAME             Renderer override (auto / skia / wgpu).
+    #|  --renderer NAME             Renderer override (auto / skia / wgpu / sun for
+    #|                              desktop/web; auto / skia / wgpu for mobile).
+    #|  --release                   Desktop/web: build in release mode with --strip.
     #|  --fallback-skia             Allow Skia fallback when primary renderer fails.
     #|  --prepare-only               Stop after preparing native build inputs.
     #|  --product-name NAME         iOS product name override.
@@ -97,6 +104,7 @@ fn parse_build_args(
   let renderer : Ref[String?] = Ref(None)
   let fallback_skia = Ref(false)
   let prepare_only = Ref(false)
+  let release = Ref(false)
   let product_name : Ref[String?] = Ref(None)
   let abi : Ref[String?] = Ref(None)
   let compile_sdk : Ref[Int?] = Ref(None)
@@ -123,12 +131,13 @@ fn parse_build_args(
           Ok(_) => help.val = true
           Err(message) => return Err(message)
         }
-      "--fallback-skia" | "--prepare-only" =>
+      "--fallback-skia" | "--prepare-only" | "--release" =>
         match flag_without_value(inline, name) {
           Ok(_) =>
             match name {
               "--fallback-skia" => fallback_skia.val = true
               "--prepare-only" => prepare_only.val = true
+              "--release" => release.val = true
               _ => ()
             }
           Err(message) => return Err(message)
@@ -199,7 +208,13 @@ fn parse_build_args(
     index += 1
   }
   if help.val {
-    return Ok({ help: true, json: json.val, platform: "", options: None })
+    return Ok({
+      help: true,
+      json: json.val,
+      platform: "",
+      app: "",
+      options: None,
+    })
   }
   if positional.length() < 2 {
     return Err("usage: moui build <platform> <app> [options]")
@@ -209,22 +224,24 @@ fn parse_build_args(
   }
   let platform = positional[0]
   let app = positional[1]
-  match platform {
-    "android" | "ios" | "harmonyos" => ()
-    _ =>
-      return Err(
-        "unsupported platform for moui build: " +
-        platform +
-        " (use `moon run` for desktop/web targets)",
-      )
+  let is_mobile = platform == "android" ||
+    platform == "ios" ||
+    platform == "harmonyos"
+  let is_desktop = desktop_platform_supported(platform)
+  if !is_mobile && !is_desktop {
+    return Err(
+      "unsupported platform for moui build: " +
+      platform +
+      " (expected macos, windows, linux, web, android, ios, or harmonyos)",
+    )
   }
-  // `app` positional arg is validated but not stored; the platform
-  // build functions carry the parsed mobile configuration.
-  let _ = app
+  // Mobile builds carry the parsed mobile configuration; desktop builds
+  // resolve the positional `app` path at dispatch time.
   Ok({
     help: false,
     json: json.val,
     platform,
+    app,
     options: Some({
       app_config_path: app_config.val,
       workspace_root: workspace_root.val.unwrap_or(cwd),
@@ -235,6 +252,7 @@ fn parse_build_args(
       renderer: renderer.val,
       fallback_skia: fallback_skia.val,
       prepare_only: prepare_only.val,
+      release: release.val,
       product_name: product_name.val,
       abi: abi.val,
       compile_sdk: compile_sdk.val,
@@ -553,6 +571,9 @@ fn run_build(parsed : ParsedBuild, host : HostPlatform) -> CliOutcome {
       parsed.json,
       build_usage(),
     )
+  }
+  if desktop_platform_supported(parsed.platform) {
+    return run_build_desktop(parsed, host)
   }
   // 1. Read mobile metadata from the supplied path or workspace root.
   let app_result = match options.app_config_path {

@@ -56,11 +56,16 @@ fn root_usage() -> String {
     #|  new             Create an independent MoUI project.
     #|  add platform    Add platforms to an existing project.
     #|  doctor          Check the selected platform toolchains.
-    #|  package         Validate and plan a unified package manifest.
+    #|  package         Package a desktop/web app as a distributable artifact,
+    #|                  or plan a unified release manifest (legacy mode).
     #|  dev             Build, watch, and restart a MoUI project.
-    #|  build           Build a mobile app artifact (APK / .app / .hap) without installing.
-    #|  run             Build, install, and launch a mobile app on a device or emulator.
-    #|  devices         List connected mobile devices and emulators.
+    #|  build           Build an app artifact for any platform (desktop in
+    #|                  place, mobile APK / .app / .hap).
+    #|  run             Run an app: desktop builds and launches in place,
+    #|                  web serves through the dev runner, mobile builds,
+    #|                  installs, and launches on a device or emulator.
+    #|  devices         List connected mobile devices, emulators, and the
+    #|                  desktop host.
     #|  verify          Verify embedded-runtime evidence.
     #|  config          Get/set MoUI CLI configuration values (XDG-backed).
     #|
@@ -736,7 +741,14 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
         )
       }
     "doctor" => run_doctor_command(args[1:].to_owned(), cwd)
-    "package" => run_package_command(args[1:].to_owned(), cwd)
+    "package" => {
+      let rest = args[1:].to_owned()
+      if package_build_requested(rest) {
+        run_package_build(rest, cwd)
+      } else {
+        run_package_command(rest, cwd)
+      }
+    }
     "dev" =>
       match parse_dev_args(args[1:].to_owned(), cwd) {
         Ok(parsed) => run_dev(parsed)

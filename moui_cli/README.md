@@ -1,8 +1,9 @@
 # MoUI CLI
 
-`moui` creates and operates independent MoUI projects. Mobile targets use the
-matching `wzzc-dev/window` host template and `*_window_hosted` entrypoint; the
-CLI does not create a separate mobile runtime layer.
+`moui` creates and operates independent MoUI projects. Desktop and web
+targets build and run directly from the project directory; mobile targets use
+the matching `wzzc-dev/window` host template and `*_window_hosted` entrypoint,
+so the CLI does not create a separate mobile runtime layer.
 
 ## Commands
 
@@ -11,15 +12,37 @@ CLI does not create a separate mobile runtime layer.
 | `moui new <target>` | Create an independent project. |
 | `moui add platform <platform>` | Add a desktop, web, or mobile platform. |
 | `moui doctor` | Check selected platform toolchains. |
-| `moui package` | Print the project package inventory. |
+| `moui package [platform] [app]` | Package a desktop/web app as a distributable (macOS `.app`, Windows portable folder, web bundle); without positional arguments, print the release-planning inventory. |
 | `moui dev [package]` | Build, watch, restart, and serve a project during development. |
-| `moui build <platform> <app>` | Build Android, iOS, or HarmonyOS artifacts. |
-| `moui run <platform> <app>` | Build, install, and launch a mobile artifact. |
-| `moui devices` | List connected mobile devices and emulators. |
+| `moui build <platform> <app>` | Build an artifact for any platform: desktop/web build the entrypoint package in place; Android / iOS / HarmonyOS produce APK / .app / .hap. |
+| `moui run <platform> <app>` | Run an app: desktop builds and launches in place, web serves through the dev runner, mobile builds, installs, and launches on a device or emulator. |
+| `moui devices` | List connected mobile devices, emulators, and the desktop host. |
 | `moui verify <platform> <app>` | Verify generated embedded-runtime evidence. |
 | `moui config <action>` | Read or update CLI configuration. |
 
 Use `moui --help` or `moui <command> --help` for current options.
+
+## Run Desktop And Web
+
+```sh
+moui run macos .    # build + launch the native executable
+moui run windows .  # MSVC environment is configured automatically
+moui run linux .
+moui run web .      # serve through the dev runner (refresh + error overlay)
+```
+
+Package distributables:
+
+```sh
+moui package macos .     # dist/macos/<Name>.app
+moui package windows .   # dist/windows-msvc/<Name>/ with exe + run.cmd
+moui package web .       # static web bundle (gzip/brotli + bundle-size.json)
+```
+
+Linux run/build work directly (`moui run linux .`); Linux bundle packaging is
+not implemented yet. Windows builds resolve the MSVC toolchain through
+vswhere and vcvarsall in-process, so sourcing `scripts/windows/msvc_env.ps1`
+first is no longer required (a preset `CC` environment is respected).
 
 ## Develop With A Watch Loop
 

@@ -615,3 +615,20 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_validate_generated_project_stage(
   return status == 0 ? 0 : (status < 0 ? 100 + stage : stage);
 #endif
 }
+
+/*
+ * moui_cli_make_executable — mark a file as executable (chmod 0755). Only
+ * meaningful on POSIX hosts; on Windows the loader does not consult an
+ * executable bit, so this is a no-op success.
+ */
+MOONBIT_FFI_EXPORT int32_t moui_cli_make_executable(moonbit_bytes_t path) {
+#ifdef _WIN32
+  (void)path;
+  return 0;
+#else
+  if (path == NULL) {
+    return 1;
+  }
+  return chmod((const char *)path, 0755) == 0 ? 0 : 1;
+#endif
+}

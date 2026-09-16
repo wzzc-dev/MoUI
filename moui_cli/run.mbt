@@ -1,13 +1,15 @@
 // `moui run` command — build, install, and launch a mobile app on a device
 // or emulator. Orchestrates the M6 `build_*` functions with platform-specific
 // install/launch commands (adb / xcrun / hdc). Optional `--verify` runs the
-// M9.2 probe to collect runtime observations.
+// M9.2 probe to collect runtime observations. Desktop/web platforms are
+// dispatched to `run_desktop.mbt` flows.
 
 ///|
 priv struct ParsedRun {
   help : Bool
   json : Bool
   platform : String
+  app : String
   options : RunOptions?
 }
 
@@ -33,12 +35,17 @@ fn run_usage() -> String {
   (
     #|Usage: moui run <platform> <app> [options]
     #|
-    #|Build, install, and launch a MoUI mobile app on a connected device or
-    #|emulator. The platform toolchain (adb / xcrun / hdc) must be on PATH.
+    #|Run a MoUI app. Mobile platforms build, install, and launch on a
+    #|connected device or emulator. Desktop platforms build and launch the
+    #|native executable in place; web serves the project through the dev
+    #|runner.
     #|
     #|Arguments:
-    #|  platform     Target platform: android, ios, or harmonyos.
-    #|  app          Application id (matches moui.mobile.json `id`).
+    #|  platform     Target platform: macos, windows, linux, web, android,
+    #|               ios, or harmonyos.
+    #|  app          Project directory holding the entrypoint packages (or
+    #|               the entrypoint package itself) for desktop/web; the
+    #|               application id matching moui.mobile.json for mobile.
     #|
     #|Options:
     #|  --mobile-config PATH    Path to moui.mobile.json. Defaults to ./moui.mobile.json.
@@ -155,7 +162,13 @@ fn parse_run_args(
     index += 1
   }
   if help.val {
-    return Ok({ help: true, json: json.val, platform: "", options: None })
+    return Ok({
+      help: true,
+      json: json.val,
+      platform: "",
+      app: "",
+      options: None,
+    })
   }
   if positional.length() < 2 {
     return Err("usage: moui run <platform> <app> [options]")
@@ -164,19 +177,23 @@ fn parse_run_args(
     return Err("moui run accepts exactly two positional arguments")
   }
   let platform = positional[0]
-  match platform {
-    "android" | "ios" | "harmonyos" => ()
-    _ =>
-      return Err(
-        "unsupported platform for moui run: " +
-        platform +
-        " (use `moon run` for desktop/web targets)",
-      )
+  let app = positional[1]
+  let is_mobile = platform == "android" ||
+    platform == "ios" ||
+    platform == "harmonyos"
+  let is_desktop = desktop_platform_supported(platform)
+  if !is_mobile && !is_desktop {
+    return Err(
+      "unsupported platform for moui run: " +
+      platform +
+      " (expected macos, windows, linux, web, android, ios, or harmonyos)",
+    )
   }
   Ok({
     help: false,
     json: json.val,
     platform,
+    app,
     options: Some({
       app_config_path: app_config.val,
       device: device.val,
@@ -245,6 +262,7 @@ fn build_options_from_run_options(
     renderer: options.renderer,
     fallback_skia: options.fallback_skia,
     prepare_only: options.prepare_only,
+    release: false,
     product_name: None,
     abi: None,
     compile_sdk: None,
@@ -694,6 +712,9 @@ fn run_run(parsed : ParsedRun, cwd : String, host : HostPlatform) -> CliOutcome 
       parsed.json,
       run_usage(),
     )
+  }
+  if desktop_platform_supported(parsed.platform) {
+    return run_run_desktop(parsed, cwd, host)
   }
   // 1. Resolve config + apply overrides.
   let config = match read_config(host) {
