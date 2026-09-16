@@ -1,5 +1,7 @@
 #include "skia_stub_common.h"
 
+#include <cstring>
+
 #if defined(MOUI_SKIA_HAS_SKSHAPER_HEADERS)
 #if __has_include("modules/skshaper/include/SkShaper_harfbuzz.h")
 #include "modules/skshaper/include/SkShaper_harfbuzz.h"
@@ -383,14 +385,47 @@ static int32_t moonbit_skia_font_text_to_glyphs_utf8_at(
     return 0;
   }
 
-  std::vector<SkGlyphID> glyphs;
-  if (!moonbit_skia_font_text_to_glyphs_utf8_vector(wrapper, text, &glyphs)) {
+  // MoonBit's `Font::text_to_glyphs_utf8` maps a text by calling this
+  // export once per glyph index. Recomputing the full vector per index made
+  // the loop O(N^2) over the text length, which dominated large-document
+  // coverage checks (every keystroke re-maps the edited block twice). The
+  // loop always issues the whole run against the same (font, text) pair, so
+  // memoize the most recent mapping and answer per-index reads from it.
+  // The font pointer is part of the key but is never dereferenced while
+  // cached; a mismatch (including a freed font's recycled address) simply
+  // recomputes with the wrapper of the current call.
+  static thread_local struct {
+    bool valid = false;
+    MoonbitSkiaFont* font = nullptr;
+    std::vector<unsigned char> text;
+    std::vector<SkGlyphID> glyphs;
+  } cache;
+
+  const size_t text_length = (text == nullptr)
+    ? 0
+    : static_cast<size_t>(Moonbit_array_length(text));
+  const bool cache_matches = cache.valid && cache.font == wrapper &&
+    cache.text.size() == text_length &&
+    (text_length == 0 ||
+      memcmp(cache.text.data(), text, text_length) == 0);
+  if (!cache_matches) {
+    cache.valid = false;
+    cache.font = wrapper;
+    cache.text.assign(
+      static_cast<const unsigned char*>(text),
+      static_cast<const unsigned char*>(text) + text_length
+    );
+    cache.glyphs.clear();
+    if (!moonbit_skia_font_text_to_glyphs_utf8_vector(wrapper, text, &cache.glyphs)) {
+      cache.text.clear();
+      return 0;
+    }
+    cache.valid = true;
+  }
+  if (static_cast<size_t>(index) >= cache.glyphs.size()) {
     return 0;
   }
-  if (static_cast<size_t>(index) >= glyphs.size()) {
-    return 0;
-  }
-  return static_cast<int32_t>(glyphs[static_cast<size_t>(index)]);
+  return static_cast<int32_t>(cache.glyphs[static_cast<size_t>(index)]);
 }
 #endif
 
