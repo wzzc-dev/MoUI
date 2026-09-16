@@ -736,56 +736,55 @@ fn markdown_session_estimated_caret_inset_x(
   content_width~ : Double,
   text_system~ : @core.TextSystem,
 ) -> Double {
-  for editor_block in session.editor_blocks {
-    if source_caret < editor_block.source_range.start ||
-      source_caret > editor_block.source_range.end {
-      continue
-    }
-    // Caret geometry needs the block's real inline runs.
-    let editor_block = markdown_editor_block_materialized(
-      session.source(),
-      source_length=session.source_length,
-      source_digest=session.source_digest,
-      editor_block,
-    )
-    let rich_block = markdown_editor_block_to_rich_text(
-      session.source(),
-      editor_block,
-      font,
-      base_dir~,
-    )
-    let block_font = rich_block.font.unwrap_or(font)
-    let scan_end = markdown_editor_min_int(
-      source_caret,
-      editor_block.source_range.end,
-    )
-    let before_caret = markdown_editor_substring(
-      session.source(),
-      editor_block.source_range.start,
-      scan_end,
-    )
-    let mut line_start = 0
-    for index, ch in before_caret {
-      if ch == '\n' {
-        line_start = index + 1
+  match
+    markdown_editor_block_index_at_offset(session.editor_blocks, source_caret) {
+    None => 0.0
+    Some(block_index) => {
+      // Caret geometry needs the block's real inline runs.
+      let editor_block = markdown_editor_block_materialized(
+        session.source(),
+        source_length=session.source_length,
+        source_digest=session.source_digest,
+        session.editor_blocks[block_index],
+      )
+      let rich_block = markdown_editor_block_to_rich_text(
+        session.source(),
+        editor_block,
+        font,
+        base_dir~,
+      )
+      let block_font = rich_block.font.unwrap_or(font)
+      let scan_end = markdown_editor_min_int(
+        source_caret,
+        editor_block.source_range.end,
+      )
+      let before_caret = markdown_editor_substring(
+        session.source(),
+        editor_block.source_range.start,
+        scan_end,
+      )
+      let mut line_start = 0
+      for index, ch in before_caret {
+        if ch == '\n' {
+          line_start = index + 1
+        }
       }
-    }
-    let line_text = markdown_editor_substring(
-      before_caret,
-      line_start,
-      markdown_editor_text_length(before_caret),
-    )
-    // The caret rect fallback maps canonical source text; hidden inline
-    // markers make this an over-estimate, so clamp to the content width.
-    let line_width = min_double(
-      rich_text_width(line_text, block_font, text_system),
-      max_double(0.0, content_width - rich_block.inset.left),
-    )
-    return rich_block.inset.left +
+      let line_text = markdown_editor_substring(
+        before_caret,
+        line_start,
+        markdown_editor_text_length(before_caret),
+      )
+      // The caret rect fallback maps canonical source text; hidden inline
+      // markers make this an over-estimate, so clamp to the content width.
+      let line_width = min_double(
+        rich_text_width(line_text, block_font, text_system),
+        max_double(0.0, content_width - rich_block.inset.left),
+      )
+      rich_block.inset.left +
       rich_text_block_marker_lane(rich_block, block_font, text_system) +
       line_width
+    }
   }
-  0.0
 }
 
 ///|

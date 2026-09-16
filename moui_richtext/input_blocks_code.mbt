@@ -147,20 +147,25 @@ fn markdown_editor_exit_empty_code_block_on_enter(
 }
 
 ///|
-/// Index of the shell block of `kind` containing the char `offset`.
+/// Index of the shell block of `kind` containing the char `offset`. Block
+/// ranges are ordered and non-overlapping, so the containing block is
+/// unique and a binary search replaces the per-keystroke full scan.
 fn markdown_editor_block_at_offset_of_kind(
   blocks : Array[MarkdownEditorBlock],
   offset : Int,
   kind : MarkdownBlockKind,
 ) -> MarkdownEditorBlock? {
-  for block in blocks {
-    if block.block.kind == kind &&
-      offset >= block.source_range.start &&
-      offset <= block.source_range.end {
-      return Some(block)
+  match markdown_editor_block_index_at_offset(blocks, offset) {
+    Some(index) => {
+      let block = blocks[index]
+      if block.block.kind == kind {
+        Some(block)
+      } else {
+        None
+      }
     }
+    None => None
   }
-  None
 }
 
 ///|
@@ -173,11 +178,13 @@ fn markdown_editor_quoted_code_block_at_content_offset(
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
-  let caret = markdown_editor_clamp_int(
-    caret,
-    0,
-    markdown_editor_text_length(source),
-  )
+  // With the session context the char length is the text store's O(1) tail
+  // offset; without one, fall back to the cached whole-source length.
+  let source_length = match context {
+    Some(context) => context.store.length()
+    None => markdown_editor_text_length(source)
+  }
+  let caret = markdown_editor_clamp_int(caret, 0, source_length)
   let containing = match context {
     // Quoted fences only ever sit on quote-prefixed lines, which the
     // shell kinds track exactly: scan the enclosing quote block's lines

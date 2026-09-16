@@ -722,6 +722,33 @@ fn parse_markdown_editor_blocks_uncached(
 }
 
 ///|
+/// Index of the shell block whose `source_range` contains the char
+/// `offset`, by binary search. The shell parse emits ordered,
+/// non-overlapping ranges that cover the document (a block's `end` is its
+/// last line's newline position and the next block starts one past it), so
+/// the containing block is unique and a keystroke's block-context lookups
+/// never need to scan every block. `None` when no range contains `offset`.
+fn markdown_editor_block_index_at_offset(
+  blocks : Array[MarkdownEditorBlock],
+  offset : Int,
+) -> Int? {
+  let mut low = 0
+  let mut high = blocks.length() - 1
+  while low <= high {
+    let mid = (low + high) / 2
+    let block = blocks[mid]
+    if offset < block.source_range.start {
+      high = mid - 1
+    } else if offset > block.source_range.end {
+      low = mid + 1
+    } else {
+      return Some(mid)
+    }
+  }
+  None
+}
+
+///|
 /// Shell parse: the same line scan and block boundaries as the full parse,
 /// but content blocks (paragraphs, headings, list items, quotes) carry no
 /// inline runs and best-effort marker-stripped text. Used for session

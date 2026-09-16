@@ -102,7 +102,7 @@ pub fn parse_markdown_inlines(String) -> Array[MarkdownInline]
 
 pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, @core.Rect, @core.FontSpec, text_system? : @core.TextSystem) -> @core.Rect?
 
-pub fn rich_text_document_height(RichTextDocument, @core.FontSpec, text_system? : @core.TextSystem) -> Double
+pub fn rich_text_document_height(RichTextDocument, @core.FontSpec, text_system? : @core.TextSystem, block_width? : Double) -> Double
 
 pub fn rich_text_editor_content_rect(@core.Rect) -> @core.Rect
 
