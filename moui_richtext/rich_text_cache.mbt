@@ -438,7 +438,11 @@ fn markdown_reference_definitions_cached_keyed(
   match markdown_reference_definitions_cache.get(key) {
     Some(definitions) => definitions
     None => {
-      let definitions = markdown_reference_definitions(source)
+      // The miss resolution must stay cheap: with the full-parser union a
+      // miss charged an interactive keystroke a whole-document markdown
+      // parse (~700 ms on a 5 MB fixture), and the 16-entry cache evicts
+      // during ordinary typing, so misses recur every few edits.
+      let definitions = markdown_reference_definitions_scan_only(source)
       markdown_reference_definitions_cache_store_keyed(
         source_length~,
         source_digest~,

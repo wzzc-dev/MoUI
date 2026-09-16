@@ -325,7 +325,11 @@ fn apply_text_edit(
   edit : TextEditResult,
   record_history~ : Bool,
 ) -> TextInputApplyResult {
-  let changed = edit.text != previous ||
+  // Splicing `after` over `before` at one range yields the previous text
+  // exactly when the two strings are equal, so the changed test avoids the
+  // O(doc) whole-text compare on every keystroke.
+  let text_changed = edit.after != edit.before
+  let changed = text_changed ||
     edit.caret != control.caret ||
     edit.selection != control.selection ||
     control.composition is Some(_) ||
@@ -333,7 +337,7 @@ fn apply_text_edit(
   if changed {
     let undo_stack : Array[@core.TextHistoryEntryContext] = []
     undo_stack.append(control.undo_stack)
-    if record_history && previous != edit.text {
+    if record_history && text_changed {
       rich_text_history_extend_stack(
         undo_stack,
         rich_text_history_record_edit(
