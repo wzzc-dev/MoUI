@@ -14,14 +14,44 @@ fn skia_typeface_from_font_files(
 }
 
 ///|
+/// Session-scoped memoization for typefaces loaded from font files. A
+/// font-file load stats candidate directories and decodes the file (woff2)
+/// from disk; before this cache every shape call for a fresh text — one
+/// per keystroke on the edited block — repeated that work for the same
+/// family/weight/style. Typefaces are immutable and size-independent (the
+/// caller derives its sized `Font` from them), so entries never go stale,
+/// and misses are cached too so absent files stop re-statting directories.
+priv struct SkiaFontFileTypefaceEntry {
+  typeface : @skia_native.Typeface?
+}
+
+///|
+let skia_font_file_typeface_cache : Map[String, SkiaFontFileTypefaceEntry] = Map([],
+)
+
+///|
 fn skia_typeface_from_font_file_family(
   family_name : String,
   font : @core.FontSpec,
 ) -> @skia_native.Typeface? {
-  if family_name == "Open Sans" {
-    skia_open_sans_typeface_from_file(font)
-  } else {
-    None
+  if family_name != "Open Sans" {
+    return None
+  }
+  let key = family_name +
+    "/" +
+    font.weight.to_string() +
+    "/" +
+    (font.style is @core.FontStyle::Italic).to_string()
+  match skia_font_file_typeface_cache.get(key) {
+    Some(entry) => entry.typeface
+    None => {
+      let typeface = skia_open_sans_typeface_from_file(font)
+      if skia_font_file_typeface_cache.length() >= 32 {
+        skia_font_file_typeface_cache.clear()
+      }
+      skia_font_file_typeface_cache.set(key, { typeface, })
+      typeface
+    }
   }
 }
 
