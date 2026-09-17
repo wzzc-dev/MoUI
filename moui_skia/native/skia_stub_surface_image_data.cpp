@@ -205,16 +205,55 @@ void moonbit_skia_com_release(void* object) {
 // adapters a second time.
 static std::mutex g_d3d_shared_mutex;
 static bool g_d3d_shared_ready = false;
+// Verdict cache for the availability probe (hoisted so the prewarm thread
+// can publish it before the first MoonBit-side query).
+static std::atomic<int32_t> g_d3d_probe_verdict(0);
 static ComPtr<IDXGIAdapter1> g_d3d_shared_adapter;
 static ComPtr<ID3D12Device> g_d3d_shared_device;
 static ComPtr<ID3D12CommandQueue> g_d3d_shared_queue;
 
-static bool moonbit_skia_make_d3d12_objects(
+// Background warm-up: create the D3D12 stack on a worker thread at process
+// start so the ~200 ms device creation overlaps document parsing instead of
+// stalling the window/renderer creation path. The prewarm publishes the same
+// shared objects and verdict cache the probe and real context creation use.
+static std::atomic<int> g_d3d_prewarm_state(0); // 0 idle, 1 running, 2 done
+static bool moonbit_skia_prewarm_populate_shared(void);
+static DWORD WINAPI moui_skia_prewarm_proc(LPVOID) {
+  const bool ok = moonbit_skia_prewarm_populate_shared();
+  g_d3d_probe_verdict.store(ok ? 1 : -2, std::memory_order_release);
+  g_d3d_prewarm_state.store(2, std::memory_order_release);
+  return 0;
+}
+
+extern "C" MOONBIT_FFI_EXPORT void
+moui_skia_prewarm_d3d(void) {
+  int expected = 0;
+  if (g_d3d_prewarm_state.compare_exchange_strong(expected, 1,
+      std::memory_order_acquire, std::memory_order_acquire)) {
+    HANDLE thread = CreateThread(nullptr, 0, moui_skia_prewarm_proc,
+                                 nullptr, 0, nullptr);
+    if (thread != nullptr) {
+      CloseHandle(thread);
+    } else {
+      g_d3d_prewarm_state.store(0, std::memory_order_release);
+    }
+  }
+}
+
+static bool moonbit_skia_make_d3d12_objects_impl(
   ComPtr<IDXGIAdapter1>& adapter,
   ComPtr<ID3D12Device>& device,
-  ComPtr<ID3D12CommandQueue>& queue
+  ComPtr<ID3D12CommandQueue>& queue,
+  bool wait_for_prewarm
 ) {
   {
+    // A running prewarm thread owns device creation; wait for it instead of
+    // building a second device that would double the cold-start cost.
+    while (wait_for_prewarm &&
+           g_d3d_prewarm_state.load(std::memory_order_acquire) == 1) {
+      YieldProcessor();
+      std::this_thread::yield();
+    }
     std::lock_guard<std::mutex> lock(g_d3d_shared_mutex);
     if (g_d3d_shared_ready) {
       adapter = g_d3d_shared_adapter;
@@ -267,6 +306,31 @@ static bool moonbit_skia_make_d3d12_objects(
     &queue_description,
     IID_PPV_ARGS(&queue)
   ));
+}
+
+static bool moonbit_skia_make_d3d12_objects(
+  ComPtr<IDXGIAdapter1>& adapter,
+  ComPtr<ID3D12Device>& device,
+  ComPtr<ID3D12CommandQueue>& queue
+) {
+  return moonbit_skia_make_d3d12_objects_impl(adapter, device, queue, true);
+}
+
+static bool moonbit_skia_prewarm_populate_shared(void) {
+  ComPtr<IDXGIAdapter1> adapter;
+  ComPtr<ID3D12Device> device;
+  ComPtr<ID3D12CommandQueue> queue;
+  // The prewarm thread creates the fresh objects itself and must not wait
+  // on its own in-flight marker.
+  if (!moonbit_skia_make_d3d12_objects_impl(adapter, device, queue, false)) {
+    return false;
+  }
+  std::lock_guard<std::mutex> lock(g_d3d_shared_mutex);
+  g_d3d_shared_adapter = adapter;
+  g_d3d_shared_device = device;
+  g_d3d_shared_queue = queue;
+  g_d3d_shared_ready = true;
+  return true;
 }
 
 static GrDirectContext* moonbit_skia_make_d3d_direct_context(
@@ -400,6 +464,7 @@ moonbit_skia_surface_gpu_d3d_headers_available(void) {
 #endif
 }
 
+///|
 extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_surface_gpu_d3d_runtime_available(void) {
 #if defined(MOUI_SKIA_ENABLE_GPU_D3D) && \
@@ -408,9 +473,8 @@ moonbit_skia_surface_gpu_d3d_runtime_available(void) {
   // (~200 ms cold on multi-adapter systems). The adapter set cannot change
   // under a running process, so probe once, stash the created objects, and
   // let `moonbit_skia_gpu_context_direct3d` reuse them for the real context.
-  static std::atomic<int32_t> cached(0);
   int32_t expected = 0;
-  if (cached.compare_exchange_strong(expected, -1,
+  if (g_d3d_probe_verdict.compare_exchange_strong(expected, -1,
       std::memory_order_acquire, std::memory_order_acquire)) {
     ComPtr<IDXGIAdapter1> adapter;
     ComPtr<ID3D12Device> device;
@@ -423,11 +487,11 @@ moonbit_skia_surface_gpu_d3d_runtime_available(void) {
       g_d3d_shared_queue = queue;
       g_d3d_shared_ready = true;
     }
-    cached.store(ok ? 1 : -2, std::memory_order_release);
+    g_d3d_probe_verdict.store(ok ? 1 : -2, std::memory_order_release);
     return ok ? 1 : 0;
   }
   int32_t verdict;
-  while ((verdict = cached.load(std::memory_order_acquire)) == -1) {
+  while ((verdict = g_d3d_probe_verdict.load(std::memory_order_acquire)) == -1) {
     std::this_thread::yield();
   }
   return verdict == 1 ? 1 : 0;
