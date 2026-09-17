@@ -312,3 +312,51 @@ test "readme hero container projects images, heading and links" {
     }
   }
 }
+
+///|
+test "container view drops the trailing newline after the last child" {
+  let blocks = parse_markdown(
+    "<div align=\"center\"><img src=\"logo.png\" alt=\"logo\"/><p>intro</p><p>nav</p>\n</div>",
+  )
+  inspect(blocks.length(), content="1")
+  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+    fail("expected a single html block")
+  }
+  match
+    markdown_block_view_project(
+      blocks[0],
+      @core.FontSpec::new(size=16.0),
+      base_dir=None,
+    ) {
+    None => fail("expected the container to project")
+    Some(projection) => {
+      // logo row separator, intro row separator, then the nav text — the
+      // newline after the final </p> must not survive as an empty last line.
+      inspect(projection.runs.length(), content="5")
+      let last = projection.runs[projection.runs.length() - 1]
+      inspect(rich_text_run_visual_text(last), content="nav")
+    }
+  }
+}
+
+///|
+test "container view keeps interior row separators" {
+  let blocks = parse_markdown(
+    "<div align=\"center\"><p>first</p><p>second</p></div>",
+  )
+  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+    fail("expected a single html block")
+  }
+  match
+    markdown_block_view_project(
+      blocks[0],
+      @core.FontSpec::new(size=16.0),
+      base_dir=None,
+    ) {
+    None => fail("expected the container to project")
+    Some(projection) => {
+      let visuals = projection.runs.map(run => rich_text_run_visual_text(run))
+      debug_inspect(visuals, content="[first, \n, second]")
+    }
+  }
+}
