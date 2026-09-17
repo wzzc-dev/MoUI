@@ -188,6 +188,9 @@ required_headers=(
   "$sysroot/usr/include/fontconfig/fontconfig.h"
   "$sysroot/usr/include/freetype2/ft2build.h"
   "$sysroot/usr/include/harfbuzz/hb.h"
+  "$sysroot/usr/include/X11/Xlib.h"
+  "$sysroot/usr/include/X11/extensions/XShm.h"
+  "$sysroot/usr/include/X11/extensions/Xrandr.h"
 )
 for header in "${required_headers[@]}"; do
   [[ -f "$header" ]] || {
@@ -220,7 +223,9 @@ pkg_flags() {
   "$pkg_config" "$@"
 }
 
-for package in gio-2.0 glib-2.0 wayland-client fontconfig freetype2 harfbuzz; do
+# The window module's prebuild only emits X11/Wayland link flags on Linux
+# hosts; from a macOS cross host the X11 libraries are carried here instead.
+for package in gio-2.0 glib-2.0 wayland-client x11 xext xrandr fontconfig freetype2 harfbuzz; do
   if ! pkg_flags --exists "$package"; then
     echo "target pkg-config package is missing: $package" >&2
     echo "  PKG_CONFIG_LIBDIR=$PKG_CONFIG_LIBDIR" >&2
@@ -239,7 +244,7 @@ fi
 glib_stub_flags="$(pkg_flags --cflags gio-2.0)"
 glib_link_flags="$(pkg_flags --libs gio-2.0)"
 native_stub_flags="$(pkg_flags --cflags fontconfig freetype2 harfbuzz wayland-client)"
-native_link_flags="$(pkg_flags --libs fontconfig freetype2 harfbuzz wayland-client)"
+native_link_flags="$(pkg_flags --libs fontconfig freetype2 harfbuzz wayland-client x11 xext xrandr)"
 if [[ -z "$glib_stub_flags" || -z "$glib_link_flags" || -z "$native_link_flags" ]]; then
   echo "target pkg-config did not resolve required compile/link flags" >&2
   exit 1
@@ -263,7 +268,7 @@ require_target_library() {
   fi
 }
 
-for library in gio-2.0 glib-2.0 wayland-client fontconfig freetype harfbuzz z stdc++; do
+for library in gio-2.0 glib-2.0 wayland-client X11 Xext Xrandr fontconfig freetype harfbuzz z stdc++; do
   require_target_library "$library"
 done
 

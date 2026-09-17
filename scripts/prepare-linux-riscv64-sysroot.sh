@@ -196,8 +196,15 @@ if [[ "${actual_sha256,,}" != "${base_sha256,,}" ]]; then
 fi
 
 temp_root="$(mktemp -d "${cache_dir}/.sysroot.XXXXXX")"
+umount_chroot_trees() {
+  for fs in dev/pts dev/shm dev proc sys; do
+    "${root_cmd[@]}" umount "$temp_root/$fs" 2>/dev/null || true
+  done
+}
+
 cleanup() {
   if [[ -d "$temp_root" ]]; then
+    umount_chroot_trees
     "${root_cmd[@]}" rm -rf -- "$temp_root"
   fi
 }
@@ -206,6 +213,18 @@ trap cleanup EXIT
 tar -xzf "$archive" -C "$temp_root"
 "${root_cmd[@]}" cp "$qemu_bin" "$temp_root/usr/bin/qemu-riscv64-static"
 "${root_cmd[@]}" mkdir -p "$temp_root/proc" "$temp_root/sys" "$temp_root/dev"
+# qemu user emulation inside the chroot needs /dev/urandom (GNUTLS init),
+# apt/dpkg need /proc, /dev/pts (maint-script ptys), and /dev/shm; bind-mount
+# the host trees when mount is available (Linux host or privileged container)
+# and fall back to the bare directories.
+if command -v mount >/dev/null 2>&1 && [[ "$(uname -s)" == "Linux" ]]; then
+  for fs in dev proc sys; do
+    "${root_cmd[@]}" mount --bind "/$fs" "$temp_root/$fs" 2>/dev/null || true
+  done
+  "${root_cmd[@]}" mkdir -p "$temp_root/dev/pts" "$temp_root/dev/shm"
+  "${root_cmd[@]}" mount --bind /dev/pts "$temp_root/dev/pts" 2>/dev/null || true
+  "${root_cmd[@]}" mount --bind /dev/shm "$temp_root/dev/shm" 2>/dev/null || true
+fi
 "${root_cmd[@]}" rm -f "$temp_root/etc/resolv.conf"
 "${root_cmd[@]}" cp /etc/resolv.conf "$temp_root/etc/resolv.conf"
 
@@ -221,7 +240,10 @@ chroot_target() {
 }
 
 echo "installing target development packages"
-chroot_target 'export DEBIAN_FRONTEND=noninteractive; apt-get update; apt-get install -y --no-install-recommends ca-certificates '"${packages[*]}"
+# --force-bad-path: inside the qemu chroot dpkg's ldconfig PATH check can
+# spuriously fail (sbin lookup during the libc-bin upgrade); the sysroot
+# does not need an ld.so.cache, so skip that check instead of failing.
+chroot_target 'export DEBIAN_FRONTEND=noninteractive; apt-get update; apt-get install -y --no-install-recommends -o Dpkg::Options::=--force-bad-path ca-certificates '"${packages[*]}"
 
 # Package indexes and archives are not part of the reusable target rootfs
 # evidence. Removing them also keeps the checksum manifest focused on files
@@ -259,6 +281,9 @@ printf '%s\n' \
   | "${root_cmd[@]}" tee "$temp_root/.moui-riscv64-sysroot" >/dev/null
 
 "${root_cmd[@]}" chown -R "$(id -u):$(id -g)" "$temp_root" 2>/dev/null || true
+# Detach the bind mounts before the rename so the prepared sysroot contains
+# plain empty dev/proc/sys directories instead of live mounts.
+umount_chroot_trees
 mv "$temp_root" "$output"
 trap - EXIT
 echo "prepared Linux RISC-V64 sysroot: $output"
