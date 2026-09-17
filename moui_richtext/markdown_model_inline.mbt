@@ -785,7 +785,50 @@ fn markdown_blocks_text(blocks : Array[@md.Block]) -> String {
 }
 
 ///|
-fn markdown_list_item_text(item : @md.ListItem) -> String {
+/// The item's rendered text. When the raw source line is available, the
+/// item's content slice comes straight from it with the list marker
+/// (`- `/`- [x] `/`1. `/`+ `/`3) `...) stripped: inline markers (`` ` ``/
+/// `**`/...) stay in the text, so the item's inlines parse styled exactly
+/// like a paragraph's. The AST-flattened fallback loses the markers (and
+/// would strip them from the source on edit round-trips), so it stays only
+/// for callers without source context (nested lists inside quotes).
+fn markdown_list_item_text(
+  item : @md.ListItem,
+  source_text? : String? = None,
+) -> String {
+  match source_text {
+    Some(source) =>
+      match item.children.get(0) {
+        Some(Paragraph(span~, ..)) => {
+          let chars = source.to_array()
+          let start = @core.clamp_int(
+            span.from,
+            0,
+            chars.length(),
+          )
+          let end = @core.clamp_int(
+            @core.min_int(@core.min_int(span.to, item.span.to), chars.length()),
+            start,
+            chars.length(),
+          )
+          let slice = String::from_array(chars[start:end])
+          let marker_length = markdown_editor_marker_prefix_length(slice)
+          if marker_length > 0 {
+            String::from_array(
+              slice.to_array()[marker_length:].to_array(),
+            )
+          } else {
+            slice
+          }
+        }
+        _ => markdown_list_item_text_flattened(item)
+      }
+    None => markdown_list_item_text_flattened(item)
+  }
+}
+
+///|
+fn markdown_list_item_text_flattened(item : @md.ListItem) -> String {
   markdown_blocks_text(item.children)
 }
 

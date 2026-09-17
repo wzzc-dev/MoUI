@@ -437,15 +437,21 @@ test "parse_markdown keeps quoted fence marker lines visible" {
 ///|
 /// Inline nodes are siblings on one visual line (backslash escapes split
 /// Text nodes without any source break), so flattening must concatenate
-/// them instead of joining with newlines.
+/// them instead of joining with newlines. The quote's text keeps its
+/// source form (markers included, `>` stripped) — the same contract a
+/// paragraph's text has — so styling round-trips; only the rendered runs
+/// lose the markers.
 test "parse_markdown concatenates inline nodes without inserting breaks" {
   let blocks = parse_markdown(
     "> **注意：** 运行 .\\scripts\\run.ps1 完成。",
   )
   match blocks[0] {
-    { kind: Blockquote, text, .. } => {
+    { kind: Blockquote, text, inlines, .. } => {
       assert_false(text.contains("\n"))
-      inspect(text, content="注意： 运行 .\\scripts\\run.ps1 完成。")
+      inspect(text, content="**注意：** 运行 .\\scripts\\run.ps1 完成。")
+      // The styled projection carries no markers, only the visible text.
+      let joined = inlines.map(inline => inline.text).join("")
+      inspect(joined, content="注意： 运行 .\\scripts\\run.ps1 完成。")
     }
     _ => fail("expected quote block")
   }

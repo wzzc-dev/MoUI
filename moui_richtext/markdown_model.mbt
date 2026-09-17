@@ -1045,7 +1045,7 @@ fn append_markdown_ast_block(
     }
     BulletList(items~, ..) =>
       for item in items {
-        let text = markdown_list_item_text(item)
+        let text = markdown_list_item_text(item, source_text~)
         match item.checked {
           Some(checked) =>
             blocks.push({
@@ -1072,7 +1072,7 @@ fn append_markdown_ast_block(
     OrderedList(start~, items~, ..) => {
       let mut number = start
       for item in items {
-        let text = markdown_list_item_text(item)
+        let text = markdown_list_item_text(item, source_text~)
         blocks.push({
           kind: MarkdownBlockKind::OrderedListItem(number),
           text,
@@ -1114,30 +1114,25 @@ fn markdown_trim_single_trailing_newline(text : String) -> String {
 }
 
 ///|
-/// Quote lines are parsed per source line, so a fenced code block inside
-/// a blockquote flattens its fence-marker lines (`> ```lang` / `> ``` `)
-/// to an empty quote block, rendering two blank quote rows around the
-/// quoted code. Keep the fence text visible so those rows carry their
-/// source content instead of blank space.
+/// Quote lines are parsed per source line. The raw line with its `>`
+/// marker stripped keeps inline markers (`` ` ``/`**`/...) so the quote's
+/// inlines parse styled exactly like a paragraph's; a fenced code block
+/// inside a quote (`> ```lang`) keeps its fence text visible too. The
+/// AST-flattened fallback stays for callers without source context.
 fn markdown_quote_block_text(
   children : Array[@md.Block],
   source_text : String?,
 ) -> String {
-  let text = markdown_blocks_text(children)
-  if text != "" {
-    return text
-  }
   match source_text {
-    None => text
     Some(source_text) => {
       let content = markdown_editor_strip_block_marker(source_text)
-      if content.trim_start().has_prefix("```") ||
-        content.trim_start().has_prefix("~~~") {
+      if content != "" {
         content
       } else {
-        text
+        markdown_blocks_text(children)
       }
     }
+    None => markdown_blocks_text(children)
   }
 }
 

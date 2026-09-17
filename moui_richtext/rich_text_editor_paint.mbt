@@ -612,6 +612,38 @@ fn append_rich_text_block_table(
           if column_index < table_row.length() {
             let cell = table_row[column_index]
             let align = cell.align.unwrap_or(@core.TextAlign::TextStart)
+            if cell_layout.segments.length() > 0 {
+              // Styled cell: draw each run segment at its laid-out x with
+              // its own font; the segment layout already skipped markers.
+              for segment in cell_layout.segments {
+                if segment.text == "" {
+                  continue
+                }
+                let line_y = row_y +
+                  table.cell_padding.top +
+                  layout.line_step * segment.line.to_double()
+                commands.push(
+                  @core.DrawCommand::DrawText(
+                    @core.TextRun::new(
+                      text=segment.text,
+                      frame=@core.Rect::new(
+                        x=cell_x + table.cell_padding.left + segment.x,
+                        y=line_y,
+                        width=max_double(0.0, segment.width),
+                        height=layout.line_step,
+                      ),
+                      font=segment.run.font.unwrap_or(cell_layout.font),
+                      color=segment
+                        .run
+                        .color
+                        .unwrap_or(rich_text_block_color(block, foreground)),
+                      align=@core.TextAlign::TextStart,
+                    ),
+                  ),
+                )
+              }
+              continue
+            }
             for line_index, line in cell_layout.lines {
               if line.text == "" {
                 continue

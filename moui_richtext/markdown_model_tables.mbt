@@ -168,6 +168,7 @@ fn markdown_table_preview(
         for cell in markdown_table_cell_ranges_for_line(source_line) {
           cells.push({
             text: cell.text,
+            runs: markdown_table_cell_runs(cell.text, base),
             header: index == 0,
             align: markdown_table_alignment_at(aligns, cells.length()),
             source_range: Some({
@@ -191,6 +192,91 @@ fn markdown_table_preview(
     }
     _ => None
   }
+}
+
+///|
+/// Styled runs for one table cell: parse the cell's raw source as inline
+/// markdown so `` ` ``/`**`/... render WYSIWYG inside the cell, and hide the
+/// markers via `visual_text` (the raw text stays in `text`/source ranges, so
+/// caret/hit geometry keeps mapping to the source). A cell whose parse
+/// yields a single plain span keeps empty runs — the plain-text path is
+/// then exactly what it always painted.
+fn markdown_table_cell_runs(
+  cell_text : String,
+  base : @core.FontSpec,
+) -> Array[RichTextRun] {
+  if cell_text == "" {
+    return []
+  }
+  let inlines = parse_markdown_inlines(cell_text)
+  let plain = inlines.length() == 1 && inlines[0].kind is Plain
+  if plain {
+    return []
+  }
+  // Multi-span parse: locate each run's raw source (markers included,
+  // re-serialized from the inline) inside the cell by sequential search,
+  // mirroring how block runs map to block content. A span that cannot be
+  // located (entity decoding changed the text) falls back to its visible
+  // text with no source range.
+  let runs : Array[RichTextRun] = []
+  let chars = cell_text.to_array()
+  let mut search = 0
+  for inline in inlines {
+    let raw = markdown_editor_inline_source([inline])
+    let range = markdown_table_find_run_range(chars, raw, search)
+    let run = RichTextRun::new(
+      text=match range {
+        Some(_) => raw
+        None => inline.text
+      },
+      visual_text=if inline.kind is Plain {
+        None
+      } else {
+        Some(inline.text)
+      },
+      font=Some(markdown_inline_font(inline.kind, base)),
+      color=markdown_inline_color(inline.kind),
+      background=markdown_inline_background(inline.kind),
+      decoration=markdown_inline_decoration(inline.kind),
+      source_range=range,
+    )
+    runs.push(run)
+    match range {
+      Some(range) => search = range.end
+      None => ()
+    }
+  }
+  runs
+}
+
+///|
+/// Locate `raw` inside the cell chars at/after `search`, returning the
+/// cell-relative range including markers. Finds the closing marker beyond
+/// the visible text so the range covers the whole construct.
+fn markdown_table_find_run_range(
+  chars : Array[Char],
+  raw : String,
+  search : Int,
+) -> RichTextSourceRange? {
+  if raw == "" {
+    return None
+  }
+  let raw_chars = raw.to_array()
+  let mut index = search
+  while index + raw_chars.length() <= chars.length() {
+    let mut matched = true
+    for offset in 0..<raw_chars.length() {
+      if chars[index + offset] != raw_chars[offset] {
+        matched = false
+        break
+      }
+    }
+    if matched {
+      return Some({ start: index, end: index + raw_chars.length() })
+    }
+    index = index + 1
+  }
+  None
 }
 
 ///|

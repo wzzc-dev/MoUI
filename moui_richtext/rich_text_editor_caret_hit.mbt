@@ -683,6 +683,49 @@ fn append_rich_text_table_selection_rects(
       let cell_x = frame.origin.x +
         layout.column_width * column_index.to_double()
       let inner_x = cell_x + table.cell_padding.left
+      // Styled cell: highlight each segment's selected slice at its
+      // laid-out x, skipping marker-only overlaps (no width to show).
+      if cell_layout.segments.length() > 0 {
+        for segment in cell_layout.segments {
+          let s = @core.max_int(cs, segment.start)
+          let e = @core.min_int(ce, segment.end)
+          if e <= s {
+            continue
+          }
+          let chars = segment.text.to_array()
+          let visible_s = @core.clamp_int(s - segment.start, 0, chars.length())
+          let visible_e = @core.clamp_int(e - segment.start, 0, chars.length())
+          if visible_e <= visible_s {
+            continue
+          }
+          let font = segment.run.font.unwrap_or(cell_layout.font)
+          let before = String::from_array(chars[:visible_s])
+          let covered = String::from_array(chars[:visible_e])
+          let x0 = inner_x +
+            segment.x +
+            rich_text_width(before, font, text_system)
+          let x1 = inner_x +
+            segment.x +
+            rich_text_width(covered, font, text_system)
+          if x1 > x0 {
+            commands.push(
+              @core.DrawCommand::FillRect(
+                @core.Rect::new(
+                  x=x0,
+                  y=row_y +
+                  table.cell_padding.top +
+                  layout.line_step * segment.line.to_double() +
+                  3.0,
+                  width=x1 - x0,
+                  height=max_double(10.0, layout.line_step - 6.0),
+                ),
+                @core.Color::blue().with_alpha(0.18),
+              ),
+            )
+          }
+        }
+        continue
+      }
       for line_index, line in cell_layout.lines {
         let s = @core.max_int(cs, line.start)
         let e = @core.min_int(ce, line.end)
@@ -1716,6 +1759,23 @@ fn rich_text_block_table_source_offset_at_point(
           let row_layout = layout.rows[row_index]
           let cell_layout = row_layout.cells[column_index]
           let cell_font = cell_layout.font
+          // Styled cell: map x through the run segments (markers occupy no
+          // width; a click over a marker snaps to the adjacent visible
+          // character), falling back to the plain path when segments are
+          // empty.
+          if cell_layout.segments.length() > 0 {
+            return rich_text_table_segment_offset_at_point(
+              cell,
+              cell_layout,
+              point,
+              range~,
+              row_top=frame.origin.y + layout.row_top(row_index),
+              inner_x~,
+              table,
+              layout,
+              text_system~,
+            )
+          }
           // 行按 y 选择；拖到单元格底部时钳在最后一行。
           let cell_top = frame.origin.y + layout.row_top(row_index)
           let line_index = @core.clamp_int(
@@ -1787,6 +1847,129 @@ fn rich_text_block_table_source_offset_at_point(
     }
     None => None
   }
+}
+
+///|
+/// Hit-test a styled cell through its run segments. Each segment covers its
+/// visible characters (markers excluded from width); the char midpoints
+/// inside a segment decide the offset, and clicks left/right of the whole
+/// styled content clamp to its first/last visible char. Marker source chars
+/// are never returned directly: they collapse onto the nearest visible
+/// boundary so the caret always lands where text was drawn.
+fn rich_text_table_segment_offset_at_point(
+  cell : RichTextTableCell,
+  cell_layout : RichTextTableCellLayout,
+  point : @core.Point,
+  range~ : RichTextSourceRange,
+  row_top~ : Double,
+  inner_x~ : Double,
+  table : RichTextTable,
+  layout : RichTextTableLayout,
+  text_system~ : @core.TextSystem,
+) -> Int? {
+  ignore(table)
+  let first = cell_layout.segments[0]
+  let last = cell_layout.segments[cell_layout.segments.length() - 1]
+  // y band selects the line; below the last line clamps into it.
+  let line_index = @core.clamp_int(
+    ((point.y - row_top - table.cell_padding.top) / layout.line_step)
+    .floor()
+    .to_int(),
+    0,
+    cell_layout.lines.length() - 1,
+  )
+  // Segments on the picked line, in x order (the layout walks runs in
+  // order and segments carry their x offsets).
+  let line_segments : Array[RichTextTableCellSegment] = []
+  for segment in cell_layout.segments {
+    if segment.line == line_index {
+      line_segments.push(segment)
+    }
+  }
+  if line_segments.is_empty() {
+    return Some(
+      @core.clamp_int(range.start + first.start, range.start, range.end),
+    )
+  }
+  let head = line_segments[0]
+  let tail = line_segments[line_segments.length() - 1]
+  let text_x = inner_x + head.x
+  let text_end = inner_x + tail.x + tail.width
+  if point.x <= text_x {
+    return Some(@core.clamp_int(range.start + head.start, range.start, range.end))
+  }
+  if point.x >= text_end {
+    return Some(@core.clamp_int(range.start + tail.end, range.start, range.end))
+  }
+  // Inside the styled content: find the segment under the point (a click
+  // over a marker gap between segments snaps to the nearer side).
+  for index, segment in line_segments {
+    let segment_x = inner_x + segment.x
+    let segment_end = segment_x + segment.width
+    if point.x < segment_end || index == line_segments.length() - 1 {
+      let font = segment.run.font.unwrap_or(cell_layout.font)
+      let chars = segment.text.to_array()
+      let mut local = chars.length()
+      for char_index in 0..<chars.length() {
+        let before = rich_text_width(
+          String::from_array(chars[:char_index]),
+          font,
+          text_system,
+        )
+        let after = rich_text_width(
+          String::from_array(chars[:char_index + 1]),
+          font,
+          text_system,
+        )
+        if point.x < segment_x + (before + after) / 2.0 {
+          local = char_index
+          break
+        }
+      }
+      return Some(
+        @core.clamp_int(
+          range.start + segment.start + local,
+          range.start,
+          range.end,
+        ),
+      )
+    }
+  }
+  Some(@core.clamp_int(range.start + last.end, range.start, range.end))
+}
+
+///|
+/// Caret x for a raw cell offset in a styled cell. Offsets inside a hidden
+/// marker collapse: before the segment's visible start the caret pins to
+/// the segment start; inside the visible span it advances by the measured
+/// prefix width with the segment's font; past the last segment it pins to
+/// the content end.
+fn rich_text_table_segment_caret_x(
+  cell_layout : RichTextTableCellLayout,
+  local_offset~ : Int,
+  text_x : Double,
+  text_system~ : @core.TextSystem,
+) -> Double {
+  for segment in cell_layout.segments {
+    if local_offset <= segment.start {
+      return text_x + segment.x
+    }
+    if local_offset <= segment.end {
+      let font = segment.run.font.unwrap_or(cell_layout.font)
+      let chars = segment.text.to_array()
+      let visible = @core.clamp_int(
+        local_offset - segment.start,
+        0,
+        chars.length(),
+      )
+      let prefix = String::from_array(chars[:visible])
+      return text_x +
+        segment.x +
+        rich_text_width(prefix, font, text_system)
+    }
+  }
+  let last = cell_layout.segments[cell_layout.segments.length() - 1]
+  text_x + last.x + last.width
 }
 
 ///|
@@ -1922,8 +2105,33 @@ fn rich_text_block_table_caret_rect(
         0,
         cell.text.to_array().length(),
       )
-      // 定位 local_offset 所在的视觉行，caret y 随行推进。
       let cell_layout = layout.rows[found_row].cells[found_col]
+      // Styled cell: fold the raw offset through the run segments so markers
+      // collapse onto the adjacent visible char, then place the caret at the
+      // segment position the paint drew.
+      if cell_layout.segments.length() > 0 {
+        let mut line_index = cell_layout.lines.length() - 1
+        for index, line in cell_layout.lines {
+          if local_offset < line.end {
+            line_index = index
+            break
+          }
+        }
+        let line_frame = @core.Rect::new(
+          x=text_frame.origin.x,
+          y=text_frame.origin.y + layout.line_step * line_index.to_double(),
+          width=text_frame.size.width,
+          height=layout.line_step,
+        )
+        let caret_x = rich_text_table_segment_caret_x(
+          cell_layout,
+          local_offset~,
+          text_frame.origin.x,
+          text_system~,
+        )
+        return rich_text_cursor_rect_at(caret_x, line_frame, cell_font)
+      }
+      // 定位 local_offset 所在的视觉行，caret y 随行推进。
       let mut line_index = cell_layout.lines.length() - 1
       for index, line in cell_layout.lines {
         if local_offset < line.end {
