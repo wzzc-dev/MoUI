@@ -117,6 +117,7 @@ fn markdown_html_image_gallery_project(
       markdown_html_image_gallery_walk_body(walk, outer.name)
       if !walk.invalid.val {
         markdown_html_image_gallery_walk_tail(walk)
+        markdown_html_image_gallery_strip_trailing_newline(walk)
       }
       if walk.invalid.val || walk.runs.length() == 0 {
         None
@@ -727,6 +728,25 @@ fn markdown_html_image_gallery_push_newline(
     RichTextRun::new(text="", visual_text=Some("\n"), font=Some(walk.base)),
   )
   walk.line_open.val = false
+}
+
+///|
+/// Drop the newline-only runs the flat projection appends after the last
+/// block-level child. Those separators exist to keep interior rows apart, but
+/// after the container's final child nothing follows to separate from, so the
+/// walk's trailing `push_newline` would lay out as a full empty line that HTML
+/// never renders there.
+fn markdown_html_image_gallery_strip_trailing_newline(
+  walk : MarkdownHtmlImageGalleryWalk,
+) -> Unit {
+  while walk.runs.length() > 0 {
+    let last = walk.runs[walk.runs.length() - 1]
+    if last.text == "" && last.visual_text == Some("\n") {
+      let _ = walk.runs.pop()
+    } else {
+      break
+    }
+  }
 }
 
 ///|
