@@ -2238,16 +2238,44 @@ fn markdown_editor_table_with_source_ranges(
           let mapped = markdown_editor_find_table_cell(
             source_cells, row_index, column_index,
           )
+          let next_source_range : RichTextSourceRange? = match mapped {
+            Some(range) =>
+              Some({
+                start: editor_block.source_range.start + range.content_start,
+                end: editor_block.source_range.start + range.content_end,
+              })
+            None => cell.source_range
+          }
+          // Cell runs carry cell-relative ranges; re-base them onto the
+          // document source so reveal/hit math on the absolute source works.
+          let previous_start : Int = match cell.source_range {
+            Some(previous) => previous.start
+            None => 0
+          }
+          let shift : Int = match next_source_range {
+            Some(next_range) => next_range.start - previous_start
+            None => 0
+          }
           row.push({
             ..cell,
-            source_range: match mapped {
-              Some(range) =>
-                Some({
-                  start: editor_block.source_range.start + range.content_start,
-                  end: editor_block.source_range.start + range.content_end,
-                })
-              None => cell.source_range
+            runs: if shift == 0 {
+              cell.runs
+            } else {
+              cell.runs.map(run => {
+                match run.source_range {
+                  Some(range) =>
+                    {
+                      ..run,
+                      source_range: Some({
+                        start: range.start + shift,
+                        end: range.end + shift,
+                      }),
+                    }
+                  None => run
+                }
+              })
             },
+            source_range: next_source_range,
           })
         }
         rows.push(row)

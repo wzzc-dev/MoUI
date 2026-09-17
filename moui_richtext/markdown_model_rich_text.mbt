@@ -30,6 +30,9 @@ pub fn markdown_block_to_rich_text(
         runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         prefix="• ",
         line_height=Some(base.size * 1.55),
+        // Typora-style breathing room between list items; the last item of
+        // a list gets paragraph spacing from the following blank-gap block.
+        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0 },
       )
     TaskListItem(checked) =>
       RichTextBlock::new(
@@ -40,12 +43,14 @@ pub fn markdown_block_to_rich_text(
         prefix=" ",
         marker=Some(RichTextMarker::TaskCheckbox(checked)),
         line_height=Some(base.size * 1.55),
+        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0 },
       )
     OrderedListItem(number) =>
       RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         prefix="\{number}. ",
         line_height=Some(base.size * 1.55),
+        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0 },
       )
     Blockquote =>
       RichTextBlock::new(

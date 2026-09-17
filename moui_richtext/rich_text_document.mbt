@@ -52,8 +52,14 @@ pub(all) struct RichTextRun {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// One table cell. `text` is the cell's raw source (markers included);
+/// `runs` is the styled projection (markers hidden, one run per inline
+/// span) used by paint/geometry. Empty `runs` means "render `text` plain",
+/// which keeps viewer-side tables and any legacy construction unstyled but
+/// correct.
 pub(all) struct RichTextTableCell {
   text : String
+  runs : Array[RichTextRun]
   header : Bool
   align : @core.TextAlign?
   source_range : RichTextSourceRange?
