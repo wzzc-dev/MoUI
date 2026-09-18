@@ -633,10 +633,9 @@ fn append_rich_text_block_table(
                         height=layout.line_step,
                       ),
                       font=segment.run.font.unwrap_or(cell_layout.font),
-                      color=segment
-                        .run
-                        .color
-                        .unwrap_or(rich_text_block_color(block, foreground)),
+                      color=segment.run.color.unwrap_or(
+                        rich_text_block_color(block, foreground),
+                      ),
                       align=@core.TextAlign::TextStart,
                     ),
                   ),

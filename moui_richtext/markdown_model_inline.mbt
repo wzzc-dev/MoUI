@@ -548,6 +548,7 @@ fn markdown_split_plain_highlights(
 }
 
 ///|
+
 ///|
 /// Definition set from the single-line scanner only. The full-parser union
 /// below costs a whole-document markdown parse (~700 ms on a 5 MB fixture),
@@ -601,7 +602,7 @@ fn markdown_scan_reference_definitions_fast(
     // trimmed content starts with '['.
     let mut scan = line_start
     while scan < line_end &&
-      markdown_source_char_is_ascii_or_nbsp_whitespace(chars[scan]) {
+          markdown_source_char_is_ascii_or_nbsp_whitespace(chars[scan]) {
       scan = scan + 1
     }
     if scan >= line_end || chars[scan] != '[' {
@@ -801,11 +802,7 @@ fn markdown_list_item_text(
       match item.children.get(0) {
         Some(Paragraph(span~, ..)) => {
           let chars = source.to_array()
-          let start = @core.clamp_int(
-            span.from,
-            0,
-            chars.length(),
-          )
+          let start = @core.clamp_int(span.from, 0, chars.length())
           let end = @core.clamp_int(
             @core.min_int(@core.min_int(span.to, item.span.to), chars.length()),
             start,
@@ -814,9 +811,7 @@ fn markdown_list_item_text(
           let slice = String::from_array(chars[start:end])
           let marker_length = markdown_editor_marker_prefix_length(slice)
           if marker_length > 0 {
-            String::from_array(
-              slice.to_array()[marker_length:].to_array(),
-            )
+            String::from_array(slice.to_array()[marker_length:].to_owned())
           } else {
             slice
           }

@@ -169,7 +169,7 @@ fn markdown_session_editor_paint(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-) -> @core.ViewPaintPlan {
+) -> (@core.ViewPaintPlan, Double) {
   let commands : Array[@core.DrawCommand] = []
   let overlay_commands : Array[@core.DrawCommand] = []
   let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
@@ -193,6 +193,7 @@ fn markdown_session_editor_paint(
   let content = rich_text_editor_content_rect(ctx.frame)
   commands.push(@core.DrawCommand::PushClip(content))
   let child_layers : Array[@core.ViewPaintLayer] = []
+  let mut geometry_compensation = 0.0
   if display_text == "" {
     commands.push(
       @core.DrawCommand::DrawText(
@@ -206,7 +207,7 @@ fn markdown_session_editor_paint(
       ),
     )
   } else {
-    let window = markdown_session_visible_window(
+    let mut window = markdown_session_visible_window(
       display_session,
       selection,
       font,
@@ -219,19 +220,44 @@ fn markdown_session_editor_paint(
       content_width=content.size.width,
       text_system=ctx.text_system,
     )
-    let window_content = window.content_rect(content)
     if display_text == session.source() &&
       !source_mode &&
       content.size.width > 0.0 {
-      markdown_session_record_measured_block_heights(
+      geometry_compensation = markdown_session_record_measured_block_heights(
         session,
         window,
         content_width=content.size.width,
         base=font,
         base_dir~,
         text_system=ctx.text_system,
+        visible_scroll_y~,
       )
+      // Measurement commits geometry during paint. Recompute the window for
+      // this same frame after an above-anchor change so its prefix and block
+      // positions use the same geometry as the compensated scroll offset.
+      // Without this second lookup, one frame combines new heights with the
+      // old top padding and reads as a small rebound before the next repaint.
+      if geometry_compensation != 0.0 {
+        window = markdown_session_visible_window(
+          display_session,
+          selection,
+          font,
+          source_mode~,
+          focus_mode~,
+          base_dir~,
+          visible_scroll_y=visible_scroll_y + geometry_compensation,
+          visible_viewport_height~,
+          visible_overscan~,
+          content_width=content.size.width,
+          text_system=ctx.text_system,
+        )
+      }
     }
+    // Derive the paint-space content rect only after measurement has settled
+    // the final window. Keeping the rect from the pre-measurement window
+    // combines the new prefix with the old offset and produces a one-frame
+    // reverse-looking jump when a block above the anchor grows or shrinks.
+    let window_content = window.content_rect(content)
     // Position blocks inside the offset `window_content`, but cull against
     // the original `content` viewport. Without this, the non-windowed cull
     // uses `window_content.origin.y + height` which is shifted up by
@@ -264,14 +290,17 @@ fn markdown_session_editor_paint(
   // which are rendered between commands and post_commands — stay inside the
   // content clip. Without this, overscan blocks bleed past the editor frame
   // and overlap the chrome/status bar during scrolling.
-  {
-    commands,
-    child_layers,
-    post_commands: [@core.DrawCommand::PopClip],
-    overlay_commands,
-    repaint_boundary: false,
-    animating: false,
-  }
+  (
+    {
+      commands,
+      child_layers,
+      post_commands: [@core.DrawCommand::PopClip],
+      overlay_commands,
+      repaint_boundary: false,
+      animating: false,
+    },
+    geometry_compensation,
+  )
 }
 
 ///|
@@ -289,7 +318,7 @@ fn[Msg] markdown_session_editor_event(
   on_command_click~ : ((Int) -> Msg)?,
   accepts_tab_input~ : Bool,
   visible_scroll_y~ : Double,
-  on_scroll~ : ((Double) -> Msg)?,
+  on_scroll~ : ((Double, Double) -> Msg)?,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
 ) -> @core.ViewEventResult[Msg] {
@@ -407,7 +436,7 @@ fn[Msg] markdown_session_pointer_event(
   on_command_click~ : ((Int) -> Msg)?,
   event~ : @core.PointerEvent,
   visible_scroll_y~ : Double,
-  on_scroll~ : ((Double) -> Msg)?,
+  on_scroll~ : ((Double, Double) -> Msg)?,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
 ) -> @core.ViewEventResult[Msg] {
@@ -415,14 +444,9 @@ fn[Msg] markdown_session_pointer_event(
   let content_width = rich_text_editor_content_rect(ctx.frame).size.width
   if inside && (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
     return markdown_session_scroll_event(
-      session,
-      font,
-      source_mode~,
       event~,
-      visible_scroll_y~,
       on_scroll~,
-      visible_viewport_height~,
-      content_width~,
+      clock_ms=ctx.now_ms,
     )
   }
   match event.phase {
@@ -615,40 +639,33 @@ fn[Msg] markdown_session_pointer_event(
 }
 
 ///|
+/// Forward a wheel event to the app as (raw delta, animation-clock ms). The
+/// delta is deliberately NOT resolved into an absolute offset against
+/// `visible_scroll_y`: that prop is the position at the last view build,
+/// which lags the eased offset mid-glide, so an absolute offset computed
+/// here would land behind the displayed position and snap the scroll
+/// backward on momentum tail events. The app applies the delta to its own
+/// current position and owns the clamping.
+///
+/// The clock value is the runtime animation clock (`ctx.now_ms`) — the same
+/// timeline the glide is evaluated on at paint time — so an app can stamp a
+/// new glide with it and get a self-consistent animation. The pointer
+/// contract's own `time_ms` is not used: the input path does not populate
+/// it (it stays 0.0).
 fn[Msg] markdown_session_scroll_event(
-  session : MarkdownDocumentSession,
-  font : @core.FontSpec,
-  source_mode~ : Bool,
   event~ : @core.PointerEvent,
-  visible_scroll_y~ : Double,
-  on_scroll~ : ((Double) -> Msg)?,
-  visible_viewport_height~ : Double,
-  content_width? : Double = 0.0,
+  on_scroll~ : ((Double, Double) -> Msg)?,
+  clock_ms~ : Double,
 ) -> @core.ViewEventResult[Msg] {
   match on_scroll {
     Some(handler) => {
-      let viewport_height = if visible_viewport_height > 0.0 {
-        visible_viewport_height
-      } else {
-        0.0
-      }
-      let content_height = session.estimated_content_height(
-          base=font,
-          source_mode~,
-          content_width~,
-        ) +
-        96.0
-      let max_scroll = max_double(0.0, content_height - viewport_height)
-      let next_y = min_double(
-        max_double(0.0, visible_scroll_y - event.wheel_delta.y),
-        max_scroll,
-      )
+      let delta_y = event.wheel_delta.y
       view_event_result(
-        changed=next_y != visible_scroll_y,
-        activated=next_y != visible_scroll_y,
+        changed=delta_y != 0.0,
+        activated=delta_y != 0.0,
         captured=true,
         dirty=@core.ViewDirtyHint::ViewPaintDirty,
-        messages=if next_y != visible_scroll_y { [handler(next_y)] } else { [] },
+        messages=if delta_y != 0.0 { [handler(delta_y, clock_ms)] } else { [] },
       )
     }
     None => @core.ViewEventResult::ignored()
@@ -667,10 +684,23 @@ fn markdown_session_record_measured_block_heights(
   base~ : @core.FontSpec,
   base_dir~ : String?,
   text_system~ : @core.TextSystem,
-) -> Unit {
+  visible_scroll_y~ : Double,
+) -> Double {
   if window.visible_start < 0 {
-    return
+    return 0.0
   }
+  // Keep the range that was used to produce this window. A measurement can
+  // change the document's max offset even when it is below the anchor; if the
+  // user was at the bottom, that range change must be folded into the same
+  // compensation transaction instead of letting the next paint clamp behind
+  // the current glide.
+  let old_max_scroll = max_double(
+    0.0,
+    window.content_height + 96.0 - window.viewport_height,
+  )
+  let was_at_bottom = old_max_scroll > 0.0 &&
+    visible_scroll_y >= old_max_scroll - 1.0
+  let updates : Array[(Int, Double)] = []
   for offset, _window_block in window.document.blocks {
     match session.editor_blocks.get(window.visible_start + offset) {
       Some(editor_block) => {
@@ -710,21 +740,85 @@ fn markdown_session_record_measured_block_heights(
             None => 0
           },
           height~,
+          source_digest=Some(session.document_identity.to_uint64()),
         )
-        // Push the height into this block's geometry slot unconditionally:
-        // the measured-height table deduplicates by content, but the
-        // scroll geometry keeps one height slot per block position.
-        markdown_document_apply_measured_height(
+        // Avoid feeding identical measurements back into the geometry. This
+        // is especially important for retained paints: an unchanged height
+        // must not look like a fresh update that can be compensated again.
+        let block_index = window.visible_start + offset
+        let old = markdown_document_block_height_at(
           session,
           base,
-          block_index=window.visible_start + offset,
-          width=content_width,
-          height~,
+          content_width~,
+          block_index,
         )
+        if (height - old).abs() > 0.0001 {
+          updates.push((block_index, height))
+        }
       }
       None => ()
     }
   }
+  // Apply the complete visible-window batch after all measurements have been
+  // collected. Only changes above the first visible block move the viewport.
+  let offset = visible_scroll_y
+  let anchor_index = markdown_document_anchor_index(
+    session,
+    base,
+    content_width~,
+    offset~,
+  )
+  let mut compensation = 0.0
+  for update in updates {
+    let index = update.0
+    let height = update.1
+    let old = markdown_document_block_height_at(
+      session,
+      base,
+      content_width~,
+      index,
+    )
+    markdown_document_apply_measured_height(
+      session,
+      base,
+      block_index=index,
+      width=content_width,
+      height~,
+    )
+    if index < anchor_index {
+      compensation = compensation + height - old
+    }
+  }
+  // A fresh document starts with an empty negative geometry entry. Once this
+  // batch has populated the measured-height table, materialize the live
+  // geometry exactly once so subsequent paints point-update it instead of
+  // re-publishing the same delta forever.
+  if !updates.is_empty() {
+    ignore(markdown_document_block_geometry(session, base, content_width~))
+  }
+  if !updates.is_empty() {
+    let new_content_height = session.estimated_content_height(
+      base~,
+      source_mode=false,
+      content_width~,
+    )
+    let new_max_scroll = max_double(
+      0.0,
+      new_content_height + 96.0 - window.viewport_height,
+    )
+    if was_at_bottom {
+      // Bottom anchoring wins over a block anchor: the scrollbar thumb and
+      // the final line stay attached to the viewport edge as content grows or
+      // shrinks anywhere in the document.
+      compensation = new_max_scroll - visible_scroll_y
+    } else if visible_scroll_y > new_max_scroll {
+      // A range shrink away from the bottom still cannot leave the displayed
+      // point outside the new scrollable interval.
+      compensation = new_max_scroll - visible_scroll_y
+    }
+  }
+  markdown_scroll_publish_geometry_compensation(compensation)
+  compensation
 }
 
 ///|

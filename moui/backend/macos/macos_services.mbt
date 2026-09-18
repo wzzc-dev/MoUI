@@ -280,6 +280,7 @@ pub fn app_environment() -> @services.AppEnvironment {
   @window_services.app_environment(
     bridge=macos_service_bridge(),
     timer=Some(macos_timer_source()),
+    clock=Some(macos_perf_now_ms),
   )
 }
 

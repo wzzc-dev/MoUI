@@ -662,6 +662,8 @@ pub using @core {type TypographyScale}
 
 pub using @data {type VariableListAnchor}
 
+pub using @data {type VariableListGeometryChange}
+
 pub using @data {type VariableListMetrics}
 
 pub using @data {type VariableListRange}

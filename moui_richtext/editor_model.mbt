@@ -297,6 +297,7 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
 /// multi-megabyte decode for each.
 const MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_MIN_UNITS : Int = 256
 
+///|
 const MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_SLOTS : Int = 4
 
 ///|

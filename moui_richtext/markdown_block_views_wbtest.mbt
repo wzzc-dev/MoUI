@@ -356,7 +356,7 @@ test "container view keeps interior row separators" {
     None => fail("expected the container to project")
     Some(projection) => {
       let visuals = projection.runs.map(run => rich_text_run_visual_text(run))
-      debug_inspect(visuals, content="[first, \n, second]")
+      debug_inspect(visuals, content="[\"first\", \"\\n\", \"second\"]")
     }
   }
 }

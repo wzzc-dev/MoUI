@@ -116,6 +116,10 @@ pub(all) struct MarkdownDocumentSession {
   text_store : MarkdownDocumentTextStore
   source_length : Int
   source_digest : UInt64
+  // Stable identity for the lifetime of one open document. Unlike
+  // `source_digest`, this survives incremental edits so measured block
+  // heights remain valid for blocks whose content did not change.
+  document_identity : Int
   blocks : Array[MarkdownDocumentBlock]
   editor_blocks : Array[MarkdownEditorBlock]
   line_count : Int
@@ -132,6 +136,17 @@ pub(all) struct MarkdownDocumentSession {
   height_index : MarkdownDocumentHeightIndex
   layout_cache : MarkdownDocumentLayoutCache?
 } derive(Eq, Debug, ToJson)
+
+///|
+/// Process-local identity allocator for document-scoped layout caches.
+let markdown_document_next_identity : Ref[Int] = Ref(1)
+
+///|
+fn markdown_document_fresh_identity() -> Int {
+  let identity = markdown_document_next_identity.val
+  markdown_document_next_identity.val = identity + 1
+  identity
+}
 
 ///|
 pub fn MarkdownEditTransaction::replace_all(
@@ -952,6 +967,8 @@ fn markdown_document_session_apply_incremental(
       )
       let dirty = markdown_document_dirty_range(transaction, stitched)
       let reindex : MarkdownDocumentReindexWindow = {
+        previous_source_digest: session.source_digest,
+        previous_source_length: session.source_length,
         prefix_count: cluster.start_index,
         suffix_new_start: cluster.start_index + reparsed.length(),
         suffix_shift: cluster.end_index +
@@ -1170,6 +1187,8 @@ priv struct MarkdownDocumentEditCluster {
 /// it. `edit_start`/`deleted`/`replacement`/`char_delta` describe the
 /// character edit itself, which the count deltas need.
 priv struct MarkdownDocumentReindexWindow {
+  previous_source_digest : UInt64
+  previous_source_length : Int
   prefix_count : Int
   suffix_new_start : Int
   suffix_shift : Int
@@ -1622,10 +1641,16 @@ fn markdown_document_block_geometry(
         geometry.source_length == session.source_length {
         hot_path_scroll_geometry_cache_hits.val = hot_path_scroll_geometry_cache_hits.val +
           1
-        if geometry.heights.is_empty() {
+        // An empty entry is only a negative cache while no measured height
+        // exists. The first paint records measured blocks after this query;
+        // let that next query build the real geometry instead of returning
+        // None forever and publishing the same compensation on every frame.
+        if geometry.heights.is_empty() && rich_text_block_heights_count.val == 0 {
           return None
         }
-        return Some(geometry)
+        if !geometry.heights.is_empty() {
+          return Some(geometry)
+        }
       }
       if markdown_document_scroll_geometry_rebase(
           geometry,
@@ -1646,6 +1671,7 @@ fn markdown_document_block_geometry(
   let height_seed = rich_text_block_height_digest_seed(
     base,
     width=content_width,
+    source_digest=Some(session.document_identity.to_uint64()),
   )
   let heights : Array[Double] = []
   let mut has_measured = false
@@ -1669,6 +1695,7 @@ fn markdown_document_block_geometry(
           Some(session_block) => session_block.revision
           None => 0
         },
+        source_digest=Some(session.document_identity.to_uint64()),
       ) {
       Some(height) => {
         has_measured = true
@@ -1738,6 +1765,10 @@ fn markdown_document_scroll_geometry_rebase(
   if geometry.heights.is_empty() {
     return false
   }
+  if geometry.source_digest != window.previous_source_digest ||
+    geometry.source_length != window.previous_source_length {
+    return false
+  }
   let new_count = session.editor_blocks.length()
   if geometry.heights.length() != new_count + window.suffix_shift {
     return false
@@ -1756,6 +1787,7 @@ fn markdown_document_scroll_geometry_rebase(
   let height_seed = rich_text_block_height_digest_seed(
     base,
     width=content_width,
+    source_digest=Some(session.document_identity.to_uint64()),
   )
   for index = window.prefix_count
       index < window.suffix_new_start
@@ -1774,6 +1806,7 @@ fn markdown_document_scroll_geometry_rebase(
           Some(session_block) => session_block.revision
           None => 0
         },
+        source_digest=Some(session.document_identity.to_uint64()),
       ) {
       Some(height) => height
       None =>
@@ -1848,6 +1881,74 @@ fn markdown_document_apply_measured_height(
         )
       }
     None => ()
+  }
+}
+
+///|
+/// Read the currently committed geometry slot without rebuilding geometry.
+fn markdown_document_block_height_at(
+  session : MarkdownDocumentSession,
+  base : @core.FontSpec,
+  content_width~ : Double,
+  index : Int,
+) -> Double {
+  match
+    markdown_document_scroll_geometry_cache.get(
+      markdown_document_scroll_geometry_key(base, width=content_width),
+    ) {
+    Some(geometry) if geometry.source_digest == session.source_digest &&
+      geometry.source_length == session.source_length &&
+      geometry.epoch == rich_text_block_heights_epoch.val &&
+      index >= 0 &&
+      index < geometry.heights.length() => geometry.heights[index]
+    _ =>
+      session.height_index.blocks
+      .get(index)
+      .map(metric => metric.visual_height_units * base.size)
+      .unwrap_or(base.size * 1.55)
+  }
+}
+
+///|
+fn markdown_document_anchor_index(
+  session : MarkdownDocumentSession,
+  base : @core.FontSpec,
+  content_width~ : Double,
+  offset~ : Double,
+) -> Int {
+  match markdown_document_block_geometry(session, base, content_width~) {
+    Some(geometry) => {
+      let mut low = 0
+      let mut high = geometry.heights.length()
+      while low < high {
+        let middle = low + (high - low) / 2
+        if markdown_document_scroll_geometry_prefix_at(
+            geometry,
+            count=middle + 1,
+          ) <=
+          offset {
+          low = middle + 1
+        } else {
+          high = middle
+        }
+      }
+      low.min(geometry.heights.length())
+    }
+    None => {
+      // Before the first measured paint, the cache intentionally contains an
+      // empty negative entry. Use the parse-time unit estimates to identify
+      // the stable top item; returning zero here would suppress compensation
+      // for every measured block above the viewport on the first paint.
+      let mut top = 0.0
+      for index, metric in session.height_index.blocks {
+        let height = metric.visual_height_units * base.size
+        if top + height > offset {
+          return index
+        }
+        top = top + height
+      }
+      session.height_index.blocks.length()
+    }
   }
 }
 
@@ -2779,6 +2880,10 @@ fn markdown_document_session_from_blocks(
           Some(scan) => scan.0
           None => markdown_document_source_digest(source)
         }
+    },
+    document_identity: match previous {
+      Some(prev) => prev.document_identity
+      None => markdown_document_fresh_identity()
     },
     blocks: assigned.blocks,
     editor_blocks,

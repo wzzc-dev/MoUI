@@ -287,6 +287,35 @@ test "markdown document session estimated_content_height returns positive value"
 }
 
 ///|
+/// A geometry entry is shared by font/width, so its source identity must be
+/// checked at every read. Reusing a block id at the same position in a newly
+/// loaded document must fall back to the parse-time estimate until that
+/// document has supplied a measurement; otherwise anchor compensation uses a
+/// height from the previous document and moves the viewport in the wrong
+/// direction.
+test "scroll geometry block height ignores stale document entries" {
+  let base = @core.FontSpec::new(size=17.0)
+  let width = 733.0
+  let session = MarkdownDocumentSession::new("fresh document")
+  let stale = markdown_document_scroll_geometry_from_heights(
+    [9999.0],
+    epoch=rich_text_block_heights_epoch.val,
+    source_digest=0x123456789abcdef0UL,
+    source_length=session.source_length,
+  )
+  markdown_document_scroll_geometry_put(base, stale, width~)
+  let expected = session.height_index.blocks[0].visual_height_units * base.size
+  let actual = markdown_document_block_height_at(
+    session,
+    base,
+    content_width=width,
+    0,
+  )
+  assert_eq(actual, expected)
+  assert_true(actual != 9999.0)
+}
+
+///|
 test "markdown document session measures responsive html galleries by width" {
   let source =
     #|<div align="center">
@@ -516,6 +545,8 @@ test "scroll geometry rebase keeps the Fenwick tree consistent across a block-co
   markdown_document_last_rebase.val = (
     session.revision,
     Some({
+      previous_source_digest: 0UL,
+      previous_source_length: -1,
       prefix_count: 1,
       suffix_new_start: 3,
       suffix_shift,

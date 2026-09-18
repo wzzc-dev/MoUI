@@ -788,13 +788,12 @@ fn rich_text_block_line_height(
       // Rows grow with their tallest wrapped cell, so the band height stays
       // in sync with what the table painter draws.
       let table_height = rich_text_table_layout(
-          table,
-          block,
-          base_font,
-          frame_width=available_width,
-          text_system~,
-        )
-        .total_height()
+        table,
+        block,
+        base_font,
+        frame_width=available_width,
+        text_system~,
+      ).total_height()
       height = max_double(height, table_height)
     }
     None => ()

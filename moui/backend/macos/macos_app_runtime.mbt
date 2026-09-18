@@ -162,7 +162,17 @@ async fn launch_macos_app_async_pump(
       @window_core.PumpStatus::Exit(_) => return ()
       @window_core.PumpStatus::Continue => ()
     }
-    @async.sleep(frame_interval_ms)
+    // Frame pacing: while the runtime still owes a frame (an animation is
+    // ticking — scroll glides, overlay fades) or a sub-frame timer
+    // subscription is live, keep polling tight so timer fires and redraw
+    // requests are serviced without waiting out the idle sleep. Idle frames
+    // sleep the full interval so sibling async tasks (remote images, IO)
+    // keep their turn.
+    if app.driver.runtime.needs_redraw() || macos_timer_sub_frame_active() {
+      @async.sleep(1)
+    } else {
+      @async.sleep(frame_interval_ms)
+    }
   }
 }
 

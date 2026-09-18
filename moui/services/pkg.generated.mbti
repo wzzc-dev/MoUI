@@ -16,8 +16,10 @@ pub struct AppEnvironment {
   services_value : AppServices
   timer_value : TimerSource?
   routes_value : RouteSource?
+  clock_value : (() -> Double)?
 }
-pub fn AppEnvironment::new(services? : AppServices, timer? : TimerSource?, routes? : RouteSource?) -> Self
+pub fn AppEnvironment::clock(Self) -> (() -> Double)?
+pub fn AppEnvironment::new(services? : AppServices, timer? : TimerSource?, routes? : RouteSource?, clock? : (() -> Double)?) -> Self
 pub fn AppEnvironment::routes(Self) -> RouteSource?
 pub fn AppEnvironment::services(Self) -> AppServices
 pub fn AppEnvironment::timer(Self) -> TimerSource?

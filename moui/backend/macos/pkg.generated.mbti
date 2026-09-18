@@ -39,11 +39,15 @@ pub fn macos_modal_presenter() -> MacosModalPresenter
 
 pub fn macos_native_view_handle(@wzzc-dev/window/macos.Window) -> UInt64?
 
+pub fn macos_perf_now_ms() -> Double
+
 pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @backend.HostServiceBridge
 
 pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
 pub fn macos_timer_source() -> @services.TimerSource
+
+pub fn macos_timer_sub_frame_active() -> Bool
 
 pub fn macos_wall_clock() -> @runtime.HostWallClock
 

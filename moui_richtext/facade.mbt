@@ -119,8 +119,8 @@ pub fn[Msg] controlled_markdown_session_editor(
   on_prefix_click? : ((Int) -> Msg)? = None,
   on_command_click? : ((Int) -> Msg)? = None,
   accepts_tab_input? : Bool = true,
-  visible_scroll_y? : Double = 0.0,
-  on_scroll? : ((Double) -> Msg)? = None,
+  scroll_glide? : MarkdownScrollGlide = MarkdownScrollGlide::settled(0.0),
+  on_scroll? : ((Double, Double) -> Msg)? = None,
   visible_viewport_height? : Double = 0.0,
   visible_overscan? : Double = 320.0,
   key? : String? = None,
@@ -146,7 +146,7 @@ pub fn[Msg] controlled_markdown_session_editor(
     on_prefix_click~,
     on_command_click~,
     accepts_tab_input~,
-    visible_scroll_y~,
+    scroll_glide~,
     on_scroll~,
     visible_viewport_height~,
     visible_overscan~,
@@ -176,8 +176,8 @@ fn[Msg] controlled_markdown_session_editor_snapshot(
   on_prefix_click~ : ((Int) -> Msg)?,
   on_command_click~ : ((Int) -> Msg)?,
   accepts_tab_input~ : Bool,
-  visible_scroll_y~ : Double,
-  on_scroll~ : ((Double) -> Msg)?,
+  scroll_glide~ : MarkdownScrollGlide,
+  on_scroll~ : ((Double, Double) -> Msg)?,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
   key~ : String?,
@@ -200,7 +200,7 @@ fn[Msg] controlled_markdown_session_editor_snapshot(
       focus_mode,
       base_dir,
       accepts_tab_input,
-      visible_scroll_y,
+      scroll_glide,
       visible_viewport_height,
       visible_overscan,
       key,
@@ -219,7 +219,13 @@ fn[Msg] controlled_markdown_session_editor_snapshot(
         on_prefix_click~,
         on_command_click~,
         accepts_tab_input=node.accepts_tab_input,
-        visible_scroll_y~,
+        // Hit-testing and visual caret moves use the same frame-local offset
+        // as paint. A retained paint may have published a measurement delta
+        // before the app rebuilds its glide, so include that pending delta.
+        visible_scroll_y=node.scroll_glide.display_offset(
+          ctx.now_ms,
+          compensation=markdown_scroll_peek_geometry_compensation(),
+        ),
         on_scroll~,
         visible_viewport_height=node.visible_viewport_height,
         visible_overscan=node.visible_overscan,
@@ -277,7 +283,9 @@ priv struct MarkdownSessionEditorViewNode {
   focus_mode : Bool
   base_dir : String?
   accepts_tab_input : Bool
-  visible_scroll_y : Double
+  /// The scroll transition to draw: evaluated at paint/event time from the
+  /// runtime animation clock, never resolved into a stored offset.
+  scroll_glide : MarkdownScrollGlide
   visible_viewport_height : Double
   visible_overscan : Double
   key : String?
@@ -329,7 +337,21 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn declaration(self) 
           "accepts_tab_input",
           @core.DeclarationKey::bool(self.accepts_tab_input),
         ),
-        ("scroll_y", @core.DeclarationKey::double(self.visible_scroll_y)),
+        (
+          "scroll_glide",
+          @core.DeclarationKey::record(
+            type_tag="moui_richtext.MarkdownScrollGlide.v2",
+            fields=[
+              ("from_y", @core.DeclarationKey::double(self.scroll_glide.from_y)),
+              ("to_y", @core.DeclarationKey::double(self.scroll_glide.to_y)),
+              (
+                "start_ms",
+                @core.DeclarationKey::double(self.scroll_glide.start_ms),
+              ),
+              ("tau_ms", @core.DeclarationKey::double(self.scroll_glide.tau_ms)),
+            ],
+          ),
+        ),
         (
           "viewport_height",
           @core.DeclarationKey::double(self.visible_viewport_height),
@@ -350,7 +372,15 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn layout(self, ctx) 
 
 ///|
 impl @core.ViewNode for MarkdownSessionEditorViewNode with fn paint(self, ctx) {
-  markdown_session_editor_paint(
+  markdown_scroll_publish_frame_time(ctx.now_ms)
+  // The offset is sampled for THIS frame: the glide is a function of the
+  // animation clock, so the position shown is always correct for the frame
+  // being drawn (no timer tick grid to beat against the display refresh).
+  // A retained node can paint again before the app consumes the measurement
+  // message. Include that pending delta in the frame-local offset so a
+  // geometry commit cannot move content backward for one frame.
+  let pending_geometry_compensation = markdown_scroll_peek_geometry_compensation()
+  let (plan, geometry_compensation) = markdown_session_editor_paint(
     ctx,
     session=self.session,
     selection=self.selection,
@@ -366,10 +396,21 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn paint(self, ctx) {
     source_mode=self.source_mode,
     focus_mode=self.focus_mode,
     base_dir=self.base_dir,
-    visible_scroll_y=self.visible_scroll_y,
+    visible_scroll_y=self.scroll_glide.display_offset(
+      ctx.now_ms,
+      compensation=pending_geometry_compensation,
+      scale=ctx.environment.scale_factor,
+    ),
     visible_viewport_height=self.visible_viewport_height,
     visible_overscan=self.visible_overscan,
   )
+  // The application owns the persistent glide. Paint only publishes the
+  // measurement compensation; mutating this transient view node as well
+  // would apply the same delta a second time when the app consumes it.
+  ignore(geometry_compensation)
+  // Keep the host's animation-driven redraw loop alive until the glide
+  // settles; the runtime stops ticking once this reports false.
+  { ..plan, animating: self.scroll_glide.is_animating(ctx.now_ms) }
 }
 
 ///|
@@ -388,7 +429,10 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn text_input_state(
       source_mode=self.source_mode,
       focus_mode=self.focus_mode,
       base_dir=self.base_dir,
-      visible_scroll_y=self.visible_scroll_y,
+      visible_scroll_y=self.scroll_glide.display_offset(
+        ctx.now_ms,
+        compensation=markdown_scroll_peek_geometry_compensation(),
+      ),
       visible_viewport_height=self.visible_viewport_height,
       visible_overscan=self.visible_overscan,
       text_system=ctx.text_system,

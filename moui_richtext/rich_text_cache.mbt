@@ -639,11 +639,18 @@ fn rich_text_block_measured_height_key(
   width~ : Double,
   block_id~ : Int,
   block_revision~ : Int,
+  source_digest? : UInt64? = None,
 ) -> String {
   rich_text_cache_join_key([
     "height",
     rich_text_cache_font_key(base),
     width.to_string(),
+    // Block ids are session-local and restart at 1 for a new document. Keep
+    // independent documents from reusing one another's measured geometry.
+    match source_digest {
+      Some(digest) => digest.to_string()
+      None => "legacy"
+    },
     block_id.to_string(),
     block_revision.to_string(),
   ])
@@ -696,12 +703,17 @@ fn rich_text_digest_string(hash : UInt64, text : String) -> UInt64 {
 fn rich_text_block_height_digest_seed(
   base : @core.FontSpec,
   width~ : Double,
+  source_digest? : UInt64? = None,
 ) -> UInt64 {
   let hash = rich_text_digest_string(
     0xcbf29ce484222325UL,
     rich_text_cache_font_key(base),
   )
-  rich_text_digest_string(hash, width.to_string())
+  let hash = rich_text_digest_string(hash, width.to_string())
+  match source_digest {
+    Some(digest) => rich_text_digest_mix(hash, digest)
+    None => hash
+  }
 }
 
 ///|
@@ -735,17 +747,19 @@ fn rich_text_record_block_measured_height(
   block_id~ : Int,
   block_revision~ : Int,
   height~ : Double,
+  source_digest? : UInt64? = None,
 ) -> Bool {
   if width <= 0.0 || height <= 0.0 {
     return false
   }
-  let seed = rich_text_block_height_digest_seed(base, width~)
+  let seed = rich_text_block_height_digest_seed(base, width~, source_digest~)
   let digest = rich_text_block_height_digest(seed~, block_id~, block_revision~)
   let key = rich_text_block_measured_height_key(
     base,
     width~,
     block_id~,
     block_revision~,
+    source_digest~,
   )
   let old_bucket = rich_text_block_heights.get(digest)
   match old_bucket {
@@ -837,6 +851,7 @@ fn rich_text_block_measured_height(
   seed~ : UInt64,
   block_id~ : Int,
   block_revision~ : Int,
+  source_digest? : UInt64? = None,
 ) -> Double? {
   if width <= 0.0 {
     return None
@@ -858,6 +873,7 @@ fn rich_text_block_measured_height(
         width~,
         block_id~,
         block_revision~,
+        source_digest~,
       )
       rich_text_bucket_lookup(bucket, key~)
     }

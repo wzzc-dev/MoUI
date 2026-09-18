@@ -110,13 +110,25 @@ pub(all) struct TextInputImeRequestDiagnostics {
   candidate_anchor : @wzzc-dev/moui/core.Rect
   has_surrounding_text : Bool
   surrounding_text_utf8_length : Int
+  surrounding_text : String?
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct TextInputImeStateKey {
+  focused : Bool
+  text : String
+  caret : Int
+  selection : @wzzc-dev/moui/core.TextRange?
+  composition : String?
+  composition_cursor : @wzzc-dev/moui/core.TextRange?
+  caret_rect : @wzzc-dev/moui/core.Rect
+}
 
 pub(all) struct TextInputSession {
   mut enabled : Bool
   mut last_request : @wzzc-dev/window/core.ImeRequestData?
   mut last_capabilities : @wzzc-dev/window/core.ImeCapabilities?
   mut last_diagnostics : TextInputImeRequestDiagnostics?
+  mut last_state : TextInputImeStateKey?
 }
 pub fn TextInputSession::last_diagnostics(Self) -> TextInputImeRequestDiagnostics?
 pub fn TextInputSession::new() -> Self

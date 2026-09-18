@@ -238,6 +238,7 @@ pub using @data {
   type IncrementalData,
   type IncrementalDataChange,
   type VariableListAnchor,
+  type VariableListGeometryChange,
   type VariableListMetrics,
   type VariableListRange,
 }

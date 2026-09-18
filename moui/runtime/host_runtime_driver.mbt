@@ -387,14 +387,26 @@ pub fn HostRuntimeDriver::request_redraw_if_needed(
 }
 
 ///|
+/// Start a redraw and advance the animation clock one step.
+///
+/// With a host `frame_clock` the tick carries real monotonic milliseconds, so
+/// paint-time animations (`ViewPaintContext.now_ms`) run in real time on any
+/// refresh rate — 60Hz, 120Hz ProMotion, variable refresh — instead of a
+/// synthetic 16ms-per-frame step. Without a clock the fixed synthetic step is
+/// kept, which still lets animations progress without user input.
+///
+/// `HostRuntimeDriver::draw_frame` may advance the same clock again through
+/// `profile_draw_frame`; the duplicate tick lands on ~the same timestamp
+/// (delta ≈ 0), which is harmless.
 pub fn HostRuntimeDriver::begin_redraw(self : HostRuntimeDriver) -> Unit {
   self.scheduler.begin_redraw()
-  self.frame_time_ms = self.frame_time_ms + 16.0
-  self.runtime.dispatch_event(
-    @core.AppEvent::FrameTick(
-      @core.Frame::new(time_ms=self.frame_time_ms, delta_ms=16.0),
-    ),
-  )
+  match self.frame_clock {
+    Some(clock) => self.runtime.advance_time(clock())
+    None => {
+      self.frame_time_ms = self.frame_time_ms + 16.0
+      self.runtime.advance_time(self.frame_time_ms)
+    }
+  }
 }
 
 ///|

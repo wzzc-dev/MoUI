@@ -216,6 +216,7 @@ pub struct AppEnvironment {
   services_value : AppServices
   timer_value : TimerSource?
   routes_value : RouteSource?
+  clock_value : (() -> Double)?
 }
 
 ///|
@@ -223,8 +224,14 @@ pub fn AppEnvironment::new(
   services? : AppServices = AppServices::unavailable(),
   timer? : TimerSource? = None,
   routes? : RouteSource? = None,
+  clock? : (() -> Double)? = None,
 ) -> AppEnvironment {
-  { services_value: services, timer_value: timer, routes_value: routes }
+  {
+    services_value: services,
+    timer_value: timer,
+    routes_value: routes,
+    clock_value: clock,
+  }
 }
 
 ///|
@@ -240,6 +247,16 @@ pub fn AppEnvironment::timer(self : AppEnvironment) -> TimerSource? {
 ///|
 pub fn AppEnvironment::routes(self : AppEnvironment) -> RouteSource? {
   self.routes_value
+}
+
+///|
+/// Monotonic milliseconds on a real host clock, when the backend provides
+/// one. Apps use it to stamp animations and to measure event spacing (the
+/// core pointer contract does not carry event timestamps). It shares the
+/// timeline with the host's frame clock, so a stamp taken here compares
+/// directly against `ViewPaintContext.now_ms`.
+pub fn AppEnvironment::clock(self : AppEnvironment) -> (() -> Double)? {
+  self.clock_value
 }
 
 ///|

@@ -4,6 +4,7 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
+  "moonbitlang/core/math",
   "wzzc-dev/moui/render/common" @render_common,
 }
 

@@ -15,6 +15,18 @@ extern "C" fn macos_timer_start(
 extern "C" fn macos_timer_cancel(handle : UInt64) -> Unit = "moui_macos_timer_cancel"
 
 ///|
+/// Whether any timer subscription with an interval at or below one display
+/// frame is currently live. The async pump keeps its polling tight while this
+/// holds so frame-paced animation ticks are delivered without waiting out the
+/// idle sleep.
+extern "C" fn macos_timer_sub_frame_active_extern() -> Int = "moui_macos_timer_sub_frame_active"
+
+///|
+pub fn macos_timer_sub_frame_active() -> Bool {
+  macos_timer_sub_frame_active_extern() != 0
+}
+
+///|
 /// Construct a `TimerSource` backed by the macOS main-queue dispatch timer.
 /// Each tick builds a `Frame` carrying real elapsed time via the shared timer
 /// skeleton; the cancel closure returned to the runtime releases the dispatch

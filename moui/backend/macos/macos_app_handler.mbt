@@ -360,7 +360,15 @@ fn MacosNativeHostBackend::show_primary_window_after_first_present(
 }
 
 ///|
-extern "c" fn macos_perf_now_ms() -> Double = "moui_macos_perf_now_ms"
+extern "c" fn macos_perf_now_ms_extern() -> Double = "moui_macos_perf_now_ms"
+
+///|
+/// Monotonic milliseconds on the host clock (`mach_absolute_time`), shared by
+/// the timer host, the frame clock and app-level animation stamping so every
+/// animation timestamp is on one timeline.
+pub fn macos_perf_now_ms() -> Double {
+  macos_perf_now_ms_extern()
+}
 
 ///|
 fn MacosNativeHostBackend::record_performance_smoke_present(

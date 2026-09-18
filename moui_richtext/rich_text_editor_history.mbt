@@ -199,7 +199,7 @@ fn rich_text_history_record_edit(
         // construction (`edit_shape_at`); stepping the running length by
         // that delta avoids decoding the whole new document here.
         state.after_length = state.after_length +
-        rich_text_history_shape_char_delta(kind)
+          rich_text_history_shape_char_delta(kind)
         state.last_push_ms = now
         MergeHistory(kind, character)
       }
@@ -211,7 +211,7 @@ fn rich_text_history_record_edit(
         state.kind = kind
         state.start = start
         state.after_length = text_length(previous) +
-        rich_text_history_shape_char_delta(kind)
+          rich_text_history_shape_char_delta(kind)
       }
       None => {
         state.kind = 0

@@ -85,13 +85,12 @@ test "pointer hit test matches painted geometry around image galleries" {
     y=target_frame.origin.y + target_frame.size.height * 0.5,
   )
   let caret = rich_text_document_source_offset_at_point(
-      window.document,
-      target_click,
-      window_content,
-      font,
-      text_system,
-    )
-    .unwrap_or(-1)
+    window.document,
+    target_click,
+    window_content,
+    font,
+    text_system,
+  ).unwrap_or(-1)
   assert_true(caret >= target_start && caret <= target_end)
   // Clicking the middle of the rendered gallery must stay inside the gallery's
   // source range instead of skipping into the blocks below.
@@ -100,16 +99,13 @@ test "pointer hit test matches painted geometry around image galleries" {
     y=gallery_frame.origin.y + gallery_frame.size.height * 0.5,
   )
   let gallery_caret = rich_text_document_source_offset_at_point(
-      window.document,
-      gallery_click,
-      window_content,
-      font,
-      text_system,
-    )
-    .unwrap_or(-1)
-  assert_true(
-    gallery_caret >= gallery_start && gallery_caret <= gallery_end,
-  )
+    window.document,
+    gallery_click,
+    window_content,
+    font,
+    text_system,
+  ).unwrap_or(-1)
+  assert_true(gallery_caret >= gallery_start && gallery_caret <= gallery_end)
 }
 
 ///|
@@ -119,33 +115,12 @@ test "pointer hit test matches painted geometry around image galleries" {
 /// selection landed correctly.
 test "caret rect stays inside the clicked block's painted band" {
   let source = [
-    "# Title",
-    "",
-    "<div>",
-    "<img src=\"resource/a.png\" width=\"48%\" alt=\"A\"/>",
-    "<img src=\"resource/b.png\" width=\"48%\" alt=\"B\"/>",
-    "</div>",
-    "",
-    "## 支持平台",
-    "",
-    "| 平台 | 形态 |",
-    "| --- | --- |",
-    "| macOS | committed |",
-    "| Android | experimental |",
-    "",
-    "> 移动端不是胶水代码。",
-    "",
-    "详见平台就绪声明。",
-    "",
-    "### 运行时管线",
-    "",
-    "```sh",
-    "View[Msg] -> ElementTree -> DrawCommand",
-    "text -> renderer",
-    "```",
-    "",
-    "- moui/core 拥有契约",
-    "- moui/views 拥有控件",
+    "# Title", "", "<div>", "<img src=\"resource/a.png\" width=\"48%\" alt=\"A\"/>",
+    "<img src=\"resource/b.png\" width=\"48%\" alt=\"B\"/>", "</div>", "", "## 支持平台",
+    "", "| 平台 | 形态 |", "| --- | --- |", "| macOS | committed |", "| Android | experimental |",
+    "", "> 移动端不是胶水代码。", "", "详见平台就绪声明。", "",
+    "### 运行时管线", "", "```sh", "View[Msg] -> ElementTree -> DrawCommand",
+    "text -> renderer", "```", "", "- moui/core 拥有契约", "- moui/views 拥有控件",
     "",
   ].join("\n")
   let session = MarkdownDocumentSession::new(source)
@@ -159,7 +134,7 @@ test "caret rect stays inside the clicked block's painted band" {
   let chars = source.to_array()
   let needle_chars = needle.to_array()
   let mut anchor = 0
-  for start in 0..=(chars.length() - needle_chars.length()) {
+  for start in 0..<=(chars.length() - needle_chars.length()) {
     let mut matched = true
     for offset in 0..<needle_chars.length() {
       if chars[start + offset] != needle_chars[offset] {
@@ -173,11 +148,7 @@ test "caret rect stays inside the clicked block's painted band" {
     }
   }
   let selection : MarkdownEditorSelection = { caret: anchor, selection: None }
-  let scroll_y = session.source_offset_y(
-      anchor,
-      base=font,
-      content_width~,
-    ) -
+  let scroll_y = session.source_offset_y(anchor, base=font, content_width~) -
     240.0
   let window = session.rich_text_window(
     selection,
@@ -230,13 +201,12 @@ test "caret rect stays inside the clicked block's painted band" {
           y=frame.origin.y + max_double(6.0, frame.size.height * 0.5),
         )
         let caret = rich_text_document_source_offset_at_point(
-            window.document,
-            click,
-            window_content,
-            font,
-            text_system,
-          )
-          .unwrap_or(-1)
+          window.document,
+          click,
+          window_content,
+          font,
+          text_system,
+        ).unwrap_or(-1)
         assert_true(caret >= range.start && caret <= range.end)
         let rect = rich_text_document_caret_rect_at_source(
           window.document,
@@ -349,13 +319,12 @@ test "table cells wrap and selection follows cell geometry" {
     table.cell_padding.left +
     4.0
   let caret = rich_text_document_source_offset_at_point(
-      window.document,
-      @core.Point::new(x=click_x, y=click_y),
-      window_content,
-      font,
-      text_system,
-    )
-    .unwrap_or(-1)
+    window.document,
+    @core.Point::new(x=click_x, y=click_y),
+    window_content,
+    font,
+    text_system,
+  ).unwrap_or(-1)
   assert_true(caret >= cell_range.start && caret <= cell_range.end)
   assert_true(caret >= cell_range.start + second_line.start)
   // Selecting part of the cell draws the highlight over the cell band, not
@@ -375,8 +344,8 @@ test "table cells wrap and selection follows cell geometry" {
   for command in commands {
     match command {
       @core.DrawCommand::FillRect(rect, _) =>
-        if rect.origin.y >= frame.origin.y +
-          layout.row_top(layout.rows.length() - 1) &&
+        if rect.origin.y >=
+          frame.origin.y + layout.row_top(layout.rows.length() - 1) &&
           rect.origin.y <
           frame.origin.y +
           layout.row_top(layout.rows.length() - 1) +
@@ -461,13 +430,12 @@ test "table caret rect stays inside the clicked cell band" {
     y=row_top + table.cell_padding.top + layout.line_step * 0.5,
   )
   let caret = rich_text_document_source_offset_at_point(
-      window.document,
-      click,
-      window_content,
-      font,
-      text_system,
-    )
-    .unwrap_or(-1)
+    window.document,
+    click,
+    window_content,
+    font,
+    text_system,
+  ).unwrap_or(-1)
   assert_true(caret >= cell_range.start && caret <= cell_range.end)
   let rect = rich_text_document_caret_rect_at_source(
     window.document,
@@ -500,7 +468,7 @@ test "table caret lands in clicked row while scrolled" {
   let chars = source.to_array()
   let needle_chars = needle.to_array()
   let mut caret_anchor = 0
-  for start in 0..=(chars.length() - needle_chars.length()) {
+  for start in 0..<=(chars.length() - needle_chars.length()) {
     let mut matched = true
     for offset in 0..<needle_chars.length() {
       if chars[start + offset] != needle_chars[offset] {
@@ -521,7 +489,12 @@ test "table caret lands in clicked row while scrolled" {
     overscan=0.0,
     content_width~,
   )
-  let content = @core.Rect::new(x=0.0, y=0.0, width=content_width, height=viewport_height)
+  let content = @core.Rect::new(
+    x=0.0,
+    y=0.0,
+    width=content_width,
+    height=viewport_height,
+  )
   let window_content = window.content_rect(content)
   // Painted bands.
   let mut y = window_content.origin.y
@@ -543,15 +516,31 @@ test "table caret lands in clicked row while scrolled" {
         ),
         height=line_height,
       )
-      let table = match block.table { Some(t) => t; None => fail("table") }
+      let table = match block.table {
+        Some(t) => t
+        None => fail("table")
+      }
       let layout = rich_text_table_layout(
-        table, block, font, frame_width=frame.size.width, text_system~,
+        table,
+        block,
+        font,
+        frame_width=frame.size.width,
+        text_system~,
       )
-      for row_index, row in table.rows {
-        if row_index == 0 { continue }
+      for row_index, _row in table.rows {
+        if row_index == 0 {
+          continue
+        }
         let row_top = frame.origin.y + layout.row_top(row_index)
         let row_bottom = row_top + layout.rows[row_index].height
-        bands.push(@core.Rect::new(x=frame.origin.x, y=row_top, width=frame.size.width, height=row_bottom - row_top))
+        bands.push(
+          @core.Rect::new(
+            x=frame.origin.x,
+            y=row_top,
+            width=frame.size.width,
+            height=row_bottom - row_top,
+          ),
+        )
       }
     }
     y = y + line_height + block.inset.top + block.inset.bottom
@@ -562,15 +551,17 @@ test "table caret lands in clicked row while scrolled" {
     x=mac_band.origin.x + 40.0,
     y=mac_band.origin.y + mac_band.size.height * 0.5,
   )
-  assert_true(click.y >= window_content.origin.y && click.y <= window_content.origin.y + viewport_height)
+  assert_true(
+    click.y >= window_content.origin.y &&
+    click.y <= window_content.origin.y + viewport_height,
+  )
   let caret = rich_text_document_source_offset_at_point(
-      window.document,
-      click,
-      window_content,
-      font,
-      text_system,
-    )
-    .unwrap_or(-1)
+    window.document,
+    click,
+    window_content,
+    font,
+    text_system,
+  ).unwrap_or(-1)
   let rect = rich_text_document_caret_rect_at_source(
     window.document,
     caret,
@@ -578,7 +569,10 @@ test "table caret lands in clicked row while scrolled" {
     font,
     text_system~,
   )
-  let rect = match rect { Some(r) => r; None => fail("caret rect missing") }
+  let rect = match rect {
+    Some(r) => r
+    None => fail("caret rect missing")
+  }
   // The caret must sit in the same band that was clicked.
   assert_true(
     rect.origin.y >= mac_band.origin.y - 1.0 &&

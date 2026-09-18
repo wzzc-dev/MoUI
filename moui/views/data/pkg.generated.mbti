@@ -250,20 +250,45 @@ pub struct VariableListAnchor {
 pub fn VariableListAnchor::inset(Self) -> Double
 pub fn VariableListAnchor::key(Self) -> String
 
+pub struct VariableListGeometryChange {
+  key : String
+  index : Int
+  old_height : Double
+  new_height : Double
+  delta : Double
+  total_delta : Double
+}
+pub fn VariableListGeometryChange::delta(Self) -> Double
+pub fn VariableListGeometryChange::index(Self) -> Int
+pub fn VariableListGeometryChange::key(Self) -> String
+pub fn VariableListGeometryChange::new_height(Self) -> Double
+pub fn VariableListGeometryChange::old_height(Self) -> Double
+pub fn VariableListGeometryChange::total_delta(Self) -> Double
+
 pub struct VariableListMetrics {
   keys : Array[String]
   heights : Array[Double]
-  offsets : Array[Double]
+  estimated : Array[Double]
+  measured : Array[Bool]
+  mut tree : Array[Double]
   spacing : Double
-  total_extent : Double
+  mut total_extent : Double
 }
 pub fn VariableListMetrics::anchor_for_offset(Self, Double) -> VariableListAnchor?
+pub fn VariableListMetrics::clamp_offset(Self, Double, Double) -> Double
 pub fn VariableListMetrics::count(Self) -> Int
 pub fn VariableListMetrics::height_at(Self, Int) -> Double?
+pub fn VariableListMetrics::insert(Self, Int, String, Double) -> Int
+pub fn VariableListMetrics::is_measured(Self, Int) -> Bool
+pub fn VariableListMetrics::max_scroll_offset(Self, Double) -> Double
 pub fn VariableListMetrics::offset_at(Self, Int) -> Double?
 pub fn VariableListMetrics::offset_for_anchor(Self, VariableListAnchor, fallback? : Double) -> Double
 pub fn VariableListMetrics::offset_for_key(Self, String) -> Double?
+pub fn VariableListMetrics::remove(Self, String) -> Int?
+pub fn VariableListMetrics::restore_offset_after_updates(Self, VariableListAnchor?, Array[VariableListGeometryChange], Double, Double) -> Double
 pub fn VariableListMetrics::total_extent(Self) -> Double
+pub fn VariableListMetrics::update_height(Self, String, Double) -> VariableListGeometryChange?
+pub fn VariableListMetrics::update_heights(Self, Array[(String, Double)]) -> Array[VariableListGeometryChange]
 pub fn VariableListMetrics::visible_range(Self, offset_y~ : Double, viewport_height~ : Double, overscan? : Int) -> VariableListRange?
 pub fn VariableListMetrics::with_height(Self, String, Double) -> Self
 

@@ -229,11 +229,7 @@ fn markdown_table_cell_runs(
         Some(_) => raw
         None => inline.text
       },
-      visual_text=if inline.kind is Plain {
-        None
-      } else {
-        Some(inline.text)
-      },
+      visual_text=if inline.kind is Plain { None } else { Some(inline.text) },
       font=Some(markdown_inline_font(inline.kind, base)),
       color=markdown_inline_color(inline.kind),
       background=markdown_inline_background(inline.kind),

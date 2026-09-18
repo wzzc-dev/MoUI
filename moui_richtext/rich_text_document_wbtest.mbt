@@ -448,7 +448,10 @@ test "parse_markdown concatenates inline nodes without inserting breaks" {
   match blocks[0] {
     { kind: Blockquote, text, inlines, .. } => {
       assert_false(text.contains("\n"))
-      inspect(text, content="**注意：** 运行 .\\scripts\\run.ps1 完成。")
+      inspect(
+        text,
+        content="**注意：** 运行 .\\scripts\\run.ps1 完成。",
+      )
       // The styled projection carries no markers, only the visible text.
       let joined = inlines.map(inline => inline.text).join("")
       inspect(joined, content="注意： 运行 .\\scripts\\run.ps1 完成。")
@@ -477,9 +480,9 @@ test "vertical caret movement steps onto the visible blank line" {
   assert_true(rich_text_block_is_blank_gap(document.blocks[3]))
   // The first and last blank lines are separators with no line box at all;
   // only the middle one is an empty writing line.
-  inspect(document.blocks[1].line_height, content="Some(0)")
-  inspect(document.blocks[2].line_height, content="Some(24.8)")
-  inspect(document.blocks[3].line_height, content="Some(0)")
+  debug_inspect(document.blocks[1].line_height, content="Some(0)")
+  debug_inspect(document.blocks[2].line_height, content="Some(24.8)")
+  debug_inspect(document.blocks[3].line_height, content="Some(0)")
   // Down from the end of the first paragraph: over the separator, onto the
   // writing line (offset 5), then into the second paragraph.
   let mut down = 3
@@ -657,9 +660,9 @@ test "blank lines are pointer targets and the caret line stays a writing line" {
     { caret: 5, selection: None },
     base~,
   )
-  inspect(active.blocks[1].line_height, content="Some(0)")
-  inspect(active.blocks[1].inset.top, content="6.4")
-  inspect(active.blocks[2].line_height, content="Some(24.8)")
+  debug_inspect(active.blocks[1].line_height, content="Some(0)")
+  debug_inspect(active.blocks[1].inset.top, content="6.4")
+  debug_inspect(active.blocks[2].line_height, content="Some(24.8)")
   // The caret's line stands in for the blank line it occupies, so it takes
   // the writing line instead of that blank line's 1.2em increment. Carrying
   // both would leave the caret one increment too low, and the line would jump

@@ -59,7 +59,9 @@ fn TextInputImeStateKey::matches(
 }
 
 ///|
-fn text_input_ime_state_key(state : @core.TextInputState) -> TextInputImeStateKey {
+fn text_input_ime_state_key(
+  state : @core.TextInputState,
+) -> TextInputImeStateKey {
   {
     focused: state.focused,
     text: state.text,
@@ -299,7 +301,16 @@ fn text_input_ime_window(text : String, center : Int) -> TextInputImeWindow {
   }
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let utf8_length = boundaries.utf8_offset(boundaries.length())
-  { text, boundaries, start: if start_found { start_char } else { char_index }, utf8_length }
+  {
+    text,
+    boundaries,
+    start: if start_found {
+      start_char
+    } else {
+      char_index
+    },
+    utf8_length,
+  }
 }
 
 ///|
@@ -309,9 +320,9 @@ fn text_input_ime_window_boundary(
   window : TextInputImeWindow,
   offset : Int,
 ) -> Int {
-  let window_local = (offset - window.start).max(0).min(
-    window.boundaries.length(),
-  )
+  let window_local = (offset - window.start)
+    .max(0)
+    .min(window.boundaries.length())
   window.start + window.boundaries.nearest_boundary(window_local)
 }
 
@@ -324,8 +335,7 @@ fn text_input_ime_request_diagnostics_windowed(
   // The anchor shares the caret window while it stays inside it (the
   // typing case); a distant selection anchor gets its own window.
   let anchor_window = if anchor >= caret_window.start &&
-    anchor <=
-    caret_window.start + caret_window.boundaries.length() {
+    anchor <= caret_window.start + caret_window.boundaries.length() {
     caret_window
   } else {
     text_input_ime_window(state.text, anchor)
@@ -347,8 +357,12 @@ fn text_input_ime_request_diagnostics_windowed(
     anchor: anchor_position,
     cursor_utf8,
     anchor_utf8,
-    cursor_is_grapheme_boundary: caret_window.boundaries.is_boundary(cursor_window_offset),
-    anchor_is_grapheme_boundary: anchor_window.boundaries.is_boundary(anchor_window_offset),
+    cursor_is_grapheme_boundary: caret_window.boundaries.is_boundary(
+      cursor_window_offset,
+    ),
+    anchor_is_grapheme_boundary: anchor_window.boundaries.is_boundary(
+      anchor_window_offset,
+    ),
     candidate_anchor: text_input_candidate_anchor_rect(state),
     has_surrounding_text: caret_window.utf8_length <=
     @window_core.ImeSurroundingText::max_text_bytes(),

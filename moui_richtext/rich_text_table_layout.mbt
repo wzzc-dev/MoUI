@@ -59,7 +59,10 @@ priv struct RichTextTableLayout {
 ///|
 /// Height of every row above `row_index`, so a row's top y can be derived
 /// without assuming the historical uniform `table.row_height`.
-fn RichTextTableLayout::row_top(self : RichTextTableLayout, row_index : Int) -> Double {
+fn RichTextTableLayout::row_top(
+  self : RichTextTableLayout,
+  row_index : Int,
+) -> Double {
   let mut y = 0.0
   for index, row in self.rows {
     if index >= row_index {
@@ -95,7 +98,14 @@ fn rich_text_table_cell_font(
       }
     None => false
   }
-  { ..rich_text_block_font(block, base_font), weight: if header { 700 } else { 400 } }
+  {
+    ..rich_text_block_font(block, base_font),
+    weight: if header {
+      700
+    } else {
+      400
+    },
+  }
 }
 
 ///|
@@ -154,11 +164,7 @@ fn rich_text_table_layout(
         )
         let lines : Array[RichTextTableCellLine] = []
         for line in layout.lines {
-          let start = @core.clamp_int(
-            line.text_range.start,
-            0,
-            chars.length(),
-          )
+          let start = @core.clamp_int(line.text_range.start, 0, chars.length())
           let end = @core.clamp_int(line.text_range.end, start, chars.length())
           let text = String::from_array(chars[start:end])
           lines.push({
@@ -297,8 +303,5 @@ fn rich_text_table_cell_segments_layout(
       })
     }
   }
-  {
-    layout: { lines, segments, font },
-    line_count: lines.length(),
-  }
+  { layout: { lines, segments, font }, line_count: lines.length() }
 }

@@ -166,10 +166,7 @@ fn rich_text_wrap_breakable_after(cluster : String) -> Bool {
   match chars.get(0) {
     Some(ch) => {
       let code = ch.to_int()
-      if ch == ' ' ||
-        ch == '\t' ||
-        ch == '-' ||
-        ch == '/' {
+      if ch == ' ' || ch == '\t' || ch == '-' || ch == '/' {
         true
       } else if code >= 0x2E80 {
         // CJK radicals, ideographs, kana, fullwidth forms.
@@ -187,9 +184,26 @@ fn rich_text_wrap_breakable_after(cluster : String) -> Bool {
 /// slashes that belong to the preceding token).
 fn rich_text_wrap_cannot_start_line(cluster : String) -> Bool {
   match cluster {
-    "、" | "，" | "。" | "；" | "：" | "）" | "！"
-    | "？" | "》" | "」" | "』" | ")" | "%" | "." | "," | ";" | ":"
-    | "!" | "?" | "/" | "」" => true
+    "、"
+    | "，"
+    | "。"
+    | "；"
+    | "："
+    | "）"
+    | "！"
+    | "？"
+    | "》"
+    | "」"
+    | "』"
+    | ")"
+    | "%"
+    | "."
+    | ","
+    | ";"
+    | ":"
+    | "!"
+    | "?"
+    | "/" => true
     _ => false
   }
 }

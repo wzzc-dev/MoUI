@@ -713,9 +713,9 @@ fn append_rich_text_table_selection_rects(
                 @core.Rect::new(
                   x=x0,
                   y=row_y +
-                  table.cell_padding.top +
-                  layout.line_step * segment.line.to_double() +
-                  3.0,
+                    table.cell_padding.top +
+                    layout.line_step * segment.line.to_double() +
+                    3.0,
                   width=x1 - x0,
                   height=max_double(10.0, layout.line_step - 6.0),
                 ),
@@ -733,8 +733,8 @@ fn append_rich_text_table_selection_rects(
           continue
         }
         let line_chars = line.text.to_array()
-        let before = String::from_array(line_chars[0:(s - line.start)])
-        let covered = String::from_array(line_chars[0:(e - line.start)])
+        let before = String::from_array(line_chars[0:s - line.start])
+        let covered = String::from_array(line_chars[0:e - line.start])
         let text_x = match cell.align.unwrap_or(@core.TextAlign::TextStart) {
           TextStart => inner_x
           TextCenter =>
@@ -743,8 +743,7 @@ fn append_rich_text_table_selection_rects(
           TextEnd =>
             inner_x + max_double(0.0, layout.cell_inner_width - line.width)
         }
-        let x0 = text_x +
-          rich_text_width(before, cell_layout.font, text_system)
+        let x0 = text_x + rich_text_width(before, cell_layout.font, text_system)
         let x1 = text_x +
           rich_text_width(covered, cell_layout.font, text_system)
         if x1 > x0 {
@@ -753,9 +752,9 @@ fn append_rich_text_table_selection_rects(
               @core.Rect::new(
                 x=x0,
                 y=row_y +
-                table.cell_padding.top +
-                layout.line_step * line_index.to_double() +
-                3.0,
+                  table.cell_padding.top +
+                  layout.line_step * line_index.to_double() +
+                  3.0,
                 width=x1 - x0,
                 height=max_double(10.0, layout.line_step - 6.0),
               ),
@@ -1247,11 +1246,9 @@ fn rich_text_block_line_index_at_y(
   offset_y~ : Double,
 ) -> Int {
   let mut cursor = 0.0
-  for index, height in rich_text_block_line_heights(
-      block,
-      base_font,
-      text_system,
-      available_width,
+  for
+    index, height in rich_text_block_line_heights(
+      block, base_font, text_system, available_width,
     ) {
     if offset_y < cursor + height {
       return index
@@ -1779,8 +1776,7 @@ fn rich_text_block_table_source_offset_at_point(
           // 行按 y 选择；拖到单元格底部时钳在最后一行。
           let cell_top = frame.origin.y + layout.row_top(row_index)
           let line_index = @core.clamp_int(
-            ((point.y - cell_top - table.cell_padding.top) /
-            layout.line_step)
+            ((point.y - cell_top - table.cell_padding.top) / layout.line_step)
             .floor()
             .to_int(),
             0,
@@ -1817,16 +1813,12 @@ fn rich_text_block_table_source_offset_at_point(
           let mut local_offset = line_chars
           for index in 0..<line_chars {
             let before = rich_text_width(
-              String::from_array(
-                chars[line.start:line.start + index],
-              ),
+              String::from_array(chars[line.start:line.start + index]),
               cell_font,
               text_system,
             )
             let after = rich_text_width(
-              String::from_array(
-                chars[line.start:line.start + index + 1],
-              ),
+              String::from_array(chars[line.start:line.start + index + 1]),
               cell_font,
               text_system,
             )
@@ -1835,7 +1827,9 @@ fn rich_text_block_table_source_offset_at_point(
               break
             }
           }
-          let line_boundaries = @core.TextGraphemeBoundaries::new(text=line.text)
+          let line_boundaries = @core.TextGraphemeBoundaries::new(
+            text=line.text,
+          )
           let char_offset = line.start +
             line_boundaries.nearest_boundary(local_offset)
           Some(
@@ -1857,7 +1851,7 @@ fn rich_text_block_table_source_offset_at_point(
 /// are never returned directly: they collapse onto the nearest visible
 /// boundary so the caret always lands where text was drawn.
 fn rich_text_table_segment_offset_at_point(
-  cell : RichTextTableCell,
+  _cell : RichTextTableCell,
   cell_layout : RichTextTableCellLayout,
   point : @core.Point,
   range~ : RichTextSourceRange,
@@ -1896,7 +1890,9 @@ fn rich_text_table_segment_offset_at_point(
   let text_x = inner_x + head.x
   let text_end = inner_x + tail.x + tail.width
   if point.x <= text_x {
-    return Some(@core.clamp_int(range.start + head.start, range.start, range.end))
+    return Some(
+      @core.clamp_int(range.start + head.start, range.start, range.end),
+    )
   }
   if point.x >= text_end {
     return Some(@core.clamp_int(range.start + tail.end, range.start, range.end))
@@ -1909,7 +1905,7 @@ fn rich_text_table_segment_offset_at_point(
     if point.x < segment_end || index == line_segments.length() - 1 {
       let font = segment.run.font.unwrap_or(cell_layout.font)
       let chars = segment.text.to_array()
-      let mut local = chars.length()
+      let mut chars_local = chars.length()
       for char_index in 0..<chars.length() {
         let before = rich_text_width(
           String::from_array(chars[:char_index]),
@@ -1922,13 +1918,13 @@ fn rich_text_table_segment_offset_at_point(
           text_system,
         )
         if point.x < segment_x + (before + after) / 2.0 {
-          local = char_index
+          chars_local = char_index
           break
         }
       }
       return Some(
         @core.clamp_int(
-          range.start + segment.start + local,
+          range.start + segment.start + chars_local,
           range.start,
           range.end,
         ),
@@ -1963,9 +1959,7 @@ fn rich_text_table_segment_caret_x(
         chars.length(),
       )
       let prefix = String::from_array(chars[:visible])
-      return text_x +
-        segment.x +
-        rich_text_width(prefix, font, text_system)
+      return text_x + segment.x + rich_text_width(prefix, font, text_system)
     }
   }
   let last = cell_layout.segments[cell_layout.segments.length() - 1]
@@ -2154,8 +2148,7 @@ fn rich_text_block_table_caret_rect(
       let inner_width = text_frame.size.width
       let text_x = match cell.align.unwrap_or(@core.TextAlign::TextStart) {
         TextStart => text_frame.origin.x
-        TextCenter =>
-          text_frame.origin.x + (inner_width - line.width) / 2.0
+        TextCenter => text_frame.origin.x + (inner_width - line.width) / 2.0
         TextEnd => text_frame.origin.x + inner_width - line.width
       }
       let line_frame = @core.Rect::new(

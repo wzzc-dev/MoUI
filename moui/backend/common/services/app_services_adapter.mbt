@@ -680,11 +680,13 @@ fn HostServicesAdapter::app_environment(
   timer? : @app_services.TimerSource? = None,
   routes? : @app_services.RouteSource? = None,
   lifecycle? : @app_services.AppLifecycleSource? = None,
+  clock? : (() -> Double)? = None,
 ) -> @app_services.AppEnvironment {
   @app_services.AppEnvironment::new(
     services=self.as_app_services(lifecycle~),
     timer~,
     routes~,
+    clock~,
   )
 }
 
@@ -707,10 +709,12 @@ pub fn app_environment(
   timer? : @app_services.TimerSource? = None,
   routes? : @app_services.RouteSource? = None,
   lifecycle? : @app_services.AppLifecycleSource? = None,
+  clock? : (() -> Double)? = None,
 ) -> @app_services.AppEnvironment {
   HostServicesAdapter::new(bridge~, async_queue~).app_environment(
     timer~,
     routes~,
     lifecycle~,
+    clock~,
   )
 }

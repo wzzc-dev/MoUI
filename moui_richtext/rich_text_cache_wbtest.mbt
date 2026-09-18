@@ -100,3 +100,67 @@ test "measured block height lookups key on identity, font, and width" {
   assert_true(other_font == None)
   assert_true(other_revision == None)
 }
+
+///|
+test "measured block heights do not leak across document sessions" {
+  let base = @core.FontSpec::new(size=16.0)
+  let first_digest = 0x1111222233334444UL
+  let second_digest = 0x5555666677778888UL
+  let first = rich_text_record_block_measured_height(
+    base,
+    width=420.0,
+    block_id=1,
+    block_revision=0,
+    height=72.0,
+    source_digest=Some(first_digest),
+  )
+  assert_true(first)
+  let second_seed = rich_text_block_height_digest_seed(
+    base,
+    width=420.0,
+    source_digest=Some(second_digest),
+  )
+  // A new document reuses block id 1/revision 0, but it must start with a
+  // cache miss until that document paints the block itself.
+  let second_before = rich_text_block_measured_height(
+    base,
+    width=420.0,
+    seed=second_seed,
+    block_id=1,
+    block_revision=0,
+    source_digest=Some(second_digest),
+  )
+  assert_true(second_before == None)
+  let second = rich_text_record_block_measured_height(
+    base,
+    width=420.0,
+    block_id=1,
+    block_revision=0,
+    height=31.0,
+    source_digest=Some(second_digest),
+  )
+  assert_true(second)
+  let second_after = rich_text_block_measured_height(
+    base,
+    width=420.0,
+    seed=second_seed,
+    block_id=1,
+    block_revision=0,
+    source_digest=Some(second_digest),
+  )
+  assert_true(second_after == Some(31.0))
+  let first_seed = rich_text_block_height_digest_seed(
+    base,
+    width=420.0,
+    source_digest=Some(first_digest),
+  )
+  let first_after = rich_text_block_measured_height(
+    base,
+    width=420.0,
+    seed=first_seed,
+    block_id=1,
+    block_revision=0,
+    source_digest=Some(first_digest),
+  )
+  assert_true(first_after == Some(72.0))
+}

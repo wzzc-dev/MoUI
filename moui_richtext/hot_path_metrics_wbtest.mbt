@@ -203,6 +203,7 @@ test "hot path: wheel and rebuild walk zero blocks once geometry exists" {
       block_id=session.blocks[index].id,
       block_revision=session.blocks[index].revision,
       height=24.0,
+      source_digest=Some(session.document_identity.to_uint64()),
     )
   }
   // First geometry build pays for the walk (it replaces the old per-wheel
@@ -319,6 +320,7 @@ test "hot path: measured-height change updates the scroll geometry in place" {
       block_id=session.blocks[index].id,
       block_revision=session.blocks[index].revision,
       height=24.0,
+      source_digest=Some(session.document_identity.to_uint64()),
     )
   }
   let before = session.estimated_content_height(base~, content_width=720.0)
@@ -329,6 +331,7 @@ test "hot path: measured-height change updates the scroll geometry in place" {
     block_id=session.blocks[0].id,
     block_revision=session.blocks[0].revision,
     height=900.0,
+    source_digest=Some(session.document_identity.to_uint64()),
   )
   assert_true(changed)
   markdown_document_apply_measured_height(
@@ -347,6 +350,45 @@ test "hot path: measured-height change updates the scroll geometry in place" {
 }
 
 ///|
+/// A fresh session first caches an empty negative geometry entry. The first
+/// real measurement must revive that entry; otherwise the paint path keeps
+/// publishing the same anchor delta on every frame while the live geometry
+/// remains at the parse-time estimate.
+test "hot path: first measured height revives empty geometry" {
+  let base = @core.FontSpec::new()
+  let width = 913.0
+  let session = MarkdownDocumentSession::new(
+    "A paragraph with enough content to form a measured block.\n\nSecond block.",
+  )
+  let before = session.estimated_content_height(base~, content_width=width)
+  let block = session.blocks[0]
+  let changed = rich_text_record_block_measured_height(
+    base,
+    width~,
+    block_id=block.id,
+    block_revision=block.revision,
+    height=240.0,
+    source_digest=Some(session.document_identity.to_uint64()),
+  )
+  assert_true(changed)
+  markdown_document_apply_measured_height(
+    session,
+    base,
+    block_index=0,
+    width~,
+    height=240.0,
+  )
+  let after = session.estimated_content_height(base~, content_width=width)
+  assert_true(after > before)
+  guard markdown_document_block_geometry(session, base, content_width=width)
+    is Some(geometry) else {
+    fail("first measurement did not revive scroll geometry")
+  }
+  assert_true(geometry.heights.length() == session.editor_blocks.length())
+  assert_true(geometry.heights[0] == 240.0)
+}
+
+///|
 test "hot path: repeated identical measurements are not re-applied" {
   let base = @core.FontSpec::new()
   let session = MarkdownDocumentSession::new(hot_path_bench_document(6))
@@ -357,6 +399,7 @@ test "hot path: repeated identical measurements are not re-applied" {
       block_id=session.blocks[index].id,
       block_revision=session.blocks[index].revision,
       height=24.0,
+      source_digest=Some(session.document_identity.to_uint64()),
     )
   }
   let _ = session.estimated_content_height(base~, content_width=720.0)
@@ -366,6 +409,7 @@ test "hot path: repeated identical measurements are not re-applied" {
     block_id=session.blocks[1].id,
     block_revision=session.blocks[1].revision,
     height=24.0,
+    source_digest=Some(session.document_identity.to_uint64()),
   )
   assert_true(!changed)
 }
@@ -400,6 +444,7 @@ test "hot path: scrolling through freshly measured blocks stays walk-free" {
         block_id=session.blocks[index].id,
         block_revision=session.blocks[index].revision,
         height=48.0,
+        source_digest=Some(session.document_identity.to_uint64()),
       )
       // Unconditional per-slot apply, mirroring the paint path: the
       // height table dedupes by content, the geometry keeps one slot
@@ -613,13 +658,19 @@ test "hot path: scroll geometry rebases in place after a keystroke" {
         block_id=session_block.id,
         block_revision=session_block.revision,
         height=24.0,
+        source_digest=Some(session.document_identity.to_uint64()),
       ),
     )
   }
   // First edit: cold cache, so this query walks and stores a real entry.
   session = hot_path_apply_edit(session, session.source() + "x")
   hot_path_metrics_reset()
-  ignore(markdown_document_block_geometry(session, base, content_width=width))
+  let first_geometry = markdown_document_block_geometry(
+    session,
+    base,
+    content_width=width,
+  )
+  ignore(first_geometry)
   assert_true(hot_path_block_height_walk_blocks.val > 0)
   // Second edit: the next geometry query must rebase, not walk.
   session = hot_path_apply_edit(session, session.source() + "y")
@@ -633,6 +684,21 @@ test "hot path: scroll geometry rebases in place after a keystroke" {
   assert_eq(hot_path_block_height_walk_blocks.val, 0)
   // The rebased geometry agrees with a from-scratch walk of the source.
   let scratch = MarkdownDocumentSession::new(session.source())
+  // A fresh document identity must not inherit the live document's measured
+  // heights. Seed the same measured prefix explicitly for the comparison.
+  for index in 0..<5 {
+    let block = scratch.blocks[index]
+    ignore(
+      rich_text_record_block_measured_height(
+        base,
+        width~,
+        block_id=block.id,
+        block_revision=block.revision,
+        height=24.0,
+        source_digest=Some(scratch.document_identity.to_uint64()),
+      ),
+    )
+  }
   let walked = markdown_document_block_geometry(
     scratch,
     base,

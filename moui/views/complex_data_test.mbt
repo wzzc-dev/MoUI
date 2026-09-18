@@ -83,6 +83,26 @@ test "variable virtual list keeps only keyed visible rows" {
 }
 
 ///|
+test "variable metrics updates preserve an anchor and clamp to geometry" {
+  let metrics = @views.variable_list_metrics(
+    ["a", "b", "c", "d"],
+    item => item,
+    _ => 20.0,
+    spacing=2.0,
+  )
+  guard metrics.anchor_for_offset(45.0) is Some(anchor) else { fail("anchor") }
+  let changes = metrics.update_heights([("a", 50.0), ("d", 60.0)])
+  inspect(changes.length(), content="2")
+  inspect(changes[0].delta, content="30")
+  inspect(
+    metrics.restore_offset_after_updates(Some(anchor), changes, 45.0, 30.0),
+    content="75",
+  )
+  inspect(metrics.max_scroll_offset(30.0), content="126")
+  inspect(metrics.clamp_offset(999.0, 30.0), content="126")
+}
+
+///|
 test "data grid viewport includes frozen panes without duplicate cells" {
   let viewport = @views.data_grid_viewport(
     first_row=10,
