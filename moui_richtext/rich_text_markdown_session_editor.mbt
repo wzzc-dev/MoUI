@@ -676,7 +676,17 @@ fn[Msg] markdown_session_scroll_event(
 /// Feed the scroll geometry with the pixel heights actually laid out for
 /// the visible block window. Heights are computed from the pre-reveal
 /// rich blocks (cache-hot at this point) so temporary marker reveals do
-/// not leak into the content-keyed measurements.
+/// not leak into the content-keyed measurements. Blank gap blocks are the
+/// one exception: they render collapsed (a 0.4em separator vs a full writing
+/// line, see `markdown_editor_collapse_inactive_blank_gaps`), which is
+/// structural WYSIWYG geometry rather than a transient reveal. Measuring
+/// the uncollapsed block overstates every paragraph separator by ~1.55em
+/// (≈26px at 17px body text); the spurious growth above the anchor is then
+/// published as geometry compensation, and the next wheel event re-keys
+/// from the shifted offset — scrolling up through blanks reads as a small
+/// rollback. Blank gaps therefore measure the painted (collapsed) window
+/// block, which already carries the correct separator/writing-line state
+/// including the caret-active case.
 fn markdown_session_record_measured_block_heights(
   session : MarkdownDocumentSession,
   window : MarkdownDocumentRichTextWindow,
@@ -701,7 +711,7 @@ fn markdown_session_record_measured_block_heights(
   let was_at_bottom = old_max_scroll > 0.0 &&
     visible_scroll_y >= old_max_scroll - 1.0
   let updates : Array[(Int, Double)] = []
-  for offset, _window_block in window.document.blocks {
+  for offset, window_block in window.document.blocks {
     match session.editor_blocks.get(window.visible_start + offset) {
       Some(editor_block) => {
         // Measured heights must come from the block's real inline runs.
@@ -711,22 +721,35 @@ fn markdown_session_record_measured_block_heights(
           source_digest=session.source_digest,
           editor_block,
         )
-        let height = rich_text_block_total_height(
-          rich_text_block_soft_wrap(
-            markdown_editor_block_to_rich_text(
-              session.source(),
-              editor_block,
-              base,
-              base_dir~,
-            ),
-            content_width,
+        let height = if rich_text_block_is_blank_gap(window_block) {
+          // Collapsed WYSIWYG height (separator margin or writing line),
+          // already soft-wrapped in the window; re-wrapping is a no-op for
+          // run-less gaps. Using the uncollapsed rebuild here would record
+          // a full line box for every separator.
+          rich_text_block_total_height(
+            window_block,
             base,
             text_system,
-          ),
-          base,
-          text_system,
-          block_width=content_width,
-        )
+            block_width=content_width,
+          )
+        } else {
+          rich_text_block_total_height(
+            rich_text_block_soft_wrap(
+              markdown_editor_block_to_rich_text(
+                session.source(),
+                editor_block,
+                base,
+                base_dir~,
+              ),
+              content_width,
+              base,
+              text_system,
+            ),
+            base,
+            text_system,
+            block_width=content_width,
+          )
+        }
         let identity = session.blocks.get(window.visible_start + offset)
         let _ = rich_text_record_block_measured_height(
           base,
