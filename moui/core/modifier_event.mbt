@@ -10,6 +10,12 @@ pub(all) struct OnTapModifier[Msg] {
 ///|
 /// Secondary mouse-button activation. Native desktop backends normalize the
 /// context-menu button to `button == 1`; primary taps continue to use 0.
+///
+/// The modifier is deliberately transparent: it contributes no semantics and
+/// no focusability. A context-menu hook is an observer, not a control — making
+/// it focusable would insert it into focus traversal, and any semantics role
+/// it declared would override the host view's role (a tree row must stay a
+/// TreeItem, a plain container must not become a Button).
 priv struct OnSecondaryTapModifier[Msg] {
   message : Msg
 }
@@ -22,10 +28,11 @@ fn[Msg] OnSecondaryTapModifier::to_any_modifier(
   {
     ..noop_modifier(),
     identity_kind: "OnSecondaryTap",
-    focusable: true,
-    semantics: ViewSemanticsInfo::new(role=SemanticsRole::Button),
     event: fn(ctx) {
       match ctx.event {
+        // A secondary tap is a press, not a press/release pair: native
+        // context menus open on button-down, and the host backends show the
+        // context menu before the release can be dispatched to the tree.
         Pointer(event) if event.button == 1 => {
           let inside = ctx.frame.contains(event.position)
           let current = view_state_to_pressable_state(ctx.state)
@@ -34,12 +41,17 @@ fn[Msg] OnSecondaryTapModifier::to_any_modifier(
             ctx.state,
             tap.next_state,
           )
-          let changed = next_state != ctx.state || tap.activated
+          let activated = event.phase == PointerPhase::Down && inside
+          let changed = next_state != ctx.state || activated
           {
             changed,
-            activated: tap.activated,
+            activated,
             focused: false,
-            captured: inside || current == PressableState::Pressed,
+            // No pointer capture: the tap is delivered on press and owns no
+            // gesture. Capturing would route later presses (a second
+            // right-click elsewhere before the release) to this element and
+            // mis-attribute their context-menu target.
+            captured: false,
             state: Some(next_state),
             text_control: None,
             dirty: if changed {
@@ -47,7 +59,7 @@ fn[Msg] OnSecondaryTapModifier::to_any_modifier(
             } else {
               ViewDirtyHint::ViewClean
             },
-            messages: if tap.activated {
+            messages: if activated {
               [message]
             } else {
               []
@@ -76,8 +88,12 @@ pub fn[Msg] OnTapModifier::to_any_modifier(
       }),
     ],
     event: fn(ctx) {
+      // Only the primary button activates a tap. Host backends now route
+      // right-button presses into the view tree (so per-target context menus
+      // can observe them), and a secondary press must not also fire the
+      // control's primary action. Touch/pen events decode to button 0.
       match ctx.event {
-        Pointer(event) => {
+        Pointer(event) if event.button == 0 => {
           let inside = ctx.frame.contains(event.position)
           let current = view_state_to_pressable_state(ctx.state)
           let tap = recognize_press_tap(current, inside, event.phase)
@@ -133,8 +149,9 @@ pub fn[Msg] OnLongPressModifier::to_any_modifier(
     focusable: true,
     semantics: ViewSemanticsInfo::new(role=SemanticsRole::Button),
     event: fn(ctx) {
+      // Primary button only: see OnTapModifier.
       match ctx.event {
-        Pointer(event) => {
+        Pointer(event) if event.button == 0 => {
           let result = LongPressGestureState::new().update(
             event,
             inside=ctx.frame.contains(event.position),
@@ -176,8 +193,9 @@ pub fn[Msg] OnDoubleTapModifier::to_any_modifier(
     focusable: true,
     semantics: ViewSemanticsInfo::new(role=SemanticsRole::Button),
     event: fn(ctx) {
+      // Primary button only: see OnTapModifier.
       match ctx.event {
-        Pointer(event) => {
+        Pointer(event) if event.button == 0 => {
           let result = DoubleTapGestureState::new().update(
             event,
             inside=ctx.frame.contains(event.position),
@@ -239,8 +257,9 @@ fn[Msg] handle_drag_modifier_event(
   ctx : ViewEventContext,
   handler~ : (DragGestureEvent, Rect) -> Msg,
 ) -> ViewEventResult[Msg] {
+  // Primary button only: secondary presses belong to context menus.
   match ctx.event {
-    Pointer(event) => {
+    Pointer(event) if event.button == 0 => {
       let slot = drag_gesture_view_state_slot()
       let gesture = ctx.state.read_slot(slot)
       let result = gesture.update(

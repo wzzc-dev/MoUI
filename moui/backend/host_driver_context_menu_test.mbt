@@ -121,7 +121,7 @@ test "host driver shows marked document context menu commands without text focus
 }
 
 ///|
-test "host driver shows document actions in focused text context menu without selection" {
+test "host driver merges the editing group into a focused text context menu" {
   let runtime = host_test_runtime_with_commands(
     root=host_test_text_field("", width=240.0, height=40.0).map(_ => ()),
     size=@core.Size::new(width=240.0, height=60.0),
@@ -176,6 +176,8 @@ test "host driver shows document actions in focused text context menu without se
     ()
   })
   let seen_labels : Array[String] = []
+  let copy_enabled = Ref(false)
+  let cut_enabled = Ref(false)
   let services = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(menus=true),
     handle=request => {
@@ -183,6 +185,12 @@ test "host driver shows document actions in focused text context menu without se
         ShowMenu(commands) => {
           for command in commands {
             seen_labels.push(command.label)
+            if command.label == "Copy" {
+              copy_enabled.val = command.enabled
+            }
+            if command.label == "Cut" {
+              cut_enabled.val = command.enabled
+            }
           }
           HostServiceResponse::Unavailable("cancelled")
         }
@@ -201,9 +209,82 @@ test "host driver shows document actions in focused text context menu without se
     ),
   )
   ignore(driver.show_context_menu(services))
-  inspect(seen_labels.length(), content="2")
-  assert_true(seen_labels.any(label => label == "New Document"))
-  assert_true(seen_labels.any(label => label == "Open Document"))
-  assert_false(seen_labels.any(label => label == "Copy"))
-  assert_false(seen_labels.any(label => label == "Paste"))
+  // The editing group leads the menu the way mature editors present it, and
+  // the program's own commands follow instead of being replaced by it.
+  inspect(
+    seen_labels.join(","),
+    content="Copy,Cut,Paste,Undo,Redo,Select All,New Document,Open Document",
+  )
+  // Nothing is selected, so the two commands that need one are disabled.
+  assert_false(copy_enabled.val)
+  assert_false(cut_enabled.val)
+}
+
+///|
+test "host driver keeps document actions beside Cut and Copy with a selection" {
+  let value = Ref("hello world")
+  let runtime = host_test_text_field_runtime(
+    value~,
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
+  let seen_labels : Array[String] = []
+  let copy_enabled = Ref(false)
+  let cut_enabled = Ref(false)
+  let services = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(menus=true),
+    handle=request => {
+      match request {
+        ShowMenu(commands) => {
+          for command in commands {
+            seen_labels.push(command.label)
+            if command.label == "Copy" {
+              copy_enabled.val = command.enabled
+            }
+            if command.label == "Cut" {
+              cut_enabled.val = command.enabled
+            }
+          }
+          HostServiceResponse::Unavailable("cancelled")
+        }
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  // Press, drag across the text, release: the field now has a selection.
+  ignore(
+    driver.dispatch(
+      Event::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      Event::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=120.0, y=10.0),
+          phase=@core.PointerPhase::Move,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      Event::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=120.0, y=10.0),
+          phase=@core.PointerPhase::Up,
+        ),
+      ),
+    ),
+  )
+  ignore(driver.show_context_menu(services))
+  assert_true(copy_enabled.val)
+  assert_true(cut_enabled.val)
 }

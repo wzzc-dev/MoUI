@@ -371,7 +371,9 @@ fn[Msg] button_event(
   on_click : Msg?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
-    @core.AppEvent::Pointer(event) => {
+    // Primary button only: right-button presses now reach the view tree for
+    // per-target context menus and must not press or activate the button.
+    @core.AppEvent::Pointer(event) if event.button == 0 => {
       let inside = ctx.frame.contains(event.position)
       // A stale-hover Exit re-dispatches positionally and can carry a
       // position that is still inside this button; such an Exit must not

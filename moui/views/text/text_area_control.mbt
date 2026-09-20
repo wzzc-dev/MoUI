@@ -441,6 +441,13 @@ fn[Msg] handle_text_area_pointer(
   line_height~ : Double,
   event : @core.PointerEvent,
 ) -> @core.ViewEventResult[Msg] {
+  // Secondary/middle presses reach the view tree now that host backends
+  // route right-button downs for per-target context menus; they must not
+  // move the caret or start a selection drag. Wheel events decode with
+  // button 0, so scrolling is unaffected.
+  if event.button != 0 {
+    return @core.ViewEventResult::ignored()
+  }
   let text = value
   let text_frame = text_area_text_frame(ctx.frame)
   let display_text = text_with_composition(

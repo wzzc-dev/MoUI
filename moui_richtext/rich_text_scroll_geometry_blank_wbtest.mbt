@@ -45,15 +45,22 @@ test "blank separators measure as painted collapsed height" {
     ),
   )
   ignore(markdown_scroll_take_geometry_compensation())
-  let geometry = markdown_document_block_geometry(session, base, content_width=width)
+  let geometry = markdown_document_block_geometry(
+    session,
+    base,
+    content_width=width,
+  )
   match geometry {
     None => fail("expected scroll geometry after measuring the window")
-    Some(geometry) => {
+    Some(geometry) =>
       for offset, window_block in window.document.blocks {
         let index = window.visible_start + offset
         if rich_text_block_is_blank_gap(window_block) {
           let painted = rich_text_block_total_height(
-            window_block, base, text_system, block_width=width,
+            window_block,
+            base,
+            text_system,
+            block_width=width,
           )
           let stored = geometry.heights[index]
           if (painted - stored).abs() > 0.001 {
@@ -63,6 +70,5 @@ test "blank separators measure as painted collapsed height" {
           }
         }
       }
-    }
   }
 }

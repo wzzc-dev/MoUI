@@ -39,7 +39,8 @@ pub fn[Msg] slider(
     Some(handler) =>
       (_node : Slider, context : @core.ViewEventContext) => {
         match context.event {
-          @core.AppEvent::Pointer(pointer) =>
+          // Primary button only: secondary presses belong to context menus.
+          @core.AppEvent::Pointer(pointer) if pointer.button == 0 =>
             match pointer.phase {
               @core.PointerPhase::Down =>
                 if context.frame.contains(pointer.position) {

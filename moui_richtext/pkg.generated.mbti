@@ -86,6 +86,12 @@ pub fn markdown_image_metrics_size_from_bytes(Bytes) -> @core.Size?
 
 pub fn markdown_join_lines(Array[String]) -> String
 
+pub fn markdown_scroll_peek_frame_time() -> Double
+
+pub fn markdown_scroll_peek_geometry_compensation() -> Double
+
+pub fn markdown_scroll_publish_frame_time(Double) -> Unit
+
 pub fn markdown_scroll_publish_geometry_compensation(Double) -> Unit
 
 pub fn markdown_scroll_take_geometry_compensation() -> Double
@@ -243,6 +249,7 @@ pub(all) struct MarkdownDocumentSession {
   text_store : MarkdownDocumentTextStore
   source_length : Int
   source_digest : UInt64
+  document_identity : Int
   blocks : Array[MarkdownDocumentBlock]
   editor_blocks : Array[MarkdownEditorBlock]
   line_count : Int
@@ -452,12 +459,14 @@ pub(all) struct MarkdownScrollGlide {
   start_ms : Double
   tau_ms : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownScrollGlide::display_offset(Self, Double, compensation? : Double, scale? : Double) -> Double
 pub fn MarkdownScrollGlide::exact_offset_at(Self, Double) -> Double
 pub fn MarkdownScrollGlide::is_animating(Self, Double) -> Bool
 pub fn MarkdownScrollGlide::new(from_y~ : Double, to_y~ : Double, start_ms~ : Double, tau_ms? : Double) -> Self
 pub fn MarkdownScrollGlide::offset_at(Self, Double, scale? : Double) -> Double
+pub fn MarkdownScrollGlide::offset_at_with_compensation(Self, Double, Double, scale? : Double) -> Double
 pub fn MarkdownScrollGlide::settled(Double) -> Self
-pub fn MarkdownScrollGlide::with_anchor_compensation(Self, Double, Double) -> Self
+pub fn MarkdownScrollGlide::with_anchor_compensation(Self, Double, Double, now_ms? : Double) -> Self
 
 type MarkdownSetextHeadingParseResult derive(Eq, @debug.Debug)
 

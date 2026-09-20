@@ -313,3 +313,93 @@ test "markdown session drag move still extends the selection" {
   assert_true(selection_range.start == caret)
   assert_true(head != caret)
 }
+
+///|
+/// A right press opens the host's context menu, but first moves the caret the
+/// way mature editors do, so the menu built next describes the text that was
+/// pressed. It reports `activated=false` on purpose: the enclosing
+/// `on_secondary_tap` observer must still run, because that observer is what
+/// records the app's menu target from the same press.
+test "markdown session right press places the caret without claiming activation" {
+  let source = "第一段文字用于定位光标，右侧按下应该把光标移到按下的位置。\n\n第二段。"
+  let session = MarkdownDocumentSession::new(source)
+  let font = @core.FontSpec::new(size=16.0)
+  let text_system = @core.TextSystem::fallback()
+  let point = @core.Point::new(x=60.0, y=12.0)
+  let event = @core.PointerEvent::new(
+    position=point,
+    phase=@core.PointerPhase::Down,
+    button=1,
+  )
+  let result = session_editor_pointer_event(
+    ctx=session_editor_ctx(
+      event=@core.AppEvent::Pointer(event),
+      text_control=session_editor_text_control(caret=0),
+      text_system~,
+    ),
+    session~,
+    selection={ caret: 0, selection: None },
+    font~,
+    event~,
+  )
+  assert_true(!result.activated)
+  assert_true(result.changed)
+  assert_true(result.focused)
+  // No capture: the press owns no gesture, so later presses still hit their
+  // own views and record their own menu targets.
+  assert_true(!result.captured)
+  assert_true(result.messages.length() == 1)
+  guard result.messages[0] is (caret, None) else {
+    fail("expected a collapsed caret from the right press")
+  }
+  assert_true(caret > 0)
+  guard result.text_control is Some(control) else {
+    fail("expected the right press to publish a text control")
+  }
+  assert_true(control.caret == caret)
+  // No anchor: a right-drag must never grow a selection.
+  assert_true(control.text_selection_anchor is None)
+}
+
+///|
+/// A right press inside the current selection keeps it, which is what makes
+/// the context menu's inline formatting apply to the selected run.
+test "markdown session right press inside the selection keeps it" {
+  let source = "第一段文字用于定位光标，右侧按下应该保留已有的选区。\n\n第二段。"
+  let session = MarkdownDocumentSession::new(source)
+  let font = @core.FontSpec::new(size=16.0)
+  let text_system = @core.TextSystem::fallback()
+  let point = @core.Point::new(x=60.0, y=12.0)
+  let (caret, _) = session_editor_click_down(
+    session~,
+    font~,
+    text_system~,
+    point~,
+    selection={ caret: 0, selection: None },
+  )
+  assert_true(caret > 0)
+  let event = @core.PointerEvent::new(
+    position=point,
+    phase=@core.PointerPhase::Down,
+    button=1,
+  )
+  let result = session_editor_pointer_event(
+    ctx=session_editor_ctx(
+      event=@core.AppEvent::Pointer(event),
+      text_control=session_editor_text_control(caret~),
+      text_system~,
+    ),
+    session~,
+    selection={
+      caret,
+      selection: Some(@core.TextRange::new(start=caret - 1, end=caret + 1)),
+    },
+    font~,
+    event~,
+  )
+  assert_true(!result.activated)
+  // The press landed inside the selection, so nothing moved and nothing was
+  // republished; the menu still describes the selected run.
+  assert_true(result.messages.is_empty())
+  assert_true(result.text_control is None)
+}

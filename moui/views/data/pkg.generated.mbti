@@ -54,7 +54,7 @@ pub fn table_column(id~ : String, label~ : String, width? : Double) -> TableColu
 
 pub fn tree_item(id~ : String, label~ : String, children? : Array[TreeItem]) -> TreeItem
 
-pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, on_secondary_tap? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[T] variable_list_metrics(Array[T], (T) -> String, (T) -> Double, spacing? : Double) -> VariableListMetrics
 

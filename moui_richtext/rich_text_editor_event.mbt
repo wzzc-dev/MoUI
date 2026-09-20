@@ -76,6 +76,15 @@ fn[Msg] rich_text_pointer_event(
   visible_overscan~ : Double,
 ) -> @core.ViewEventResult[Msg] {
   ignore(visible_overscan)
+  // Secondary/middle presses reach the view tree now that host backends route
+  // right-button downs for per-target context menus. A right press only places
+  // the caret (see the Down branch), so the menu the host builds next describes
+  // what was pressed; every other button and phase is ignored, which keeps a
+  // right-drag from selecting and leaves the wheel path (button 0) untouched.
+  if event.button != 0 &&
+    !(event.button == 1 && event.phase == @core.PointerPhase::Down) {
+    return @core.ViewEventResult::ignored()
+  }
   let inside = ctx.frame.contains(event.position)
   if inside && (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
     return rich_text_scroll_event(
@@ -101,6 +110,41 @@ fn[Msg] rich_text_pointer_event(
           scroll_y=visible_scroll_y,
           visible_viewport_height~,
         )
+        // A right press moves the caret the way mature editors do, so the
+        // context menu the host builds next describes the text that was
+        // pressed. A press inside the current selection keeps it: that is what
+        // makes "Bold" in the menu apply to the selected run. The result
+        // reports `activated=false` on purpose — the enclosing
+        // `on_secondary_tap` observer must still run, so the app records its
+        // menu target from the same press — and leaves no selection anchor
+        // behind, so a right-drag never grows a selection.
+        if event.button == 1 {
+          let caret = rich_text_document_source_offset_at_point(
+            document,
+            event.position,
+            content,
+            font,
+            ctx.text_system,
+          ).unwrap_or(text_length(text))
+          if rich_text_selection_covers(ctx.text_control.selection, caret) {
+            return view_event_result(focused=true)
+          }
+          return view_event_result(
+            changed=true,
+            focused=true,
+            text_control=Some({
+              ..ctx.text_control,
+              caret,
+              selection: None,
+              text_selection_anchor: None,
+              text_selection_origin: None,
+              composition: None,
+              composition_cursor: None,
+            }),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            messages=selection_messages(on_selection_change, caret, None),
+          )
+        }
         // A Cmd/Ctrl-held click opens links/images instead of moving the caret:
         // dispatch the command-click hook with the source offset and swallow the
         // caret placement so the selection is not disturbed.

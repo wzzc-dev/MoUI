@@ -244,6 +244,11 @@ fn LinuxNativeHostBackend::dispatch_pointer_or_context_menu(
     if self.pointer_is_in_client_titlebar(window_id) {
       return ()
     }
+    // The press/release reaches the view tree first so per-target
+    // `on_secondary_tap` handlers can record what was clicked; the menu is
+    // built afterwards from that state. Without a handler on the hit view
+    // the driver falls back to the program's global context-menu commands.
+    self.dispatch_window_event(window_id, event)
     if @window_input.window_event_is_context_menu_trigger(event) {
       match self.lifecycle.runtime_slots().lookup(window_id) {
         Some(slot) =>

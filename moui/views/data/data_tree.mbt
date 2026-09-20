@@ -5,6 +5,7 @@ pub fn[Msg] tree_view(
   selected? : String = "",
   on_select? : ((String) -> Msg)? = None,
   on_toggle? : ((String) -> Msg)? = None,
+  on_secondary_tap? : ((String) -> Msg)? = None,
   theme? : @core.Theme,
   width? : Double = 280.0,
 ) -> @core.View[Msg] {
@@ -19,6 +20,7 @@ pub fn[Msg] tree_view(
       selected~,
       on_select~,
       on_toggle~,
+      on_secondary_tap~,
       theme=resolved_theme,
       width~,
     )
@@ -39,6 +41,7 @@ fn[Msg] append_tree_rows(
   selected~ : String,
   on_select~ : ((String) -> Msg)?,
   on_toggle~ : ((String) -> Msg)?,
+  on_secondary_tap~ : ((String) -> Msg)?,
   theme~ : @core.Theme,
   width~ : Double,
 ) -> Unit {
@@ -52,6 +55,7 @@ fn[Msg] append_tree_rows(
       selected=is_selected,
       on_select~,
       on_toggle~,
+      on_secondary_tap~,
       theme~,
       width~,
     ),
@@ -66,6 +70,7 @@ fn[Msg] append_tree_rows(
         selected~,
         on_select~,
         on_toggle~,
+        on_secondary_tap~,
         theme~,
         width~,
       )
@@ -81,6 +86,7 @@ fn[Msg] tree_row(
   selected~ : Bool,
   on_select~ : ((String) -> Msg)?,
   on_toggle~ : ((String) -> Msg)?,
+  on_secondary_tap~ : ((String) -> Msg)?,
   theme~ : @core.Theme,
   width~ : Double,
 ) -> @core.View[Msg] {
@@ -145,7 +151,7 @@ fn[Msg] tree_row(
   // Depth is a left padding, not a spacer child: a spacer with weight 0 still
   // absorbed the row's slack here, which pushed the label to the right edge and
   // left a gap after the disclosure glyph.
-  @layout.padding_edges(
+  let row_body = @layout.padding_edges(
     @layout.row(
       [toggle, label_view],
       spacing=2.0,
@@ -153,6 +159,14 @@ fn[Msg] tree_row(
     ),
     left=indent,
   )
+  // Right-click target coverage spans the whole row (glyph + label), not just
+  // the label button: the row modifier only reacts to button 1, so primary
+  // taps on the toggle/label children keep working unchanged.
+  let row_view = match on_secondary_tap {
+    Some(handler) => row_body.on_secondary_tap(handler(item.id))
+    None => row_body
+  }
+  row_view
   .semantics_role(@core.SemanticsRole::TreeItem)
   .semantics_expanded(expanded~)
   .semantics_selected(selected~)

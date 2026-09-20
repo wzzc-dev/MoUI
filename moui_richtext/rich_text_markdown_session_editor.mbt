@@ -440,6 +440,15 @@ fn[Msg] markdown_session_pointer_event(
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
 ) -> @core.ViewEventResult[Msg] {
+  // Secondary/middle presses reach the view tree now that host backends route
+  // right-button downs for per-target context menus. A right press only places
+  // the caret (see the Down branch), so the menu the host builds next describes
+  // what was pressed; every other button and phase is ignored, which keeps a
+  // right-drag from selecting and leaves the wheel path (button 0) untouched.
+  if event.button != 0 &&
+    !(event.button == 1 && event.phase == @core.PointerPhase::Down) {
+    return @core.ViewEventResult::ignored()
+  }
   let inside = ctx.frame.contains(event.position)
   let content_width = rich_text_editor_content_rect(ctx.frame).size.width
   if inside && (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
@@ -469,6 +478,41 @@ fn[Msg] markdown_session_pointer_event(
         let content = window.content_rect(
           rich_text_editor_content_rect(ctx.frame),
         )
+        // A right press moves the caret the way mature editors do, so the
+        // context menu the host builds next describes the text that was
+        // pressed. A press inside the current selection keeps it: that is what
+        // makes "Bold" in the menu apply to the selected run. The result
+        // reports `activated=false` on purpose — the enclosing
+        // `on_secondary_tap` observer must still run, so the app records its
+        // menu target from the same press — and leaves no selection anchor
+        // behind, so a right-drag never grows a selection.
+        if event.button == 1 {
+          let caret = rich_text_document_source_offset_at_point(
+            window.document,
+            event.position,
+            content,
+            font,
+            ctx.text_system,
+          ).unwrap_or(text_length(text))
+          if rich_text_selection_covers(selection.selection, caret) {
+            return view_event_result(focused=true)
+          }
+          return view_event_result(
+            changed=true,
+            focused=true,
+            text_control=Some({
+              ..ctx.text_control,
+              caret,
+              selection: None,
+              text_selection_anchor: None,
+              text_selection_origin: None,
+              composition: None,
+              composition_cursor: None,
+            }),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            messages=selection_messages(on_selection_change, caret, None),
+          )
+        }
         let command_modifiers = event.modifiers.meta || event.modifiers.control
         match (command_modifiers, on_command_click) {
           (true, Some(handler)) => {

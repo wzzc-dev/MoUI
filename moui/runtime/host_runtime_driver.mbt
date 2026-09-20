@@ -269,19 +269,25 @@ pub fn HostRuntimeDriver::show_context_menu(
 }
 
 ///|
+/// The menu the host shows for whatever is under the pointer.
+///
+/// A focused text control contributes the standard editing group (Undo/Redo,
+/// Cut/Copy/Paste, Select All) *in addition to* whatever the program
+/// contributes, rather than instead of it: VS Code, Typora and Obsidian all
+/// lead the menu with the editing group and follow it with the surface's own
+/// actions, so a selection adds Cut/Copy instead of replacing the app's
+/// formatting menu. Copy and Cut stay disabled while there is no selection.
+/// Without focus there is no text target, so only the program's commands
+/// apply.
 fn HostRuntimeDriver::context_menu_commands(
   self : HostRuntimeDriver,
 ) -> Array[@core.ActionCommand] {
   let input = self.runtime.focused_text_input()
-  if input.focused && text_input_state_has_active_selection(input) {
-    focused_text_context_menu_commands(input)
+  let commands = self.document_context_menu_commands()
+  if input.focused {
+    focused_text_context_menu_commands(input) + commands
   } else {
-    let commands = self.document_context_menu_commands()
-    if commands.length() > 0 || !input.focused {
-      commands
-    } else {
-      focused_text_context_menu_commands(input)
-    }
+    commands
   }
 }
 

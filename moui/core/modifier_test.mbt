@@ -265,8 +265,10 @@ test "on_secondary_tap only activates for the secondary mouse button" {
     size: @core.Size::new(width=8.0, height=8.0),
   }).on_secondary_tap(7)
   assert_true(view.identity().kind.contains("OnSecondaryTap"))
-  assert_true(view.accepts_focus())
-  assert_true(view.semantics().role == Some(@core.SemanticsRole::Button))
+  // A context-menu hook is an observer: it must not become a focus stop, and
+  // must not override the host view's semantics role.
+  assert_true(!view.accepts_focus())
+  assert_true(view.semantics().role == None)
 }
 
 ///|

@@ -446,3 +446,94 @@ test "direct pointer input retains a captured non-focusable target" {
   inspect(up.host_flags(), content="5")
   inspect(received.join(","), content="clicked")
 }
+
+///|
+/// Host backends route right-button presses into the view tree so per-target
+/// context menus can observe them before the menu is shown: the secondary tap
+/// fires on press (the host trigger phase), not on release.
+test "secondary pointer press delivers the context menu target" {
+  let received : Array[String] = []
+  let root : @core.View[String] = @views.container(
+    @views.spacer(min_length=0.0, weight=0.0),
+    width=40.0,
+    height=40.0,
+    padding=0.0,
+  ).on_secondary_tap("context")
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=40.0, height=40.0),
+    on_message=Some(message => received.push(message)),
+  )
+  let center = @core.Point::new(x=20.0, y=20.0)
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=center,
+        phase=@core.PointerPhase::Down,
+        button=1,
+      ),
+    ),
+  )
+  inspect(received.join(","), content="context")
+}
+
+///|
+/// Right/middle presses now reach the view tree; they must not also fire the
+/// control's primary activation.
+test "secondary pointer press does not activate a button" {
+  let received : Array[String] = []
+  let runtime = AppRuntime::new_view(
+    root=@views.button("Go", on_click="clicked", width=80.0, height=32.0),
+    size=@core.Size::new(width=80.0, height=32.0),
+    on_message=Some(message => received.push(message)),
+  )
+  let position = @core.Point::new(x=8.0, y=8.0)
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position~,
+        phase=@core.PointerPhase::Down,
+        button=1,
+      ),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up, button=1),
+    ),
+  )
+  assert_true(received.length() == 0)
+}
+
+///|
+/// The tree view's secondary-tap hook covers the whole row (glyph + label)
+/// and reports the row id, so explorers can scope their context menu per row.
+test "tree view secondary tap reports the row id" {
+  let received : Array[String] = []
+  let items = [
+    @views.tree_item(id="/tmp/project/notes.md", label="notes.md"),
+    @views.tree_item(id="/tmp/project", label="project", children=[
+      @views.tree_item(id="/tmp/project/a.md", label="a.md"),
+    ]),
+  ]
+  let runtime = AppRuntime::new_view(
+    root=@views.tree_view(
+      items,
+      expanded=["/tmp/project"],
+      on_secondary_tap=Some(id => "context:" + id),
+      width=200.0,
+    ),
+    size=@core.Size::new(width=200.0, height=200.0),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=60.0, y=10.0),
+        phase=@core.PointerPhase::Down,
+        button=1,
+      ),
+    ),
+  )
+  inspect(received.join(","), content="context:/tmp/project/notes.md")
+}

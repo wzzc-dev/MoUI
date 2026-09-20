@@ -414,7 +414,10 @@ fn scroll_container_drag_handles_event(
   }
   let drag = ctx.state.read_slot(scroll_drag_state_slot())
   match event.phase {
-    @core.PointerPhase::Down => ctx.frame.contains(event.position)
+    // Primary button only: right-button presses reach the view tree for
+    // per-target context menus and must not start a scroll drag.
+    @core.PointerPhase::Down =>
+      event.button == 0 && ctx.frame.contains(event.position)
     @core.PointerPhase::Move
     | @core.PointerPhase::Up
     | @core.PointerPhase::Cancel

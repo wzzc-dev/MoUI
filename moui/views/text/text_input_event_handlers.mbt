@@ -37,6 +37,12 @@ fn[Msg] handle_text_field_pointer(
   on_clear~ : Msg?,
   event : @core.PointerEvent,
 ) -> @core.ViewEventResult[Msg] {
+  // Secondary/middle presses reach the view tree now that host backends
+  // route right-button downs for per-target context menus; they must not
+  // move the caret or start a selection drag.
+  if event.button != 0 {
+    return @core.ViewEventResult::ignored()
+  }
   let text = value
   if search_bar && text != "" {
     let clear_frame = searchbar_clear_frame(ctx.frame)

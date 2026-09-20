@@ -1687,3 +1687,15 @@ fn[Msg] selection_messages(
     None => []
   }
 }
+
+///|
+/// Whether a source offset falls inside a text range. A right press inside the
+/// current selection keeps it instead of collapsing it, so the context menu's
+/// inline formatting still applies to the selected run.
+fn rich_text_selection_covers(range : @core.TextRange?, offset : Int) -> Bool {
+  match range {
+    Some(range) =>
+      !range.is_collapsed() && offset >= range.start && offset <= range.end
+    None => false
+  }
+}
