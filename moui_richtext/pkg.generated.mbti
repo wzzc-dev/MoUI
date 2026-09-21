@@ -243,6 +243,7 @@ pub(all) struct MarkdownDocumentRichTextWindow {
   visible_end : Int
   block_count : Int
   rendered_block_count : Int
+  clip_lines : Int
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct MarkdownDocumentSession {

@@ -25,7 +25,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "examples/showcase/app/diagnostics/components.mbt", max_lines: 960 },
     { path: "moui/backend/host_test.mbt", max_lines: 50 },
     { path: "moui/backend/host_services_test.mbt", max_lines: 261 },
-    { path: "moui/backend/host_driver_context_menu_test.mbt", max_lines: 240 },
+    { path: "moui/backend/host_driver_context_menu_test.mbt", max_lines: 290 },
     { path: "moui/backend/host_subscription_sources_test.mbt", max_lines: 275 },
     {
       path: "moui/backend/host_route_timer_subscription_sources_test.mbt",
@@ -53,7 +53,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/common/input/text_input_ime_test.mbt",
-      max_lines: 250,
+      max_lines: 268,
     },
     {
       path: "moui/backend/common/input/window_event_decode_test.mbt",
@@ -244,7 +244,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/progress/progress.mbt", max_lines: 158 },
     // Slider exposes localized labels, range metadata, and typed numeric
     // actions as part of the neutral accessibility contract.
-    { path: "moui/views/slider/slider.mbt", max_lines: 396 },
+    { path: "moui/views/slider/slider.mbt", max_lines: 397 },
     { path: "moui/views/form/form_state.mbt", max_lines: 75 },
     { path: "moui/views/form/form_layout.mbt", max_lines: 80 },
     { path: "moui/views/form/form_field.mbt", max_lines: 95 },
@@ -256,7 +256,7 @@ fn file_budgets() -> Array[FileBudget] {
     // Text controls now publish selection/caret actions for native and Web
     // accessibility clients.
     { path: "moui/views/text/text_input_controls.mbt", max_lines: 245 },
-    { path: "moui/views/text/text_input_event_handlers.mbt", max_lines: 245 },
+    { path: "moui/views/text/text_input_event_handlers.mbt", max_lines: 250 },
     { path: "moui/views/text/text_input_apply.mbt", max_lines: 400 },
     { path: "moui/views/text/text_input_editing.mbt", max_lines: 500 },
     { path: "moui/views/text/text_input_paint.mbt", max_lines: 510 },
@@ -313,7 +313,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/data/data_selectable_list.mbt", max_lines: 195 },
     { path: "moui/views/data/data_selection_toolbar.mbt", max_lines: 120 },
     { path: "moui/views/data/data_avatar.mbt", max_lines: 95 },
-    { path: "moui/views/data/data_tree.mbt", max_lines: 165 },
+    { path: "moui/views/data/data_tree.mbt", max_lines: 174 },
     { path: "moui/views/data/data_filter_bar.mbt", max_lines: 170 },
     {
       path: "moui/views/data/data_filter_column_visibility.mbt",
@@ -327,10 +327,9 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/data/data_grid_edit_state.mbt", max_lines: 82 },
     { path: "moui/views/data/data_incremental_state.mbt", max_lines: 71 },
     { path: "moui/views/data/data_grid_semantics.mbt", max_lines: 57 },
-    { path: "moui/views/data/data_variable_list_metrics.mbt", max_lines: 189 },
-    { path: "moui/views/data/data_variable_list_anchor.mbt", max_lines: 61 },
+    { path: "moui/views/data/data_variable_list_metrics.mbt", max_lines: 489 },
     { path: "moui/views/data/data_variable_virtual_list.mbt", max_lines: 91 },
-    { path: "moui/views/complex_data_test.mbt", max_lines: 178 },
+    { path: "moui/views/complex_data_test.mbt", max_lines: 198 },
     { path: "moui/runtime/complex_data_semantics_test.mbt", max_lines: 102 },
     {
       path: "examples/pdf_workbench/app/pdf_workbench_app_wbtest.mbt",

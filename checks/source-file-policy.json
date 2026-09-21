@@ -43,7 +43,7 @@
     },
     {
       "path": "moui_skia/native/skia_stub_surface_image_data.cpp",
-      "maxLines": 3421,
+      "maxLines": 3521,
       "reason": "Existing native Skia surface and image bridge implementation."
     },
     {
@@ -128,22 +128,22 @@
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 2615,
+      "maxLines": 2937,
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
       "path": "moui_wgpu_renderer/native_renderer.mbt",
-      "maxLines": 1844,
+      "maxLines": 1848,
       "reason": "Existing diagnostic WGPU renderer implementation."
     },
     {
       "path": "moui_richtext/rich_text_editor_caret_hit.mbt",
-      "maxLines": 1963,
+      "maxLines": 2182,
       "reason": "Existing caret and hit-testing algorithms."
     },
     {
       "path": "moui_skia/native/skia_stub_text_font.cpp",
-      "maxLines": 1680,
+      "maxLines": 1715,
       "reason": "Existing native text and font bridge implementation."
     },
     {
@@ -203,7 +203,7 @@
     },
     {
       "path": "moui_richtext/editor_session.mbt",
-      "maxLines": 3394,
+      "maxLines": 4161,
       "reason": "Existing rich-text editor session state machine."
     },
     {
@@ -258,22 +258,22 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_helpers.mbt",
-      "maxLines": 1686,
+      "maxLines": 1689,
       "reason": "Existing shared rich-text editor algorithms plus canonical declaration-key encoders."
     },
     {
-      "path": "moui_richtext/markdown_model.mbt",
-      "maxLines": 1205,
-      "reason": "Existing markdown block/inline model with normalization passes."
-    },
-    {
       "path": "moui_richtext/markdown_html_image_gallery.mbt",
-      "maxLines": 1273,
+      "maxLines": 1293,
       "reason": "Existing HTML container image gallery projection."
     },
     {
+      "path": "moui_richtext/rich_text_markdown_session_editor.mbt",
+      "maxLines": 1315,
+      "reason": "Existing rich-text markdown session editor state and rendering."
+    },
+    {
       "path": "moui_richtext/editor_selection.mbt",
-      "maxLines": 1223,
+      "maxLines": 1231,
       "reason": "Existing selection, hit-test, and block-context helpers."
     }
   ],

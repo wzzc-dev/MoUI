@@ -52,7 +52,7 @@ fn linux_surface_binding(
         0
       },
     )
-    // X11 windows omit the display handle on purpose: the Skia GPU provider
+    // X11 windows omit the display handle on purpose: the GPU provider
     // rejects Linux surfaces without one (`skia_native_surface_error`), which
     // steers hybrid resolution to the CPU raster route. The GPU route is
     // Vulkan-Wayland only; forwarding an Xlib `Display*` there would be

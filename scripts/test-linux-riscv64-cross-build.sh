@@ -20,6 +20,7 @@ mkdir -p \
   "$sysroot/usr/include/fontconfig" \
   "$sysroot/usr/include/freetype2" \
   "$sysroot/usr/include/harfbuzz" \
+  "$sysroot/usr/include/X11/extensions" \
   "$sysroot/usr/lib/riscv64-linux-gnu/pkgconfig" \
   "$sysroot/usr/share/wayland-protocols"
 
@@ -29,8 +30,11 @@ touch \
   "$sysroot/usr/include/glib-2.0/glib.h" \
   "$sysroot/usr/include/fontconfig/fontconfig.h" \
   "$sysroot/usr/include/freetype2/ft2build.h" \
-  "$sysroot/usr/include/harfbuzz/hb.h"
-for library in gio-2.0 glib-2.0 wayland-client fontconfig freetype harfbuzz z stdc++; do
+  "$sysroot/usr/include/harfbuzz/hb.h" \
+  "$sysroot/usr/include/X11/Xlib.h" \
+  "$sysroot/usr/include/X11/extensions/XShm.h" \
+  "$sysroot/usr/include/X11/extensions/Xrandr.h"
+for library in gio-2.0 glib-2.0 wayland-client X11 Xext Xrandr fontconfig freetype harfbuzz z stdc++; do
   touch "$sysroot/usr/lib/riscv64-linux-gnu/lib${library}.so.0"
   ln -s "lib${library}.so.0" "$sysroot/usr/lib/riscv64-linux-gnu/lib${library}.so"
 done

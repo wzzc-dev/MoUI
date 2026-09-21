@@ -27,6 +27,7 @@ jobs:
           sudo apt-get install -y \
             weston \
             libwayland-dev libwayland-bin wayland-protocols \
+            libx11-dev libxext-dev libxrandr-dev \
             libfontconfig1-dev libfreetype-dev libharfbuzz-dev \
             fonts-noto-color-emoji fonts-noto-cjk \
             pkg-config unzip \
