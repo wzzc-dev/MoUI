@@ -9,6 +9,7 @@ fn hot_path_metrics_reset() -> Unit {
   hot_path_full_parse_count.val = 0
   hot_path_region_reparse_count.val = 0
   hot_path_incremental_fallback_count.val = 0
+  hot_path_in_line_apply_count.val = 0
   hot_path_block_height_walk_blocks.val = 0
   hot_path_scroll_geometry_cache_hits.val = 0
   hot_path_scroll_geometry_point_updates.val = 0
@@ -66,7 +67,11 @@ test "hot path: plain keystrokes at document end parse only the last cluster" {
     )
   }
   inspect(hot_path_full_parse_count.val, content="0")
-  inspect(hot_path_region_reparse_count.val, content="20")
+  // Typing at the document end is a pure insertion strictly inside the
+  // tail paragraph's last line, so the structure-preserving fast path
+  // answers every keystroke with no region re-parse at all.
+  inspect(hot_path_in_line_apply_count.val, content="20")
+  inspect(hot_path_region_reparse_count.val, content="0")
   assert_true(current.blocks.length() == session.blocks.length())
 }
 
@@ -632,7 +637,8 @@ test "hot path: keystroke bookkeeping work stays inside the re-parse window" {
   let keystrokes = 5
   assert_eq(hot_path_full_parse_count.val, 0)
   assert_eq(hot_path_incremental_fallback_count.val, 0)
-  assert_eq(hot_path_region_reparse_count.val, keystrokes)
+  assert_eq(hot_path_in_line_apply_count.val, keystrokes)
+  assert_eq(hot_path_region_reparse_count.val, 0)
   // The trailing cluster is a couple of blocks; whole-document work would
   // show thousands of fingerprint builds and height recomputes here.
   assert_true(hot_path_block_fingerprints_built.val < block_count)

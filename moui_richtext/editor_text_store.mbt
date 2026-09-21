@@ -64,15 +64,126 @@ pub impl ToJson for MarkdownDocumentTextStore with fn to_json(self) {
 }
 
 ///|
+/// Segment size cap: a segment is the read/write locality unit (char
+/// probes and slices scan it, edits rewrite it), so one is never allowed
+/// to grow past this many characters. A document whose text collapses
+/// into one block would otherwise be one segment, making every keystroke
+/// rewrite — and every char probe rescan — the whole document.
+const MARKDOWN_TEXT_STORE_SEGMENT_CAP : Int = 262144
+
+///|
+/// Push `text` at absolute char offset `start` into `out`, splitting it
+/// into chunks of at most the segment cap. One linear pass; chunks own
+/// their text (a view would pin the parent string in memory).
+fn markdown_text_store_push_capped(
+  out : Array[MarkdownTextSegment],
+  text : String,
+  start : Int,
+) -> Unit {
+  let length = text.char_length()
+  if length == 0 {
+    return
+  }
+  if length <= MARKDOWN_TEXT_STORE_SEGMENT_CAP {
+    out.push({ start, end: start + length, text })
+    return
+  }
+  let mut chunk_char_start = 0
+  let mut chunk_unit_start = 0
+  let mut chars = 0
+  let mut units = 0
+  for ch in text {
+    if chars - chunk_char_start == MARKDOWN_TEXT_STORE_SEGMENT_CAP {
+      out.push({
+        start: start + chunk_char_start,
+        end: start + chars,
+        text: text.sub(start=chunk_unit_start, end=units).to_owned(),
+      })
+      chunk_char_start = chars
+      chunk_unit_start = units
+    }
+    units = units + ch.utf16_len()
+    chars = chars + 1
+  }
+  out.push({
+    start: start + chunk_char_start,
+    end: start + chars,
+    text: text.sub(start=chunk_unit_start, end=units).to_owned(),
+  })
+}
+
+///|
+/// Build capped segments from (text, absolute post-edit start) pieces:
+/// pieces are packed greedily so the array stays minimal, and any piece
+/// over the cap is split. This is what keeps an edit's rewrite bounded by
+/// the cap on every later keystroke.
+fn markdown_text_store_capped_chunks(
+  pieces : Array[(String, Int)],
+) -> Array[MarkdownTextSegment] {
+  let chunks : Array[MarkdownTextSegment] = []
+  let mut current = ""
+  let mut current_start = 0
+  let mut have_current = false
+  for piece in pieces {
+    let (text, start) = piece
+    if text.char_length() == 0 {
+      continue
+    }
+    if have_current &&
+      current.char_length() + text.char_length() <=
+      MARKDOWN_TEXT_STORE_SEGMENT_CAP {
+      current = current + text
+    } else {
+      if have_current {
+        markdown_text_store_push_capped(chunks, current, current_start)
+      }
+      current = text
+      current_start = start
+      have_current = true
+    }
+  }
+  if have_current {
+    markdown_text_store_push_capped(chunks, current, current_start)
+  }
+  chunks
+}
+
+///|
+/// Split any segment over the cap in place; a no-op share of the array is
+/// returned as-is so ordinary documents pay one length check per segment.
+fn markdown_text_store_cap_in_place(
+  segments : Array[MarkdownTextSegment],
+) -> Array[MarkdownTextSegment] {
+  let mut oversized = false
+  for segment in segments {
+    if segment.text.char_length() > MARKDOWN_TEXT_STORE_SEGMENT_CAP {
+      oversized = true
+      break
+    }
+  }
+  if !oversized {
+    return segments
+  }
+  let next : Array[MarkdownTextSegment] = []
+  for segment in segments {
+    markdown_text_store_push_capped(next, segment.text, segment.start)
+  }
+  if next.length() == 0 {
+    next.push({ start: 0, end: 0, text: "" })
+  }
+  next
+}
+
+///|
 pub fn MarkdownDocumentTextStore::new(
   text : String,
 ) -> MarkdownDocumentTextStore {
-  let length = text.char_length()
-  {
-    segments: Ref([{ start: 0, end: length, text }]),
-    revision: Ref(0),
-    materialized: Ref((0, text)),
+  let segments : Array[MarkdownTextSegment] = []
+  markdown_text_store_push_capped(segments, text, 0)
+  if segments.length() == 0 {
+    segments.push({ start: 0, end: 0, text: "" })
   }
+  { segments: Ref(segments), revision: Ref(0), materialized: Ref((0, text)) }
 }
 
 ///|
@@ -86,7 +197,7 @@ pub fn MarkdownDocumentTextStore::from_texts(
   let mut offset = 0
   for text in texts {
     let length = text.char_length()
-    segments.push({ start: offset, end: offset + length, text })
+    markdown_text_store_push_capped(segments, text, offset)
     offset = offset + length
   }
   if segments.length() == 0 {
@@ -152,7 +263,11 @@ pub fn MarkdownDocumentTextStore::segmented(
     end: char_index,
     text: current.to_string(),
   })
-  { segments: Ref(segments), revision: Ref(0), materialized: Ref((0, source)) }
+  {
+    segments: Ref(markdown_text_store_cap_in_place(segments)),
+    revision: Ref(0),
+    materialized: Ref((0, source)),
+  }
 }
 
 ///|
@@ -201,7 +316,7 @@ fn MarkdownDocumentTextStore::segmented_at_line_starts(
     text: source.sub(start=segment_unit_start, end=source.length()).to_owned(),
   })
   Some({
-    segments: Ref(segments),
+    segments: Ref(markdown_text_store_cap_in_place(segments)),
     revision: Ref(0),
     materialized: Ref((0, source)),
   })
@@ -214,8 +329,12 @@ pub fn MarkdownDocumentTextStore::replace_all(
   self : MarkdownDocumentTextStore,
   text : String,
 ) -> Unit {
-  let length = text.char_length()
-  self.segments.val = [{ start: 0, end: length, text }]
+  let segments : Array[MarkdownTextSegment] = []
+  markdown_text_store_push_capped(segments, text, 0)
+  if segments.length() == 0 {
+    segments.push({ start: 0, end: 0, text: "" })
+  }
+  self.segments.val = segments
   self.revision.val = self.revision.val + 1
   self.materialized.val = (self.revision.val, text)
 }
@@ -414,11 +533,30 @@ pub fn MarkdownDocumentTextStore::edit(
       { start: 0, end: replacement_length, text: replacement },
     ]
   } else if start >= segments[segments.length() - 1].end {
-    // Edit at (or past) the document end: extend the tail segment.
+    // Edit at (or past) the document end: extend the tail, re-capping it
+    // so typing at the end cannot grow one segment without bound.
     let last = segments[segments.length() - 1]
-    last.text = markdown_text_segment_slice(last, last.start, start) +
-      replacement
-    last.end = start + replacement_length
+    let head = markdown_text_segment_slice(last, last.start, start)
+    let chunks = markdown_text_store_capped_chunks([
+      (head, last.start),
+      (replacement, start),
+    ])
+    if chunks.length() == 1 {
+      last.text = chunks[0].text
+      last.end = chunks[0].end
+    } else if chunks.length() == 0 {
+      last.text = ""
+      last.end = last.start
+    } else {
+      let next : Array[MarkdownTextSegment] = []
+      for index in 0..<(segments.length() - 1) {
+        next.push(segments[index])
+      }
+      for chunk in chunks {
+        next.push(chunk)
+      }
+      self.segments.val = next
+    }
   } else {
     let first = markdown_text_store_segment_index(segments, start)
     let mut last = first
@@ -427,22 +565,53 @@ pub fn MarkdownDocumentTextStore::edit(
     }
     if last == first {
       // Fast path for the dominant keystroke case: the edit stays inside
-      // one segment, so rewrite that segment in place and shift the tail
-      // offsets in place — no fresh segment array, no per-segment re-push.
+      // one segment. The span is rebuilt as capped chunks (no concat of
+      // the whole segment), so a document that is one block pays a
+      // cap-bounded rewrite per keystroke instead of a whole-document
+      // one; the tail offsets shift in place, texts untouched.
       let segment = segments[first]
       let head = markdown_text_segment_slice(segment, segment.start, start)
       let tail = markdown_text_segment_slice(segment, end, segment.end)
-      segment.text = head + replacement + tail
-      segment.end = segment.start +
-        (start - segment.start) +
-        replacement_length +
-        (segment.end - end)
+      let chunks = markdown_text_store_capped_chunks([
+        (head, segment.start),
+        (replacement, start),
+        (tail, end + delta),
+      ])
       if delta != 0 {
         for index = first + 1; index < segments.length(); index = index + 1 {
           let after = segments[index]
           after.start = after.start + delta
           after.end = after.end + delta
         }
+      }
+      if chunks.length() == 1 {
+        segments[first] = chunks[0]
+      } else if chunks.length() == 0 {
+        // The span emptied: drop the segment unless it is the only one.
+        if segments.length() == 1 {
+          segments[0] = { start: 0, end: 0, text: "" }
+        } else {
+          let next : Array[MarkdownTextSegment] = []
+          for index in 0..<first {
+            next.push(segments[index])
+          }
+          for index = first + 1; index < segments.length(); index = index + 1 {
+            next.push(segments[index])
+          }
+          self.segments.val = next
+        }
+      } else {
+        let next : Array[MarkdownTextSegment] = []
+        for index in 0..<first {
+          next.push(segments[index])
+        }
+        for chunk in chunks {
+          next.push(chunk)
+        }
+        for index = first + 1; index < segments.length(); index = index + 1 {
+          next.push(segments[index])
+        }
+        self.segments.val = next
       }
     } else {
       let head = markdown_text_segment_slice(
@@ -455,28 +624,30 @@ pub fn MarkdownDocumentTextStore::edit(
         end,
         segments[last].end,
       )
-      // The spliced segment replaces segments first..last wholesale: it
-      // spans head (text kept before the edit) + replacement + tail (text
-      // kept after it), starting where the first replaced segment started.
-      let spliced_start = segments[first].start
-      let spliced : MarkdownTextSegment = {
-        start: spliced_start,
-        end: spliced_start +
-        (start - spliced_start) +
-        replacement_length +
-        (segments[last].end - end),
-        text: head + replacement + tail,
-      }
+      // The replaced span (segments first..last) is rebuilt as capped
+      // chunks spanning head (text kept before the edit) + replacement +
+      // tail (text kept after it), starting where the first replaced
+      // segment started; middle segments carried only replaced text.
+      let chunks = markdown_text_store_capped_chunks([
+        (head, segments[first].start),
+        (replacement, start),
+        (tail, end + delta),
+      ])
       let next : Array[MarkdownTextSegment] = []
       for index in 0..<first {
         next.push(segments[index])
       }
-      next.push(spliced)
+      for chunk in chunks {
+        next.push(chunk)
+      }
       for index = last + 1; index < segments.length(); index = index + 1 {
         let segment = segments[index]
         segment.start = segment.start + delta
         segment.end = segment.end + delta
         next.push(segment)
+      }
+      if next.length() == 0 {
+        next.push({ start: 0, end: 0, text: "" })
       }
       self.segments.val = next
     }

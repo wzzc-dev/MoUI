@@ -731,6 +731,11 @@ fn append_rich_text_editor_overlay(
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
   clip_rect? : @core.Rect? = None,
+  // Precomputed caret rect for a caret the window document does not
+  // contain (the visible band is clipped and the caret sits outside it):
+  // the document walk would pin such a caret to the first rendered line,
+  // so the caller supplies the session-level estimate instead.
+  caret_rect_override? : @core.Rect? = None,
 ) -> Unit {
   let clip = match clip_rect {
     Some(r) => r
@@ -764,9 +769,13 @@ fn append_rich_text_editor_overlay(
     0,
     text_length(display_text),
   )
-  let caret_rect = rich_text_document_caret_rect_or_plain(
-    document, caret, content, font, text_system, display_text,
-  )
+  let caret_rect = match caret_rect_override {
+    Some(rect) => rect
+    None =>
+      rich_text_document_caret_rect_or_plain(
+        document, caret, content, font, text_system, display_text,
+      )
+  }
   commands.push(@core.DrawCommand::FillRect(caret_rect, cursor_color))
   commands.push(@core.DrawCommand::PopClip)
 }

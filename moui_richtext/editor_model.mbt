@@ -392,3 +392,40 @@ pub fn markdown_editor_clamp_int(value : Int, min : Int, max : Int) -> Int {
     value
   }
 }
+
+///|
+/// The source line containing `offset`: its index in the document's line scan
+/// and its start offset. `None` when the scan for this source is not cached, so
+/// callers fall back to their own scan rather than paying for one here.
+///
+/// This is what lets the caret be located without the window. Clipping the
+/// window to the visible band removes an out-of-band caret's line from
+/// `window.document`, and the old fallback then placed the caret from
+/// block-level geometry — at the block's start. With the line index the caret's
+/// y follows from the block's top plus `index * line_step`, and the line start
+/// gives its x, both in O(log n) over a scan the open path already made.
+fn markdown_editor_line_at_offset(source : String, offset : Int) -> (Int, Int)? {
+  match markdown_editor_line_scan_cached_line_units(source) {
+    Some((lines, _)) => {
+      if lines.length() == 0 {
+        return None
+      }
+      // Line starts are ascending, so binary search the last line that begins
+      // at or before the offset.
+      let mut low = 0
+      let mut high = lines.length() - 1
+      let mut found = 0
+      while low <= high {
+        let mid = low + (high - low) / 2
+        if lines[mid].start <= offset {
+          found = mid
+          low = mid + 1
+        } else {
+          high = mid - 1
+        }
+      }
+      Some((found, lines[found].start))
+    }
+    None => None
+  }
+}

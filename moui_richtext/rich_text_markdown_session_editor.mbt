@@ -280,6 +280,34 @@ fn markdown_session_editor_paint(
       visible_viewport_height=content.size.height,
     )
     if ctx.focused {
+      // The clipped window may not contain the caret (parked off-screen
+      // while the user scrolls). The document walk pins such a caret to
+      // the first rendered line — the "caret at the very front" defect —
+      // so the session-level estimate, which answers for any offset,
+      // stands in whenever the window does not cover the caret.
+      let paint_caret = @core.clamp_int(
+        rich_text_visual_caret(text, ctx.text_control, focused=true),
+        0,
+        text_length(display_text),
+      )
+      let caret_rect_override = if markdown_session_window_covers_caret(
+          window, paint_caret,
+        ) {
+        None
+      } else {
+        Some(
+          markdown_session_estimated_caret_rect(
+            display_session,
+            paint_caret,
+            content,
+            font,
+            source_mode~,
+            scroll_y=window.scroll_y,
+            base_dir~,
+            text_system=ctx.text_system,
+          ),
+        )
+      }
       append_rich_text_editor_overlay(
         overlay_commands,
         text~,
@@ -291,6 +319,7 @@ fn markdown_session_editor_paint(
         control=ctx.text_control,
         text_system=ctx.text_system,
         clip_rect=Some(content),
+        caret_rect_override~,
       )
     }
   }
@@ -778,11 +807,11 @@ fn markdown_session_record_measured_block_heights(
         // widens a block's range, and treating those as slices skipped
         // measurements the geometry depends on.
         let sliced = markdown_document_block_needs_line_window(
-          session,
-          base,
-          window.visible_start + offset,
-          window.viewport_height,
-        ) &&
+            session,
+            base,
+            window.visible_start + offset,
+            window.viewport_height,
+          ) &&
           (match window_block.source_range {
             Some(range) =>
               range.end - range.start <
@@ -935,40 +964,119 @@ fn markdown_session_estimated_caret_inset_x(
     markdown_editor_block_index_at_offset(session.editor_blocks, source_caret) {
     None => 0.0
     Some(block_index) => {
-      // Caret geometry needs the block's real inline runs.
-      let editor_block = markdown_editor_block_materialized(
-        session.source(),
-        source_length=session.source_length,
-        source_digest=session.source_digest,
-        session.editor_blocks[block_index],
-      )
-      let rich_block = markdown_editor_block_to_rich_text(
-        session.source(),
-        editor_block,
-        font,
-        base_dir~,
-      )
-      let block_font = rich_block.font.unwrap_or(font)
+      let editor_block = session.editor_blocks[block_index]
+      let block_start = editor_block.source_range.start
       let scan_end = markdown_editor_min_int(
         source_caret,
         editor_block.source_range.end,
       )
-      let before_caret = markdown_editor_substring(
-        session.source(),
-        editor_block.source_range.start,
-        scan_end,
-      )
-      let mut line_start = 0
-      for index, ch in before_caret {
-        if ch == '\n' {
-          line_start = index + 1
+      // A caret can resolve to a block it sits before (the index lookup
+      // clamps); pin the range so the substring below always has start <= end.
+      let scan_end = if scan_end < block_start { block_start } else { scan_end }
+      // The caret's own line start comes from the document's cached line scan
+      // in O(log n), with no copy of the text before the caret and no
+      // approximation: the window then begins exactly at that line.
+      //
+      // The bounded scan below stays as the fallback for a source the line
+      // scan has not seen. It was the only path before, and it approximates
+      // when the caret's line is longer than the window.
+      let (window_start, line_start) = match
+        markdown_editor_line_at_offset(session.source(), scan_end) {
+        Some((_, start)) if start >= block_start && start <= scan_end =>
+          (start, 0)
+        _ => {
+          let start = if scan_end > block_start + 4096 {
+            scan_end - 4096
+          } else {
+            block_start
+          }
+          let window = markdown_editor_substring(
+            session.source(),
+            start,
+            scan_end,
+          )
+          let mut offset = if start > block_start { -1 } else { 0 }
+          for index, ch in window {
+            if ch == '\n' {
+              offset = index + 1
+            }
+          }
+          (start, offset)
         }
       }
-      let line_text = markdown_editor_substring(
-        before_caret,
-        line_start,
-        markdown_editor_text_length(before_caret),
+      let window = markdown_editor_substring(
+        session.source(),
+        window_start,
+        scan_end,
       )
+      // Caret geometry only needs the caret's own line, so materialise the
+      // caret's neighbourhood rather than the whole block. A block can hold
+      // the entire document — a soft-wrapped paragraph with no blank lines —
+      // and parsing all of it on every click is what made clicking a large
+      // document stall. The full block is still used when the window holds no
+      // line break, which means the caret's line is longer than the window and
+      // the exact answer still matters.
+      let rich_source_block = if line_start >= 0 {
+        let slice_end = if scan_end + 4096 < editor_block.source_range.end {
+          scan_end + 4096
+        } else {
+          editor_block.source_range.end
+        }
+        {
+          block: {
+            ..editor_block.block,
+            text: markdown_editor_substring(
+              session.source(),
+              window_start,
+              slice_end,
+            ),
+            inlines: [],
+          },
+          source_range: { start: window_start, end: slice_end },
+          content_range: { start: window_start, end: slice_end },
+        }
+      } else {
+        editor_block
+      }
+      // Caret geometry needs the block's real inline runs.
+      let rich_block = markdown_editor_block_to_rich_text(
+        session.source(),
+        markdown_editor_block_materialized(
+          session.source(),
+          source_length=session.source_length,
+          source_digest=session.source_digest,
+          rich_source_block,
+        ),
+        font,
+        base_dir~,
+      )
+      let block_font = rich_block.font.unwrap_or(font)
+      let line_text = if line_start >= 0 {
+        markdown_editor_substring(
+          window,
+          line_start,
+          markdown_editor_text_length(window),
+        )
+      } else {
+        // No newline inside the window and it does not reach the block start,
+        // so the line begins earlier: scan the whole block range exactly.
+        let before_caret = markdown_editor_substring(
+          session.source(),
+          block_start,
+          scan_end,
+        )
+        let mut exact_start = 0
+        for index, ch in before_caret {
+          if ch == '\n' {
+            exact_start = index + 1
+          }
+        }
+        markdown_editor_substring(
+          before_caret,
+          exact_start,
+          markdown_editor_text_length(before_caret),
+        )
+      }
       // The caret rect fallback maps canonical source text; hidden inline
       // markers make this an over-estimate, so clamp to the content width.
       let line_width = min_double(
@@ -979,6 +1087,25 @@ fn markdown_session_estimated_caret_inset_x(
       rich_text_block_marker_lane(rich_block, block_font, text_system) +
       line_width
     }
+  }
+}
+
+///|
+/// Whether the window's document actually contains `caret`. A window
+/// clipped to the visible band does not, and asking its document for such
+/// a caret returns a rect pinned to the first rendered line instead of
+/// failing — callers must fall back to the session-level estimate.
+fn markdown_session_window_covers_caret(
+  window : MarkdownDocumentRichTextWindow,
+  caret : Int,
+) -> Bool {
+  match (window.document.blocks.get(0), window.document.blocks.last()) {
+    (Some(first), Some(last)) =>
+      match (first.source_range, last.source_range) {
+        (Some(start), Some(end)) => caret >= start.start && caret <= end.end
+        _ => true
+      }
+    _ => false
   }
 }
 
@@ -1047,14 +1174,28 @@ fn markdown_session_input_state(
   )
   let base_content = rich_text_editor_content_rect(frame)
   let content = window.content_rect(base_content)
-  let caret_rect = match
+  // The window may be clipped to the visible band, in which case a caret
+  // outside that band is simply not in `window.document`. Asking the document
+  // for such a caret does not come back empty — it returns a rect pinned to the
+  // first rendered line, which painted the caret at the start of the block
+  // instead of at its own offset. Only consult the document when it actually
+  // covers the caret; otherwise let the session's height index answer, since it
+  // knows every offset regardless of the window.
+  let caret_in_window = markdown_session_window_covers_caret(
+    window, visual_caret,
+  )
+  let window_caret_rect = if caret_in_window {
     rich_text_document_caret_rect_at_source(
       window.document,
       visual_caret,
       content,
       font,
       text_system~,
-    ) {
+    )
+  } else {
+    None
+  }
+  let caret_rect = match window_caret_rect {
     Some(rect) => rect
     None =>
       markdown_session_estimated_caret_rect(

@@ -61,7 +61,11 @@ test "line window stays disengaged while scrolling a multi-block document" {
 test "single oversized block reports the full block in the window" {
   let parts : Array[String] = []
   for index in 0..<4000 {
-    parts.push("　　第" + index.to_string() + "段正文内容，模拟长篇小说的一行文字。")
+    parts.push(
+      "　　第" +
+      index.to_string() +
+      "段正文内容，模拟长篇小说的一行文字。",
+    )
   }
   let session = MarkdownDocumentSession::new(parts.join("\n"))
   let font = @core.FontSpec::new()
@@ -114,7 +118,12 @@ test "slicing a block keeps absolute source offsets" {
 test "slicing re-parses inline runs from the slice" {
   let source = "one **bold**\ntwo `code`\nthree plain"
   let blocks = parse_markdown_editor_blocks_shell(source)
-  let sliced = markdown_editor_block_slice_to_source_lines(source, blocks[0], 1, 2)
+  let sliced = markdown_editor_block_slice_to_source_lines(
+    source,
+    blocks[0],
+    1,
+    2,
+  )
   inspect(sliced.block.text, content="two `code`\nthree plain")
   // The materialised parse carries the code span from the kept lines.
   let materialized = markdown_editor_block_materialized(
@@ -124,7 +133,9 @@ test "slicing re-parses inline runs from the slice" {
     sliced,
   )
   assert_true(
-    materialized.block.inlines.any(inline => inline.kind == Code && inline.text == "code"),
+    materialized.block.inlines.any(inline => {
+      inline.kind == Code && inline.text == "code"
+    }),
   )
 }
 
@@ -140,13 +151,73 @@ test "an out-of-range slice falls back to the whole block" {
   let (source, block) = line_window_slice_block()
   // Past the end: nothing to render, so the caller gets the block back rather
   // than an empty one it would have to special-case.
-  assert_true(markdown_editor_block_slice_to_source_lines(source, block, 9, 12) == block)
-  assert_true(markdown_editor_block_slice_to_source_lines(source, block, 3, 1) == block)
+  assert_true(
+    markdown_editor_block_slice_to_source_lines(source, block, 9, 12) == block,
+  )
+  assert_true(
+    markdown_editor_block_slice_to_source_lines(source, block, 3, 1) == block,
+  )
   // A block with no content lines is returned as-is.
   let empty = parse_markdown_editor_blocks_shell("")
   if empty.length() > 0 {
     assert_true(
-      markdown_editor_block_slice_to_source_lines("", empty[0], 1, 2) == empty[0],
+      markdown_editor_block_slice_to_source_lines("", empty[0], 1, 2) ==
+      empty[0],
     )
   }
+}
+
+///|
+/// The gate 3a must pass before it can be enabled.
+///
+/// A caret rect is a screen position, so it has to track the scroll exactly:
+/// scrolling by N moves it by N, whether the caret's own line is inside the
+/// window or not. Clipping the window to the visible band removes an
+/// out-of-band caret's line from `window.document`, and the defect this guards
+/// against pinned the caret to the start of the block instead of letting it
+/// follow the scroll.
+fn line_window_caret_y(scroll_y : Double) -> Double {
+  let parts : Array[String] = []
+  for index in 0..<3000 {
+    parts.push(
+      "　　第" +
+      index.to_string() +
+      "段正文内容，模拟长篇小说的一行文字。",
+    )
+  }
+  let source = parts.join("\n")
+  let session = MarkdownDocumentSession::new(source)
+  let frame = @core.Rect::new(x=0.0, y=0.0, width=860.0, height=600.0)
+  let font = @core.FontSpec::new()
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let state = markdown_session_input_state(
+    text=source,
+    frame~,
+    session~,
+    selection~,
+    font~,
+    control=session_editor_text_control(caret=0),
+    source_mode=false,
+    focus_mode=false,
+    base_dir=None,
+    visible_scroll_y=scroll_y,
+    visible_viewport_height=600.0,
+    visible_overscan=0.0,
+    text_system=@core.TextSystem::fallback(),
+  )
+  state.caret_rect.origin.y
+}
+
+///|
+test "caret rect tracks the scroll while the caret is in the window" {
+  let base = line_window_caret_y(0.0)
+  let scrolled = line_window_caret_y(200.0)
+  assert_true((base - scrolled - 200.0).abs() < 2.0)
+}
+
+///|
+test "caret rect tracks the scroll after the caret leaves the window" {
+  let base = line_window_caret_y(0.0)
+  let scrolled = line_window_caret_y(20000.0)
+  assert_true((base - scrolled - 20000.0).abs() < 2.0)
 }

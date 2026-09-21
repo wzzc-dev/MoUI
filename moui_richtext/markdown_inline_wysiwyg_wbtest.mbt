@@ -120,16 +120,22 @@ test "unclosed backtick on its own line stays literal text" {
     .map(inline => inline.text)
     .join("")
   assert_true(plain.contains("`stray"))
-  assert_true(!inlines.any(inline => inline.kind == Code && inline.text.contains("stray")))
+  assert_true(
+    !inlines.any(inline => inline.kind == Code && inline.text.contains("stray")),
+  )
   // The well-formed span on the second line still parses as code.
-  assert_true(inlines.any(inline => inline.kind == Code && inline.text == "closed"))
+  assert_true(
+    inlines.any(inline => inline.kind == Code && inline.text == "closed"),
+  )
 }
 
 ///|
 /// A code span that does close on its own line is untouched by the rule.
 test "backtick closing on the same line still parses as code" {
   let inlines = parse_markdown_inlines_with_definitions("a `code` b", [])
-  assert_true(inlines.any(inline => inline.kind == Code && inline.text == "code"))
+  assert_true(
+    inlines.any(inline => inline.kind == Code && inline.text == "code"),
+  )
 }
 
 ///|
@@ -140,7 +146,11 @@ test "backtick closing on the same line still parses as code" {
 test "a stray backtick does not swallow the rest of a huge paragraph" {
   let parts : Array[String] = []
   for index in 0..<2000 {
-    parts.push("　　第" + index.to_string() + "段正文，中间夹一个反引号 ` 在行内。")
+    parts.push(
+      "　　第" +
+      index.to_string() +
+      "段正文，中间夹一个反引号 ` 在行内。",
+    )
   }
   let text = parts.join("\n")
   let inlines = parse_markdown_inlines_with_definitions(text, [])

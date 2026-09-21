@@ -661,6 +661,12 @@ pub fn MarkdownDocumentSession::rich_text_window(
   // (editor_app_writing_modes_runtime_wbtest.mbt:222) deterministically. The
   // helper, its tests and the clip decision below are in place; re-enable by
   // removing the `|| true` once the abort is understood.
+  // DISABLED: with the window clipped to the visible band, a caret outside the
+  // band is no longer present in `window.document`, so
+  // `rich_text_document_caret_rect_at_source` misses and the estimate fallback
+  // paints the caret at the block's start — "scroll, then click, and the caret
+  // sits at the very front". Correctness first: the clip comes back once the
+  // caret path is windowed too (see the plan's 3b).
   let (clip_lines, clip_last_line) = if source_mode {
     (0, MARKDOWN_EDITOR_SLICE_TO_LAST_LINE)
   } else {
@@ -684,6 +690,15 @@ pub fn MarkdownDocumentSession::rich_text_window(
     MARKDOWN_EDITOR_SLICE_TO_LAST_LINE
   }
   let rich_blocks : Array[RichTextBlock] = []
+  // The document's line-start index turns each block slice into a binary
+  // search plus two lookups; without it a block that holds a whole novel
+  // is materialized and scanned per window build. Source mode never
+  // slices.
+  let line_index = if source_mode {
+    None
+  } else {
+    Some(markdown_document_session_line_index(self))
+  }
   if range.visible_start >= 0 && range.visible_end >= range.visible_start {
     for index in range.visible_start..<=range.visible_end {
       // Slice the *shell* block, then materialise the slice. Doing it the
@@ -699,18 +714,20 @@ pub fn MarkdownDocumentSession::rich_text_window(
             self.editor_blocks[index],
             clip_lines,
             clip_last_line,
+            line_index~,
           )
         } else {
           self.editor_blocks[index]
         }
       } else if markdown_document_block_needs_line_window(
-        self, base, index, viewport_height,
-      ) {
+          self, base, index, viewport_height,
+        ) {
         markdown_editor_block_slice_to_source_lines(
           self.source(),
           self.editor_blocks[index],
           0,
           band_lines,
+          line_index~,
         )
       } else {
         self.editor_blocks[index]
@@ -856,6 +873,7 @@ pub fn MarkdownDocumentSession::apply(
     Some(next) => next
     None => {
       hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
+      markdown_document_line_index_invalidate()
       let blocks = parse_markdown_editor_blocks(transaction.source)
       let dirty = markdown_document_dirty_range(transaction, blocks)
       let session = markdown_document_session_from_blocks(
@@ -875,6 +893,280 @@ pub fn MarkdownDocumentSession::apply(
       session
     }
   }
+}
+
+///|
+/// Structure-preserving incremental apply: an edit (insert, delete,
+/// replace) that stays strictly inside one line of a single paragraph
+/// block and leaves that line ordinary paragraph text. The line-level
+/// check below rejects exactly the edits a re-parse would answer with a
+/// different block list (a line turned blank, a setext underline, a fence
+/// or marker prefix), so the block list is reproduced by splicing the
+/// text and shifting absolute ranges — no region re-parse, no window
+/// decode. That is what keeps typing and backspacing responsive on a
+/// document whose text collapses into one huge block, where both would
+/// walk megabytes per keystroke. Returns None when the edit does not
+/// qualify; the caller then re-parses the region as before.
+fn markdown_document_session_apply_in_line_edit(
+  session : MarkdownDocumentSession,
+  transaction : MarkdownEditTransaction,
+  cluster : MarkdownDocumentEditCluster,
+  delta~ : Int,
+) -> MarkdownDocumentSession? {
+  // Upstream newlines_safe already rejected edits touching a newline for
+  // non-fence clusters, so the edit provably stays on one line.
+  if transaction.replacement.contains("\n") ||
+    transaction.deleted.contains("\n") {
+    return None
+  }
+  if cluster.start_index != cluster.end_index {
+    return None
+  }
+  let editor_block = session.editor_blocks[cluster.start_index]
+  if !(editor_block.block.kind is Paragraph) {
+    return None
+  }
+  let edit_start = transaction.edit_range.start
+  let edit_end = transaction.edit_range.end
+  // The edit must land inside the block's own content.
+  if edit_start < editor_block.content_range.start ||
+    edit_end > editor_block.content_range.end {
+    return None
+  }
+  // Not at a line start: line starts decide classification (markers,
+  // setext underlines), and this path does not re-classify them. An O(1)
+  // read — a line start is the document start or the character right
+  // after a newline — with no dependence on the line-scan cache, which
+  // the region re-parse of a previous keystroke leaves holding a region
+  // slice, not this document.
+  let before = if edit_start == 0 {
+    Some('\n')
+  } else {
+    session.text_store.char_at(edit_start - 1)
+  }
+  if before is Some('\n') {
+    return None
+  }
+  // The splice below assumes the block text is the block's own source
+  // slice; paragraph blocks are built that way (shell and full parse
+  // alike). Anything else falls back to the re-parse.
+  if markdown_editor_text_length(editor_block.block.text) !=
+    editor_block.content_range.end - editor_block.content_range.start {
+    return None
+  }
+  // The edited line, post-edit, must still classify as ordinary paragraph
+  // text under the same cheap rules the parser uses; otherwise the
+  // re-parse would split or retag the block and only it may answer.
+  let index = markdown_document_session_line_index(session)
+  let source_length = session.source_length
+  let mut low = 0
+  let mut high = index.length() - 1
+  let mut line_k = 0
+  while low <= high {
+    let mid = low + (high - low) / 2
+    if index[mid] <= edit_start {
+      line_k = mid
+      low = mid + 1
+    } else {
+      high = mid - 1
+    }
+  }
+  let line_start = index[line_k]
+  let line_end = if line_k + 1 < index.length() {
+    index[line_k + 1] - 1
+  } else {
+    source_length
+  }
+  let pre_line = session.text_store.text_of(line_start, line_end)
+  let in_start = edit_start - line_start
+  let in_end = edit_end - line_start
+  let post_line = markdown_editor_substring(pre_line, 0, in_start) +
+    transaction.replacement +
+    markdown_editor_substring(
+      pre_line,
+      in_end,
+      markdown_editor_text_length(pre_line),
+    )
+  let post_view = post_line.sub(start=0, end=post_line.length())
+  if markdown_editor_line_text_is_blank(post_view) {
+    return None
+  }
+  if markdown_editor_shell_line_may_open_fence(post_view) &&
+    markdown_editor_opening_code_fence_marker(post_view) is Some(_) {
+    return None
+  }
+  if markdown_editor_shell_line_may_open_html(post_view) {
+    let probe : Array[MarkdownLine] = [
+      { text: post_view, start: line_start, end: line_end },
+    ]
+    if markdown_editor_html_block_at(probe, 0) is Some(_) {
+      return None
+    }
+  }
+  if markdown_editor_setext_underline_level(post_view) is Some(_) {
+    return None
+  }
+  if !(markdown_editor_shell_structural_kind(post_view) is None) {
+    return None
+  }
+  let old_source_start = editor_block.source_range.start
+  let old_source_end = editor_block.source_range.end
+  let content_start = editor_block.content_range.start
+  let content_end = editor_block.content_range.end
+  // Advance the live text store first: every read below (probes, splices)
+  // sees the post-edit text, same contract as the region re-parse path.
+  session.text_store.edit(transaction.edit_range, transaction.replacement)
+  session.text_store.seed(transaction.source)
+  // Splice the text into the block and shift its absolute ranges. The
+  // block drops its inline runs (shell shape, matching the open path):
+  // the visible window re-parses whatever lines it renders.
+  let offset_in_text = edit_start - content_start
+  let edit_end_in_text = edit_end - content_start
+  let next_text = markdown_editor_substring(
+      editor_block.block.text,
+      0,
+      offset_in_text,
+    ) +
+    transaction.replacement +
+    markdown_editor_substring(
+      editor_block.block.text,
+      edit_end_in_text,
+      markdown_editor_text_length(editor_block.block.text),
+    )
+  session.editor_blocks[cluster.start_index] = {
+    block: { ..editor_block.block, text: next_text, inlines: [] },
+    source_range: { start: old_source_start, end: old_source_end + delta },
+    content_range: { start: content_start, end: content_end + delta },
+  }
+  // Maintain the document line index in place: line starts after the edit
+  // shift by the delta (the edit cannot add or remove a line, and no line
+  // starts at the edit point).
+  let cached_index = markdown_document_line_index.val
+  if cached_index.0 == session.document_identity && delta != 0 {
+    let starts = cached_index.1
+    let mut low = 0
+    let mut high = starts.length()
+    while low < high {
+      let mid = low + (high - low) / 2
+      if starts[mid] <= edit_start {
+        low = mid + 1
+      } else {
+        high = mid
+      }
+    }
+    for i = low; i < starts.length(); i = i + 1 {
+      starts[i] = starts[i] + delta
+    }
+  }
+  // Shift the suffix blocks' shared range objects by the edit delta, in
+  // place, exactly like the region re-parse path: editor-block records,
+  // block records and height metrics all reference the same range
+  // objects, so one in-place shift keeps every view consistent. This must
+  // run before the dirty-range computation reads the post-edit tiling.
+  if delta != 0 {
+    for index = cluster.start_index + 1
+        index < session.editor_blocks.length()
+        index = index + 1 {
+      let suffix_block = session.editor_blocks[index]
+      suffix_block.source_range.start = suffix_block.source_range.start + delta
+      suffix_block.source_range.end = suffix_block.source_range.end + delta
+      suffix_block.content_range.start = suffix_block.content_range.start +
+        delta
+      suffix_block.content_range.end = suffix_block.content_range.end + delta
+    }
+  }
+  let window : MarkdownDocumentReindexWindow = {
+    previous_source_digest: session.source_digest,
+    previous_source_length: session.source_length,
+    prefix_count: cluster.start_index,
+    suffix_new_start: cluster.start_index + 1,
+    suffix_shift: 0,
+    old_region_start: old_source_start,
+    old_region_end: old_source_end,
+    edit_start,
+    deleted: transaction.deleted,
+    replacement: transaction.replacement,
+    char_delta: delta,
+  }
+  let dirty = markdown_document_dirty_range(transaction, session.editor_blocks)
+  // Same identity update the region re-parse path performs: the
+  // single-block window matches by position (id preserved, revision
+  // bumped), and the fingerprint is recomputed so the session keeps
+  // ending in exactly the state a from-scratch parse has.
+  let assigned = markdown_document_assign_blocks_reuse(
+    session.editor_blocks,
+    session,
+    window,
+    next_id=session.next_block_id,
+    dirty_range=dirty,
+  )
+  let word_count = markdown_document_word_count_after_edit(session, window)
+  let line_count = markdown_document_line_count_after_edit(
+    session,
+    transaction.source,
+    window,
+  )
+  let height_reuse_ok = session.height_index.blocks.length() ==
+    session.blocks.length()
+  let height_index = markdown_document_height_index(
+    transaction.source,
+    session.editor_blocks,
+    assigned.blocks,
+    previous=Some(session),
+    reuse=Some(window),
+    reuse_ok=height_reuse_ok,
+    dirty_range=dirty,
+    text_store=Some(session.text_store),
+    structure_preserving=true,
+  )
+  let outline = markdown_document_outline_after_edit(
+    session.editor_blocks,
+    session,
+    window,
+  )
+  let next_source_digest = markdown_document_edit_digest(
+    session.source_digest,
+    length=session.source_length + delta,
+    start=transaction.edit_range.start,
+    deleted="",
+    replacement=transaction.replacement,
+  )
+  // The upstream incremental-safety guard already proved this edit cannot
+  // change the definition set, so publish the previous set under the new
+  // (length, digest) key like the region re-parse path does.
+  markdown_reference_definitions_cache_store_keyed(
+    source_length=transaction.source.length(),
+    source_digest=next_source_digest,
+    markdown_reference_definitions_cached_keyed(
+      transaction.previous_source,
+      source_length=transaction.previous_source.length(),
+      source_digest=session.source_digest,
+    ),
+  )
+  let revision = session.revision + 1
+  markdown_document_last_rebase.val = (revision, Some(window))
+  hot_path_in_line_apply_count.val = hot_path_in_line_apply_count.val + 1
+  Some({
+    text_store: session.text_store,
+    source_length: session.text_store.length(),
+    source_digest: next_source_digest,
+    document_identity: session.document_identity,
+    blocks: assigned.blocks,
+    editor_blocks: session.editor_blocks,
+    line_count,
+    word_count,
+    reading_minutes: markdown_editor_reading_minutes(word_count),
+    active_heading: session.active_heading,
+    metadata_title: session.metadata_title,
+    metadata_tags: session.metadata_tags,
+    outline,
+    revision,
+    parse_count: session.parse_count + 1,
+    next_block_id: assigned.next_id,
+    dirty_range: dirty,
+    height_index,
+    layout_cache: None,
+  })
 }
 
 ///|
@@ -938,6 +1230,22 @@ fn markdown_document_session_apply_incremental(
       }
       let delta = markdown_editor_text_length(transaction.replacement) -
         markdown_editor_text_length(deleted)
+      // Structure-preserving fast path: a pure insertion strictly inside
+      // one line of a single paragraph block reproduces the region
+      // re-parse without walking the region — the keystroke path on
+      // documents whose text collapses into one huge block.
+      if deleted == "" {
+        match
+          markdown_document_session_apply_in_line_edit(
+            session,
+            transaction,
+            cluster,
+            delta~,
+          ) {
+          Some(next) => return Some(next)
+          None => ()
+        }
+      }
       let region_end = if cluster.end_index >=
         session.editor_blocks.length() - 1 {
         session.source_length
@@ -965,9 +1273,17 @@ fn markdown_document_session_apply_incremental(
         source_length=transaction.previous_source.length(),
         source_digest=session.source_digest,
       )
+      // Shell parse for the re-parsed region, matching the open path's
+      // session shape: block boundaries are exact, inline runs materialize
+      // on demand (the visible window slices and parses its own lines;
+      // caret geometry materializes its neighborhood). Parsing the region
+      // with inlines made every keystroke inside a document whose text
+      // collapses into one block re-parse megabytes of runs — the typing
+      // lag on novel-shaped files.
       let reparsed = parse_markdown_editor_blocks_with_definitions(
         region_slice,
         definitions=Some(definitions),
+        parse_inlines=false,
       )
       // In-place window splice on the shared editor-block table (same
       // contract as the text store): the prefix keeps its records, the
@@ -1012,6 +1328,9 @@ fn markdown_document_session_apply_incremental(
         }
       }
       let stitched = editor_blocks
+      // The region re-parse can merge, split or retag lines; the line
+      // index must be rebuilt from the next source on demand.
+      markdown_document_line_index_invalidate()
       hot_path_region_reparse_count.val = hot_path_region_reparse_count.val + 1
       // The guard above proved this edit cannot change the whole-source
       // definition set, so publish the previous set under the edited
@@ -1336,6 +1655,43 @@ let markdown_document_last_rebase : Ref[(Int, MarkdownDocumentReindexWindow?)] =
 )
 
 ///|
+/// Char offset of every line start for the current document, keyed by the
+/// session's document identity. The visible-window slice locates a block's
+/// line range here by binary search instead of rescanning a multi-megabyte
+/// block per paint (a novel-shaped document made every window build —
+/// every frame — materialize and walk the whole block). The
+/// structure-preserving apply maintains the array in place (one offset
+/// shift); every other apply invalidates it, and the next query rebuilds
+/// it from one line scan — free on the open path, whose merged scan is
+/// still cached.
+let markdown_document_line_index : Ref[(Int, Array[Int])] = Ref((-1, []))
+
+///|
+fn markdown_document_line_index_invalidate() -> Unit {
+  markdown_document_line_index.val = (-1, [])
+}
+
+///|
+fn markdown_document_session_line_index(
+  session : MarkdownDocumentSession,
+) -> Array[Int] {
+  let cached = markdown_document_line_index.val
+  if cached.0 == session.document_identity && cached.1.length() > 0 {
+    return cached.1
+  }
+  let scanned = markdown_editor_line_scan_cached_lines(session.source())
+  let starts : Array[Int] = []
+  for line in scanned {
+    starts.push(line.start)
+  }
+  if starts.length() == 0 {
+    starts.push(0)
+  }
+  markdown_document_line_index.val = (session.document_identity, starts)
+  starts
+}
+
+///|
 /// The blank-line-delimited block cluster containing the edit. Blank-line
 /// blocks are hard parser boundaries — no setext underline, table, list,
 /// indented code block, or soft-wrapped paragraph continues across one,
@@ -1429,6 +1785,7 @@ pub fn MarkdownDocumentSession::replace_source(
   // re-parsing every block eagerly. Shell blocks materialize on demand
   // exactly like a freshly opened document.
   hot_path_full_parse_count.val = hot_path_full_parse_count.val + 1
+  markdown_document_line_index_invalidate()
   let session = markdown_document_session_from_blocks(
     source,
     parse_markdown_editor_blocks_shell(source),
@@ -1692,8 +2049,8 @@ fn markdown_document_clip_lines_for_window(
     return whole
   }
   if !markdown_document_block_needs_line_window(
-    session, base, visible_start, viewport_height,
-  ) {
+      session, base, visible_start, viewport_height,
+    ) {
     return whole
   }
   let line_step = base.size * 1.55
@@ -1707,9 +2064,7 @@ fn markdown_document_clip_lines_for_window(
   let slack = (viewport_height / line_step).to_int() + 1
   let above = ((scroll_y - overscan - block_top) / line_step).to_int()
   let first_line = if above <= slack { 0 } else { above - slack }
-  let last_line = first_line +
-    (2.0 * overscan / line_step).to_int() +
-    slack * 2
+  let last_line = first_line + (2.0 * overscan / line_step).to_int() + slack * 2
   (first_line, last_line)
 }
 
@@ -2251,6 +2606,11 @@ fn markdown_document_height_index(
   // window decode reads through it (bounded by the window) instead of
   // scanning the whole source for char offsets.
   text_store? : MarkdownDocumentTextStore? = None,
+  // The edit provably kept every block boundary and line count (a pure
+  // insertion strictly inside one line), so the window's heights equal the
+  // previous metrics and the window decode can be skipped entirely — the
+  // per-keystroke cost on a document that is one huge block.
+  structure_preserving? : Bool = false,
 ) -> MarkdownDocumentHeightIndex {
   match (previous, reuse) {
     (Some(prev), Some(window)) if reuse_ok =>
@@ -2262,6 +2622,7 @@ fn markdown_document_height_index(
         window,
         dirty_range~,
         text_store~,
+        structure_preserving~,
       )
     _ =>
       markdown_document_height_index_full(
@@ -2417,9 +2778,19 @@ fn markdown_document_height_index_reuse(
   window : MarkdownDocumentReindexWindow,
   dirty_range? : MarkdownDocumentDirtyRange? = None,
   text_store? : MarkdownDocumentTextStore? = None,
+  structure_preserving? : Bool = false,
 ) -> MarkdownDocumentHeightIndex {
   let metrics = previous.height_index.blocks
   let window_open = window.suffix_new_start > window.prefix_count
+  // A structure-preserving edit keeps every line count, so the single
+  // window block's heights are the previous metric's. The window decode
+  // (a store read of the whole block span plus a newline walk) is what
+  // made every keystroke inside a novel-shaped document O(document).
+  let reuse_window_heights = structure_preserving &&
+    window.suffix_shift == 0 &&
+    window_open &&
+    window.suffix_new_start - window.prefix_count == 1 &&
+    window.prefix_count < metrics.length()
   let span_start = if window_open {
     editor_blocks[window.prefix_count].source_range.start
   } else {
@@ -2430,18 +2801,22 @@ fn markdown_document_height_index_reuse(
   } else {
     0
   }
-  let window_chars = match text_store {
-    Some(store) =>
-      // Bounded window read through the store: the full-source
-      // char-offset walk (`offset_of_nth_char`) costs O(document) twice.
-      store.text_of(span_start, span_end).to_array()
-    None =>
-      markdown_document_source_chars_in_range(
-        source,
-        markdown_editor_text_length(source),
-        span_start,
-        span_end,
-      )
+  let window_chars : Array[Char] = if reuse_window_heights {
+    []
+  } else {
+    match text_store {
+      Some(store) =>
+        // Bounded window read through the store: the full-source
+        // char-offset walk (`offset_of_nth_char`) costs O(document) twice.
+        store.text_of(span_start, span_end).to_array()
+      None =>
+        markdown_document_source_chars_in_range(
+          source,
+          markdown_editor_text_length(source),
+          span_start,
+          span_end,
+        )
+    }
   }
   // Window metrics first: fresh records (window-sized) carrying the
   // recomputed heights; tops are filled by the running pass below.
@@ -2456,14 +2831,6 @@ fn markdown_document_height_index_reuse(
     let editor_block = editor_blocks[index]
     hot_path_height_metrics_recomputed.val = hot_path_height_metrics_recomputed.val +
       1
-    let source_height_units = markdown_document_source_range_line_count(
-        window_chars,
-        {
-          start: editor_block.source_range.start - span_start,
-          end: editor_block.source_range.end - span_start,
-        },
-      ).to_double() *
-      1.42
     let session_block = blocks[index]
     let previous_metric = if index < metrics.length() {
       Some(metrics[index])
@@ -2472,9 +2839,23 @@ fn markdown_document_height_index_reuse(
       // new records count as changed.
       None
     }
-    let visual_height_units = markdown_document_estimated_editor_block_height_units(
-      editor_block,
-    )
+    let (visual_height_units, source_height_units) = if reuse_window_heights {
+      let metric = previous_metric.unwrap()
+      (metric.visual_height_units, metric.source_height_units)
+    } else {
+      let source_height_units = markdown_document_source_range_line_count(
+          window_chars,
+          {
+            start: editor_block.source_range.start - span_start,
+            end: editor_block.source_range.end - span_start,
+          },
+        ).to_double() *
+        1.42
+      let visual_height_units = markdown_document_estimated_editor_block_height_units(
+        editor_block,
+      )
+      (visual_height_units, source_height_units)
+    }
     if !heights_changed &&
       (
         previous_metric is None ||
@@ -3666,13 +4047,36 @@ fn markdown_document_block_index_after_source(
 }
 
 ///|
+/// Slack past a run's visible text that a reveal span can still reach: the
+/// closing markers and a link or image target, which the run's source range
+/// does not cover.
+const MARKDOWN_EDITOR_REVEAL_TARGET_SLACK : Int = 4096
+
+///|
+/// Whether a run is close enough to the reveal anchor that a marker span could
+/// be active on it. A run with no source range cannot be judged, so it is
+/// treated as near — that keeps the un-ranged case on the original path.
+fn markdown_editor_run_near_reveal_anchor(
+  run : RichTextRun,
+  anchor : Int,
+) -> Bool {
+  match run.source_range {
+    Some(range) =>
+      anchor >= range.start - 2 &&
+      anchor <= range.end + MARKDOWN_EDITOR_REVEAL_TARGET_SLACK
+    None => true
+  }
+}
+
+///|
 fn markdown_document_session_reveal_selection(
   source : String,
   document : RichTextDocument,
   selection : MarkdownEditorSelection,
 ) -> RichTextDocument {
   let blocks : Array[RichTextBlock] = []
-  let reveal_anchor = match markdown_editor_active_selection(selection.selection) {
+  let reveal_anchor = match
+    markdown_editor_active_selection(selection.selection) {
     Some(range) => range.start
     None => selection.caret
   }
@@ -3705,9 +4109,7 @@ fn markdown_document_session_reveal_selection(
     let chars = if block.runs.length() > 0 {
       Some(
         markdown_editor_block_source_chars_near(
-          source,
-          block_source_start,
-          block_source_end,
+          source, block_source_start, block_source_end,
         ),
       )
     } else {
@@ -3718,12 +4120,20 @@ fn markdown_document_session_reveal_selection(
       runs.push(
         match chars {
           Some(chars) =>
-            markdown_editor_reveal_active_inline_run(
-              source,
-              chars~,
-              selection,
-              run,
-            )
+            // Only a run the anchor sits in (or beside) can carry an active
+            // marker span. This pass runs on every window query, and a
+            // soft-wrapped paragraph carries one run per source line, so
+            // probing all of them made each frame walk the whole document.
+            if markdown_editor_run_near_reveal_anchor(run, reveal_anchor) {
+              markdown_editor_reveal_active_inline_run(
+                source,
+                chars~,
+                selection,
+                run,
+              )
+            } else {
+              run
+            }
           None => run
         },
       )

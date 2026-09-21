@@ -23,6 +23,12 @@ let hot_path_region_reparse_count : Ref[Int] = Ref(0)
 let hot_path_incremental_fallback_count : Ref[Int] = Ref(0)
 
 ///|
+/// `apply` calls handled by the structure-preserving in-line fast path (a
+/// pure insertion strictly inside one line of a single paragraph block):
+/// no region re-parse, no window decode.
+let hot_path_in_line_apply_count : Ref[Int] = Ref(0)
+
+///|
 /// Blocks visited while (re)building the scroll block-height array.
 let hot_path_block_height_walk_blocks : Ref[Int] = Ref(0)
 

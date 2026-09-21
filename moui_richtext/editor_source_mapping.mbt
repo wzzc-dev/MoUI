@@ -590,7 +590,7 @@ fn markdown_editor_reveal_active_inline_run(
   run : RichTextRun,
 ) -> RichTextRun {
   match run.source_range {
-    Some(range) => {
+    Some(range) =>
       // Probe the whole construct (markers and, for links/images, the target
       // `(...)` too) once. The reveal anchor is that full range — not the
       // run's visible span — so a caret anywhere inside the construct,
@@ -622,7 +622,6 @@ fn markdown_editor_reveal_active_inline_run(
           }
         None => run
       }
-    }
     None => run
   }
 }
@@ -1671,6 +1670,58 @@ fn markdown_editor_block_materialized(
     return editor_block
   }
   let range = editor_block.source_range
+  // The shell parse leaves a block's inline runs out, and every caret,
+  // hit-test and input-state query asks for the same block again. Without a
+  // memo each of those re-copies the block's source and re-parses it — for a
+  // document that is one paragraph that is a multi-megabyte copy plus a full
+  // markdown parse per query, which is what made clicking and scrolling a
+  // large document stall.
+  //
+  // Keyed on the document's content digest and the block's source range, so a
+  // different document (or an edited one) can never hit a stale entry. Callers
+  // that pass no digest opt out.
+  if source_digest != 0UL {
+    match markdown_editor_materialized_block_memo.val {
+      Some((digest, start, end, cached)) =>
+        if digest == source_digest && start == range.start && end == range.end {
+          return cached
+        }
+      None => ()
+    }
+  }
+  let materialized = markdown_editor_block_materialized_uncached(
+    source,
+    source_length~,
+    source_digest~,
+    editor_block,
+  )
+  if source_digest != 0UL {
+    markdown_editor_materialized_block_memo.val = Some(
+      (source_digest, range.start, range.end, materialized),
+    )
+  }
+  materialized
+}
+
+///|
+/// One-entry memo for `markdown_editor_block_materialized`. A frame asks for
+/// the same block from several paths, and a document whose text is one
+/// paragraph makes each miss cost the whole document.
+let markdown_editor_materialized_block_memo : Ref[
+  (UInt64, Int, Int, MarkdownEditorBlock)?,
+] = Ref(None)
+
+///|
+fn markdown_editor_block_materialized_uncached(
+  source : String,
+  source_length~ : Int,
+  source_digest~ : UInt64,
+  editor_block : MarkdownEditorBlock,
+) -> MarkdownEditorBlock {
+  if !markdown_editor_block_is_shell(editor_block) {
+    return editor_block
+  }
+  let range = editor_block.source_range
   let slice = markdown_editor_substring(source, range.start, range.end)
   match parse_markdown(slice) {
     [real] => {
@@ -2706,6 +2757,62 @@ fn markdown_editor_footnote_marker_prefix_length(line : StringView) -> Int {
 /// consumer keeps seeing true source offsets. Nothing downstream needs to know
 /// the block was sliced.
 ///
+
+///|
+/// Block-line bounds for a slice via the document's line-start index:
+/// O(log n) to locate the block's first line, then two direct lookups.
+/// Returns None when the index does not line up with the block (a content
+/// range that is not a line start) so the caller falls back to the scan,
+/// and when the slice would cover the whole block (a no-op, matching the
+/// scan path's "unchanged" contract).
+fn markdown_editor_block_slice_bounds_via_index(
+  index : Array[Int],
+  content_range : MarkdownSourceRange,
+  first_line : Int,
+  last_line : Int,
+  source_length : Int,
+) -> (Int, Int)? {
+  let mut low = 0
+  let mut high = index.length() - 1
+  let mut block_line = 0
+  while low <= high {
+    let mid = low + (high - low) / 2
+    if index[mid] <= content_range.start {
+      block_line = mid
+      low = mid + 1
+    } else {
+      high = mid - 1
+    }
+  }
+  if index[block_line] != content_range.start {
+    return None
+  }
+  let first = block_line + first_line
+  if first >= index.length() {
+    return None
+  }
+  let slice_start = index[first]
+  let last = block_line + last_line
+  let raw_end = if last + 1 < index.length() {
+    index[last + 1] - 1
+  } else {
+    source_length
+  }
+  let slice_end = if raw_end > content_range.end {
+    content_range.end
+  } else {
+    raw_end
+  }
+  if slice_end <= slice_start {
+    return None
+  }
+  if slice_start == content_range.start && slice_end == content_range.end {
+    return None
+  }
+  Some((slice_start, slice_end))
+}
+
+///|
 /// Returns the block unchanged when the range covers it, when the block has no
 /// content lines, or when the slice would be empty — callers treat that as
 /// "no clipping" rather than having to special-case it.
@@ -2714,11 +2821,42 @@ fn markdown_editor_block_slice_to_source_lines(
   editor_block : MarkdownEditorBlock,
   first_line : Int,
   last_line : Int,
+  line_index? : Array[Int]? = None,
 ) -> MarkdownEditorBlock {
   let content_start = editor_block.content_range.start
   let content_end = editor_block.content_range.end
   if last_line < first_line || content_end <= content_start {
     return editor_block
+  }
+  // With the document's line-start index, the slice bounds are two direct
+  // lookups past one binary search — no walk over the block. A block that
+  // holds a whole novel otherwise materialized and scanned every one of
+  // its characters on every window build (every frame).
+  match line_index {
+    Some(index) =>
+      match
+        markdown_editor_block_slice_bounds_via_index(
+          index,
+          editor_block.content_range,
+          first_line,
+          last_line,
+          markdown_editor_text_length(source),
+        ) {
+        Some((slice_start, slice_end)) => {
+          let text = markdown_editor_substring(source, slice_start, slice_end)
+          return {
+            block: {
+              ..editor_block.block,
+              text,
+              inlines: parse_markdown_inlines_with_definitions(text, []),
+            },
+            source_range: { start: slice_start, end: slice_end },
+            content_range: { start: slice_start, end: slice_end },
+          }
+        }
+        None => ()
+      }
+    None => ()
   }
   let chars = markdown_editor_substring(source, content_start, content_end).to_array()
   // Offsets of each line's first character within the slice, plus one past the
@@ -2734,7 +2872,11 @@ fn markdown_editor_block_slice_to_source_lines(
   if first >= line_count {
     return editor_block
   }
-  let last = if last_line >= line_count - 1 { line_count - 1 } else { last_line }
+  let last = if last_line >= line_count - 1 {
+    line_count - 1
+  } else {
+    last_line
+  }
   // Only a range that covers the whole block is a no-op. A *bottom-only* cap —
   // first line zero, last line bounded — is the common case for a block that
   // starts inside the band, and treating it as "nothing to do" left the whole

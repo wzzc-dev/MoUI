@@ -53,16 +53,42 @@ each y position.
 
 ### 3b — interaction side
 
-The caret rectangle, hit testing (`rich_text_document_source_offset_at_point`)
-and selection rendering consume `window.document`. Once 3a clips the wrapped
-text, they must apply the same line window and vertical offset, or a click lands
-on the wrong line.
+**This must land before 3a is enabled.** 3a was tried on its own and reverted
+twice; the second attempt produced a visible defect: scroll away from the caret,
+then click, and the caret is painted at the very start of the block.
 
-- Extend `MarkdownDocumentRichTextWindow` with `clipped_lines` (visual lines of
-  the first rendered block that sit above the viewport) and `clipped_height`
-  (their accumulated height). `top_padding` already exists as the mechanism for
-  the same idea at block granularity.
-- Thread the pair through the caret/hit-test coordinate conversion.
+The cause is that `window.document` is the single geometry source for both
+paint and interaction (ADR 0001). Clipping it removes the caret's line whenever
+the caret sits outside the visible band, so
+`rich_text_document_caret_rect_at_source` finds nothing and falls through to
+`markdown_session_estimated_caret_rect`, which places the caret from block-level
+geometry — i.e. at the block's start.
+
+The vertical offset itself is already solved: folding the clipped height into
+`top_padding` makes `content_rect` place the window correctly, so hit testing
+and paint agree. What is missing is *locating a caret the window does not
+contain*.
+
+Two candidate designs:
+
+- **A — window is the union of the band and the caret's line.** Extend the slice
+  to cover the caret's line as well as the visible band. The existing lookup
+  then works unchanged. Simple and exact, but when the caret is parked far from
+  the scroll position the window spans everything between them, which is the
+  scroll-with-a-parked-caret case that 3a exists to speed up.
+- **B — caret geometry from the block's own line index.** Keep the window  band-only and compute an out-of-band caret's y from the block's top plus
+  `line_index * line_step`. Exactness needs the caret's line index within the
+  block, which no index provides today: `height_index` carries per-block height
+  units, not a prefix newline count. Adding one is the real work.
+
+**B is the one that preserves 3a's win.** Its cost is a per-block prefix
+newline index, which `markdown_document_source_digest_and_line_counts` already
+walks — extending that scan to publish a prefix array is the natural place.
+
+Acceptance test for either design: with the window clipped, park the caret
+outside the band, query the caret rect, and assert it equals the rect the
+unclipped window produces. That test does not exist yet, which is why 3a looked
+safe when it was not.
 
 ## Invariants to hold
 
@@ -97,3 +123,38 @@ on the wrong line.
   no expensive optional feature to disable yet.
 - Changing the block parser so that soft-wrapped paragraphs become many blocks.
   That would change the document model, undo granularity and the outline.
+
+## Progress (2026-09-21)
+
+Landed against the reported defects (`人间如狱.md`, 17 MB / 156k lines / 2 blank
+lines → one 5.9M-char paragraph block):
+
+- **3b interaction side — done.** `markdown_session_window_covers_caret` gates
+  both the IME input state *and* the painted caret: an out-of-band caret falls
+  to `markdown_session_estimated_caret_rect` (session height index + line
+  index) instead of being pinned to the band's first rendered line. The
+  "scroll, then click, and the caret sits at the very front" defect is covered
+  by the runtime regression tests in momark
+  (`editor_app_large_file_regression_wbtest.mbt`).
+- **Document line-start index** (`markdown_document_line_index`, keyed by
+  document identity): the visible-window slice locates a block's line range by
+  binary search — a block that holds a whole novel is no longer materialized
+  and scanned per window build. Window build on the 100k-line fixture:
+  34 ms → 7 ms. Maintained in place by the structure-preserving apply; any
+  other apply invalidates it (one line-scan rebuild).
+- **Structure-preserving in-line apply** (`markdown_document_session_apply_in_line_edit`):
+  an insert/delete/replace strictly inside one line of a single paragraph
+  block, with the edited line re-validated against the shell paragraph rules,
+  splices the text, shifts ranges and maintains the line index — no region
+  re-parse (was O(block) per keystroke), no window decode. Novel-shaped typing
+  on the 100k-line fixture: 753 ms → ~33 ms per keystroke (the remainder is the
+  block-text splice, fingerprint hash and text-store rewrite, all bounded by
+  the block).
+- **Region re-parse switched to the shell parse** (`parse_inlines=false`),
+  matching the open path's session shape; inline runs materialize on demand.
+- **Text store segment cap** (256k chars): a document that is one block is one
+  segment, which made every store edit and char probe O(document); edits now
+  re-emit capped chunks and constructors cap oversized segments.
+- Remaining known cost per keystroke on a 5.9M-char block: the block-text
+  splice + fingerprint hash (~O(block) copies). A rope or incremental
+  fingerprint would remove it, if the residual latency matters.
