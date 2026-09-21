@@ -158,3 +158,13 @@ lines → one 5.9M-char paragraph block):
 - Remaining known cost per keystroke on a 5.9M-char block: the block-text
   splice + fingerprint hash (~O(block) copies). A rope or incremental
   fingerprint would remove it, if the residual latency matters.
+- **First-visual-line click snap — fixed.** A paragraph block's inline runs
+  carry one run per source line plus a bare "\n" run between them; splitting
+  that run yields two empty segments, and the second sits at the start of the
+  next line before any content. The hit walk's empty-segment shortcut returned
+  there and ignored the click x, pinning every click on a wrapped line's first
+  visual line (and past-end clicks on the previous line) to the line start.
+  `rich_text_block_visual_offset_at_point` now keeps walking to the line's
+  content and only falls back to the remembered start for a genuinely empty
+  line. Regression test:
+  `rich_text_first_visual_line_hit_wbtest.mbt`.

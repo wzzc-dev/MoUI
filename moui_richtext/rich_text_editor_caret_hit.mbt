@@ -1282,6 +1282,12 @@ fn rich_text_block_visual_offset_at_point(
   let mut visual_offset = 0
   let mut line = 0
   let mut line_end = 0
+  // Whether the target line's own content has been reached. A newline run
+  // (a run whose text is just "\n") splits into two empty segments, and
+  // the second one sits at the START of the next line before any content;
+  // returning there pinned every click on the line to its first offset,
+  // ignoring x.
+  let mut target_line_has_content = false
   if block.prefix != "" {
     let prefix_length = text_length(block.prefix)
     let width = rich_text_block_marker_lane(block, font, text_system)
@@ -1323,23 +1329,35 @@ fn rich_text_block_visual_offset_at_point(
         available_width=frame.size.width,
       )
       if line == target_line {
-        line_end = visual_offset + segment_length
-        if point.x <= origin + segment_width || segment_length == 0 {
-          return visual_offset +
-            rich_text_run_visual_offset_at_x(
-              segment,
-              run_font,
-              point.x,
-              origin,
-              text_system,
-              width=rich_text_run_hit_width(run, segment_width),
-            )
+        if segment_length == 0 {
+          // An empty segment at the target line: the split artifact around
+          // a newline run (its second half is the new line's start, before
+          // any content) or a genuinely empty visual line. Remember the
+          // line start as the fallback and keep walking — the line's
+          // content is the next non-empty segment at the same line.
+          if !target_line_has_content {
+            line_end = visual_offset
+          }
+        } else {
+          target_line_has_content = true
+          line_end = visual_offset + segment_length
+          if point.x <= origin + segment_width {
+            return visual_offset +
+              rich_text_run_visual_offset_at_x(
+                segment,
+                run_font,
+                point.x,
+                origin,
+                text_system,
+                width=rich_text_run_hit_width(run, segment_width),
+              )
+          }
         }
       }
       visual_offset = visual_offset + segment_length
       origin = origin + segment_width
       if index + 1 < segments.length() {
-        if line == target_line {
+        if line == target_line && target_line_has_content {
           return line_end
         }
         visual_offset = visual_offset + 1

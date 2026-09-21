@@ -7,13 +7,31 @@ test "line lookup finds the line containing an offset" {
   let source = "alpha\nbeta\ngamma"
   // Prime the line scan cache the way the open path does.
   let _ = MarkdownDocumentSession::new(source)
-  debug_inspect(markdown_editor_line_at_offset(source, 0), content="Some((0, 0))")
-  debug_inspect(markdown_editor_line_at_offset(source, 4), content="Some((0, 0))")
+  debug_inspect(
+    markdown_editor_line_at_offset(source, 0),
+    content="Some((0, 0))",
+  )
+  debug_inspect(
+    markdown_editor_line_at_offset(source, 4),
+    content="Some((0, 0))",
+  )
   // The newline itself belongs to the line it ends.
-  debug_inspect(markdown_editor_line_at_offset(source, 5), content="Some((0, 0))")
-  debug_inspect(markdown_editor_line_at_offset(source, 6), content="Some((1, 6))")
-  debug_inspect(markdown_editor_line_at_offset(source, 11), content="Some((2, 11))")
-  debug_inspect(markdown_editor_line_at_offset(source, 16), content="Some((2, 11))")
+  debug_inspect(
+    markdown_editor_line_at_offset(source, 5),
+    content="Some((0, 0))",
+  )
+  debug_inspect(
+    markdown_editor_line_at_offset(source, 6),
+    content="Some((1, 6))",
+  )
+  debug_inspect(
+    markdown_editor_line_at_offset(source, 11),
+    content="Some((2, 11))",
+  )
+  debug_inspect(
+    markdown_editor_line_at_offset(source, 16),
+    content="Some((2, 11))",
+  )
 }
 
 ///|
