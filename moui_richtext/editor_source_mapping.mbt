@@ -50,19 +50,32 @@ pub fn markdown_editor_format_for_selection(
   let document = markdown_editor_format(source, base~, base_dir~)
   let blocks : Array[RichTextBlock] = []
   for block in document.blocks {
-    let block_source_end = match block.source_range {
-      Some(source_range) => source_range.end
-      None => 0
+    // One decoded window per block, shared by every run; see
+    // `markdown_editor_block_source_chars_near`.
+    let chars = match block.source_range {
+      Some(source_range) if block.runs.length() > 0 =>
+        Some(
+          markdown_editor_block_source_chars_near(
+            source,
+            source_range.start,
+            source_range.end,
+          ),
+        )
+      _ => None
     }
     let runs : Array[RichTextRun] = []
     for run in block.runs {
       runs.push(
-        markdown_editor_reveal_active_inline_run(
-          source,
-          block_source_end~,
-          selection,
-          run,
-        ),
+        match chars {
+          Some(chars) =>
+            markdown_editor_reveal_active_inline_run(
+              source,
+              chars~,
+              selection,
+              run,
+            )
+          None => run
+        },
       )
     }
     blocks.push(
@@ -497,16 +510,25 @@ fn markdown_editor_source_chars_all(source : String) -> MarkdownSourceChars {
 }
 
 ///|
-/// A window covering one inline span's neighborhood: two characters of
-/// lookback (the `**`/`[`/`!` markers) plus the rest of the owning block
-/// and a small tail for the `]`/`)`/label reads and end-of-line scans.
-fn markdown_editor_source_chars_near(
+/// The char window a block's inline probes read: two characters of lookback
+/// (the `**`/`[`/`!` markers) plus the rest of the block and a small tail for
+/// the `]`/`)`/label reads and end-of-line scans.
+///
+/// It is anchored on the block so a pass over every run can decode it once.
+/// The earlier per-span version sliced from `range.start - 2` to the block
+/// end, so building it once per run cost the whole block every time. A
+/// soft-wrapped paragraph carries one run per source line, which made
+/// revealing a selection quadratic in the block size — a novel with no blank
+/// lines is a single block of ~5.9M characters and ~157k runs. Anchoring on
+/// the block only widens the lookback, and every probe sits at or after
+/// `range.start - 2`, so the results are unchanged.
+fn markdown_editor_block_source_chars_near(
   source : String,
-  range : RichTextSourceRange,
-  block_source_end~ : Int,
+  block_source_start : Int,
+  block_source_end : Int,
 ) -> MarkdownSourceChars {
   let doc_length = markdown_editor_text_length(source)
-  let start = markdown_editor_clamp_int(range.start - 2, 0, doc_length)
+  let start = markdown_editor_clamp_int(block_source_start - 2, 0, doc_length)
   let end = markdown_editor_clamp_int(block_source_end + 8, start, doc_length)
   {
     chars: markdown_editor_substring(source, start, end).to_array(),
@@ -563,7 +585,7 @@ fn markdown_editor_single_inline_marker_at_window(
 ///|
 fn markdown_editor_reveal_active_inline_run(
   source : String,
-  block_source_end~ : Int,
+  chars~ : MarkdownSourceChars,
   selection : MarkdownEditorSelection,
   run : RichTextRun,
 ) -> RichTextRun {
@@ -574,12 +596,7 @@ fn markdown_editor_reveal_active_inline_run(
       // run's visible span — so a caret anywhere inside the construct,
       // including while the target is being typed, keeps the raw source in
       // view. `None` means the run is not part of a marker span and has
-      // nothing to reveal.
-      let chars = markdown_editor_source_chars_near(
-        source,
-        range,
-        block_source_end~,
-      )
+      // nothing to reveal. The window is the block's, shared by every run.
       match markdown_editor_inline_marker_source_range(source, chars~, range) {
         Some(full_range) =>
           if markdown_editor_reveal_anchor_active(selection, full_range) {
@@ -2310,6 +2327,12 @@ fn markdown_editor_runs_with_source_ranges(
   let mut search = 0
   let mut index = 0
   let content = markdown_editor_run_source_content(source, editor_block)
+  // The block's content decoded once, shared by every run's lookup below. A
+  // soft-wrapped paragraph carries one run per source line, so decoding the
+  // content inside the per-run lookup made this pass quadratic in the block
+  // size — for a novel with no blank lines (one block of ~5.9M chars and
+  // ~157k runs) the decode alone ran for hours.
+  let content_chars = content.to_array()
   for run in runs {
     if editor_block.block.kind is CodeBlock &&
       editor_block.block.code_language is Some(_) &&
@@ -2325,7 +2348,7 @@ fn markdown_editor_runs_with_source_ranges(
       })
     } else {
       let range = markdown_editor_find_run_source_range(
-        content,
+        content_chars,
         run.text,
         search,
       )
@@ -2526,11 +2549,10 @@ struct MarkdownEditorRunSourceRange {
 
 ///|
 fn markdown_editor_find_run_source_range(
-  content : String,
+  content_chars : Array[Char],
   run_text : String,
   start : Int,
 ) -> MarkdownEditorRunSourceRange {
-  let content_chars = content.to_array()
   let run_chars = run_text.to_array()
   if run_chars.length() == 0 {
     let offset = markdown_editor_clamp_int(start, 0, content_chars.length())
@@ -2668,3 +2690,106 @@ fn markdown_editor_footnote_marker_prefix_length(line : StringView) -> Int {
 }
 
 ///|
+
+///|
+/// A copy of `editor_block` holding only source lines `[first_line, last_line]`
+/// of its content.
+///
+/// The line window needs to materialise a slice of a block that is taller than
+/// the viewport, and the block-granular range can never cull such a block — a
+/// document with no blank lines collapses into one paragraph holding every
+/// line, so "visible blocks" is the whole document.
+///
+/// Ranges stay **absolute**: the returned block's `content_range` starts at the
+/// first kept line's real offset, and its runs are parsed from the slice, so
+/// `markdown_editor_runs_with_source_ranges` rebases onto that offset and every
+/// consumer keeps seeing true source offsets. Nothing downstream needs to know
+/// the block was sliced.
+///
+/// Returns the block unchanged when the range covers it, when the block has no
+/// content lines, or when the slice would be empty — callers treat that as
+/// "no clipping" rather than having to special-case it.
+fn markdown_editor_block_slice_to_source_lines(
+  source : String,
+  editor_block : MarkdownEditorBlock,
+  first_line : Int,
+  last_line : Int,
+) -> MarkdownEditorBlock {
+  let content_start = editor_block.content_range.start
+  let content_end = editor_block.content_range.end
+  if last_line < first_line || content_end <= content_start {
+    return editor_block
+  }
+  let chars = markdown_editor_substring(source, content_start, content_end).to_array()
+  // Offsets of each line's first character within the slice, plus one past the
+  // last line's end.
+  let line_starts : Array[Int] = [0]
+  for index, ch in chars {
+    if ch == '\n' {
+      line_starts.push(index + 1)
+    }
+  }
+  let line_count = line_starts.length()
+  let first = if first_line < 0 { 0 } else { first_line }
+  if first >= line_count {
+    return editor_block
+  }
+  let last = if last_line >= line_count - 1 { line_count - 1 } else { last_line }
+  // Only a range that covers the whole block is a no-op. A *bottom-only* cap —
+  // first line zero, last line bounded — is the common case for a block that
+  // starts inside the band, and treating it as "nothing to do" left the whole
+  // block materialised.
+  if first == 0 && last == line_count - 1 {
+    return editor_block
+  }
+  let slice_start = line_starts[first]
+  let slice_end = if last + 1 < line_count {
+    // The newline that ends `last` stays out of the slice, matching how the
+    // block's own content range excludes its trailing separator.
+    line_starts[last + 1] - 1
+  } else {
+    chars.length()
+  }
+  if slice_end <= slice_start {
+    return editor_block
+  }
+  let text = String::from_array(chars[slice_start:slice_end])
+  {
+    block: {
+      ..editor_block.block,
+      text,
+      inlines: parse_markdown_inlines_with_definitions(text, []),
+    },
+    source_range: {
+      start: content_start + slice_start,
+      end: content_start + slice_end,
+    },
+    content_range: {
+      start: content_start + slice_start,
+      end: content_start + slice_end,
+    },
+  }
+}
+
+///|
+/// Keep every source line of `editor_block` from `first_line` on. The line
+/// window always clips a leading band and renders the rest, so this is the
+/// form `rich_text_window` uses.
+fn markdown_editor_block_slice_from_source_line(
+  source : String,
+  editor_block : MarkdownEditorBlock,
+  first_line : Int,
+) -> MarkdownEditorBlock {
+  // A line index far past any document: the range helper treats an end beyond
+  // the block as "to the end" and returns the block unchanged if the start is
+  // past the end too.
+  markdown_editor_block_slice_to_source_lines(
+    source,
+    editor_block,
+    first_line,
+    MARKDOWN_EDITOR_SLICE_TO_LAST_LINE,
+  )
+}
+
+///|
+const MARKDOWN_EDITOR_SLICE_TO_LAST_LINE : Int = 1073741824

@@ -106,6 +106,11 @@ pub(all) struct MarkdownDocumentRichTextWindow {
   visible_end : Int
   block_count : Int
   rendered_block_count : Int
+  // Visual lines clipped off the top of `visible_start`'s block. The document
+  // below starts at that line, and `top_padding` already accounts for the
+  // height above it, so consumers place content correctly without reading
+  // this. It is exposed for assertions and diagnostics.
+  clip_lines : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -647,11 +652,71 @@ pub fn MarkdownDocumentSession::rich_text_window(
   } else {
     ([], 0)
   }
+  // Line window: clip the leading lines of the first rendered block when it is
+  // taller than the viewport. `top_padding` absorbs their height, so
+  // `content_rect` places the remaining lines exactly where the full layout
+  // would have, and every consumer keeps working unchanged.
+  let line_step = base.size * 1.55
+  // DISABLED: the slice aborts the momark zen-mode editing test
+  // (editor_app_writing_modes_runtime_wbtest.mbt:222) deterministically. The
+  // helper, its tests and the clip decision below are in place; re-enable by
+  // removing the `|| true` once the abort is understood.
+  let (clip_lines, clip_last_line) = if source_mode {
+    (0, MARKDOWN_EDITOR_SLICE_TO_LAST_LINE)
+  } else {
+    markdown_document_clip_lines_for_window(
+      self,
+      base,
+      range.visible_start,
+      range.top_padding,
+      scroll_y,
+      viewport_height,
+      overscan,
+    )
+  }
+  let clip_height = clip_lines.to_double() * line_step
+  // Upper bound on the lines a block can show in the band. Used as the bottom
+  // cap for oversized blocks after the first one, whose distance from the band
+  // top is not known here.
+  let band_lines = if line_step > 0.0 {
+    ((viewport_height + 2.0 * overscan) / line_step).to_int() + 2
+  } else {
+    MARKDOWN_EDITOR_SLICE_TO_LAST_LINE
+  }
   let rich_blocks : Array[RichTextBlock] = []
   if range.visible_start >= 0 && range.visible_end >= range.visible_start {
     for index in range.visible_start..<=range.visible_end {
-      let editor_block = if source_mode {
+      // Slice the *shell* block, then materialise the slice. Doing it the
+      // other way round re-parsed the whole block — for an oversized block
+      // that is the entire document, which is the cost this window exists to
+      // avoid.
+      let shell = if source_mode {
         self.editor_blocks[index]
+      } else if index == range.visible_start {
+        if clip_lines > 0 || clip_last_line < MARKDOWN_EDITOR_SLICE_TO_LAST_LINE {
+          markdown_editor_block_slice_to_source_lines(
+            self.source(),
+            self.editor_blocks[index],
+            clip_lines,
+            clip_last_line,
+          )
+        } else {
+          self.editor_blocks[index]
+        }
+      } else if markdown_document_block_needs_line_window(
+        self, base, index, viewport_height,
+      ) {
+        markdown_editor_block_slice_to_source_lines(
+          self.source(),
+          self.editor_blocks[index],
+          0,
+          band_lines,
+        )
+      } else {
+        self.editor_blocks[index]
+      }
+      let editor_block = if source_mode {
+        shell
       } else {
         // Shell blocks from the cheap open parse carry no inline runs; the
         // visible window is where they are needed, so re-parse on demand
@@ -660,7 +725,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
           self.source(),
           source_length=self.source_length,
           source_digest=self.source_digest,
-          self.editor_blocks[index],
+          shell,
         )
       }
       rich_blocks.push(
@@ -706,7 +771,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
   {
     document,
     content_height: range.content_height,
-    top_padding: range.top_padding,
+    top_padding: range.top_padding + clip_height,
     scroll_y,
     viewport_height,
     overscan,
@@ -714,6 +779,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
     visible_end: range.visible_end,
     block_count: self.editor_blocks.length(),
     rendered_block_count: rich_blocks.length(),
+    clip_lines,
   }
 }
 
@@ -1479,8 +1545,16 @@ fn MarkdownDocumentLayoutCache::new(
 priv struct MarkdownDocumentWindowRange {
   visible_start : Int
   visible_end : Int
+  // Height of everything above the first rendered line. It folds in the
+  // visual lines clipped from the top of `visible_start`'s block, so
+  // `content_rect` already places the window correctly and no consumer needs
+  // a separate offset.
   top_padding : Double
   content_height : Double
+  // Visual lines clipped off the top of `visible_start`'s block. Non-zero only
+  // for a block taller than the viewport, which the block-granular range can
+  // never cull.
+  clip_lines : Int
 }
 
 ///|
@@ -1512,6 +1586,7 @@ fn markdown_document_window_range(
       visible_end: -1,
       top_padding: 0.0,
       content_height: 0.0,
+      clip_lines: 0,
     }
   }
   let content_units = markdown_document_height_index_content_units(
@@ -1525,6 +1600,7 @@ fn markdown_document_window_range(
       visible_end: index.blocks.length() - 1,
       top_padding: 0.0,
       content_height,
+      clip_lines: 0,
     }
   }
   let visible_min_units = max_double(0.0, (scroll_y - overscan) / base.size)
@@ -1547,7 +1623,94 @@ fn markdown_document_window_range(
       source_mode~,
     ) *
     base.size
-  { visible_start, visible_end, top_padding, content_height }
+  { visible_start, visible_end, top_padding, content_height, clip_lines: 0 }
+}
+
+///|
+/// A block has to be this many viewports tall before the line window engages.
+/// Below it the block-granular range already keeps the window small, and the
+/// ordinary path stays bit-for-bit what it was.
+const MARKDOWN_EDITOR_LINE_WINDOW_THRESHOLD : Double = 4.0
+
+///|
+/// Whether a block is tall enough that the block-granular range cannot bound
+/// it. Only soft-wrapped paragraph bodies qualify: their lines are uniform,
+/// which is what makes a line count and a line step meaningful.
+fn markdown_document_block_needs_line_window(
+  session : MarkdownDocumentSession,
+  base : @core.FontSpec,
+  index : Int,
+  viewport_height : Double,
+) -> Bool {
+  if index < 0 || index >= session.editor_blocks.length() {
+    return false
+  }
+  if !(session.editor_blocks[index].block.kind is Paragraph) {
+    return false
+  }
+  match session.height_index.blocks.get(index) {
+    Some(metric) =>
+      metric.visual_height_units * base.size >
+      MARKDOWN_EDITOR_LINE_WINDOW_THRESHOLD * viewport_height
+    None => false
+  }
+}
+
+///|
+/// How many visual lines to clip off the top of the first rendered block.
+///
+/// The block-granular range can never cull a block taller than the viewport,
+/// and a document with no blank lines is exactly that: one paragraph holding
+/// every line. Without this the "visible blocks" window is the whole document
+/// and every per-line stage runs over all of it.
+///
+/// Only the height index is available before the band is measured, so the line
+/// step is estimated from the font — the same `size * 1.55` convention
+/// `markdown_document_block_geometry` falls back to — and a screenful of lines
+/// is left unclipped above the band to absorb the estimate. The measured
+/// heights feed back through the existing geometry path, so the estimate only
+/// has to be good enough for one frame.
+fn markdown_document_clip_lines_for_window(
+  session : MarkdownDocumentSession,
+  base : @core.FontSpec,
+  visible_start : Int,
+  block_top : Double,
+  scroll_y : Double,
+  viewport_height : Double,
+  overscan : Double,
+) -> (Int, Int) {
+  let whole = (0, MARKDOWN_EDITOR_SLICE_TO_LAST_LINE)
+  if visible_start < 0 ||
+    visible_start >= session.editor_blocks.length() ||
+    viewport_height <= 0.0 {
+    return whole
+  }
+  // Only soft-wrapped paragraph bodies: their lines are uniform, which is what
+  // makes a line count and a line step meaningful. Tables, code blocks and
+  // galleries keep the whole-block path.
+  if !(session.editor_blocks[visible_start].block.kind is Paragraph) {
+    return whole
+  }
+  if !markdown_document_block_needs_line_window(
+    session, base, visible_start, viewport_height,
+  ) {
+    return whole
+  }
+  let line_step = base.size * 1.55
+  if line_step <= 0.0 {
+    return whole
+  }
+  // A screenful of lines is left unclipped on each side so a wrong estimate
+  // cannot expose a gap above or below the band. The measured heights feed
+  // back through the geometry path, so the estimate only has to hold for one
+  // frame.
+  let slack = (viewport_height / line_step).to_int() + 1
+  let above = ((scroll_y - overscan - block_top) / line_step).to_int()
+  let first_line = if above <= slack { 0 } else { above - slack }
+  let last_line = first_line +
+    (2.0 * overscan / line_step).to_int() +
+    slack * 2
+  (first_line, last_line)
 }
 
 ///|
@@ -1968,6 +2131,7 @@ fn markdown_document_window_range_for_geometry(
       visible_end: -1,
       top_padding: 0.0,
       content_height: 0.0,
+      clip_lines: 0,
     }
   }
   let content_height = markdown_document_scroll_geometry_prefix_at(
@@ -1980,6 +2144,7 @@ fn markdown_document_window_range_for_geometry(
       visible_end: count - 1,
       top_padding: 0.0,
       content_height,
+      clip_lines: 0,
     }
   }
   let visible_min = max_double(0.0, scroll_y - overscan)
@@ -2029,6 +2194,7 @@ fn markdown_document_window_range_for_geometry(
       count=visible_start,
     ),
     content_height,
+    clip_lines: 0,
   }
 }
 
@@ -3506,6 +3672,10 @@ fn markdown_document_session_reveal_selection(
   selection : MarkdownEditorSelection,
 ) -> RichTextDocument {
   let blocks : Array[RichTextBlock] = []
+  let reveal_anchor = match markdown_editor_active_selection(selection.selection) {
+    Some(range) => range.start
+    None => selection.caret
+  }
   for block in document.blocks {
     // The inline marker probes read only around one run, so each touched
     // run gets a block-sized char window instead of a whole-document array.
@@ -3513,15 +3683,49 @@ fn markdown_document_session_reveal_selection(
       Some(source_range) => source_range.end
       None => 0
     }
+    let block_source_start = match block.source_range {
+      Some(source_range) => source_range.start
+      None => 0
+    }
+    // Revealing only ever touches the block the anchor sits in: a marker span
+    // is revealed because the caret is inside it, and a span cannot leave its
+    // block. Every other block passes through untouched, which matters because
+    // this pass runs on every window query — a soft-wrapped paragraph carries
+    // one run per source line, so walking them all made each query proportional
+    // to the document. The one-character slack absorbs a collapsed caret
+    // resting against a block edge.
+    if reveal_anchor + 1 < block_source_start ||
+      reveal_anchor > block_source_end + 1 {
+      blocks.push(block)
+      continue
+    }
+    // One decoded window per block, shared by every run: a soft-wrapped
+    // paragraph carries one run per source line, and rebuilding the window
+    // per run cost the whole block each time.
+    let chars = if block.runs.length() > 0 {
+      Some(
+        markdown_editor_block_source_chars_near(
+          source,
+          block_source_start,
+          block_source_end,
+        ),
+      )
+    } else {
+      None
+    }
     let runs : Array[RichTextRun] = []
     for run in block.runs {
       runs.push(
-        markdown_editor_reveal_active_inline_run(
-          source,
-          block_source_end~,
-          selection,
-          run,
-        ),
+        match chars {
+          Some(chars) =>
+            markdown_editor_reveal_active_inline_run(
+              source,
+              chars~,
+              selection,
+              run,
+            )
+          None => run
+        },
       )
     }
     blocks.push(

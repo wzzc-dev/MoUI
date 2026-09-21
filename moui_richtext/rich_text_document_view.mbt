@@ -364,26 +364,49 @@ fn rich_text_document_view_wrap_block(
   let visual_length = visual_chars.length()
   let runs : Array[RichTextRun] = []
   let mut offset = block.prefix.to_array().length()
+  // `soft_breaks` is ascending and `offset` advances monotonically across the
+  // runs, so one cursor hands each run its own slice. Filtering the whole
+  // `soft_breaks` array for every run made the wrap quadratic in the number
+  // of runs, and a soft-wrapped paragraph carries one run per source line.
+  let mut slice_start = 0
   for run in block.runs {
     let run_visual = rich_text_run_visual_text(run)
-    let run_length = run_visual.to_array().length()
-    let local_breaks : Array[Int] = []
-    for soft_break in soft_breaks {
-      if soft_break > offset && soft_break <= offset + run_length {
-        local_breaks.push(soft_break - offset)
-      }
+    let run_length = text_length(run_visual)
+    while slice_start < soft_breaks.length() &&
+          soft_breaks[slice_start] <= offset {
+      slice_start = slice_start + 1
     }
+    let local_breaks : Array[Int] = []
+    let mut slice_end = slice_start
+    while slice_end < soft_breaks.length() &&
+          soft_breaks[slice_end] <= offset + run_length {
+      local_breaks.push(soft_breaks[slice_end] - offset)
+      slice_end = slice_end + 1
+    }
+    slice_start = slice_end
     if local_breaks.is_empty() {
       runs.push(run)
     } else {
       let run_chars = run_visual.to_array()
       let output : Array[Char] = []
+      // `local_breaks` is ascending, so one cursor replaces the per-character
+      // membership scan. `local_breaks.contains(boundary)` inside this loop
+      // made the wrap quadratic (characters × visual lines), which is what a
+      // long soft-wrapped paragraph — one block, hundreds of thousands of
+      // visual lines — turns into.
+      let mut break_cursor = 0
       for index, ch in run_chars {
         output.push(ch)
         let boundary = index + 1
+        while break_cursor < local_breaks.length() &&
+              local_breaks[break_cursor] < boundary {
+          break_cursor = break_cursor + 1
+        }
+        let at_break = break_cursor < local_breaks.length() &&
+          local_breaks[break_cursor] == boundary
         let next_is_newline = offset + boundary < visual_length &&
           visual_chars[offset + boundary] == '\n'
-        if local_breaks.contains(boundary) && ch != '\n' && !next_is_newline {
+        if at_break && ch != '\n' && !next_is_newline {
           output.push('\n')
         }
       }
@@ -392,30 +415,6 @@ fn rich_text_document_view_wrap_block(
     offset = offset + run_length
   }
   { ..block, runs, }
-}
-
-///|
-fn rich_text_document_view_wrap_font(
-  block : RichTextBlock,
-  visual : String,
-  base_font : @core.FontSpec,
-  text_system : @core.TextSystem,
-) -> @core.FontSpec {
-  let mut widest_font = rich_text_block_font(block, base_font)
-  let mut widest_width = rich_text_width(visual, widest_font, text_system)
-  for run in block.runs {
-    match run.font {
-      Some(font) => {
-        let width = rich_text_width(visual, font, text_system)
-        if width > widest_width {
-          widest_font = font
-          widest_width = width
-        }
-      }
-      None => ()
-    }
-  }
-  widest_font
 }
 
 ///|

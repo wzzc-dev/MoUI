@@ -195,6 +195,9 @@ fn append_rich_text_document_layers(
       base_font,
       foreground,
       text_system~,
+      visible_top~,
+      visible_bottom~,
+      windowed~,
     )
     layers.push(
       @core.ViewPaintLayer::new(
@@ -219,6 +222,13 @@ fn append_rich_text_block_commands(
   base_font : @core.FontSpec,
   foreground : @core.Color,
   text_system~ : @core.TextSystem,
+  // Visible band in the same space as `block_frame.origin.y`, plus whether
+  // windowing is active at all. A block taller than the viewport (a
+  // soft-wrapped paragraph holding a whole novel, say) is never culled by the
+  // block loop, so its off-screen lines have to be skipped here.
+  visible_top? : Double = 0.0,
+  visible_bottom? : Double = 0.0,
+  windowed? : Bool = false,
 ) -> Unit {
   match block.background {
     Some(background) =>
@@ -298,6 +308,9 @@ fn append_rich_text_block_commands(
       base_font,
       foreground,
       text_system~,
+      visible_top~,
+      visible_bottom~,
+      windowed~,
     )
   }
 }
@@ -310,6 +323,9 @@ fn append_rich_text_block_runs(
   base_font : @core.FontSpec,
   foreground : @core.Color,
   text_system~ : @core.TextSystem,
+  visible_top? : Double = 0.0,
+  visible_bottom? : Double = 0.0,
+  windowed? : Bool = false,
 ) -> Unit {
   let block_font = rich_text_block_font(block, base_font)
   let block_color = rich_text_block_color(block, foreground)
@@ -327,6 +343,13 @@ fn append_rich_text_block_runs(
     frame.size.width,
   )
   let mut line = 0
+  // Running vertical offset of the current visual line. The loop walks lines
+  // in order, so the offset advances by one line height per step. Re-summing
+  // `line_heights[0..line]` for every line instead made painting a block
+  // quadratic in its visual line count — which is exactly the shape of a long
+  // soft-wrapped paragraph (a novel with no blank lines is one block of
+  // hundreds of thousands of lines, and the sum alone ran for hours).
+  let mut line_offset = 0.0
   let mut x = rich_text_block_line_start_x(block, frame, line_widths, line)
   if block.prefix != "" {
     let width = rich_text_block_marker_lane(block, block_font, text_system)
@@ -368,33 +391,54 @@ fn append_rich_text_block_runs(
     let color = run.color.unwrap_or(block_color)
     let segments = rich_text_split_lines(rich_text_run_visual_text(run))
     for index, segment in segments {
-      let width = rich_text_run_segment_width(
-        run,
-        segment,
-        font,
-        text_system,
-        available_width=frame.size.width,
-      )
-      let line_y = frame.origin.y + rich_text_line_offset(line_heights, line)
-      let run_frame = rich_text_run_segment_paint_frame(
-        run,
-        x~,
-        y=line_y,
-        width~,
-        height=rich_text_run_segment_height(
+      let line_height = line_heights.get(line).unwrap_or(line_step)
+      let line_y = frame.origin.y + line_offset
+      // A line outside the visible band is skipped, not drawn. The cursor
+      // still advances so the following lines keep their positions. A block
+      // taller than the viewport never reaches the block-level cull, so this
+      // is the only thing standing between a novel-sized paragraph and one
+      // draw command per visual line for the whole document.
+      let on_screen = !windowed ||
+        (line_y + line_height >= visible_top && line_y <= visible_bottom)
+      let last_segment = index + 1 >= segments.length()
+      // Shaping is the expensive part, so an off-screen line only pays for it
+      // when its width is needed to place the next run on the same line.
+      let width = if on_screen || last_segment {
+        rich_text_run_segment_width(
           run,
-          line_step,
+          segment,
+          font,
+          text_system,
           available_width=frame.size.width,
-        ),
-        line_right=frame.origin.x + frame.size.width,
-        font~,
-      )
-      if segment != "" || run.image_source is Some(_) {
-        append_rich_text_run_segment(
-          commands, run, segment, run_frame, width, font, color,
         )
+      } else {
+        0.0
+      }
+      if on_screen {
+        let run_frame = rich_text_run_segment_paint_frame(
+          run,
+          x~,
+          y=line_y,
+          width~,
+          height=rich_text_run_segment_height(
+            run,
+            line_step,
+            available_width=frame.size.width,
+          ),
+          line_right=frame.origin.x + frame.size.width,
+          font~,
+        )
+        if segment != "" || run.image_source is Some(_) {
+          append_rich_text_run_segment(
+            commands, run, segment, run_frame, width, font, color,
+          )
+        }
       }
       if index + 1 < segments.length() {
+        match line_heights.get(line) {
+          Some(height) => line_offset = line_offset + height
+          None => ()
+        }
         line = line + 1
         x = rich_text_block_line_start_x(block, frame, line_widths, line)
       } else {

@@ -101,3 +101,59 @@ test "list items and quotes parse styled inlines from source" {
     fail("quote lost inline styles")
   }
 }
+
+///|
+/// A backtick run only opens a code span when it closes on its own source
+/// line. CommonMark lets it close anywhere in the paragraph, and a paragraph
+/// here can be an entire document: a single stray backtick in a novel-sized
+/// block closed 32k lines later, producing one multi-megabyte code span that
+/// the layout then tried to measure in one piece.
+test "unclosed backtick on its own line stays literal text" {
+  let inlines = parse_markdown_inlines_with_definitions(
+    "before `stray\nnext line `closed` here",
+    [],
+  )
+  // The stray backtick is literal, so it does not open a span that swallows
+  // the following line; the plain text keeps it verbatim.
+  let plain = inlines
+    .filter(inline => inline.kind == Plain)
+    .map(inline => inline.text)
+    .join("")
+  assert_true(plain.contains("`stray"))
+  assert_true(!inlines.any(inline => inline.kind == Code && inline.text.contains("stray")))
+  // The well-formed span on the second line still parses as code.
+  assert_true(inlines.any(inline => inline.kind == Code && inline.text == "closed"))
+}
+
+///|
+/// A code span that does close on its own line is untouched by the rule.
+test "backtick closing on the same line still parses as code" {
+  let inlines = parse_markdown_inlines_with_definitions("a `code` b", [])
+  assert_true(inlines.any(inline => inline.kind == Code && inline.text == "code"))
+}
+
+///|
+/// The regression this rule exists for: one stray backtick in a paragraph that
+/// happens to be the whole document must not turn everything up to the next
+/// backtick into a single code span. Before the rule, the span below covered
+/// every line between the two backticks.
+test "a stray backtick does not swallow the rest of a huge paragraph" {
+  let parts : Array[String] = []
+  for index in 0..<2000 {
+    parts.push("　　第" + index.to_string() + "段正文，中间夹一个反引号 ` 在行内。")
+  }
+  let text = parts.join("\n")
+  let inlines = parse_markdown_inlines_with_definitions(text, [])
+  let longest_code = inlines
+    .filter(inline => inline.kind == Code)
+    .fold(init=0, (longest, inline) => {
+      if inline.text.length() > longest {
+        inline.text.length()
+      } else {
+        longest
+      }
+    })
+  // Every backtick is unclosed on its own line, so all of them stay literal
+  // and no code span survives.
+  assert_true(longest_code == 0)
+}

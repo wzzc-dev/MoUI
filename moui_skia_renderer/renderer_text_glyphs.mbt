@@ -340,6 +340,65 @@ fn skia_typeface_for_text(
 }
 
 ///|
+/// Memoized answer of the system font manager's fallback query.
+///
+/// `match_fallback_request` reaches CoreText, which resolves a fallback through
+/// a synchronous XPC round trip to the macOS font daemon (seen as
+/// `SkFontMgr_Mac::onMatchFamilyStyleCharacter` -> `CTFontCreateForString` ->
+/// `XTCopyPropertiesForFont`). The answer is a pure function of the family
+/// chain, the text's BCP-47 tags, one representative codepoint and the style,
+/// so querying once per text segment recomputed the same handful of answers
+/// thousands of times. On a large document that dominated rendering outright —
+/// a CRLF file sends *every* segment down this path, because the trailing `\r`
+/// is not covered by the primary font.
+priv struct SkiaFallbackMemo {
+  request : @moui_skia.FontFallbackRequest
+  typeface : @skia_native.Typeface?
+}
+
+///|
+/// A short scan rather than a hash map. `FontFallbackRequest` derives `Eq` but
+/// not `Hash`, and the obvious workaround — keying on `@debug.to_string` — cost
+/// more than the query it was caching: the printer walked the family chain and
+/// the BCP-47 byte arrays once per text segment and showed up as the top frame
+/// while a large document opened. The request count is small (one per script
+/// and style in play), so comparing against a bounded list is both correct and
+/// far cheaper.
+let skia_fallback_memo : Ref[Map[Int, Array[SkiaFallbackMemo]]] = Ref(Map([]))
+
+///|
+/// Bucketed by the representative codepoint, which is what actually varies
+/// between text segments; the family chain and style are near-constant for a
+/// given font, so a bucket holds only a handful of entries and the full
+/// request comparison stays cheap.
+///
+/// A single bounded list was tried first and thrashed: a novel uses thousands
+/// of distinct characters, so any bound small enough to scan linearly was also
+/// small enough to evict entries that the next line needed again — leaving the
+/// synchronous font-daemon round trip on the hot path.
+fn skia_cached_fallback_typeface(
+  font_mgr : @skia_native.FontMgr,
+  request : @moui_skia.FontFallbackRequest,
+) -> @skia_native.Typeface? {
+  let bucket = match skia_fallback_memo.val.get(request.character) {
+    Some(bucket) => bucket
+    None => {
+      let fresh : Array[SkiaFallbackMemo] = []
+      skia_fallback_memo.val.set(request.character, fresh)
+      fresh
+    }
+  }
+  for memo in bucket {
+    if memo.request == request {
+      return memo.typeface
+    }
+  }
+  let typeface = font_mgr.match_fallback_request(request)
+  bucket.push({ request, typeface })
+  typeface
+}
+
+///|
 fn skia_typeface_from_font_mgr_for_text(
   font_mgr : @skia_native.FontMgr,
   font : @core.FontSpec,
@@ -347,7 +406,7 @@ fn skia_typeface_from_font_mgr_for_text(
 ) -> @skia_native.Typeface? {
   let request = skia_font_fallback_request(font, text)
   if !request.is_empty() {
-    match font_mgr.match_fallback_request(request) {
+    match skia_cached_fallback_typeface(font_mgr, request) {
       Some(typeface) if skia_typeface_covers_text(typeface, text) =>
         return Some(typeface)
       _ => ()

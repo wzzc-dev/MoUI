@@ -870,18 +870,6 @@ fn rich_text_block_line_widths(
 }
 
 ///|
-fn rich_text_line_offset(line_heights : Array[Double], line : Int) -> Double {
-  let mut offset = 0.0
-  for index in 0..<line {
-    match line_heights.get(index) {
-      Some(height) => offset = offset + height
-      None => ()
-    }
-  }
-  offset
-}
-
-///|
 fn rich_text_block_line_step(
   block : RichTextBlock,
   base_font : @core.FontSpec,

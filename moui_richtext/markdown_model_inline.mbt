@@ -219,6 +219,34 @@ fn markdown_parse_inlines_preserving_plain_html(
             }
             None => index = index + 1
           }
+        } else if chars[index] == '`' {
+          // A backtick run must close on its own source line, otherwise it is
+          // literal text. CommonMark instead lets it run to the next matching
+          // run anywhere in the paragraph, and a paragraph here can be an
+          // entire document: one stray backtick in a novel-sized block closed
+          // 32k lines later and produced a single multi-megabyte code span,
+          // which the layout then tried to measure in one piece. Emitting the
+          // run as plain text keeps the rest of the line parseable.
+          let run_end = markdown_backtick_run_end(chars, index)
+          match markdown_backtick_run_closer(chars, run_end, run_end - index) {
+            // A matched run opens a span that closes on this line. Skip the
+            // whole span so a backtick *inside* it (``a`b``) is never examined
+            // on its own and mistaken for an unclosed one; the segment handed
+            // to the parser still contains it verbatim.
+            Some(closer_end) => index = closer_end
+            None => {
+              markdown_append_parsed_inline_segment(
+                spans,
+                String::from_array(chars[start:index]),
+                definitions,
+              )
+              spans.push(
+                markdown_inline(String::from_array(chars[index:run_end]), Plain),
+              )
+              index = run_end
+              start = run_end
+            }
+          }
         } else {
           index = index + 1
         }
@@ -229,7 +257,81 @@ fn markdown_parse_inlines_preserving_plain_html(
     String::from_array(chars[start:]),
     definitions,
   )
+  // DISABLED: merging adjacent plain spans aborts the momark zen-mode editing
+  // test. The backtick rule above is what fixes the runaway code span; the
+  // merge only tidied the inline array, and something downstream depends on
+  // the split shape. Re-enable once that dependency is understood.
   spans
+}
+
+///|
+/// Collapse neighbouring plain spans into one.
+///
+/// The backtick rule below emits an unclosed run as its own plain span between
+/// two parsed segments, so without this a paragraph with stray backticks would
+/// fragment into three times as many inlines — and therefore three times as
+/// many layout runs — as the text needs. Runs of plain text are joined in one
+/// pass rather than accumulated, so a paragraph made entirely of stray
+/// backticks stays linear.
+fn markdown_merge_adjacent_plain_inlines(
+  spans : Array[MarkdownInline],
+) -> Array[MarkdownInline] {
+  let merged : Array[MarkdownInline] = []
+  let pending : Array[String] = []
+  let flush = () => {
+    if pending.length() > 0 {
+      merged.push(markdown_inline(pending.join(""), Plain))
+      pending.clear()
+    }
+  }
+  for span in spans {
+    // A bare newline stays a span of its own. It is what gives a soft-wrapped
+    // paragraph one layout run per source line, and folding it into the
+    // surrounding text would hand the wrap a single run holding the whole
+    // block — the very shape this pass exists to avoid.
+    if span.kind == Plain && span.text != "\n" {
+      pending.push(span.text)
+    } else {
+      flush()
+      merged.push(span)
+    }
+  }
+  flush()
+  merged
+}
+
+///|
+/// End of the backtick run starting at `start` (exclusive).
+fn markdown_backtick_run_end(chars : Array[Char], start : Int) -> Int {
+  let mut index = start
+  while index < chars.length() && chars[index] == '`' {
+    index = index + 1
+  }
+  index
+}
+
+///|
+/// End of the next run of exactly `length` backticks, searching only up to the
+/// end of the current source line. `None` means the run never closes on this
+/// line and is therefore literal text.
+fn markdown_backtick_run_closer(
+  chars : Array[Char],
+  from : Int,
+  length : Int,
+) -> Int? {
+  let mut index = from
+  while index < chars.length() && chars[index] != '\n' {
+    if chars[index] == '`' {
+      let end = markdown_backtick_run_end(chars, index)
+      if end - index == length {
+        return Some(end)
+      }
+      index = end
+    } else {
+      index = index + 1
+    }
+  }
+  None
 }
 
 ///|

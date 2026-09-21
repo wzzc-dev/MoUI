@@ -235,7 +235,6 @@ fn rich_text_measure_based_soft_breaks(
     return breaks
   }
   let block_font = rich_text_block_font(block, base_font)
-  let clusters : Array[RichTextWrapCluster] = []
   // The joined visual text is the prefix followed by each run's visual text;
   // measure every segment once with the font that will draw it.
   let segments : Array[(String, @core.FontSpec, Int)] = []
@@ -246,6 +245,14 @@ fn rich_text_measure_based_soft_breaks(
     segments.push((run_visual, run.font.unwrap_or(block_font), run_offset))
     run_offset = run_offset + text_length(run_visual)
   }
+  // One source line of clusters at a time. The greedy fill restarts at every
+  // hard break, so a line's breaks never depend on another line's clusters,
+  // and buffering the whole block made the wrap's footprint proportional to
+  // the document: a soft-wrapped paragraph carries one source line per visual
+  // line, so a novel-sized block meant millions of cluster objects and
+  // hundreds of megabytes to produce a result that needs one line of state.
+  let breaks : Array[Int] = []
+  let line_clusters : Array[RichTextWrapCluster] = []
   for segment in segments {
     let (text, font, base_offset) = segment
     if text == "" {
@@ -263,18 +270,46 @@ fn rich_text_measure_based_soft_breaks(
       let end = @core.min_int(next, chars.length())
       let advance_start = carets.get(cursor).unwrap_or(0.0)
       let advance_end = carets.get(end).unwrap_or(advance_start)
-      clusters.push({
-        offset: base_offset + cursor,
-        text: String::from_array(chars[cursor:end]),
-        advance: max_double(0.0, advance_end - advance_start),
-      })
+      let cluster_text = String::from_array(chars[cursor:end])
+      if rich_text_wrap_cluster_is_hard_break(cluster_text) {
+        rich_text_wrap_line_breaks(line_clusters, breaks, available_width)
+        line_clusters.clear()
+      } else {
+        line_clusters.push({
+          offset: base_offset + cursor,
+          text: cluster_text,
+          advance: max_double(0.0, advance_end - advance_start),
+        })
+      }
       cursor = end
     }
   }
-  // Greedy fill with kinsoku: a line never starts with closing punctuation
-  // (or a stray slash) and never ends with opening punctuation. Whitespace
-  // and closing punctuation hang at the line end without forcing a break.
-  let breaks : Array[Int] = []
+  rich_text_wrap_line_breaks(line_clusters, breaks, available_width)
+  breaks
+}
+
+///|
+/// Whether a grapheme cluster ends the source line.
+///
+/// Unicode keeps a CRLF pair inside one cluster, so a CRLF document yields
+/// `"\r\n"` where an LF document yields `"\n"`. Matching only `"\n"` left
+/// every CRLF line unterminated: the greedy fill then treated a whole block as
+/// one line, which wrapped wrongly and defeated the per-line buffering above.
+fn rich_text_wrap_cluster_is_hard_break(cluster_text : String) -> Bool {
+  cluster_text == "\n" || cluster_text == "\r\n"
+}
+
+///|
+/// Greedy fill with kinsoku over one source line's clusters: a line never
+/// starts with closing punctuation (or a stray slash) and never ends with
+/// opening punctuation. Whitespace and closing punctuation hang at the line
+/// end without forcing a break. Break offsets stay in block coordinates and
+/// are appended to `breaks` in ascending order.
+fn rich_text_wrap_line_breaks(
+  clusters : Array[RichTextWrapCluster],
+  breaks : Array[Int],
+  available_width : Double,
+) -> Unit {
   let cluster_count = clusters.length()
   let mut i = 0
   let mut line_width = 0.0
@@ -283,15 +318,6 @@ fn rich_text_measure_based_soft_breaks(
   let mut width_since_break = 0.0
   while i < cluster_count {
     let cluster = clusters[i]
-    if cluster.text == "\n" {
-      // Hard break: reset the line; the run splitter guards double \n.
-      line_width = 0.0
-      line_has_content = false
-      break_after_offset = -1
-      width_since_break = 0.0
-      i = i + 1
-      continue
-    }
     let width = cluster.advance
     let overflow = line_has_content && line_width + width > available_width
     if overflow && break_after_offset >= 0 {
@@ -302,14 +328,13 @@ fn rich_text_measure_based_soft_breaks(
       let mut pulled = true
       while pulled {
         pulled = false
-        let prev_end = break_offset
-        for candidate in clusters {
-          if candidate.offset + candidate.text.to_array().length() == prev_end &&
-            rich_text_wrap_cannot_end_line(candidate.text) {
-            break_offset = candidate.offset
-            pulled = true
-            break
-          }
+        match rich_text_cluster_ending_at(clusters, break_offset) {
+          Some(index) =>
+            if rich_text_wrap_cannot_end_line(clusters[index].text) {
+              break_offset = clusters[index].offset
+              pulled = true
+            }
+          None => ()
         }
       }
       // (b) A line may not start with closing punctuation (or a stray slash):
@@ -317,13 +342,14 @@ fn rich_text_measure_based_soft_breaks(
       let mut pushed = true
       while pushed {
         pushed = false
-        for candidate in clusters {
-          if candidate.offset == break_offset &&
-            rich_text_wrap_cannot_start_line(candidate.text) {
-            break_offset = candidate.offset + candidate.text.to_array().length()
-            pushed = true
-            break
-          }
+        match rich_text_cluster_starting_at(clusters, break_offset) {
+          Some(index) =>
+            if rich_text_wrap_cannot_start_line(clusters[index].text) {
+              break_offset = clusters[index].offset +
+                text_length(clusters[index].text)
+              pushed = true
+            }
+          None => ()
         }
       }
       breaks.push(break_offset)
@@ -369,5 +395,56 @@ fn rich_text_measure_based_soft_breaks(
     }
     i = i + 1
   }
-  breaks
+}
+
+///|
+/// Index of the cluster whose start offset is exactly `offset`, or `None`.
+///
+/// Cluster offsets are strictly ascending, so a binary search replaces both
+/// the linear scan this used to do and the offset-keyed map that briefly
+/// stood in for it: on a paragraph with millions of graphemes the map cost
+/// hundreds of megabytes, which is the wrong trade for a lookup that runs a
+/// couple of times per visual line.
+fn rich_text_cluster_starting_at(
+  clusters : Array[RichTextWrapCluster],
+  offset : Int,
+) -> Int? {
+  let mut low = 0
+  let mut high = clusters.length() - 1
+  while low <= high {
+    let mid = low + (high - low) / 2
+    let candidate = clusters[mid].offset
+    if candidate == offset {
+      return Some(mid)
+    } else if candidate < offset {
+      low = mid + 1
+    } else {
+      high = mid - 1
+    }
+  }
+  None
+}
+
+///|
+/// Index of the cluster whose end offset is exactly `offset`, or `None`. See
+/// `rich_text_cluster_starting_at` for why this is a binary search.
+fn rich_text_cluster_ending_at(
+  clusters : Array[RichTextWrapCluster],
+  offset : Int,
+) -> Int? {
+  let mut low = 0
+  let mut high = clusters.length() - 1
+  while low <= high {
+    let mid = low + (high - low) / 2
+    let cluster = clusters[mid]
+    let end = cluster.offset + text_length(cluster.text)
+    if end == offset {
+      return Some(mid)
+    } else if end < offset {
+      low = mid + 1
+    } else {
+      high = mid - 1
+    }
+  }
+  None
 }

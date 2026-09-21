@@ -270,6 +270,14 @@ fn markdown_session_editor_paint(
       foreground,
       text_system=ctx.text_system,
       clip_rect=Some(content),
+      // Blocks are already pre-positioned into paint space, so the band is the
+      // clip plus overscan and no extra scroll. Passing the viewport height is
+      // what turns the windowed path on; without it the builder falls back to
+      // culling whole blocks against the clip, which never culls a block
+      // taller than the viewport — and a soft-wrapped paragraph holding a
+      // whole novel is exactly that.
+      visible_scroll_y=0.0,
+      visible_viewport_height=content.size.height,
     )
     if ctx.focused {
       append_rich_text_editor_overlay(
@@ -758,6 +766,32 @@ fn markdown_session_record_measured_block_heights(
   for offset, window_block in window.document.blocks {
     match session.editor_blocks.get(window.visible_start + offset) {
       Some(editor_block) => {
+        // Skip a block the line window sliced. Measuring it would materialise
+        // the whole block — for an oversized block that is the entire
+        // document, on every paint — and would publish a height that covers
+        // only the visible lines, pulling the scroll geometry out of line with
+        // what is drawn. The block keeps its indexed estimate, which is what
+        // the window itself used to choose the band.
+        // "Covers less source than the session block" is the exact signature
+        // of a line-window slice. Comparing offsets for inequality was too
+        // loose: revealing a marker or an HTML block legitimately shifts or
+        // widens a block's range, and treating those as slices skipped
+        // measurements the geometry depends on.
+        let sliced = markdown_document_block_needs_line_window(
+          session,
+          base,
+          window.visible_start + offset,
+          window.viewport_height,
+        ) &&
+          (match window_block.source_range {
+            Some(range) =>
+              range.end - range.start <
+              editor_block.source_range.end - editor_block.source_range.start
+            None => false
+          })
+        if sliced {
+          continue
+        }
         // Measured heights must come from the block's real inline runs.
         let editor_block = markdown_editor_block_materialized(
           session.source(),

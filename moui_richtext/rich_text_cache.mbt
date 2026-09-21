@@ -226,11 +226,17 @@ let markdown_document_scroll_geometry_cache : Map[
 
 ///|
 fn rich_text_cache_join_key(parts : Array[String]) -> String {
-  let mut key = ""
+  // Separator-joined in one pass. The previous `key = key + part` copied the
+  // accumulated key on every iteration, which is quadratic in the number of
+  // parts; a soft-wrapped paragraph contributes one part per run, so a
+  // novel-sized block (one run per source line) made building a cache key the
+  // dominant cost of opening the document.
+  let pieces : Array[String] = []
   for part in parts {
-    key = key + part + "\u0001"
+    pieces.push(part)
+    pieces.push("\u0001")
   }
-  key
+  pieces.join("")
 }
 
 ///|
