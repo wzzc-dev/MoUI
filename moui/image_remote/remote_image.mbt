@@ -125,27 +125,82 @@ pub async fn with_remote_images(
 ///
 /// Ordinary failures never escape: a task group cancels its siblings when a
 /// child raises, so a network error is converted into a `None` completion that
-/// surfaces through the renderer's image lifecycle instead of tearing down the
-/// worker. Cancellation is deliberately re-raised — swallowing it would leave
-/// the worker alive after the app asked it to stop.
+/// surfaces through the renderer's image lifecycle instead of tearing down
+/// the worker. Cancellation is deliberately re-raised — swallowing it would
+/// leave the worker alive after the app asked it to stop.
+///
+/// A fetch retries with backoff before reporting failure. The renderer never
+/// re-requests a source once its lifecycle says failed, so a single transient
+/// connect failure — hosts like img.shields.io are routinely unreachable from
+/// some networks while the same URL succeeds seconds later — would otherwise
+/// blank the image for the whole session.
 async fn remote_image_fetch(work : RemoteImageRequest) -> Unit {
   if !remote_image_source_is_fetchable(work.source) {
     (work.finish)(None)
     return
   }
+  let attempts = remote_image_fetch_retry_delays_ms.length() + 1
+  let mut completed = false
   try {
-    let (response, data) = @http.get(work.source)
-    if response.code >= 200 && response.code < 300 {
-      (work.finish)(Some(data.binary()))
-    } else {
-      (work.finish)(None)
+    for attempt in 0..<attempts {
+      match remote_image_fetch_once(work.source) {
+        Some(data) => {
+          (work.finish)(Some(data))
+          completed = true
+          break
+        }
+        None =>
+          if attempt + 1 < attempts {
+            @async.sleep(remote_image_fetch_retry_delays_ms[attempt])
+          }
+      }
     }
   } catch {
     err =>
       if @async.is_cancellation_error(err) {
         raise err
       } else {
-        (work.finish)(None)
+        completed = false
+      }
+  }
+  if !completed {
+    (work.finish)(None)
+  }
+}
+
+///|
+/// Backoff between fetch attempts, in milliseconds. The first entry follows
+/// the initial attempt.
+let remote_image_fetch_retry_delays_ms : Array[Int] = [1000, 2000, 4000]
+
+///|
+/// Connect/transfer budget for one fetch attempt. Without it a stalled host
+/// holds the image placeholder for the OS-level connect timeout, which can
+/// run minutes.
+let remote_image_fetch_timeout_ms : Int = 15000
+
+///|
+/// One bounded fetch attempt: `Some(bytes)` on a 2xx response, `None` on any
+/// other status, timeout, or network error. Cancellation is re-raised.
+async fn remote_image_fetch_once(source : String) -> Bytes? {
+  try {
+    match @async.with_timeout_opt(remote_image_fetch_timeout_ms, async fn() {
+      let (response, data) = @http.get(source)
+      if response.code >= 200 && response.code < 300 {
+        Some(data.binary())
+      } else {
+        None
+      }
+    }) {
+      Some(result) => result
+      None => None
+    }
+  } catch {
+    err =>
+      if @async.is_cancellation_error(err) {
+        raise err
+      } else {
+        None
       }
   }
 }

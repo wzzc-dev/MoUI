@@ -169,7 +169,15 @@ fn view_paint_layer_render_node(
     render_opacity: None,
     content_revision: layer.content_revision,
     is_repaint_boundary: true,
-    layer_cache_key: Some(layer.cache_key),
+    // An empty cache key opts the layer out of the retained-layer cache: its
+    // commands are painted fresh every frame (e.g. a viewport-culled block
+    // whose raster would depend on scroll position). Everything else retains
+    // under its key.
+    layer_cache_key: if layer.cache_key == "" {
+      None
+    } else {
+      Some(layer.cache_key)
+    },
     paint_commands: layer.commands,
     post_paint_commands: [],
     overlay_paint_commands: layer.overlay_commands,

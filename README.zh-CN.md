@@ -162,11 +162,12 @@ node scripts/conformance-capture-scaffold.mjs --mode benchmark
 [Android](docs/android-support.md)、[iOS](docs/ios-support.md) 或 [HarmonyOS](docs/harmonyos-support.md)。标准示例通过 `moui build` 使用匹配的 `wzzc-dev/window` 平台模板。
 
 > **Windows 前置条件：** 在构建或运行任何 Windows 原生入口（`windows_skia`，或 `windows_wgpu` 诊断路线）前，请在 PowerShell 会话中初始化 MSVC 工具链：
->
-> ```powershell
-> .\scripts\windows\msvc_env.ps1
-> ```
->
+
+```powershell
+.\scripts\windows\msvc_env.ps1
+```
+
+```
 > 该脚本会为原生 Skia 链接步骤配置 MSVC 环境，并提供共享的 C11 atomics 基础选项（`/experimental:c11atomics`）。在 Windows 上执行 `moon run ... --target native` 之前，每个 shell 需运行一次。`windows_wgpu` 诊断路线的 `wgpu_mbt` C stub（`<stdatomic.h>`）还需要 C11 模式（`/std:c11`）：Windows 构建/打包辅助脚本会对 WGPU 包自动启用；直接 `moon run` 时请先点源脚本并调用 `Enable-MsvcGlobalC11ModeForCOnlyStubs`（共享默认的 `/std:c11` 会与 `moui_skia` 的 `/std:c++20` Skia stub 选项冲突）。
 
 ### Showcase

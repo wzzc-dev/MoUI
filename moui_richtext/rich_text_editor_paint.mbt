@@ -199,10 +199,28 @@ fn append_rich_text_document_layers(
       visible_bottom~,
       windowed~,
     )
+    // A block shorter than the visible band paints every line no matter where
+    // it sits, so its cached raster is final and the retained-layer cache can
+    // keep it across scroll frames. A taller block is culled line by line, so
+    // its raster depends on where it sat in the band when painted — the first
+    // admission (at the band's bottom edge, lines still off-screen) would
+    // otherwise freeze a partial, often textless, raster that every later
+    // frame re-pasted while scrolling. Those layers opt out of the cache and
+    // draw directly; the line culling still bounds their per-frame cost.
+    let band_height = visible_bottom - visible_top
+    let cull_lines = windowed &&
+      band_height > 0.0 &&
+      block.table is None &&
+      !block.rule &&
+      line_height > band_height
     layers.push(
       @core.ViewPaintLayer::new(
         frame~,
-        cache_key=rich_text_block_cache_key(index, block, frame),
+        cache_key=if cull_lines {
+          ""
+        } else {
+          rich_text_block_cache_key(index, block, frame)
+        },
         content_revision=rich_text_block_content_revision(
           block, index, frame, base_font, foreground,
         ),
@@ -351,6 +369,19 @@ fn append_rich_text_block_runs(
   // hundreds of thousands of lines, and the sum alone ran for hours).
   let mut line_offset = 0.0
   let mut x = rich_text_block_line_start_x(block, frame, line_widths, line)
+  // Line culling only pays for blocks taller than the visible band: those
+  // never leave the block-level cull, so their off-screen lines must be
+  // skipped here. A block that fits the band paints completely wherever it
+  // sits, which is what keeps its cached layer raster independent of scroll
+  // position.
+  let mut content_height = 0.0
+  for height in line_heights {
+    content_height = content_height + height
+  }
+  let band_height = visible_bottom - visible_top
+  let cull_lines = windowed &&
+    band_height > 0.0 &&
+    content_height > band_height
   if block.prefix != "" {
     let width = rich_text_block_marker_lane(block, block_font, text_system)
     let lane = @core.Rect::new(
@@ -394,11 +425,11 @@ fn append_rich_text_block_runs(
       let line_height = line_heights.get(line).unwrap_or(line_step)
       let line_y = frame.origin.y + line_offset
       // A line outside the visible band is skipped, not drawn. The cursor
-      // still advances so the following lines keep their positions. A block
-      // taller than the viewport never reaches the block-level cull, so this
-      // is the only thing standing between a novel-sized paragraph and one
-      // draw command per visual line for the whole document.
-      let on_screen = !windowed ||
+      // still advances so the following lines keep their positions. Only a
+      // block taller than the band gets here (see `cull_lines`), so this is
+      // the only thing standing between a novel-sized paragraph and one draw
+      // command per visual line for the whole document.
+      let on_screen = !cull_lines ||
         (line_y + line_height >= visible_top && line_y <= visible_bottom)
       let last_segment = index + 1 >= segments.length()
       // Shaping is the expensive part, so an off-screen line only pays for it
