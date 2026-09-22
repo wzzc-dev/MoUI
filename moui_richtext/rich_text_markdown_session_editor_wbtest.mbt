@@ -304,9 +304,7 @@ test "markdown session drag move still extends the selection" {
     event=move_event,
   )
   assert_true(move_result.messages.length() == 1)
-  guard move_result.messages[0] is (head, range) else {
-    fail("expected a drag selection message")
-  }
+  guard move_result.messages[0] is (head, range)
   guard range is Some(selection_range) else {
     fail("expected a range while dragging")
   }

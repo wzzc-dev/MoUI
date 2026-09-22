@@ -65,7 +65,7 @@ pub fn markdown_block_to_rich_text(
             width=4.0,
           ),
         ),
-        inset={ top: 6.0, right: 0.0, bottom: 12.0, left: 14.0 },
+        inset={ top: 6.0, right: 0.0, bottom: 6.0, left: 14.0 },
         line_height=Some(base.size * 1.55),
         corner_radius=4.0,
       )
@@ -75,7 +75,7 @@ pub fn markdown_block_to_rich_text(
         background=Some(
           @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.06)),
         ),
-        inset={ top: 12.0, right: 14.0, bottom: 12.0, left: 14.0 },
+        inset={ top: 12.0, right: 14.0, bottom: 0.0, left: 14.0 },
         // 1.3x the base font is 1.4x the 0.92 code font, so descenders in code
         // stay inside the line box the painter clips to.
         line_height=Some(base.size * 1.3),

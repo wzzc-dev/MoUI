@@ -58,7 +58,7 @@ test "click on the first visual line of a wrapped source line stays inside the l
   )
   let mut y = content.origin.y + block.inset.top
   let mut failures = 0
-  for line_index, height in line_heights {
+  for _line_index, height in line_heights {
     let point = @core.Point::new(
       x=content.origin.x + block.inset.left + 300.0,
       y=y + height / 2.0,

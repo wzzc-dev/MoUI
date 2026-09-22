@@ -411,6 +411,44 @@ fn markdown_editor_active_code_block(
 }
 
 ///|
+/// How many visual lines the active raw source adds or removes compared with
+/// the inactive projection. Inactive fenced code blocks hide the opening and
+/// closing fence lines (and replace the opening line with the language label
+/// when one is present), while the active form paints the raw source verbatim.
+fn markdown_editor_code_block_active_line_delta(
+  source_text : String,
+  block : RichTextBlock,
+) -> Int {
+  (rich_text_text_newline_count(source_text) + 1) -
+  rich_text_block_visual_line_count(block)
+}
+
+///|
+/// Inactive fenced code blocks reserve the height of the fence lines that
+/// become visible on activation. The reservation lives in the bottom inset so
+/// the inactive line boxes keep their normal code spacing; the active reveal
+/// removes it before painting the raw source.
+fn markdown_editor_reserve_code_block_active_height(
+  source_text : String,
+  block : RichTextBlock,
+) -> RichTextBlock {
+  let extra_lines = markdown_editor_code_block_active_line_delta(
+    source_text, block,
+  )
+  if extra_lines <= 0 {
+    return block
+  }
+  let line_step = block.line_height.unwrap_or(0.0)
+  {
+    ..block,
+    inset: {
+      ..block.inset,
+      bottom: block.inset.bottom + extra_lines.to_double() * line_step,
+    },
+  }
+}
+
+///|
 fn markdown_editor_reveal_active_code_block(
   source : String,
   block : RichTextBlock,
@@ -423,6 +461,26 @@ fn markdown_editor_reveal_active_code_block(
         source_range.end,
       )
       let font = markdown_editor_first_run_font(block)
+      let line_delta = markdown_editor_code_block_active_line_delta(
+        source_text, block,
+      )
+      let line_step = block.line_height.unwrap_or(0.0)
+      let inset = if line_delta > 0 {
+        {
+          ..block.inset,
+          bottom: max_double(
+            0.0,
+            block.inset.bottom - line_delta.to_double() * line_step,
+          ),
+        }
+      } else if line_delta < 0 {
+        {
+          ..block.inset,
+          bottom: block.inset.bottom + (-line_delta).to_double() * line_step,
+        }
+      } else {
+        block.inset
+      }
       {
         ..block,
         runs: [
@@ -432,6 +490,7 @@ fn markdown_editor_reveal_active_code_block(
             source_range=Some(source_range),
           ),
         ],
+        inset: inset,
         content_range: Some(source_range),
       }
     }
@@ -2254,7 +2313,7 @@ fn markdown_editor_block_to_rich_text_uncached(
   base_dir~ : String?,
 ) -> RichTextBlock {
   let block = markdown_block_to_rich_text(editor_block.block, base, base_dir~)
-  {
+  let rich_block = {
     ..block,
     runs: markdown_editor_runs_with_source_ranges(
       block.runs,
@@ -2268,6 +2327,21 @@ fn markdown_editor_block_to_rich_text_uncached(
     ),
     source_range: Some(markdown_core_range(editor_block.source_range)),
     content_range: Some(markdown_core_range(editor_block.content_range)),
+  }
+  match editor_block.block.kind {
+    CodeBlock => {
+      let source_text = markdown_editor_substring(
+        source,
+        editor_block.source_range.start,
+        editor_block.source_range.end,
+      )
+      if markdown_editor_source_starts_with_code_fence(source_text) {
+        markdown_editor_reserve_code_block_active_height(source_text, rich_block)
+      } else {
+        rich_block
+      }
+    }
+    _ => rich_block
   }
 }
 

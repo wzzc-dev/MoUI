@@ -379,9 +379,7 @@ fn append_rich_text_block_runs(
     content_height = content_height + height
   }
   let band_height = visible_bottom - visible_top
-  let cull_lines = windowed &&
-    band_height > 0.0 &&
-    content_height > band_height
+  let cull_lines = windowed && band_height > 0.0 && content_height > band_height
   if block.prefix != "" {
     let width = rich_text_block_marker_lane(block, block_font, text_system)
     let lane = @core.Rect::new(

@@ -131,11 +131,8 @@ test "band-fitting blocks paint every line at band-edge admission" {
   ignore(markdown_scroll_take_geometry_compensation())
   // Document-space top of the code block. Estimates carry wrap drift, so the
   // admission scroll is scanned around it instead of computed exactly.
-  let heights = match markdown_document_block_heights(
-    session,
-    base,
-    content_width=width,
-  ) {
+  let heights = match
+    markdown_document_block_heights(session, base, content_width=width) {
     Some(heights) => heights
     None => fail("expected block heights after measuring the document")
   }
@@ -257,11 +254,8 @@ test "blocks taller than the visible band opt out of the layer cache" {
     ),
   )
   ignore(markdown_scroll_take_geometry_compensation())
-  let heights = match markdown_document_block_heights(
-    session,
-    base,
-    content_width=width,
-  ) {
+  let heights = match
+    markdown_document_block_heights(session, base, content_width=width) {
     Some(heights) => heights
     None => fail("expected block heights after measuring the document")
   }
