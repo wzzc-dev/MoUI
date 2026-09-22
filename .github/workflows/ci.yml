@@ -89,12 +89,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # The platform profile compiles the Linux window backends
+      # (wzzc-dev/window X11 + Wayland cores), links the GLib/zlib
+      # service stubs, and resolves the Skia renderer stack, so the
+      # full documented dependency set is required — Wayland alone is
+      # not enough (X11/Xatom.h, gio/glib.h, libvulkan, fontconfig).
       - name: Install native Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
-            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji
+        run: bash scripts/set_linux_deps.sh
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
