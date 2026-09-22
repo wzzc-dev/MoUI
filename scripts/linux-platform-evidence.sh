@@ -275,30 +275,73 @@ cleanup_weston() {
 }
 trap 'cleanup_weston; restore_packages' EXIT
 
+FIRST_FRAME_MARKER="Linux renderer presented first frame; exiting by request; title=MoUI Text Input Smoke"
+FIRST_FRAME_TIMEOUT_SECONDS="${MOUI_LINUX_FIRST_FRAME_TIMEOUT_SECONDS:-60}"
+gpu_first_frame_status="passed"
+
 #
 # Step 6: Run raster, GPU, and automatic-fallback first-frame smoke tests
 #
 echo "=== Step 6: Run renderer-mode first-frame smoke tests ===" | tee -a "$preflight_log"
 cd "$REPO_ROOT"
+
+gpu_surface_available() {
+  # Skia GPU needs a Vulkan/OpenGL ES surface, which requires a DRM render
+  # node on the host. Headless Weston on a GPU-less CI runner never provides
+  # one, so the skia-gpu first-frame marker can never be produced there
+  # regardless of MoUI state; GPU proof for those hosts is a runbook activity
+  # (docs/gpu-promotion-runbook.md), not a headless-runner assertion.
+  compgen -G "/dev/dri/renderD*" >/dev/null 2>&1
+}
+
 run_first_frame_mode() {
   local mode="$1"
   local output="$2"
+  local rc=0
+  local timed_out=0
   echo "  Running MOUI_SKIA_RENDERER=$mode" | tee -a "$preflight_log"
-  MOUI_FIRST_FRAME_EXIT=1 \
-    MOUI_SKIA_RENDERER="$mode" \
-    MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-    moon run moui_tests/tester/linux_skia_first_frame_smoke --target native \
-      > "$output" 2>&1
-  if ! grep -Fq "Linux renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" "$output"; then
-    echo "Missing first-frame marker for MOUI_SKIA_RENDERER=$mode" >&2
+  if command -v timeout >/dev/null 2>&1; then
+    MOUI_FIRST_FRAME_EXIT=1 \
+      MOUI_SKIA_RENDERER="$mode" \
+      MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+      MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+      timeout --signal=TERM --kill-after=10s "${FIRST_FRAME_TIMEOUT_SECONDS}s" \
+        moon run moui_tests/tester/linux_skia_first_frame_smoke --target native \
+          > "$output" 2>&1 || rc=$?
+    if [[ $rc -eq 124 ]]; then
+      timed_out=1
+    fi
+  else
+    MOUI_FIRST_FRAME_EXIT=1 \
+      MOUI_SKIA_RENDERER="$mode" \
+      MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+      MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+      moon run moui_tests/tester/linux_skia_first_frame_smoke --target native \
+        > "$output" 2>&1 || rc=$?
+  fi
+  if ! grep -Fq "$FIRST_FRAME_MARKER" "$output"; then
+    if [[ $timed_out -eq 1 ]]; then
+      echo "$mode first-frame smoke timed out after ${FIRST_FRAME_TIMEOUT_SECONDS}s" >&2
+    else
+      echo "Missing first-frame marker for MOUI_SKIA_RENDERER=$mode" >&2
+    fi
     return 1
   fi
   echo "  Verified $mode first-frame marker." | tee -a "$preflight_log"
 }
 
 run_first_frame_mode "skia-raster" "$first_frame_raster_log"
-run_first_frame_mode "skia-gpu" "$first_frame_gpu_log"
+
+if gpu_surface_available; then
+  run_first_frame_mode "skia-gpu" "$first_frame_gpu_log"
+else
+  gpu_first_frame_status="skipped (no /dev/dri/renderD* GPU render node on this host)"
+  echo "  No DRM render node on this host; headless Weston cannot provide a" | tee -a "$preflight_log"
+  echo "  Vulkan/OpenGL ES surface, so the skia-gpu first-frame marker can never" | tee -a "$preflight_log"
+  echo "  be produced here. Recording skia-gpu as skipped; the auto run below" | tee -a "$preflight_log"
+  echo "  still proves GPU-first selection falls back to a raster present." | tee -a "$preflight_log"
+fi
+
 run_first_frame_mode "auto" "$first_frame_log"
 
 #
@@ -309,7 +352,7 @@ echo "=== Step 7: Generate evidence summary ===" | tee -a "$preflight_log"
   echo "Linux platform evidence summary:"
   echo "  skia_commit=$skia_commit"
   echo "  raster_first_frame_status=passed"
-  echo "  gpu_first_frame_status=passed"
+  echo "  gpu_first_frame_status=$gpu_first_frame_status"
   echo "  auto_first_frame_status=passed"
   echo "  preflight_log=$preflight_log"
   echo "  raster_first_frame_log=$first_frame_raster_log"

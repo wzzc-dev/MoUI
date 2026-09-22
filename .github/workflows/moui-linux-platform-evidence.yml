@@ -152,6 +152,7 @@ jobs:
             echo ""
             echo "- Artifact: moui-linux-platform-evidence"
             echo "- First-frame evidence: $(grep -q '^summary=passed' <<<"${summary:-failed}" && echo 'passed' || echo 'failed')"
+            echo "- GPU first-frame: $(sed -n 's/^[[:space:]]*gpu_first_frame_status=//p' artifacts/platform-evidence/linux/linux-platform-evidence-summary.log 2>/dev/null | head -n 1)"
             echo ""
             echo "### Logs"
             echo "- Preflight: artifacts/platform-evidence/linux/linux-platform-evidence-preflight.log"
