@@ -14,6 +14,12 @@ pub using @core {type Program}
 pub using @core {type ProgramCommand}
 
 ///|
+pub using @core {type Feature}
+
+///|
+pub using @core {type ScopedFeature}
+
+///|
 pub using @core {type Effect}
 
 ///|

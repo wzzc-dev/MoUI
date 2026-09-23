@@ -579,6 +579,17 @@ pub(all) struct EnvironmentModifier {
 }
 pub fn[Msg] EnvironmentModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
+type Feature[Model, Msg]
+pub fn[Model, Msg] Feature::new(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Feature::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Feature::runtime_commands(Self[Model, Msg], Model) -> Array[ProgramCommand[Msg]]
+pub fn[Model, Msg] Feature::runtime_init(Self[Model, Msg]) -> (Model, Effect[Msg])
+pub fn[Model, Msg] Feature::runtime_subscriptions(Self[Model, Msg], Model) -> Subscription[Msg]
+pub fn[Model, Msg] Feature::runtime_update(Self[Model, Msg], Model, Msg) -> (Model, Effect[Msg])
+pub fn[Model, Msg] Feature::runtime_view(Self[Model, Msg], Model, ViewEnvironment) -> View[Msg]
+pub fn[Child, ChildMsg, Parent, ParentMsg] Feature::scope(Self[Child, ChildMsg], read~ : (Parent) -> Child, write~ : (Child, Parent) -> Parent, wrap~ : (ChildMsg) -> ParentMsg) -> ScopedFeature[Parent, Child, ChildMsg, ParentMsg]
+pub fn[Model, Msg] Feature::with_commands(Self[Model, Msg], commands~ : (Model) -> Array[ProgramCommand[Msg]]) -> Self[Model, Msg]
+
 pub(all) enum FilterEffect {
   Blur(Double)
   Saturate(Double)
@@ -985,6 +996,7 @@ pub(all) enum PressableState {
 pub fn PressableState::to_interaction(Self) -> InteractionState
 
 type Program[Model, Msg]
+pub fn[Model, Msg] Program::from_feature(feature~ : Feature[Model, Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::runtime_commands(Self[Model, Msg], Model) -> Array[ProgramCommand[Msg]]
@@ -1068,6 +1080,15 @@ pub(all) struct ScaleModifier {
   sy : Double
 }
 pub fn[Msg] ScaleModifier::to_any_modifier(Self) -> AnyModifier[Msg]
+
+pub struct ScopedFeature[Parent, Child, ChildMsg, ParentMsg] {
+  // private fields
+}
+pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::commands(Self[Parent, Child, ChildMsg, ParentMsg], Parent) -> Array[ProgramCommand[ParentMsg]]
+pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::init(Self[Parent, Child, ChildMsg, ParentMsg]) -> (Child, Effect[ParentMsg])
+pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::subscriptions(Self[Parent, Child, ChildMsg, ParentMsg], Parent) -> Subscription[ParentMsg]
+pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::update(Self[Parent, Child, ChildMsg, ParentMsg], Parent, ChildMsg) -> (Parent, Effect[ParentMsg])
+pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::view(Self[Parent, Child, ChildMsg, ParentMsg], Parent, ViewEnvironment) -> View[ParentMsg]
 
 pub(all) enum ScrollAlignment {
   Start

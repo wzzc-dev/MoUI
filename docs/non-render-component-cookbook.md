@@ -53,6 +53,44 @@ fn focus_first_invalid(runtime : @runtime.AppRuntime) -> Bool {
 }
 ```
 
+### Keyed field messages
+
+One `*Changed` variant per field grows the root enum linearly. Key edits by
+field name instead and handle every field in a single arm with
+`views.FieldAction`:
+
+```moonbit nocheck
+enum FormMsg {
+  Field(String, FieldAction)
+  Submit
+}
+
+fn update_form(model : FormModel, msg : FormMsg) -> FormModel {
+  match msg {
+    Field(name, action) =>
+      match action {
+        Text(value) => set_field(model, name, value) // your keyed setter
+        Toggle(enabled) => set_toggle(model, name, enabled)
+        Select(value) => set_field(model, name, value)
+      }
+    Submit => validate_and_submit(model)
+  }
+}
+
+// view side: one constructor covers every text field
+text_field(
+  model.email,
+  on_input=value => Field("email", FieldAction::Text(value)),
+)
+```
+
+The `name` key reuses `FormFieldState.name` /
+`FormValidationSummary.first_invalid_id`. With `Array[FormFieldState]` storage
+apply edits through `update_named_field` (unknown names are inert). `Toggle`
+stores `"true"` / `"false"` in string-valued `FormFieldState`; app models that
+keep real `Bool`s match on the action directly. `examples/settings/app` uses
+this pattern for its profile section.
+
 Recommended checks:
 
 ```sh
@@ -247,6 +285,75 @@ Recommended checks:
 moon test moui/core --target native
 moon test moui/views --target native
 moon test examples/command_palette/app --target native
+```
+
+## Feature Composition With Scope
+
+`Feature[Model, Msg]` is a standalone TEA unit — the same `init` / `update` /
+`view` / `subscriptions` / `commands` five-tuple as `Program` — that you mount
+into a parent model with `Feature::scope`. Terminology: this core composition
+`Feature` is unrelated to `RendererFeature` (renderer capability tags in
+`moui/render`) and to the feature-status / feature-proof documentation pages.
+
+A scope is a `read`/`write` lens pair plus a `wrap` message constructor.
+`ScopedFeature::update` reads the child model, runs the child update, writes
+the result back, and lifts the effect — replacing the hand-written "delegate +
+`Effect::map`" boilerplate. `view`, `subscriptions`, and `commands` lift the
+same way through the existing `View::map` / `Subscription::map` /
+`ProgramCommand::map` helpers.
+
+```moonbit nocheck
+enum SettingsMsg {
+  Profile(ProfileMsg)
+  Save
+}
+
+fn profile_scope() -> @moui.ScopedFeature[
+  SettingsModel,
+  ProfileSection,
+  ProfileMsg,
+  SettingsMsg,
+] {
+  profile_feature().scope(
+    read=model => model.profile,
+    write=(section, model) => { ..model, profile: section },
+    wrap=message => SettingsMsg::Profile(message),
+  )
+}
+
+fn update(model : SettingsModel, msg : SettingsMsg) -> SettingsModel {
+  match msg {
+    Profile(inner) => {
+      let (next, _effect) = profile_scope().update(model, inner)
+      next
+    }
+    Save => save(model)
+  }
+}
+```
+
+Rules that keep this honest:
+
+- The lens must satisfy `read(write(child, parent)) == child`,
+  `write(read(parent), parent) == parent`, and later writes win. `write` is a
+  pure function, not a setter: application state still changes only inside
+  `update` (invariant P13).
+- There is deliberately no `Feature::map`: a one-way map cannot close over
+  `update`'s input side. The parent match arm unwraps; `scope(wrap)` performs
+  every lift.
+- A section whose view needs parent-only inputs (sibling state, window size)
+  keeps its view composed by the parent; scope still covers `update` and
+  effect lifting. `examples/mo_workbench/app` uses this shape — its settings
+  scope `view` field aborts by design.
+- App roots stay `Program`; build the root as a `Feature` and bridge with
+  `Program::from_feature` when that reads better.
+
+Runnable shape: `examples/settings/app` (three section features with scoped
+views). Recommended checks:
+
+```sh
+moon test moui/core --target native
+moon test examples/settings/app --target native
 ```
 
 ## Host Services

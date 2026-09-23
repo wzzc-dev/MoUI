@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui/views",
   "wzzc-dev/moui",
+  "wzzc-dev/moui/geometry",
 }
 
 import {

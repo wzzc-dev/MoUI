@@ -391,6 +391,8 @@ pub fn tree_item(id~ : String, label~ : String, children? : Array[@data.TreeItem
 
 pub fn[Msg] tree_view(Array[@data.TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, on_secondary_tap? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn update_named_field(Array[@form.FormFieldState], String, @form.FieldAction) -> Array[@form.FormFieldState]
+
 pub fn validate_form(Array[@form.FormFieldState]) -> @form.FormValidationResult
 
 pub fn[T] variable_list_metrics(Array[T], (T) -> String, (T) -> Double, spacing? : Double) -> @data.VariableListMetrics
@@ -503,6 +505,8 @@ pub using @style {type FeedbackStyle}
 pub using @style {type FeedbackTheme}
 
 pub using @style {type FeedbackTone}
+
+pub using @form {type FieldAction}
 
 pub using @form {type FileImportAvailability}
 

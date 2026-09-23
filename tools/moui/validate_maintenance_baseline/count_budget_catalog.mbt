@@ -16,7 +16,8 @@ fn pub_all_budgets() -> Array[CountBudget] {
     { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 190 },
     // 57 = 39 (ADR 0017 control theme tokens) + 17 control-theme/style
     // records + 1 externally constructed incremental-data change enum.
-    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 65 },
+    // 66 = 65 + 1 FieldAction keyed-form enum (feature-scope-composition).
+    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 66 },
     {
       kind: "pub(all)",
       label: "moui/runtime",

@@ -369,7 +369,10 @@ event sources. Full details: [TEA Program Model](tea-program-model.md).
 Key surface: `Program::simple` / `Program::new` / `Program::with_commands` / `*_with_environment`,
 `Effect::send` / `Effect::run` / `Effect::task` / `Effect::service_task`,
 `Subscription::timer` / `Subscription::host_event` / `Subscription::route_event`,
-`View::map`, `Effect::map`, `Subscription::map`. Message drains are bounded
+`View::map`, `Effect::map`, `Subscription::map`,
+`Feature` / `Feature::scope` / `ScopedFeature` for sub-model composition, and
+`Program::from_feature` to bridge a root `Feature` into the runtime-facing
+`Program`. Message drains are bounded
 runtime turns; stale dispatchers after `AppRuntime::destroy()` are ignored.
 
 ## Runtime Mental Model

@@ -181,7 +181,7 @@ fn core_api_surface_name_tokens() -> Array[String] {
     "CheckMark", "ChoiceControl", "Color", "Command", "Component", "Composition",
     "Constraints", "ContentSize", "ControlState", "CrossAxis", "Custom", "Damage",
     "DateValue", "Declaration", "DerivedState", "Drag", "Draw", "Easing", "Effect",
-    "Environment", "Feedback", "Filter", "Focus", "Font", "FormValidationTheme",
+    "Environment", "Feedback", "Feature", "Filter", "Focus", "Font", "FormValidationTheme",
     "Frame", "Image", "Insets", "InteractionState", "Key", "Keyboard", "Layer", "Layout",
     "LinearGradient", "MainAxis", "Motion", "Navigation", "Path", "PickerTheme",
     "PlatformView", "Point", "Pointer", "Program", "Progress", "RadialGradient",

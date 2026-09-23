@@ -1,42 +1,57 @@
 ///|
+using @views { type FieldAction }
+
+///|
 test "settings update edits fields and selection" {
   let model = SettingsModel::new()
-    .update(DisplayNameChanged("Grace Hopper"))
-    .update(EmailChanged("grace@example.com"))
-    .update(WorkspaceChanged("Compiler Lab"))
-    .update(ThemeModeSelected("dark"))
-    .update(NotificationsChanged(false))
-    .update(TelemetryChanged(true))
+    .update(
+      Profile(ProfileMsg::Field(
+        "display_name",
+        FieldAction::Text("Grace Hopper"),
+      )),
+    )
+    .update(
+      Profile(ProfileMsg::Field("email", FieldAction::Text("grace@example.com"))),
+    )
+    .update(Workspace(WorkspaceMsg::WorkspaceChanged("Compiler Lab")))
+    .update(Preferences(PreferencesMsg::ThemeModeSelected("dark")))
+    .update(Workspace(WorkspaceMsg::NotificationsChanged(false)))
+    .update(Preferences(PreferencesMsg::TelemetryChanged(true)))
     .update(SelectSettingsSection("preferences"))
-  inspect(model.display_name, content="Grace Hopper")
-  inspect(model.email, content="grace@example.com")
-  inspect(model.workspace, content="Compiler Lab")
-  inspect(model.theme_mode, content="dark")
-  inspect(model.notifications, content="false")
-  inspect(model.telemetry, content="true")
-  inspect(model.selected_section, content="preferences")
+  inspect(model.profile.display_name, content="Grace Hopper")
+  inspect(model.profile.email, content="grace@example.com")
+  inspect(model.workspace.workspace, content="Compiler Lab")
+  inspect(model.preferences.theme_mode, content="dark")
+  inspect(model.workspace.notifications, content="false")
+  inspect(model.preferences.telemetry, content="true")
+  inspect(model.shell.selected_section, content="preferences")
 }
 
 ///|
 test "settings saveable snapshot restores model state" {
   let model = SettingsModel::new()
-    .update(DisplayNameChanged("Katherine Johnson"))
-    .update(EmailChanged("kj@nasa.example"))
-    .update(WorkspaceChanged("Orbital Mechanics"))
-    .update(ThemeModeSelected("light"))
-    .update(NotificationsChanged(false))
-    .update(TelemetryChanged(true))
+    .update(
+      Profile(ProfileMsg::Field(
+        "display_name",
+        FieldAction::Text("Katherine Johnson"),
+      )),
+    )
+    .update(Profile(ProfileMsg::Field("email", FieldAction::Text("kj@nasa.example"))))
+    .update(Workspace(WorkspaceMsg::WorkspaceChanged("Orbital Mechanics")))
+    .update(Preferences(PreferencesMsg::ThemeModeSelected("light")))
+    .update(Workspace(WorkspaceMsg::NotificationsChanged(false)))
+    .update(Preferences(PreferencesMsg::TelemetryChanged(true)))
     .update(SelectSettingsSection("workspace"))
     .update(SaveSettings)
   let restored = SettingsModel::restore_from_snapshot(model.save_snapshot())
-  inspect(restored.display_name, content="Katherine Johnson")
-  inspect(restored.email, content="kj@nasa.example")
-  inspect(restored.workspace, content="Orbital Mechanics")
-  inspect(restored.theme_mode, content="light")
-  inspect(restored.notifications, content="false")
-  inspect(restored.telemetry, content="true")
-  inspect(restored.selected_section, content="workspace")
-  inspect(restored.saved_label, content="Saved: Workspace")
+  inspect(restored.profile.display_name, content="Katherine Johnson")
+  inspect(restored.profile.email, content="kj@nasa.example")
+  inspect(restored.workspace.workspace, content="Orbital Mechanics")
+  inspect(restored.preferences.theme_mode, content="light")
+  inspect(restored.workspace.notifications, content="false")
+  inspect(restored.preferences.telemetry, content="true")
+  inspect(restored.shell.selected_section, content="workspace")
+  inspect(restored.shell.saved_label, content="Saved: Workspace")
 }
 
 ///|

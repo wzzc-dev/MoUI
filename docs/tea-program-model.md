@@ -165,3 +165,34 @@ Environment-aware TEA apps should use
 the `*_with_environment` constructors instead of taking `ComponentContext` in their
 view layer. In both cases event dispatch flows through typed messages instead of
 exposing the runtime tree.
+
+## Feature Composition
+
+`Feature[Model, Msg]` packages the same five-tuple as `Program` (`init`,
+`update`, `view`, `subscriptions`, `commands`) as a value that can be defined
+and tested independently, then mounted into a parent model with
+`Feature::scope(read, write, wrap)`. The scope runs the child update through
+the lens pair and lifts messages, effects, views, subscriptions, and commands
+with the existing `View::map` / `Effect::map` / `Subscription::map` helpers —
+the same shape as hand-written wrapper variants, minus the per-message
+boilerplate. App roots stay `Program`; bridge with `Program::from_feature`.
+
+Naming: this `Feature` (the core TEA composition unit) is unrelated to
+`RendererFeature` (renderer capability tags in `moui/render`) and to the
+feature-status / feature-proof documentation pages.
+
+Two deliberate limits:
+
+- No `Feature::map`: a one-way message map cannot close over `update`'s input
+  side — the parent would need the inverse function to feed the child.
+  Unwrapping happens in the parent match arm; `scope(wrap)` performs every
+  lift. A future prism variant (`wrap` + `unwrap`) would revisit this.
+- The lens `write : (Child, Parent) -> Parent` is a pure function, not the
+  setter banned by P13: application state still changes only inside `update`,
+  and `Feature` introduces no lifecycle state machine, binding, context, or
+  mutable holder. Lens laws: `read(write(child, parent)) == child`,
+  `write(read(parent), parent) == parent`, later writes win.
+
+Composition rules and keyed field messages:
+[Non-render component cookbook](non-render-component-cookbook.md#feature-composition-with-scope).
+Runnable shape: `examples/settings/app`.

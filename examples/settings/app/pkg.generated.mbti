@@ -4,6 +4,7 @@ package "examples/settings/app"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/form",
 }
 
 // Values
@@ -16,6 +17,25 @@ pub fn view(SettingsModel) -> @core.View[SettingsMsg]
 // Errors
 
 // Types and methods
+pub(all) enum PreferencesMsg {
+  ThemeModeSelected(String)
+  TelemetryChanged(Bool)
+}
+
+pub(all) struct PreferencesSection {
+  theme_mode : String
+  telemetry : Bool
+}
+
+pub(all) enum ProfileMsg {
+  Field(String, @form.FieldAction)
+}
+
+pub(all) struct ProfileSection {
+  display_name : String
+  email : String
+}
+
 pub struct SettingsApp {
   unit : Unit
 }
@@ -23,14 +43,10 @@ pub fn SettingsApp::new() -> Self
 pub fn SettingsApp::program(Self) -> @core.Program[SettingsModel, SettingsMsg]
 
 pub(all) struct SettingsModel {
-  selected_section : String
-  display_name : String
-  email : String
-  workspace : String
-  theme_mode : String
-  notifications : Bool
-  telemetry : Bool
-  saved_label : String
+  profile : ProfileSection
+  workspace : WorkspaceSection
+  preferences : PreferencesSection
+  shell : ShellSection
 }
 pub fn SettingsModel::new() -> Self
 pub fn SettingsModel::program(Self) -> @core.Program[Self, SettingsMsg]
@@ -38,15 +54,13 @@ pub fn SettingsModel::restore_from_snapshot(SettingsSnapshot) -> Self
 pub fn SettingsModel::save_snapshot(Self) -> SettingsSnapshot
 pub fn SettingsModel::update(Self, SettingsMsg) -> Self
 pub fn SettingsModel::view(Self) -> @core.View[SettingsMsg]
+pub fn SettingsModel::view_with_environment(Self, @core.ViewEnvironment) -> @core.View[SettingsMsg]
 
 pub(all) enum SettingsMsg {
+  Profile(ProfileMsg)
+  Workspace(WorkspaceMsg)
+  Preferences(PreferencesMsg)
   SelectSettingsSection(String)
-  DisplayNameChanged(String)
-  EmailChanged(String)
-  WorkspaceChanged(String)
-  ThemeModeSelected(String)
-  NotificationsChanged(Bool)
-  TelemetryChanged(Bool)
   SaveSettings
   ResetSettings
 }
@@ -61,6 +75,21 @@ pub struct SettingsSnapshot {
   telemetry : Bool
   saved_label : String
 } derive(Eq, @debug.Debug)
+
+pub(all) struct ShellSection {
+  selected_section : String
+  saved_label : String
+}
+
+pub(all) enum WorkspaceMsg {
+  WorkspaceChanged(String)
+  NotificationsChanged(Bool)
+}
+
+pub(all) struct WorkspaceSection {
+  workspace : String
+  notifications : Bool
+}
 
 // Type aliases
 

@@ -1,4 +1,49 @@
 // ---------------------------------------------------------------------------
+// Settings section scope
+// ---------------------------------------------------------------------------
+
+///|
+fn settings_read(model : WorkbenchModel) -> SettingsWorkspace {
+  model.settings
+}
+
+///|
+fn settings_write(
+  section : SettingsWorkspace,
+  model : WorkbenchModel,
+) -> WorkbenchModel {
+  { ..model, settings: section, }
+}
+
+///|
+/// Settings section as a `Feature`, used for scoped update/effect lifting.
+/// The view field deliberately aborts: rendering stays in
+/// `settings_overlay_view`, which threads parent inputs (appearance, theme,
+/// window size) that a child-only `Feature` view cannot receive. If a future
+/// refactor makes the section view child-pure, wire it here and call
+/// `ScopedFeature::view` from the overlay.
+fn settings_feature() -> @moui.Feature[SettingsWorkspace, SettingsMsg] {
+  @moui.Feature::new(
+    init=() => (SettingsWorkspace::new(), @moui.Effect::none()),
+    update=(section, message) => section.update(message),
+    view=_section =>
+      abort(
+        "settings section view is composed by settings_overlay_view; scope is update/effect only",
+      ),
+  )
+}
+
+///|
+fn settings_scope(
+) -> @moui.ScopedFeature[WorkbenchModel, SettingsWorkspace, SettingsMsg, WorkbenchMsg] {
+  settings_feature().scope(
+    read=settings_read,
+    write=settings_write,
+    wrap=msg => WorkbenchMsg::SettingsMsg(msg),
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Task projection sync
 // ---------------------------------------------------------------------------
 
@@ -465,11 +510,12 @@ fn WorkbenchModel::update(
     SettingsMsg(m) =>
       match m {
         AppearanceChanged(mode) => {
-          let (settings, eff) = self.settings.update(m)
-          (
-            { ..self, settings, appearance: mode },
-            eff.map(msg => WorkbenchMsg::SettingsMsg(msg)),
-          )
+          // ScopedFeature::update replaces the hand-written child-update +
+          // Effect::map lift. The child arm for AppearanceChanged is a
+          // no-op (appearance lives on the parent), and the parent mirror
+          // write stays explicit beside the scope call.
+          let (next, effect) = settings_scope().update(self, m)
+          ({ ..next, appearance: mode }, effect)
         }
         DetectModels(provider_id) => {
           let settings = {

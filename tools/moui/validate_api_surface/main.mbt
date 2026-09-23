@@ -85,8 +85,8 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 /// App-loop types forwarded by root `wzzc-dev/moui` (not a subpackage).
 fn root_app_shape_tokens() -> Array[String] {
   [
-    "View", "Program", "ProgramCommand", "Effect", "Subscription", "Theme", "Environment",
-    "ViewEnvironment", "SemanticId", "ControlledValue", "ScrollRequest", "FocusRequest",
+    "View", "Program", "ProgramCommand", "Feature", "ScopedFeature", "Effect", "Subscription", "Theme",
+    "Environment", "ViewEnvironment", "SemanticId", "ControlledValue", "ScrollRequest", "FocusRequest",
   ]
 }
 
@@ -154,7 +154,7 @@ fn sugar_cross_domain_forbidden_tokens(
   own_tokens : Array[String],
 ) -> Array[String] {
   let all = [
-    "View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment",
+    "View", "Program", "Effect", "Subscription", "Feature", "ScopedFeature", "Theme", "Environment", "ViewEnvironment",
     "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment", "MainAxisAlignment",
     "CrossAxisAlignment", "Color", "Brush", "BorderStyle", "ShadowStyle", "RoundedRect",
     "PathSpec", "PathVerb", "ImageRun", "ImageFit", "BlendMode", "LayerSpec", "LayerMask",
@@ -215,8 +215,10 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "root facade (app-loop sugar)",
       path: "moui/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui\"",
-      max_lines: 40,
-      max_pub_lines: 12,
+      // Feature/ScopedFeature type forwards join the app-loop kernel set
+      // (feature-scope-composition plan): +2 type lines, +2 declarations.
+      max_lines: 43,
+      max_pub_lines: 14,
       max_pub_all_lines: 0,
       required_tokens: root_facade_required_tokens(),
       forbidden_tokens: sugar_cross_domain_forbidden_tokens(
@@ -321,8 +323,11 @@ fn package_budgets() -> Array[PackageBudget] {
       // live announcements, and typed actions in one intentional migration.
       // The keystroke-path text-edit primitive replace_text_range_edit adds
       // one signature line. The pointer-selection-origin field docs add two.
-      max_lines: 2140,
-      max_pub_lines: 560,
+      // Feature composition (feature-scope-composition plan) adds the
+      // Feature five-tuple factories/runtime accessors, Feature::scope, the
+      // ScopedFeature handle, and Program::from_feature: +19 lines, +12 pub.
+      max_lines: 2159,
+      max_pub_lines: 572,
       max_pub_all_lines: 189,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",

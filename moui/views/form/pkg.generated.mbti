@@ -37,6 +37,8 @@ pub fn[Msg] form_workflow_bar(summary~ : FormValidationSummary, primary~ : @cont
 
 pub fn required_field(message? : String) -> (String) -> String?
 
+pub fn update_named_field(Array[FormFieldState], String, FieldAction) -> Array[FormFieldState]
+
 pub fn validate_form(Array[FormFieldState]) -> FormValidationResult
 
 // Errors
@@ -47,6 +49,12 @@ pub struct BaselineFormRow[Msg] {
   control : @core.View[Msg]
 }
 pub fn[Msg] BaselineFormRow::new(label~ : @core.View[Msg], control~ : @core.View[Msg]) -> Self[Msg]
+
+pub(all) enum FieldAction {
+  Text(String)
+  Toggle(Bool)
+  Select(String)
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum FileImportAvailability {
   Available
@@ -80,6 +88,7 @@ pub(all) enum FormFieldLayout {
 pub fn FormFieldLayout::to_string(Self) -> String
 
 type FormFieldState
+pub fn FormFieldState::apply_action(Self, FieldAction) -> Self
 pub fn FormFieldState::new(name~ : String, initial? : String, label? : String, validator? : (String) -> String?, rules? : Array[FormValidationRule]) -> Self
 pub fn FormFieldState::validate(Self) -> FormFieldError?
 pub fn FormFieldState::value(Self) -> String
