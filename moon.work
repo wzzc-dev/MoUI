@@ -45,6 +45,7 @@ members = [
   "./examples/code_editor",
   "./examples/webview_demo",
   "./examples/deepseek_harness_desktop",
+  "./examples/momark",
   "./examples/browser",
   "./examples/terminal",
   "./benchmarks/app_cached_layer",

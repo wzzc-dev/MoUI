@@ -4,8 +4,8 @@
     {
       "label": "root facade (app-loop sugar)",
       "path": "moui/pkg.generated.mbti",
-      "lines": 39,
-      "public_declarations": 12,
+      "lines": 43,
+      "public_declarations": 14,
       "pub_all_declarations": 0
     },
     {
@@ -53,15 +53,15 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2138,
-      "public_declarations": 556,
+      "lines": 2159,
+      "public_declarations": 572,
       "pub_all_declarations": 189
     },
     {
       "label": "views facade",
       "path": "moui/views/pkg.generated.mbti",
-      "lines": 673,
-      "public_declarations": 324,
+      "lines": 677,
+      "public_declarations": 326,
       "pub_all_declarations": 0
     },
     {

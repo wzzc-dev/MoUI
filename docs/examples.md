@@ -75,7 +75,7 @@ entrypoint supplies the program and renderer provider. Run
 | Browser | Pure-MoonBit HTML browser demo | `examples/browser/app/`, `examples/browser/engine/` | crater (HTML/CSS/paint) + dowdiness/js_engine (pure-MoonBit JS) rendered through MoUI canvas: address bar, link hit-testing, data-URL navigation, page scripts |
 | PDF Workbench | PDF reading and light editing prototype | `examples/pdf_workbench/app/` | Typed binary file services, PDF adapters, and retained macOS Skia entrypoint |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette, typed `ProgramCommand`, and context-menu service flow through the same TEA queue |
-| MoMark (Markdown Editor) | Typora-style editing prototype, now its own repository | [wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark) | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
+| MoMark (Markdown Editor) | Typora-style editing prototype, published standalone and vendored here as a submodule | `examples/momark/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Code Editor | Native code editor shell and language-provider prototype | `examples/code_editor/app/` | Native `moui_richtext` editor shell with activity rail, file tab, line-number gutter, status bar, tokenizer-backed highlighting, bracket matching, auto indentation, multi-cursor edits, hidden find/replace overlay, runtime action-command shortcuts, completion overlay, diagnostics, hover, go-to-definition, main-editor Diff mode, and custom language/provider registration through app-owned callbacks |
 | Terminal | PTY-backed terminal emulator | `examples/terminal/app/` | Screen buffer (cells/attrs/wide chars/scroll region/scrollback), VT/ANSI parser (SGR/cursor/erase/OSC title/modes), run-merging mono rendering with 16/256/truecolor, native `openpty`+`posix_spawn` PTY host with async read loop, keyboard input encoding (Ctrl/special/function keys), ⌘-arrow scrollback review, and a macOS Skia entrypoint |
 | Mo Desktop | macOS-inspired responsive desktop simulation | `examples/mo_desktop/app/` | Lock/unlock session, image wallpaper, menu bar, live dock, calendar/weather/task widgets, responsive Finder with navigation/search/icon-list modes/selection, Safari start page and search results, searchable Apps/Actions launcher, notifications, Control Center toggles/sliders, global light/dark appearance, Web wasm-gc and macOS Skia entrypoints |
@@ -335,9 +335,11 @@ development workflows:
 - `Examples`: Counter and Todo reusable app patterns until the dedicated
   example apps cover those workflows.
 
-The Typora-style WYSIWYG Markdown editor (MoMark) lives in its own repository,
-[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark), built on the published
-`wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages. See
+The Typora-style WYSIWYG Markdown editor (MoMark) is published from its own
+repository, [wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark), and vendored
+into this workspace as the `examples/momark` submodule so the app builds next to
+the framework it consumes. It builds on the published `wzzc-dev/moui` and
+`wzzc-dev/moui_richtext` packages. See
 [Markdown Editor](markdown-editor.md) for the pointer.
 
 ## Settings

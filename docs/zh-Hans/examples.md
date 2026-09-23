@@ -54,7 +54,7 @@ lifecycle、surface creation 和 input，MoUI 入口负责 program 和 renderer 
 | DSH Desktop | 薄的 DeepSeek Harness WebView 宿主 | `examples/deepseek_harness_desktop/app/` | 为已有本地 Harness Host 提供原生 macOS WKWebView、Windows WebView2 和 Linux WebKitGTK surface，不复制 Web UI 状态；`Settings…`（`Cmd+,`）持久化根地址并用 MoUI 模态层覆盖 WebView；顶部 32 点支持 drag/no-drag |
 | PDF Workbench | PDF 阅读和轻量编辑原型 | `examples/pdf_workbench/app/` | 简洁的原生 PDF reader/editor shell、host binary file service open/save flow、PDFium page bitmap preview、fit-width responsive reading canvas、scrollable page/inspector panels、reader fullscreen toggle、page navigation/direct page jump/search/metadata summaries、可 undo/可 discard 的 preview rotate/crop/stamp/title/bookmark/note edit state、用于真实 parsing/writeback checks 的独立 `pdflite_adapter` 包、JSONL pdflite helper protocol 加 native process transport、用于 page rasterization 的 native-only `pdfium_adapter` 包、macOS/Windows/Linux Skia native entrypoints |
 | Command Palette | 命令元数据和菜单模式 | `examples/command_palette/app/` | Command palette rows、shortcut labels、enabled/disabled dispatch、command menu、context menu fallback、`program(environment)`，以及 `@services.MenuServices::show_context` native menu preview |
-| MoMark (Markdown Editor) | Typora 风格编辑原型，已独立成仓库 | [wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark) | Editor snapshot core、`mizchi/markdown` parsing、source-range mapping、primary rich text editor、可选 source preview |
+| MoMark (Markdown Editor) | Typora 风格编辑原型，独立发布并以子模块形式挂载 | `examples/momark/app/` | Editor snapshot core、`mizchi/markdown` parsing、source-range mapping、primary rich text editor、可选 source preview |
 | Code Editor | 原生代码编辑器 shell 和 language-provider 原型 | `examples/code_editor/app/` | 带 activity rail、file tab、line-number gutter、status bar、tokenizer-backed highlighting、bracket matching、auto indentation、multi-cursor edits、hidden find/replace overlay、runtime action-command shortcuts、completion overlay、diagnostics、hover、go-to-definition、main-editor Diff mode 的原生 `moui_richtext` editor shell，以及通过应用拥有 callbacks 注册的 custom language/provider |
 | Mo Desktop | macOS 风格响应式桌面模拟 | `examples/mo_desktop/app/` | Lock/unlock session、image wallpaper、menu bar、live dock、calendar/weather/task widgets、带 navigation/search/icon-list modes/selection 的 responsive Finder、Safari start page 和 search results、可搜索 Apps/Actions launcher、notifications、Control Center toggles/sliders、全局 light/dark appearance、Web wasm-gc 和 macOS Skia 入口 |
 | Mo Workbench | 以 Native-Skia 为优先的桌面 agent dogfood 应用 | `examples/mo_workbench/app/` | 受 DeepSeek-GUI 启发的多工作区 shell，包含 Code chat、starter cards、backend-aware OpenSeek/ACP controls、responsive left rail、optional right inspector、low-noise status bar、grouped Settings form、static Write/Connect Phone/Scheduled Tasks/Plugins surfaces、injected stub backend、OpenSeek native transport、generic ACP stdio native transport、macOS Skia native entrypoint |
@@ -293,9 +293,10 @@ wiring、text diagnostics 和 advanced rendering，
   app model 中。
 - `Examples`：Counter 和 Todo 可复用应用模式，直到专用示例应用覆盖这些工作流。
 
-Typora 风格的所见即所得 Markdown 编辑器（MoMark）已独立成仓库：
-[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark)，基于已发布的 `wzzc-dev/moui`
-与 `wzzc-dev/moui_richtext` 包构建。指针说明参见
+Typora 风格的所见即所得 Markdown 编辑器（MoMark）在自有仓库
+[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark) 独立发布，并作为
+`examples/momark` 子模块挂载到本工作区，与它所消费的框架一起构建。它基于已发布的
+`wzzc-dev/moui` 与 `wzzc-dev/moui_richtext` 包构建。指针说明参见
 [Markdown Editor](markdown-editor.md)。
 
 ## Settings

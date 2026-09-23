@@ -191,8 +191,9 @@ moon run examples/showcase/linux_skia --target native
 
 ### Markdown Editor
 
-所见即所得的类 Typora Markdown 编辑器（MoMark）已独立成仓库：
-[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark)。它基于已发布的
+所见即所得的类 Typora Markdown 编辑器（MoMark）位于自有仓库
+[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark)，并作为 `examples/momark`
+子模块挂载到本仓库，同时注册为 `moon.work` 成员。它基于已发布的
 `wzzc-dev/moui` 与 `wzzc-dev/moui_richtext` 包构建，环境准备与各平台入口
 请见 MoMark 仓库 README。
 

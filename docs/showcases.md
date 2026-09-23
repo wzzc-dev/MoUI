@@ -16,10 +16,11 @@ GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/mo_workbench
 
 MoMark is a Typora-style WYSIWYG Markdown editor that shares one typed Markdown
 application model between source and visual editing modes. It builds on the
-published `wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages and lives in
-its own repository.
+published `wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages and lives in its
+own repository, vendored into this workspace as the `examples/momark` submodule.
 
 GitHub source: https://github.com/wzzc-dev/MoMark
+Submodule: `examples/momark`
 
 ## Showcase
 

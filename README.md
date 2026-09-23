@@ -182,10 +182,11 @@ moon run examples/showcase/linux_skia --target native
 
 ### Markdown Editor
 
-The Typora-style WYSIWYG Markdown editor (MoMark) graduated into its own
-repository: [wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark). It builds
-on published `wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages; see the
-MoMark README for setup and platform entrypoints.
+The Typora-style WYSIWYG Markdown editor (MoMark) lives in its own repository,
+[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark), vendored here as the
+`examples/momark` submodule and registered as a `moon.work` member. It builds on
+published `wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages; see the MoMark
+README for setup and platform entrypoints.
 
 ### Mo Workbench
 

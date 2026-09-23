@@ -29,10 +29,14 @@ fn max_shared_app_core_imports() -> Int {
 ///|
 /// Post-domain-sugar refactor, `@core` is a first-class shared-app dependency;
 /// this list is retained only for tests that assert the guard still tracks paths.
+/// MoMark (the `examples/momark` submodule) is the reference rich text editing
+/// kernel consumer: its editor reads `@core` text editing primitives and the
+/// paragraph layout contract directly, matching the framework pieces listed in
+/// docs/markdown-editor.md.
 fn allowed_shared_app_core_imports() -> Array[String] {
   [
     "examples/browser/app/moon.pkg", "examples/mo_workbench/app/moon.pkg", "examples/pdf_workbench/app/moon.pkg",
-    "examples/showcase/app/moon.pkg", "website/app/moon.pkg",
+    "examples/showcase/app/moon.pkg", "examples/momark/app/moon.pkg", "website/app/moon.pkg",
   ]
 }
 

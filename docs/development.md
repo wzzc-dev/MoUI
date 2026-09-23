@@ -150,9 +150,10 @@ workflow.
 
 When updating this repository, update all Git checkouts that participate in the
 workspace, not just the root checkout. That includes the main MoUI repository
-and Git submodules such as `.agents/skills/moonbit-skills` and `window`. Then
-run `moon update` so registry dependencies are refreshed. `moui_skia` updates
-with the main MoUI checkout.
+and Git submodules such as `.agents/skills/moonbit-skills`, `window`, and the
+example submodules `examples/deepseek_harness_desktop` and `examples/momark`.
+Then run `moon update` so registry dependencies are refreshed. `moui_skia`
+updates with the main MoUI checkout.
 
 For a fresh clone, fetch submodules in the initial checkout:
 

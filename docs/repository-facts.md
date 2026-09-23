@@ -54,6 +54,7 @@ This file is generated from repository manifests and validator reports.
 | ./examples/code_editor |
 | ./examples/webview_demo |
 | ./examples/deepseek_harness_desktop |
+| ./examples/momark |
 | ./examples/browser |
 | ./examples/terminal |
 | ./benchmarks/app_cached_layer |
@@ -65,15 +66,15 @@ This file is generated from repository manifests and validator reports.
 
 | Package | Interface lines | Public | pub(all) |
 |---|---:|---:|---:|
-| root facade (app-loop sugar) (moui/pkg.generated.mbti) | 39 | 12 | 0 |
+| root facade (app-loop sugar) (moui/pkg.generated.mbti) | 43 | 14 | 0 |
 | geometry sugar (moui/geometry/pkg.generated.mbti) | 33 | 9 | 0 |
 | graphics sugar (moui/graphics/pkg.generated.mbti) | 47 | 16 | 0 |
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 721 | 427 | 24 |
-| core (moui/core/pkg.generated.mbti) | 2138 | 556 | 189 |
-| views facade (moui/views/pkg.generated.mbti) | 673 | 324 | 0 |
+| core (moui/core/pkg.generated.mbti) | 2159 | 572 | 189 |
+| views facade (moui/views/pkg.generated.mbti) | 677 | 326 | 0 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 467 | 84 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 476 | 151 | 31 |
 | render common (moui/render/common/pkg.generated.mbti) | 376 | 112 | 13 |
@@ -113,6 +114,7 @@ This file is generated from repository manifests and validator reports.
 | Code Editor | examples/code_editor | no |
 | WebView Demo | examples/webview_demo | no |
 | DSH Desktop | examples/deepseek_harness_desktop | yes |
+| MoMark | examples/momark | no |
 | Browser | examples/browser | no |
 | Terminal | examples/terminal | yes |
 

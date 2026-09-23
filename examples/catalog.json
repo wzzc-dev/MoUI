@@ -110,6 +110,12 @@
       "featured": true
     },
     {
+      "id": "momark",
+      "path": "examples/momark",
+      "title": "MoMark",
+      "featured": false
+    },
+    {
       "id": "three_d_viewer",
       "path": "examples/three_d_viewer",
       "title": "3D Viewer",
